@@ -1,10 +1,10 @@
 # Riff
 
-A private essay-sharing platform for creative minds to connect through long-form writing.
+A private essay-sharing platform for creatives to connect through long-form writing.
 
 ## Overview
 
-Riff is a social platform designed for trendy creatives (ages 25-45) to share and discuss their own essays with friends. Think of it as a modern book club, but for your own writing.
+Riff is a social platform designed for trendy creatives to share and discuss their own essays with friends. Think of it as a modern book club, but for your own writing.
 
 ## Tech Stack
 
@@ -55,16 +55,6 @@ riff/
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint
 - `npm run format` - Format code with Prettier
-
-## Roadmap
-
-- [ ] Set up authentication
-- [ ] Design database schema
-- [ ] Build essay editor (rich text)
-- [ ] Implement user profiles
-- [ ] Create feed/discovery
-- [ ] Add comments/discussions
-- [ ] Deploy to production
 
 ## License
 
