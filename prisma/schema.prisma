@@ -1,0 +1,311 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== USER ====================
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  username  String   @unique
+  bio       String?
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  circleMemberships      CircleMember[]
+  createdCircles         Circle[]                 @relation("CircleCreator")
+  pieces                 Piece[]
+  comments               Comment[]
+  createdPrompts         CirclePrompt[]
+  ownedCollections       Collection[]             @relation("CollectionOwner")
+  addedPiecesToCollection CollectionPiece[]
+  collectionCollaborations CollectionCollaborator[]
+  sentNotifications      Notification[]           @relation("NotificationActor")
+  receivedNotifications  Notification[]           @relation("NotificationRecipient")
+
+  @@map("users")
+}
+
+// ==================== CIRCLE ====================
+
+model Circle {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  createdBy   User           @relation("CircleCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  members     CircleMember[]
+  prompts     CirclePrompt[]
+  pieces      PieceShare[]
+  collections Collection[]
+  comments    Comment[]
+  notifications Notification[]
+
+  @@map("circles")
+}
+
+model CircleMember {
+  id       String           @id @default(cuid())
+  circleId String
+  userId   String
+  role     CircleMemberRole @default(MEMBER)
+  joinedAt DateTime         @default(now())
+
+  // Relations
+  circle Circle @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([circleId, userId])
+  @@map("circle_members")
+}
+
+enum CircleMemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+// ==================== CIRCLE PROMPTS ====================
+
+model CirclePrompt {
+  id             String                @id @default(cuid())
+  circleId       String
+  title          String
+  description    String?
+  isFreeform     Boolean               @default(false)
+  deadline       DateTime?
+  visibilityRule PromptVisibilityRule  @default(ON_SUBMIT)
+  createdById    String
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  // Relations
+  circle    Circle       @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  createdBy User         @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  pieces    PieceShare[]
+
+  @@map("circle_prompts")
+}
+
+enum PromptVisibilityRule {
+  ON_SUBMIT
+  ALL_SUBMITTED
+  AFTER_DEADLINE
+}
+
+// ==================== PIECE & VERSIONS ====================
+
+model Piece {
+  id             String   @id @default(cuid())
+  title          String
+  authorId       String
+  currentContent String   @db.Text
+  currentExcerpt String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  author     User              @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  versions   PieceVersion[]
+  shares     PieceShare[]
+  collections CollectionPiece[]
+  visibility PieceVisibilitySettings?
+  comments   Comment[]
+  notifications Notification[]
+
+  @@map("pieces")
+}
+
+model PieceVersion {
+  id            String   @id @default(cuid())
+  pieceId       String
+  versionNumber Int
+  title         String
+  content       String   @db.Text
+  excerpt       String?
+  createdAt     DateTime @default(now())
+
+  // Relations
+  piece    Piece        @relation(fields: [pieceId], references: [id], onDelete: Cascade)
+  shares   PieceShare[]
+  comments Comment[]
+
+  @@unique([pieceId, versionNumber])
+  @@map("piece_versions")
+}
+
+model PieceShare {
+  id          String   @id @default(cuid())
+  pieceId     String
+  circleId    String
+  versionId   String
+  promptId    String?
+  submittedAt DateTime @default(now())
+  isVisible   Boolean  @default(true)
+
+  // Relations
+  piece   Piece         @relation(fields: [pieceId], references: [id], onDelete: Cascade)
+  circle  Circle        @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  version PieceVersion  @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  prompt  CirclePrompt? @relation(fields: [promptId], references: [id], onDelete: SetNull)
+
+  @@unique([pieceId, circleId])
+  @@map("piece_shares")
+}
+
+// ==================== PIECE VISIBILITY ====================
+
+model PieceVisibilitySettings {
+  id             String          @id @default(cuid())
+  pieceId        String          @unique
+  visibility     PieceVisibility @default(PRIVATE)
+  allowedUserIds String[]
+
+  // Relations
+  piece Piece @relation(fields: [pieceId], references: [id], onDelete: Cascade)
+
+  @@map("piece_visibility_settings")
+}
+
+enum PieceVisibility {
+  PRIVATE
+  CIRCLES_ONLY
+  SPECIFIC_USERS
+  PUBLIC
+}
+
+// ==================== COMMENTS ====================
+
+model Comment {
+  id             String   @id @default(cuid())
+  content        String   @db.Text
+  pieceId        String
+  versionId      String
+  circleId       String?
+  authorId       String
+  parentId       String?
+  selectionStart Int?
+  selectionEnd   Int?
+  selectedText   String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  author  User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  piece   Piece         @relation(fields: [pieceId], references: [id], onDelete: Cascade)
+  version PieceVersion  @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  circle  Circle?       @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  parent  Comment?      @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies Comment[]     @relation("CommentReplies")
+  notifications Notification[]
+
+  @@map("comments")
+}
+
+// ==================== COLLECTIONS ====================
+
+model Collection {
+  id          String         @id @default(cuid())
+  name        String
+  description String?
+  type        CollectionType @default(PERSONAL)
+  ownerId     String
+  circleId    String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  // Relations
+  owner         User                     @relation("CollectionOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  circle        Circle?                  @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  pieces        CollectionPiece[]
+  collaborators CollectionCollaborator[]
+  notifications Notification[]
+
+  @@map("collections")
+}
+
+model CollectionPiece {
+  id           String   @id @default(cuid())
+  collectionId String
+  pieceId      String
+  addedById    String
+  addedAt      DateTime @default(now())
+  order        Int?
+
+  // Relations
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  piece      Piece      @relation(fields: [pieceId], references: [id], onDelete: Cascade)
+  addedBy    User       @relation(fields: [addedById], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, pieceId])
+  @@map("collection_pieces")
+}
+
+model CollectionCollaborator {
+  id           String   @id @default(cuid())
+  collectionId String
+  userId       String
+  canEdit      Boolean  @default(false)
+  addedAt      DateTime @default(now())
+
+  // Relations
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, userId])
+  @@map("collection_collaborators")
+}
+
+enum CollectionType {
+  PERSONAL
+  GROUP
+  CIRCLE
+}
+
+// ==================== NOTIFICATIONS ====================
+
+model Notification {
+  id           String           @id @default(cuid())
+  type         NotificationType
+  recipientId  String
+  actorId      String?
+  circleId     String?
+  pieceId      String?
+  commentId    String?
+  collectionId String?
+  isRead       Boolean          @default(false)
+  createdAt    DateTime         @default(now())
+
+  // Relations
+  recipient  User        @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  actor      User?       @relation("NotificationActor", fields: [actorId], references: [id], onDelete: Cascade)
+  circle     Circle?     @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  piece      Piece?      @relation(fields: [pieceId], references: [id], onDelete: Cascade)
+  comment    Comment?    @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  collection Collection? @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+enum NotificationType {
+  CIRCLE_INVITATION
+  NEW_PROMPT
+  PIECE_SUBMITTED
+  PIECES_VISIBLE
+  NEW_COMMENT
+  COMMENT_REPLY
+  COLLECTION_INVITE
+  PIECE_ADDED_TO_COLLECTION
+}
