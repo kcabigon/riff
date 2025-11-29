@@ -48,14 +48,6 @@ riff/
 └── ...config files
 ```
 
-## Development
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
-- `npm run format` - Format code with Prettier
-
 ## License
 
 Private - All rights reserved
