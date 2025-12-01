@@ -39,7 +39,7 @@ interface PieceViewerProps {
   piece: Piece;
   userCircles: Circle[];
   isAuthor: boolean;
-  onShare?: (circleId: string, promptId?: string) => Promise<void>;
+  onShare?: (pieceId: string, circleId: string, promptId?: string) => Promise<void>;
 }
 
 export default function PieceViewer({
@@ -173,6 +173,7 @@ export default function PieceViewer({
           onClose={() => setShowShareModal(false)}
           onShare={onShare}
           circles={userCircles}
+          pieceId={piece.id}
           pieceTitle={piece.title}
         />
       )}

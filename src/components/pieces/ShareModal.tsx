@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Circle {
   id: string;
@@ -12,12 +12,22 @@ interface Circle {
   }>;
 }
 
+interface Piece {
+  id: string;
+  title: string;
+}
+
 interface ShareModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onShare: (circleId: string, promptId?: string) => Promise<void>;
+  onShare: (pieceId: string, circleId: string, promptId?: string) => Promise<void>;
   circles: Circle[];
-  pieceTitle: string;
+  // For piece-view context (sharing from piece editor)
+  pieceId?: string;
+  pieceTitle?: string;
+  // For circle-view context (sharing from circle page)
+  pieces?: Piece[];
+  preSelectedCircleId?: string;
 }
 
 export default function ShareModal({
@@ -25,27 +35,45 @@ export default function ShareModal({
   onClose,
   onShare,
   circles,
+  pieceId,
   pieceTitle,
+  pieces,
+  preSelectedCircleId,
 }: ShareModalProps) {
-  const [selectedCircle, setSelectedCircle] = useState<string>('');
+  const [selectedPiece, setSelectedPiece] = useState<string>(pieceId || '');
+  const [selectedCircle, setSelectedCircle] = useState<string>(preSelectedCircleId || '');
   const [selectedPrompt, setSelectedPrompt] = useState<string>('');
   const [isSharing, setIsSharing] = useState(false);
 
+  // Update selections when props change
+  useEffect(() => {
+    if (pieceId) setSelectedPiece(pieceId);
+    if (preSelectedCircleId) setSelectedCircle(preSelectedCircleId);
+  }, [pieceId, preSelectedCircleId]);
+
   if (!isOpen) return null;
+
+  const isCircleViewMode = !!pieces && !!preSelectedCircleId;
+  const isPieceViewMode = !!pieceId && !!pieceTitle;
 
   const selectedCircleData = circles.find((c) => c.id === selectedCircle);
   const activePrompts = selectedCircleData?.prompts?.filter(
     (p) => !p.deadline || new Date(p.deadline) > new Date()
   ) || [];
 
+  const selectedPieceData = pieces?.find((p) => p.id === selectedPiece);
+  const displayTitle = pieceTitle || selectedPieceData?.title || '';
+
   const handleShare = async () => {
-    if (!selectedCircle) return;
+    if (!selectedCircle || !selectedPiece) return;
 
     setIsSharing(true);
     try {
-      await onShare(selectedCircle, selectedPrompt || undefined);
+      await onShare(selectedPiece, selectedCircle, selectedPrompt || undefined);
       onClose();
-      setSelectedCircle('');
+      // Reset state
+      if (!pieceId) setSelectedPiece('');
+      if (!preSelectedCircleId) setSelectedCircle('');
       setSelectedPrompt('');
     } catch (error) {
       console.error('Error sharing piece:', error);
@@ -62,7 +90,9 @@ export default function ShareModal({
         <div className="border-b px-6 py-4">
           <h2 className="text-xl font-semibold text-gray-900">Share Piece</h2>
           <p className="text-sm text-gray-600 mt-1">
-            Share &quot;{pieceTitle}&quot; to a circle
+            {isCircleViewMode
+              ? `Share a piece to ${selectedCircleData?.name}`
+              : `Share "${displayTitle}" to a circle`}
           </p>
         </div>
 
@@ -76,27 +106,62 @@ export default function ShareModal({
             </p>
           </div>
 
-          {/* Circle selection */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Select Circle
-            </label>
-            <select
-              value={selectedCircle}
-              onChange={(e) => {
-                setSelectedCircle(e.target.value);
-                setSelectedPrompt(''); // Reset prompt selection
-              }}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="">Choose a circle...</option>
-              {circles.map((circle) => (
-                <option key={circle.id} value={circle.id}>
-                  {circle.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Piece selection (only in circle-view mode) */}
+          {isCircleViewMode && pieces && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Select Piece
+              </label>
+              <select
+                value={selectedPiece}
+                onChange={(e) => setSelectedPiece(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">Choose a piece...</option>
+                {pieces.map((piece) => (
+                  <option key={piece.id} value={piece.id}>
+                    {piece.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Circle selection (only in piece-view mode) */}
+          {isPieceViewMode && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Select Circle
+              </label>
+              <select
+                value={selectedCircle}
+                onChange={(e) => {
+                  setSelectedCircle(e.target.value);
+                  setSelectedPrompt(''); // Reset prompt selection
+                }}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">Choose a circle...</option>
+                {circles.map((circle) => (
+                  <option key={circle.id} value={circle.id}>
+                    {circle.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Circle display (in circle-view mode - disabled/locked) */}
+          {isCircleViewMode && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Circle
+              </label>
+              <div className="w-full border border-gray-200 bg-gray-50 rounded-lg px-3 py-2 text-gray-700">
+                {selectedCircleData?.name}
+              </div>
+            </div>
+          )}
 
           {/* Prompt selection (optional) */}
           {selectedCircle && activePrompts.length > 0 && (
@@ -122,16 +187,17 @@ export default function ShareModal({
           )}
 
           {/* Preview */}
-          {selectedCircle && (
+          {selectedCircle && selectedPiece && (
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
               <p className="text-sm text-gray-700">
                 <span className="font-medium">This will:</span>
               </p>
               <ul className="text-sm text-gray-600 mt-2 space-y-1">
                 <li>
-                  • Create a new version and share it to{' '}
+                  • Share &quot;{displayTitle}&quot; to{' '}
                   <span className="font-medium">{selectedCircleData?.name}</span>
                 </li>
+                <li>• Create a new frozen version</li>
                 {selectedPrompt && (
                   <li>
                     • Link to prompt:{' '}
@@ -157,7 +223,7 @@ export default function ShareModal({
           </button>
           <button
             onClick={handleShare}
-            disabled={!selectedCircle || isSharing}
+            disabled={!selectedCircle || !selectedPiece || isSharing}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSharing ? 'Sharing...' : 'Share to Circle'}
