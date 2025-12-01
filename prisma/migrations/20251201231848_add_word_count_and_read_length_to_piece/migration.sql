@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "pieces" ADD COLUMN     "readLengthMin" INTEGER NOT NULL DEFAULT 1,
+ADD COLUMN     "wordCount" INTEGER NOT NULL DEFAULT 0;
