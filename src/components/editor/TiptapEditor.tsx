@@ -6,7 +6,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import CharacterCount from '@tiptap/extension-character-count';
 import Link from '@tiptap/extension-link';
 import TextAlign from '@tiptap/extension-text-align';
-import Image from '@tiptap/extension-image';
+import ResizableImage from 'tiptap-extension-resize-image';
 import Youtube from '@tiptap/extension-youtube';
 import { Spotify } from './extensions/Spotify';
 import { useEffect, useCallback, useState } from 'react';
@@ -53,11 +53,9 @@ export default function TiptapEditor({
       TextAlign.configure({
         types: ['heading', 'paragraph'],
       }),
-      Image.configure({
+      ResizableImage.configure({
+        inline: true,
         allowBase64: true,
-        HTMLAttributes: {
-          class: 'max-w-full h-auto rounded-lg cursor-pointer hover:opacity-80',
-        },
       }),
       Youtube.configure({
         controls: true,
