@@ -117,14 +117,17 @@ export default function TestEditorV2() {
         flexDirection: 'column',
         overflow: 'hidden',
       }}>
-        {/* Inner padding: 57px horizontal, 40px vertical */}
+        {/* Inner padding: 12px all sides, with dark background */}
         <div style={{
           display: 'flex',
           flexDirection: 'column',
           gap: '10px',
-          padding: '40px 57px',
+          padding: '40px 12px 0',
           height: '100%',
           boxSizing: 'border-box',
+          background: '#2c2d30',
+          borderRadius: '8px',
+          boxShadow: '0px 1px 3px 0px rgba(0,0,0,0.1)',
         }}>
           {/* Hidden file input */}
           <input
@@ -135,24 +138,33 @@ export default function TestEditorV2() {
             style={{ display: 'none' }}
           />
 
-          {/* Title Section */}
+          {/* Title Section - centered with word count below */}
           <div style={{
-            height: '48px',
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
+            justifyContent: 'center',
             gap: '8px',
-            padding: '8px 16px',
+            padding: '24px 16px',
             flexShrink: 0,
           }}>
             <h1 style={{
               fontFamily: 'var(--font-playfair), serif',
-              fontSize: '24px',
+              fontSize: '32px',
               fontWeight: 'bold',
-              color: '#000',
+              color: '#ffffff',
               margin: 0,
             }}>
               Untitled piece
             </h1>
+            <p style={{
+              fontFamily: 'var(--font-playfair), serif',
+              fontSize: '14px',
+              color: '#bbbbbb',
+              margin: 0,
+            }}>
+              <span style={{ fontWeight: 'bold' }}>{wordCount}</span> words • <span style={{ fontWeight: 'bold' }}>{readLengthMin}</span> min read
+            </p>
           </div>
 
           {/* Toolbar: 48px height, 0.5px bottom border */}
@@ -186,7 +198,7 @@ export default function TestEditorV2() {
               onMouseLeave={(e) => { if (!editor.isActive('bold')) e.currentTarget.style.background = 'transparent'; }}
               title="Bold"
             >
-              <span style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '14px', fontWeight: 'bold', color: '#000' }}>B</span>
+              <span style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '14px', fontWeight: 'bold', color: '#fff' }}>B</span>
             </button>
 
             {/* Italic */}
@@ -208,7 +220,7 @@ export default function TestEditorV2() {
               onMouseLeave={(e) => { if (!editor.isActive('italic')) e.currentTarget.style.background = 'transparent'; }}
               title="Italic"
             >
-              <span style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '14px', fontStyle: 'italic', color: '#000' }}>I</span>
+              <span style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '14px', fontStyle: 'italic', color: '#fff' }}>I</span>
             </button>
 
             {/* Underline */}
@@ -230,7 +242,7 @@ export default function TestEditorV2() {
               onMouseLeave={(e) => { if (!editor.isActive('underline')) e.currentTarget.style.background = 'transparent'; }}
               title="Underline"
             >
-              <span style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '14px', textDecoration: 'underline', color: '#000' }}>U</span>
+              <span style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '14px', textDecoration: 'underline', color: '#fff' }}>U</span>
             </button>
 
             {/* Strikethrough */}
@@ -252,7 +264,7 @@ export default function TestEditorV2() {
               onMouseLeave={(e) => { if (!editor.isActive('strike')) e.currentTarget.style.background = 'transparent'; }}
               title="Strikethrough"
             >
-              <span style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '14px', textDecoration: 'line-through', color: '#000' }}>S</span>
+              <span style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '14px', textDecoration: 'line-through', color: '#fff' }}>S</span>
             </button>
 
             {/* H1 */}
@@ -274,7 +286,7 @@ export default function TestEditorV2() {
               onMouseLeave={(e) => { if (!editor.isActive('heading', { level: 1 })) e.currentTarget.style.background = 'transparent'; }}
               title="Heading 1"
             >
-              <span style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '14px', color: '#000' }}>H1</span>
+              <span style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '14px', color: '#fff' }}>H1</span>
             </button>
 
             {/* H2 */}
@@ -296,7 +308,7 @@ export default function TestEditorV2() {
               onMouseLeave={(e) => { if (!editor.isActive('heading', { level: 2 })) e.currentTarget.style.background = 'transparent'; }}
               title="Heading 2"
             >
-              <span style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '14px', color: '#000' }}>H2</span>
+              <span style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '14px', color: '#fff' }}>H2</span>
             </button>
 
             {/* H3 */}
@@ -318,7 +330,7 @@ export default function TestEditorV2() {
               onMouseLeave={(e) => { if (!editor.isActive('heading', { level: 3 })) e.currentTarget.style.background = 'transparent'; }}
               title="Heading 3"
             >
-              <span style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '14px', color: '#000' }}>H3</span>
+              <span style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '14px', color: '#fff' }}>H3</span>
             </button>
 
             {/* Bullet List */}
@@ -340,7 +352,7 @@ export default function TestEditorV2() {
               onMouseLeave={(e) => { if (!editor.isActive('bulletList')) e.currentTarget.style.background = 'transparent'; }}
               title="Bullet List"
             >
-              <span style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '14px', color: '#000' }}>•</span>
+              <span style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '14px', color: '#fff' }}>•</span>
             </button>
 
             {/* Numbered List */}
@@ -362,7 +374,7 @@ export default function TestEditorV2() {
               onMouseLeave={(e) => { if (!editor.isActive('orderedList')) e.currentTarget.style.background = 'transparent'; }}
               title="Numbered List"
             >
-              <span style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '14px', color: '#000' }}>1.</span>
+              <span style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '14px', color: '#fff' }}>1.</span>
             </button>
 
             {/* Align Left */}
@@ -385,7 +397,7 @@ export default function TestEditorV2() {
               title="Align Left"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M3 19h18v-2H3v2zm0-4h12v-2H3v2zm0-6v2h18V9H3zm0-4v2h12V5H3z" fill="currentColor"/>
+                <path d="M3 19h18v-2H3v2zm0-4h12v-2H3v2zm0-6v2h18V9H3zm0-4v2h12V5H3z" fill="#fff"/>
               </svg>
             </button>
 
@@ -409,7 +421,7 @@ export default function TestEditorV2() {
               title="Align Center"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M3 19h18v-2H3v2zm4-4h10v-2H7v2zM3 9v2h18V9H3zm4-4v2h10V5H7z" fill="currentColor"/>
+                <path d="M3 19h18v-2H3v2zm4-4h10v-2H7v2zM3 9v2h18V9H3zm4-4v2h10V5H7z" fill="#fff"/>
               </svg>
             </button>
 
@@ -433,7 +445,7 @@ export default function TestEditorV2() {
               title="Align Right"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M3 19h18v-2H3v2zm6-4h12v-2H9v2zM3 9v2h18V9H3zm6-4v2h12V5H9z" fill="currentColor"/>
+                <path d="M3 19h18v-2H3v2zm6-4h12v-2H9v2zM3 9v2h18V9H3zm6-4v2h12V5H9z" fill="#fff"/>
               </svg>
             </button>
 
@@ -462,8 +474,8 @@ export default function TestEditorV2() {
               title="Add Link"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M17 7h-4v2h4c1.65 0 3 1.35 3 3s-1.35 3-3 3h-4v2h4c2.76 0 5-2.24 5-5s-2.24-5-5-5zm-6 8H7c-1.65 0-3-1.35-3-3s1.35-3 3-3h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-2z" fill="currentColor"/>
-                <path d="M8 11h8v2H8z" fill="currentColor"/>
+                <path d="M17 7h-4v2h4c1.65 0 3 1.35 3 3s-1.35 3-3 3h-4v2h4c2.76 0 5-2.24 5-5s-2.24-5-5-5zm-6 8H7c-1.65 0-3-1.35-3-3s1.35-3 3-3h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-2z" fill="#fff"/>
+                <path d="M8 11h8v2H8z" fill="#fff"/>
               </svg>
             </button>
 
@@ -487,7 +499,7 @@ export default function TestEditorV2() {
               title="Add Image"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" fill="currentColor"/>
+                <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" fill="#fff"/>
               </svg>
             </button>
 
@@ -515,7 +527,7 @@ export default function TestEditorV2() {
               onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
               title="Add YouTube Video"
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="#fff">
                 <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
               </svg>
             </button>
@@ -544,7 +556,7 @@ export default function TestEditorV2() {
               onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
               title="Add Spotify Embed"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff">
                 <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
               </svg>
             </button>
@@ -554,7 +566,10 @@ export default function TestEditorV2() {
           <div style={{
             flex: 1,
             overflow: 'auto',
-            padding: '48px 64px',
+            padding: '0px 12px',
+            maxWidth: '800px',
+            margin: '0 auto',
+            textAlign: 'left',
             minHeight: 0, // Important for flex child to be scrollable
           }}>
             <div className="tiptap-editor">
@@ -568,11 +583,10 @@ export default function TestEditorV2() {
             borderTop: '0.5px solid #cccccc',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
             padding: '8px 32px',
             flexShrink: 0,
           }}>
-            {/* Save status - left side */}
+            {/* Save status - left side only */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div style={{
                 width: '8px',
@@ -584,20 +598,11 @@ export default function TestEditorV2() {
               <span style={{
                 fontFamily: 'var(--font-playfair), serif',
                 fontSize: '14px',
-                color: '#6b7280',
+                color: '#bbbbbb',
               }}>
                 {saveStatus === 'saved' ? 'Saved' : saveStatus === 'saving' ? 'Saving...' : 'Unsaved changes'}
               </span>
             </div>
-
-            {/* Word count and read length - right side */}
-            <span style={{
-              fontFamily: 'var(--font-playfair), serif',
-              fontSize: '14px',
-              color: '#6b7280',
-            }}>
-              {wordCount} words · {readLengthMin} min read
-            </span>
           </div>
         </div>
       </div>
