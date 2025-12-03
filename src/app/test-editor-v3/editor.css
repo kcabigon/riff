@@ -1,0 +1,168 @@
+/* Complete override of Tiptap default styles */
+
+/* Toolbar responsive alignment */
+.toolbar-container {
+  justify-content: flex-start;
+}
+
+@media (min-width: 667px) {
+  .toolbar-container {
+    justify-content: center;
+  }
+}
+
+/* Hide scrollbar but keep scroll functionality */
+.toolbar-container {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.toolbar-container::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Remove all default prose styling */
+.tiptap-editor .ProseMirror {
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  color: #ffffff;
+  font-family: var(--font-playfair), serif;
+  font-size: 18px;
+  line-height: normal;
+  outline: none;
+  border: none;
+  min-height: 100%;
+  max-width: 100%;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Remove all default margins and padding from elements */
+.tiptap-editor .ProseMirror > * {
+  margin: 0;
+  padding: 0;
+}
+
+/* Paragraph spacing */
+.tiptap-editor .ProseMirror p {
+  margin: 0 0 1em 0;
+  color: #ffffff;
+  font-family: var(--font-playfair), serif;
+  font-size: 18px;
+  line-height: normal;
+  max-width: 100%;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.tiptap-editor .ProseMirror p:last-child {
+  margin-bottom: 0;
+}
+
+/* Placeholder styling */
+.tiptap-editor .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #ffffff;
+  pointer-events: none;
+  height: 0;
+  font-family: var(--font-playfair), serif;
+  font-size: 18px;
+}
+
+/* Headings */
+.tiptap-editor .ProseMirror h1,
+.tiptap-editor .ProseMirror h2,
+.tiptap-editor .ProseMirror h3 {
+  margin: 0 0 0.5em 0;
+  padding: 0;
+  color: #ffffff;
+  font-family: var(--font-playfair), serif;
+  line-height: normal;
+  font-weight: bold;
+}
+
+.tiptap-editor .ProseMirror h1 {
+  font-size: 32px;
+}
+
+.tiptap-editor .ProseMirror h2 {
+  font-size: 24px;
+}
+
+.tiptap-editor .ProseMirror h3 {
+  font-size: 20px;
+}
+
+/* Lists */
+.tiptap-editor .ProseMirror ul,
+.tiptap-editor .ProseMirror ol {
+  margin: 0 0 1em 0;
+  padding-left: 1.5em;
+  color: #ffffff;
+}
+
+.tiptap-editor .ProseMirror li {
+  margin: 0;
+  padding: 0;
+  color: #ffffff;
+  font-family: var(--font-playfair), serif;
+  font-size: 18px;
+  line-height: normal;
+}
+
+/* Links */
+.tiptap-editor .ProseMirror a {
+  color: #60a5fa;
+  text-decoration: underline;
+}
+
+.tiptap-editor .ProseMirror a:hover {
+  color: #93c5fd;
+}
+
+/* Remove any max-width constraints */
+.tiptap-editor .ProseMirror {
+  max-width: none;
+}
+
+/* Focus state */
+.tiptap-editor .ProseMirror:focus {
+  outline: none;
+}
+
+/* Remove any text color overrides */
+.tiptap-editor .ProseMirror * {
+  color: inherit;
+}
+
+/* Images - ensure they stay within bounds */
+.tiptap-editor .ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1em 0;
+}
+
+/* YouTube embeds - center and constrain */
+.tiptap-editor .ProseMirror iframe[src*="youtube.com"],
+.tiptap-editor .ProseMirror iframe[src*="youtu.be"] {
+  max-width: 100%;
+  display: block;
+  margin: 1em auto;
+}
+
+/* Spotify embeds - reduce height and ensure proper sizing */
+.tiptap-editor .ProseMirror .spotify-embed-wrapper {
+  /*margin: 1em 0;*/
+  margin-left: auto;
+  margin-right: auto;
+  /*max-width: 50%;*/
+}
+
+.tiptap-editor .ProseMirror .spotify-embed-wrapper iframe {
+  max-width: 100%;
+  height: 152px !important;
+  display: block;
+}
