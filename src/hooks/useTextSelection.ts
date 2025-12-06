@@ -96,24 +96,21 @@ function getCharacterOffsets(
     const node = treeWalker.currentNode as Text;
     const nodeLength = node.textContent?.length || 0;
 
-    if (!foundStart) {
-      if (node === range.startContainer) {
-        start = charCount + range.startOffset;
-        foundStart = true;
-      } else {
-        charCount += nodeLength;
-      }
+    // Check if this node contains the start of the range
+    if (!foundStart && node === range.startContainer) {
+      start = charCount + range.startOffset;
+      foundStart = true;
     }
 
-    if (foundStart && !foundEnd) {
-      if (node === range.endContainer) {
-        end = charCount + range.endOffset;
-        foundEnd = true;
-        break;
-      } else {
-        charCount += nodeLength;
-      }
+    // Check if this node contains the end of the range
+    if (node === range.endContainer) {
+      end = charCount + range.endOffset;
+      foundEnd = true;
+      break;
     }
+
+    // Always increment character count for this node
+    charCount += nodeLength;
   }
 
   return { start, end };

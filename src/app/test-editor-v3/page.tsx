@@ -101,7 +101,7 @@ export default function TestEditorV3() {
     const resizeTextarea = () => {
       if (titleRef.current) {
         // Reset height to auto to get the correct scrollHeight
-        titleRef.current.style.height = 'auto';
+        titleRef.current.style.height = '38px';
         // Set to scrollHeight to fit content
         titleRef.current.style.height = titleRef.current.scrollHeight + 'px';
       }
@@ -622,9 +622,10 @@ export default function TestEditorV3() {
                 overflow: 'hidden',
                 lineHeight: '1.2',
                 minHeight: '38px',
+                height: '38px',
                 overflowWrap: 'break-word',
                 wordBreak: 'break-word',
-                whiteSpace: 'normal',
+                whiteSpace: 'pre-wrap',
                 boxSizing: 'border-box',
               }}
             />

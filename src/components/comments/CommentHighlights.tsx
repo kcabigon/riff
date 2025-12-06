@@ -162,8 +162,45 @@ function highlightRange(
       range.surroundContents(mark);
     } catch (e) {
       // If surroundContents fails (e.g., range spans multiple elements),
-      // try a fallback approach
-      console.warn('Failed to wrap range, trying fallback:', e);
+      // use a fallback approach with extractContents
+      console.warn('Range spans multiple elements, using fallback highlighting');
+
+      try {
+        // Create a wrapper span for fallback
+        const wrapper = document.createElement('span');
+        wrapper.dataset.commentId = commentId;
+        wrapper.style.backgroundColor = '#fef3c7';
+        wrapper.style.padding = '2px 0';
+        wrapper.style.borderRadius = '2px';
+        wrapper.style.cursor = 'pointer';
+        wrapper.style.transition = 'background-color 0.2s';
+        wrapper.title = 'Click to view comment';
+
+        // Extract and wrap the contents
+        const contents = range.extractContents();
+        wrapper.appendChild(contents);
+        range.insertNode(wrapper);
+
+        // Add hover effect
+        wrapper.addEventListener('mouseenter', () => {
+          wrapper.style.backgroundColor = '#fde68a';
+        });
+
+        wrapper.addEventListener('mouseleave', () => {
+          wrapper.style.backgroundColor = '#fef3c7';
+        });
+
+        // Add click handler
+        if (onClick) {
+          wrapper.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onClick(commentId);
+          });
+        }
+      } catch (fallbackError) {
+        console.error('Fallback highlighting also failed:', fallbackError);
+      }
     }
   }
 }
