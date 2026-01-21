@@ -2,14 +2,19 @@
 // These define the shape of data independent of database implementation
 
 export type UserId = string;
-export type CircleId = string;
+export type ClubId = string;
+export type RiffId = string;
 export type PieceId = string;
 export type PieceVersionId = string;
-export type CirclePromptId = string;
-export type PieceShareId = string;
+export type ShareId = string;
 export type CommentId = string;
 export type CollectionId = string;
 export type NotificationId = string;
+
+// DEPRECATED (kept for backward compatibility)
+export type CircleId = string;
+export type CirclePromptId = string;
+export type PieceShareId = string;
 
 // ==================== USER ====================
 
@@ -24,7 +29,123 @@ export interface User {
   updatedAt: Date;
 }
 
-// ==================== CIRCLE ====================
+// ==================== CLUBS (NEW ARCHITECTURE) ====================
+
+export interface Club {
+  id: ClubId;
+  name: string;
+  description?: string;
+  adminId: UserId; // Creator, permanent
+  moderatorId?: UserId; // Rotatable moderator role
+  isArchived: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+
+  // Relational fields
+  admin?: User;
+  moderator?: User;
+  members?: ClubMember[];
+  riffs?: Riff[];
+}
+
+export enum ClubRole {
+  ADMIN = "ADMIN", // Creator, permanent
+  MODERATOR = "MODERATOR", // Rotatable between members
+  MEMBER = "MEMBER", // Default role
+}
+
+export interface ClubMember {
+  id: string;
+  clubId: ClubId;
+  userId: UserId;
+  role: ClubRole;
+  joinedAt: Date;
+
+  // Relational fields
+  user?: User;
+  club?: Club;
+}
+
+// ==================== RIFFS (NEW ARCHITECTURE) ====================
+
+export interface Riff {
+  id: RiffId;
+  clubId: ClubId;
+  creatorId: UserId;
+  title: string;
+  prompt?: string;
+  deadline?: Date;
+  status: RiffStatus;
+  createdAt: Date;
+  updatedAt: Date;
+
+  // Relational fields
+  club?: Club;
+  creator?: User;
+  participants?: RiffParticipant[];
+  pieces?: PieceRiff[];
+}
+
+export enum RiffStatus {
+  DRAFT = "DRAFT", // Creator is setting up, no invites sent yet
+  ACTIVE = "ACTIVE", // Running, members can join/leave and submit pieces
+  COMPLETED = "COMPLETED", // Manually marked complete by any club member
+}
+
+export interface RiffParticipant {
+  id: string;
+  riffId: RiffId;
+  userId: UserId;
+  joinedAt: Date;
+
+  // Relational fields
+  riff?: Riff;
+  user?: User;
+}
+
+export interface PieceRiff {
+  id: string;
+  pieceId: PieceId;
+  riffId: RiffId;
+  versionId?: PieceVersionId; // Optional: specific version submitted to riff
+  submittedAt: Date;
+
+  // Relational fields
+  piece?: Piece;
+  riff?: Riff;
+  version?: PieceVersion;
+}
+
+// ==================== SHARES (NEW ARCHITECTURE) ====================
+
+export enum ShareType {
+  CLUB = "CLUB", // All club members can see
+  RIFF = "RIFF", // Only riff participants can see
+  INDIVIDUAL = "INDIVIDUAL", // Specific user only
+  PUBLIC = "PUBLIC", // Anyone with link (view-only, no comments)
+}
+
+export interface Share {
+  id: ShareId;
+  pieceId: PieceId;
+  versionId: PieceVersionId;
+  shareType: ShareType;
+  clubId?: ClubId; // For CLUB-level shares
+  riffId?: RiffId; // For RIFF-level shares
+  sharedWithId?: UserId; // For INDIVIDUAL shares
+  isPublic: boolean; // For PUBLIC shares
+  submittedAt: Date;
+  isVisible: boolean;
+
+  // Relational fields
+  piece?: Piece;
+  version?: PieceVersion;
+  club?: Club;
+  riff?: Riff;
+  sharedWith?: User;
+}
+
+// ==================== CIRCLE (DEPRECATED) ====================
 
 export interface Circle {
   id: CircleId;
@@ -164,7 +285,9 @@ export interface Comment {
   content: string;
   pieceId: PieceId;
   versionId: PieceVersionId; // Tied to a specific version
-  circleId?: CircleId; // Optional: Comments can be in a circle or direct share
+  clubId?: ClubId; // NEW: Club context for comments
+  riffId?: RiffId; // NEW: Riff context for comments
+  circleId?: CircleId; // DEPRECATED: Old circle context
   authorId: UserId;
   parentId?: CommentId; // For nested replies
   createdAt: Date;
@@ -179,7 +302,9 @@ export interface Comment {
   author?: User;
   piece?: Piece;
   version?: PieceVersion;
-  circle?: Circle;
+  club?: Club;
+  riff?: Riff;
+  circle?: Circle; // DEPRECATED
   replies?: Comment[];
 }
 
@@ -188,7 +313,8 @@ export interface Comment {
 export enum CollectionType {
   PERSONAL = "PERSONAL", // User's own organizational collection
   GROUP = "GROUP", // Collaborative collection with other users
-  CIRCLE = "CIRCLE", // Automatic collection of circle's pieces
+  CLUB = "CLUB", // NEW: Automatic collection of club's pieces
+  CIRCLE = "CIRCLE", // DEPRECATED: Old circle collections
 }
 
 export interface Collection {
@@ -197,13 +323,15 @@ export interface Collection {
   description?: string;
   type: CollectionType;
   ownerId: UserId; // Creator of the collection
-  circleId?: CircleId; // Only for CIRCLE type collections
+  clubId?: ClubId; // NEW: For CLUB type collections
+  circleId?: CircleId; // DEPRECATED: For old CIRCLE type collections
   createdAt: Date;
   updatedAt: Date;
 
   // Relational fields
   owner?: User;
-  circle?: Circle;
+  club?: Club;
+  circle?: Circle; // DEPRECATED
   pieces?: CollectionPiece[];
   collaborators?: CollectionCollaborator[]; // For GROUP collections
 }
@@ -239,14 +367,28 @@ export interface CollectionCollaborator {
 // ==================== NOTIFICATIONS ====================
 
 export enum NotificationType {
+  // NEW: Club/Riff notifications
+  CLUB_INVITATION = "CLUB_INVITATION",
+  RIFF_CREATED = "RIFF_CREATED",
+  RIFF_INVITATION = "RIFF_INVITATION",
+  RIFF_STARTED = "RIFF_STARTED",
+  RIFF_DEADLINE_APPROACHING = "RIFF_DEADLINE_APPROACHING",
+  RIFF_COMPLETED = "RIFF_COMPLETED",
+  PIECE_SUBMITTED_TO_RIFF = "PIECE_SUBMITTED_TO_RIFF",
+
+  // Comment notifications
+  NEW_COMMENT = "NEW_COMMENT",
+  COMMENT_REPLY = "COMMENT_REPLY",
+
+  // Collection notifications
+  COLLECTION_INVITE = "COLLECTION_INVITE",
+  PIECE_ADDED_TO_COLLECTION = "PIECE_ADDED_TO_COLLECTION",
+
+  // DEPRECATED: Old circle notifications
   CIRCLE_INVITATION = "CIRCLE_INVITATION",
   NEW_PROMPT = "NEW_PROMPT",
   PIECE_SUBMITTED = "PIECE_SUBMITTED",
-  PIECES_VISIBLE = "PIECES_VISIBLE", // When prompt deadline passes
-  NEW_COMMENT = "NEW_COMMENT",
-  COMMENT_REPLY = "COMMENT_REPLY",
-  COLLECTION_INVITE = "COLLECTION_INVITE",
-  PIECE_ADDED_TO_COLLECTION = "PIECE_ADDED_TO_COLLECTION",
+  PIECES_VISIBLE = "PIECES_VISIBLE",
 }
 
 export interface Notification {
@@ -254,7 +396,9 @@ export interface Notification {
   type: NotificationType;
   recipientId: UserId;
   actorId?: UserId; // Who triggered the notification
-  circleId?: CircleId;
+  clubId?: ClubId; // NEW: Club notifications
+  riffId?: RiffId; // NEW: Riff notifications
+  circleId?: CircleId; // DEPRECATED: Old circle notifications
   pieceId?: PieceId;
   commentId?: CommentId;
   collectionId?: CollectionId;
@@ -264,7 +408,9 @@ export interface Notification {
   // Relational fields
   recipient?: User;
   actor?: User;
-  circle?: Circle;
+  club?: Club;
+  riff?: Riff;
+  circle?: Circle; // DEPRECATED
   piece?: Piece;
   comment?: Comment;
   collection?: Collection;
@@ -272,6 +418,49 @@ export interface Notification {
 
 // ==================== INPUT TYPES ====================
 
+// NEW: Club/Riff input types
+export interface CreateClubInput {
+  name: string;
+  description?: string;
+}
+
+export interface UpdateClubInput {
+  name?: string;
+  description?: string;
+  moderatorId?: UserId; // Rotate moderator
+}
+
+export interface InviteToClubInput {
+  clubId: ClubId;
+  userId: UserId;
+  role?: ClubRole;
+}
+
+export interface CreateRiffInput {
+  clubId: ClubId;
+  title: string;
+  prompt?: string;
+  deadline?: Date;
+}
+
+export interface UpdateRiffInput {
+  title?: string;
+  prompt?: string;
+  deadline?: Date;
+  status?: RiffStatus;
+}
+
+export interface JoinRiffInput {
+  riffId: RiffId;
+}
+
+export interface SubmitPieceToRiffInput {
+  riffId: RiffId;
+  pieceId: PieceId;
+  versionId?: PieceVersionId; // Optional: specific version to submit
+}
+
+// DEPRECATED: Circle input types
 export interface CreateCircleInput {
   name: string;
   description?: string;
@@ -304,6 +493,35 @@ export interface UpdatePieceInput {
   excerpt?: string;
 }
 
+// NEW: Multi-level sharing input
+export interface SharePieceToClubInput {
+  pieceId: PieceId;
+  clubId: ClubId;
+  versionId?: PieceVersionId; // Optional: specific version, or create new
+  createNewVersion?: boolean;
+}
+
+export interface SharePieceToRiffInput {
+  pieceId: PieceId;
+  riffId: RiffId;
+  versionId?: PieceVersionId; // Optional: specific version, or create new
+  createNewVersion?: boolean;
+}
+
+export interface SharePieceToUserInput {
+  pieceId: PieceId;
+  sharedWithId: UserId;
+  versionId?: PieceVersionId;
+  createNewVersion?: boolean;
+}
+
+export interface CreatePublicShareInput {
+  pieceId: PieceId;
+  versionId?: PieceVersionId;
+  createNewVersion?: boolean;
+}
+
+// DEPRECATED: Old circle-based sharing
 export interface SharePieceInput {
   pieceId: PieceId;
   circleId: CircleId;
@@ -315,7 +533,9 @@ export interface CreateCommentInput {
   content: string;
   pieceId: PieceId;
   versionId: PieceVersionId;
-  circleId?: CircleId; // Optional: only needed if commenting in a circle context
+  clubId?: ClubId; // NEW: Club context for comments
+  riffId?: RiffId; // NEW: Riff context for comments
+  circleId?: CircleId; // DEPRECATED: Old circle context
   parentId?: CommentId;
   selectionStart?: number;
   selectionEnd?: number;

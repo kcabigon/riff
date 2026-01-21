@@ -25,22 +25,55 @@ model User {
   accounts Account[]
   sessions Session[]
 
-  // App relations
-  circleMemberships        CircleMember[]
-  createdCircles           Circle[]                 @relation("CircleCreator")
+  // App relations (updated for Clubs/Riffs)
+  clubMemberships          ClubMember[]
+  createdClubs             Club[]                   @relation("ClubCreator")
+  moderatedClubs           Club[]                   @relation("ClubModerator")
+  createdRiffs             Riff[]                   @relation("RiffCreator")
+  riffParticipations       RiffParticipant[]
   pieces                   Piece[]
+  individualShares         Share[]                  @relation("IndividualShares")
   comments                 Comment[]
-  createdPrompts           CirclePrompt[]
   ownedCollections         Collection[]             @relation("CollectionOwner")
   addedPiecesToCollection  CollectionPiece[]
   collectionCollaborations CollectionCollaborator[]
   sentNotifications        Notification[]           @relation("NotificationActor")
   receivedNotifications    Notification[]           @relation("NotificationRecipient")
 
+  // DEPRECATED: Circle relations (kept for backward compatibility)
+  circleMemberships        CircleMember[]
+  createdCircles           Circle[]                 @relation("CircleCreator")
+  createdPrompts           CirclePrompt[]
+
   @@map("users")
 }
 
-// ==================== CIRCLE ====================
+// ==================== CLUBS (NEW ARCHITECTURE) ====================
+
+model Club {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  isArchived  Boolean  @default(false)
+  adminId     String   // Creator, permanent
+  moderatorId String?  // Rotatable moderator role
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  admin       User         @relation("ClubCreator", fields: [adminId], references: [id], onDelete: Cascade)
+  moderator   User?        @relation("ClubModerator", fields: [moderatorId], references: [id], onDelete: SetNull)
+  members     ClubMember[]
+  riffs       Riff[]
+  shares      Share[]
+  collections Collection[]
+  comments    Comment[]
+  notifications Notification[]
+
+  @@map("clubs")
+}
+
+// ==================== CIRCLE (DEPRECATED - TO BE REMOVED) ====================
 
 model Circle {
   id          String   @id @default(cuid())
@@ -56,12 +89,80 @@ model Circle {
   members     CircleMember[]
   prompts     CirclePrompt[]
   pieces      PieceShare[]
-  collections Collection[]
-  comments    Comment[]
+  collections_deprecated Collection[] @relation("DeprecatedCircleCollections")
+  comments_deprecated    Comment[]    @relation("DeprecatedCircleComments")
+  notifications_deprecated Notification[] @relation("DeprecatedCircleNotifications")
+
+  @@map("circles_deprecated")
+}
+
+model ClubMember {
+  id       String    @id @default(cuid())
+  clubId   String
+  userId   String
+  role     ClubRole  @default(MEMBER)
+  joinedAt DateTime  @default(now())
+
+  // Relations
+  club Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([clubId, userId])
+  @@map("club_members")
+}
+
+enum ClubRole {
+  ADMIN      // Creator, permanent
+  MODERATOR  // Rotatable between members
+  MEMBER     // Default role
+}
+
+// ==================== RIFFS (NEW ARCHITECTURE) ====================
+
+model Riff {
+  id          String     @id @default(cuid())
+  clubId      String
+  creatorId   String
+  title       String
+  prompt      String?    @db.Text
+  deadline    DateTime?
+  status      RiffStatus @default(DRAFT)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relations
+  club         Club              @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  creator      User              @relation("RiffCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  participants RiffParticipant[]
+  pieces       PieceRiff[]
+  shares       Share[]
+  comments     Comment[]
   notifications Notification[]
 
-  @@map("circles")
+  @@map("riffs")
 }
+
+enum RiffStatus {
+  DRAFT      // Creator is setting up, no invites sent yet
+  ACTIVE     // Running, members can join/leave and submit pieces
+  COMPLETED  // Manually marked complete by any club member
+}
+
+model RiffParticipant {
+  id        String   @id @default(cuid())
+  riffId    String
+  userId    String
+  joinedAt  DateTime @default(now())
+
+  // Relations
+  riff Riff @relation(fields: [riffId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([riffId, userId])
+  @@map("riff_participants")
+}
+
+// ==================== CIRCLE MEMBERS (DEPRECATED) ====================
 
 model CircleMember {
   id       String           @id @default(cuid())
@@ -75,7 +176,7 @@ model CircleMember {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([circleId, userId])
-  @@map("circle_members")
+  @@map("circle_members_deprecated")
 }
 
 enum CircleMemberRole {
@@ -128,7 +229,9 @@ model Piece {
   // Relations
   author     User              @relation(fields: [authorId], references: [id], onDelete: Cascade)
   versions   PieceVersion[]
-  shares     PieceShare[]
+  newShares  Share[]           // NEW: Multi-level sharing (club, riff, individual, public)
+  shares     PieceShare[]      // DEPRECATED: Old circle-based sharing
+  riffs      PieceRiff[]       // NEW: Junction for piece-riff relationships
   collections CollectionPiece[]
   visibility PieceVisibilitySettings?
   comments   Comment[]
@@ -147,13 +250,66 @@ model PieceVersion {
   createdAt     DateTime @default(now())
 
   // Relations
-  piece    Piece        @relation(fields: [pieceId], references: [id], onDelete: Cascade)
-  shares   PieceShare[]
-  comments Comment[]
+  piece      Piece        @relation(fields: [pieceId], references: [id], onDelete: Cascade)
+  newShares  Share[]      // NEW: Multi-level sharing
+  shares     PieceShare[] // DEPRECATED
+  riffs      PieceRiff[]  // NEW: Junction for riff submissions
+  comments   Comment[]
 
   @@unique([pieceId, versionNumber])
   @@map("piece_versions")
 }
+
+// ==================== PIECE-RIFF JUNCTION (NEW) ====================
+
+model PieceRiff {
+  id          String   @id @default(cuid())
+  pieceId     String
+  riffId      String
+  versionId   String?  // Optional: specific version submitted to riff
+  submittedAt DateTime @default(now())
+
+  // Relations
+  piece   Piece         @relation(fields: [pieceId], references: [id], onDelete: Cascade)
+  riff    Riff          @relation(fields: [riffId], references: [id], onDelete: Cascade)
+  version PieceVersion? @relation(fields: [versionId], references: [id], onDelete: SetNull)
+
+  @@unique([pieceId, riffId])
+  @@map("piece_riffs")
+}
+
+// ==================== SHARES (NEW ARCHITECTURE) ====================
+
+model Share {
+  id              String    @id @default(cuid())
+  pieceId         String
+  versionId       String
+  shareType       ShareType
+  clubId          String?   // For CLUB-level shares
+  riffId          String?   // For RIFF-level shares
+  sharedWithId    String?   // For INDIVIDUAL shares
+  isPublic        Boolean   @default(false)  // For PUBLIC shares
+  submittedAt     DateTime  @default(now())
+  isVisible       Boolean   @default(true)
+
+  // Relations
+  piece        Piece         @relation(fields: [pieceId], references: [id], onDelete: Cascade)
+  version      PieceVersion  @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  club         Club?         @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  riff         Riff?         @relation(fields: [riffId], references: [id], onDelete: Cascade)
+  sharedWith   User?         @relation("IndividualShares", fields: [sharedWithId], references: [id], onDelete: Cascade)
+
+  @@map("shares")
+}
+
+enum ShareType {
+  CLUB        // All club members can see
+  RIFF        // Only riff participants can see
+  INDIVIDUAL  // Specific user only
+  PUBLIC      // Anyone with link (view-only, no comments)
+}
+
+// ==================== PIECE SHARES (DEPRECATED) ====================
 
 model PieceShare {
   id          String   @id @default(cuid())
@@ -171,7 +327,7 @@ model PieceShare {
   prompt  CirclePrompt? @relation(fields: [promptId], references: [id], onDelete: SetNull)
 
   @@unique([pieceId, circleId])
-  @@map("piece_shares")
+  @@map("piece_shares_deprecated")
 }
 
 // ==================== PIECE VISIBILITY ====================
@@ -202,7 +358,9 @@ model Comment {
   content        String   @db.Text
   pieceId        String
   versionId      String
-  circleId       String?
+  clubId         String?  // NEW: Club context for comments
+  riffId         String?  // NEW: Riff context for comments
+  circleId       String?  // DEPRECATED: Old circle context
   authorId       String
   parentId       String?
   selectionStart Int?
@@ -212,13 +370,15 @@ model Comment {
   updatedAt      DateTime @updatedAt
 
   // Relations
-  author  User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  piece   Piece         @relation(fields: [pieceId], references: [id], onDelete: Cascade)
-  version PieceVersion  @relation(fields: [versionId], references: [id], onDelete: Cascade)
-  circle  Circle?       @relation(fields: [circleId], references: [id], onDelete: Cascade)
-  parent  Comment?      @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies Comment[]     @relation("CommentReplies")
-  notifications Notification[]
+  author            User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  piece             Piece         @relation(fields: [pieceId], references: [id], onDelete: Cascade)
+  version           PieceVersion  @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  club              Club?         @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  riff              Riff?         @relation(fields: [riffId], references: [id], onDelete: Cascade)
+  circle_deprecated Circle?       @relation("DeprecatedCircleComments", fields: [circleId], references: [id], onDelete: Cascade)
+  parent            Comment?      @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies           Comment[]     @relation("CommentReplies")
+  notifications     Notification[]
 
   @@map("comments")
 }
@@ -231,16 +391,18 @@ model Collection {
   description String?
   type        CollectionType @default(PERSONAL)
   ownerId     String
-  circleId    String?
+  clubId      String?        // NEW: Club collections
+  circleId    String?        // DEPRECATED: Old circle collections
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 
   // Relations
-  owner         User                     @relation("CollectionOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  circle        Circle?                  @relation(fields: [circleId], references: [id], onDelete: Cascade)
-  pieces        CollectionPiece[]
-  collaborators CollectionCollaborator[]
-  notifications Notification[]
+  owner                  User                     @relation("CollectionOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  club                   Club?                    @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  circle_deprecated      Circle?                  @relation("DeprecatedCircleCollections", fields: [circleId], references: [id], onDelete: Cascade)
+  pieces                 CollectionPiece[]
+  collaborators          CollectionCollaborator[]
+  notifications          Notification[]
 
   @@map("collections")
 }
@@ -280,7 +442,8 @@ model CollectionCollaborator {
 enum CollectionType {
   PERSONAL
   GROUP
-  CIRCLE
+  CLUB    // NEW: Club-based collections
+  CIRCLE  // DEPRECATED
 }
 
 // ==================== NOTIFICATIONS ====================
@@ -290,7 +453,9 @@ model Notification {
   type         NotificationType
   recipientId  String
   actorId      String?
-  circleId     String?
+  clubId       String?          // NEW: Club notifications
+  riffId       String?          // NEW: Riff notifications
+  circleId     String?          // DEPRECATED: Old circle notifications
   pieceId      String?
   commentId    String?
   collectionId String?
@@ -298,25 +463,41 @@ model Notification {
   createdAt    DateTime         @default(now())
 
   // Relations
-  recipient  User        @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
-  actor      User?       @relation("NotificationActor", fields: [actorId], references: [id], onDelete: Cascade)
-  circle     Circle?     @relation(fields: [circleId], references: [id], onDelete: Cascade)
-  piece      Piece?      @relation(fields: [pieceId], references: [id], onDelete: Cascade)
-  comment    Comment?    @relation(fields: [commentId], references: [id], onDelete: Cascade)
-  collection Collection? @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  recipient          User        @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  actor              User?       @relation("NotificationActor", fields: [actorId], references: [id], onDelete: Cascade)
+  club               Club?       @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  riff               Riff?       @relation(fields: [riffId], references: [id], onDelete: Cascade)
+  circle_deprecated  Circle?     @relation("DeprecatedCircleNotifications", fields: [circleId], references: [id], onDelete: Cascade)
+  piece              Piece?      @relation(fields: [pieceId], references: [id], onDelete: Cascade)
+  comment            Comment?    @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  collection         Collection? @relation(fields: [collectionId], references: [id], onDelete: Cascade)
 
   @@map("notifications")
 }
 
 enum NotificationType {
+  // NEW: Club/Riff notifications
+  CLUB_INVITATION
+  RIFF_CREATED
+  RIFF_INVITATION
+  RIFF_STARTED
+  RIFF_DEADLINE_APPROACHING
+  RIFF_COMPLETED
+  PIECE_SUBMITTED_TO_RIFF
+
+  // Comment notifications
+  NEW_COMMENT
+  COMMENT_REPLY
+
+  // Collection notifications
+  COLLECTION_INVITE
+  PIECE_ADDED_TO_COLLECTION
+
+  // DEPRECATED: Old circle notifications
   CIRCLE_INVITATION
   NEW_PROMPT
   PIECE_SUBMITTED
   PIECES_VISIBLE
-  NEW_COMMENT
-  COMMENT_REPLY
-  COLLECTION_INVITE
-  PIECE_ADDED_TO_COLLECTION
 }
 
 // ==================== NEXTAUTH ====================
