@@ -1,10 +1,24 @@
 import type { Metadata } from "next";
-import { Playfair_Display } from "next/font/google";
+import { Playfair_Display, DM_Sans, DM_Serif_Text } from "next/font/google";
 import "./globals.css";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
   variable: "--font-playfair",
+  display: "swap",
+});
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  weight: ["300", "700"],
+  variable: "--font-dm-sans",
+  display: "swap",
+});
+
+const dmSerifText = DM_Serif_Text({
+  subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-dm-serif-text",
   display: "swap",
 });
 
@@ -20,7 +34,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`antialiased ${playfair.variable}`}>{children}</body>
+      <body className={`antialiased ${playfair.variable} ${dmSans.variable} ${dmSerifText.variable}`}>{children}</body>
     </html>
   );
 }
