@@ -61,7 +61,7 @@ export default function LoginPage() {
         <AuthInput
           type="email"
           name="email"
-          placeholder="kyle.cabigon@gmail.com"
+          placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           error={error}
