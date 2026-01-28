@@ -39,26 +39,30 @@ export default function AuthButton({
       }}
       onMouseEnter={(e) => {
         if (!isDisabled) {
-          e.currentTarget.style.borderColor = "#00FF66";
+          e.currentTarget.style.backgroundColor = "#FFFFFF";
+          e.currentTarget.style.borderColor = "#000000";
+          e.currentTarget.style.boxShadow = "8px 8px 0px 0px #00FF66";
         }
         props.onMouseEnter?.(e);
       }}
       onMouseLeave={(e) => {
         if (!isDisabled) {
+          e.currentTarget.style.backgroundColor = "#00FF66";
           e.currentTarget.style.borderColor = "#000000";
+          e.currentTarget.style.boxShadow = "8px 8px 0px 0px #000000";
         }
         props.onMouseLeave?.(e);
       }}
       onMouseDown={(e) => {
         if (!isDisabled) {
-          e.currentTarget.style.boxShadow = "4px 4px 0px 0px #000000";
+          e.currentTarget.style.boxShadow = "4px 4px 0px 0px #00FF66";
           e.currentTarget.style.transform = "translate(4px, 4px)";
         }
         props.onMouseDown?.(e);
       }}
       onMouseUp={(e) => {
         if (!isDisabled) {
-          e.currentTarget.style.boxShadow = "8px 8px 0px 0px #000000";
+          e.currentTarget.style.boxShadow = "8px 8px 0px 0px #00FF66";
           e.currentTarget.style.transform = "translate(0, 0)";
         }
         props.onMouseUp?.(e);
