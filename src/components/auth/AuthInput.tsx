@@ -11,7 +11,6 @@ export default function AuthInput({ error, ...props }: AuthInputProps) {
     <div
       style={{
         width: "100%",
-        maxWidth: "560px",
       }}
     >
       <input

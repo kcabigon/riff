@@ -30,7 +30,7 @@ export default function AuthCard({ children }: AuthCardProps) {
       <div
         style={{
           width: "100%",
-          maxWidth: "392px",
+          maxWidth: "560px",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -104,20 +104,12 @@ export default function AuthCard({ children }: AuthCardProps) {
             display: "flex",
             flexDirection: "column",
             gap: "32px",
+            alignItems: "center",
           }}
         >
           {children}
         </div>
       </div>
-
-      {/* Desktop Media Query */}
-      <style jsx>{`
-        @media (min-width: 1024px) {
-          div:first-child > div:first-child {
-            max-width: 560px;
-          }
-        }
-      `}</style>
     </div>
   );
 }

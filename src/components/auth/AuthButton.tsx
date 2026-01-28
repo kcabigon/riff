@@ -20,7 +20,6 @@ export default function AuthButton({
       disabled={isDisabled}
       style={{
         width: "100%",
-        maxWidth: "560px",
         height: "45px",
         backgroundColor: isDisabled ? "#FFFFFF" : "#00FF66",
         border: isDisabled ? "2px solid #9C9C9C" : "2px solid #000000",

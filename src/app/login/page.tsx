@@ -80,7 +80,6 @@ export default function LoginPage() {
       <div
         style={{
           width: "100%",
-          maxWidth: "344px",
           backgroundColor: "#FFFFFF",
           padding: "8px 24px",
           display: "flex",
