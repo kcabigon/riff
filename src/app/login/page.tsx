@@ -76,20 +76,33 @@ export default function LoginPage() {
         </AuthButton>
       </form>
 
-      {/* Helper text */}
-      <p
+      {/* Disclaimer */}
+      <div
         style={{
-          textAlign: "center",
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "14px",
-          fontWeight: 300,
-          lineHeight: "normal",
-          color: "#959595",
-          margin: 0,
+          width: "100%",
+          maxWidth: "344px",
+          backgroundColor: "#FFFFFF",
+          padding: "8px 24px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
-        We&apos;ll send you a magic link to sign in.
-      </p>
+        <p
+          style={{
+            textAlign: "center",
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "12px",
+            fontWeight: 300,
+            lineHeight: "normal",
+            color: "#000000",
+            margin: 0,
+          }}
+        >
+          By continuing, you acknowledge Riff&apos;s Privacy Policy and agree
+          to get occasional product update and promotional emails.
+        </p>
+      </div>
     </AuthCard>
   );
 }
