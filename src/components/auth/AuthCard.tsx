@@ -66,19 +66,30 @@ export default function AuthCard({ children }: AuthCardProps) {
           {/* Tagline */}
           <div
             style={{
-              backgroundColor: "#FFD700",
-              padding: "4px 16px",
-              borderRadius: "64px",
+              width: "262px",
+              height: "26px",
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
+            <Image
+              src="/images/tagline_vector.svg"
+              alt=""
+              fill
+              style={{ objectFit: "contain" }}
+            />
             <p
               style={{
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
+                fontSize: "20px",
                 fontWeight: 300,
                 lineHeight: "normal",
                 color: "#000000",
                 margin: 0,
+                position: "relative",
+                zIndex: 1,
               }}
             >
               For friends who write for fun.
