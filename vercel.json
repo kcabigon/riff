@@ -1,0 +1,13 @@
+{
+  "buildCommand": "prisma generate && next build",
+  "framework": "nextjs",
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "git": {
+    "deploymentEnabled": {
+      "main": true,
+      "preview": true
+    }
+  }
+}
