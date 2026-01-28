@@ -47,7 +47,6 @@ export default function AuthCard({ children }: AuthCardProps) {
           }}
         >
           {/* Riff Wordmark */}
-          {/* TODO: Replace with colorful wordmark from Figma */}
           <div
             style={{
               width: "220px",
@@ -56,11 +55,11 @@ export default function AuthCard({ children }: AuthCardProps) {
             }}
           >
             <Image
-              src="/images/riff_wordmark_white_outline.svg"
+              src="/images/riff_wordmark_black_outline.svg"
               alt="Riff"
               fill
               priority
-              style={{ objectFit: "contain", filter: "invert(1)" }}
+              style={{ objectFit: "contain" }}
             />
           </div>
 
