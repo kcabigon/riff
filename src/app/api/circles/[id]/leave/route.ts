@@ -5,11 +5,11 @@ import { requireAuth } from "@/lib/auth-utils";
 // POST /api/circles/[id]/leave - Leave a circle
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth();
-    const circleId = params.id;
+    const { id: circleId } = await params;
 
     // Get user's membership
     const membership = await prisma.circleMember.findFirst({

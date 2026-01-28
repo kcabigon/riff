@@ -5,11 +5,11 @@ import { requireAuth } from "@/lib/auth-utils";
 // PATCH /api/pieces/[id]/autosave - Auto-save piece content (author only)
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth();
-    const pieceId = params.id;
+    const { id: pieceId } = await params;
     const { currentContent } = await req.json();
 
     if (!currentContent) {

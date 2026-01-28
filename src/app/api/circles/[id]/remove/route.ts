@@ -5,11 +5,11 @@ import { requireAuth } from "@/lib/auth-utils";
 // POST /api/circles/[id]/remove - Remove member from circle (OWNER/ADMIN only)
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth();
-    const circleId = params.id;
+    const { id: circleId } = await params;
     const { userId } = await req.json();
 
     if (!userId) {

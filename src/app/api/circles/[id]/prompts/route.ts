@@ -5,11 +5,11 @@ import { requireAuth } from "@/lib/auth-utils";
 // GET /api/circles/[id]/prompts - List circle prompts
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth();
-    const circleId = params.id;
+    const { id: circleId } = await params;
 
     // Check if user is a member
     const membership = await prisma.circleMember.findFirst({
@@ -64,11 +64,11 @@ export async function GET(
 // POST /api/circles/[id]/prompts - Create prompt (OWNER/ADMIN only)
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth();
-    const circleId = params.id;
+    const { id: circleId } = await params;
     const { title, description, isFreeform, deadline, visibilityRule } =
       await req.json();
 

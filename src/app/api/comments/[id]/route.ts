@@ -5,11 +5,11 @@ import { requireAuth } from "@/lib/auth-utils";
 // PATCH /api/comments/[id] - Update comment (author only)
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth();
-    const commentId = params.id;
+    const { id: commentId } = await params;
     const { content } = await req.json();
 
     if (!content || content.trim().length === 0) {
@@ -76,11 +76,11 @@ export async function PATCH(
 // DELETE /api/comments/[id] - Delete comment (author only)
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth();
-    const commentId = params.id;
+    const { id: commentId } = await params;
 
     // Check if user is the author
     const comment = await prisma.comment.findUnique({

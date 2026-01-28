@@ -5,7 +5,7 @@ import { Comment } from '@/types';
 
 interface CommentHighlightsProps {
   comments: Comment[];
-  containerRef: React.RefObject<HTMLElement>;
+  containerRef: React.RefObject<HTMLElement | null>;
   onCommentClick?: (commentId: string) => void;
 }
 

@@ -5,11 +5,11 @@ import { requireAuth } from "@/lib/auth-utils";
 // GET /api/pieces/[id] - Get piece details
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth();
-    const pieceId = params.id;
+    const { id: pieceId } = await params;
 
     const piece = await prisma.piece.findUnique({
       where: { id: pieceId },
@@ -91,11 +91,11 @@ export async function GET(
 // PATCH /api/pieces/[id] - Update piece (author only)
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth();
-    const pieceId = params.id;
+    const { id: pieceId } = await params;
     const { title, content, excerpt } = await req.json();
 
     // Check if user is the author
@@ -172,11 +172,11 @@ export async function PATCH(
 // DELETE /api/pieces/[id] - Delete piece (author only)
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth();
-    const pieceId = params.id;
+    const { id: pieceId } = await params;
 
     // Check if user is the author
     const piece = await prisma.piece.findUnique({

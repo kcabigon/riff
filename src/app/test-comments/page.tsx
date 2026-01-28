@@ -50,9 +50,12 @@ const initialMockComments: Comment[] = [
     authorId: 'user-1',
     author: {
       id: 'user-1',
+      email: 'test@example.com',
       name: 'Test User',
       username: 'testuser',
-      avatarUrl: null,
+      avatarUrl: undefined,
+      createdAt: new Date('2024-12-03T10:00:00'),
+      updatedAt: new Date('2024-12-03T10:00:00'),
     },
     createdAt: new Date('2024-12-03T10:00:00'),
     updatedAt: new Date('2024-12-03T10:00:00'),
@@ -113,9 +116,12 @@ export default function TestCommentsPage() {
       authorId: mockUser.id,
       author: {
         id: mockUser.id,
+        email: mockUser.email,
         name: mockUser.name,
         username: 'testuser',
-        avatarUrl: null,
+        avatarUrl: undefined,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
       parentId: input.parentId,
       createdAt: new Date(),
@@ -128,7 +134,8 @@ export default function TestCommentsPage() {
 
     if (input.parentId) {
       // Add as reply to parent (supports any nesting level)
-      setComments(prev => addReplyRecursively(prev, input.parentId, newComment));
+      const parentId = input.parentId;
+      setComments(prev => addReplyRecursively(prev, parentId, newComment));
     } else {
       // Add as top-level comment
       setComments(prev => [...prev, newComment]);

@@ -5,11 +5,11 @@ import { requireAuth } from "@/lib/auth-utils";
 // POST /api/circles/[id]/invite - Invite user to circle (ANY member can invite)
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth();
-    const circleId = params.id;
+    const { id: circleId } = await params;
     const { userId, role } = await req.json();
 
     if (!userId) {

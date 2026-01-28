@@ -5,11 +5,11 @@ import { requireAuth } from "@/lib/auth-utils";
 // GET /api/pieces/[id]/versions - List all versions of a piece
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth();
-    const pieceId = params.id;
+    const { id: pieceId } = await params;
 
     // Check if user can view this piece
     const piece = await prisma.piece.findUnique({

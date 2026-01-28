@@ -5,11 +5,11 @@ import { requireAuth } from "@/lib/auth-utils";
 // PATCH /api/circles/[id]/role - Update member role (OWNER only)
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth();
-    const circleId = params.id;
+    const { id: circleId } = await params;
     const { userId, role } = await req.json();
 
     if (!userId || !role) {

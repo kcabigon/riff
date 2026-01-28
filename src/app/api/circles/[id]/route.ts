@@ -5,11 +5,11 @@ import { requireAuth } from "@/lib/auth-utils";
 // GET /api/circles/[id] - Get circle details
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth();
-    const circleId = params.id;
+    const { id: circleId } = await params;
 
     // Check if user is a member of the circle
     const membership = await prisma.circleMember.findFirst({
@@ -85,11 +85,11 @@ export async function GET(
 // PATCH /api/circles/[id] - Update circle details (OWNER/ADMIN only)
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth();
-    const circleId = params.id;
+    const { id: circleId } = await params;
     const { name, description, isArchived } = await req.json();
 
     // Check if user is OWNER or ADMIN

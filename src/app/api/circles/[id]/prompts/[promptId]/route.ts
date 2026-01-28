@@ -5,11 +5,11 @@ import { requireAuth } from "@/lib/auth-utils";
 // PATCH /api/circles/[id]/prompts/[promptId] - Update prompt (OWNER/ADMIN only)
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string; promptId: string } }
+  { params }: { params: Promise<{ id: string; promptId: string }> }
 ) {
   try {
     const user = await requireAuth();
-    const { id: circleId, promptId } = params;
+    const { id: circleId, promptId } = await params;
     const { title, description, deadline, visibilityRule } = await req.json();
 
     // Check if user is OWNER or ADMIN
@@ -98,11 +98,11 @@ export async function PATCH(
 // DELETE /api/circles/[id]/prompts/[promptId] - Delete prompt (OWNER/ADMIN only)
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string; promptId: string } }
+  { params }: { params: Promise<{ id: string; promptId: string }> }
 ) {
   try {
     const user = await requireAuth();
-    const { id: circleId, promptId } = params;
+    const { id: circleId, promptId } = await params;
 
     // Check if user is OWNER or ADMIN
     const membership = await prisma.circleMember.findFirst({

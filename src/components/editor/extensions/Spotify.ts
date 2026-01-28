@@ -98,25 +98,27 @@ export const Spotify = Node.create<SpotifyOptions>({
     };
   },
 
-  addPasteHandler() {
-    return {
-      handlePaste: (view, event) => {
-        const text = event.clipboardData?.getData('text/plain');
+  // TODO: Fix addPasteHandler for Tiptap 3.x API
+  // The API has changed and this needs to be updated
+  // addPasteHandler() {
+  //   return {
+  //     handlePaste: (view, event) => {
+  //       const text = event.clipboardData?.getData('text/plain');
 
-        if (!text || !this.options.addPasteHandler) {
-          return false;
-        }
+  //       if (!text || !this.options.addPasteHandler) {
+  //         return false;
+  //       }
 
-        const spotifyRegex = /spotify\.com\/(track|album|playlist)\/([a-zA-Z0-9]+)/;
-        const match = text.match(spotifyRegex);
+  //       const spotifyRegex = /spotify\.com\/(track|album|playlist)\/([a-zA-Z0-9]+)/;
+  //       const match = text.match(spotifyRegex);
 
-        if (match) {
-          this.editor.commands.setSpotifyEmbed({ src: text });
-          return true;
-        }
+  //       if (match) {
+  //         this.editor.commands.setSpotifyEmbed({ src: text });
+  //         return true;
+  //       }
 
-        return false;
-      },
-    };
-  },
+  //       return false;
+  //     },
+  //   };
+  // },
 });

@@ -46,7 +46,6 @@ export default function TestEditorV3() {
         controls: true,
         nocookie: true,
         inline: false,
-        width: '100%',
         HTMLAttributes: {
           class: 'youtube-video',
         },

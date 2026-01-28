@@ -7,7 +7,22 @@ import EmptyRiffState from "@/components/riffs/EmptyRiffState";
 
 export default async function TestClubViewPage() {
   // Get authenticated user
-  const user = await getCurrentUser();
+  const sessionUser = await getCurrentUser();
+
+  if (!sessionUser) {
+    redirect("/test-auth");
+  }
+
+  // Fetch full user details from database
+  const user = await prisma.user.findUnique({
+    where: { id: sessionUser.id },
+    select: {
+      id: true,
+      username: true,
+      name: true,
+      avatarUrl: true,
+    },
+  });
 
   if (!user) {
     redirect("/test-auth");

@@ -10,7 +10,7 @@ export type Environment = "development" | "staging" | "production";
  * @returns The current environment (development, staging, or production)
  */
 export function getEnvironment(): Environment {
-  const env = process.env.NODE_ENV || "development";
+  const env: string = process.env.NODE_ENV || "development";
 
   // Check if we're in Vercel preview deployment (staging)
   if (process.env.VERCEL_ENV === "preview") {

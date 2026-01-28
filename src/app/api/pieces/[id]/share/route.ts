@@ -5,11 +5,11 @@ import { requireAuth } from "@/lib/auth-utils";
 // POST /api/pieces/[id]/share - Share piece to circle
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth();
-    const pieceId = params.id;
+    const { id: pieceId } = await params;
     const { circleId, promptId } = await req.json();
 
     if (!circleId) {

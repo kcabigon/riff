@@ -13,7 +13,7 @@ export interface TextSelection {
  * Hook for detecting and tracking text selections within a container
  * Returns the selected text, character offsets, and position for floating UI
  */
-export function useTextSelection(containerRef: RefObject<HTMLElement>) {
+export function useTextSelection(containerRef: RefObject<HTMLElement | null>) {
   const [selection, setSelection] = useState<TextSelection | null>(null);
 
   useEffect(() => {
