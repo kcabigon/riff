@@ -35,6 +35,7 @@ export default function AuthButton({
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
+        boxSizing: "border-box",
         ...props.style,
       }}
       onMouseEnter={(e) => {

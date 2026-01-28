@@ -28,6 +28,7 @@ export default function AuthInput({ error, ...props }: AuthInputProps) {
           color: error ? "#FF0000" : "#000000",
           outline: "none",
           transition: "border-color 0.2s",
+          boxSizing: "border-box",
           ...props.style,
         }}
         onFocus={(e) => {

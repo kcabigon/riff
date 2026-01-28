@@ -66,7 +66,8 @@ export default function AuthCard({ children }: AuthCardProps) {
           {/* Tagline */}
           <div
             style={{
-              width: "262px",
+              width: "100%",
+              maxWidth: "262px",
               height: "26px",
               position: "relative",
               display: "flex",
