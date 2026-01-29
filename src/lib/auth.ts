@@ -2,21 +2,47 @@ import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Resend from "next-auth/providers/resend";
 import { prisma } from "./prisma";
-import { sendMagicLinkEmail } from "./resend";
+import { sendSignInEmail, sendOnboardingEmail } from "./resend";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: PrismaAdapter(prisma),
+  adapter: {
+    ...PrismaAdapter(prisma),
+    // Override createUser to allow partial user creation (email only)
+    createUser: async (user: any) => {
+      return await prisma.user.create({
+        data: {
+          email: user.email.toLowerCase(),
+          emailVerified: user.emailVerified,
+          // name and username are optional now, will be collected during onboarding
+          onboardingStep: "NAME", // Start at NAME step for new users
+          onboardingCompleted: false,
+        },
+      });
+    },
+  },
   providers: [
     Resend({
       apiKey: process.env.RESEND_API_KEY,
       from: process.env.EMAIL_FROM || "noreply@localhost",
-      // Custom email sender
+      // Custom email sender - will be called for both new and existing users
       sendVerificationRequest: async ({ identifier: email, url, provider }) => {
         try {
-          await sendMagicLinkEmail(email, url);
+          // Check if user exists to determine which email template to use
+          const user = await prisma.user.findUnique({
+            where: { email: email.toLowerCase() },
+            select: { id: true, onboardingCompleted: true },
+          });
+
+          if (user && user.onboardingCompleted) {
+            // Existing user - send sign-in email
+            await sendSignInEmail(email, url);
+          } else {
+            // New user or incomplete onboarding - send onboarding email
+            await sendOnboardingEmail(email, url);
+          }
         } catch (error) {
-          console.error("Failed to send magic link email:", error);
-          throw new Error("Failed to send magic link email");
+          console.error("Failed to send authentication email:", error);
+          throw new Error("Failed to send authentication email");
         }
       },
     }),
@@ -34,6 +60,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.id = user.id;
         token.username = (user as any).username;
+        token.firstName = (user as any).firstName;
+        token.lastName = (user as any).lastName;
+        token.onboardingCompleted = (user as any).onboardingCompleted;
+        token.onboardingStep = (user as any).onboardingStep;
       }
       return token;
     },
@@ -41,18 +71,74 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (session.user) {
         (session.user as any).id = token.id;
         (session.user as any).username = token.username;
+        (session.user as any).firstName = token.firstName;
+        (session.user as any).lastName = token.lastName;
+        (session.user as any).onboardingCompleted = token.onboardingCompleted;
+        (session.user as any).onboardingStep = token.onboardingStep;
       }
       return session;
     },
-    // Redirect to user's first club after successful sign-in
+    // Redirect based on onboarding status
     async redirect({ url, baseUrl }) {
       // If URL is already specified and valid, use it
       if (url.startsWith(baseUrl)) {
         return url;
       }
 
-      // For external URLs or after sign in, redirect to clubs
-      return `${baseUrl}/clubs`;
+      // Get user to check onboarding status
+      const session = await auth();
+      if (session?.user) {
+        const user = await prisma.user.findUnique({
+          where: { id: (session.user as any).id },
+          select: {
+            onboardingCompleted: true,
+            onboardingStep: true,
+            lastActiveClubId: true,
+            clubMemberships: {
+              select: { clubId: true },
+              orderBy: { joinedAt: "asc" },
+              take: 1,
+            },
+          },
+        });
+
+        if (!user?.onboardingCompleted) {
+          // Redirect to appropriate onboarding step
+          const step = user?.onboardingStep || "NAME";
+          const stepRoutes = {
+            NAME: "/onboarding/name",
+            CLUB_CHOICE: "/onboarding/club-choice",
+            INVITE: "/onboarding/invite",
+            COMPLETED: "/clubs",
+          };
+          return `${baseUrl}${stepRoutes[step as keyof typeof stepRoutes]}`;
+        }
+
+        // User has completed onboarding
+        if (user.lastActiveClubId) {
+          // Check if user is still a member of last active club
+          const isMember = await prisma.clubMember.findFirst({
+            where: {
+              userId: (session.user as any).id,
+              clubId: user.lastActiveClubId,
+            },
+          });
+          if (isMember) {
+            return `${baseUrl}/clubs/${user.lastActiveClubId}`;
+          }
+        }
+
+        // Fallback to first club
+        if (user.clubMemberships.length > 0) {
+          return `${baseUrl}/clubs/${user.clubMemberships[0].clubId}`;
+        }
+
+        // No clubs - redirect to create club (edge case)
+        return `${baseUrl}/onboarding/create-club`;
+      }
+
+      // Default fallback
+      return `${baseUrl}/login`;
     },
   },
 });
