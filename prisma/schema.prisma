@@ -10,16 +10,21 @@ datasource db {
 // ==================== USER ====================
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  emailVerified DateTime?
-  password      String?   // Hashed password for credentials auth
-  name          String
-  username      String    @unique
-  bio           String?
-  avatarUrl     String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                 String             @id @default(cuid())
+  email              String             @unique
+  emailVerified      DateTime?
+  password           String?            // Hashed password for credentials auth
+  name               String?            // Made optional for magic link auth
+  username           String?            @unique // Made optional for magic link auth
+  firstName          String?            // New: First name collected during onboarding
+  lastName           String?            // New: Last name collected during onboarding
+  bio                String?
+  avatarUrl          String?
+  lastActiveClubId   String?            // New: Tracks last viewed club for redirect
+  onboardingStep     OnboardingStep?    // New: Resume onboarding progress
+  onboardingCompleted Boolean           @default(false) // New: Track if user finished onboarding
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
 
   // NextAuth relations
   accounts Account[]
@@ -39,6 +44,7 @@ model User {
   collectionCollaborations CollectionCollaborator[]
   sentNotifications        Notification[]           @relation("NotificationActor")
   receivedNotifications    Notification[]           @relation("NotificationRecipient")
+  createdInvites           ClubInvite[]             // New: Club invites created by user
 
   // DEPRECATED: Circle relations (kept for backward compatibility)
   circleMemberships        CircleMember[]
@@ -48,12 +54,20 @@ model User {
   @@map("users")
 }
 
+enum OnboardingStep {
+  NAME          // Collecting first/last name
+  CLUB_CHOICE   // Choosing to start or join a club
+  INVITE        // Inviting friends to club (club already created)
+  COMPLETED     // Onboarding finished
+}
+
 // ==================== CLUBS (NEW ARCHITECTURE) ====================
 
 model Club {
   id          String   @id @default(cuid())
   name        String
   description String?
+  bannerImage String?  // New: Banner image URL for club personalization
   isArchived  Boolean  @default(false)
   adminId     String   // Creator, permanent
   moderatorId String?  // Rotatable moderator role
@@ -69,6 +83,7 @@ model Club {
   collections Collection[]
   comments    Comment[]
   notifications Notification[]
+  invites     ClubInvite[] // New: Club invitation tokens
 
   @@map("clubs")
 }
@@ -97,17 +112,19 @@ model Circle {
 }
 
 model ClubMember {
-  id       String    @id @default(cuid())
-  clubId   String
-  userId   String
-  role     ClubRole  @default(MEMBER)
-  joinedAt DateTime  @default(now())
+  id           String    @id @default(cuid())
+  clubId       String
+  userId       String
+  role         ClubRole  @default(MEMBER)
+  joinedAt     DateTime  @default(now())
+  lastViewedAt DateTime? // New: Track last time user viewed this club
 
   // Relations
   club Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([clubId, userId])
+  @@index([userId, lastViewedAt]) // New: Index for efficient "last active club" queries
   @@map("club_members")
 }
 
@@ -539,4 +556,25 @@ model VerificationToken {
 
   @@unique([identifier, token])
   @@map("verification_tokens")
+}
+
+// ==================== CLUB INVITES (NEW) ====================
+
+model ClubInvite {
+  id        String    @id @default(cuid())
+  clubId    String
+  token     String    @unique // Unique token for shareable invite link
+  createdBy String    // User who created the invite
+  expiresAt DateTime  // Invite expiry (7 days default)
+  usedAt    DateTime? // Timestamp when invite was used
+  usedBy    String?   // User ID who used the invite
+  createdAt DateTime  @default(now())
+
+  // Relations
+  club    Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  creator User @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+
+  @@index([token]) // Index for fast invite lookup
+  @@index([clubId]) // Index for club's invites
+  @@map("club_invites")
 }
