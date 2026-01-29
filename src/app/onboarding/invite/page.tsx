@@ -1,12 +1,12 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import OnboardingCard from "@/components/onboarding/OnboardingCard";
 import OnboardingButton from "@/components/onboarding/OnboardingButton";
 import OnboardingProgress from "@/components/onboarding/OnboardingProgress";
 
-export default function OnboardingInvitePage() {
+function InvitePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const clubId = searchParams.get("clubId");
@@ -136,5 +136,32 @@ export default function OnboardingInvitePage() {
         </OnboardingButton>
       </div>
     </OnboardingCard>
+  );
+}
+
+export default function OnboardingInvitePage() {
+  return (
+    <Suspense
+      fallback={
+        <OnboardingCard>
+          <OnboardingProgress currentStep={4} totalSteps={4} />
+          <div
+            style={{
+              width: "100%",
+              padding: "32px",
+              textAlign: "center",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "16px",
+              fontWeight: 300,
+              color: "#959595",
+            }}
+          >
+            Loading...
+          </div>
+        </OnboardingCard>
+      }
+    >
+      <InvitePageContent />
+    </Suspense>
   );
 }

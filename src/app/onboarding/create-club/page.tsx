@@ -10,6 +10,8 @@ import OnboardingButton from "@/components/onboarding/OnboardingButton";
 import OnboardingProgress from "@/components/onboarding/OnboardingProgress";
 import ImageUpload from "@/components/onboarding/ImageUpload";
 
+export const dynamic = "force-dynamic";
+
 export default function OnboardingCreateClubPage() {
   const router = useRouter();
   const { data: session } = useSession();
