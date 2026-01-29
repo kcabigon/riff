@@ -80,11 +80,14 @@ export default function LoginPage() {
       <div
         style={{
           width: "100%",
+          maxWidth: "344px",
           backgroundColor: "#FFFFFF",
           padding: "8px 0",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          marginLeft: 0,
+          marginRight: 0,
         }}
       >
         <p
@@ -96,7 +99,8 @@ export default function LoginPage() {
             lineHeight: "normal",
             color: "#000000",
             margin: 0,
-            padding: "0 24px",
+            padding: 0,
+            height: "100%",
           }}
         >
           By continuing, you acknowledge Riff&apos;s Privacy Policy and agree
