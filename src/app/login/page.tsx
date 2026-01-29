@@ -81,7 +81,7 @@ export default function LoginPage() {
         style={{
           width: "100%",
           backgroundColor: "#FFFFFF",
-          padding: "8px 24px",
+          padding: "8px 0",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -96,6 +96,7 @@ export default function LoginPage() {
             lineHeight: "normal",
             color: "#000000",
             margin: 0,
+            padding: "0 24px",
           }}
         >
           By continuing, you acknowledge Riff&apos;s Privacy Policy and agree
