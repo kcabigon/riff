@@ -435,6 +435,63 @@ export async function GET(req: Request) {
 6. **Code Style**: Run `npm run format` before committing
 7. **Linting**: Run `npm run lint` to catch issues
 
+## Git Workflow
+
+**IMPORTANT**: Always follow the feature branch workflow documented in `docs/RIFF-GIT-WORKFLOW.md`
+
+### Quick Reference
+
+1. **Starting a feature**:
+   ```bash
+   git checkout develop
+   git pull origin develop
+   git checkout -b feature/description-of-feature
+   ```
+
+2. **Making commits** (conventional commits, lowercase):
+   ```bash
+   git add <files>
+   git commit -m "feat: description of what was added"
+   git commit -m "fix: description of what was fixed"
+   git commit -m "docs: description of documentation change"
+   git commit -m "refactor: description of code improvement"
+   git commit -m "chore: description of maintenance task"
+   ```
+
+3. **Completing a feature**:
+   ```bash
+   git checkout develop
+   git pull origin develop
+   git merge feature/your-feature-name
+   git push origin develop
+   git branch -d feature/your-feature-name
+   git push origin --delete feature/your-feature-name
+   ```
+
+4. **Releasing to production**:
+   - Create PR on GitHub: `develop` → `main`
+   - Review and merge PR (triggers Vercel deployment)
+
+### Key Principles
+
+- ✅ **Atomic commits**: One logical change per commit
+- ✅ **Feature branches**: One branch per task/feature
+- ✅ **Clean history**: Clear commit messages, no "wip" or "update stuff"
+- ✅ **Always use develop**: Never commit directly to main
+- ✅ **Delete after merge**: Remove feature branches after merging
+
+### For Claude AI Assistant
+
+When working on tasks:
+1. Create feature branch before starting work
+2. Make atomic commits with conventional commit messages
+3. Push commits regularly as work progresses
+4. Merge to develop when feature is complete
+5. Delete feature branch after successful merge
+6. Update session notes with branch/commit information
+
+See `docs/RIFF-GIT-WORKFLOW.md` for complete workflow documentation.
+
 ---
 
 ## Migration Status
