@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Comment } from '@/types';
 import { CommentComposer } from './CommentComposer';
 import { CreateCommentInput } from '@/types';
+import Avatar from '@/components/shared/Avatar';
 
 interface CommentItemProps {
   comment: Comment;
@@ -120,20 +121,17 @@ export function CommentItem({
             alignItems: 'center',
             gap: '8px',
           }}>
-            <div style={{
-              width: '24px',
-              height: '24px',
-              borderRadius: '50%',
-              background: '#3b82f6',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#ffffff',
-              fontSize: '12px',
-              fontWeight: 'bold',
-            }}>
-              {comment.author?.name?.charAt(0).toUpperCase() || 'U'}
-            </div>
+            <Avatar
+              user={{
+                id: comment.authorId,
+                name: comment.author?.name || null,
+                username: comment.author?.username || null,
+                avatarUrl: comment.author?.avatarUrl || null,
+              }}
+              size={24}
+              showBorder={false}
+              style={{ background: '#3b82f6' }}
+            />
             <span style={{ fontSize: '14px', fontWeight: '500' }}>
               {comment.author?.name || 'Unknown User'}
             </span>

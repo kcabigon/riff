@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import CountdownTimer from "./CountdownTimer";
+import AvatarStack from "@/components/shared/AvatarStack";
+import { useProfileNavigation } from "@/hooks/useProfileNavigation";
 
 interface RiffCardProps {
   riff: {
@@ -37,6 +39,7 @@ export default function RiffCard({
   currentUserId,
 }: RiffCardProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const handleAvatarClick = useProfileNavigation();
 
   // Format date
   const formatDate = (date: Date) => {
@@ -60,21 +63,6 @@ export default function RiffCard({
   const waitingUsers = riff.participants.filter(
     (p) => !riff.pieces.some((piece) => piece.piece.authorId === p.user.id)
   );
-
-  // Get user initials for avatar
-  const getInitials = (user: any) => {
-    if (user.name) {
-      const parts = user.name.split(" ");
-      if (parts.length >= 2) {
-        return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-      }
-      return user.name.substring(0, 2).toUpperCase();
-    }
-    if (user.username) {
-      return user.username.substring(0, 2).toUpperCase();
-    }
-    return "U";
-  };
 
   const handleJoinRiff = async () => {
     console.log("Joining riff:", riff.id);
@@ -164,56 +152,12 @@ export default function RiffCard({
             >
               Joined by
             </p>
-            <div style={{ display: "flex", gap: "0", marginLeft: "0" }}>
-              {riff.participants.slice(0, 5).map((participant, index) => (
-                <div
-                  key={participant.user.id}
-                  style={{
-                    width: "32px",
-                    height: "32px",
-                    borderRadius: "64px",
-                    border: "1px solid #000000",
-                    backgroundColor: participant.user.avatarUrl
-                      ? "transparent"
-                      : "#E6E6E6",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    overflow: "hidden",
-                    marginLeft: index > 0 ? "-4px" : "0",
-                    position: "relative",
-                    zIndex: riff.participants.length - index,
-                  }}
-                >
-                  {participant.user.avatarUrl ? (
-                    <img
-                      src={participant.user.avatarUrl}
-                      alt={
-                        participant.user.name ||
-                        participant.user.username ||
-                        "User"
-                      }
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                      }}
-                    />
-                  ) : (
-                    <span
-                      style={{
-                        fontFamily: "var(--font-dm-serif-text)",
-                        fontSize: "12px",
-                        fontWeight: 400,
-                        color: "#000000",
-                      }}
-                    >
-                      {getInitials(participant.user)}
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
+            <AvatarStack
+              users={riff.participants.slice(0, 5).map((p) => p.user)}
+              size={32}
+              showBorder={false}
+              onAvatarClick={handleAvatarClick}
+            />
           </div>
         )}
 
@@ -248,62 +192,12 @@ export default function RiffCard({
                 >
                   Submitted
                 </p>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    paddingRight: "4px",
-                  }}
-                >
-                  {submittedUsers.slice(0, 5).map((participant, index) => (
-                    <div
-                      key={participant.user.id}
-                      style={{
-                        width: "32px",
-                        height: "32px",
-                        borderRadius: "64px",
-                        border: "1px solid #000000",
-                        backgroundColor: participant.user.avatarUrl
-                          ? "transparent"
-                          : "#E6E6E6",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        overflow: "hidden",
-                        marginLeft: index > 0 ? "-4px" : "0",
-                        position: "relative",
-                        zIndex: submittedUsers.length - index,
-                      }}
-                    >
-                      {participant.user.avatarUrl ? (
-                        <img
-                          src={participant.user.avatarUrl}
-                          alt={
-                            participant.user.name ||
-                            participant.user.username ||
-                            "User"
-                          }
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                          }}
-                        />
-                      ) : (
-                        <span
-                          style={{
-                            fontFamily: "var(--font-dm-serif-text)",
-                            fontSize: "12px",
-                            fontWeight: 400,
-                            color: "#000000",
-                          }}
-                        >
-                          {getInitials(participant.user)}
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                <AvatarStack
+                  users={submittedUsers.slice(0, 5).map((p) => p.user)}
+                  size={32}
+                  showBorder={false}
+                  onAvatarClick={handleAvatarClick}
+                />
               </div>
             )}
 
@@ -329,62 +223,12 @@ export default function RiffCard({
                 >
                   Waiting for
                 </p>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    paddingRight: "4px",
-                  }}
-                >
-                  {waitingUsers.slice(0, 5).map((participant, index) => (
-                    <div
-                      key={participant.user.id}
-                      style={{
-                        width: "32px",
-                        height: "32px",
-                        borderRadius: "64px",
-                        border: "1px solid #000000",
-                        backgroundColor: participant.user.avatarUrl
-                          ? "transparent"
-                          : "#E6E6E6",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        overflow: "hidden",
-                        marginLeft: index > 0 ? "-4px" : "0",
-                        position: "relative",
-                        zIndex: waitingUsers.length - index,
-                      }}
-                    >
-                      {participant.user.avatarUrl ? (
-                        <img
-                          src={participant.user.avatarUrl}
-                          alt={
-                            participant.user.name ||
-                            participant.user.username ||
-                            "User"
-                          }
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                          }}
-                        />
-                      ) : (
-                        <span
-                          style={{
-                            fontFamily: "var(--font-dm-serif-text)",
-                            fontSize: "12px",
-                            fontWeight: 400,
-                            color: "#000000",
-                          }}
-                        >
-                          {getInitials(participant.user)}
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                <AvatarStack
+                  users={waitingUsers.slice(0, 5).map((p) => p.user)}
+                  size={32}
+                  showBorder={false}
+                  onAvatarClick={handleAvatarClick}
+                />
               </div>
             )}
           </div>
