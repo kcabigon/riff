@@ -2,15 +2,18 @@
 
 import { ReactNode } from "react";
 import Image from "next/image";
+import NoiseBackground from "@/components/NoiseBackground";
 
 interface OnboardingCardProps {
   children: ReactNode;
   showLogo?: boolean;
+  headerContent?: ReactNode;
 }
 
 export default function OnboardingCard({
   children,
   showLogo = true,
+  headerContent,
 }: OnboardingCardProps) {
   return (
     <div
@@ -27,78 +30,7 @@ export default function OnboardingCard({
       }}
     >
       {/* Noise Background */}
-      <svg
-        style={{
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          zIndex: 0,
-        }}
-        xmlns="http://www.w3.org/2000/svg"
-        preserveAspectRatio="none"
-        viewBox="0 0 1440 1024"
-      >
-        <g filter="url(#filter0_n_686_2149)">
-          <rect width="1440" height="1024" fill="white" />
-        </g>
-        <defs>
-          <filter
-            id="filter0_n_686_2149"
-            x="0"
-            y="0"
-            width="1440"
-            height="1024"
-            filterUnits="userSpaceOnUse"
-            colorInterpolationFilters="sRGB"
-          >
-            <feFlood floodOpacity="0" result="BackgroundImageFix" />
-            <feBlend
-              mode="normal"
-              in="SourceGraphic"
-              in2="BackgroundImageFix"
-              result="shape"
-            />
-            <feTurbulence
-              type="fractalNoise"
-              baseFrequency="0.5 0.5"
-              stitchTiles="stitch"
-              numOctaves="3"
-              result="noise"
-              seed="7463"
-            />
-            <feColorMatrix
-              in="noise"
-              type="luminanceToAlpha"
-              result="alphaNoise"
-            />
-            <feComponentTransfer in="alphaNoise" result="coloredNoise1">
-              <feFuncA
-                type="discrete"
-                tableValues="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "
-              />
-            </feComponentTransfer>
-            <feComposite
-              operator="in"
-              in2="shape"
-              in="coloredNoise1"
-              result="noise1Clipped"
-            />
-            <feFlood floodColor="#000000" result="color1Flood" />
-            <feComposite
-              operator="in"
-              in2="noise1Clipped"
-              in="color1Flood"
-              result="color1"
-            />
-            <feMerge result="effect1_noise_686_2149">
-              <feMergeNode in="shape" />
-              <feMergeNode in="color1" />
-            </feMerge>
-          </filter>
-        </defs>
-      </svg>
-
+      <NoiseBackground fillMode="cover" />
       <div
         style={{
           width: "100%",
@@ -106,31 +38,43 @@ export default function OnboardingCard({
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          gap: showLogo ? "56px" : "32px",
+          gap: "56px",
           position: "relative",
           zIndex: 1,
         }}
       >
-        {/* Logo (optional) */}
-        {showLogo && (
+        {/* Logo and Header Content (optional) */}
+        {(showLogo || headerContent) && (
           <div
             style={{
-              width: "220px",
-              height: "144px",
-              position: "relative",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "24px",
             }}
           >
-            <Image
-              src="/images/riff_wordmark_black_outline.svg"
-              alt="Riff"
-              fill
-              priority
-              style={{ objectFit: "contain" }}
-            />
+            {showLogo && (
+              <div
+                style={{
+                  width: "220px",
+                  height: "144px",
+                  position: "relative",
+                }}
+              >
+                <Image
+                  src="/images/riff_wordmark_black_outline.svg"
+                  alt="Riff"
+                  fill
+                  priority
+                  style={{ objectFit: "contain" }}
+                />
+              </div>
+            )}
+            {headerContent}
           </div>
         )}
 
-        {/* Content */}
+        {/* Form Content */}
         <div
           style={{
             width: "100%",

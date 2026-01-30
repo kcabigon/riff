@@ -52,10 +52,10 @@ export default function OnboardingNamePage() {
   };
 
   return (
-    <OnboardingCard>
+    <OnboardingCard
+      headerContent={<Tagline text="Let's start with the basics." />}
+    >
       {/* <OnboardingProgress currentStep={1} totalSteps={4} /> */}
-
-      <Tagline text="Let's start with the basics." />
 
       <form
         onSubmit={handleSubmit}
