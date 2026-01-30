@@ -490,6 +490,12 @@ When working on tasks:
 5. Delete feature branch after successful merge
 6. Update session notes with branch/commit information
 
+**IMPORTANT - Documentation Files:**
+- The `/docs` directory is in `.gitignore` and should NEVER be committed
+- Session notes and documentation updates are for context only
+- Only commit actual code changes (src/, prisma/, config files, etc.)
+- After creating/updating documentation, do NOT run `git add docs/` or commit doc files
+
 See `docs/RIFF-GIT-WORKFLOW.md` for complete workflow documentation.
 
 ---
