@@ -29,6 +29,21 @@ export interface User {
   updatedAt: Date;
 }
 
+// ==================== AVATAR TYPES ====================
+
+// Minimal user data for avatar display
+export interface AvatarUser {
+  id: string;
+  name: string | null;
+  username: string | null;
+  avatarUrl: string | null;
+}
+
+// Avatar user with optional tag/label (e.g., "H" for host)
+export interface AvatarUserWithTag extends AvatarUser {
+  tag?: string | null;
+}
+
 // ==================== CLUBS (NEW ARCHITECTURE) ====================
 
 export interface Club {
