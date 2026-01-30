@@ -45,6 +45,13 @@ export default function AvatarStack({
     return null;
   }
 
+  // Filter out any undefined/null users for safety
+  const validUsers = users.filter((user) => user != null);
+
+  if (validUsers.length === 0) {
+    return null;
+  }
+
   return (
     <div
       className={className}
@@ -55,7 +62,7 @@ export default function AvatarStack({
         ...style,
       }}
     >
-      {users.map((user, index) => (
+      {validUsers.map((user, index) => (
         <Avatar
           key={user.id}
           user={user}
@@ -66,7 +73,7 @@ export default function AvatarStack({
           tag={user.tag}
           onClick={onAvatarClick}
           style={{
-            marginRight: index < users.length - 1 ? "-4px" : "0",
+            marginRight: index < validUsers.length - 1 ? "-4px" : "0",
             zIndex: index, // 0, 1, 2, 3... (rightmost has highest z-index)
           }}
         />

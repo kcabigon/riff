@@ -37,6 +37,11 @@ export default function Avatar({
   className = "",
   style = {},
 }: AvatarProps) {
+  // Safety check: return null if user is not provided
+  if (!user) {
+    return null;
+  }
+
   // Calculate scaled sizes based on avatar size
   const textSize = getTextSize(size);
   const tagSize = getTagSize(size);
