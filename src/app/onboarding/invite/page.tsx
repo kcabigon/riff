@@ -5,6 +5,7 @@ import { useEffect, Suspense } from "react";
 import OnboardingCard from "@/components/onboarding/OnboardingCard";
 import OnboardingButton from "@/components/onboarding/OnboardingButton";
 import OnboardingProgress from "@/components/onboarding/OnboardingProgress";
+import InviteOptions from "@/components/clubs/InviteOptions";
 
 function InvitePageContent() {
   const router = useRouter();
@@ -84,44 +85,8 @@ function InvitePageContent() {
         </p>
       </div>
 
-      {/* Placeholder for invite options - will be implemented in Branch 4 */}
-      <div
-        style={{
-          width: "100%",
-          padding: "32px 24px",
-          backgroundColor: "#F9F9F9",
-          border: "2px dashed #E6E6E6",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: "12px",
-        }}
-      >
-        <p
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
-            fontWeight: 300,
-            color: "#959595",
-            margin: 0,
-            textAlign: "center",
-          }}
-        >
-          Invitation features coming soon!
-        </p>
-        <p
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
-            fontWeight: 300,
-            color: "#959595",
-            margin: 0,
-            textAlign: "center",
-          }}
-        >
-          (Email invites, shareable links, and SMS sharing)
-        </p>
-      </div>
+      {/* Invite Options Component */}
+      {clubId && <InviteOptions clubId={clubId} />}
 
       <div
         style={{
