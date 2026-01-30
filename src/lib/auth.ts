@@ -13,6 +13,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         data: {
           email: user.email.toLowerCase(),
           emailVerified: user.emailVerified,
+          name: null, // Explicitly set to null - will be collected during onboarding
           // name and username are optional now, will be collected during onboarding
           onboardingStep: "NAME", // Start at NAME step for new users
           onboardingCompleted: false,
