@@ -5,7 +5,7 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import AuthCard from "@/components/auth/AuthCard";
 import TextInput from "@/components/TextInput";
-import AuthButton from "@/components/auth/AuthButton";
+import PrimaryButton from "@/components/PrimaryButton";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -71,9 +71,9 @@ export default function LoginPage() {
           autoComplete="email"
         />
 
-        <AuthButton type="submit" loading={loading} disabled={loading}>
+        <PrimaryButton type="submit" loading={loading} disabled={loading}>
           Let&apos;s do this shit
-        </AuthButton>
+        </PrimaryButton>
       </form>
 
       {/* Disclaimer */}

@@ -4,7 +4,7 @@ import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import OnboardingCard from "@/components/onboarding/OnboardingCard";
 import TextInput from "@/components/TextInput";
-import OnboardingButton from "@/components/onboarding/OnboardingButton";
+import PrimaryButton from "@/components/PrimaryButton";
 import Tagline from "@/components/Tagline";
 // import OnboardingProgress from "@/components/onboarding/OnboardingProgress";
 
@@ -111,9 +111,9 @@ export default function OnboardingNamePage() {
           </p>
         )}
 
-        <OnboardingButton type="submit" loading={loading} disabled={loading}>
+        <PrimaryButton type="submit" loading={loading} disabled={loading}>
           Continue
-        </OnboardingButton>
+        </PrimaryButton>
       </form>
     </OnboardingCard>
   );
