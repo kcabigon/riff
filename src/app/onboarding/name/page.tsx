@@ -3,9 +3,10 @@
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import OnboardingCard from "@/components/onboarding/OnboardingCard";
-import OnboardingInput from "@/components/onboarding/OnboardingInput";
+import TextInput from "@/components/TextInput";
 import OnboardingButton from "@/components/onboarding/OnboardingButton";
-import OnboardingProgress from "@/components/onboarding/OnboardingProgress";
+import Tagline from "@/components/Tagline";
+// import OnboardingProgress from "@/components/onboarding/OnboardingProgress";
 
 export default function OnboardingNamePage() {
   const router = useRouter();
@@ -52,44 +53,9 @@ export default function OnboardingNamePage() {
 
   return (
     <OnboardingCard>
-      <OnboardingProgress currentStep={1} totalSteps={4} />
+      {/* <OnboardingProgress currentStep={1} totalSteps={4} /> */}
 
-      <div
-        style={{
-          width: "100%",
-          display: "flex",
-          flexDirection: "column",
-          gap: "16px",
-          alignItems: "center",
-        }}
-      >
-        <h1
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "32px",
-            fontWeight: 300,
-            color: "#000000",
-            margin: 0,
-            textAlign: "center",
-          }}
-        >
-          What's your name?
-        </h1>
-        <p
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
-            fontWeight: 300,
-            color: "#959595",
-            margin: 0,
-            textAlign: "center",
-            maxWidth: "400px",
-          }}
-        >
-          Let's start with the basics. We'll use this to personalize your
-          experience.
-        </p>
-      </div>
+      <Tagline text="Let's start with the basics." />
 
       <form
         onSubmit={handleSubmit}
@@ -97,29 +63,38 @@ export default function OnboardingNamePage() {
           width: "100%",
           display: "flex",
           flexDirection: "column",
-          gap: "24px",
+          gap: "32px",
         }}
       >
-        <OnboardingInput
-          type="text"
-          name="firstName"
-          placeholder="First name"
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
-          disabled={loading}
-          required
-          autoFocus
-        />
+        <div
+          style={{
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+          }}
+        >
+          <TextInput
+            type="text"
+            name="firstName"
+            placeholder="First name"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            disabled={loading}
+            required
+            autoFocus
+          />
 
-        <OnboardingInput
-          type="text"
-          name="lastName"
-          placeholder="Last name"
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-          disabled={loading}
-          required
-        />
+          <TextInput
+            type="text"
+            name="lastName"
+            placeholder="Last name"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            disabled={loading}
+            required
+          />
+        </div>
 
         {error && (
           <p

@@ -4,7 +4,7 @@ import { useState, FormEvent } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import AuthCard from "@/components/auth/AuthCard";
-import AuthInput from "@/components/auth/AuthInput";
+import TextInput from "@/components/TextInput";
 import AuthButton from "@/components/auth/AuthButton";
 
 export default function LoginPage() {
@@ -58,7 +58,7 @@ export default function LoginPage() {
           gap: "32px",
         }}
       >
-        <AuthInput
+        <TextInput
           type="email"
           name="email"
           placeholder="Email"
