@@ -18,7 +18,7 @@ export async function GET(
             id: true,
             name: true,
             description: true,
-            bannerUrl: true,
+            bannerImage: true,
             _count: {
               select: { members: true },
             },
@@ -64,7 +64,7 @@ export async function GET(
         id: invite.club.id,
         name: invite.club.name,
         description: invite.club.description,
-        bannerUrl: invite.club.bannerUrl,
+        bannerUrl: invite.club.bannerImage,
         memberCount: invite.club._count.members,
       },
       invitedBy: {
