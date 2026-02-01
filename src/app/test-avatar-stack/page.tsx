@@ -23,6 +23,7 @@ export default function TestAvatarStackPage() {
     { id: "3", name: "Charlie Anderson", username: "ca", avatarUrl: null },
     { id: "4", name: null, username: "user4", avatarUrl: null },
     { id: "5", name: "Kim Davis", username: "kd", avatarUrl: null },
+    { id: "6", name: "Elena Vasquez", username: "ev", avatarUrl: null },
   ];
 
   // Sample users for stacks (club view with host)
