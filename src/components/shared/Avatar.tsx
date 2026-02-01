@@ -75,21 +75,28 @@ export default function Avatar({
     }
   };
 
-  // Base avatar style
+  // Outer container: positioning + border, allows tag to overflow
   const avatarStyle: CSSProperties = {
     width: `${size}px`,
     height: `${size}px`,
     borderRadius: "64px", // Full circle
-    backgroundColor: user.avatarUrl ? "transparent" : "#E6E6E6",
     border: showBorder ? `${borderWidth}px solid ${borderColor}` : "none",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden",
     cursor: onClick ? "pointer" : "default",
     position: "relative",
     flexShrink: 0,
     ...style,
+  };
+
+  // Inner wrapper: circular clip for avatar content only
+  const innerStyle: CSSProperties = {
+    width: "100%",
+    height: "100%",
+    borderRadius: "64px",
+    overflow: "hidden",
+    backgroundColor: user.avatarUrl ? "transparent" : "#E6E6E6",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   };
 
   return (
@@ -99,32 +106,34 @@ export default function Avatar({
       onClick={handleClick}
       title={getTooltipText()}
     >
-      {/* Avatar content: photo or initials */}
-      {user.avatarUrl ? (
-        <img
-          src={user.avatarUrl}
-          alt={getTooltipText()}
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-          }}
-        />
-      ) : (
-        <span
-          style={{
-            fontFamily: "var(--font-dm-serif-text)",
-            fontSize: `${textSize}px`,
-            fontWeight: 400,
-            color: "#000000",
-            lineHeight: "normal",
-          }}
-        >
-          {getInitials()}
-        </span>
-      )}
+      {/* Inner wrapper: circular clip for photo or initials */}
+      <div style={innerStyle}>
+        {user.avatarUrl ? (
+          <img
+            src={user.avatarUrl}
+            alt={getTooltipText()}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+            }}
+          />
+        ) : (
+          <span
+            style={{
+              fontFamily: "var(--font-dm-serif-text)",
+              fontSize: `${textSize}px`,
+              fontWeight: 400,
+              color: "#000000",
+              lineHeight: "normal",
+            }}
+          >
+            {getInitials()}
+          </span>
+        )}
+      </div>
 
-      {/* Optional tag/label */}
+      {/* Optional tag/label — sibling to inner, not clipped */}
       {tag && (
         <div
           style={{
@@ -139,6 +148,7 @@ export default function Avatar({
             alignItems: "center",
             justifyContent: "center",
             padding: "2px",
+            zIndex: 1,
           }}
         >
           <span

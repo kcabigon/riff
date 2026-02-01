@@ -73,7 +73,7 @@ export default function AvatarStack({
           tag={user.tag}
           onClick={onAvatarClick}
           style={{
-            marginRight: index < validUsers.length - 1 ? "-4px" : "0",
+            marginRight: "-4px",
             zIndex: index, // 0, 1, 2, 3... (rightmost has highest z-index)
           }}
         />
