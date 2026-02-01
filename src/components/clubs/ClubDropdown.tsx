@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface ClubDropdownProps {
   clubs: Array<{
@@ -25,6 +26,7 @@ export default function ClubDropdown({
 }: ClubDropdownProps) {
   const [isHovered, setIsHovered] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -47,14 +49,13 @@ export default function ClubDropdown({
   }, [isOpen, onClose]);
 
   const handleClubSelect = (clubId: string) => {
-    // Navigate to club (for now just reload with query param or handle state)
-    console.log("Selected club:", clubId);
     onClose();
+    router.push(`/clubs/${clubId}`);
   };
 
   const handleStartNewClub = () => {
-    console.log("Start new club");
     onClose();
+    router.push("/onboarding/create-club");
   };
 
   return (

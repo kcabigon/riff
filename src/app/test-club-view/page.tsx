@@ -193,7 +193,7 @@ export default async function TestClubViewPage() {
           </h2>
 
           {activeRiffs.length === 0 ? (
-            <EmptyRiffState />
+            <EmptyRiffState onStartNewRiff={() => {}} />
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
               {activeRiffs.map((riff) => {

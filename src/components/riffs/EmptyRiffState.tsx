@@ -2,13 +2,12 @@
 
 import { useState } from "react";
 
-export default function EmptyRiffState() {
-  const [isHovered, setIsHovered] = useState(false);
+interface EmptyRiffStateProps {
+  onStartNewRiff: () => void;
+}
 
-  const handleStartNewRiff = () => {
-    console.log("Start new riff");
-    // TODO: Navigate to create riff form
-  };
+export default function EmptyRiffState({ onStartNewRiff }: EmptyRiffStateProps) {
+  const [isHovered, setIsHovered] = useState(false);
 
   return (
     <div
@@ -38,12 +37,12 @@ export default function EmptyRiffState() {
 
       {/* Action Button */}
       <button
-        onClick={handleStartNewRiff}
+        onClick={onStartNewRiff}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         style={{
           backgroundColor: isHovered ? "#00FF66" : "#FFFFFF",
-          border: isHovered ? "2px solid #000000" : "2px solid #000000",
+          border: "2px solid #000000",
           boxShadow: isHovered
             ? "8px 8px 0px 0px #000000"
             : "8px 8px 0px 0px #01EFFC",

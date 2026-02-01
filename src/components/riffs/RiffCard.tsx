@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import CountdownTimer from "./CountdownTimer";
 import AvatarStack from "@/components/shared/AvatarStack";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
@@ -30,6 +31,7 @@ interface RiffCardProps {
   isJoined: boolean;
   hasSubmitted: boolean;
   currentUserId: string;
+  onJoin?: () => void;
 }
 
 export default function RiffCard({
@@ -37,8 +39,11 @@ export default function RiffCard({
   isJoined,
   hasSubmitted,
   currentUserId,
+  onJoin,
 }: RiffCardProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [isCardHovered, setIsCardHovered] = useState(false);
+  const router = useRouter();
   const handleAvatarClick = useProfileNavigation();
 
   // Format date
@@ -64,18 +69,35 @@ export default function RiffCard({
     (p) => !riff.pieces.some((piece) => piece.piece.authorId === p.user.id)
   );
 
-  const handleJoinRiff = async () => {
-    console.log("Joining riff:", riff.id);
-    // TODO: Call API to join riff
+  const handleCardClick = () => {
+    router.push(`/riffs/${riff.id}`);
   };
 
-  const handleContinueWriting = () => {
-    console.log("Continue writing for riff:", riff.id);
-    // TODO: Navigate to editor
+  const handleJoinRiff = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const res = await fetch(`/api/riffs/${riff.id}/participants`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (res.ok && onJoin) {
+        onJoin();
+      }
+    } catch (err) {
+      console.error("Error joining riff:", err);
+    }
+  };
+
+  const handleContinueWriting = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    router.push(`/riffs/${riff.id}`);
   };
 
   return (
     <div
+      onClick={handleCardClick}
+      onMouseEnter={() => setIsCardHovered(true)}
+      onMouseLeave={() => setIsCardHovered(false)}
       style={{
         backgroundColor: "#FFFFFF",
         border: "2px solid #000000",
@@ -85,6 +107,9 @@ export default function RiffCard({
         gap: "40px",
         alignItems: "center",
         justifyContent: "space-between",
+        cursor: "pointer",
+        boxShadow: isCardHovered ? "4px 4px 0px 0px #000000" : "none",
+        transition: "box-shadow 0.1s ease",
       }}
     >
       {/* Left Section - Riff Metadata */}

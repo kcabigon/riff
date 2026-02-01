@@ -1,0 +1,388 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import AvatarStack from "@/components/shared/AvatarStack";
+import CountdownTimer from "./CountdownTimer";
+import { useProfileNavigation } from "@/hooks/useProfileNavigation";
+
+interface RiffPageLayoutProps {
+  riff: {
+    id: string;
+    title: string;
+    prompt: string | null;
+    deadline: string | null;
+    status: string;
+    createdAt: string;
+    clubId: string;
+    club: { id: string; name: string };
+    creator: {
+      id: string;
+      name: string | null;
+      username: string | null;
+      avatarUrl: string | null;
+    };
+    participants: Array<{
+      user: {
+        id: string;
+        name: string | null;
+        username: string | null;
+        avatarUrl: string | null;
+      };
+    }>;
+    pieces: Array<{
+      piece: {
+        id: string;
+        title: string;
+        authorId: string;
+        wordCount: number;
+      };
+    }>;
+  };
+  currentUserId: string;
+  isJoined: boolean;
+  hasSubmitted: boolean;
+}
+
+export default function RiffPageLayout({
+  riff,
+  currentUserId,
+  isJoined: initialIsJoined,
+  hasSubmitted,
+}: RiffPageLayoutProps) {
+  const [isJoined, setIsJoined] = useState(initialIsJoined);
+  const [isButtonHovered, setIsButtonHovered] = useState(false);
+  const router = useRouter();
+  const handleAvatarClick = useProfileNavigation();
+
+  const handleJoinRiff = async () => {
+    try {
+      const res = await fetch(`/api/riffs/${riff.id}/participants`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (res.ok) {
+        setIsJoined(true);
+      }
+    } catch (err) {
+      console.error("Error joining riff:", err);
+    }
+  };
+
+  const handleContinueWriting = () => {
+    // Editor integration — future phase
+    console.log("Continue writing for riff:", riff.id);
+  };
+
+  const handleButtonClick = () => {
+    if (!isJoined) {
+      handleJoinRiff();
+    } else {
+      handleContinueWriting();
+    }
+  };
+
+  const formatDate = (date: string) => {
+    return new Date(date).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const submittedUsers = riff.participants.filter((p) =>
+    riff.pieces.some((piece) => piece.piece.authorId === p.user.id)
+  );
+
+  const waitingUsers = riff.participants.filter(
+    (p) => !riff.pieces.some((piece) => piece.piece.authorId === p.user.id)
+  );
+
+  const buttonLabel = isJoined
+    ? hasSubmitted
+      ? "View submission"
+      : "Continue writing"
+    : "Join riff";
+
+  return (
+    <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
+      {/* Back navigation */}
+      <div
+        style={{
+          maxWidth: "1000px",
+          margin: "0 auto",
+          padding: "24px 24px 0",
+        }}
+      >
+        <button
+          onClick={() => router.push(`/clubs/${riff.clubId}`)}
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "14px",
+            fontWeight: 300,
+            color: "#808080",
+            padding: 0,
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          }}
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            style={{ color: "#808080" }}
+          >
+            <path
+              d="M10 12L6 8L10 4"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          Back to {riff.club.name}
+        </button>
+      </div>
+
+      {/* Main content */}
+      <div
+        style={{
+          maxWidth: "1000px",
+          margin: "0 auto",
+          padding: "32px 24px 64px",
+        }}
+      >
+        {/* Riff header */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            gap: "40px",
+            flexWrap: "wrap",
+          }}
+        >
+          {/* Left — title, dates, prompt, participants */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "24px",
+              flex: 1,
+              minWidth: 0,
+            }}
+          >
+            {/* Title & dates */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+              <h1
+                style={{
+                  fontFamily: "var(--font-dm-serif-text)",
+                  fontSize: "32px",
+                  fontWeight: 400,
+                  color: "#000000",
+                  margin: 0,
+                }}
+              >
+                {riff.title}
+              </h1>
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 300,
+                  color: "#808080",
+                  margin: 0,
+                }}
+              >
+                {riff.deadline
+                  ? `${formatDate(riff.createdAt)} - ${formatDate(riff.deadline)}`
+                  : formatDate(riff.createdAt)}
+              </p>
+            </div>
+
+            {/* Prompt */}
+            {riff.prompt && (
+              <div
+                style={{
+                  borderLeft: "2px solid #000000",
+                  paddingLeft: "16px",
+                }}
+              >
+                <p
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "16px",
+                    fontWeight: 300,
+                    color: "#000000",
+                    margin: 0,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {riff.prompt}
+                </p>
+              </div>
+            )}
+
+            {/* Participants */}
+            {riff.participants.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {submittedUsers.length > 0 && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "12px",
+                      height: "32px",
+                    }}
+                  >
+                    <p
+                      style={{
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "16px",
+                        fontWeight: 300,
+                        color: "#000000",
+                        margin: 0,
+                      }}
+                    >
+                      Submitted
+                    </p>
+                    <AvatarStack
+                      users={submittedUsers.slice(0, 5).map((p) => p.user)}
+                      size={32}
+                      showBorder={false}
+                      onAvatarClick={handleAvatarClick}
+                    />
+                  </div>
+                )}
+                {waitingUsers.length > 0 && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "12px",
+                      height: "32px",
+                    }}
+                  >
+                    <p
+                      style={{
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "16px",
+                        fontWeight: 300,
+                        color: "#000000",
+                        margin: 0,
+                      }}
+                    >
+                      Waiting for
+                    </p>
+                    <AvatarStack
+                      users={waitingUsers.slice(0, 5).map((p) => p.user)}
+                      size={32}
+                      showBorder={false}
+                      onAvatarClick={handleAvatarClick}
+                    />
+                  </div>
+                )}
+                {!isJoined && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "12px",
+                      height: "32px",
+                    }}
+                  >
+                    <p
+                      style={{
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "16px",
+                        fontWeight: 300,
+                        color: "#000000",
+                        margin: 0,
+                      }}
+                    >
+                      Joined by
+                    </p>
+                    <AvatarStack
+                      users={riff.participants.slice(0, 5).map((p) => p.user)}
+                      size={32}
+                      showBorder={false}
+                      onAvatarClick={handleAvatarClick}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Right — CTA button + countdown */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "24px",
+              minWidth: "200px",
+            }}
+          >
+            <button
+              onClick={handleButtonClick}
+              onMouseEnter={() => setIsButtonHovered(true)}
+              onMouseLeave={() => setIsButtonHovered(false)}
+              style={{
+                backgroundColor: isButtonHovered ? "#00FF66" : "#FFFFFF",
+                border: "2px solid #000000",
+                boxShadow: isButtonHovered
+                  ? "8px 8px 0px 0px #000000"
+                  : isJoined
+                    ? "8px 8px 0px 0px #00FF66"
+                    : "8px 8px 0px 0px #01EFFC",
+                padding: "12px 48px",
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "16px",
+                fontWeight: 300,
+                color: "#000000",
+                cursor: "pointer",
+                transition: "none",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {buttonLabel}
+            </button>
+
+            {isJoined && riff.deadline && (
+              <CountdownTimer deadline={new Date(riff.deadline)} />
+            )}
+          </div>
+        </div>
+
+        {/* Placeholder for future riff detail content */}
+        <div
+          style={{
+            marginTop: "48px",
+            padding: "40px",
+            backgroundColor: "#F9F9F9",
+            border: "2px dashed #E6E6E6",
+            textAlign: "center",
+          }}
+        >
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "16px",
+              fontWeight: 300,
+              color: "#959595",
+              margin: 0,
+            }}
+          >
+            More riff details coming soon.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,354 @@
+"use client";
+
+import { useState, useCallback } from "react";
+import NavBar from "@/components/clubs/NavBar";
+import AvatarStack from "@/components/shared/AvatarStack";
+import RiffCard from "@/components/riffs/RiffCard";
+import EmptyRiffState from "@/components/riffs/EmptyRiffState";
+import CompletedRiffCard from "@/components/riffs/CompletedRiffCard";
+import CreateRiffModal from "@/components/riffs/CreateRiffModal";
+import { useProfileNavigation } from "@/hooks/useProfileNavigation";
+
+interface ClubMember {
+  user: {
+    id: string;
+    name: string | null;
+    username: string | null;
+    avatarUrl: string | null;
+  };
+}
+
+interface RiffPiece {
+  piece: {
+    id: string;
+    title: string;
+    authorId: string;
+    currentContent: string;
+    wordCount: number;
+  };
+}
+
+interface RiffParticipant {
+  user: {
+    id: string;
+    name: string | null;
+    username: string | null;
+    avatarUrl: string | null;
+  };
+}
+
+interface Riff {
+  id: string;
+  title: string;
+  prompt: string | null;
+  deadline: string | null;
+  status: string;
+  createdAt: string;
+  creator: {
+    id: string;
+    name: string | null;
+    username: string | null;
+    avatarUrl: string | null;
+  };
+  participants: RiffParticipant[];
+  pieces: RiffPiece[];
+}
+
+interface ClubPageLayoutProps {
+  club: {
+    id: string;
+    name: string;
+    description: string | null;
+    bannerImage: string | null;
+    adminId: string;
+    members: ClubMember[];
+  };
+  userClubs: Array<{ id: string; name: string }>;
+  currentUserId: string;
+  isAdmin: boolean;
+  activeRiff: Riff | null;
+  completedRiffs: Riff[];
+  stats: {
+    riffCount: number;
+    pieceCount: number;
+    wordCount: number;
+  };
+}
+
+export default function ClubPageLayout({
+  club,
+  userClubs,
+  currentUserId,
+  isAdmin,
+  activeRiff,
+  completedRiffs,
+  stats,
+}: ClubPageLayoutProps) {
+  const [isCreateRiffModalOpen, setIsCreateRiffModalOpen] = useState(false);
+  const [currentActiveRiff, setCurrentActiveRiff] = useState<Riff | null>(
+    activeRiff
+  );
+  const handleAvatarClick = useProfileNavigation();
+
+  // After joining a riff, refresh the page to get updated state
+  const handleJoinRiff = useCallback(() => {
+    window.location.reload();
+  }, []);
+
+  // After creating a riff, refresh the page
+  const handleRiffCreated = useCallback(() => {
+    setIsCreateRiffModalOpen(false);
+    window.location.reload();
+  }, []);
+
+  // Compute joined/submitted state for active riff
+  const isJoined = activeRiff
+    ? activeRiff.participants.some((p) => p.user.id === currentUserId)
+    : false;
+  const hasSubmitted = activeRiff
+    ? activeRiff.pieces.some((p) => p.piece.authorId === currentUserId)
+    : false;
+
+  // Format word count with commas
+  const formatNumber = (n: number): string => {
+    return n.toLocaleString();
+  };
+
+  return (
+    <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
+      {/* Sticky NavBar */}
+      <div style={{ position: "sticky", top: 0, zIndex: 50 }}>
+        <NavBar
+          user={
+            club.members.find((m) => m.user.id === currentUserId)?.user || {
+              id: currentUserId,
+              name: null,
+              username: null,
+              avatarUrl: null,
+            }
+          }
+          clubs={userClubs}
+          currentClub={{ id: club.id, name: club.name }}
+        />
+      </div>
+
+      {/* Banner — full width, 320px height */}
+      {club.bannerImage && (
+        <div
+          style={{
+            width: "100%",
+            height: "320px",
+            backgroundImage: `url(${club.bannerImage})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        />
+      )}
+
+      {/* Main content — max-width 1000px, centered */}
+      <div
+        style={{
+          maxWidth: "1000px",
+          margin: "0 auto",
+          padding: "32px 24px 64px",
+        }}
+      >
+        {/* Club frame */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+            marginBottom: "48px",
+          }}
+        >
+          {/* Club name */}
+          <h1
+            style={{
+              fontFamily: "var(--font-dm-serif-text)",
+              fontSize: "32px",
+              fontWeight: 400,
+              color: "#000000",
+              margin: 0,
+            }}
+          >
+            {club.name}
+          </h1>
+
+          {/* Stats row */}
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "4px 12px",
+              alignItems: "start",
+            }}
+          >
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "16px",
+                fontWeight: 300,
+                color: "#000000",
+                margin: 0,
+              }}
+            >
+              <span style={{ fontWeight: 700 }}>{stats.riffCount}</span> riffs
+            </p>
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "16px",
+                fontWeight: 300,
+                color: "#000000",
+                margin: 0,
+              }}
+            >
+              <span style={{ fontWeight: 700 }}>{stats.pieceCount}</span> pieces
+            </p>
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "16px",
+                fontWeight: 300,
+                color: "#000000",
+                margin: 0,
+              }}
+            >
+              <span style={{ fontWeight: 700 }}>
+                {formatNumber(stats.wordCount)}
+              </span>{" "}
+              words
+            </p>
+          </div>
+
+          {/* Member avatars — size 48, black border */}
+          <AvatarStack
+            users={club.members.map((m) => m.user)}
+            size={48}
+            showBorder={true}
+            borderColor="#000000"
+            borderWidth={2}
+            onAvatarClick={handleAvatarClick}
+          />
+
+          {/* Description */}
+          {club.description && (
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "16px",
+                fontWeight: 300,
+                color: "#000000",
+                margin: 0,
+                lineHeight: "normal",
+              }}
+            >
+              {club.description}
+            </p>
+          )}
+        </div>
+
+        {/* Current Riff section */}
+        <div style={{ marginBottom: "48px" }}>
+          {/* Section header — only show if there's an active riff OR user is admin */}
+          {(activeRiff || isAdmin) && (
+            <h2
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "20px",
+                fontWeight: 300,
+                color: "#000000",
+                margin: "0 0 16px 0",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+              }}
+            >
+              Current Riff
+            </h2>
+          )}
+
+          {activeRiff ? (
+            <RiffCard
+              riff={{
+                id: activeRiff.id,
+                title: activeRiff.title,
+                prompt: activeRiff.prompt,
+                deadline: activeRiff.deadline
+                  ? new Date(activeRiff.deadline)
+                  : null,
+                createdAt: new Date(activeRiff.createdAt),
+                participants: activeRiff.participants,
+                pieces: activeRiff.pieces,
+              }}
+              isJoined={isJoined}
+              hasSubmitted={hasSubmitted}
+              currentUserId={currentUserId}
+              onJoin={handleJoinRiff}
+            />
+          ) : isAdmin ? (
+            <EmptyRiffState
+              onStartNewRiff={() => setIsCreateRiffModalOpen(true)}
+            />
+          ) : null}
+        </div>
+
+        {/* Completed Riffs section */}
+        {completedRiffs.length > 0 && (
+          <div>
+            <h2
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "20px",
+                fontWeight: 300,
+                color: "#000000",
+                margin: "0 0 16px 0",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+              }}
+            >
+              Completed Riffs
+            </h2>
+
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                gap: "40px",
+                overflowX: "auto",
+                paddingBottom: "16px",
+              }}
+            >
+              {completedRiffs.map((riff) => (
+                <CompletedRiffCard
+                  key={riff.id}
+                  riff={{
+                    id: riff.id,
+                    title: riff.title,
+                    createdAt: new Date(riff.createdAt),
+                    deadline: riff.deadline ? new Date(riff.deadline) : null,
+                  }}
+                  clubName={club.name}
+                  pieces={riff.pieces.map((p) => ({
+                    id: p.piece.id,
+                    title: p.piece.title,
+                    currentContent: p.piece.currentContent,
+                    wordCount: p.piece.wordCount,
+                  }))}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Create Riff Modal */}
+      <CreateRiffModal
+        clubId={club.id}
+        isOpen={isCreateRiffModalOpen}
+        onClose={() => setIsCreateRiffModalOpen(false)}
+        onCreated={handleRiffCreated}
+      />
+    </div>
+  );
+}
