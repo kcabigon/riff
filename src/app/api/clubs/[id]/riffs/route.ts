@@ -54,6 +54,22 @@ export async function GET(
             },
           },
         },
+        pieces: {
+          include: {
+            piece: {
+              select: {
+                id: true,
+                title: true,
+                authorId: true,
+                currentContent: true,
+                wordCount: true,
+              },
+            },
+          },
+          orderBy: {
+            submittedAt: "desc",
+          },
+        },
         _count: {
           select: {
             pieces: true,
