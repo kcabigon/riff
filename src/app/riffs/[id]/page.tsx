@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import RiffPageLayout from "@/components/riffs/RiffPageLayout";
 
@@ -9,7 +9,7 @@ export default async function RiffPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const session = await auth();
+  const session = await getSession();
 
   if (!session?.user) {
     redirect("/login");

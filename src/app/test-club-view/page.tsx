@@ -1,293 +1,184 @@
-import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth-utils";
-import { prisma } from "@/lib/prisma";
-import NavBar from "@/components/clubs/NavBar";
-import RiffCard from "@/components/riffs/RiffCard";
-import EmptyRiffState from "@/components/riffs/EmptyRiffState";
+/**
+ * Static test page for ClubPageLayout.
+ * No database or auth required — all data is hardcoded.
+ * Exercises:
+ *   • Club frame: 5 members, description, banner (null), stats
+ *   • Active riff: current user joined, Alice submitted, Bob & Carol waiting
+ *   • Completed riff 1: 3 pieces, no images → placeholder mosaic
+ *   • Completed riff 2: 2 pieces, one with an embedded <img> → mixed mosaic
+ *   • Admin = true (shows EmptyRiffState / CreateRiffModal path if no active riff)
+ *
+ * To test the "no active riff + admin" state, comment out `activeRiff` below.
+ * To test the "not admin" state, set isAdmin to false.
+ */
 
-export default async function TestClubViewPage() {
-  // Get authenticated user
-  const sessionUser = await getCurrentUser();
+import ClubPageLayout from "@/components/clubs/ClubPageLayout";
 
-  if (!sessionUser) {
-    redirect("/test-auth");
-  }
+// ---------------------------------------------------------------------------
+// Fake users
+// ---------------------------------------------------------------------------
+const ME = { id: "user-me", name: "You", username: "youuser", avatarUrl: null };
+const ALICE = { id: "user-alice", name: "Alice Chen", username: "alicechen", avatarUrl: null };
+const BOB = { id: "user-bob", name: "Bob Rivera", username: "bobrivera", avatarUrl: null };
+const CAROL = { id: "user-carol", name: "Carol Kim", username: "carolkim", avatarUrl: null };
+const DAVE = { id: "user-dave", name: "Dave Okafor", username: "daveokafor", avatarUrl: null };
 
-  // Fetch full user details from database
-  const user = await prisma.user.findUnique({
-    where: { id: sessionUser.id },
-    select: {
-      id: true,
-      username: true,
-      name: true,
-      avatarUrl: true,
+// ---------------------------------------------------------------------------
+// Club
+// ---------------------------------------------------------------------------
+const club = {
+  id: "club-test-1",
+  name: "The Sunday Writers",
+  description:
+    "A small group of friends who write together every week. No pressure, just words on a page.",
+  bannerImage: null as string | null,
+  adminId: ME.id,
+  members: [
+    { user: ME },
+    { user: ALICE },
+    { user: BOB },
+    { user: CAROL },
+    { user: DAVE },
+  ],
+};
+
+// ---------------------------------------------------------------------------
+// Active riff — you joined, Alice submitted, Bob & Carol waiting, Dave didn't join
+// ---------------------------------------------------------------------------
+const activeRiff = {
+  id: "riff-active-1",
+  title: "Write About a Place",
+  prompt:
+    "Describe a place that has changed you — not where you live now, but somewhere you carry with you. Lean into the sensory details.",
+  deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 1 week out
+  status: "ACTIVE",
+  createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+  creator: ME,
+  participants: [
+    { user: ME },
+    { user: ALICE },
+    { user: BOB },
+    { user: CAROL },
+  ],
+  pieces: [
+    {
+      piece: {
+        id: "piece-alice-active",
+        title: "The Train Station in Prague",
+        authorId: ALICE.id,
+        currentContent:
+          '<p>I first arrived at Prague\'s main station on a grey Tuesday in March. The ceiling arches above you like the ribcage of some enormous creature.</p>',
+        wordCount: 58,
+      },
     },
-  });
+  ],
+};
 
-  if (!user) {
-    redirect("/test-auth");
-  }
-
-  // Fetch user's clubs
-  const clubs = await prisma.club.findMany({
-    where: {
-      members: {
-        some: {
-          userId: user.id,
-        },
-      },
-      isArchived: false,
-    },
-    include: {
-      members: {
-        include: {
-          user: {
-            select: {
-              id: true,
-              username: true,
-              name: true,
-              avatarUrl: true,
-            },
-          },
-        },
-      },
-      admin: {
-        select: {
-          id: true,
-          username: true,
-          name: true,
-        },
-      },
-      moderator: {
-        select: {
-          id: true,
-          username: true,
-          name: true,
-        },
+// ---------------------------------------------------------------------------
+// Completed riff 1 — 3 pieces, plain text only → placeholder mosaic colors
+// ---------------------------------------------------------------------------
+const completedRiff1 = {
+  id: "riff-completed-1",
+  title: "Childhood Memories",
+  prompt: "Write about something you remember from before you were ten.",
+  deadline: new Date("2026-01-15T23:59:59Z").toISOString(),
+  status: "COMPLETED",
+  createdAt: new Date("2025-12-01T10:00:00Z").toISOString(),
+  creator: ME,
+  participants: [
+    { user: ME },
+    { user: ALICE },
+    { user: BOB },
+  ],
+  pieces: [
+    {
+      piece: {
+        id: "piece-me-cr1",
+        title: "The Red Bicycle",
+        authorId: ME.id,
+        currentContent:
+          "<p>The summer I turned seven, my father brought home a red bicycle. It was too big for me — my feet barely grazed the pedals — but I rode it anyway.</p>",
+        wordCount: 42,
       },
     },
-    orderBy: {
-      createdAt: "desc",
+    {
+      piece: {
+        id: "piece-alice-cr1",
+        title: "Saturday Mornings",
+        authorId: ALICE.id,
+        currentContent:
+          "<p>Saturday mornings meant cartoons and toast with too much butter. My sister and I would camp on the living room floor with blankets.</p>",
+        wordCount: 36,
+      },
     },
-  });
-
-  // Get the first club
-  const currentClub = clubs[0];
-
-  // Fetch riffs for the current club
-  let activeRiffs: any[] = [];
-  let completedRiffs: any[] = [];
-
-  if (currentClub) {
-    const riffs = await prisma.riff.findMany({
-      where: {
-        clubId: currentClub.id,
+    {
+      piece: {
+        id: "piece-bob-cr1",
+        title: "Grandma's Kitchen",
+        authorId: BOB.id,
+        currentContent:
+          "<p>The kitchen smelled like cardamom and something I still can't name. She never measured anything. She just knew.</p>",
+        wordCount: 38,
       },
-      include: {
-        creator: {
-          select: {
-            id: true,
-            username: true,
-            name: true,
-            avatarUrl: true,
-          },
-        },
-        participants: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                username: true,
-                name: true,
-                avatarUrl: true,
-              },
-            },
-          },
-        },
-        pieces: {
-          include: {
-            piece: {
-              select: {
-                id: true,
-                title: true,
-                authorId: true,
-              },
-            },
-          },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    },
+  ],
+};
 
-    activeRiffs = riffs.filter((r) => r.status === "ACTIVE");
-    completedRiffs = riffs.filter((r) => r.status === "COMPLETED");
-  }
+// ---------------------------------------------------------------------------
+// Completed riff 2 — 2 pieces, one with an embedded <img> → mixed mosaic
+// ---------------------------------------------------------------------------
+const completedRiff2 = {
+  id: "riff-completed-2",
+  title: "Objects We Keep",
+  prompt: "Pick an object you've carried for years. Why?",
+  deadline: new Date("2025-12-20T23:59:59Z").toISOString(),
+  status: "COMPLETED",
+  createdAt: new Date("2025-11-10T10:00:00Z").toISOString(),
+  creator: ME,
+  participants: [
+    { user: CAROL },
+    { user: DAVE },
+  ],
+  pieces: [
+    {
+      piece: {
+        id: "piece-carol-cr2",
+        title: "The Compass",
+        authorId: CAROL.id,
+        currentContent:
+          '<p>My grandfather\'s compass stopped working in 1998, but I still carry it.</p><img src="https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=400" alt="compass"><p>It points nowhere now, but holding it makes me feel oriented.</p>',
+        wordCount: 34,
+      },
+    },
+    {
+      piece: {
+        id: "piece-dave-cr2",
+        title: "A Letter I Never Sent",
+        authorId: DAVE.id,
+        currentContent:
+          "<p>I wrote it when I was nineteen. Folded it into thirds and put it in the front pocket of my wallet, where it stayed for six years.</p>",
+        wordCount: 42,
+      },
+    },
+  ],
+};
 
+// ---------------------------------------------------------------------------
+// Page — renders ClubPageLayout with all static data
+// ---------------------------------------------------------------------------
+export default function TestClubViewPage() {
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "#FFFFFF",
-      }}
-    >
-      <NavBar user={user} clubs={clubs} currentClub={currentClub} />
-
-      {/* Main Content */}
-      <main
-        style={{
-          maxWidth: "1000px",
-          margin: "0 auto",
-          padding: "48px 24px",
-        }}
-      >
-        {/* Club Header */}
-        {currentClub && (
-          <div
-            style={{
-              marginBottom: "48px",
-            }}
-          >
-            <h1
-              style={{
-                fontFamily: "var(--font-dm-serif-text)",
-                fontSize: "32px",
-                fontWeight: 400,
-                lineHeight: 1.2,
-                color: "#000000",
-                marginBottom: "8px",
-              }}
-            >
-              {currentClub.name}
-            </h1>
-            {currentClub.description && (
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  lineHeight: 1.6,
-                  color: "#959595",
-                }}
-              >
-                {currentClub.description}
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* Active Riffs Section */}
-        <section style={{ marginBottom: "56px" }}>
-          <h2
-            style={{
-              fontFamily: "var(--font-dm-serif-text)",
-              fontSize: "24px",
-              fontWeight: 400,
-              lineHeight: 1.2,
-              color: "#000000",
-              marginBottom: "24px",
-            }}
-          >
-            Current Riff
-          </h2>
-
-          {activeRiffs.length === 0 ? (
-            <EmptyRiffState onStartNewRiff={() => {}} />
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-              {activeRiffs.map((riff) => {
-                const isParticipant = riff.participants.some(
-                  (p: any) => p.userId === user.id
-                );
-                const hasSubmitted = riff.pieces.some(
-                  (pr: any) => pr.piece.authorId === user.id
-                );
-
-                return (
-                  <RiffCard
-                    key={riff.id}
-                    riff={riff}
-                    isJoined={isParticipant}
-                    hasSubmitted={hasSubmitted}
-                    currentUserId={user.id}
-                  />
-                );
-              })}
-            </div>
-          )}
-        </section>
-
-        {/* Completed Riffs Section */}
-        {completedRiffs.length > 0 && (
-          <section>
-            <h2
-              style={{
-                fontFamily: "var(--font-dm-serif-text)",
-                fontSize: "24px",
-                fontWeight: 400,
-                lineHeight: 1.2,
-                color: "#000000",
-                marginBottom: "24px",
-              }}
-            >
-              Completed Riffs
-            </h2>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
-                gap: "20px",
-              }}
-            >
-              {completedRiffs.map((riff) => (
-                <div
-                  key={riff.id}
-                  style={{
-                    width: "240px",
-                    height: "320px",
-                    border: "1px solid #000000",
-                    boxShadow: "8px 8px 0px 0px #000000",
-                    position: "relative",
-                    backgroundColor: "#000000",
-                    color: "#FFFFFF",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    padding: "24px",
-                  }}
-                >
-                  <div style={{ textAlign: "center" }}>
-                    <h3
-                      style={{
-                        fontFamily: "var(--font-dm-serif-text)",
-                        fontSize: "20px",
-                        fontWeight: 400,
-                        lineHeight: 1.2,
-                        marginBottom: "8px",
-                      }}
-                    >
-                      {riff.title}
-                    </h3>
-                    <p
-                      style={{
-                        fontFamily: "var(--font-dm-sans)",
-                        fontSize: "12px",
-                        fontWeight: 300,
-                        lineHeight: 1.4,
-                        color: "#FFFFFF",
-                      }}
-                    >
-                      {riff.pieces.length} submission{riff.pieces.length !== 1 ? "s" : ""}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-      </main>
-    </div>
+    <ClubPageLayout
+      club={club}
+      userClubs={[
+        { id: "club-test-1", name: "The Sunday Writers" },
+        { id: "club-test-2", name: "Poetry & Prose" },
+      ]}
+      currentUserId={ME.id}
+      isAdmin={true}
+      activeRiff={activeRiff}
+      completedRiffs={[completedRiff1, completedRiff2]}
+      stats={{ riffCount: 3, pieceCount: 6, wordCount: 250 }}
+    />
   );
 }

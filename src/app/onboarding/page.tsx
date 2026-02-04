@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 
 export default async function OnboardingPage() {
   // Get current user's onboarding status
-  const session = await auth();
+  const session = await getSession();
 
   if (!session?.user) {
     redirect("/login");
