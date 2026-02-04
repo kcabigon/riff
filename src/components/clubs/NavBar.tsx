@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import ClubDropdown from "./ClubDropdown";
 import Avatar from "@/components/shared/Avatar";
+import { useProfileNavigation } from "@/hooks/useProfileNavigation";
 
 interface NavBarProps {
   user: {
@@ -24,6 +25,7 @@ interface NavBarProps {
 
 export default function NavBar({ user, clubs, currentClub }: NavBarProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const handleProfileClick = useProfileNavigation();
 
   return (
     <nav
@@ -89,6 +91,7 @@ export default function NavBar({ user, clubs, currentClub }: NavBarProps) {
           showBorder={true}
           borderColor="#FFFFFF"
           borderWidth={1}
+          onClick={handleProfileClick}
         />
       </div>
     </nav>
