@@ -238,6 +238,7 @@ model Piece {
   authorId       String
   currentContent String   @db.Text
   currentExcerpt String?
+  coverImage     String?  // Cover image URL for piece display (uploaded later)
   wordCount      Int      @default(0)
   readLengthMin  Int      @default(1)
   createdAt      DateTime @default(now())
