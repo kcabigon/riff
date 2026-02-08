@@ -7,12 +7,18 @@ interface ImageUploadProps {
   onUpload: (imageUrl: string) => void;
   currentImage?: string | null;
   disabled?: boolean;
+  uploadIcon?: React.ReactNode;
+  uploadText?: string;
+  hideRecommendedText?: boolean;
 }
 
 export default function ImageUpload({
   onUpload,
   currentImage,
   disabled = false,
+  uploadIcon,
+  uploadText = "Click or drag to upload",
+  hideRecommendedText = false,
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -183,42 +189,46 @@ export default function ImageUpload({
         ) : (
           // Show upload prompt
           <>
-            <svg
-              width="48"
-              height="48"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="17 8 12 3 7 8" />
-              <line x1="12" y1="3" x2="12" y2="15" />
-            </svg>
+            {uploadIcon || (
+              <svg
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+            )}
             <p
               style={{
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
+                fontSize: "20px",
                 fontWeight: 300,
                 color: "#000000",
                 margin: 0,
                 textAlign: "center",
               }}
             >
-              {uploading ? "Uploading..." : "Click or drag to upload"}
+              {uploading ? "Uploading..." : uploadText}
             </p>
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: 300,
-                color: "#959595",
-                margin: 0,
-                textAlign: "center",
-              }}
-            >
-              Recommended: 1200x400px • JPG, PNG, or WebP • Max 5MB
-            </p>
+            {!hideRecommendedText && (
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "14px",
+                  fontWeight: 300,
+                  color: "#959595",
+                  margin: 0,
+                  textAlign: "center",
+                }}
+              >
+                Recommended: 1200x400px • JPG, PNG, or WebP • Max 5MB
+              </p>
+            )}
           </>
         )}
       </div>
