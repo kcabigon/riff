@@ -133,7 +133,7 @@ export default function OnboardingCreateClubBannerPage() {
               alignItems: "flex-start",
             }}
           >
-            <Tagline text="Let's make it your own (optional)" color="#01EFFC" width={218} />
+            <Tagline text="Let's make it your own" color="#01EFFC" textColor="#000000" width={218} />
             <ImageUpload
               onUpload={setBannerImage}
               currentImage={bannerImage}

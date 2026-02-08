@@ -132,7 +132,7 @@ export default function ImageUpload({
         onDrop={handleDrop}
         style={{
           width: "100%",
-          minHeight: preview ? "200px" : "150px",
+          height: "320px",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -155,14 +155,17 @@ export default function ImageUpload({
               style={{
                 position: "relative",
                 width: "100%",
-                height: "180px",
+                height: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
               <Image
                 src={preview}
                 alt="Banner preview"
                 fill
-                style={{ objectFit: "cover" }}
+                style={{ objectFit: "contain" }}
               />
             </div>
             <button
