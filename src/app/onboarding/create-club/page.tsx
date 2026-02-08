@@ -4,11 +4,9 @@ import { useState, FormEvent, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import OnboardingCard from "@/components/onboarding/OnboardingCard";
-import OnboardingInput from "@/components/onboarding/OnboardingInput";
-import OnboardingTextarea from "@/components/onboarding/OnboardingTextarea";
-import OnboardingButton from "@/components/onboarding/OnboardingButton";
-import OnboardingProgress from "@/components/onboarding/OnboardingProgress";
-import ImageUpload from "@/components/onboarding/ImageUpload";
+import TextInput from "@/components/TextInput";
+import Tagline from "@/components/Tagline";
+import BackButton from "@/components/BackButton";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +15,6 @@ export default function OnboardingCreateClubPage() {
   const { data: session } = useSession();
   const [clubName, setClubName] = useState("");
   const [description, setDescription] = useState("");
-  const [bannerImage, setBannerImage] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -35,175 +32,133 @@ export default function OnboardingCreateClubPage() {
     setError("");
 
     // Use default name if not changed
-    const finalClubName = clubName.trim() || `${(session?.user as any)?.firstName || "My"}'s write club`;
+    const finalClubName =
+      clubName.trim() ||
+      `${(session?.user as any)?.firstName || "My"}'s write club`;
 
-    try {
-      const response = await fetch("/api/clubs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: finalClubName,
-          description: description.trim() || null,
-          bannerImage: bannerImage || null,
-        }),
-      });
+    // Store club data in sessionStorage for next step
+    sessionStorage.setItem(
+      "pendingClub",
+      JSON.stringify({
+        name: finalClubName,
+        description: description.trim() || null,
+      })
+    );
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to create club");
-      }
-
-      const data = await response.json();
-      const clubId = data.club.id;
-
-      // Update onboarding step to INVITE
-      await fetch("/api/onboarding/complete", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          step: "INVITE",
-          clubId: clubId,
-        }),
-      });
-
-      // Success - redirect to invite step
-      router.push(`/onboarding/invite?clubId=${clubId}`);
-    } catch (err: any) {
-      console.error("Error creating club:", err);
-      setError(err.message || "Something went wrong. Please try again.");
-      setLoading(false);
-    }
+    // Navigate to banner upload step
+    router.push("/onboarding/create-club-banner");
   };
 
   return (
     <OnboardingCard showLogo={false}>
-      <OnboardingProgress currentStep={3} totalSteps={4} />
-
       <div
         style={{
           width: "100%",
           display: "flex",
           flexDirection: "column",
-          gap: "16px",
-          alignItems: "center",
+          gap: "32px",
         }}
       >
-        <h1
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "32px",
-            fontWeight: 300,
-            color: "#000000",
-            margin: 0,
-            textAlign: "center",
-          }}
-        >
-          Create your write club
-        </h1>
-        <p
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
-            fontWeight: 300,
-            color: "#959595",
-            margin: 0,
-            textAlign: "center",
-            maxWidth: "400px",
-          }}
-        >
-          Give your club a name and personality. You can always change this
-          later.
-        </p>
-      </div>
+        {/* Back Button */}
+        <div style={{ width: "100%", display: "flex", alignItems: "flex-start" }}>
+          <BackButton href="/onboarding/club-choice" />
+        </div>
 
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          width: "100%",
-          display: "flex",
-          flexDirection: "column",
-          gap: "24px",
-        }}
-      >
-        <OnboardingInput
-          type="text"
-          name="clubName"
-          placeholder={`${(session?.user as any)?.firstName || "My"}'s write club`}
-          value={clubName}
-          onChange={(e) => setClubName(e.target.value)}
-          disabled={loading}
-          autoFocus
-        />
-
-        <OnboardingTextarea
-          name="description"
-          placeholder="A little blurb about this club."
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          disabled={loading}
-        />
-
-        <div
+        {/* Form */}
+        <form
+          onSubmit={handleSubmit}
           style={{
             width: "100%",
             display: "flex",
             flexDirection: "column",
-            gap: "8px",
+            gap: "24px",
           }}
         >
-          <label
+          {/* Club Name Field */}
+          <div
             style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              fontWeight: 300,
-              color: "#000000",
+              width: "100%",
+              display: "flex",
+              flexDirection: "column",
+              gap: "8px",
             }}
           >
-            Club banner (optional)
-          </label>
-          <ImageUpload
-            onUpload={setBannerImage}
-            currentImage={bannerImage}
-            disabled={loading}
-          />
-        </div>
+            <Tagline text="Club name" color="#C01582" width={118} />
+            <TextInput
+              type="text"
+              name="clubName"
+              placeholder="Write Club"
+              value={clubName}
+              onChange={(e) => setClubName(e.target.value)}
+              disabled={loading}
+              autoFocus
+            />
+          </div>
 
-        {error && (
-          <p
+          {/* Description Field */}
+          <div
             style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              fontWeight: 300,
-              color: "#FF0000",
-              margin: 0,
-              textAlign: "center",
+              width: "100%",
+              display: "flex",
+              flexDirection: "column",
+              gap: "8px",
             }}
           >
-            {error}
-          </p>
-        )}
+            <Tagline text="Description" color="#955CB5" width={125} />
+            <TextInput
+              multiline
+              rows={3}
+              name="description"
+              placeholder="A little blurb about this club."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              disabled={loading}
+            />
+          </div>
 
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "12px",
-          }}
-        >
-          <OnboardingButton type="submit" loading={loading} disabled={loading}>
-            Create club
-          </OnboardingButton>
+          {error && (
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "14px",
+                fontWeight: 300,
+                color: "#FF0000",
+                margin: 0,
+                textAlign: "center",
+              }}
+            >
+              {error}
+            </p>
+          )}
 
-          <OnboardingButton
-            type="button"
-            variant="secondary"
-            onClick={() => router.back()}
+          {/* Submit Button */}
+          <button
+            type="submit"
             disabled={loading}
+            style={{
+              width: "100%",
+              height: "45px",
+              backgroundColor: loading ? "#FFFFFF" : "#EECF01",
+              border: loading ? "2px solid #9C9C9C" : "2px solid #000000",
+              boxShadow: loading ? "none" : "8px 8px 0px 0px #000000",
+              padding: "12px 48px",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "16px",
+              fontWeight: 300,
+              lineHeight: "normal",
+              color: loading ? "#9C9C9C" : "#000000",
+              cursor: loading ? "not-allowed" : "pointer",
+              transition: "all 0.2s",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxSizing: "border-box",
+            }}
           >
-            Back
-          </OnboardingButton>
-        </div>
-      </form>
+            {loading ? "Loading..." : "Now what?"}
+          </button>
+        </form>
+      </div>
     </OnboardingCard>
   );
 }

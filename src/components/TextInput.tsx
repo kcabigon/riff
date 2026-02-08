@@ -1,49 +1,90 @@
 "use client";
 
-import { InputHTMLAttributes } from "react";
+import { InputHTMLAttributes, TextareaHTMLAttributes } from "react";
 
-interface TextInputProps extends InputHTMLAttributes<HTMLInputElement> {
+interface BaseTextInputProps {
   error?: string;
+  multiline?: boolean;
+  rows?: number;
 }
 
-export default function TextInput({ error, ...props }: TextInputProps) {
+type TextInputProps = BaseTextInputProps &
+  (
+    | ({ multiline?: false } & InputHTMLAttributes<HTMLInputElement>)
+    | ({ multiline: true } & TextareaHTMLAttributes<HTMLTextAreaElement>)
+  );
+
+export default function TextInput({
+  error,
+  multiline = false,
+  rows = 3,
+  ...props
+}: TextInputProps) {
+  const commonStyles = {
+    width: "100%",
+    backgroundColor: "#FFFFFF",
+    border: error ? "2px solid #FF0000" : "2px solid #000000",
+    padding: "12px",
+    fontFamily: "var(--font-dm-sans)",
+    fontSize: "16px",
+    fontWeight: 300,
+    lineHeight: multiline ? "1.5" : "normal",
+    color: error ? "#FF0000" : "#000000",
+    outline: "none",
+    transition: "border-color 0.2s",
+    boxSizing: "border-box" as const,
+  };
+
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (!error) {
+      e.target.style.borderColor = "#00FF66";
+    }
+    if ('onFocus' in props && props.onFocus) {
+      props.onFocus(e as any);
+    }
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (!error) {
+      e.target.style.borderColor = "#000000";
+    }
+    if ('onBlur' in props && props.onBlur) {
+      props.onBlur(e as any);
+    }
+  };
+
   return (
     <div
       style={{
         width: "100%",
       }}
     >
-      <input
-        {...props}
-        style={{
-          width: "100%",
-          height: "auto",
-          backgroundColor: "#FFFFFF",
-          border: error ? "2px solid #FF0000" : "2px solid #000000",
-          padding: "12px",
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "16px",
-          fontWeight: 300,
-          lineHeight: "normal",
-          color: error ? "#FF0000" : "#000000",
-          outline: "none",
-          transition: "border-color 0.2s",
-          boxSizing: "border-box",
-          ...props.style,
-        }}
-        onFocus={(e) => {
-          if (!error) {
-            e.target.style.borderColor = "#00FF66";
-          }
-          props.onFocus?.(e);
-        }}
-        onBlur={(e) => {
-          if (!error) {
-            e.target.style.borderColor = "#000000";
-          }
-          props.onBlur?.(e);
-        }}
-      />
+      {multiline ? (
+        <textarea
+          {...(props as TextareaHTMLAttributes<HTMLTextAreaElement>)}
+          rows={rows}
+          style={{
+            ...commonStyles,
+            height: "auto",
+            resize: "vertical" as const,
+            minHeight: `${rows * 1.5 + 2}em`,
+            ...(props.style || {}),
+          }}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+        />
+      ) : (
+        <input
+          {...(props as InputHTMLAttributes<HTMLInputElement>)}
+          style={{
+            ...commonStyles,
+            height: "auto",
+            ...(props.style || {}),
+          }}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+        />
+      )}
       {error && (
         <p
           style={{
@@ -59,7 +100,8 @@ export default function TextInput({ error, ...props }: TextInputProps) {
         </p>
       )}
       <style jsx>{`
-        input::placeholder {
+        input::placeholder,
+        textarea::placeholder {
           color: #9c9c9c;
         }
       `}</style>
