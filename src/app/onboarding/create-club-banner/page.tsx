@@ -2,6 +2,7 @@
 
 import { useState, useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import OnboardingCard from "@/components/onboarding/OnboardingCard";
 import ImageUpload from "@/components/onboarding/ImageUpload";
 import PrimaryButton from "@/components/PrimaryButton";
@@ -132,23 +133,22 @@ export default function OnboardingCreateClubBannerPage() {
               alignItems: "flex-start",
             }}
           >
-            <Tagline text="Club banner (optional)" color="#FF6B35" />
+            <Tagline text="Let's make it your own (optional)" color="#01EFFC" width={218} />
             <ImageUpload
               onUpload={setBannerImage}
               currentImage={bannerImage}
               disabled={loading}
+              uploadIcon={
+                <Image
+                  src="/icons/camera_icon.svg"
+                  alt=""
+                  width={56}
+                  height={42}
+                />
+              }
+              uploadText="Upload your club's cover photo"
+              hideRecommendedText={true}
             />
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: 300,
-                color: "#959595",
-                margin: 0,
-              }}
-            >
-              Add a visual identity to your club. You can always change this later.
-            </p>
           </div>
 
           {error && (
@@ -167,8 +167,13 @@ export default function OnboardingCreateClubBannerPage() {
           )}
 
           {/* Submit Button */}
-          <PrimaryButton type="submit" loading={loading} disabled={loading}>
-            Create club
+          <PrimaryButton
+            type="submit"
+            loading={loading}
+            disabled={loading}
+            style={{ backgroundColor: "#EECF01" }}
+          >
+            Cool. What's next?
           </PrimaryButton>
         </form>
       </div>
