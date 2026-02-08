@@ -30,6 +30,7 @@ export default function Tagline({ text, color, textColor, width = 262 }: Tagline
       "#C01582": "brightness(0) saturate(100%) invert(18%) sepia(82%) saturate(3721%) hue-rotate(307deg) brightness(95%) contrast(98%)", // pink
       "#955CB5": "brightness(0) saturate(100%) invert(42%) sepia(42%) saturate(887%) hue-rotate(232deg) brightness(94%) contrast(89%)", // purple
       "#FF6B35": "brightness(0) saturate(100%) invert(57%) sepia(87%) saturate(2645%) hue-rotate(339deg) brightness(101%) contrast(101%)", // orange
+      "#01EFFC": "brightness(0) saturate(100%) invert(79%) sepia(91%) saturate(2670%) hue-rotate(137deg) brightness(103%) contrast(101%)", // cyan
     };
 
     return colorFilters[hexColor] || "none";
