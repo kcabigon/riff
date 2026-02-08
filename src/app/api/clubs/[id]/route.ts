@@ -106,7 +106,7 @@ export async function PATCH(
   try {
     const user = await requireAuth();
     const { id: clubId } = await params;
-    const { name, description, moderatorId } = await req.json();
+    const { name, description, moderatorId, bannerImage } = await req.json();
 
     // Check if user is admin
     const club = await prisma.club.findUnique({
@@ -167,6 +167,7 @@ export async function PATCH(
           description: description?.trim() || null,
         }),
         ...(moderatorId !== undefined && { moderatorId }),
+        ...(bannerImage !== undefined && { bannerImage }),
       },
       include: {
         admin: {
