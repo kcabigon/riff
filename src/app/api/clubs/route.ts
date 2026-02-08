@@ -78,7 +78,7 @@ export async function POST(req: Request) {
   try {
     const user = await requireAuth();
 
-    const { name, description } = await req.json();
+    const { name, description, bannerImage } = await req.json();
 
     // Validate input
     if (!name || name.trim().length === 0) {
@@ -100,6 +100,7 @@ export async function POST(req: Request) {
       data: {
         name: name.trim(),
         description: description?.trim() || null,
+        bannerImage: bannerImage || null,
         adminId: (user as any).id,
         members: {
           create: {
