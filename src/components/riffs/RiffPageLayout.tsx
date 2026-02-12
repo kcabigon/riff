@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import AvatarStack from "@/components/shared/AvatarStack";
 import CountdownTimer from "./CountdownTimer";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
+import { useDraftCreation } from "@/hooks/useDraftCreation";
 
 interface RiffPageLayoutProps {
   riff: {
@@ -54,6 +55,7 @@ export default function RiffPageLayout({
   const [isButtonHovered, setIsButtonHovered] = useState(false);
   const router = useRouter();
   const handleAvatarClick = useProfileNavigation();
+  const { createDraft } = useDraftCreation();
 
   const handleJoinRiff = async () => {
     try {
@@ -70,8 +72,14 @@ export default function RiffPageLayout({
   };
 
   const handleContinueWriting = () => {
-    // Editor integration — future phase
-    console.log("Continue writing for riff:", riff.id);
+    const existingPiece = riff.pieces.find(
+      (p) => p.piece.authorId === currentUserId
+    );
+    if (existingPiece) {
+      router.push(`/write/${existingPiece.piece.id}`);
+    } else {
+      createDraft(riff.id);
+    }
   };
 
   const handleButtonClick = () => {
