@@ -1,5 +1,13 @@
 # Riff - Architecture Documentation
 
+## Quick Start (READ FIRST)
+
+**Before doing anything else in a new session**, read `docs/QUICKSTART.md` for full project context (~3,000 tokens). It contains the current state, recent work, priorities, file map, design system, and key commands. Do NOT explore the codebase or read other docs until you've read the quickstart file — it saves ~88K tokens compared to re-exploring.
+
+If the user asks you to "regain context" or "catch up", just read `docs/QUICKSTART.md` and summarize — do not use the Explore agent or read all docs.
+
+---
+
 ## Project Overview
 
 **Riff** is a private essay-sharing platform designed for creative communities to connect through long-form writing. It combines features of a collaborative text editor, essay showcase, book club functionality, and a social feed with notifications. The platform enables users to create "clubs" (groups), launch "riffs" (writing prompts/challenges within clubs), share essays with granular permission controls, and participate in threaded comments with text-level selections.
