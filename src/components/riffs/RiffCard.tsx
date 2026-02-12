@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import CountdownTimer from "./CountdownTimer";
 import AvatarStack from "@/components/shared/AvatarStack";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
+import { useDraftCreation } from "@/hooks/useDraftCreation";
 
 interface RiffCardProps {
   riff: {
@@ -45,6 +46,7 @@ export default function RiffCard({
   const [isCardHovered, setIsCardHovered] = useState(false);
   const router = useRouter();
   const handleAvatarClick = useProfileNavigation();
+  const { createDraft, isCreating } = useDraftCreation();
 
   // Format date
   const formatDate = (date: Date) => {
@@ -90,7 +92,14 @@ export default function RiffCard({
 
   const handleContinueWriting = (e: React.MouseEvent) => {
     e.stopPropagation();
-    router.push(`/riffs/${riff.id}`);
+    const existingPiece = riff.pieces.find(
+      (p) => p.piece.authorId === currentUserId
+    );
+    if (existingPiece) {
+      router.push(`/write/${existingPiece.piece.id}`);
+    } else {
+      createDraft(riff.id);
+    }
   };
 
   return (
