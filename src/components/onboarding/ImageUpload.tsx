@@ -209,7 +209,7 @@ export default function ImageUpload({
             <p
               style={{
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: "20px",
+                fontSize: "16px",
                 fontWeight: 300,
                 color: "#000000",
                 margin: 0,

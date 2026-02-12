@@ -4,7 +4,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, Suspense } from "react";
 import OnboardingCard from "@/components/onboarding/OnboardingCard";
 import OnboardingButton from "@/components/onboarding/OnboardingButton";
-import OnboardingProgress from "@/components/onboarding/OnboardingProgress";
+import BackButton from "@/components/BackButton";
+import Tagline from "@/components/Tagline";
 import InviteOptions from "@/components/clubs/InviteOptions";
 
 function InvitePageContent() {
@@ -45,60 +46,38 @@ function InvitePageContent() {
   }, [clubId, router]);
 
   return (
-    <OnboardingCard>
-      <OnboardingProgress currentStep={4} totalSteps={4} />
-
+    <OnboardingCard showLogo={false}>
       <div
         style={{
           width: "100%",
           display: "flex",
           flexDirection: "column",
-          gap: "16px",
-          alignItems: "center",
+          gap: "32px",
         }}
       >
-        <h1
+        <BackButton href="/onboarding/create-club-banner" />
+
+        <Tagline
+          text="Invite some homies to write with"
+          color="#01EFFC"
+          textColor="#000000"
+          width={330}
+        />
+
+        {/* Invite Options Component */}
+        {clubId && <InviteOptions clubId={clubId} />}
+
+        <div
           style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "32px",
-            fontWeight: 300,
-            color: "#000000",
-            margin: 0,
-            textAlign: "center",
+            width: "100%",
+            display: "flex",
+            justifyContent: "center",
           }}
         >
-          Invite your friends
-        </h1>
-        <p
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
-            fontWeight: 300,
-            color: "#959595",
-            margin: 0,
-            textAlign: "center",
-            maxWidth: "400px",
-          }}
-        >
-          Your club is ready! You can invite friends now or skip this step and
-          invite them later from your club page.
-        </p>
-      </div>
-
-      {/* Invite Options Component */}
-      {clubId && <InviteOptions clubId={clubId} />}
-
-      <div
-        style={{
-          width: "100%",
-          display: "flex",
-          flexDirection: "column",
-          gap: "12px",
-        }}
-      >
-        <OnboardingButton onClick={handleComplete}>
-          Skip for now
-        </OnboardingButton>
+          <OnboardingButton onClick={handleComplete}>
+            Skip for now
+          </OnboardingButton>
+        </div>
       </div>
     </OnboardingCard>
   );
@@ -109,7 +88,6 @@ export default function OnboardingInvitePage() {
     <Suspense
       fallback={
         <OnboardingCard>
-          <OnboardingProgress currentStep={4} totalSteps={4} />
           <div
             style={{
               width: "100%",

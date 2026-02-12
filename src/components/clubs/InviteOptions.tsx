@@ -1,27 +1,61 @@
 "use client";
 
-import { useState } from "react";
-import TextInput from "@/components/TextInput";
-import OnboardingButton from "@/components/onboarding/OnboardingButton";
+import { useState, useEffect } from "react";
+import Image from "next/image";
+
+// Custom hook for responsive design
+function useWindowWidth() {
+  const [windowWidth, setWindowWidth] = useState<number>(
+    typeof window !== "undefined" ? window.innerWidth : 1024
+  );
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  return windowWidth;
+}
 
 interface InviteOptionsProps {
   clubId: string;
 }
 
 export default function InviteOptions({ clubId }: InviteOptionsProps) {
-  const [emails, setEmails] = useState("");
+  const [clubName, setClubName] = useState<string>("");
   const [inviteUrl, setInviteUrl] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [copySuccess, setCopySuccess] = useState(false);
+  const [showLinkBox, setShowLinkBox] = useState(false);
+  const windowWidth = useWindowWidth();
+  const isMobile = windowWidth < 768;
+
+  // Fetch club name on mount
+  useEffect(() => {
+    const fetchClubName = async () => {
+      try {
+        const response = await fetch(`/api/clubs/${clubId}`);
+        if (response.ok) {
+          const data = await response.json();
+          setClubName(data.club.name || "your club");
+        }
+      } catch (err) {
+        console.error("Failed to fetch club name:", err);
+        setClubName("your club");
+      }
+    };
+
+    if (clubId) {
+      fetchClubName();
+    }
+  }, [clubId]);
 
   // Generate invite link
   const generateInviteLink = async () => {
-    setLoading(true);
-    setError("");
-    setSuccess("");
+    if (inviteUrl) return inviteUrl; // Already generated
 
+    setLoading(true);
     try {
       const response = await fetch(`/api/clubs/${clubId}/invites`, {
         method: "POST",
@@ -35,107 +69,67 @@ export default function InviteOptions({ clubId }: InviteOptionsProps) {
 
       const data = await response.json();
       setInviteUrl(data.invite.url);
-      setSuccess("Invite link generated!");
+      return data.invite.url;
     } catch (err: any) {
-      setError(err.message);
+      console.error("Error generating invite link:", err.message);
+      return null;
     } finally {
       setLoading(false);
     }
   };
 
-  // Copy link to clipboard
-  const copyToClipboard = async () => {
-    if (!inviteUrl) {
-      await generateInviteLink();
-      return;
+  // Handler: Send a text
+  const handleSendText = async () => {
+    const url = await generateInviteLink();
+    if (!url) return;
+
+    const message = `Join ${clubName} on Riff! ${url}`;
+
+    // Try Web Share API first (works on mobile)
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Join ${clubName} on Riff`,
+          text: message,
+        });
+        return;
+      } catch (err: any) {
+        // User cancelled or error occurred
+        if (err.name === "AbortError") return;
+      }
     }
 
+    // Fallback to SMS URI scheme
+    const smsBody = encodeURIComponent(message);
+    window.location.href = `sms:?&body=${smsBody}`;
+  };
+
+  // Handler: Send an email
+  const handleSendEmail = async () => {
+    const url = await generateInviteLink();
+    if (!url) return;
+
+    const subject = encodeURIComponent(`Join ${clubName} on Riff`);
+    const body = encodeURIComponent(
+      `I'd love for you to join my club on Riff!\n\nClick here to join: ${url}`
+    );
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  };
+
+  // Handler: Generate link to share
+  const handleGenerateLink = async () => {
+    await generateInviteLink();
+    setShowLinkBox(true);
+  };
+
+  // Copy to clipboard
+  const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(inviteUrl);
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
     } catch (err) {
-      setError("Failed to copy to clipboard");
-    }
-  };
-
-  // Share via native share API (SMS/other)
-  const shareViaSystem = async () => {
-    if (!inviteUrl) {
-      await generateInviteLink();
-      return;
-    }
-
-    // Check if Web Share API is available
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: "Join my club on Riff",
-          text: "I'd love for you to join my club on Riff!",
-          url: inviteUrl,
-        });
-      } catch (err: any) {
-        // User cancelled or error occurred
-        if (err.name !== "AbortError") {
-          setError("Failed to share");
-        }
-      }
-    } else {
-      // Fallback to copying
-      await copyToClipboard();
-      setError("Share not supported. Link copied to clipboard instead.");
-    }
-  };
-
-  // Send email invitations
-  const sendEmailInvites = async () => {
-    if (!emails.trim()) {
-      setError("Please enter at least one email address");
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-    setSuccess("");
-
-    try {
-      // Parse comma-separated emails
-      const emailList = emails
-        .split(",")
-        .map((e) => e.trim())
-        .filter((e) => e.length > 0);
-
-      if (emailList.length === 0) {
-        throw new Error("Please enter at least one email address");
-      }
-
-      // Basic email validation
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      const invalidEmails = emailList.filter((e) => !emailRegex.test(e));
-      if (invalidEmails.length > 0) {
-        throw new Error(`Invalid email(s): ${invalidEmails.join(", ")}`);
-      }
-
-      const response = await fetch(`/api/clubs/${clubId}/invites/email`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ emails: emailList }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to send invitations");
-      }
-
-      const data = await response.json();
-      setSuccess(
-        `Successfully sent ${data.sentCount || emailList.length} invitation(s)!`
-      );
-      setEmails(""); // Clear input
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+      console.error("Failed to copy to clipboard");
     }
   };
 
@@ -145,151 +139,170 @@ export default function InviteOptions({ clubId }: InviteOptionsProps) {
         width: "100%",
         display: "flex",
         flexDirection: "column",
-        gap: "24px",
+        gap: "12px",
       }}
     >
-      {/* Email Invitations */}
+      {/* Three action boxes - responsive */}
       <div
         style={{
           width: "100%",
           display: "flex",
-          flexDirection: "column",
+          flexDirection: isMobile ? "column" : "row",
           gap: "12px",
         }}
       >
-        <h3
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "18px",
-            fontWeight: 500,
-            color: "#000000",
-            margin: 0,
-          }}
-        >
-          Invite by Email
-        </h3>
-        <TextInput
-          type="text"
-          placeholder="friend@example.com, another@example.com"
-          value={emails}
-          onChange={(e) => setEmails(e.target.value)}
+        {/* Box 1: Send a text */}
+        <button
+          onClick={handleSendText}
           disabled={loading}
-        />
-        <OnboardingButton
-          onClick={sendEmailInvites}
-          disabled={loading || !emails.trim()}
-          loading={loading}
-        >
-          Send Email Invites
-        </OnboardingButton>
-      </div>
-
-      {/* Shareable Link */}
-      <div
-        style={{
-          width: "100%",
-          display: "flex",
-          flexDirection: "column",
-          gap: "12px",
-        }}
-      >
-        <h3
           style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "18px",
-            fontWeight: 500,
-            color: "#000000",
-            margin: 0,
+            background: "#FFFFFF",
+            border: "2px dashed #000000",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "12px",
+            padding: "16px 12px",
+            flex: isMobile ? "none" : 1,
+            width: isMobile ? "100%" : "auto",
+            height: isMobile ? "151px" : "auto",
+            cursor: loading ? "not-allowed" : "pointer",
+            opacity: loading ? 0.6 : 1,
           }}
         >
-          Share Link
-        </h3>
-        {inviteUrl && (
-          <div
+          <Image
+            src="/icons/invite_text.svg"
+            alt="Send a text"
+            width={26}
+            height={42}
+          />
+          <p
             style={{
-              padding: "12px",
-              backgroundColor: "#F9F9F9",
-              border: "2px solid #000000",
               fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              wordBreak: "break-all",
+              fontSize: "16px",
+              fontWeight: 300,
               color: "#000000",
+              margin: 0,
+              textAlign: "center",
             }}
           >
-            {inviteUrl}
-          </div>
-        )}
-        <OnboardingButton
-          onClick={copyToClipboard}
-          disabled={loading}
-          loading={loading}
-          variant="secondary"
-        >
-          {copySuccess
-            ? "Copied!"
-            : inviteUrl
-            ? "Copy Link"
-            : "Generate Link"}
-        </OnboardingButton>
-      </div>
+            Send a text
+          </p>
+        </button>
 
-      {/* Share via SMS/System */}
-      <div
-        style={{
-          width: "100%",
-          display: "flex",
-          flexDirection: "column",
-          gap: "12px",
-        }}
-      >
-        <h3
+        {/* Box 2: Send an email */}
+        <button
+          onClick={handleSendEmail}
+          disabled={loading}
           style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "18px",
-            fontWeight: 500,
-            color: "#000000",
-            margin: 0,
+            background: "#FFFFFF",
+            border: "2px dashed #000000",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "12px",
+            padding: "16px 12px",
+            flex: isMobile ? "none" : 1,
+            width: isMobile ? "100%" : "auto",
+            height: isMobile ? "151px" : "auto",
+            cursor: loading ? "not-allowed" : "pointer",
+            opacity: loading ? 0.6 : 1,
           }}
         >
-          Share via SMS
-        </h3>
-        <OnboardingButton
-          onClick={shareViaSystem}
+          <Image
+            src="/icons/invite_email.svg"
+            alt="Send an email"
+            width={40}
+            height={42}
+          />
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "16px",
+              fontWeight: 300,
+              color: "#000000",
+              margin: 0,
+              textAlign: "center",
+            }}
+          >
+            Send an email
+          </p>
+        </button>
+
+        {/* Box 3: Generate link */}
+        <button
+          onClick={handleGenerateLink}
           disabled={loading}
-          loading={loading}
-          variant="secondary"
+          style={{
+            background: "#FFFFFF",
+            border: "2px dashed #000000",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "12px",
+            padding: "16px 12px",
+            flex: isMobile ? "none" : 1,
+            width: isMobile ? "100%" : "auto",
+            height: isMobile ? "151px" : "auto",
+            cursor: loading ? "not-allowed" : "pointer",
+            opacity: loading ? 0.6 : 1,
+          }}
         >
-          Share via SMS
-        </OnboardingButton>
+          <Image
+            src="/icons/invite_link.svg"
+            alt="Generate a link to share"
+            width={60}
+            height={29}
+          />
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "16px",
+              fontWeight: 300,
+              color: "#000000",
+              margin: 0,
+              textAlign: "center",
+            }}
+          >
+            Generate a link to share
+          </p>
+        </button>
       </div>
 
-      {/* Success/Error Messages */}
-      {success && (
+      {/* Show link box when generated */}
+      {showLinkBox && inviteUrl && (
         <div
           style={{
             padding: "12px",
-            backgroundColor: "#00FF66",
+            background: "#F9F9F9",
             border: "2px solid #000000",
             fontFamily: "var(--font-dm-sans)",
             fontSize: "14px",
+            wordBreak: "break-all",
             color: "#000000",
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px",
           }}
         >
-          {success}
-        </div>
-      )}
-      {error && (
-        <div
-          style={{
-            padding: "12px",
-            backgroundColor: "#FFE6E6",
-            border: "2px solid #FF0000",
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
-            color: "#FF0000",
-          }}
-        >
-          {error}
+          <div>{inviteUrl}</div>
+          <button
+            onClick={copyToClipboard}
+            style={{
+              padding: "8px 16px",
+              background: "#FFFFFF",
+              border: "2px solid #000000",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "14px",
+              fontWeight: 300,
+              cursor: "pointer",
+            }}
+          >
+            {copySuccess ? "Copied!" : "Copy Link"}
+          </button>
         </div>
       )}
     </div>
