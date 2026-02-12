@@ -1,0 +1,165 @@
+/* Write page editor styles — black canvas on white page */
+
+/* Toolbar responsive alignment */
+.write-toolbar-container {
+  justify-content: flex-start;
+}
+
+@media (min-width: 667px) {
+  .write-toolbar-container {
+    justify-content: center;
+  }
+}
+
+/* Hide scrollbar but keep scroll functionality */
+.write-toolbar-container {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.write-toolbar-container::-webkit-scrollbar {
+  display: none;
+}
+
+/* ProseMirror editor styles */
+.write-editor .ProseMirror {
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  color: #ffffff;
+  font-family: var(--font-playfair), serif;
+  font-size: 18px;
+  line-height: normal;
+  outline: none;
+  border: none;
+  min-height: 200px;
+  max-width: 100%;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.write-editor .ProseMirror > * {
+  margin: 0;
+  padding: 0;
+}
+
+.write-editor .ProseMirror p {
+  margin: 0 0 1em 0;
+  color: #ffffff;
+  font-family: var(--font-playfair), serif;
+  font-size: 18px;
+  line-height: normal;
+  max-width: 100%;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.write-editor .ProseMirror p:last-child {
+  margin-bottom: 0;
+}
+
+/* Placeholder */
+.write-editor .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #666666;
+  pointer-events: none;
+  height: 0;
+  font-family: var(--font-playfair), serif;
+  font-size: 18px;
+}
+
+/* Headings */
+.write-editor .ProseMirror h1,
+.write-editor .ProseMirror h2,
+.write-editor .ProseMirror h3 {
+  margin: 0 0 0.5em 0;
+  padding: 0;
+  color: #ffffff;
+  font-family: var(--font-playfair), serif;
+  line-height: normal;
+  font-weight: bold;
+}
+
+.write-editor .ProseMirror h1 {
+  font-size: 32px;
+}
+
+.write-editor .ProseMirror h2 {
+  font-size: 24px;
+}
+
+.write-editor .ProseMirror h3 {
+  font-size: 20px;
+}
+
+/* Lists */
+.write-editor .ProseMirror ul,
+.write-editor .ProseMirror ol {
+  margin: 0 0 1em 0;
+  padding-left: 1.5em;
+  color: #ffffff;
+}
+
+.write-editor .ProseMirror li {
+  margin: 0;
+  padding: 0;
+  color: #ffffff;
+  font-family: var(--font-playfair), serif;
+  font-size: 18px;
+  line-height: normal;
+}
+
+/* Links */
+.write-editor .ProseMirror a {
+  color: #60a5fa;
+  text-decoration: underline;
+}
+
+.write-editor .ProseMirror a:hover {
+  color: #93c5fd;
+}
+
+/* Focus */
+.write-editor .ProseMirror:focus {
+  outline: none;
+}
+
+/* Inherit color */
+.write-editor .ProseMirror * {
+  color: inherit;
+}
+
+/* Images */
+.write-editor .ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1em 0;
+}
+
+/* YouTube embeds */
+.write-editor .ProseMirror iframe[src*="youtube.com"],
+.write-editor .ProseMirror iframe[src*="youtu.be"] {
+  max-width: 100%;
+  display: block;
+  margin: 1em auto;
+}
+
+/* Spotify embeds */
+.write-editor .ProseMirror .spotify-embed-wrapper {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.write-editor .ProseMirror .spotify-embed-wrapper iframe {
+  max-width: 100%;
+  height: 152px !important;
+  display: block;
+}
+
+/* Saving status pulse animation */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}

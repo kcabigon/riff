@@ -5,6 +5,8 @@ import ProfileHeader from "./ProfileHeader";
 import PiecesGrid from "./tabs/PiecesGrid";
 import DraftsList from "./tabs/DraftsList";
 import CollectionsList from "./tabs/CollectionsList";
+import PrimaryButton from "@/components/PrimaryButton";
+import { useDraftCreation } from "@/hooks/useDraftCreation";
 
 type TabId = "pieces" | "drafts" | "collections";
 
@@ -66,6 +68,7 @@ export default function ProfilePage({
   isOwnProfile,
 }: ProfilePageProps) {
   const [activeTab, setActiveTab] = useState<TabId>("pieces");
+  const { createDraft, isCreating } = useDraftCreation();
 
   return (
     <div
@@ -145,7 +148,27 @@ export default function ProfilePage({
         {isOwnProfile ? (
           <>
             {activeTab === "pieces" && <PiecesGrid pieces={pieces} />}
-            {activeTab === "drafts" && <DraftsList drafts={drafts} />}
+            {activeTab === "drafts" && (
+              <>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    padding: "16px 24px 0",
+                  }}
+                >
+                  <PrimaryButton
+                    onClick={() => createDraft()}
+                    loading={isCreating}
+                    disabled={isCreating}
+                    style={{ width: "auto" }}
+                  >
+                    Start writing
+                  </PrimaryButton>
+                </div>
+                <DraftsList drafts={drafts} />
+              </>
+            )}
             {activeTab === "collections" && (
               <CollectionsList collections={collections} />
             )}

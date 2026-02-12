@@ -10,11 +10,11 @@ export async function PATCH(
   try {
     const user = await requireAuth();
     const { id: pieceId } = await params;
-    const { currentContent } = await req.json();
+    const { currentContent, title } = await req.json();
 
-    if (!currentContent) {
+    if (!currentContent && title === undefined) {
       return NextResponse.json(
-        { error: "Content is required" },
+        { error: "At least one of currentContent or title is required" },
         { status: 400 }
       );
     }
@@ -38,13 +38,18 @@ export async function PATCH(
       );
     }
 
-    // Auto-save just updates currentContent without updating title/excerpt
-    // This is a lightweight save for draft content
+    // Build dynamic update data — at least one field will be present
+    const data: { currentContent?: string; title?: string } = {};
+    if (currentContent) {
+      data.currentContent = currentContent;
+    }
+    if (title !== undefined) {
+      data.title = title.trim() || "Untitled";
+    }
+
     const updatedPiece = await prisma.piece.update({
       where: { id: pieceId },
-      data: {
-        currentContent,
-      },
+      data,
       select: {
         id: true,
         updatedAt: true,

@@ -56,7 +56,7 @@ export default function DraftsList({ drafts }: DraftsListProps) {
         return (
           <a
             key={draft.id}
-            href={`/pieces/${draft.id}`}
+            href={`/write/${draft.id}`}
             style={{
               textDecoration: "none",
               color: "inherit",
