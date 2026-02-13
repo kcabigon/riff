@@ -13,6 +13,7 @@ import { Spotify } from "@/components/editor/extensions/Spotify";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import "@/app/write/[pieceId]/editor.css";
+import NoiseBackground from "@/components/NoiseBackground";
 
 interface RiffConnection {
   id: string;
@@ -275,8 +276,11 @@ export default function WritePage({ piece }: WritePageProps) {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
+        position: "relative",
       }}
     >
+      <NoiseBackground fillMode="cover" />
+
       {/* Hidden file input */}
       <input
         ref={fileInputRef}
@@ -293,6 +297,8 @@ export default function WritePage({ piece }: WritePageProps) {
           maxWidth: "1000px",
           padding: "32px 24px 0",
           boxSizing: "border-box",
+          position: "relative",
+          zIndex: 1,
         }}
       >
         {/* Back frame: back arrow + save status */}
