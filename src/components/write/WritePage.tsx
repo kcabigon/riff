@@ -14,6 +14,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import "@/app/write/[pieceId]/editor.css";
 import NoiseBackground from "@/components/NoiseBackground";
+import BackButton from "@/components/BackButton";
 
 interface RiffConnection {
   id: string;
@@ -312,27 +313,7 @@ export default function WritePage({ piece }: WritePageProps) {
           }}
         >
           {/* Back arrow */}
-          <button
-            onClick={handleBack}
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: 0,
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-              <path
-                d="M20 24L12 16L20 8"
-                stroke="#000000"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
+          <BackButton onClick={handleBack} />
 
           {/* Save status */}
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -444,7 +425,8 @@ export default function WritePage({ piece }: WritePageProps) {
             boxShadow: "12px 12px 0px 0px #000000",
             display: "flex",
             flexDirection: "column",
-            marginBottom: "48px",
+            minHeight: "calc(100vh - 220px)",
+            marginBottom: "32px",
           }}
         >
           {/* Canvas content area */}
