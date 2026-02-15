@@ -121,17 +121,15 @@ export async function POST(
       );
     }
 
-    // Check if user is a club member
-    const member = await prisma.clubMember.findFirst({
-      where: {
-        clubId,
-        userId: (user as any).id,
-      },
+    // Check if user is the club admin
+    const club = await prisma.club.findUnique({
+      where: { id: clubId },
+      select: { adminId: true },
     });
 
-    if (!member) {
+    if (!club || club.adminId !== (user as any).id) {
       return NextResponse.json(
-        { error: "You must be a club member to create a riff" },
+        { error: "Only the club admin can create a riff" },
         { status: 403 }
       );
     }

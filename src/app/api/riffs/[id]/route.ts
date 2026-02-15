@@ -143,20 +143,53 @@ export async function PATCH(
       );
     }
 
-    // Any club member can mark riff as COMPLETED
+    // Status transition rules
     if (status && status !== riff.status) {
-      if (status === "COMPLETED") {
-        // Any member can complete
-      } else if (status === "ACTIVE" && riff.creatorId !== (user as any).id) {
-        return NextResponse.json(
-          { error: "Only the riff creator can activate the riff" },
-          { status: 403 }
-        );
-      } else if (!["DRAFT", "ACTIVE", "COMPLETED"].includes(status)) {
+      if (!["DRAFT", "ACTIVE", "REVEALED", "COMPLETED"].includes(status)) {
         return NextResponse.json(
           { error: "Invalid riff status" },
           { status: 400 }
         );
+      }
+
+      // Fetch club to check admin
+      const club = await prisma.club.findUnique({
+        where: { id: riff.clubId },
+        select: { adminId: true },
+      });
+
+      const isClubAdmin = club?.adminId === (user as any).id;
+
+      if (status === "ACTIVE" && riff.status === "DRAFT") {
+        // Only creator can activate from DRAFT
+        if (riff.creatorId !== (user as any).id) {
+          return NextResponse.json(
+            { error: "Only the riff creator can activate the riff" },
+            { status: 403 }
+          );
+        }
+      } else if (status === "REVEALED") {
+        // Only club admin can reveal, and riff must be ACTIVE
+        if (!isClubAdmin) {
+          return NextResponse.json(
+            { error: "Only the club admin can reveal pieces" },
+            { status: 403 }
+          );
+        }
+        if (riff.status !== "ACTIVE") {
+          return NextResponse.json(
+            { error: "Only active riffs can be revealed" },
+            { status: 400 }
+          );
+        }
+      } else if (status === "COMPLETED") {
+        // Only club admin can complete
+        if (!isClubAdmin) {
+          return NextResponse.json(
+            { error: "Only the club admin can complete a riff" },
+            { status: 403 }
+          );
+        }
       }
     }
 
