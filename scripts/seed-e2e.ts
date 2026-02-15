@@ -102,6 +102,10 @@ async function main() {
     const riffIds = riffs.map((r) => r.id);
 
     if (riffIds.length > 0) {
+      // Delete pieceRead entries for these riffs
+      await prisma.pieceRead.deleteMany({
+        where: { riffId: { in: riffIds } },
+      });
       // Delete pieceRiff entries for these riffs
       await prisma.pieceRiff.deleteMany({
         where: { riffId: { in: riffIds } },
@@ -279,7 +283,99 @@ async function main() {
   console.log("  Alice submitted piece to active riff");
 
   // -------------------------------------------------------------------------
-  // 4. Completed riff — "Childhood Memories"
+  // 4. Revealed riff — "Sex, Money & Religion"
+  // -------------------------------------------------------------------------
+  console.log("\nCreating revealed riff...");
+  const revealedRiff = await prisma.riff.create({
+    data: {
+      clubId: club.id,
+      creatorId: writer.id,
+      title: "Volume 3 | Sex, Money & Religion",
+      prompt:
+        "Pick one of the three — sex, money, or religion — and write something honest. No judgment, no filter.",
+      deadline: new Date("2026-02-01T23:59:59Z"),
+      status: "REVEALED",
+    },
+  });
+  console.log(`  Revealed riff: "${revealedRiff.title}" (${revealedRiff.id})`);
+
+  // All 4 members are participants
+  await prisma.riffParticipant.createMany({
+    data: [
+      { riffId: revealedRiff.id, userId: writer.id },
+      { riffId: revealedRiff.id, userId: alice.id },
+      { riffId: revealedRiff.id, userId: bob.id },
+      { riffId: revealedRiff.id, userId: carol.id },
+    ],
+  });
+  console.log("  Participants: writer, alice, bob, carol (all 4)");
+
+  // All 4 submitted pieces
+  const revealedPieces = [
+    {
+      title: "The Collection Plate",
+      authorId: writer.id,
+      currentContent:
+        "<p>Every Sunday, the brass plate came around, and I watched my father drop in exactly ten percent. Not a dollar more, not a dollar less. I used to think it was about God, but it was about something else entirely — about being seen.</p><p>He never prayed at home. But in that pew, with the plate in his hands, he was the most devout man in the room.</p>",
+      wordCount: 72,
+    },
+    {
+      title: "What We Don't Talk About",
+      authorId: alice.id,
+      currentContent:
+        "<p>My mother never said the word \"money.\" She said \"the situation\" or \"things are tight\" or simply changed the subject. I learned early that wanting things was impolite, and asking for them was worse.</p><p>It wasn't until I was thirty that I realized I had internalized every one of her silences.</p>",
+      wordCount: 55,
+    },
+    {
+      title: "First Date Economics",
+      authorId: bob.id,
+      currentContent:
+        "<p>She ordered the salmon. I ordered the chicken, not because I wanted it, but because it was eight dollars cheaper. I did the math in my head — appetizer, two entrees, tax, tip — and felt my palms get damp.</p><p>She split the bill without asking. I married her two years later.</p>",
+      wordCount: 58,
+    },
+    {
+      title: "Temple of the Body",
+      authorId: carol.id,
+      currentContent:
+        "<p>The yoga studio smelled like sandalwood and ambition. Everyone was bending themselves into shapes that promised enlightenment, or at least a better Instagram. I was there because my therapist said I needed to \"reconnect with my body.\"</p><p>Three months later, I still couldn't touch my toes, but I'd stopped apologizing for taking up space.</p>",
+      wordCount: 62,
+    },
+  ];
+
+  const revealedPieceIds: string[] = [];
+  for (const p of revealedPieces) {
+    const piece = await prisma.piece.create({ data: p });
+    await prisma.pieceRiff.create({
+      data: { pieceId: piece.id, riffId: revealedRiff.id },
+    });
+    revealedPieceIds.push(piece.id);
+  }
+  console.log("  Added 4 pieces (writer, alice, bob, carol)");
+
+  // PieceReads: Alice has read 2/4 pieces (tests "Continue reading")
+  await prisma.pieceRead.createMany({
+    data: [
+      { userId: alice.id, pieceId: revealedPieceIds[0], riffId: revealedRiff.id }, // writer's piece
+      { userId: alice.id, pieceId: revealedPieceIds[2], riffId: revealedRiff.id }, // bob's piece
+    ],
+  });
+  console.log("  Alice has read 2/4 pieces (tests 'Continue reading')");
+
+  // Bob has read 0 pieces (tests "Reveal")
+  console.log("  Bob has read 0/4 pieces (tests 'Reveal')");
+
+  // Writer has read all 4 pieces (tests completed state)
+  await prisma.pieceRead.createMany({
+    data: revealedPieceIds.map((pieceId) => ({
+      userId: writer.id,
+      pieceId,
+      riffId: revealedRiff.id,
+    })),
+  });
+  console.log("  Writer has read 4/4 pieces (tests completed state)");
+
+  // -------------------------------------------------------------------------
+  // 5. Completed riff — "Childhood Memories"
   // -------------------------------------------------------------------------
   console.log("\nCreating completed riff...");
   const completedRiff = await prisma.riff.create({
@@ -327,13 +423,14 @@ async function main() {
   console.log("  Added 3 pieces (writer, alice, bob)");
 
   // -------------------------------------------------------------------------
-  // 5. Summary
+  // 6. Summary
   // -------------------------------------------------------------------------
   console.log("\n========================================");
   console.log("  E2E seed data created successfully!");
   console.log("========================================\n");
   console.log("Club:", club.name, `(${club.id})`);
   console.log("Active riff:", activeRiff.title, `(${activeRiff.id})`);
+  console.log("Revealed riff:", revealedRiff.title, `(${revealedRiff.id})`);
   console.log("Completed riff:", completedRiff.title, `(${completedRiff.id})`);
   console.log("");
   console.log("Test scenarios (go to /dev-signin):");
@@ -344,17 +441,20 @@ async function main() {
   console.log("  2. RESUME ONBOARDING");
   console.log("     midway@test.local → /onboarding (resumes at club-choice)");
   console.log("");
-  console.log("  3. CLUB VIEW + EDITOR");
+  console.log("  3. CLUB VIEW + EDITOR (HOST)");
   console.log(`     writer@test.local → /clubs/${club.id}`);
   console.log('     Joined active riff, no piece. Click "Continue writing" → editor');
+  console.log("     Revealed riff: all 4/4 read → appears in Completed Riffs");
   console.log("");
-  console.log("  4. SUBMITTED STATE");
+  console.log("  4. SUBMITTED + CONTINUE READING");
   console.log(`     alice@test.local → /clubs/${club.id}`);
   console.log("     Has submitted piece to active riff");
+  console.log('     Revealed riff: 2/4 read → "Continue reading" CTA');
   console.log("");
-  console.log("  5. WAITING STATE");
+  console.log("  5. WAITING + FIRST REVEAL");
   console.log(`     bob@test.local → /clubs/${club.id}`);
   console.log("     Joined active riff, no piece yet");
+  console.log('     Revealed riff: 0/4 read → "Reveal" CTA');
   console.log("");
   console.log("  6. NOT JOINED");
   console.log(`     carol@test.local → /clubs/${club.id}`);

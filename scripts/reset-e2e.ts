@@ -41,6 +41,9 @@ async function main() {
     const riffIds = riffs.map((r) => r.id);
 
     if (riffIds.length > 0) {
+      await prisma.pieceRead.deleteMany({
+        where: { riffId: { in: riffIds } },
+      });
       await prisma.pieceRiff.deleteMany({
         where: { riffId: { in: riffIds } },
       });
@@ -76,7 +79,12 @@ async function main() {
     console.log(`\nDeleted ${pieces.length} piece(s)`);
   }
 
-  // 3. Delete riff participations by test users (in non-test clubs)
+  // 3. Delete piece reads by test users
+  await prisma.pieceRead.deleteMany({
+    where: { userId: { in: userIds } },
+  });
+
+  // 4. Delete riff participations by test users (in non-test clubs)
   await prisma.riffParticipant.deleteMany({
     where: { userId: { in: userIds } },
   });

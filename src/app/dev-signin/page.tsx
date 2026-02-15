@@ -59,25 +59,25 @@ export default async function DevSignInPage() {
           redirect: "/onboarding",
         },
         {
-          label: "Scenario 3: Club view + editor",
+          label: "Scenario 3: Host (all read)",
           description:
-            'Joined active riff, no piece yet. Click "Continue writing" to test the editor.',
+            'Club admin. Active riff: "Continue writing". Revealed riff: all 4/4 read → appears in Completed Riffs.',
           email: "writer@test.local",
-          userName: "Writer",
+          userName: "Writer (Host)",
           redirect: `/clubs/${clubId}`,
         },
         {
-          label: "Scenario 4: Submitted state",
+          label: "Scenario 4: Continue reading",
           description:
-            "Has submitted a piece to the active riff. See the submitted state UI.",
+            'Revealed riff: 2/4 pieces read → "Continue reading" CTA in Ready to Reveal section.',
           email: "alice@test.local",
           userName: "Alice Chen",
           redirect: `/clubs/${clubId}`,
         },
         {
-          label: "Scenario 5: Waiting state",
+          label: "Scenario 5: First reveal",
           description:
-            "Joined active riff but hasn't written anything yet.",
+            'Revealed riff: 0/4 pieces read → "Reveal" CTA. Click to see pieces gallery.',
           email: "bob@test.local",
           userName: "Bob Rivera",
           redirect: `/clubs/${clubId}`,
