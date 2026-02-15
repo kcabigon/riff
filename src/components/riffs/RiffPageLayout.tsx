@@ -37,25 +37,45 @@ interface RiffPageLayoutProps {
         title: string;
         authorId: string;
         wordCount: number;
+        coverImage?: string | null;
+        currentContent?: string;
+        author?: {
+          id: string;
+          name: string | null;
+          avatarUrl: string | null;
+        };
       };
     }>;
   };
   currentUserId: string;
+  isAdmin: boolean;
   isJoined: boolean;
   hasSubmitted: boolean;
+  readPieceIds?: string[];
+  onReveal?: () => void;
 }
 
 export default function RiffPageLayout({
   riff,
   currentUserId,
+  isAdmin,
   isJoined: initialIsJoined,
   hasSubmitted,
+  readPieceIds = [],
+  onReveal,
 }: RiffPageLayoutProps) {
   const [isJoined, setIsJoined] = useState(initialIsJoined);
   const [isButtonHovered, setIsButtonHovered] = useState(false);
   const router = useRouter();
   const handleAvatarClick = useProfileNavigation();
   const { createDraft } = useDraftCreation();
+
+  // Deadline detection
+  const isPastDeadline = riff.deadline
+    ? new Date(riff.deadline).getTime() < Date.now()
+    : false;
+
+  const canRevealNoDeadline = !riff.deadline && isAdmin && riff.pieces.length > 0;
 
   const handleJoinRiff = async () => {
     try {
@@ -104,6 +124,10 @@ export default function RiffPageLayout({
   const waitingUsers = riff.participants.filter(
     (p) => !riff.pieces.some((piece) => piece.piece.authorId === p.user.id)
   );
+
+  const handleRevealClick = () => {
+    onReveal?.();
+  };
 
   const buttonLabel = isJoined
     ? hasSubmitted
@@ -203,13 +227,15 @@ export default function RiffPageLayout({
                   fontFamily: "var(--font-dm-sans)",
                   fontSize: "16px",
                   fontWeight: 300,
-                  color: "#808080",
+                  color: isPastDeadline ? "#FF4444" : "#808080",
                   margin: 0,
                 }}
               >
-                {riff.deadline
-                  ? `${formatDate(riff.createdAt)} - ${formatDate(riff.deadline)}`
-                  : formatDate(riff.createdAt)}
+                {isPastDeadline
+                  ? "Deadline passed"
+                  : riff.deadline
+                    ? `${formatDate(riff.createdAt)} - ${formatDate(riff.deadline)}`
+                    : formatDate(riff.createdAt)}
               </p>
             </div>
 
@@ -337,33 +363,90 @@ export default function RiffPageLayout({
               minWidth: "200px",
             }}
           >
-            <button
-              onClick={handleButtonClick}
-              onMouseEnter={() => setIsButtonHovered(true)}
-              onMouseLeave={() => setIsButtonHovered(false)}
-              style={{
-                backgroundColor: isButtonHovered ? "#00FF66" : "#FFFFFF",
-                border: "2px solid #000000",
-                boxShadow: isButtonHovered
-                  ? "8px 8px 0px 0px #000000"
-                  : isJoined
-                    ? "8px 8px 0px 0px #00FF66"
+            {(isPastDeadline || canRevealNoDeadline) && isAdmin && riff.status === "ACTIVE" ? (
+              <button
+                onClick={handleRevealClick}
+                onMouseEnter={() => setIsButtonHovered(true)}
+                onMouseLeave={() => setIsButtonHovered(false)}
+                style={{
+                  backgroundColor: isButtonHovered ? "#00FF66" : "#FFFFFF",
+                  border: "2px solid #000000",
+                  boxShadow: isButtonHovered
+                    ? "8px 8px 0px 0px #000000"
                     : "8px 8px 0px 0px #01EFFC",
-                padding: "12px 48px",
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 300,
-                color: "#000000",
-                cursor: "pointer",
-                transition: "none",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {buttonLabel}
-            </button>
+                  padding: "12px 48px",
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 300,
+                  color: "#000000",
+                  cursor: "pointer",
+                  transition: "none",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Reveal pieces
+              </button>
+            ) : isPastDeadline && !isAdmin && riff.status === "ACTIVE" ? (
+              <button
+                disabled
+                style={{
+                  backgroundColor: "#FFFFFF",
+                  border: "2px solid #000000",
+                  boxShadow: "8px 8px 0px 0px #808080",
+                  padding: "12px 48px",
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 300,
+                  color: "#808080",
+                  cursor: "not-allowed",
+                  transition: "none",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Waiting for reveal
+              </button>
+            ) : riff.status !== "REVEALED" ? (
+              <button
+                onClick={handleButtonClick}
+                onMouseEnter={() => setIsButtonHovered(true)}
+                onMouseLeave={() => setIsButtonHovered(false)}
+                style={{
+                  backgroundColor: isButtonHovered ? "#00FF66" : "#FFFFFF",
+                  border: "2px solid #000000",
+                  boxShadow: isButtonHovered
+                    ? "8px 8px 0px 0px #000000"
+                    : isJoined
+                      ? "8px 8px 0px 0px #00FF66"
+                      : "8px 8px 0px 0px #01EFFC",
+                  padding: "12px 48px",
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 300,
+                  color: "#000000",
+                  cursor: "pointer",
+                  transition: "none",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {buttonLabel}
+              </button>
+            ) : null}
 
-            {isJoined && riff.deadline && (
+            {isJoined && riff.deadline && !isPastDeadline && (
               <CountdownTimer deadline={new Date(riff.deadline)} />
+            )}
+            {isPastDeadline && riff.deadline && (
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "14px",
+                  fontWeight: 700,
+                  color: "#FF4444",
+                  margin: 0,
+                }}
+              >
+                Time&apos;s up!
+              </p>
             )}
           </div>
         </div>

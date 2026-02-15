@@ -32,7 +32,9 @@ interface RiffCardProps {
   isJoined: boolean;
   hasSubmitted: boolean;
   currentUserId: string;
+  isAdmin: boolean;
   onJoin?: () => void;
+  onReveal?: () => void;
 }
 
 export default function RiffCard({
@@ -40,13 +42,23 @@ export default function RiffCard({
   isJoined,
   hasSubmitted,
   currentUserId,
+  isAdmin,
   onJoin,
+  onReveal,
 }: RiffCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isCardHovered, setIsCardHovered] = useState(false);
   const router = useRouter();
   const handleAvatarClick = useProfileNavigation();
   const { createDraft, isCreating } = useDraftCreation();
+
+  // Deadline detection
+  const isPastDeadline = riff.deadline
+    ? new Date(riff.deadline).getTime() < Date.now()
+    : false;
+
+  // Host can reveal riffs with no deadline if at least 1 piece submitted
+  const canRevealNoDeadline = !riff.deadline && isAdmin && riff.pieces.length > 0;
 
   // Format date
   const formatDate = (date: Date) => {
@@ -100,6 +112,11 @@ export default function RiffCard({
     } else {
       createDraft(riff.id);
     }
+  };
+
+  const handleRevealClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onReveal?.();
   };
 
   return (
@@ -159,15 +176,17 @@ export default function RiffCard({
               fontSize: "16px",
               fontWeight: 300,
               lineHeight: "normal",
-              color: "#808080",
+              color: isPastDeadline ? "#FF4444" : "#808080",
               margin: 0,
             }}
           >
-            {isJoined && riff.deadline
-              ? getDateRange()
-              : riff.deadline
-                ? `Deadline: ${formatDate(riff.deadline)}`
-                : "No deadline"}
+            {isPastDeadline
+              ? "Deadline passed"
+              : isJoined && riff.deadline
+                ? getDateRange()
+                : riff.deadline
+                  ? `Deadline: ${formatDate(riff.deadline)}`
+                  : "No deadline"}
           </p>
         </div>
 
@@ -281,39 +300,98 @@ export default function RiffCard({
         }}
       >
         {/* Button */}
-        <button
-          onClick={isJoined ? handleContinueWriting : handleJoinRiff}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-          style={{
-            backgroundColor: isHovered ? "#00FF66" : "#FFFFFF",
-            border: "2px solid #000000",
-            boxShadow: isHovered
-              ? "8px 8px 0px 0px #000000"
-              : isJoined
-                ? "8px 8px 0px 0px #00FF66"
+        {(isPastDeadline || canRevealNoDeadline) && isAdmin ? (
+          <button
+            onClick={handleRevealClick}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            style={{
+              backgroundColor: isHovered ? "#00FF66" : "#FFFFFF",
+              border: "2px solid #000000",
+              boxShadow: isHovered
+                ? "8px 8px 0px 0px #000000"
                 : "8px 8px 0px 0px #01EFFC",
-            padding: "12px 48px",
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
-            fontWeight: 300,
-            lineHeight: "normal",
-            color: "#000000",
-            cursor: "pointer",
-            transition: "none",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {isJoined
-            ? hasSubmitted
-              ? "View submission"
-              : "Continue writing"
-            : "Join riff"}
-        </button>
+              padding: "12px 48px",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "16px",
+              fontWeight: 300,
+              lineHeight: "normal",
+              color: "#000000",
+              cursor: "pointer",
+              transition: "none",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Reveal pieces
+          </button>
+        ) : (isPastDeadline) && !isAdmin ? (
+          <button
+            disabled
+            style={{
+              backgroundColor: "#FFFFFF",
+              border: "2px solid #000000",
+              boxShadow: "8px 8px 0px 0px #808080",
+              padding: "12px 48px",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "16px",
+              fontWeight: 300,
+              lineHeight: "normal",
+              color: "#808080",
+              cursor: "not-allowed",
+              transition: "none",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Waiting for reveal
+          </button>
+        ) : (
+          <button
+            onClick={isJoined ? handleContinueWriting : handleJoinRiff}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            style={{
+              backgroundColor: isHovered ? "#00FF66" : "#FFFFFF",
+              border: "2px solid #000000",
+              boxShadow: isHovered
+                ? "8px 8px 0px 0px #000000"
+                : isJoined
+                  ? "8px 8px 0px 0px #00FF66"
+                  : "8px 8px 0px 0px #01EFFC",
+              padding: "12px 48px",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "16px",
+              fontWeight: 300,
+              lineHeight: "normal",
+              color: "#000000",
+              cursor: "pointer",
+              transition: "none",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {isJoined
+              ? hasSubmitted
+                ? "View submission"
+                : "Continue writing"
+              : "Join riff"}
+          </button>
+        )}
 
-        {/* Countdown Timer (only for joined riffs with deadline) */}
-        {isJoined && riff.deadline && (
+        {/* Countdown Timer or Time's up */}
+        {isJoined && riff.deadline && !isPastDeadline && (
           <CountdownTimer deadline={new Date(riff.deadline)} />
+        )}
+        {isPastDeadline && riff.deadline && (
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "14px",
+              fontWeight: 700,
+              color: "#FF4444",
+              margin: 0,
+            }}
+          >
+            Time&apos;s up!
+          </p>
         )}
       </div>
     </div>
