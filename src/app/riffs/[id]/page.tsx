@@ -22,7 +22,7 @@ export default async function RiffPage({
     where: { id },
     include: {
       club: {
-        select: { id: true, name: true },
+        select: { id: true, name: true, adminId: true },
       },
       creator: {
         select: { id: true, name: true, username: true, avatarUrl: true },
@@ -43,6 +43,11 @@ export default async function RiffPage({
               title: true,
               authorId: true,
               wordCount: true,
+              coverImage: true,
+              currentContent: true,
+              author: {
+                select: { id: true, name: true, avatarUrl: true },
+              },
             },
           },
         },
@@ -71,6 +76,17 @@ export default async function RiffPage({
   const hasSubmitted = riff.pieces.some(
     (p) => p.piece.authorId === userId
   );
+  const isAdmin = riff.club.adminId === userId;
+
+  // Fetch read piece IDs for REVEALED riffs
+  let readPieceIds: string[] = [];
+  if (riff.status === "REVEALED") {
+    const reads = await prisma.pieceRead.findMany({
+      where: { userId, riffId: id },
+      select: { pieceId: true },
+    });
+    readPieceIds = reads.map((r) => r.pieceId);
+  }
 
   // Serialize dates to strings for client component boundary (Prisma returns Date objects)
   const serializedRiff = {
@@ -83,8 +99,10 @@ export default async function RiffPage({
     <RiffPageLayout
       riff={serializedRiff}
       currentUserId={userId}
+      isAdmin={isAdmin}
       isJoined={isJoined}
       hasSubmitted={hasSubmitted}
+      readPieceIds={readPieceIds}
     />
   );
 }

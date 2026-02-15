@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import AvatarStack from "@/components/shared/AvatarStack";
 import CountdownTimer from "./CountdownTimer";
+import PieceCard from "./PieceCard";
+import RevealConfirmModal from "./RevealConfirmModal";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
 import { useDraftCreation } from "@/hooks/useDraftCreation";
 
@@ -66,6 +68,8 @@ export default function RiffPageLayout({
 }: RiffPageLayoutProps) {
   const [isJoined, setIsJoined] = useState(initialIsJoined);
   const [isButtonHovered, setIsButtonHovered] = useState(false);
+  const [isRevealModalOpen, setIsRevealModalOpen] = useState(false);
+  const [isRevealing, setIsRevealing] = useState(false);
   const router = useRouter();
   const handleAvatarClick = useProfileNavigation();
   const { createDraft } = useDraftCreation();
@@ -126,7 +130,30 @@ export default function RiffPageLayout({
   );
 
   const handleRevealClick = () => {
-    onReveal?.();
+    if (onReveal) {
+      onReveal();
+    } else {
+      setIsRevealModalOpen(true);
+    }
+  };
+
+  const handleRevealConfirm = async () => {
+    setIsRevealing(true);
+    try {
+      const res = await fetch(`/api/riffs/${riff.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "REVEALED" }),
+      });
+      if (res.ok) {
+        setIsRevealModalOpen(false);
+        window.location.reload();
+      }
+    } catch (err) {
+      console.error("Error revealing riff:", err);
+    } finally {
+      setIsRevealing(false);
+    }
   };
 
   const buttonLabel = isJoined
@@ -451,29 +478,136 @@ export default function RiffPageLayout({
           </div>
         </div>
 
-        {/* Placeholder for future riff detail content */}
-        <div
-          style={{
-            marginTop: "48px",
-            padding: "40px",
-            backgroundColor: "#F9F9F9",
-            border: "2px dashed #E6E6E6",
-            textAlign: "center",
-          }}
-        >
-          <p
+        {/* Pieces gallery for REVEALED riffs */}
+        {riff.status === "REVEALED" && riff.pieces.length > 0 && (
+          <div style={{ marginTop: "48px" }}>
+            {/* Stats header */}
+            <div
+              style={{
+                display: "flex",
+                gap: "16px",
+                marginBottom: "24px",
+              }}
+            >
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 300,
+                  color: "#000000",
+                  margin: 0,
+                }}
+              >
+                <span style={{ fontWeight: 700 }}>{riff.pieces.length}</span>{" "}
+                {riff.pieces.length === 1 ? "piece" : "pieces"}
+              </p>
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 300,
+                  color: "#000000",
+                  margin: 0,
+                }}
+              >
+                <span style={{ fontWeight: 700 }}>
+                  {riff.pieces
+                    .reduce((sum, p) => sum + (p.piece.wordCount || 0), 0)
+                    .toLocaleString()}
+                </span>{" "}
+                words
+              </p>
+            </div>
+
+            {/* Pieces grid */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                gap: "24px",
+              }}
+            >
+              {riff.pieces.map((pieceRiff) => (
+                <PieceCard
+                  key={pieceRiff.piece.id}
+                  piece={{
+                    id: pieceRiff.piece.id,
+                    title: pieceRiff.piece.title,
+                    coverImage: pieceRiff.piece.coverImage,
+                    currentContent: pieceRiff.piece.currentContent || "",
+                    wordCount: pieceRiff.piece.wordCount,
+                    author: pieceRiff.piece.author || {
+                      id: pieceRiff.piece.authorId,
+                      name: null,
+                      avatarUrl: null,
+                    },
+                  }}
+                  isRead={readPieceIds.includes(pieceRiff.piece.id)}
+                  onClick={() =>
+                    router.push(
+                      `/read/${pieceRiff.piece.id}?riff=${riff.id}`
+                    )
+                  }
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Placeholder for non-revealed riffs */}
+        {riff.status !== "REVEALED" && (
+          <div
             style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              color: "#959595",
-              margin: 0,
+              marginTop: "48px",
+              padding: "40px",
+              backgroundColor: "#F9F9F9",
+              border: "2px dashed #E6E6E6",
+              textAlign: "center",
             }}
           >
-            More riff details coming soon.
-          </p>
-        </div>
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "16px",
+                fontWeight: 300,
+                color: "#959595",
+                margin: 0,
+              }}
+            >
+              More riff details coming soon.
+            </p>
+          </div>
+        )}
       </div>
+
+      {/* Reveal Confirm Modal (for riff detail page) */}
+      <RevealConfirmModal
+        isOpen={isRevealModalOpen}
+        onClose={() => setIsRevealModalOpen(false)}
+        onConfirm={handleRevealConfirm}
+        isRevealing={isRevealing}
+        riffTitle={riff.title}
+        waitingUsers={riff.participants
+          .filter(
+            (p) =>
+              !riff.pieces.some(
+                (piece) => piece.piece.authorId === p.user.id
+              )
+          )
+          .map((p) => ({
+            id: p.user.id,
+            name: p.user.name,
+            avatarUrl: p.user.avatarUrl,
+          }))}
+        submittedCount={
+          riff.participants.filter((p) =>
+            riff.pieces.some(
+              (piece) => piece.piece.authorId === p.user.id
+            )
+          ).length
+        }
+        totalParticipants={riff.participants.length}
+      />
     </div>
   );
 }
