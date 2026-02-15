@@ -177,6 +177,8 @@ export default function TestClubViewPage() {
       currentUserId={ME.id}
       isAdmin={true}
       activeRiff={activeRiff}
+      revealedRiffs={[]}
+      readCounts={{}}
       completedRiffs={[completedRiff1, completedRiff2]}
       stats={{ riffCount: 3, pieceCount: 6, wordCount: 250 }}
     />
