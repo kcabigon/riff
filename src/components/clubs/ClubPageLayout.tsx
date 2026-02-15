@@ -7,6 +7,8 @@ import RiffCard from "@/components/riffs/RiffCard";
 import EmptyRiffState from "@/components/riffs/EmptyRiffState";
 import CompletedRiffCard from "@/components/riffs/CompletedRiffCard";
 import CreateRiffModal from "@/components/riffs/CreateRiffModal";
+import RevealConfirmModal from "@/components/riffs/RevealConfirmModal";
+import ReadyToRevealCard from "@/components/riffs/ReadyToRevealCard";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
 
 interface ClubMember {
@@ -67,6 +69,8 @@ interface ClubPageLayoutProps {
   currentUserId: string;
   isAdmin: boolean;
   activeRiff: Riff | null;
+  revealedRiffs: Riff[];
+  readCounts: Record<string, number>;
   completedRiffs: Riff[];
   stats: {
     riffCount: number;
@@ -81,10 +85,14 @@ export default function ClubPageLayout({
   currentUserId,
   isAdmin,
   activeRiff,
+  revealedRiffs,
+  readCounts,
   completedRiffs,
   stats,
 }: ClubPageLayoutProps) {
   const [isCreateRiffModalOpen, setIsCreateRiffModalOpen] = useState(false);
+  const [isRevealModalOpen, setIsRevealModalOpen] = useState(false);
+  const [isRevealing, setIsRevealing] = useState(false);
   const [currentActiveRiff, setCurrentActiveRiff] = useState<Riff | null>(
     activeRiff
   );
@@ -100,6 +108,27 @@ export default function ClubPageLayout({
     setIsCreateRiffModalOpen(false);
     window.location.reload();
   }, []);
+
+  // Handle reveal confirmation
+  const handleRevealConfirm = useCallback(async () => {
+    if (!activeRiff) return;
+    setIsRevealing(true);
+    try {
+      const res = await fetch(`/api/riffs/${activeRiff.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "REVEALED" }),
+      });
+      if (res.ok) {
+        setIsRevealModalOpen(false);
+        window.location.reload();
+      }
+    } catch (err) {
+      console.error("Error revealing riff:", err);
+    } finally {
+      setIsRevealing(false);
+    }
+  }, [activeRiff]);
 
   // Compute joined/submitted state for active riff
   const isJoined = activeRiff
@@ -284,7 +313,9 @@ export default function ClubPageLayout({
               isJoined={isJoined}
               hasSubmitted={hasSubmitted}
               currentUserId={currentUserId}
+              isAdmin={isAdmin}
               onJoin={handleJoinRiff}
+              onReveal={() => setIsRevealModalOpen(true)}
             />
           ) : isAdmin ? (
             <EmptyRiffState
@@ -293,8 +324,58 @@ export default function ClubPageLayout({
           ) : null}
         </div>
 
-        {/* Completed Riffs section */}
-        {completedRiffs.length > 0 && (
+        {/* Ready to Reveal section */}
+        {(() => {
+          // Revealed riffs where user hasn't read all pieces yet
+          const unfinishedRevealed = revealedRiffs.filter(
+            (r) => (readCounts[r.id] || 0) < r.pieces.length
+          );
+          if (unfinishedRevealed.length === 0) return null;
+          return (
+            <div style={{ marginBottom: "48px" }}>
+              <h2
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "20px",
+                  fontWeight: 300,
+                  color: "#000000",
+                  margin: "0 0 16px 0",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                }}
+              >
+                Ready to Reveal
+              </h2>
+
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "32px",
+                }}
+              >
+                {unfinishedRevealed.map((riff) => (
+                  <ReadyToRevealCard
+                    key={riff.id}
+                    riff={riff}
+                    readCount={readCounts[riff.id] || 0}
+                    totalPieces={riff.pieces.length}
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Completed Riffs section — includes COMPLETED + fully-read REVEALED riffs */}
+        {(() => {
+          // Revealed riffs where user has read all pieces
+          const fullyReadRevealed = revealedRiffs.filter(
+            (r) => r.pieces.length > 0 && (readCounts[r.id] || 0) >= r.pieces.length
+          );
+          const allCompleted = [...completedRiffs, ...fullyReadRevealed];
+          return allCompleted.length > 0;
+        })() && (
           <div>
             <h2
               style={{
@@ -319,7 +400,14 @@ export default function ClubPageLayout({
                 paddingBottom: "16px",
               }}
             >
-              {completedRiffs.map((riff) => (
+              {[
+                ...completedRiffs,
+                ...revealedRiffs.filter(
+                  (r) =>
+                    r.pieces.length > 0 &&
+                    (readCounts[r.id] || 0) >= r.pieces.length
+                ),
+              ].map((riff) => (
                 <CompletedRiffCard
                   key={riff.id}
                   riff={{
@@ -349,6 +437,37 @@ export default function ClubPageLayout({
         onClose={() => setIsCreateRiffModalOpen(false)}
         onCreated={handleRiffCreated}
       />
+
+      {/* Reveal Confirm Modal */}
+      {activeRiff && (
+        <RevealConfirmModal
+          isOpen={isRevealModalOpen}
+          onClose={() => setIsRevealModalOpen(false)}
+          onConfirm={handleRevealConfirm}
+          isRevealing={isRevealing}
+          riffTitle={activeRiff.title}
+          waitingUsers={activeRiff.participants
+            .filter(
+              (p) =>
+                !activeRiff.pieces.some(
+                  (piece) => piece.piece.authorId === p.user.id
+                )
+            )
+            .map((p) => ({
+              id: p.user.id,
+              name: p.user.name,
+              avatarUrl: p.user.avatarUrl,
+            }))}
+          submittedCount={
+            activeRiff.participants.filter((p) =>
+              activeRiff.pieces.some(
+                (piece) => piece.piece.authorId === p.user.id
+              )
+            ).length
+          }
+          totalParticipants={activeRiff.participants.length}
+        />
+      )}
     </div>
   );
 }

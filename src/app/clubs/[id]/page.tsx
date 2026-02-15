@@ -128,13 +128,33 @@ export default async function ClubPage({
     deadline: r.deadline ? r.deadline.toISOString() : null,
   });
 
-  // Separate active riff (at most one) from completed riffs
+  // Separate riffs by status
   const activeRiff = riffs.find((r) => r.status === "ACTIVE")
     ? serializeRiff(riffs.find((r) => r.status === "ACTIVE")!)
     : null;
+  const revealedRiffs = riffs
+    .filter((r) => r.status === "REVEALED")
+    .map(serializeRiff);
   const completedRiffs = riffs
     .filter((r) => r.status === "COMPLETED")
     .map(serializeRiff);
+
+  // Fetch read counts for revealed riffs (per-user)
+  const revealedRiffIds = revealedRiffs.map((r) => r.id);
+  let readCounts: Record<string, number> = {};
+  if (revealedRiffIds.length > 0) {
+    const readGroups = await prisma.pieceRead.groupBy({
+      by: ["riffId"],
+      where: {
+        userId,
+        riffId: { in: revealedRiffIds },
+      },
+      _count: { pieceId: true },
+    });
+    readCounts = Object.fromEntries(
+      readGroups.map((g) => [g.riffId, g._count.pieceId])
+    );
+  }
 
   const isAdmin = club.adminId === userId;
 
@@ -153,6 +173,8 @@ export default async function ClubPage({
       currentUserId={userId}
       isAdmin={isAdmin}
       activeRiff={activeRiff}
+      revealedRiffs={revealedRiffs}
+      readCounts={readCounts}
       completedRiffs={completedRiffs}
       stats={{ riffCount, pieceCount, wordCount }}
     />
