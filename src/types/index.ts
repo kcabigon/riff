@@ -104,6 +104,7 @@ export interface Riff {
 export enum RiffStatus {
   DRAFT = "DRAFT", // Creator is setting up, no invites sent yet
   ACTIVE = "ACTIVE", // Running, members can join/leave and submit pieces
+  REVEALED = "REVEALED", // Host revealed, members can now read pieces
   COMPLETED = "COMPLETED", // Manually marked complete by any club member
 }
 

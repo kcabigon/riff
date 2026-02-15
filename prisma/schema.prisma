@@ -45,6 +45,7 @@ model User {
   sentNotifications        Notification[]           @relation("NotificationActor")
   receivedNotifications    Notification[]           @relation("NotificationRecipient")
   createdInvites           ClubInvite[]             // New: Club invites created by user
+  pieceReads               PieceRead[]              // New: Track which pieces user has read
 
   // DEPRECATED: Circle relations (kept for backward compatibility)
   circleMemberships        CircleMember[]
@@ -152,6 +153,7 @@ model Riff {
   creator      User              @relation("RiffCreator", fields: [creatorId], references: [id], onDelete: Cascade)
   participants RiffParticipant[]
   pieces       PieceRiff[]
+  pieceReads   PieceRead[]
   shares       Share[]
   comments     Comment[]
   notifications Notification[]
@@ -162,6 +164,7 @@ model Riff {
 enum RiffStatus {
   DRAFT      // Creator is setting up, no invites sent yet
   ACTIVE     // Running, members can join/leave and submit pieces
+  REVEALED   // Host revealed, members can now read pieces
   COMPLETED  // Manually marked complete by any club member
 }
 
@@ -177,6 +180,23 @@ model RiffParticipant {
 
   @@unique([riffId, userId])
   @@map("riff_participants")
+}
+
+// ==================== PIECE READS (REVEAL TRACKING) ====================
+
+model PieceRead {
+  id        String   @id @default(cuid())
+  userId    String
+  pieceId   String
+  riffId    String
+  readAt    DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  piece Piece @relation(fields: [pieceId], references: [id], onDelete: Cascade)
+  riff  Riff  @relation(fields: [riffId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, pieceId, riffId])
+  @@map("piece_reads")
 }
 
 // ==================== CIRCLE MEMBERS (DEPRECATED) ====================
@@ -250,6 +270,7 @@ model Piece {
   newShares  Share[]           // NEW: Multi-level sharing (club, riff, individual, public)
   shares     PieceShare[]      // DEPRECATED: Old circle-based sharing
   riffs      PieceRiff[]       // NEW: Junction for piece-riff relationships
+  pieceReads PieceRead[]       // NEW: Track which users have read this piece
   collections CollectionPiece[]
   visibility PieceVisibilitySettings?
   comments   Comment[]
