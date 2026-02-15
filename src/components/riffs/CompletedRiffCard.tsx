@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { extractFirstImage } from "@/lib/extract-first-image";
+import MosaicCollage from "./MosaicCollage";
 
 interface CompletedRiffPiece {
   id: string;
@@ -20,16 +20,6 @@ interface CompletedRiffCardProps {
   clubName: string;
   pieces: CompletedRiffPiece[];
 }
-
-// Placeholder color palette for pieces without images
-const PLACEHOLDER_COLORS = [
-  "#E8E0D5",
-  "#D5E0E8",
-  "#E0E8D5",
-  "#E8D5E0",
-  "#D5E8E0",
-  "#E0D5E8",
-];
 
 export default function CompletedRiffCard({
   riff,
@@ -102,54 +92,10 @@ export default function CompletedRiffCard({
         position: "relative",
         cursor: "pointer",
         overflow: "hidden",
-        display: "flex",
-        flexDirection: "row",
         flexShrink: 0,
       }}
     >
-      {/* Mosaic slivers */}
-      {pieces.map((piece, index) => {
-        const imageUrl =
-          extractFirstImage(piece.currentContent) ||
-          PLACEHOLDER_COLORS[index % PLACEHOLDER_COLORS.length];
-        const isPlaceholder = !extractFirstImage(piece.currentContent);
-
-        return (
-          <div
-            key={piece.id}
-            style={{
-              flex: "1 0 0",
-              height: "100%",
-              position: "relative",
-              overflow: "hidden",
-              minWidth: 0,
-            }}
-          >
-            {isPlaceholder ? (
-              <div
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  backgroundColor: imageUrl,
-                }}
-              />
-            ) : (
-              <img
-                src={imageUrl}
-                alt=""
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  pointerEvents: "none",
-                }}
-              />
-            )}
-          </div>
-        );
-      })}
+      <MosaicCollage pieces={pieces} width={240} height={320} />
 
       {/* Label strip — positioned at vertical center */}
       <div
