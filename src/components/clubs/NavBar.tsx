@@ -30,6 +30,9 @@ export default function NavBar({ user, clubs, currentClub }: NavBarProps) {
   return (
     <nav
       style={{
+        position: "sticky",
+        top: 0,
+        zIndex: 50,
         height: "72px",
         backgroundColor: "#000000",
         display: "flex",
