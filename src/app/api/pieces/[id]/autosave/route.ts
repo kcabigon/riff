@@ -56,6 +56,44 @@ export async function PATCH(
       },
     });
 
+    // Re-anchor comments when content changes (Google Docs behavior)
+    if (currentContent) {
+      const comments = await prisma.comment.findMany({
+        where: {
+          pieceId,
+          selectedText: { not: null },
+        },
+        select: {
+          id: true,
+          selectedText: true,
+          selectionStart: true,
+        },
+      });
+
+      for (const comment of comments) {
+        if (!comment.selectedText) continue;
+
+        const newIndex = currentContent.indexOf(comment.selectedText);
+
+        if (newIndex === -1) {
+          // Text was deleted — remove comment (Google Docs behavior)
+          await prisma.comment.delete({ where: { id: comment.id } });
+        } else if (
+          comment.selectionStart !== null &&
+          newIndex !== comment.selectionStart
+        ) {
+          // Text moved — update anchors
+          await prisma.comment.update({
+            where: { id: comment.id },
+            data: {
+              selectionStart: newIndex,
+              selectionEnd: newIndex + comment.selectedText.length,
+            },
+          });
+        }
+      }
+    }
+
     return NextResponse.json({
       success: true,
       piece: updatedPiece,
