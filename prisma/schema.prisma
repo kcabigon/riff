@@ -396,7 +396,7 @@ model Comment {
   id             String   @id @default(cuid())
   content        String   @db.Text
   pieceId        String
-  versionId      String
+  versionId      String?  // Optional: no longer required for new riff-scoped comments
   clubId         String?  // NEW: Club context for comments
   riffId         String?  // NEW: Riff context for comments
   circleId       String?  // DEPRECATED: Old circle context
@@ -411,7 +411,7 @@ model Comment {
   // Relations
   author            User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
   piece             Piece         @relation(fields: [pieceId], references: [id], onDelete: Cascade)
-  version           PieceVersion  @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  version           PieceVersion? @relation(fields: [versionId], references: [id], onDelete: Cascade)
   club              Club?         @relation(fields: [clubId], references: [id], onDelete: Cascade)
   riff              Riff?         @relation(fields: [riffId], references: [id], onDelete: Cascade)
   circle_deprecated Circle?       @relation("DeprecatedCircleComments", fields: [circleId], references: [id], onDelete: Cascade)
