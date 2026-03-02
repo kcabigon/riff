@@ -41,6 +41,7 @@ interface RiffPageLayoutProps {
         wordCount: number;
         coverImage?: string | null;
         currentContent?: string;
+        commentCount?: number;
         author?: {
           id: string;
           name: string | null;
@@ -536,6 +537,7 @@ export default function RiffPageLayout({
                     coverImage: pieceRiff.piece.coverImage,
                     currentContent: pieceRiff.piece.currentContent || "",
                     wordCount: pieceRiff.piece.wordCount,
+                    commentCount: pieceRiff.piece.commentCount,
                     author: pieceRiff.piece.author || {
                       id: pieceRiff.piece.authorId,
                       name: null,

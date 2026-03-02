@@ -48,6 +48,13 @@ export default async function RiffPage({
               author: {
                 select: { id: true, name: true, avatarUrl: true },
               },
+              _count: {
+                select: {
+                  comments: {
+                    where: { riffId: id },
+                  },
+                },
+              },
             },
           },
         },
@@ -93,6 +100,14 @@ export default async function RiffPage({
     ...riff,
     createdAt: riff.createdAt.toISOString(),
     deadline: riff.deadline ? riff.deadline.toISOString() : null,
+    pieces: riff.pieces.map((pr) => ({
+      ...pr,
+      piece: {
+        ...pr.piece,
+        commentCount: pr.piece._count?.comments ?? 0,
+        _count: undefined,
+      },
+    })),
   };
 
   return (

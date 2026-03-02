@@ -11,6 +11,7 @@ interface PieceCardProps {
     coverImage?: string | null;
     currentContent: string;
     wordCount: number;
+    commentCount?: number;
     author: {
       id: string;
       name: string | null;
@@ -159,18 +160,33 @@ export default function PieceCard({
           </p>
         </div>
 
-        {/* Word count */}
-        <p
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
-            fontWeight: 300,
-            color: "#AFAFAF",
-            margin: 0,
-          }}
-        >
-          {piece.wordCount.toLocaleString()} words
-        </p>
+        {/* Word count + comment count */}
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "14px",
+              fontWeight: 300,
+              color: "#AFAFAF",
+              margin: 0,
+            }}
+          >
+            {piece.wordCount.toLocaleString()} words
+          </p>
+          {piece.commentCount !== undefined && piece.commentCount > 0 && (
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "12px",
+                fontWeight: 300,
+                color: "#808080",
+                margin: 0,
+              }}
+            >
+              💬 {piece.commentCount}
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );
