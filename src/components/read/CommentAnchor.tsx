@@ -132,14 +132,15 @@ export default function CommentAnchor({
     (e: MouseEvent) => {
       if (!isRiffMode || !containerRef.current) return;
 
-      // Get caret position at tap point
+      // Get caret position at tap point (browser compat)
+      const doc = document as any;
       let range: Range | null = null;
-      if ("caretRangeFromPoint" in document) {
-        range = (document as any).caretRangeFromPoint(e.clientX, e.clientY);
-      } else if ("caretPositionFromPoint" in document) {
-        const pos = (document as any).caretPositionFromPoint(e.clientX, e.clientY);
+      if (typeof doc.caretRangeFromPoint === "function") {
+        range = doc.caretRangeFromPoint(e.clientX, e.clientY) as Range | null;
+      } else if (typeof doc.caretPositionFromPoint === "function") {
+        const pos = doc.caretPositionFromPoint(e.clientX, e.clientY);
         if (pos) {
-          range = document.createRange();
+          range = doc.createRange() as Range;
           range.setStart(pos.offsetNode, pos.offset);
           range.collapse(true);
         }
@@ -165,7 +166,7 @@ export default function CommentAnchor({
           break;
         }
         if (/[.!?]/.test(text[i - 1]) && /\s/.test(text[i])) {
-          sentenceStart = i + 0;
+          sentenceStart = i;
           break;
         }
       }
@@ -188,8 +189,10 @@ export default function CommentAnchor({
       const startIdx = text.indexOf(selected, sentenceStart);
       if (startIdx === -1) return;
 
-      newRange.setStart(textNode, startIdx);
-      newRange.setEnd(textNode, startIdx + selected.length);
+      if (textNode.nodeType === Node.TEXT_NODE) {
+        newRange.setStart(textNode, startIdx);
+        newRange.setEnd(textNode, startIdx + selected.length);
+      }
       sel.removeAllRanges();
       sel.addRange(newRange);
 
