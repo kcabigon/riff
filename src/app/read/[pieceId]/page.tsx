@@ -47,9 +47,9 @@ export default async function ReadPage({
 
   // Validate access: piece must be in a REVEALED riff and user must be a club member
   let validRiffId: string | null = null;
+  let clubId: string | null = null;
 
   if (riffId) {
-    // Check specific riff
     const pieceRiff = await prisma.pieceRiff.findFirst({
       where: {
         pieceId,
@@ -61,16 +61,19 @@ export default async function ReadPage({
           },
         },
       },
-      select: { riffId: true },
+      select: {
+        riffId: true,
+        riff: { select: { clubId: true } },
+      },
     });
 
     if (pieceRiff) {
       validRiffId = pieceRiff.riffId;
+      clubId = pieceRiff.riff.clubId;
     }
   }
 
   if (!validRiffId) {
-    // Find any REVEALED riff containing this piece where user is a member
     const pieceRiff = await prisma.pieceRiff.findFirst({
       where: {
         pieceId,
@@ -81,7 +84,10 @@ export default async function ReadPage({
           },
         },
       },
-      select: { riffId: true },
+      select: {
+        riffId: true,
+        riff: { select: { clubId: true } },
+      },
     });
 
     if (!pieceRiff) {
@@ -89,6 +95,7 @@ export default async function ReadPage({
     }
 
     validRiffId = pieceRiff.riffId;
+    clubId = pieceRiff.riff.clubId;
   }
 
   // Check if already read
@@ -99,6 +106,46 @@ export default async function ReadPage({
         pieceId,
         riffId: validRiffId,
       },
+    },
+  });
+
+  // Fetch comments server-side
+  const rawComments = await prisma.comment.findMany({
+    where: { pieceId, riffId: validRiffId },
+    include: {
+      author: {
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          avatarUrl: true,
+        },
+      },
+    },
+    orderBy: { selectionStart: "asc" },
+  });
+
+  // Serialize for client boundary
+  const initialComments = rawComments.map((c) => ({
+    id: c.id,
+    content: c.content,
+    selectionStart: c.selectionStart ?? 0,
+    selectionEnd: c.selectionEnd ?? 0,
+    selectedText: c.selectedText ?? "",
+    authorId: c.authorId,
+    createdAt: c.createdAt.toISOString(),
+    updatedAt: c.updatedAt.toISOString(),
+    author: c.author,
+  }));
+
+  // Fetch current user info for comment compose
+  const currentUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      name: true,
+      username: true,
+      avatarUrl: true,
     },
   });
 
@@ -114,6 +161,9 @@ export default async function ReadPage({
         author: piece.author,
       }}
       riffId={validRiffId}
+      clubId={clubId!}
+      currentUser={currentUser ?? { id: userId, name: null, username: null, avatarUrl: null }}
+      initialComments={initialComments}
       isAlreadyRead={!!existingRead}
     />
   );
