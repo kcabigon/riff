@@ -300,7 +300,7 @@ export interface Comment {
   id: CommentId;
   content: string;
   pieceId: PieceId;
-  versionId: PieceVersionId; // Tied to a specific version
+  versionId?: PieceVersionId; // Optional: not required for riff-scoped comments
   clubId?: ClubId; // NEW: Club context for comments
   riffId?: RiffId; // NEW: Riff context for comments
   circleId?: CircleId; // DEPRECATED: Old circle context
@@ -309,10 +309,10 @@ export interface Comment {
   createdAt: Date;
   updatedAt: Date;
 
-  // Text selection anchor (for inline comments like Google Docs)
-  selectionStart?: number; // Character offset in the content
-  selectionEnd?: number;
-  selectedText?: string; // Store the actual text for reference
+  // Text selection anchor (required for all new comments)
+  selectionStart: number;
+  selectionEnd: number;
+  selectedText: string;
 
   // Relational fields
   author?: User;
@@ -548,14 +548,11 @@ export interface SharePieceInput {
 export interface CreateCommentInput {
   content: string;
   pieceId: PieceId;
-  versionId: PieceVersionId;
-  clubId?: ClubId; // NEW: Club context for comments
-  riffId?: RiffId; // NEW: Riff context for comments
-  circleId?: CircleId; // DEPRECATED: Old circle context
-  parentId?: CommentId;
-  selectionStart?: number;
-  selectionEnd?: number;
-  selectedText?: string;
+  riffId: RiffId; // required — all comments are riff-scoped
+  clubId: ClubId; // required — all comments are club-scoped
+  selectionStart: number; // required — all comments must be anchored
+  selectionEnd: number; // required
+  selectedText: string; // required
 }
 
 export interface CreateCollectionInput {
