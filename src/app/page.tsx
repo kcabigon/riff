@@ -81,7 +81,7 @@ export default function LandingPage() {
               Who built this?
             </a>
             <button
-              onClick={() => router.push("/onboarding/login")}
+              onClick={() => router.push("/login")}
               style={{
                 backgroundColor: "#000000",
                 border: "2px solid #FFFFFF",
@@ -210,7 +210,7 @@ export default function LandingPage() {
 
             {/* CTA Button — absolute, horizontally centered */}
             <button
-              onClick={() => router.push("/onboarding/login")}
+              onClick={() => router.push("/login")}
               style={{
                 position: "absolute",
                 top: "489px",
@@ -245,7 +245,7 @@ export default function LandingPage() {
                 e.currentTarget.style.boxShadow = "8px 8px 0px 0px #01EFFC";
               }}
             >
-              Yeah ok, let&apos;s do it
+              Let&apos;s do this
             </button>
           </div>
         </div>
@@ -325,7 +325,7 @@ export default function LandingPage() {
 
             {/* Mobile CTA Button */}
             <button
-              onClick={() => router.push("/onboarding/login")}
+              onClick={() => router.push("/login")}
               style={{
                 position: "absolute",
                 bottom: "60px",
@@ -359,7 +359,7 @@ export default function LandingPage() {
                 e.currentTarget.style.boxShadow = "8px 8px 0px 0px #01EFFC";
               }}
             >
-              Yeah ok, let&apos;s do it
+              Let&apos;s do this
             </button>
           </div>
         </div>
@@ -416,7 +416,7 @@ export default function LandingPage() {
 
         {/* Sign In */}
         <button
-          onClick={() => { setDrawerOpen(false); router.push("/onboarding/login"); }}
+          onClick={() => { setDrawerOpen(false); router.push("/login"); }}
           style={{
             backgroundColor: "#000000",
             border: "2px solid #FFFFFF",
