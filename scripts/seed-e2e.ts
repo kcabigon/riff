@@ -375,6 +375,153 @@ async function main() {
   console.log("  Writer has read 4/4 pieces (tests completed state)");
 
   // -------------------------------------------------------------------------
+  // 4b. Past-deadline active riff — "Guilty Pleasures" (ready to reveal)
+  // -------------------------------------------------------------------------
+  console.log("\nCreating past-deadline active riff...");
+  const pastDeadlineRiff = await prisma.riff.create({
+    data: {
+      clubId: club.id,
+      creatorId: writer.id,
+      title: "Guilty Pleasures",
+      prompt:
+        "Write about something you enjoy that you'd never admit to in polite company.",
+      deadline: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+      status: "ACTIVE",
+    },
+  });
+  console.log(
+    `  Past-deadline riff: "${pastDeadlineRiff.title}" (${pastDeadlineRiff.id})`
+  );
+
+  // Participants: writer, alice, bob
+  await prisma.riffParticipant.createMany({
+    data: [
+      { riffId: pastDeadlineRiff.id, userId: writer.id },
+      { riffId: pastDeadlineRiff.id, userId: alice.id },
+      { riffId: pastDeadlineRiff.id, userId: bob.id },
+    ],
+  });
+
+  // All 3 submitted pieces
+  const guiltyPieces = [
+    {
+      title: "Reality TV and Me",
+      authorId: writer.id,
+      currentContent:
+        "<p>I watch three hours of reality TV every night. Not ironically. I genuinely care who gets the final rose.</p>",
+      wordCount: 24,
+    },
+    {
+      title: "The Drive-Through Confession",
+      authorId: alice.id,
+      currentContent:
+        "<p>Every Friday I tell my family I'm working late. I'm actually sitting in a McDonald's parking lot eating a Big Mac in total silence.</p>",
+      wordCount: 28,
+    },
+    {
+      title: "My Spreadsheet Empire",
+      authorId: bob.id,
+      currentContent:
+        "<p>I have a spreadsheet that tracks every cup of coffee I've bought in the last four years. Cost, location, rating. I am not okay.</p>",
+      wordCount: 29,
+    },
+  ];
+
+  for (const p of guiltyPieces) {
+    const piece = await prisma.piece.create({ data: p });
+    await prisma.pieceRiff.create({
+      data: { pieceId: piece.id, riffId: pastDeadlineRiff.id },
+    });
+  }
+  console.log("  Added 3 pieces (writer, alice, bob). Ready for host to reveal.");
+
+  // -------------------------------------------------------------------------
+  // 4c. Second club — "Solo Writers" (empty, tests onboarding checklist)
+  // -------------------------------------------------------------------------
+  console.log("\nCreating empty club for onboarding checklist...");
+
+  // Clean up old "Solo Writers" clubs
+  const oldSoloClubs = await prisma.club.findMany({
+    where: { name: "Solo Writers" },
+    select: { id: true },
+  });
+  for (const c of oldSoloClubs) {
+    await prisma.clubMember.deleteMany({ where: { clubId: c.id } });
+    await prisma.club.delete({ where: { id: c.id } });
+  }
+
+  const soloClub = await prisma.club.create({
+    data: {
+      name: "Solo Writers",
+      description: "A brand new club — no riffs yet, no other members.",
+      adminId: writer.id,
+      members: {
+        create: [{ userId: writer.id, role: "ADMIN" }],
+      },
+    },
+  });
+  console.log(`  Empty club: "${soloClub.name}" (${soloClub.id})`);
+
+  // -------------------------------------------------------------------------
+  // 4d. Seed notifications for writer
+  // -------------------------------------------------------------------------
+  console.log("\nCreating sample notifications...");
+
+  // Clean old notifications for test users
+  await prisma.notification.deleteMany({
+    where: { recipientId: { in: testUserIds } },
+  });
+
+  await prisma.notification.createMany({
+    data: [
+      {
+        type: "RIFF_CREATED",
+        recipientId: alice.id,
+        actorId: writer.id,
+        clubId: club.id,
+        riffId: activeRiff.id,
+        isRead: false,
+      },
+      {
+        type: "RIFF_CREATED",
+        recipientId: bob.id,
+        actorId: writer.id,
+        clubId: club.id,
+        riffId: activeRiff.id,
+        isRead: false,
+      },
+      {
+        type: "NEW_COMMENT",
+        recipientId: writer.id,
+        actorId: alice.id,
+        pieceId: revealedPieceIds[0],
+        clubId: club.id,
+        riffId: revealedRiff.id,
+        isRead: false,
+      },
+      {
+        type: "NEW_COMMENT",
+        recipientId: writer.id,
+        actorId: bob.id,
+        pieceId: revealedPieceIds[0],
+        clubId: club.id,
+        riffId: revealedRiff.id,
+        isRead: true,
+        createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000), // yesterday
+      },
+      {
+        type: "RIFF_COMPLETED",
+        recipientId: alice.id,
+        actorId: writer.id,
+        riffId: revealedRiff.id,
+        isRead: true,
+        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+      },
+    ],
+  });
+  console.log("  Created 5 notifications (writer: 2, alice: 2, bob: 1)");
+
+  // -------------------------------------------------------------------------
   // 5. Completed riff — "Childhood Memories"
   // -------------------------------------------------------------------------
   console.log("\nCreating completed riff...");
@@ -429,36 +576,26 @@ async function main() {
   console.log("  E2E seed data created successfully!");
   console.log("========================================\n");
   console.log("Club:", club.name, `(${club.id})`);
+  console.log("Empty club:", soloClub.name, `(${soloClub.id})`);
   console.log("Active riff:", activeRiff.title, `(${activeRiff.id})`);
+  console.log("Past-deadline riff:", pastDeadlineRiff.title, `(${pastDeadlineRiff.id})`);
   console.log("Revealed riff:", revealedRiff.title, `(${revealedRiff.id})`);
   console.log("Completed riff:", completedRiff.title, `(${completedRiff.id})`);
   console.log("");
   console.log("Test scenarios (go to /dev-signin):");
   console.log("");
-  console.log("  1. FRESH ONBOARDING");
-  console.log("     fresh@test.local → /onboarding (starts at name step)");
-  console.log("");
-  console.log("  2. RESUME ONBOARDING");
-  console.log("     midway@test.local → /onboarding (resumes at club-choice)");
-  console.log("");
-  console.log("  3. CLUB VIEW + EDITOR (HOST)");
-  console.log(`     writer@test.local → /clubs/${club.id}`);
-  console.log('     Joined active riff, no piece. Click "Continue writing" → editor');
-  console.log("     Revealed riff: all 4/4 read → appears in Completed Riffs");
-  console.log("");
-  console.log("  4. SUBMITTED + CONTINUE READING");
-  console.log(`     alice@test.local → /clubs/${club.id}`);
-  console.log("     Has submitted piece to active riff");
-  console.log('     Revealed riff: 2/4 read → "Continue reading" CTA');
-  console.log("");
-  console.log("  5. WAITING + FIRST REVEAL");
-  console.log(`     bob@test.local → /clubs/${club.id}`);
-  console.log("     Joined active riff, no piece yet");
-  console.log('     Revealed riff: 0/4 read → "Reveal" CTA');
-  console.log("");
-  console.log("  6. NOT JOINED");
-  console.log(`     carol@test.local → /clubs/${club.id}`);
-  console.log("     Club member but not joined to active riff");
+  console.log("  1. FRESH ONBOARDING — fresh@test.local → /onboarding");
+  console.log("  2. RESUME ONBOARDING — midway@test.local → /onboarding");
+  console.log(`  3. HOST (all read) — writer@test.local → /clubs/${club.id}`);
+  console.log(`  4. CONTINUE READING — alice@test.local → /clubs/${club.id}`);
+  console.log(`  5. FIRST REVEAL — bob@test.local → /clubs/${club.id}`);
+  console.log(`  6. NOT JOINED — carol@test.local → /clubs/${club.id}`);
+  console.log(`  7. PROFILE + DRAFTS — writer@test.local → /profile/${writer.id}`);
+  console.log(`  8. REVEAL + CONFETTI — writer@test.local → /riffs/${pastDeadlineRiff.id}`);
+  console.log(`  9. EMPTY CLUB (checklist) — writer@test.local → /clubs/${soloClub.id}`);
+  console.log("  10. NOTIFICATIONS — writer@test.local → (bell in navbar, 2 unread)");
+  console.log("  11. SETTINGS — writer@test.local → /settings");
+  console.log("  12. ABOUT PAGE — /about (no auth needed)");
 }
 
 main()

@@ -17,9 +17,14 @@ interface Scenario {
 }
 
 async function getSeedData() {
-  // Find the seeded club
+  // Find the seeded clubs
   const club = await prisma.club.findFirst({
     where: { name: "The Sunday Writers" },
+    select: { id: true },
+  });
+
+  const soloClub = await prisma.club.findFirst({
+    where: { name: "Solo Writers" },
     select: { id: true },
   });
 
@@ -29,7 +34,20 @@ async function getSeedData() {
     select: { id: true },
   });
 
-  return { clubId: club?.id ?? null, writerId: writer?.id ?? null };
+  // Find the past-deadline active riff
+  const pastDeadlineRiff = club
+    ? await prisma.riff.findFirst({
+        where: { clubId: club.id, title: "Guilty Pleasures", status: "ACTIVE" },
+        select: { id: true },
+      })
+    : null;
+
+  return {
+    clubId: club?.id ?? null,
+    soloClubId: soloClub?.id ?? null,
+    writerId: writer?.id ?? null,
+    pastDeadlineRiffId: pastDeadlineRiff?.id ?? null,
+  };
 }
 
 export default async function DevSignInPage() {
@@ -37,7 +55,7 @@ export default async function DevSignInPage() {
     return <p>Not available in production.</p>;
   }
 
-  const { clubId, writerId } = await getSeedData();
+  const { clubId, soloClubId, writerId, pastDeadlineRiffId } = await getSeedData();
   const hasSeeded = clubId !== null;
 
   const scenarios: Scenario[] = hasSeeded
@@ -102,6 +120,46 @@ export default async function DevSignInPage() {
               },
             ]
           : []),
+        ...(pastDeadlineRiffId
+          ? [
+              {
+                label: "Scenario 8: Reveal + confetti",
+                description:
+                  'Past-deadline riff with 3 submissions. Click "Reveal pieces" to see confetti celebration.',
+                email: "writer@test.local",
+                userName: "Writer (Host)",
+                redirect: `/riffs/${pastDeadlineRiffId}`,
+              },
+            ]
+          : []),
+        ...(soloClubId
+          ? [
+              {
+                label: "Scenario 9: Empty club (onboarding checklist)",
+                description:
+                  "Brand new club with no riffs or other members. Tests the admin onboarding checklist and prompt library.",
+                email: "writer@test.local",
+                userName: "Writer (Host)",
+                redirect: `/clubs/${soloClubId}`,
+              },
+            ]
+          : []),
+        {
+          label: "Scenario 10: Notifications",
+          description:
+            "Writer has 2 unread notifications (comments on their piece). Check the bell icon in the navbar.",
+          email: "writer@test.local",
+          userName: "Writer (Host)",
+          redirect: `/clubs/${clubId}`,
+        },
+        {
+          label: "Scenario 11: Settings",
+          description:
+            "Edit profile (name, bio), export writing as JSON, or delete account.",
+          email: "writer@test.local",
+          userName: "Writer (settings)",
+          redirect: "/settings",
+        },
       ]
     : [];
 
@@ -180,6 +238,40 @@ export default async function DevSignInPage() {
             </a>
           </div>
         ))}
+      </div>
+
+      {/* No-auth pages */}
+      <div style={{ marginTop: "28px" }}>
+        <div
+          style={{
+            fontSize: "11px",
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+            color: "#999",
+            marginBottom: "6px",
+          }}
+        >
+          Scenario 12: About page (no auth)
+        </div>
+        <a
+          href="/about"
+          style={{
+            display: "block",
+            padding: "14px 18px",
+            border: "2px solid #000",
+            backgroundColor: "#fff",
+            fontSize: "15px",
+            textDecoration: "none",
+            color: "#000",
+            boxShadow: "4px 4px 0px #000",
+          }}
+        >
+          <strong>About Page</strong>
+          <div style={{ color: "#666", fontSize: "12px", marginTop: "4px" }}>
+            Genesis story, team section, privacy promise. No auth required.
+          </div>
+        </a>
       </div>
 
       <a
