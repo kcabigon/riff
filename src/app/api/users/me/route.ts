@@ -81,3 +81,31 @@ export async function PATCH(req: Request) {
     );
   }
 }
+
+// DELETE /api/users/me - Delete current user's account
+export async function DELETE() {
+  try {
+    const user = await requireAuth();
+    const userId = (user as any).id;
+
+    // Delete in order of dependencies
+    await prisma.$transaction([
+      prisma.notification.deleteMany({ where: { recipientId: userId } }),
+      prisma.notification.deleteMany({ where: { actorId: userId } }),
+      prisma.comment.deleteMany({ where: { authorId: userId } }),
+      prisma.pieceRead.deleteMany({ where: { userId } }),
+      prisma.riffParticipant.deleteMany({ where: { userId } }),
+      prisma.clubMember.deleteMany({ where: { userId } }),
+      prisma.piece.deleteMany({ where: { authorId: userId } }),
+      prisma.user.delete({ where: { id: userId } }),
+    ]);
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    if (error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    console.error("Error deleting account:", error);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
+}

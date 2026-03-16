@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import Avatar from "@/components/shared/Avatar";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
@@ -17,6 +18,7 @@ interface AvatarDropdownProps {
 export default function AvatarDropdown({ user }: AvatarDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
   const handleProfileClick = useProfileNavigation();
 
   // Close on outside click
@@ -92,6 +94,34 @@ export default function AvatarDropdown({ user }: AvatarDropdownProps) {
             }}
           >
             Profile
+          </button>
+          <button
+            onClick={() => {
+              setIsOpen(false);
+              router.push("/settings");
+            }}
+            style={{
+              display: "block",
+              width: "100%",
+              textAlign: "left",
+              background: "none",
+              border: "none",
+              borderBottom: "1px solid #E6E6E6",
+              padding: "12px 16px",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "14px",
+              fontWeight: 300,
+              color: "#000000",
+              cursor: "pointer",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#F5F5F5";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent";
+            }}
+          >
+            Settings
           </button>
           <button
             onClick={() => {

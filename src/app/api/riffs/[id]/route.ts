@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
+import { notifyClubMembers, notifyRiffParticipants } from "@/lib/notifications";
+import { NotificationType } from "@prisma/client";
 
 // GET /api/riffs/[id] - Get riff details
 export async function GET(
@@ -252,6 +254,16 @@ export async function PATCH(
         },
       },
     });
+
+    // Fire notifications for status changes (non-blocking)
+    if (status && status !== riff.status) {
+      const actorId = (user as any).id;
+      if (status === "ACTIVE") {
+        notifyClubMembers(riff.clubId, NotificationType.RIFF_CREATED, actorId, { riffId }).catch(() => {});
+      } else if (status === "REVEALED") {
+        notifyRiffParticipants(riffId, NotificationType.RIFF_COMPLETED, actorId).catch(() => {});
+      }
+    }
 
     return NextResponse.json({
       success: true,

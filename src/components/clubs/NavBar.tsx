@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import ClubDropdown from "./ClubDropdown";
 import AvatarDropdown from "./AvatarDropdown";
+import NotificationBell from "@/components/notifications/NotificationBell";
 
 interface NavBarProps {
   user: {
@@ -85,8 +86,11 @@ export default function NavBar({ user, clubs, currentClub }: NavBarProps) {
           )}
         </div>
 
-        {/* Right Section: Avatar Dropdown */}
-        <AvatarDropdown user={user} />
+        {/* Right Section: Bell + Avatar Dropdown */}
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <NotificationBell />
+          <AvatarDropdown user={user} />
+        </div>
       </div>
     </nav>
   );
