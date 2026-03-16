@@ -57,7 +57,7 @@ export default function LandingPage() {
           {/* Desktop: nav links + sign in */}
           <div className="desktop-nav" style={{ display: "flex", alignItems: "center", gap: "40px" }}>
             <a
-              href="#"
+              href="/about#story"
               style={{
                 fontFamily: "var(--font-dm-sans)",
                 fontSize: "16px",
@@ -69,7 +69,7 @@ export default function LandingPage() {
               What is this?
             </a>
             <a
-              href="#"
+              href="/about#team"
               style={{
                 fontFamily: "var(--font-dm-sans)",
                 fontSize: "16px",
@@ -433,7 +433,7 @@ export default function LandingPage() {
 
         {/* Nav links */}
         <a
-          href="#"
+          href="/about#story"
           onClick={() => setDrawerOpen(false)}
           style={{
             fontFamily: "var(--font-dm-sans)",
@@ -446,7 +446,7 @@ export default function LandingPage() {
           What is this?
         </a>
         <a
-          href="#"
+          href="/about#team"
           onClick={() => setDrawerOpen(false)}
           style={{
             fontFamily: "var(--font-dm-sans)",

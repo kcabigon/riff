@@ -116,7 +116,7 @@ export default function ProfilePage({
                   fontWeight: isActive ? 700 : 300,
                   color: "#000000",
                   cursor: "pointer",
-                  padding: "12px 56px",
+                  padding: "12px 24px",
                   letterSpacing: "0.02em",
                 }}
               >

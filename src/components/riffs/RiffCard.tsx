@@ -124,12 +124,12 @@ export default function RiffCard({
       onClick={handleCardClick}
       onMouseEnter={() => setIsCardHovered(true)}
       onMouseLeave={() => setIsCardHovered(false)}
+      className="riff-card"
       style={{
         backgroundColor: "#FFFFFF",
         border: "2px solid #000000",
         padding: "32px",
         display: "flex",
-        flexDirection: "row",
         gap: "40px",
         alignItems: "center",
         justifyContent: "space-between",
@@ -290,6 +290,7 @@ export default function RiffCard({
 
       {/* Right Section - Call-to-Action */}
       <div
+        className="riff-card-cta"
         style={{
           minWidth: "200px",
           display: "flex",
@@ -394,6 +395,23 @@ export default function RiffCard({
           </p>
         )}
       </div>
+
+      <style>{`
+        @media (max-width: 767px) {
+          .riff-card {
+            flex-direction: column !important;
+            gap: 24px !important;
+            padding: 24px !important;
+          }
+          .riff-card-cta {
+            min-width: 0 !important;
+            width: 100% !important;
+          }
+          .riff-card-cta button {
+            width: 100% !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

@@ -161,9 +161,10 @@ export default function ClubPageLayout({
         />
       </div>
 
-      {/* Banner — full width, 320px height */}
+      {/* Banner — full width, 320px height (180px on mobile) */}
       {club.bannerImage && (
         <div
+          className="club-banner"
           style={{
             width: "100%",
             height: "320px",
@@ -317,11 +318,12 @@ export default function ClubPageLayout({
               onJoin={handleJoinRiff}
               onReveal={() => setIsRevealModalOpen(true)}
             />
-          ) : isAdmin ? (
+          ) : (
             <EmptyRiffState
               onStartNewRiff={() => setIsCreateRiffModalOpen(true)}
+              isAdmin={isAdmin}
             />
-          ) : null}
+          )}
         </div>
 
         {/* Ready to Reveal section */}
@@ -429,6 +431,14 @@ export default function ClubPageLayout({
           </div>
         )}
       </div>
+
+      <style>{`
+        @media (max-width: 767px) {
+          .club-banner {
+            height: 180px !important;
+          }
+        }
+      `}</style>
 
       {/* Create Riff Modal */}
       <CreateRiffModal

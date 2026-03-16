@@ -88,6 +88,10 @@ export default function ClubDropdown({
                 ? "#00FF66"
                 : "#FFFFFF",
             transition: "none",
+            maxWidth: "160px",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
           }}
         >
           {currentClub.name}

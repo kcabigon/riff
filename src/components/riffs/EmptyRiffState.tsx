@@ -4,42 +4,71 @@ import { useState } from "react";
 
 interface EmptyRiffStateProps {
   onStartNewRiff: () => void;
+  isAdmin?: boolean;
 }
 
-export default function EmptyRiffState({ onStartNewRiff }: EmptyRiffStateProps) {
+export default function EmptyRiffState({
+  onStartNewRiff,
+  isAdmin = true,
+}: EmptyRiffStateProps) {
   const [isHovered, setIsHovered] = useState(false);
+
+  if (!isAdmin) {
+    return (
+      <div
+        style={{
+          padding: "40px",
+          backgroundColor: "#F9F9F9",
+          border: "2px dashed #E6E6E6",
+          textAlign: "center",
+        }}
+      >
+        <p
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "16px",
+            fontWeight: 300,
+            color: "#959595",
+            margin: 0,
+          }}
+        >
+          The host will start a riff soon.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div
+      className="empty-riff-cta"
       style={{
         display: "flex",
-        flexDirection: "column",
         alignItems: "center",
         gap: "16px",
         width: "100%",
       }}
     >
-      {/* Header */}
-      <h3
+      {/* Description */}
+      <p
+        className="empty-riff-text"
         style={{
           fontFamily: "var(--font-dm-sans)",
-          fontSize: "20px",
+          fontSize: "16px",
           fontWeight: 300,
-          lineHeight: 1.2,
           color: "#000000",
-          textAlign: "center",
-          textTransform: "uppercase",
-          letterSpacing: "0.05em",
+          margin: 0,
+          flex: 1,
         }}
       >
-        NO CURRENT RIFF
-      </h3>
+        No riff yet &mdash; kick things off with a new one.
+      </p>
 
       {/* Action Button */}
       <button
         onClick={onStartNewRiff}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        className="empty-riff-button"
         style={{
           backgroundColor: isHovered ? "#00FF66" : "#FFFFFF",
           border: "2px solid #000000",
@@ -53,12 +82,27 @@ export default function EmptyRiffState({ onStartNewRiff }: EmptyRiffStateProps) 
           color: "#000000",
           cursor: "pointer",
           transition: "none",
-          width: "100%",
-          textAlign: "center",
+          whiteSpace: "nowrap",
+          flexShrink: 0,
         }}
       >
         Start new riff
       </button>
+
+      <style>{`
+        @media (max-width: 767px) {
+          .empty-riff-cta {
+            flex-direction: column !important;
+          }
+          .empty-riff-text {
+            text-align: center !important;
+          }
+          .empty-riff-button {
+            width: 100% !important;
+            text-align: center !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

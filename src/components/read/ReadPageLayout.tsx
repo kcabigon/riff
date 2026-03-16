@@ -8,6 +8,7 @@ import CommentAnchor from "./CommentAnchor";
 import CommentPopover from "./CommentPopover";
 import CommentSidebar from "./CommentSidebar";
 import CommentDrawer from "./CommentDrawer";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 
 interface CommentAuthor {
   id: string;
@@ -69,7 +70,7 @@ export default function ReadPageLayout({
   const [activeHighlightId, setActiveHighlightId] = useState<string | null>(null);
   const [pendingSelection, setPendingSelection] = useState<PendingSelection | null>(null);
 
-  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+  const isMobile = useIsMobile();
 
   const markAsRead = useCallback(async () => {
     if (markedRead) return;
@@ -208,7 +209,7 @@ export default function ReadPageLayout({
         }}
       >
         {/* Main content column */}
-        <div style={{ width: "720px", flexShrink: 0, minWidth: 0 }}>
+        <div style={{ maxWidth: "720px", width: "100%", flexShrink: 0, minWidth: 0 }}>
           {/* Cover image */}
           {piece.coverImage && (
             <div

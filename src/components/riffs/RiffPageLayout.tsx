@@ -218,6 +218,7 @@ export default function RiffPageLayout({
       >
         {/* Riff header */}
         <div
+          className="riff-page-header"
           style={{
             display: "flex",
             flexDirection: "row",
@@ -610,6 +611,22 @@ export default function RiffPageLayout({
         }
         totalParticipants={riff.participants.length}
       />
+
+      <style>{`
+        @media (max-width: 767px) {
+          .riff-page-header {
+            flex-direction: column !important;
+            gap: 24px !important;
+          }
+          .riff-page-header > div:last-child {
+            width: 100% !important;
+            min-width: 0 !important;
+          }
+          .riff-page-header > div:last-child button {
+            width: 100% !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
