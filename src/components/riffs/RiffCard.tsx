@@ -343,7 +343,7 @@ export default function RiffCard({
               whiteSpace: "nowrap",
             }}
           >
-            Waiting for reveal
+            Waiting for the host to reveal
           </button>
         ) : (
           <button

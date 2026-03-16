@@ -71,6 +71,7 @@ export default function AvatarStack({
           borderColor={borderColor}
           borderWidth={borderWidth}
           tag={user.tag}
+          badge={user.badge}
           onClick={onAvatarClick}
           style={{
             marginRight: "-4px",

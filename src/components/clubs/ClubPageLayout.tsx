@@ -9,6 +9,7 @@ import CompletedRiffCard from "@/components/riffs/CompletedRiffCard";
 import CreateRiffModal from "@/components/riffs/CreateRiffModal";
 import RevealConfirmModal from "@/components/riffs/RevealConfirmModal";
 import ReadyToRevealCard from "@/components/riffs/ReadyToRevealCard";
+import OnboardingChecklist from "@/components/clubs/OnboardingChecklist";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
 
 interface ClubMember {
@@ -278,6 +279,20 @@ export default function ClubPageLayout({
             </p>
           )}
         </div>
+
+        {/* Onboarding checklist for admin of new clubs */}
+        {isAdmin && (
+          <OnboardingChecklist
+            clubId={club.id}
+            hasMembers={club.members.length > 1}
+            hasActiveRiff={!!activeRiff}
+            hasCompletedRiff={completedRiffs.length > 0}
+            onStartRiff={() => setIsCreateRiffModalOpen(true)}
+            onInvite={() =>
+              window.open(`/onboarding/invite?clubId=${club.id}`, "_self")
+            }
+          />
+        )}
 
         {/* Current Riff section */}
         <div style={{ marginBottom: "48px" }}>

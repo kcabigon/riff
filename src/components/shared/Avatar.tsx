@@ -2,6 +2,7 @@
 
 import { CSSProperties } from "react";
 import { AvatarUser } from "@/types";
+import AdminBadge from "./AdminBadge";
 
 interface AvatarProps {
   user: AvatarUser;
@@ -10,6 +11,7 @@ interface AvatarProps {
   borderColor?: string; // Default: '#000000' (black)
   borderWidth?: number; // Default: 2 (in pixels)
   tag?: string | null; // Optional label (e.g., "H" for host)
+  badge?: "admin" | "moderator" | null; // Optional role badge
   onClick?: (userId: string) => void;
   className?: string;
   style?: CSSProperties;
@@ -33,6 +35,7 @@ export default function Avatar({
   borderColor = "#000000",
   borderWidth = 2,
   tag = null,
+  badge = null,
   onClick,
   className = "",
   style = {},
@@ -132,6 +135,9 @@ export default function Avatar({
           </span>
         )}
       </div>
+
+      {/* Optional role badge */}
+      {badge && <AdminBadge type={badge} size={size <= 32 ? 12 : 14} />}
 
       {/* Optional tag/label — sibling to inner, not clipped */}
       {tag && (

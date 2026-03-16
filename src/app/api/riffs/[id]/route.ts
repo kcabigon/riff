@@ -135,6 +135,14 @@ export async function PATCH(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Only DRAFT or ACTIVE riffs can have details edited
+    if ((title || prompt || deadline !== undefined) && !["DRAFT", "ACTIVE"].includes(riff.status)) {
+      return NextResponse.json(
+        { error: "Can only edit draft or active riffs" },
+        { status: 400 }
+      );
+    }
+
     // Only creator can update title, prompt, deadline
     if ((title || prompt || deadline !== undefined) && riff.creatorId !== (user as any).id) {
       return NextResponse.json(
@@ -277,6 +285,14 @@ export async function DELETE(
 
     if (!riff) {
       return NextResponse.json({ error: "Riff not found" }, { status: 404 });
+    }
+
+    // Only DRAFT riffs can be deleted
+    if (riff.status !== "DRAFT") {
+      return NextResponse.json(
+        { error: "Only draft riffs can be deleted" },
+        { status: 400 }
+      );
     }
 
     // Only creator or club admin can delete

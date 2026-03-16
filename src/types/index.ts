@@ -39,9 +39,10 @@ export interface AvatarUser {
   avatarUrl: string | null;
 }
 
-// Avatar user with optional tag/label (e.g., "H" for host)
+// Avatar user with optional tag/label (e.g., "H" for host) and role badge
 export interface AvatarUserWithTag extends AvatarUser {
   tag?: string | null;
+  badge?: "admin" | "moderator" | null;
 }
 
 // ==================== CLUBS (NEW ARCHITECTURE) ====================

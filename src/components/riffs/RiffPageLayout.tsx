@@ -6,6 +6,8 @@ import AvatarStack from "@/components/shared/AvatarStack";
 import CountdownTimer from "./CountdownTimer";
 import PieceCard from "./PieceCard";
 import RevealConfirmModal from "./RevealConfirmModal";
+import EditRiffModal from "./EditRiffModal";
+import DeleteRiffConfirmModal from "./DeleteRiffConfirmModal";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
 import { useDraftCreation } from "@/hooks/useDraftCreation";
 
@@ -71,6 +73,8 @@ export default function RiffPageLayout({
   const [isButtonHovered, setIsButtonHovered] = useState(false);
   const [isRevealModalOpen, setIsRevealModalOpen] = useState(false);
   const [isRevealing, setIsRevealing] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const router = useRouter();
   const handleAvatarClick = useProfileNavigation();
   const { createDraft } = useDraftCreation();
@@ -268,6 +272,60 @@ export default function RiffPageLayout({
               </p>
             </div>
 
+            {/* Admin actions */}
+            {isAdmin && (riff.status === "ACTIVE" || riff.status === "DRAFT") && (
+              <div style={{ display: "flex", gap: "12px" }}>
+                <button
+                  onClick={() => setIsEditModalOpen(true)}
+                  style={{
+                    background: "none",
+                    border: "1px solid #E6E6E6",
+                    padding: "6px 16px",
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "13px",
+                    fontWeight: 300,
+                    color: "#808080",
+                    cursor: "pointer",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = "#000000";
+                    e.currentTarget.style.color = "#000000";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = "#E6E6E6";
+                    e.currentTarget.style.color = "#808080";
+                  }}
+                >
+                  Edit
+                </button>
+                {riff.status === "DRAFT" && (
+                  <button
+                    onClick={() => setIsDeleteModalOpen(true)}
+                    style={{
+                      background: "none",
+                      border: "1px solid #E6E6E6",
+                      padding: "6px 16px",
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "13px",
+                      fontWeight: 300,
+                      color: "#808080",
+                      cursor: "pointer",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = "#FF4444";
+                      e.currentTarget.style.color = "#FF4444";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = "#E6E6E6";
+                      e.currentTarget.style.color = "#808080";
+                    }}
+                  >
+                    Delete
+                  </button>
+                )}
+              </div>
+            )}
+
             {/* Prompt */}
             {riff.prompt && (
               <div
@@ -432,7 +490,7 @@ export default function RiffPageLayout({
                   whiteSpace: "nowrap",
                 }}
               >
-                Waiting for reveal
+                Waiting for the host to reveal
               </button>
             ) : riff.status !== "REVEALED" ? (
               <button
@@ -611,6 +669,38 @@ export default function RiffPageLayout({
         }
         totalParticipants={riff.participants.length}
       />
+
+      {/* Edit Riff Modal */}
+      {isEditModalOpen && (
+        <EditRiffModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onUpdated={() => {
+            setIsEditModalOpen(false);
+            router.refresh();
+          }}
+          riff={{
+            id: riff.id,
+            title: riff.title,
+            prompt: riff.prompt,
+            deadline: riff.deadline,
+          }}
+        />
+      )}
+
+      {/* Delete Riff Modal */}
+      {isDeleteModalOpen && (
+        <DeleteRiffConfirmModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          onDeleted={() => {
+            setIsDeleteModalOpen(false);
+            router.push(`/clubs/${riff.clubId}`);
+          }}
+          riffId={riff.id}
+          riffTitle={riff.title}
+        />
+      )}
 
       <style>{`
         @media (max-width: 767px) {
