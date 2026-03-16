@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import NavBar from "@/components/clubs/NavBar";
 import AvatarStack from "@/components/shared/AvatarStack";
 import RiffCard from "@/components/riffs/RiffCard";
@@ -91,6 +92,7 @@ export default function ClubPageLayout({
   completedRiffs,
   stats,
 }: ClubPageLayoutProps) {
+  const router = useRouter();
   const [isCreateRiffModalOpen, setIsCreateRiffModalOpen] = useState(false);
   const [isRevealModalOpen, setIsRevealModalOpen] = useState(false);
   const [isRevealing, setIsRevealing] = useState(false);
@@ -101,13 +103,13 @@ export default function ClubPageLayout({
 
   // After joining a riff, refresh the page to get updated state
   const handleJoinRiff = useCallback(() => {
-    window.location.reload();
+    router.refresh();
   }, []);
 
   // After creating a riff, refresh the page
   const handleRiffCreated = useCallback(() => {
     setIsCreateRiffModalOpen(false);
-    window.location.reload();
+    router.refresh();
   }, []);
 
   // Handle reveal confirmation
@@ -122,7 +124,7 @@ export default function ClubPageLayout({
       });
       if (res.ok) {
         setIsRevealModalOpen(false);
-        window.location.reload();
+        router.refresh();
       }
     } catch (err) {
       console.error("Error revealing riff:", err);

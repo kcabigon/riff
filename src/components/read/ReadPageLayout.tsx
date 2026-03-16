@@ -8,6 +8,8 @@ import CommentAnchor from "./CommentAnchor";
 import CommentPopover from "./CommentPopover";
 import CommentSidebar from "./CommentSidebar";
 import CommentDrawer from "./CommentDrawer";
+import ReadingProgress from "./ReadingProgress";
+import PieceNavigation from "./PieceNavigation";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 
 interface CommentAuthor {
@@ -51,6 +53,8 @@ interface ReadPageLayoutProps {
   currentUser: CommentAuthor;
   initialComments: CommentData[];
   isAlreadyRead: boolean;
+  previousPiece?: { id: string; title: string } | null;
+  nextPiece?: { id: string; title: string } | null;
 }
 
 export default function ReadPageLayout({
@@ -60,6 +64,8 @@ export default function ReadPageLayout({
   currentUser,
   initialComments,
   isAlreadyRead,
+  previousPiece = null,
+  nextPiece = null,
 }: ReadPageLayoutProps) {
   const router = useRouter();
   const endRef = useRef<HTMLDivElement>(null);
@@ -147,6 +153,8 @@ export default function ReadPageLayout({
       style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}
       onClick={handleLayoutClick}
     >
+      <ReadingProgress />
+
       {/* Top nav */}
       <div
         style={{
@@ -350,6 +358,13 @@ export default function ReadPageLayout({
           onDelete={handleDeleteComment}
         />
       )}
+
+      {/* Piece-to-piece navigation */}
+      <PieceNavigation
+        previousPiece={previousPiece}
+        nextPiece={nextPiece}
+        riffId={riffId}
+      />
     </div>
   );
 }

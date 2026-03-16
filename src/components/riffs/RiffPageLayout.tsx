@@ -8,6 +8,7 @@ import PieceCard from "./PieceCard";
 import RevealConfirmModal from "./RevealConfirmModal";
 import EditRiffModal from "./EditRiffModal";
 import DeleteRiffConfirmModal from "./DeleteRiffConfirmModal";
+import RevealCelebration from "./RevealCelebration";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
 import { useDraftCreation } from "@/hooks/useDraftCreation";
 
@@ -75,6 +76,7 @@ export default function RiffPageLayout({
   const [isRevealing, setIsRevealing] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
   const router = useRouter();
   const handleAvatarClick = useProfileNavigation();
   const { createDraft } = useDraftCreation();
@@ -152,7 +154,7 @@ export default function RiffPageLayout({
       });
       if (res.ok) {
         setIsRevealModalOpen(false);
-        window.location.reload();
+        setShowCelebration(true);
       }
     } catch (err) {
       console.error("Error revealing riff:", err);
@@ -669,6 +671,17 @@ export default function RiffPageLayout({
         }
         totalParticipants={riff.participants.length}
       />
+
+      {/* Reveal Celebration */}
+      {showCelebration && (
+        <RevealCelebration
+          pieceCount={riff.pieces.length}
+          onDismiss={() => {
+            setShowCelebration(false);
+            router.refresh();
+          }}
+        />
+      )}
 
       {/* Edit Riff Modal */}
       {isEditModalOpen && (

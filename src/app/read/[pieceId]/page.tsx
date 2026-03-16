@@ -138,6 +138,22 @@ export default async function ReadPage({
     author: c.author,
   }));
 
+  // Fetch sibling pieces in same riff for navigation
+  const siblingPieces = await prisma.pieceRiff.findMany({
+    where: { riffId: validRiffId },
+    select: {
+      piece: {
+        select: { id: true, title: true },
+      },
+    },
+    orderBy: { submittedAt: "asc" },
+  });
+
+  const orderedPieces = siblingPieces.map((pr) => pr.piece);
+  const currentIndex = orderedPieces.findIndex((p) => p.id === pieceId);
+  const previousPiece = currentIndex > 0 ? orderedPieces[currentIndex - 1] : null;
+  const nextPiece = currentIndex < orderedPieces.length - 1 ? orderedPieces[currentIndex + 1] : null;
+
   // Fetch current user info for comment compose
   const currentUser = await prisma.user.findUnique({
     where: { id: userId },
@@ -165,6 +181,8 @@ export default async function ReadPage({
       currentUser={currentUser ?? { id: userId, name: null, username: null, avatarUrl: null }}
       initialComments={initialComments}
       isAlreadyRead={!!existingRead}
+      previousPiece={previousPiece}
+      nextPiece={nextPiece}
     />
   );
 }

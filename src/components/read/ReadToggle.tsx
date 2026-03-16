@@ -48,7 +48,7 @@ export default function ReadToggle({ isRiffMode, onToggle }: ReadToggleProps) {
           transition: "background-color 0.15s ease, color 0.15s ease",
         }}
       >
-        Riff
+        Comment
       </button>
     </div>
   );
