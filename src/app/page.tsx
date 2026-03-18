@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import NoiseBackground from "@/components/NoiseBackground";
@@ -7,6 +8,22 @@ import LandingNavBar from "@/components/LandingNavBar";
 
 export default function LandingPage() {
   const router = useRouter();
+  const startARef = useRef<HTMLDivElement>(null);
+  const heroRef = useRef<HTMLDivElement>(null);
+  const [ctaTop, setCtaTop] = useState<number | null>(null);
+
+  useEffect(() => {
+    const measure = () => {
+      if (startARef.current && heroRef.current) {
+        const startARect = startARef.current.getBoundingClientRect();
+        const heroRect = heroRef.current.getBoundingClientRect();
+        setCtaTop(startARect.bottom - heroRect.top + 40);
+      }
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
 
   return (
     <div style={{ height: "100vh", overflow: "hidden", position: "relative", backgroundColor: "#FFFFFF" }}>
@@ -33,7 +50,7 @@ export default function LandingPage() {
             alignItems: "center",
           }}
         >
-          <div style={{ position: "relative", height: "661px", width: "100%" }}>
+          <div ref={heroRef} style={{ position: "relative", height: "661px", width: "100%" }}>
             {/* SVG + text row */}
             <div
               style={{
@@ -41,6 +58,7 @@ export default function LandingPage() {
                 flexDirection: "row",
                 alignItems: "flex-start",
                 marginLeft: "-260px",
+                gap: "16px",
               }}
             >
               {/* Left SVG — bleeds off left edge */}
@@ -50,7 +68,7 @@ export default function LandingPage() {
                 width={599}
                 height={502}
                 priority
-                style={{ flexShrink: 0 }}
+                style={{ flexShrink: 0, marginTop: "28px" }}
               />
 
               {/* Text block */}
@@ -75,6 +93,7 @@ export default function LandingPage() {
                   with friends.
                 </div>
                 <div
+                  ref={startARef}
                   style={{
                     fontFamily: "var(--font-dm-serif-text)",
                     fontSize: "96px",
@@ -85,6 +104,7 @@ export default function LandingPage() {
                 >
                   Start a
                 </div>
+
               </div>
 
               {/* Right SVG — bleeds off right edge */}
@@ -94,18 +114,18 @@ export default function LandingPage() {
                 width={815}
                 height={477}
                 priority
-                style={{ flexShrink: 0 }}
+                style={{ flexShrink: 0, marginTop: "190px" }}
               />
             </div>
 
-            {/* CTA Button — absolute, horizontally centered */}
+            {/* CTA Button — below "Start a", centered on page */}
             <button
               onClick={() => router.push("/login")}
               style={{
                 position: "absolute",
-                top: "489px",
                 left: "50%",
                 transform: "translateX(-50%)",
+                top: `${ctaTop ?? 300}px`,
                 backgroundColor: "#01EFFC",
                 border: "2px solid #000000",
                 boxShadow: "8px 8px 0px 0px #000000",
@@ -117,6 +137,7 @@ export default function LandingPage() {
                 cursor: "pointer",
                 transition: "background-color 0.2s ease, box-shadow 0.2s ease",
                 whiteSpace: "nowrap",
+                zIndex: 2,
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = "#FFFFFF";
@@ -169,7 +190,7 @@ export default function LandingPage() {
                 width={329}
                 height={276}
                 priority
-                style={{ flexShrink: 0 }}
+                style={{ flexShrink: 0, paddingTop: "32px" }}
               />
               <div
                 style={{
