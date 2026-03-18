@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Avatar from "@/components/shared/Avatar";
 
 interface ProfileSectionProps {
   user: {
@@ -10,6 +11,7 @@ interface ProfileSectionProps {
     firstName: string | null;
     lastName: string | null;
     bio: string | null;
+    avatarUrl: string | null;
     email: string | null;
   };
 }
@@ -18,9 +20,48 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
   const [firstName, setFirstName] = useState(user.firstName || "");
   const [lastName, setLastName] = useState(user.lastName || "");
   const [bio, setBio] = useState(user.bio || "");
+  const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl || "");
+  const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Reset input so same file can be re-selected
+    e.target.value = "";
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload/image", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setAvatarUrl(data.url);
+      }
+    } catch {
+      // silent
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleRemoveAvatar = () => {
+    setAvatarUrl("");
+  };
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -34,6 +75,7 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
           firstName: firstName.trim(),
           lastName: lastName.trim(),
           bio: bio.trim() || null,
+          avatarUrl: avatarUrl || null,
         }),
       });
 
@@ -62,6 +104,14 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
     boxSizing: "border-box" as const,
   };
 
+  // Build an AvatarUser for the Avatar component preview
+  const avatarUser = {
+    id: user.id,
+    name: [firstName, lastName].filter(Boolean).join(" ") || user.name || null,
+    username: null,
+    avatarUrl: avatarUrl || null,
+  };
+
   return (
     <section>
       <h2
@@ -79,6 +129,97 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
       </h2>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+        {/* Avatar upload */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          <label
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "14px",
+              fontWeight: 300,
+              color: "#000000",
+            }}
+          >
+            Photo
+          </label>
+          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+            <div
+              onClick={handleAvatarClick}
+              style={{
+                cursor: isUploading ? "wait" : "pointer",
+                position: "relative",
+                width: "72px",
+                height: "72px",
+                flexShrink: 0,
+              }}
+            >
+              <Avatar user={avatarUser} size={48} style={{ width: "72px", height: "72px" }} />
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  borderRadius: "64px",
+                  backgroundColor: isUploading
+                    ? "rgba(0,0,0,0.4)"
+                    : "rgba(0,0,0,0)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "background-color 0.15s",
+                }}
+                onMouseEnter={(e) => {
+                  if (!isUploading)
+                    e.currentTarget.style.backgroundColor = "rgba(0,0,0,0.4)";
+                }}
+                onMouseLeave={(e) => {
+                  if (!isUploading)
+                    e.currentTarget.style.backgroundColor = "rgba(0,0,0,0)";
+                }}
+              >
+                <span
+                  style={{
+                    color: "#FFFFFF",
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "11px",
+                    fontWeight: 500,
+                    opacity: isUploading ? 1 : 0,
+                    transition: "opacity 0.15s",
+                  }}
+                  className="avatar-upload-label"
+                >
+                  {isUploading ? "..." : "Edit"}
+                </span>
+              </div>
+              <style>{`
+                div:hover .avatar-upload-label { opacity: 1 !important; }
+              `}</style>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/gif,image/webp"
+              onChange={handleFileChange}
+              style={{ display: "none" }}
+            />
+            {avatarUrl && (
+              <button
+                onClick={handleRemoveAvatar}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "13px",
+                  fontWeight: 300,
+                  color: "#959595",
+                  padding: 0,
+                }}
+              >
+                Remove
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Email (read-only) */}
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           <label

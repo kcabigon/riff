@@ -7,8 +7,7 @@ import { randomUUID } from "crypto";
 // POST /api/upload/image - Upload image file
 export async function POST(req: Request) {
   try {
-    // TODO: Re-enable auth in production
-    // await requireAuth();
+    await requireAuth();
 
     const formData = await req.formData();
     const file = formData.get("file") as File;
