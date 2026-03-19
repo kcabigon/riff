@@ -8,6 +8,7 @@ import PieceCard from "./PieceCard";
 import RevealConfirmModal from "./RevealConfirmModal";
 import EditRiffModal from "./EditRiffModal";
 import DeleteRiffConfirmModal from "./DeleteRiffConfirmModal";
+import BackButton from "@/components/BackButton";
 import RevealCelebration from "./RevealCelebration";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
 import { useDraftCreation } from "@/hooks/useDraftCreation";
@@ -179,39 +180,10 @@ export default function RiffPageLayout({
           padding: "24px 24px 0",
         }}
       >
-        <button
-          onClick={() => router.push(`/clubs/${riff.clubId}`)}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
-            fontWeight: 300,
-            color: "#808080",
-            padding: 0,
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-          }}
-        >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
-            style={{ color: "#808080" }}
-          >
-            <path
-              d="M10 12L6 8L10 4"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          Back to {riff.club.name}
-        </button>
+        <BackButton
+          href={`/clubs/${riff.clubId}`}
+          label={`Back to ${riff.club.name}`}
+        />
       </div>
 
       {/* Main content */}

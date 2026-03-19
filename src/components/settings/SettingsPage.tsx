@@ -1,8 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import ProfileSection from "./ProfileSection";
 import DataSection from "./DataSection";
+import BackButton from "@/components/BackButton";
 
 interface SettingsPageProps {
   user: {
@@ -17,8 +17,6 @@ interface SettingsPageProps {
 }
 
 export default function SettingsPage({ user }: SettingsPageProps) {
-  const router = useRouter();
-
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
       {/* Header */}
@@ -29,34 +27,9 @@ export default function SettingsPage({ user }: SettingsPageProps) {
           padding: "48px 24px 64px",
         }}
       >
-        <button
-          onClick={() => router.back()}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
-            fontWeight: 300,
-            color: "#808080",
-            padding: 0,
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            marginBottom: "32px",
-          }}
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path
-              d="M10 12L6 8L10 4"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          Back
-        </button>
+        <div style={{ marginBottom: "32px" }}>
+          <BackButton label="Back" />
+        </div>
 
         <h1
           style={{

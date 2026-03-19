@@ -11,6 +11,7 @@ import CommentDrawer from "./CommentDrawer";
 import ReadingProgress from "./ReadingProgress";
 import PieceNavigation from "./PieceNavigation";
 import { useIsMobile } from "@/hooks/useMediaQuery";
+import BackButton from "@/components/BackButton";
 
 interface CommentAuthor {
   id: string;
@@ -167,39 +168,7 @@ export default function ReadPageLayout({
           alignItems: "center",
         }}
       >
-        <button
-          onClick={() => router.push(`/riffs/${riffId}`)}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
-            fontWeight: 300,
-            color: "#808080",
-            padding: 0,
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-          }}
-        >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
-            style={{ color: "#808080" }}
-          >
-            <path
-              d="M10 12L6 8L10 4"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          Back to riff
-        </button>
+        <BackButton href={`/riffs/${riffId}`} label="Back to riff" />
 
         <ReadToggle isRiffMode={isRiffMode} onToggle={setIsRiffMode} />
       </div>
