@@ -6,14 +6,9 @@ import Image from "next/image";
 interface BackButtonProps {
   href?: string;
   onClick?: () => void;
-  label?: string;
 }
 
-/**
- * Reusable back button component with arrow icon
- * Used in onboarding and other flows for navigation
- */
-export default function BackButton({ href, onClick, label }: BackButtonProps) {
+export default function BackButton({ href, onClick }: BackButtonProps) {
   const router = useRouter();
 
   const handleClick = () => {
@@ -30,35 +25,25 @@ export default function BackButton({ href, onClick, label }: BackButtonProps) {
     <button
       onClick={handleClick}
       style={{
+        width: "32px",
+        height: "32px",
         backgroundColor: "transparent",
         border: "none",
         cursor: "pointer",
         padding: 0,
         display: "flex",
         alignItems: "center",
-        gap: label ? "8px" : 0,
+        justifyContent: "center",
       }}
-      aria-label={label || "Go back"}
+      aria-label="Go back"
     >
       <Image
         src="/icons/back_arrow.svg"
         alt="Back"
-        width={label ? 20 : 32}
-        height={label ? 20 : 32}
+        width={32}
+        height={32}
         style={{ display: "block" }}
       />
-      {label && (
-        <span
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
-            fontWeight: 300,
-            color: "#808080",
-          }}
-        >
-          {label}
-        </span>
-      )}
     </button>
   );
 }

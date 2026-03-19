@@ -168,7 +168,7 @@ export default function ReadPageLayout({
           alignItems: "center",
         }}
       >
-        <BackButton href={`/riffs/${riffId}`} label="Back to riff" />
+        <BackButton href={`/riffs/${riffId}`} />
 
         <ReadToggle isRiffMode={isRiffMode} onToggle={setIsRiffMode} />
       </div>

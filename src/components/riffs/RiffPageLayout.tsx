@@ -180,10 +180,7 @@ export default function RiffPageLayout({
           padding: "24px 24px 0",
         }}
       >
-        <BackButton
-          href={`/clubs/${riff.clubId}`}
-          label={`Back to ${riff.club.name}`}
-        />
+        <BackButton href={`/clubs/${riff.clubId}`} />
       </div>
 
       {/* Main content */}

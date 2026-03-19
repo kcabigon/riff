@@ -28,7 +28,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
         }}
       >
         <div style={{ marginBottom: "32px" }}>
-          <BackButton label="Back" />
+          <BackButton />
         </div>
 
         <h1
