@@ -66,7 +66,7 @@ export default function NavBar({ user, clubs, currentClub }: NavBarProps) {
             }}
           >
             <Image
-              src="/images/riff_wordmark_white_outline.svg"
+              src="/images/landing/riff_lp.svg"
               alt="Riff"
               width={55}
               height={36}
