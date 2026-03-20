@@ -164,7 +164,7 @@ export default function ClubPageLayout({
         />
       </div>
 
-      {/* Banner — full width, 320px height (180px on mobile) */}
+      {/* Banner with overlay — full width, 320px height (180px on mobile) */}
       {club.bannerImage && (
         <div
           className="club-banner"
@@ -174,8 +174,114 @@ export default function ClubPageLayout({
             backgroundImage: `url(${club.bannerImage})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
+            position: "relative",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
-        />
+        >
+          {/* Dark overlay */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              backgroundColor: "rgba(0, 0, 0, 0.66)",
+            }}
+          />
+          {/* Club info overlaid on banner */}
+          <div
+            style={{
+              position: "relative",
+              display: "flex",
+              flexDirection: "column",
+              gap: "16px",
+              alignItems: "flex-start",
+            }}
+          >
+            <h1
+              style={{
+                fontFamily: "var(--font-dm-serif-text)",
+                fontSize: "32px",
+                fontWeight: 400,
+                color: "#FFFFFF",
+                margin: 0,
+              }}
+            >
+              {club.name}
+            </h1>
+
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "4px 12px",
+                alignItems: "start",
+              }}
+            >
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 300,
+                  color: "#FFFFFF",
+                  margin: 0,
+                }}
+              >
+                <span style={{ fontWeight: 700 }}>{stats.riffCount}</span> riffs
+              </p>
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 300,
+                  color: "#FFFFFF",
+                  margin: 0,
+                }}
+              >
+                <span style={{ fontWeight: 700 }}>{stats.pieceCount}</span>{" "}
+                pieces
+              </p>
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 300,
+                  color: "#FFFFFF",
+                  margin: 0,
+                }}
+              >
+                <span style={{ fontWeight: 700 }}>
+                  {formatNumber(stats.wordCount)}
+                </span>{" "}
+                words
+              </p>
+            </div>
+
+            <AvatarStack
+              users={club.members.map((m) => m.user)}
+              size={48}
+              showBorder={true}
+              borderColor="#FFFFFF"
+              borderWidth={2}
+              onAvatarClick={handleAvatarClick}
+            />
+
+            {club.description && (
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 300,
+                  color: "#FFFFFF",
+                  margin: 0,
+                  lineHeight: "normal",
+                }}
+              >
+                {club.description}
+              </p>
+            )}
+          </div>
+        </div>
       )}
 
       {/* Main content — max-width 1000px, centered */}
@@ -186,7 +292,8 @@ export default function ClubPageLayout({
           padding: "32px 24px 64px",
         }}
       >
-        {/* Club frame */}
+        {/* Club frame — only shown when no banner image */}
+        {!club.bannerImage && (
         <div
           style={{
             display: "flex",
@@ -195,7 +302,6 @@ export default function ClubPageLayout({
             marginBottom: "48px",
           }}
         >
-          {/* Club name */}
           <h1
             style={{
               fontFamily: "var(--font-dm-serif-text)",
@@ -208,7 +314,6 @@ export default function ClubPageLayout({
             {club.name}
           </h1>
 
-          {/* Stats row */}
           <div
             style={{
               display: "flex",
@@ -255,7 +360,6 @@ export default function ClubPageLayout({
             </p>
           </div>
 
-          {/* Member avatars — size 48, black border */}
           <AvatarStack
             users={club.members.map((m) => m.user)}
             size={48}
@@ -265,7 +369,6 @@ export default function ClubPageLayout({
             onAvatarClick={handleAvatarClick}
           />
 
-          {/* Description */}
           {club.description && (
             <p
               style={{
@@ -281,6 +384,7 @@ export default function ClubPageLayout({
             </p>
           )}
         </div>
+        )}
 
         {/* Onboarding checklist for admin of new clubs */}
         {isAdmin && (
