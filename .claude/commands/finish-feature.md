@@ -36,7 +36,12 @@ Complete the current feature branch: validate, push, and create a PR targeting d
      ```
    - Use the PR template format from `.github/pull_request_template.md`
 
-7. **Report**:
+7. **Clean up branch**:
+   - Switch back to develop: `git checkout develop && git pull origin develop`
+   - Delete the local feature branch: `git branch -d <branch-name>`
+   - Delete the remote feature branch: `git push origin --delete <branch-name>`
+
+8. **Report**:
    - Show the PR URL
    - Tell the user: "Sick! Kyle's gonna review this PR and decide if it's dope enough. You can continue working on other features in the meantime."
 
