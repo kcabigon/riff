@@ -10,11 +10,14 @@ export async function PATCH(
   try {
     const user = await requireAuth();
     const { id: pieceId } = await params;
-    const { currentContent, title } = await req.json();
+    const { currentContent, title, coverImage } = await req.json();
 
-    if (!currentContent && title === undefined) {
+    if (!currentContent && title === undefined && coverImage === undefined) {
       return NextResponse.json(
-        { error: "At least one of currentContent or title is required" },
+        {
+          error:
+            "At least one of currentContent, title, or coverImage is required",
+        },
         { status: 400 }
       );
     }
@@ -39,12 +42,19 @@ export async function PATCH(
     }
 
     // Build dynamic update data — at least one field will be present
-    const data: { currentContent?: string; title?: string } = {};
+    const data: {
+      currentContent?: string;
+      title?: string;
+      coverImage?: string | null;
+    } = {};
     if (currentContent) {
       data.currentContent = currentContent;
     }
     if (title !== undefined) {
       data.title = title.trim() || "Untitled";
+    }
+    if (coverImage !== undefined) {
+      data.coverImage = coverImage || null;
     }
 
     const updatedPiece = await prisma.piece.update({
