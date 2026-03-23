@@ -11,7 +11,7 @@ export default async function OnboardingPage() {
   }
 
   const user = await prisma.user.findUnique({
-    where: { id: (session.user as any).id },
+    where: { id: session.user.id },
     select: {
       onboardingCompleted: true,
       onboardingStep: true,

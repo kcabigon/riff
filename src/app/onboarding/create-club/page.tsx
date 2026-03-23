@@ -21,7 +21,7 @@ export default function OnboardingCreateClubPage() {
   // Generate default club name from user's first name
   useEffect(() => {
     if (session?.user) {
-      const firstName = (session.user as any).firstName || "My";
+      const firstName = session.user.firstName || "My";
       setClubName(`${firstName}'s write club`);
     }
   }, [session]);
@@ -33,8 +33,7 @@ export default function OnboardingCreateClubPage() {
 
     // Use default name if not changed
     const finalClubName =
-      clubName.trim() ||
-      `${(session?.user as any)?.firstName || "My"}'s write club`;
+      clubName.trim() || `${session?.user?.firstName || "My"}'s write club`;
 
     // Store club data in sessionStorage for next step
     sessionStorage.setItem(
@@ -60,7 +59,9 @@ export default function OnboardingCreateClubPage() {
         }}
       >
         {/* Back Button */}
-        <div style={{ width: "100%", display: "flex", alignItems: "flex-start" }}>
+        <div
+          style={{ width: "100%", display: "flex", alignItems: "flex-start" }}
+        >
           <BackButton href="/onboarding/club-choice" />
         </div>
 

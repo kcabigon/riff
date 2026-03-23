@@ -15,7 +15,7 @@ export default async function WritePageRoute({
     redirect("/login");
   }
 
-  const userId = (session.user as any).id;
+  const userId = session.user.id;
 
   const piece = await prisma.piece.findUnique({
     where: { id: pieceId },

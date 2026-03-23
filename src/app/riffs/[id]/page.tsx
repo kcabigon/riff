@@ -15,7 +15,7 @@ export default async function RiffPage({
     redirect("/login");
   }
 
-  const userId = (session.user as any).id;
+  const userId = session.user.id;
 
   // Fetch riff with full data
   const riff = await prisma.riff.findUnique({
@@ -80,9 +80,7 @@ export default async function RiffPage({
   }
 
   const isJoined = riff.participants.some((p) => p.user.id === userId);
-  const hasSubmitted = riff.pieces.some(
-    (p) => p.piece.authorId === userId
-  );
+  const hasSubmitted = riff.pieces.some((p) => p.piece.authorId === userId);
   const isAdmin = riff.club.adminId === userId;
 
   // Fetch read piece IDs for REVEALED riffs

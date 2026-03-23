@@ -18,7 +18,7 @@ export default async function ReadPage({
     redirect("/login");
   }
 
-  const userId = (session.user as any).id;
+  const userId = session.user.id;
 
   // Fetch piece with author info
   const piece = await prisma.piece.findUnique({
@@ -151,8 +151,12 @@ export default async function ReadPage({
 
   const orderedPieces = siblingPieces.map((pr) => pr.piece);
   const currentIndex = orderedPieces.findIndex((p) => p.id === pieceId);
-  const previousPiece = currentIndex > 0 ? orderedPieces[currentIndex - 1] : null;
-  const nextPiece = currentIndex < orderedPieces.length - 1 ? orderedPieces[currentIndex + 1] : null;
+  const previousPiece =
+    currentIndex > 0 ? orderedPieces[currentIndex - 1] : null;
+  const nextPiece =
+    currentIndex < orderedPieces.length - 1
+      ? orderedPieces[currentIndex + 1]
+      : null;
 
   // Fetch current user info for comment compose
   const currentUser = await prisma.user.findUnique({
@@ -178,7 +182,14 @@ export default async function ReadPage({
       }}
       riffId={validRiffId}
       clubId={clubId!}
-      currentUser={currentUser ?? { id: userId, name: null, username: null, avatarUrl: null }}
+      currentUser={
+        currentUser ?? {
+          id: userId,
+          name: null,
+          username: null,
+          avatarUrl: null,
+        }
+      }
       initialComments={initialComments}
       isAlreadyRead={!!existingRead}
       previousPiece={previousPiece}
