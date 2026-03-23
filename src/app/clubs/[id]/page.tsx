@@ -101,6 +101,7 @@ export default async function ClubPage({
               title: true,
               authorId: true,
               currentContent: true,
+              coverImage: true,
               wordCount: true,
             },
           },

@@ -15,6 +15,7 @@ const PLACEHOLDER_COLORS = [
 interface MosaicPiece {
   id: string;
   currentContent: string;
+  coverImage?: string | null;
 }
 
 interface MosaicCollageProps {
@@ -51,7 +52,8 @@ export default function MosaicCollage({
       }}
     >
       {pieces.map((piece, index) => {
-        const imageUrl = extractFirstImage(piece.currentContent);
+        const imageUrl =
+          piece.coverImage || extractFirstImage(piece.currentContent);
         const isPlaceholder = !imageUrl;
         const bgColor =
           PLACEHOLDER_COLORS[index % PLACEHOLDER_COLORS.length];

@@ -22,6 +22,7 @@ interface ReadyToRevealCardProps {
         id: string;
         title: string;
         currentContent: string;
+        coverImage?: string | null;
         wordCount: number;
         authorId: string;
       };
@@ -123,6 +124,7 @@ export default function ReadyToRevealCard({
           pieces={riff.pieces.map((p) => ({
             id: p.piece.id,
             currentContent: p.piece.currentContent,
+            coverImage: p.piece.coverImage,
           }))}
           width={400}
           height={440}

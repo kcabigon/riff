@@ -28,6 +28,7 @@ interface RiffPiece {
     title: string;
     authorId: string;
     currentContent: string;
+    coverImage?: string | null;
     wordCount: number;
   };
 }
@@ -544,6 +545,7 @@ export default function ClubPageLayout({
                     id: p.piece.id,
                     title: p.piece.title,
                     currentContent: p.piece.currentContent,
+                    coverImage: p.piece.coverImage,
                     wordCount: p.piece.wordCount,
                   }))}
                 />
