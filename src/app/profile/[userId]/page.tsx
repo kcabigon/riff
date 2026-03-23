@@ -15,7 +15,13 @@ export default async function ProfilePageRoute({
     redirect("/login");
   }
 
-  const currentUserId = (session.user as any).id;
+  const currentUserId = session.user.id;
+
+  // Get the current user's last active club for back navigation
+  const currentUser = await prisma.user.findUnique({
+    where: { id: currentUserId },
+    select: { lastActiveClubId: true },
+  });
 
   // Fetch the target user
   const user = await prisma.user.findUnique({
@@ -163,6 +169,7 @@ export default async function ProfilePageRoute({
       drafts={drafts}
       collections={collections}
       isOwnProfile={isOwnProfile}
+      lastActiveClubId={currentUser?.lastActiveClubId ?? null}
     />
   );
 }

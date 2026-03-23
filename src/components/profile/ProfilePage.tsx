@@ -6,6 +6,7 @@ import PiecesGrid from "./tabs/PiecesGrid";
 import DraftsList from "./tabs/DraftsList";
 import CollectionsList from "./tabs/CollectionsList";
 import PrimaryButton from "@/components/PrimaryButton";
+import BackButton from "@/components/BackButton";
 import { useDraftCreation } from "@/hooks/useDraftCreation";
 
 type TabId = "pieces" | "drafts" | "collections";
@@ -51,6 +52,7 @@ interface ProfilePageProps {
     }>;
   }>;
   isOwnProfile: boolean;
+  lastActiveClubId: string | null;
 }
 
 const TABS: { id: TabId; label: string }[] = [
@@ -66,6 +68,7 @@ export default function ProfilePage({
   drafts,
   collections,
   isOwnProfile,
+  lastActiveClubId,
 }: ProfilePageProps) {
   const [activeTab, setActiveTab] = useState<TabId>("pieces");
   const { createDraft, isCreating } = useDraftCreation();
@@ -77,6 +80,13 @@ export default function ProfilePage({
         backgroundColor: "#FFFFFF",
       }}
     >
+      {/* Back to club */}
+      {lastActiveClubId && (
+        <div style={{ padding: "16px 24px 0" }}>
+          <BackButton href={`/clubs/${lastActiveClubId}`} />
+        </div>
+      )}
+
       {/* Header */}
       <ProfileHeader user={user} stats={stats} />
 
@@ -110,7 +120,9 @@ export default function ProfilePage({
                 style={{
                   background: "none",
                   border: "none",
-                  borderBottom: isActive ? "2px solid #000000" : "2px solid transparent",
+                  borderBottom: isActive
+                    ? "2px solid #000000"
+                    : "2px solid transparent",
                   fontFamily: "var(--font-dm-sans)",
                   fontSize: "20px",
                   fontWeight: isActive ? 700 : 300,

@@ -17,6 +17,7 @@ If the user asks you to "regain context" or "catch up", run `/letsriff`.
 | `/sync` | Pull latest develop into your feature branch — prevents merge conflicts |
 | `/pr-check` | Pre-PR validation — lint, type-check, build, commit format |
 | `/finish-feature` | Push branch and create a PR targeting develop |
+| `/promote` | Kyle only — promote develop → staging or staging → main |
 | `/setup` | First-time setup — walks through environment, deps, database |
 
 ## Rules

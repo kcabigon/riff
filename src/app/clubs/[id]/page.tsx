@@ -15,7 +15,7 @@ export default async function ClubPage({
     redirect("/login");
   }
 
-  const userId = (session.user as any).id;
+  const userId = session.user.id;
 
   // Verify user is a member of this club
   const membership = await prisma.clubMember.findFirst({
@@ -117,8 +117,7 @@ export default async function ClubPage({
   const pieceCount = riffs.reduce((sum, r) => sum + r.pieces.length, 0);
   const wordCount = riffs.reduce(
     (sum, r) =>
-      sum +
-      r.pieces.reduce((s, p) => s + (p.piece?.wordCount || 0), 0),
+      sum + r.pieces.reduce((s, p) => s + (p.piece?.wordCount || 0), 0),
     0
   );
 

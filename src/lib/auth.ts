@@ -8,7 +8,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: {
     ...PrismaAdapter(prisma),
     // Override createUser to allow partial user creation (email only)
-    createUser: async (user: any) => {
+    createUser: async (user: { email: string; emailVerified: Date | null }) => {
       return await prisma.user.create({
         data: {
           email: user.email.toLowerCase(),
@@ -26,7 +26,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       apiKey: process.env.RESEND_API_KEY,
       from: process.env.EMAIL_FROM || "noreply@localhost",
       // Custom email sender - will be called for both new and existing users
-      sendVerificationRequest: async ({ identifier: email, url, provider }) => {
+      sendVerificationRequest: async ({ identifier: email, url }) => {
         try {
           // Check if user exists to determine which email template to use
           const user = await prisma.user.findUnique({
@@ -60,22 +60,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.username = (user as any).username;
-        token.firstName = (user as any).firstName;
-        token.lastName = (user as any).lastName;
-        token.onboardingCompleted = (user as any).onboardingCompleted;
-        token.onboardingStep = (user as any).onboardingStep;
+        token.username = user.username;
+        token.firstName = user.firstName;
+        token.lastName = user.lastName;
+        token.onboardingCompleted = user.onboardingCompleted;
+        token.onboardingStep = user.onboardingStep;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).id = token.id;
-        (session.user as any).username = token.username;
-        (session.user as any).firstName = token.firstName;
-        (session.user as any).lastName = token.lastName;
-        (session.user as any).onboardingCompleted = token.onboardingCompleted;
-        (session.user as any).onboardingStep = token.onboardingStep;
+        session.user.id = token.id as string;
+        session.user.username = token.username;
+        session.user.firstName = token.firstName;
+        session.user.lastName = token.lastName;
+        session.user.onboardingCompleted = token.onboardingCompleted;
+        session.user.onboardingStep = token.onboardingStep;
       }
       return session;
     },
@@ -90,7 +90,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       const session = await auth();
       if (session?.user) {
         const user = await prisma.user.findUnique({
-          where: { id: (session.user as any).id },
+          where: { id: session.user.id },
           select: {
             onboardingCompleted: true,
             onboardingStep: true,
@@ -120,7 +120,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           // Check if user is still a member of last active club
           const isMember = await prisma.clubMember.findFirst({
             where: {
-              userId: (session.user as any).id,
+              userId: session.user.id,
               clubId: user.lastActiveClubId,
             },
           });

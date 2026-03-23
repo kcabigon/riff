@@ -16,10 +16,12 @@ Welcome! This guide covers everything you need to know to contribute code to Rif
 feature/your-feature  →  develop  →  staging  →  main
 ```
 
-- **`main`**: Production. Never commit directly. Only receives PRs from `staging`.
-- **`staging`**: Pre-production testing. Only receives merges from `develop`.
-- **`develop`**: Integration branch. Merge your feature branches here via PR.
+- **`main`**: Production (letsriff.app). Never commit directly. Only receives PRs from `staging`.
+- **`staging`**: Pre-production testing (staging.letsriff.app). Kyle promotes `develop` → `staging` when ready for testers.
+- **`develop`**: Integration branch. Your PRs target here. This is where your work lands.
 - **Feature branches**: Where you work. One branch per feature/fix.
+
+**Your work stops at `develop`.** Kyle handles promoting to staging and production.
 
 ### Starting a Feature
 
