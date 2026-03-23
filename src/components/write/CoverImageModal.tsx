@@ -66,7 +66,11 @@ export default function CoverImageModal({
       return;
     }
 
-    if (file.type === "image/gif") {
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    const isHeic = ext === "heic" || ext === "heif";
+
+    // GIFs skip crop to preserve animation; HEIC can't preview in browser
+    if (file.type === "image/gif" || isHeic) {
       setIsUploading(true);
       const formData = new FormData();
       formData.append("file", file);
@@ -288,7 +292,7 @@ export default function CoverImageModal({
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
+            accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,.heic,.heif"
             onChange={(e) => {
               const file = e.target.files?.[0];
               if (file) handleFileSelected(file);
@@ -354,7 +358,7 @@ export default function CoverImageModal({
                     margin: 0,
                   }}
                 >
-                  JPEG, PNG, WebP, or GIF (max 5MB)
+                  JPEG, PNG, WebP, GIF, or HEIC (max 5MB)
                 </p>
               </>
             )}
