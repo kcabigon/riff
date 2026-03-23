@@ -60,8 +60,9 @@ export async function POST(req: Request) {
     // Convert HEIC/HEIF to JPEG since browsers can't display them
     let fileExtension = ext;
     if (isHeic) {
+      // Pass the raw ArrayBuffer directly (not buffer.buffer which may be a shared pool)
       const converted = await convert({
-        buffer: buffer.buffer as ArrayBuffer,
+        buffer: bytes,
         format: "JPEG",
         quality: 0.92,
       });
