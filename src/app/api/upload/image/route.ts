@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth-utils";
-import { supabaseAdmin } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase";
 import { randomUUID } from "crypto";
 
 // POST /api/upload/image - Upload image file to Supabase Storage
@@ -8,6 +8,7 @@ export async function POST(req: Request) {
   try {
     await requireAuth();
 
+    const supabase = getSupabaseAdmin();
     const formData = await req.formData();
     const file = formData.get("file") as File;
 
@@ -56,7 +57,7 @@ export async function POST(req: Request) {
     const buffer = Buffer.from(bytes);
 
     // Upload to Supabase Storage
-    const { error: uploadError } = await supabaseAdmin.storage
+    const { error: uploadError } = await supabase.storage
       .from("images")
       .upload(filename, buffer, {
         contentType: file.type,
@@ -74,7 +75,7 @@ export async function POST(req: Request) {
     // Get public URL
     const {
       data: { publicUrl },
-    } = supabaseAdmin.storage.from("images").getPublicUrl(filename);
+    } = supabase.storage.from("images").getPublicUrl(filename);
 
     return NextResponse.json({
       success: true,
