@@ -323,7 +323,7 @@ export default function WritePage({ piece }: WritePageProps) {
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,.heic,.heif"
         onChange={handleImageUpload}
         style={{ display: "none" }}
       />
