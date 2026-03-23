@@ -32,12 +32,12 @@ A private essay-sharing platform for creative communities. Users create **clubs*
 - Club invitations (email, link, SMS)
 - Avatar system with admin badges
 - Mobile responsive across all views
+- Image uploads via Supabase Storage (persistent across deploys)
 
 ### What's Incomplete
 - Notification click-through (clicking doesn't navigate yet)
 - Notification emails (in-app only, Resend templates not wired)
 - Deadline reminder cron (planned, not implemented)
-- Image persistence on Vercel (ephemeral filesystem — Supabase Storage migration planned)
 
 ---
 
@@ -103,6 +103,7 @@ src/lib/
 ├── auth-utils.ts              # requireAuth(), getSession(), getCurrentUser()
 ├── resend.ts                  # Email: signIn, onboarding, club invite
 ├── notifications.ts           # createNotification, notifyClubMembers, notifyRiffParticipants
+├── supabase.ts                # Supabase admin client (Storage uploads)
 └── prompt-suggestions.ts      # 27 curated writing prompts
 ```
 
