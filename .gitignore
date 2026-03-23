@@ -53,6 +53,8 @@ next-env.d.ts
 *.swo
 *~
 
-# claude code
-.claude
+# session notes & personal docs (keep committed docs in project root)
 /docs
+
+# claude personal memory (project-level commands and settings ARE committed)
+.claude/memory

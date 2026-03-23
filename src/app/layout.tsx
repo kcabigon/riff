@@ -1,5 +1,11 @@
 import type { Metadata } from "next";
-import { Playfair_Display, DM_Sans, DM_Serif_Text, Over_the_Rainbow } from "next/font/google";
+import {
+  Playfair_Display,
+  DM_Sans,
+  DM_Serif_Text,
+  Over_the_Rainbow,
+} from "next/font/google";
+import EnvironmentBadge from "@/components/shared/EnvironmentBadge";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -41,7 +47,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`antialiased ${playfair.variable} ${dmSans.variable} ${dmSerifText.variable} ${overTheRainbow.variable}`}>{children}</body>
+      <body
+        className={`antialiased ${playfair.variable} ${dmSans.variable} ${dmSerifText.variable} ${overTheRainbow.variable}`}
+      >
+        {children}
+        <EnvironmentBadge />
+      </body>
     </html>
   );
 }

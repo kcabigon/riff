@@ -1,0 +1,188 @@
+# Riff — Architecture & Project Reference
+
+**Last Updated**: March 23, 2026
+
+This file is the single source of truth for project context. The `/letsriff` slash command reads this automatically at the start of each session.
+
+---
+
+## What is Riff?
+
+A private essay-sharing platform for creative communities. Users create **clubs** (groups), launch **riffs** (writing prompts with deadlines), write essays, and read + comment on each other's work after a reveal.
+
+**Tech Stack**: Next.js 16 (React 19) · TypeScript · Prisma · PostgreSQL (Supabase) · Tiptap · Tailwind CSS · NextAuth.js · Resend
+
+---
+
+## Current State (March 23, 2026)
+
+### What's Working
+- Landing page + About page
+- Magic link authentication (Resend)
+- Full onboarding flow (name → club → banner → invite)
+- Club detail page with onboarding checklist, riff cards, completed riffs
+- Riff lifecycle: DRAFT → ACTIVE → REVEALED → COMPLETED (with confetti)
+- Read page with progress bar, piece navigation, comment toggle
+- Comment system with text selection anchoring
+- Rich text editor (Tiptap: images, YouTube, Spotify, resize)
+- Draft editor with autosave and cover image upload (crop, HEIC support)
+- Profile page (pieces, drafts, collections)
+- Settings page (edit profile, export data, delete account)
+- Notification system (bell + panel, polls every 30s)
+- Club invitations (email, link, SMS)
+- Avatar system with admin badges
+- Mobile responsive across all views
+
+### What's Incomplete
+- Notification click-through (clicking doesn't navigate yet)
+- Notification emails (in-app only, Resend templates not wired)
+- Deadline reminder cron (planned, not implemented)
+- Image persistence on Vercel (ephemeral filesystem — Supabase Storage migration planned)
+
+---
+
+## File Map
+
+### Pages
+```
+src/app/
+├── page.tsx                   # Landing page
+├── about/page.tsx             # About page
+├── login/page.tsx             # Magic link login
+├── settings/page.tsx          # User settings
+├── clubs/[id]/page.tsx        # Club detail (main hub)
+├── riffs/[id]/page.tsx        # Riff detail (revealed pieces)
+├── read/[pieceId]/page.tsx    # Reading page
+├── write/[pieceId]/page.tsx   # Draft editor
+├── profile/[userId]/page.tsx  # User profile
+└── onboarding/                # Onboarding flow (name, club-choice, create-club, banner, invite)
+```
+
+### API Routes
+```
+src/app/api/
+├── auth/                      # NextAuth (magic link)
+├── clubs/                     # Club CRUD + members + riffs
+├── riffs/[id]/                # Riff CRUD, participants, read tracking
+├── drafts/                    # Draft creation
+├── pieces/[id]/               # Piece CRUD, autosave, share/unshare, versions
+├── comments/                  # List + create (with selection anchor)
+├── notifications/             # List, mark read, unread count
+├── users/me/                  # Current user, update, delete, export
+├── users/[id]/                # User profile data
+└── upload/image/              # Image upload (auth required, 5MB max)
+```
+
+### Components
+```
+src/components/
+├── shared/        # Modal, Avatar, AvatarStack, AdminBadge, EnvironmentBadge
+├── clubs/         # ClubPageLayout, NavBar, ClubDropdown, AvatarDropdown, OnboardingChecklist, InviteOptions
+├── riffs/         # RiffCard, RiffPageLayout, CreateRiffModal, EditRiffModal, DeleteRiffConfirmModal,
+│                  # RevealCelebration, RevealConfirmModal, PieceCard, CompletedRiffCard, ReadyToRevealCard,
+│                  # MosaicCollage, PromptLibrary, EmptyRiffState, CountdownTimer
+├── read/          # ReadPageLayout, ReadToggle, ReadingProgress, PieceNavigation,
+│                  # CommentAnchor, CommentPopover, CommentSidebar, CommentDrawer
+├── notifications/ # NotificationBell, NotificationPanel, NotificationItem
+├── settings/      # SettingsPage, ProfileSection, DataSection
+├── about/         # AboutPage
+└── editor/        # TiptapEditor, EditorToolbar, extensions/Spotify
+```
+
+### Hooks & Lib
+```
+src/hooks/
+├── useMediaQuery.ts           # SSR-safe media query + useIsMobile
+├── useProfileNavigation.ts    # Navigate to /profile/[userId]
+├── useDraftCreation.ts        # Create draft + navigate to write page
+└── useTextSelection.ts        # Text selection detection
+
+src/lib/
+├── prisma.ts                  # Prisma singleton
+├── auth.ts                    # NextAuth config (Resend magic link)
+├── auth-utils.ts              # requireAuth(), getSession(), getCurrentUser()
+├── resend.ts                  # Email: signIn, onboarding, club invite
+├── notifications.ts           # createNotification, notifyClubMembers, notifyRiffParticipants
+└── prompt-suggestions.ts      # 27 curated writing prompts
+```
+
+---
+
+## Database Schema (Key Models)
+
+```
+Club         → has members (ClubMember), riffs (Riff), admin + moderator
+ClubMember   → role: ADMIN | MODERATOR | MEMBER
+Riff         → status: DRAFT | ACTIVE | REVEALED | COMPLETED, has participants, pieces
+Piece        → title, content, coverImage, wordCount, versions
+PieceVersion → frozen snapshot when shared
+PieceRiff    → junction: piece submitted to riff
+PieceRead    → tracks who read what in which riff (for reveal progress)
+Share        → shareType: CLUB | RIFF | INDIVIDUAL | PUBLIC
+Comment      → threaded, with selectionStart/End/selectedText anchoring
+Notification → type: CLUB_INVITATION | RIFF_CREATED | RIFF_ACTIVATED | PIECES_REVEALED | NEW_COMMENT
+User         → email, username, firstName, lastName, bio, avatarUrl, onboardingStep
+```
+
+**Schema file**: `prisma/schema.prisma`
+
+---
+
+## Design System
+
+### Colors
+- Primary: `#00FF66` (green) · Secondary: `#01EFFC` (cyan)
+- Yellow: `#EECF01` · Orange: `#FF6B35` · Pink: `#C01582` · Purple: `#955CB5`
+
+### Typography
+- Body: DM Sans (`--font-dm-sans`)
+- Handwriting: Over the Rainbow (`--font-over-the-rainbow`)
+- Serif display: Playfair Display (`--font-playfair`) — navbar wordmark
+- Hero: DM Serif Text (`--font-dm-serif-text`) — landing page 96px
+
+### Component Patterns
+- **PrimaryButton**: Green bg, white hover with green shadow
+- **Modal**: 2px border, 8px shadow, white bg, focus trap, ESC close
+- **CTA layout**: Row on desktop (text left, button right), column on mobile (text top, button full-width)
+
+---
+
+## Authentication
+
+- **Provider**: Resend magic link (no passwords)
+- **Session**: JWT (client-side)
+- **Adapter**: PrismaAdapter
+- **Protected routes**: Use `requireAuth()` from `@/lib/auth-utils`
+- **Login flow**: Email → magic link → JWT → onboarding check → redirect to club or onboarding step
+
+---
+
+## Multi-Developer Notes
+
+### Shared Database
+Everyone (local dev + staging) shares the `dev-riff` Supabase project. This means:
+- You'll see other people's test data — that's fine
+- **Schema changes need coordination** — message Kyle before modifying `prisma/schema.prisma`
+- Only one person creates a migration at a time; others run `npm run db:migrate:dev` to apply
+
+### Branch Strategy
+```
+feature/* or fix/*  →  develop  →  staging  →  main
+```
+- `develop`: integration branch (merge feature branches here via PR)
+- `staging`: auto-deploys to staging.letsriff.app (password-protected)
+- `main`: production (auto-deploys to letsriff.app)
+
+### Image Uploads
+- Stored locally in `public/uploads/images/` (ephemeral on Vercel)
+- Images work in local dev but may disappear on staging between deploys
+- Supabase Storage migration planned
+
+---
+
+## Migration Status
+
+Transitioning from deprecated **Circle** architecture to **Club/Riff**:
+- New: Club, ClubMember, Riff, RiffParticipant, Share
+- Deprecated: Circle, CircleMember, CirclePrompt, PieceShare
+- Old circle API routes still exist but all new features use Club/Riff
