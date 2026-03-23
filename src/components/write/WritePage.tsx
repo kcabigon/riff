@@ -42,9 +42,7 @@ export default function WritePage({ piece }: WritePageProps) {
     "saved"
   );
   const [title, setTitle] = useState(piece.title || "Untitled");
-  const [coverImage, setCoverImage] = useState<string | null>(
-    piece.coverImage
-  );
+  const [coverImage, setCoverImage] = useState<string | null>(piece.coverImage);
   const [showCoverModal, setShowCoverModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const titleRef = useRef<HTMLTextAreaElement>(null);
@@ -211,11 +209,14 @@ export default function WritePage({ piece }: WritePageProps) {
         body: formData,
       });
       const data = await response.json();
-      if (data.success && data.url) {
-        editor.chain().focus().setImage({ src: data.url }).run();
+      if (!response.ok || !data.success || !data.url) {
+        alert("Failed to upload image: " + (data.error || "Unknown error"));
+        return;
       }
+      editor.chain().focus().setImage({ src: data.url }).run();
     } catch (error) {
       console.error("Error uploading image:", error);
+      alert("Failed to upload image. Please try again.");
     }
 
     if (fileInputRef.current) {
@@ -266,12 +267,10 @@ export default function WritePage({ piece }: WritePageProps) {
         flexShrink: 0,
       }}
       onMouseEnter={(e) => {
-        if (!isActive)
-          e.currentTarget.style.border = "0.5px solid #ffffff";
+        if (!isActive) e.currentTarget.style.border = "0.5px solid #ffffff";
       }}
       onMouseLeave={(e) => {
-        if (!isActive)
-          e.currentTarget.style.border = "0.5px solid transparent";
+        if (!isActive) e.currentTarget.style.border = "0.5px solid transparent";
       }}
       title={btnTitle}
     >
@@ -680,9 +679,7 @@ export default function WritePage({ piece }: WritePageProps) {
               {/* Bullet List */}
               <ToolbarButton
                 isActive={editor.isActive("bulletList")}
-                onClick={() =>
-                  editor.chain().focus().toggleBulletList().run()
-                }
+                onClick={() => editor.chain().focus().toggleBulletList().run()}
                 title="Bullet List"
               >
                 <TextLabel text={"\u2022"} />
@@ -691,9 +688,7 @@ export default function WritePage({ piece }: WritePageProps) {
               {/* Numbered List */}
               <ToolbarButton
                 isActive={editor.isActive("orderedList")}
-                onClick={() =>
-                  editor.chain().focus().toggleOrderedList().run()
-                }
+                onClick={() => editor.chain().focus().toggleOrderedList().run()}
                 title="Numbered List"
               >
                 <TextLabel text="1." />
@@ -784,11 +779,7 @@ export default function WritePage({ piece }: WritePageProps) {
                 onClick={() => {
                   const url = window.prompt("Enter YouTube URL:");
                   if (url) {
-                    editor
-                      .chain()
-                      .focus()
-                      .setYoutubeVideo({ src: url })
-                      .run();
+                    editor.chain().focus().setYoutubeVideo({ src: url }).run();
                   }
                 }}
                 title="YouTube"

@@ -35,7 +35,19 @@ The pipeline is: `develop → staging → main`
      ```
    - Return to the original branch
 
-5. **Report**:
+5. **Update docs**:
+   - Read `ARCHITECTURE.md` and scan the commits being promoted for changes that affect it:
+     - New pages or routes added?
+     - New components created?
+     - New API endpoints?
+     - New hooks or lib files?
+     - Features completed that are listed under "What's Incomplete"?
+     - New features that should be added to "What's Working"?
+   - If anything needs updating, show Kyle what you'd change and ask: "Want me to update ARCHITECTURE.md with these changes?"
+   - If yes, make the edits, commit with `docs: update ARCHITECTURE.md`, and push to the target branch
+   - If nothing needs updating, skip silently
+
+6. **Report**:
    - Confirm the merge and push succeeded
    - "Staging is updated — your friends can test the latest changes at staging.letsriff.app"
    - Or "Production is updated — letsriff.app is live with the latest changes"

@@ -35,3 +35,5 @@ jobs:
           NEXTAUTH_URL: "http://localhost:3000"
           RESEND_API_KEY: "re_fake_key"
           EMAIL_FROM: "test@test.com"
+          SUPABASE_URL: "https://fake.supabase.co"
+          SUPABASE_SERVICE_ROLE_KEY: "fake-key"

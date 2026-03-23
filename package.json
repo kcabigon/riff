@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint src/",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,md}\"",
     "db:migrate:dev": "dotenv -e .env.development -- npx prisma migrate dev",
     "db:migrate:staging": "dotenv -e .env.staging -- npx prisma migrate deploy",
@@ -25,6 +25,7 @@
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
     "@prisma/client": "^6.1.0",
+    "@supabase/supabase-js": "^2.100.0",
     "@tiptap/extension-character-count": "^3.11.1",
     "@tiptap/extension-image": "^3.11.1",
     "@tiptap/extension-link": "^3.11.1",

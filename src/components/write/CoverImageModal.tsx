@@ -58,7 +58,11 @@ export default function CoverImageModal({
       body: formData,
     });
     const data = await res.json();
-    return data.success ? data.url : null;
+    if (!res.ok || !data.success) {
+      alert("Failed to upload image: " + (data.error || "Unknown error"));
+      return null;
+    }
+    return data.url;
   };
 
   const handleFileSelected = async (file: File) => {
@@ -239,7 +243,8 @@ export default function CoverImageModal({
               color: tab === t ? "#000" : "#808080",
               background: "none",
               border: "none",
-              borderBottom: tab === t ? "2px solid #000" : "2px solid transparent",
+              borderBottom:
+                tab === t ? "2px solid #000" : "2px solid transparent",
               cursor: "pointer",
               transition: "color 0.15s",
             }}
