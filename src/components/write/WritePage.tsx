@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import "@/app/write/[pieceId]/editor.css";
 import NoiseBackground from "@/components/NoiseBackground";
 import BackButton from "@/components/BackButton";
+import CoverImageModal from "@/components/write/CoverImageModal";
 
 interface RiffConnection {
   id: string;
@@ -30,6 +31,7 @@ interface WritePageProps {
     id: string;
     title: string;
     currentContent: string;
+    coverImage: string | null;
     riffs: RiffConnection[];
   };
 }
@@ -39,6 +41,10 @@ export default function WritePage({ piece }: WritePageProps) {
     "saved"
   );
   const [title, setTitle] = useState(piece.title || "Untitled");
+  const [coverImage, setCoverImage] = useState<string | null>(
+    piece.coverImage
+  );
+  const [showCoverModal, setShowCoverModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const titleRef = useRef<HTMLTextAreaElement>(null);
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -125,6 +131,37 @@ export default function WritePage({ piece }: WritePageProps) {
       }
     },
     [piece.id]
+  );
+
+  const autosaveCoverImage = useCallback(
+    async (newCoverImage: string | null) => {
+      setSaveStatus("saving");
+      try {
+        const res = await fetch(`/api/pieces/${piece.id}/autosave`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ coverImage: newCoverImage ?? "" }),
+        });
+        if (res.ok) {
+          setSaveStatus("saved");
+        } else {
+          setSaveStatus("unsaved");
+        }
+      } catch {
+        setSaveStatus("unsaved");
+      }
+    },
+    [piece.id]
+  );
+
+  const handleCoverImageSelect = useCallback(
+    (url: string) => {
+      const value = url || null;
+      setCoverImage(value);
+      autosaveCoverImage(value);
+      setShowCoverModal(false);
+    },
+    [autosaveCoverImage]
   );
 
   // Auto-resize textarea
@@ -351,14 +388,60 @@ export default function WritePage({ piece }: WritePageProps) {
           </div>
         </div>
 
-        {/* Share CTA (future) */}
+        {/* Cover image + Share CTAs */}
         <div
           style={{
             display: "flex",
             justifyContent: "center",
+            gap: "8px",
             marginBottom: "16px",
           }}
         >
+          <button
+            onClick={() => setShowCoverModal(true)}
+            style={{
+              background: "#FFFFFF",
+              border: "1px dashed #000000",
+              borderRadius: "0",
+              padding: "4px 12px",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "12px",
+              fontWeight: 300,
+              color: "#000000",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
+          >
+            {coverImage ? (
+              <>
+                <img
+                  src={coverImage}
+                  alt=""
+                  style={{
+                    width: "24px",
+                    height: "16px",
+                    objectFit: "cover",
+                    borderRadius: "2px",
+                  }}
+                />
+                Change cover
+              </>
+            ) : (
+              <>
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path
+                    d="M6 1V11M1 6H11"
+                    stroke="#000000"
+                    strokeWidth="1"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                Cover image
+              </>
+            )}
+          </button>
           <button
             style={{
               background: "#FFFFFF",
@@ -735,6 +818,14 @@ export default function WritePage({ piece }: WritePageProps) {
           </div>
         </div>
       </div>
+
+      <CoverImageModal
+        isOpen={showCoverModal}
+        onClose={() => setShowCoverModal(false)}
+        onSelect={handleCoverImageSelect}
+        pieceContent={editor.getHTML()}
+        currentCoverImage={coverImage}
+      />
     </div>
   );
 }
