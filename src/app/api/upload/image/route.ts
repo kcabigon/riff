@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth-utils";
-import { writeFile } from "fs/promises";
-import path from "path";
+import { supabaseAdmin } from "@/lib/supabase";
 import { randomUUID } from "crypto";
 
-// POST /api/upload/image - Upload image file
+// POST /api/upload/image - Upload image file to Supabase Storage
 export async function POST(req: Request) {
   try {
     await requireAuth();
@@ -27,15 +26,14 @@ export async function POST(req: Request) {
     if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
         {
-          error:
-            "Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed",
+          error: "Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed",
         },
         { status: 400 }
       );
     }
 
     // Validate file size (max 5MB)
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    const maxSize = 5 * 1024 * 1024;
     if (file.size > maxSize) {
       return NextResponse.json(
         { error: "File size too large. Maximum size is 5MB" },
@@ -43,30 +41,47 @@ export async function POST(req: Request) {
       );
     }
 
-    // Generate unique filename
+    // Derive extension from MIME type instead of filename
+    const extMap: Record<string, string> = {
+      "image/jpeg": "jpg",
+      "image/jpg": "jpg",
+      "image/png": "png",
+      "image/gif": "gif",
+      "image/webp": "webp",
+    };
+    const ext = extMap[file.type];
+    const filename = `${randomUUID()}.${ext}`;
+
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const fileExtension = file.name.split(".").pop();
-    const filename = `${randomUUID()}.${fileExtension}`;
-    const filepath = path.join(
-      process.cwd(),
-      "public/uploads/images",
-      filename
-    );
+    // Upload to Supabase Storage
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from("images")
+      .upload(filename, buffer, {
+        contentType: file.type,
+        upsert: false,
+      });
 
-    // Write file to disk
-    await writeFile(filepath, buffer);
+    if (uploadError) {
+      console.error("Supabase Storage upload error:", uploadError);
+      return NextResponse.json(
+        { error: "Failed to upload image" },
+        { status: 500 }
+      );
+    }
 
-    // Return public URL
-    const url = `/uploads/images/${filename}`;
+    // Get public URL
+    const {
+      data: { publicUrl },
+    } = supabaseAdmin.storage.from("images").getPublicUrl(filename);
 
     return NextResponse.json({
       success: true,
-      url,
+      url: publicUrl,
     });
-  } catch (error: any) {
-    if (error.message === "Unauthorized") {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
