@@ -23,6 +23,8 @@ If they're on a feature branch (not `develop`/`main`/`staging`):
 
 If they're on `develop`:
 - They're ready to start something new
+- Read `TODO.md` in the project root and show 3-5 unclaimed items from the highest-priority section: "Here are some things on the TODO list if you're looking for ideas:" — but don't force it, they can always describe their own idea
+- Mention they can run `/todo` to see the full list
 
 ## Step 4: Ask what they want to do
 
