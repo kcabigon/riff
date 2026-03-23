@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import NotificationPanel from "./NotificationPanel";
 
 export default function NotificationBell() {
@@ -54,38 +55,27 @@ export default function NotificationBell() {
           alignItems: "center",
         }}
       >
-        {/* Bell icon */}
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-          <path
-            d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"
-            stroke="#FFFFFF"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M13.73 21a2 2 0 0 1-3.46 0"
-            stroke="#FFFFFF"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <Image
+          src="/icons/notification.svg"
+          alt="Notifications"
+          width={24}
+          height={24}
+        />
 
-        {/* Badge */}
         {unreadCount > 0 && (
           <div
             style={{
               position: "absolute",
               top: 0,
               right: 0,
-              width: "16px",
+              minWidth: "16px",
               height: "16px",
               borderRadius: "50%",
               backgroundColor: "#FF4444",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              padding: "0 4px",
             }}
           >
             <span
