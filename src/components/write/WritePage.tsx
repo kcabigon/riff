@@ -16,6 +16,7 @@ import "@/app/write/[pieceId]/editor.css";
 import NoiseBackground from "@/components/NoiseBackground";
 import BackButton from "@/components/BackButton";
 import CoverImageModal from "@/components/write/CoverImageModal";
+import { convertHeicToJpeg } from "@/lib/convert-heic";
 
 interface RiffConnection {
   id: string;
@@ -195,8 +196,11 @@ export default function WritePage({ piece }: WritePageProps) {
   const handleImageUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const file = event.target.files?.[0];
+    let file = event.target.files?.[0];
     if (!file || !editor) return;
+
+    // Convert HEIC/HEIF to JPEG client-side before uploading
+    file = await convertHeicToJpeg(file);
 
     const formData = new FormData();
     formData.append("file", file);

@@ -5,6 +5,7 @@ import Cropper, { Area } from "react-easy-crop";
 import Modal from "@/components/shared/Modal";
 import { extractAllImages } from "@/lib/extract-first-image";
 import { getCroppedImg } from "@/lib/crop-image";
+import { convertHeicToJpeg, isHeicFile } from "@/lib/convert-heic";
 
 interface CoverImageModalProps {
   isOpen: boolean;
@@ -66,11 +67,8 @@ export default function CoverImageModal({
       return;
     }
 
-    const ext = file.name.split(".").pop()?.toLowerCase();
-    const isHeic = ext === "heic" || ext === "heif";
-
-    // GIFs skip crop to preserve animation; HEIC can't preview in browser
-    if (file.type === "image/gif" || isHeic) {
+    // GIFs skip crop to preserve animation
+    if (file.type === "image/gif") {
       setIsUploading(true);
       const formData = new FormData();
       formData.append("file", file);
@@ -87,7 +85,21 @@ export default function CoverImageModal({
       return;
     }
 
-    const url = URL.createObjectURL(file);
+    // Convert HEIC/HEIF to JPEG client-side so the cropper can display it
+    let processedFile = file;
+    if (isHeicFile(file)) {
+      setIsUploading(true);
+      try {
+        processedFile = await convertHeicToJpeg(file);
+      } catch {
+        alert("Could not process HEIC file");
+        setIsUploading(false);
+        return;
+      }
+      setIsUploading(false);
+    }
+
+    const url = URL.createObjectURL(processedFile);
     setCropSrc(url);
   };
 

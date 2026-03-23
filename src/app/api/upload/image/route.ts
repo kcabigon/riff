@@ -3,7 +3,6 @@ import { requireAuth } from "@/lib/auth-utils";
 import { writeFile } from "fs/promises";
 import path from "path";
 import { randomUUID } from "crypto";
-import convert from "heic-convert";
 
 // POST /api/upload/image - Upload image file
 export async function POST(req: Request) {
@@ -24,21 +23,12 @@ export async function POST(req: Request) {
       "image/png",
       "image/gif",
       "image/webp",
-      "image/heic",
-      "image/heif",
     ];
-    const ext = (file.name.split(".").pop() || "").toLowerCase();
-    const isHeic =
-      file.type === "image/heic" ||
-      file.type === "image/heif" ||
-      ext === "heic" ||
-      ext === "heif";
-
-    if (!allowedTypes.includes(file.type) && !isHeic) {
+    if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
         {
           error:
-            "Invalid file type. Only JPEG, PNG, GIF, WebP, and HEIC are allowed",
+            "Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed",
         },
         { status: 400 }
       );
@@ -55,21 +45,9 @@ export async function POST(req: Request) {
 
     // Generate unique filename
     const bytes = await file.arrayBuffer();
-    let buffer = Buffer.from(bytes);
+    const buffer = Buffer.from(bytes);
 
-    // Convert HEIC/HEIF to JPEG since browsers can't display them
-    let fileExtension = ext;
-    if (isHeic) {
-      // Pass the raw ArrayBuffer directly (not buffer.buffer which may be a shared pool)
-      const converted = await convert({
-        buffer: bytes,
-        format: "JPEG",
-        quality: 0.92,
-      });
-      buffer = Buffer.from(converted);
-      fileExtension = "jpg";
-    }
-
+    const fileExtension = file.name.split(".").pop();
     const filename = `${randomUUID()}.${fileExtension}`;
     const filepath = path.join(
       process.cwd(),
