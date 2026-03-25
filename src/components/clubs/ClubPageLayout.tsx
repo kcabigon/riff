@@ -95,6 +95,9 @@ export default function ClubPageLayout({
   stats,
 }: ClubPageLayoutProps) {
   const router = useRouter();
+  const [clubName, setClubName] = useState(club.name);
+  const [clubDescription, setClubDescription] = useState(club.description);
+  const [clubBannerImage, setClubBannerImage] = useState(club.bannerImage);
   const [isCreateRiffModalOpen, setIsCreateRiffModalOpen] = useState(false);
   const [isRevealModalOpen, setIsRevealModalOpen] = useState(false);
   const [isRevealing, setIsRevealing] = useState(false);
@@ -179,18 +182,18 @@ export default function ClubPageLayout({
             }
           }
           clubs={userClubs}
-          currentClub={{ id: club.id, name: club.name }}
+          currentClub={{ id: club.id, name: clubName }}
         />
       </div>
 
       {/* Banner with overlay — full width, 320px height (180px on mobile) */}
-      {club.bannerImage && (
+      {clubBannerImage && (
         <div
           className="club-banner"
           style={{
             width: "100%",
             height: "320px",
-            backgroundImage: `url(${club.bannerImage})`,
+            backgroundImage: `url(${clubBannerImage})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
             position: "relative",
@@ -227,7 +230,7 @@ export default function ClubPageLayout({
                   margin: 0,
                 }}
               >
-                {club.name}
+                {clubName}
               </h1>
               {isAdmin && (
                 <div ref={settingsDropdownRef} style={{ position: "relative" }}>
@@ -367,7 +370,7 @@ export default function ClubPageLayout({
               onAvatarClick={handleAvatarClick}
             />
 
-            {club.description && (
+            {clubDescription && (
               <p
                 style={{
                   fontFamily: "var(--font-dm-sans)",
@@ -378,7 +381,7 @@ export default function ClubPageLayout({
                   lineHeight: "normal",
                 }}
               >
-                {club.description}
+                {clubDescription}
               </p>
             )}
           </div>
@@ -394,7 +397,7 @@ export default function ClubPageLayout({
         }}
       >
         {/* Club frame — only shown when no banner image */}
-        {!club.bannerImage && (
+        {!clubBannerImage && (
           <div
             style={{
               display: "flex",
@@ -413,7 +416,7 @@ export default function ClubPageLayout({
                   margin: 0,
                 }}
               >
-                {club.name}
+                {clubName}
               </h1>
               {isAdmin && (
                 <div ref={settingsDropdownRef} style={{ position: "relative" }}>
@@ -553,7 +556,7 @@ export default function ClubPageLayout({
               onAvatarClick={handleAvatarClick}
             />
 
-            {club.description && (
+            {clubDescription && (
               <p
                 style={{
                   fontFamily: "var(--font-dm-sans)",
@@ -564,7 +567,7 @@ export default function ClubPageLayout({
                   lineHeight: "normal",
                 }}
               >
-                {club.description}
+                {clubDescription}
               </p>
             )}
           </div>
@@ -724,7 +727,7 @@ export default function ClubPageLayout({
                     createdAt: new Date(riff.createdAt),
                     deadline: riff.deadline ? new Date(riff.deadline) : null,
                   }}
-                  clubName={club.name}
+                  clubName={clubName}
                   pieces={riff.pieces.map((p) => ({
                     id: p.piece.id,
                     title: p.piece.title,
@@ -751,12 +754,16 @@ export default function ClubPageLayout({
       <ClubSettingsModal
         isOpen={isClubDetailsModalOpen}
         onClose={() => setIsClubDetailsModalOpen(false)}
-        onUpdated={() => router.refresh()}
+        onUpdated={(updated) => {
+          setClubName(updated.name);
+          setClubDescription(updated.description);
+          setClubBannerImage(updated.bannerImage);
+        }}
         club={{
           id: club.id,
-          name: club.name,
-          description: club.description,
-          bannerImage: club.bannerImage,
+          name: clubName,
+          description: clubDescription,
+          bannerImage: clubBannerImage,
         }}
       />
 

@@ -4,10 +4,16 @@ import { useState, useEffect } from "react";
 import Modal from "@/components/shared/Modal";
 import ImageUpload from "@/components/onboarding/ImageUpload";
 
+interface ClubUpdatedData {
+  name: string;
+  description: string | null;
+  bannerImage: string | null;
+}
+
 interface ClubSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onUpdated: () => void;
+  onUpdated: (updated: ClubUpdatedData) => void;
   club: {
     id: string;
     name: string;
@@ -64,7 +70,11 @@ export default function ClubSettingsModal({
       }
 
       setIsSubmitting(false);
-      onUpdated();
+      onUpdated({
+        name: name.trim(),
+        description: description.trim() || null,
+        bannerImage: bannerImage || null,
+      });
       onClose();
     } catch (err) {
       console.error("Error updating club:", err);
