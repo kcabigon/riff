@@ -175,7 +175,7 @@ export default function ProfilePage({
                     disabled={isCreating}
                     style={{ width: "auto" }}
                   >
-                    Start writing
+                    New Draft
                   </PrimaryButton>
                 </div>
                 <DraftsList drafts={drafts} />

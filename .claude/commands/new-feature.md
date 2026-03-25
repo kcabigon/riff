@@ -9,36 +9,102 @@ Help the user start a new feature safely. Ask questions when anything is unclear
    - If there are uncommitted changes, warn the user and ask: "You have uncommitted changes. Would you like to stash them, commit them, or abort?"
    - Handle their choice before proceeding
 
-3. **Switch to develop and update**:
-   - Run `git checkout develop && git pull origin develop`
-   - If this fails (e.g., due to uncommitted changes), report the error and ask how to proceed
+3. **Assess complexity** (do this silently — NEVER tell the user you're assessing complexity):
 
-4. **Create branch name**:
-   - Generate a branch name from the description using the format `feature/short-kebab-description`
+   Based on their description, decide if this is a **simple change** or a **complex change**.
+
+   **Simple** — ALL of these are true:
+   - Touches one file, or a tightly-coupled pair (component + its styles)
+   - No new API routes, pages, or database changes
+   - No new dependencies
+   - Clearly scoped: copy change, color tweak, spacing fix, small UI adjustment, reordering elements, toggling visibility
+
+   **Complex** — ANY of these are true:
+   - Touches multiple files across different areas (component + API + schema, etc.)
+   - New feature, new component, new page, or new API route
+   - Database schema changes
+   - Changes to auth, notifications, editor, or riff lifecycle
+   - Description is vague or could be interpreted multiple ways
+   - When in doubt, treat it as complex
+
+4. **Check TODO.md for a match**:
+   - Read `TODO.md` and check if the user's description matches an existing TODO item
+   - If it matches, note which item — you'll mark it as in-progress after creating the branch
+   - If it doesn't match, ask: "Want me to add this to the TODO list so everyone knows you're working on it?" — if yes, you'll add it after creating the branch
+
+5. **Switch to develop and update**:
+   - Run `git checkout develop && git pull origin develop`
+   - If this fails, report the error and ask how to proceed
+
+6. **Create branch name**:
+   - Generate a branch name from the description using the format `feature/short-kebab-description` (or `fix/short-kebab-description` for bug fixes)
    - Show the proposed branch name and ask the user to confirm: "I'll create branch `feature/your-name-here`. Does that look right?"
    - Wait for confirmation before creating
 
-5. **Create and checkout branch**:
+7. **Create and checkout branch**:
    - Run `git checkout -b feature/the-branch-name`
    - Confirm success
 
-6. **Understand the codebase context**:
-   - Read `CLAUDE.md` and `ARCHITECTURE.md` for project context if you haven't already this session
-   - Ask: "Which area of the codebase will this touch?" and offer common areas:
-     - Frontend components (`src/components/`)
-     - Pages (`src/app/`)
-     - API routes (`src/app/api/`)
-     - Database schema (`prisma/schema.prisma`)
-     - Hooks/utilities (`src/hooks/`, `src/lib/`)
-   - Explore the relevant files to understand the current state
+8. **Update TODO.md**:
+   - If the user's work matches a TODO item, mark it as in-progress: `- [ ] 🔨 @name — task description`
+   - If the user said yes to adding it, add a new in-progress item to the appropriate section
+   - To get the user's name, run `git config user.name` and use their first name lowercase
+   - Commit the TODO update: `chore: claim TODO item`
 
-7. **Propose approach**:
-   - Based on the feature description and codebase exploration, suggest an implementation approach
-   - Ask for confirmation before writing any code
-   - If you're unsure about anything, ask rather than guessing
+---
+
+## If SIMPLE: Fast-track it
+
+9. **Read the relevant file(s)**: Identify which file(s) need to change and read them to understand the current patterns. Keep it to the minimum needed.
+
+10. **Make the change**: Just do it. No proposal step, no asking which area of the codebase — you already know from their description.
+
+11. **Validate**:
+    - Run `npm run lint` and `npx tsc --noEmit`
+    - If either fails, fix the issues
+
+12. **Commit**: Create a conventional commit (e.g., `fix: update button color on club page`)
+
+13. **Done**: Tell the user what you changed in one or two sentences. Offer: "Want me to run `/finish-feature` to push this and create a PR?"
+
+---
+
+## If COMPLEX: Plan first, then build
+
+9. **Enter plan mode**: Call the `EnterPlanMode` tool. This locks you into read-only mode — you cannot write any code until the plan is approved. This is intentional.
+
+10. **Explore the codebase**: Read `ARCHITECTURE.md` if you haven't this session. Then explore the specific files and areas the feature will touch. Use Explore agents to search broadly if needed.
+
+11. **Ask clarifying questions** (if needed): If their description is vague or could go multiple ways, ask ONE round of clarifying questions. Keep it conversational — don't interrogate. Examples:
+    - "Just to make sure I build this right — when you say X, do you mean A or B?"
+    - "Quick question before I dive in — should this also do Y, or just X for now?"
+
+12. **Write your plan**: Write a clear, non-technical plan to the plan file. Use plain language. Structure it as:
+    - **What you're building** — one sentence summary
+    - **Steps** — numbered list in terms the user understands ("I'll add a new section to the club page" not "I'll create a new React component with a useEffect hook")
+    - **What it won't do** — call out anything you're intentionally leaving out to keep scope tight
+    - End the plan with a note: any concerns or things you want their input on
+
+13. **Exit plan mode**: Call `ExitPlanMode`. The user will review and approve the plan.
+
+14. **Guide them into accept-edits mode**: After the plan is approved, tell the user: "Alright I'm about to go crazy on this. **Press `A` or `Shift+Tab` to turn on accept-edits mode** so I can build this without stopping for every file change. Then just sit back and watch."
+
+15. **Execute the plan**: Build the feature. If it's a large change, check in at natural breakpoints ("Got the UI built — moving on to the API next."). Don't ask for permission at every step — the plan is approved, keep moving.
+
+16. **Validate**:
+    - Run `npm run lint` and `npx tsc --noEmit`
+    - If either fails, fix the issues
+
+17. **Commit**: Create one or more conventional commits (one per logical change if the feature is large)
+
+18. **Done**: Summarize what you built. Offer: "Want me to run `/finish-feature` to push this and create a PR?"
+
+---
 
 ## Important
 - Never create a branch without user confirmation of the name
 - Never write code without understanding the existing patterns in the area you're modifying
-- If the feature seems large, suggest breaking it into smaller pieces
+- The complexity assessment is for YOUR decision-making — never expose it to the user. They should feel like the flow is natural, not that they've been categorized.
+- If you initially assess something as simple but realize mid-execution it's actually complex, STOP, explain what you found, and switch to the complex flow (call `EnterPlanMode`)
+- If the feature seems very large even for complex, suggest breaking it into smaller pieces
 - Remind the user they can run `/sync` to stay up to date with develop while working

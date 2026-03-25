@@ -1,243 +1,361 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import NoiseBackground from "@/components/NoiseBackground";
 import LandingNavBar from "@/components/LandingNavBar";
 
+const FILTERS = {
+  yellow: "none",
+  orange: "brightness(0) saturate(100%) invert(57%) sepia(87%) saturate(2645%) hue-rotate(339deg) brightness(101%) contrast(101%)",
+  pink:   "brightness(0) saturate(100%) invert(18%) sepia(82%) saturate(3721%) hue-rotate(307deg) brightness(95%) contrast(98%)",
+  cyan:   "brightness(0) saturate(100%) invert(79%) sepia(91%) saturate(2670%) hue-rotate(137deg) brightness(103%) contrast(101%)",
+  purple: "brightness(0) saturate(100%) invert(42%) sepia(42%) saturate(887%) hue-rotate(232deg) brightness(94%) contrast(89%)",
+  green:  "brightness(0) saturate(100%) invert(61%) sepia(97%) saturate(431%) hue-rotate(91deg) brightness(109%) contrast(103%)",
+};
+
+function Highlight({ children, filter = FILTERS.yellow }: { children: string; filter?: string }) {
+  return (
+    <span style={{ position: "relative", display: "inline-block" }}>
+      <img
+        src="/images/tagline_vector.svg"
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          bottom: "2px",
+          left: "-4px",
+          width: "calc(100% + 8px)",
+          height: "22px",
+          zIndex: 0,
+          filter,
+        }}
+      />
+      <strong style={{ position: "relative", zIndex: 1, fontWeight: 700 }}>{children}</strong>
+    </span>
+  );
+}
+
 export default function AboutPage() {
+  const router = useRouter();
+
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF", position: "relative" }}>
       <NoiseBackground fillMode="cover" style={{ position: "fixed" }} />
 
       <LandingNavBar sticky />
 
-      {/* Page Content */}
       <main
         style={{
-          maxWidth: "720px",
+          maxWidth: "960px",
           margin: "0 auto",
           padding: "64px 24px 96px",
           position: "relative",
           zIndex: 1,
-          backgroundColor: "rgba(255, 255, 255, 1)",
         }}
       >
         {/* Title */}
         <h1
           style={{
             fontFamily: "var(--font-dm-serif-text)",
-            fontSize: "48px",
+            fontSize: "80px",
             fontWeight: 400,
             color: "#000000",
-            margin: "0 0 12px 0",
-            lineHeight: 1.2,
+            margin: "0 0 24px 0",
+            lineHeight: 1.15,
             textAlign: "center",
           }}
         >
-          It started with a few good friends...
+          <span style={{ position: "relative", display: "inline-block" }}>
+            <img
+              src="/images/tagline_vector.svg"
+              aria-hidden="true"
+              style={{
+                position: "absolute",
+                bottom: "6px",
+                left: "-6px",
+                width: "calc(100% + 12px)",
+                height: "28px",
+                zIndex: 0,
+                filter: FILTERS.cyan,
+              }}
+            />
+            <strong style={{ fontWeight: 700, position: "relative", zIndex: 1 }}>
+              Write clubs
+            </strong>
+          </span>
+
+          {" are the new"}
+          <br />
+          {"book clubs"}
         </h1>
+
+        {/* Subtitle */}
         <p
           style={{
             fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
+            fontSize: "28px",
             fontWeight: 300,
-            color: "#808080",
-            margin: "0 0 64px 0",
+            color: "#000000",
+            margin: "0 0 48px 0",
+            lineHeight: 1.6,
             textAlign: "center",
-            fontStyle: "italic",
           }}
         >
-          Jarric, Riff co-founder
+          {"Good "}
+          <Highlight>friends</Highlight>
+          {" consume together. Great friends "}
+          <Highlight filter={FILTERS.orange}>create</Highlight>
+          {" together."}
+          <br />
+          {"Share "}
+          <Highlight filter={FILTERS.pink}>stories</Highlight>
+          {" with friends, "}
+          <Highlight filter={FILTERS.purple}>once a month</Highlight>
+          {"."}
         </p>
 
-        {/* The Story */}
-        <section id="story" style={{ marginBottom: "64px" }}>
-          <p style={bodyStyle}>
-            It started with a few good friends I can count on one of my hands. We were at our
-            annual Friendsgiving, riffing on ideas like we always do. My friends and I got on
-            this tangent of wanting to create more and consume less. The conversation ended in
-            left field, like the best ones tend to do, the five of us agreeing to exchange some
-            long-form writing despite none of us being &ldquo;writers.&rdquo;
-          </p>
-
-          {/* Photo: the Friendsgiving crew */}
-          <div
+        {/* Top section CTA */}
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: "48px" }}>
+          <button
+            onClick={() => router.push("/login")}
             style={{
-              width: "100%",
-              marginBottom: "24px",
-              overflow: "hidden",
+              backgroundColor: "#01EFFC",
+              border: "2px solid #000000",
+              boxShadow: "8px 8px 0px 0px #000000",
+              padding: "12px 48px",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "16px",
+              fontWeight: 300,
+              color: "#000000",
+              cursor: "pointer",
+              transition: "background-color 0.2s ease, box-shadow 0.2s ease",
+              whiteSpace: "nowrap",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#FFFFFF";
+              e.currentTarget.style.boxShadow = "8px 8px 0px 0px #01EFFC";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "#01EFFC";
+              e.currentTarget.style.boxShadow = "8px 8px 0px 0px #000000";
+            }}
+            onMouseDown={(e) => {
+              e.currentTarget.style.transform = "translate(4px, 4px)";
+              e.currentTarget.style.boxShadow = "4px 4px 0px 0px #000000";
+            }}
+            onMouseUp={(e) => {
+              e.currentTarget.style.transform = "translate(0, 0)";
+              e.currentTarget.style.boxShadow = "8px 8px 0px 0px #01EFFC";
             }}
           >
+            Start the party
+          </button>
+        </div>
+
+        {/* GIF */}
+        <div
+          style={{
+            width: "100%",
+            marginBottom: "12px",
+            overflow: "hidden",
+          }}
+        >
+          <img
+            src="/images/about/friendsgiving2025.gif"
+            alt="Friendsgiving 2025"
+            style={{ width: "100%", height: "auto", display: "block" }}
+          />
+        </div>
+
+        {/* GIF caption */}
+        <div style={{ display: "flex", justifyContent: "center", margin: "0 0 48px 0" }}>
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "14px",
+              fontWeight: 300,
+              color: "#000000",
+              fontStyle: "italic",
+              margin: 0,
+              padding: "6px 16px",
+              backgroundColor: "#FFFFFF",
+              border: "2px solid #000000",
+              display: "inline",
+            }}
+          >
+            (This is us. 5 of us are building Riff for the 8 of us in a write club.)
+          </p>
+        </div>
+
+      </main>
+
+      {/* Riff tagline band — full bleed */}
+      <div
+        style={{
+          backgroundColor: "#00FF66",
+          borderTop: "2px solid #000000",
+          borderBottom: "2px solid #000000",
+          padding: "64px 24px",
+          position: "relative",
+          zIndex: 1,
+        }}
+      >
+        <div
+          style={{
+            maxWidth: "960px",
+            margin: "0 auto",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "16px",
+          }}
+        >
+          <div style={{ width: "160px", height: "104px" }}>
             <img
-              src="/images/about/friendsgiving2023.jpg"
-              alt="The Friendsgiving crew"
-              style={{
-                width: "100%",
-                height: "auto",
-                display: "block",
-              }}
+              src="/images/riff_wordmark_black_outline.svg"
+              alt="Riff"
+              style={{ width: "100%", height: "100%", objectFit: "contain" }}
             />
           </div>
-
-          <p style={bodyStyle}>
-            Two weeks later, I&apos;m sipping my morning coffee and opened my email to find
-            &ldquo;Sex Whoop.&rdquo; Over the next 10 minutes I laughed my ass off to a
-            parody-piece on performance optimization while learning way more about my
-            friend&apos;s actual bedroom analytics than I ever needed to know.
+          <p
+            style={{
+              fontFamily: "var(--font-dm-serif-text)",
+              fontSize: "40px",
+              fontWeight: 400,
+              color: "#000000",
+              margin: "0 0 24px 0",
+              lineHeight: 1.25,
+              textAlign: "center",
+              maxWidth: "640px",
+            }}
+          >
+            Host a write club with minimal stress and maximum fun.
+          </p>
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "18px",
+              fontWeight: 300,
+              color: "#333333",
+              margin: "0 0 32px 0",
+              lineHeight: 1.8,
+              textAlign: "center",
+              maxWidth: "560px",
+            }}
+          >
+            Create your club, invite friends, manage monthly riffs, write solo, reveal together, and comment on each others&apos; writing.
           </p>
 
-          <p style={bodyStyle}>
-            The next email read, &ldquo;Our Family Heritage - why I wrote a children&apos;s book
-            to teach my daughter about her name.&rdquo; Heartwarming, surprising, and suddenly
-            I&apos;m questioning if I&apos;ve been a terrible friend for not already knowing many
-            of these things about one of my closest friends.
-          </p>
+        </div>
 
-          <p style={bodyStyle}>
-            Then I got a text message. &ldquo;I just read your Baseball Love Letter, the part
-            about your dad made me cry, it was beautiful.&rdquo;
-          </p>
+        {/* Product screenshot — full bleed within band */}
+        <div
+          style={{
+            position: "relative",
+            width: "100%",
+            maxWidth: "1400px",
+            margin: "0 auto 0 auto",
+            padding: "0 24px",
+            boxSizing: "border-box",
+          }}
+        >
+          <img
+            src="/images/about/Riff_club_screenshot.png"
+            alt="Riff club page screenshot"
+            style={{
+              width: "100%",
+              height: "auto",
+              display: "block",
+              borderRadius: "4px",
+              border: "2px solid #000000",
+              boxShadow: "8px 8px 0px 0px #000000",
+            }}
+          />
+          {/* Gradient fade */}
+          <div
+            style={{
+              position: "absolute",
+              bottom: 0,
+              left: "24px",
+              right: "24px",
+              height: "40%",
+              background: "linear-gradient(to bottom, transparent, #000000)",
+              borderRadius: "0 0 4px 4px",
+              pointerEvents: "none",
+            }}
+          />
+        </div>
 
-          <p style={bodyStyle}>
-            Over the next few days and weeks, our group chat and conversations were electric. We
-            talked about the writing, our favorite passages and what we discovered about each
-            other. We talked about our creative process, it was like the dormant creative was
-            awakened in all of us.
-          </p>
+        <div
+          style={{
+            maxWidth: "960px",
+            margin: "0 auto",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+          <button
+            onClick={() => router.push("/login")}
+            style={{
+              marginTop: "32px",
+              backgroundColor: "#01EFFC",
+              border: "2px solid #000000",
+              boxShadow: "8px 8px 0px 0px #000000",
+              padding: "12px 48px",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "16px",
+              fontWeight: 300,
+              color: "#000000",
+              cursor: "pointer",
+              transition: "background-color 0.2s ease, box-shadow 0.2s ease",
+              whiteSpace: "nowrap",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#FFFFFF";
+              e.currentTarget.style.boxShadow = "8px 8px 0px 0px #01EFFC";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "#01EFFC";
+              e.currentTarget.style.boxShadow = "8px 8px 0px 0px #000000";
+            }}
+            onMouseDown={(e) => {
+              e.currentTarget.style.transform = "translate(4px, 4px)";
+              e.currentTarget.style.boxShadow = "4px 4px 0px 0px #000000";
+            }}
+            onMouseUp={(e) => {
+              e.currentTarget.style.transform = "translate(0, 0)";
+              e.currentTarget.style.boxShadow = "8px 8px 0px 0px #01EFFC";
+            }}
+          >
+            Be the hostess with the mostest
+          </button>
+        </div>
+      </div>
 
-          {/* Photo: group chat energy / writing together */}
-          <div style={{ width: "100%", marginBottom: "24px", overflow: "hidden" }}>
-            <img
-              src="/images/about/chrisjarric.jpg"
-              alt="Chris and Jarric"
-              style={{ width: "100%", height: "auto", display: "block" }}
-            />
-          </div>
-
-          <p style={bodyStyle}>
-            We kept writing. It was loose, we made it up on the fly. We shared passions and
-            desires and anything on our minds. Reading Kerouac lines and listening to Zach Bryan
-            songs was no longer just entertainment, it was inspiration. We were the mad ones,
-            imaginations on fire, burn burn burning with more creativity, more storytelling, more
-            vulnerability. At least that&apos;s what it felt like.
-          </p>
-
-          <p style={bodyStyle}>
-            Slowly, word spread to some of our other friends. It would come up organically, and
-            to our surprise, many of them were stoked on the whole idea. &ldquo;I&apos;ve been
-            looking for a new creative outlet&rdquo; and &ldquo;I&apos;ve actually been writing a
-            lot in my journal lately&rdquo; were common confessions. Turns out the initial 5 of
-            us weren&apos;t weirdos after all, other friends actually wanted to crash the party.
-          </p>
-
-          <p style={bodyStyle}>
-            &ldquo;Welcome to Write Club, the first rule of Write Club is&hellip;&rdquo; I would
-            joke with new friends as they joined the crew. As we grew the group it only burned
-            brighter, more voices, more diverse ideas led to more inspiration and more fun. We
-            accidentally formed our own little creative collective, nine friends just
-            groovin&apos; with words, like playin&apos; jazz baby!
-          </p>
-
-          {/* Photo: the expanded crew */}
-          <div style={{ width: "100%", marginBottom: "24px", overflow: "hidden" }}>
-            <img
-              src="/images/about/communetrip2022.jpg"
-              alt="Commune trip 2022"
-              style={{ width: "100%", height: "auto", display: "block" }}
-            />
-          </div>
-
-          <p style={bodyStyle}>
-            This wasn&apos;t writing like any of us had experienced before, it was actually fun.
-            It was deep, it was raw, it was real. The writing felt more like riffing, and my
-            friends and I love to riff. Friends everywhere love to riff. They gather in
-            circles&ndash;around campfires, dinner tables, living rooms, and
-            backyards&ndash;and have flowing conversations that include stories, witty banter,
-            inside jokes and ideas that build off one another.
-          </p>
-
-          <p style={bodyStyle}>
-            These riffing experiences deepen friendships, but that&apos;s not why we do it. We
-            riff because it&apos;s human, and it&apos;s a damn good time. If only these verbal
-            jam sessions weren&apos;t so rare. With growing families, busy schedules, and friends
-            moving away, it becomes harder and harder to pull the crew together as we get older.
-          </p>
-
-          <p style={bodyStyle}>
-            Riffing with friends feels intrinsically tied to in-person interactions, but through
-            the medium of writing we discovered a way to capture the riffing experience
-            asynchronously and on-demand. By moving the riff online, we were no longer
-            constrained by busy schedules and geography, the riff could go on endlessly. Riffs
-            could bounce from live conversations to long-form writing to the group chat and back
-            to the blank page again.
-          </p>
-
-          {/* Photo: in-person hangout */}
-          <div style={{ width: "100%", marginBottom: "24px", overflow: "hidden" }}>
-            <img
-              src="/images/about/friendsgiving2025.gif"
-              alt="Friendsgiving 2025"
-              style={{ width: "100%", height: "auto", display: "block" }}
-            />
-          </div>
-
-          <p style={bodyStyle}>
-            Digital riffing felt similar to in-person riffing&ndash;the dynamic exchange of
-            ideas, the humor and witty replies. But it was also very different, in some ways
-            better. Crafted creativity versus spontaneous creativity. There was a level of
-            emotional depth and thoughtful articulation not present in most live riffs. There were
-            tangible and ever-lasting artifacts to riff on, versus the ephemeral nature of live
-            conversations. In a world where in-person hangs are trending down and text messages
-            are the go-to form of communication, this felt revolutionary.
-          </p>
-
-          <p style={bodyStyle}>
-            The great irony of modern digital communication is that it allows us to be more
-            connected than ever, yet we don&apos;t feel more connected at all. There is a feeling
-            of proximity when we see our friends in our social feeds and know they are only a text
-            away, yet there is a growing void with how friends meaningfully connect in the digital
-            age.
-          </p>
-
-          <p style={bodyStyle}>
-            In a world growing ever so lonely, my friends and I feel like we struck gold with our
-            writing circle. We gave ourselves a platform for creative expression, a window into
-            each other&apos;s minds, an excuse to get deep and be weird. This left field idea
-            turned out to be a cheat code for being more creative and feeling more deeply
-            connected.
-          </p>
-
-          <p style={bodyStyle}>
-            Why don&apos;t more people write with their friends?
-          </p>
-
-          <p style={bodyStyle}>
-            I think they should.
-          </p>
-
-          <p style={{ ...bodyStyle, margin: "0 0 0 0" }}>
-            I have no clue if other people would be down to do this, but I imagine a world where
-            they do. A world filled with more creativity, more storytelling, more vulnerability. A
-            world less shallow and alone. A world where people feel more deeply connected to a few
-            good friends they could count on one of their hands.
-          </p>
-        </section>
-
-        {/* Our Promise */}
+      {/* Our Promise */}
+      <div
+        style={{
+          maxWidth: "960px",
+          margin: "0 auto",
+          padding: "64px 24px 96px",
+          position: "relative",
+          zIndex: 1,
+        }}
+      >
         <section>
           <h2
             style={{
               fontFamily: "var(--font-dm-sans)",
-              fontSize: "20px",
-              fontWeight: 300,
+              fontSize: "12px",
+              fontWeight: 700,
               color: "#000000",
-              margin: "0 0 32px 0",
+              letterSpacing: "0.1em",
               textTransform: "uppercase",
-              letterSpacing: "0.05em",
+              margin: "0 0 16px 0",
             }}
           >
             Our Promise
           </h2>
-
           <div
             style={{
               border: "2px solid #000000",
@@ -245,22 +363,15 @@ export default function AboutPage() {
               display: "flex",
               flexDirection: "column",
               gap: "16px",
+              backgroundColor: "#FFFFFF",
             }}
           >
             {[
               "Your data is yours. We will never sell it or use it for ads.",
               "You can export all your writing at any time.",
               "You can delete your account and all your data whenever you want.",
-              "We built this for our friends, not for investors.",
             ].map((promise, i) => (
-              <div
-                key={i}
-                style={{
-                  display: "flex",
-                  gap: "12px",
-                  alignItems: "flex-start",
-                }}
-              >
+              <div key={i} style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
                 <span
                   style={{
                     fontFamily: "var(--font-dm-sans)",
@@ -289,44 +400,8 @@ export default function AboutPage() {
             ))}
           </div>
         </section>
-      </main>
+      </div>
     </div>
   );
 }
 
-const bodyStyle = {
-  fontFamily: "var(--font-playfair)",
-  fontSize: "16px",
-  fontWeight: 400 as const,
-  color: "#000000",
-  margin: "0 0 24px 0",
-  lineHeight: 1.8,
-};
-
-function PhotoPlaceholder({ caption }: { caption: string }) {
-  return (
-    <div
-      style={{
-        width: "100%",
-        height: "240px",
-        border: "2px dashed #E6E6E6",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        marginBottom: "24px",
-        backgroundColor: "#FAFAFA",
-      }}
-    >
-      <p
-        style={{
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "14px",
-          fontWeight: 300,
-          color: "#959595",
-        }}
-      >
-        {caption}
-      </p>
-    </div>
-  );
-}

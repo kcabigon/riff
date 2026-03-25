@@ -23,11 +23,16 @@ Complete the current feature branch: validate, push, and create a PR targeting d
    - If develop has new commits, ask: "Develop has new commits. Would you like to sync first (recommended) or proceed?"
    - If they want to sync, run the sync flow from `/sync`
 
-5. **Push to remote**:
+5. **Update TODO.md**:
+   - Read `TODO.md` and check if any in-progress items (marked with 🔨) relate to the work done on this branch
+   - If found, mark them as done: change `- [ ] 🔨 @name — task description` to `- [x] task description`
+   - Commit the TODO update: `chore: mark TODO items complete`
+
+6. **Push to remote**:
    - Run `git push -u origin <branch-name>`
    - If push fails (e.g., rejected), help diagnose
 
-6. **Create PR**:
+7. **Create PR**:
    - Ask the user for a PR title (suggest one based on the branch name and commits)
    - Ask for a brief description of what changed and why
    - Create the PR using:
@@ -36,7 +41,12 @@ Complete the current feature branch: validate, push, and create a PR targeting d
      ```
    - Use the PR template format from `.github/pull_request_template.md`
 
-7. **Report**:
+8. **Clean up local branch only**:
+   - Switch back to develop: `git checkout develop && git pull origin develop`
+   - Delete the local feature branch: `git branch -d <branch-name>`
+   - Do NOT delete the remote branch — it needs to stay alive for the PR. GitHub will auto-delete it when the PR is merged.
+
+9. **Report**:
    - Show the PR URL
    - Tell the user: "Sick! Kyle's gonna review this PR and decide if it's dope enough. You can continue working on other features in the meantime."
 

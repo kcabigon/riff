@@ -30,7 +30,7 @@ export default function LoginPage() {
       const result = await signIn("resend", {
         email,
         redirect: false,
-        callbackUrl: "/auth/check-email",
+        callbackUrl: "/",
       });
 
       if (result?.error) {
@@ -103,8 +103,8 @@ export default function LoginPage() {
             height: "100%",
           }}
         >
-          By continuing, you acknowledge Riff&apos;s Privacy Policy and agree
-          to get occasional product update and promotional emails.
+          By continuing, you acknowledge Riff&apos;s Privacy Policy and agree to
+          get occasional product update and promotional emails.
         </p>
       </div>
     </AuthCard>

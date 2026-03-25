@@ -81,8 +81,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     // Redirect based on onboarding status
     async redirect({ url, baseUrl }) {
-      // If URL is already specified and valid, use it
-      if (url.startsWith(baseUrl)) {
+      // Allow specific URLs through without override
+      const skipSmartRedirect = ["/login", "/auth/check-email", "/auth/error"];
+      const pathname = url.startsWith(baseUrl)
+        ? url.slice(baseUrl.length)
+        : url;
+      if (
+        url.startsWith(baseUrl) &&
+        !skipSmartRedirect.some((p) => pathname.startsWith(p)) &&
+        pathname !== "/"
+      ) {
         return url;
       }
 

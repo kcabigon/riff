@@ -4,7 +4,8 @@ Safely sync the current feature branch with the latest changes from develop. Thi
 
 1. **Check current branch**:
    - Run `git branch --show-current`
-   - If on `main`, `develop`, or `staging`, STOP: "Yo wtf! You're on a protected branch. Kyle's gonna be pissed. This command is for syncing feature branches with develop. Switch to your feature branch first you jabroni."
+   - If on `develop`: just run `git pull origin develop` and report what was pulled. No merge needed — you're already on develop.
+   - If on `main` or `staging`, STOP: "This command is for syncing feature branches with develop. Switch to your feature branch first."
 
 2. **Check for uncommitted changes**:
    - Run `git status`
