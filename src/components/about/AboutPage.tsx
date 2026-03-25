@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import NoiseBackground from "@/components/NoiseBackground";
 import LandingNavBar from "@/components/LandingNavBar";
-import PrimaryButton from "@/components/PrimaryButton";
 
 const FILTERS = {
   yellow: "none",
@@ -168,7 +167,7 @@ export default function AboutPage() {
         </div>
 
         {/* GIF caption */}
-        <div style={{ display: "flex", justifyContent: "center", margin: "0 0 0 0" }}>
+        <div style={{ display: "flex", justifyContent: "center", margin: "0 0 48px 0" }}>
           <p
             style={{
               fontFamily: "var(--font-dm-sans)",
