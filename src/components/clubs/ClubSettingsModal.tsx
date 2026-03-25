@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Modal from "@/components/shared/Modal";
 import ImageUpload from "@/components/onboarding/ImageUpload";
 
@@ -29,6 +29,16 @@ export default function ClubSettingsModal({
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Reset form to current saved values each time the modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setName(club.name);
+      setDescription(club.description || "");
+      setBannerImage(club.bannerImage);
+      setError(null);
+    }
+  }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
