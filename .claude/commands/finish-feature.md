@@ -41,10 +41,10 @@ Complete the current feature branch: validate, push, and create a PR targeting d
      ```
    - Use the PR template format from `.github/pull_request_template.md`
 
-8. **Clean up branch**:
+8. **Clean up local branch only**:
    - Switch back to develop: `git checkout develop && git pull origin develop`
    - Delete the local feature branch: `git branch -d <branch-name>`
-   - Delete the remote feature branch: `git push origin --delete <branch-name>`
+   - Do NOT delete the remote branch — it needs to stay alive for the PR. GitHub will auto-delete it when the PR is merged.
 
 9. **Report**:
    - Show the PR URL
