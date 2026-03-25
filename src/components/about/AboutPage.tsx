@@ -1,13 +1,17 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import NoiseBackground from "@/components/NoiseBackground";
 import LandingNavBar from "@/components/LandingNavBar";
+import PrimaryButton from "@/components/PrimaryButton";
 
 const FILTERS = {
   yellow: "none",
   orange: "brightness(0) saturate(100%) invert(57%) sepia(87%) saturate(2645%) hue-rotate(339deg) brightness(101%) contrast(101%)",
   pink:   "brightness(0) saturate(100%) invert(18%) sepia(82%) saturate(3721%) hue-rotate(307deg) brightness(95%) contrast(98%)",
   cyan:   "brightness(0) saturate(100%) invert(79%) sepia(91%) saturate(2670%) hue-rotate(137deg) brightness(103%) contrast(101%)",
+  purple: "brightness(0) saturate(100%) invert(42%) sepia(42%) saturate(887%) hue-rotate(232deg) brightness(94%) contrast(89%)",
+  green:  "brightness(0) saturate(100%) invert(61%) sepia(97%) saturate(431%) hue-rotate(91deg) brightness(109%) contrast(103%)",
 };
 
 function Highlight({ children, filter = FILTERS.yellow }: { children: string; filter?: string }) {
@@ -32,6 +36,8 @@ function Highlight({ children, filter = FILTERS.yellow }: { children: string; fi
 }
 
 export default function AboutPage() {
+  const router = useRouter();
+
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF", position: "relative" }}>
       <NoiseBackground fillMode="cover" style={{ position: "fixed" }} />
@@ -95,21 +101,62 @@ export default function AboutPage() {
             textAlign: "center",
           }}
         >
-          Clubs give a{" "}
-          <Highlight>rhythm</Highlight>
-          {" to a friend group."}
+          {"Good "}
+          <Highlight>friends</Highlight>
+          {" consume together. Great friends "}
+          <Highlight filter={FILTERS.orange}>create</Highlight>
+          {" together."}
           <br />
-          <Highlight filter={FILTERS.orange}>Writing</Highlight>
-          {" on a rhythm with friends is "}
-          <Highlight filter={FILTERS.pink}>riffing</Highlight>
+          {"Share "}
+          <Highlight filter={FILTERS.pink}>stories</Highlight>
+          {" with friends, "}
+          <Highlight filter={FILTERS.purple}>once a month</Highlight>
           {"."}
         </p>
+
+        {/* Top section CTA */}
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: "48px" }}>
+          <button
+            onClick={() => router.push("/login")}
+            style={{
+              backgroundColor: "#01EFFC",
+              border: "2px solid #000000",
+              boxShadow: "8px 8px 0px 0px #000000",
+              padding: "12px 48px",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "16px",
+              fontWeight: 300,
+              color: "#000000",
+              cursor: "pointer",
+              transition: "background-color 0.2s ease, box-shadow 0.2s ease",
+              whiteSpace: "nowrap",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#FFFFFF";
+              e.currentTarget.style.boxShadow = "8px 8px 0px 0px #01EFFC";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "#01EFFC";
+              e.currentTarget.style.boxShadow = "8px 8px 0px 0px #000000";
+            }}
+            onMouseDown={(e) => {
+              e.currentTarget.style.transform = "translate(4px, 4px)";
+              e.currentTarget.style.boxShadow = "4px 4px 0px 0px #000000";
+            }}
+            onMouseUp={(e) => {
+              e.currentTarget.style.transform = "translate(0, 0)";
+              e.currentTarget.style.boxShadow = "8px 8px 0px 0px #01EFFC";
+            }}
+          >
+            Start the party
+          </button>
+        </div>
 
         {/* GIF */}
         <div
           style={{
             width: "100%",
-            marginBottom: "64px",
+            marginBottom: "12px",
             overflow: "hidden",
           }}
         >
@@ -120,14 +167,47 @@ export default function AboutPage() {
           />
         </div>
 
-        {/* Riff tagline */}
+        {/* GIF caption */}
+        <div style={{ display: "flex", justifyContent: "center", margin: "0 0 0 0" }}>
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "14px",
+              fontWeight: 300,
+              color: "#000000",
+              fontStyle: "italic",
+              margin: 0,
+              padding: "6px 16px",
+              backgroundColor: "#FFFFFF",
+              border: "2px solid #000000",
+              display: "inline",
+            }}
+          >
+            (This is us. 5 of us are building Riff for the 8 of us in a write club.)
+          </p>
+        </div>
+
+      </main>
+
+      {/* Riff tagline band — full bleed */}
+      <div
+        style={{
+          backgroundColor: "#00FF66",
+          borderTop: "2px solid #000000",
+          borderBottom: "2px solid #000000",
+          padding: "64px 24px",
+          position: "relative",
+          zIndex: 1,
+        }}
+      >
         <div
           style={{
+            maxWidth: "960px",
+            margin: "0 auto",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
             gap: "16px",
-            marginBottom: "64px",
           }}
         >
           <div style={{ width: "160px", height: "104px" }}>
@@ -139,21 +219,144 @@ export default function AboutPage() {
           </div>
           <p
             style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "28px",
-              fontWeight: 300,
+              fontFamily: "var(--font-dm-serif-text)",
+              fontSize: "40px",
+              fontWeight: 400,
               color: "#000000",
-              margin: 0,
-              lineHeight: 1.6,
+              margin: "0 0 24px 0",
+              lineHeight: 1.25,
               textAlign: "center",
+              maxWidth: "640px",
             }}
           >
-            Riff is the digital home for write clubs. Designed for friends, by friends.
+            Host a write club with minimal stress and maximum fun.
           </p>
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "18px",
+              fontWeight: 300,
+              color: "#333333",
+              margin: "0 0 32px 0",
+              lineHeight: 1.8,
+              textAlign: "center",
+              maxWidth: "560px",
+            }}
+          >
+            Create your club, invite friends, manage monthly riffs, write solo, reveal together, and comment on each others&apos; writing.
+          </p>
+
         </div>
 
-        {/* Our Promise */}
+        {/* Product screenshot — full bleed within band */}
+        <div
+          style={{
+            position: "relative",
+            width: "100%",
+            maxWidth: "1400px",
+            margin: "0 auto 0 auto",
+            padding: "0 24px",
+            boxSizing: "border-box",
+          }}
+        >
+          <img
+            src="/images/about/Riff_club_screenshot.png"
+            alt="Riff club page screenshot"
+            style={{
+              width: "100%",
+              height: "auto",
+              display: "block",
+              borderRadius: "4px",
+              border: "2px solid #000000",
+              boxShadow: "8px 8px 0px 0px #000000",
+            }}
+          />
+          {/* Gradient fade */}
+          <div
+            style={{
+              position: "absolute",
+              bottom: 0,
+              left: "24px",
+              right: "24px",
+              height: "40%",
+              background: "linear-gradient(to bottom, transparent, #000000)",
+              borderRadius: "0 0 4px 4px",
+              pointerEvents: "none",
+            }}
+          />
+        </div>
+
+        <div
+          style={{
+            maxWidth: "960px",
+            margin: "0 auto",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+          <button
+            onClick={() => router.push("/login")}
+            style={{
+              marginTop: "32px",
+              backgroundColor: "#01EFFC",
+              border: "2px solid #000000",
+              boxShadow: "8px 8px 0px 0px #000000",
+              padding: "12px 48px",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "16px",
+              fontWeight: 300,
+              color: "#000000",
+              cursor: "pointer",
+              transition: "background-color 0.2s ease, box-shadow 0.2s ease",
+              whiteSpace: "nowrap",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#FFFFFF";
+              e.currentTarget.style.boxShadow = "8px 8px 0px 0px #01EFFC";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "#01EFFC";
+              e.currentTarget.style.boxShadow = "8px 8px 0px 0px #000000";
+            }}
+            onMouseDown={(e) => {
+              e.currentTarget.style.transform = "translate(4px, 4px)";
+              e.currentTarget.style.boxShadow = "4px 4px 0px 0px #000000";
+            }}
+            onMouseUp={(e) => {
+              e.currentTarget.style.transform = "translate(0, 0)";
+              e.currentTarget.style.boxShadow = "8px 8px 0px 0px #01EFFC";
+            }}
+          >
+            Be the hostess with the mostest
+          </button>
+        </div>
+      </div>
+
+      {/* Our Promise */}
+      <div
+        style={{
+          maxWidth: "960px",
+          margin: "0 auto",
+          padding: "64px 24px 96px",
+          position: "relative",
+          zIndex: 1,
+        }}
+      >
         <section>
+          <h2
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "12px",
+              fontWeight: 700,
+              color: "#000000",
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              margin: "0 0 16px 0",
+            }}
+          >
+            Our Promise
+          </h2>
           <div
             style={{
               border: "2px solid #000000",
@@ -198,7 +401,7 @@ export default function AboutPage() {
             ))}
           </div>
         </section>
-      </main>
+      </div>
     </div>
   );
 }
