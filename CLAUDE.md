@@ -15,6 +15,7 @@ If the user asks you to "regain context" or "catch up", run `/letsriff`.
 | `/letsriff` | Start of every session — loads context, checks state, asks what to build |
 | `/new-feature` | Start a new feature — creates branch, explores codebase, proposes approach |
 | `/todo` | View, claim, add, or complete items on the shared TODO list |
+| `/test` | Start the dev server and test your changes locally |
 | `/sync` | Pull latest develop into your feature branch — prevents merge conflicts |
 | `/pr-check` | Pre-PR validation — lint, type-check, build, commit format |
 | `/finish-feature` | Push branch and create a PR targeting develop |
