@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import NavBar from "@/components/clubs/NavBar";
 import AvatarStack from "@/components/shared/AvatarStack";
@@ -11,6 +11,7 @@ import CreateRiffModal from "@/components/riffs/CreateRiffModal";
 import RevealConfirmModal from "@/components/riffs/RevealConfirmModal";
 import ReadyToRevealCard from "@/components/riffs/ReadyToRevealCard";
 import OnboardingChecklist from "@/components/clubs/OnboardingChecklist";
+import ClubSettingsModal from "@/components/clubs/ClubSettingsModal";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
 
 interface ClubMember {
@@ -97,6 +98,23 @@ export default function ClubPageLayout({
   const [isCreateRiffModalOpen, setIsCreateRiffModalOpen] = useState(false);
   const [isRevealModalOpen, setIsRevealModalOpen] = useState(false);
   const [isRevealing, setIsRevealing] = useState(false);
+  const [isSettingsDropdownOpen, setIsSettingsDropdownOpen] = useState(false);
+  const [isClubDetailsModalOpen, setIsClubDetailsModalOpen] = useState(false);
+  const settingsDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close settings dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        settingsDropdownRef.current &&
+        !settingsDropdownRef.current.contains(e.target as Node)
+      ) {
+        setIsSettingsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
   const [currentActiveRiff, setCurrentActiveRiff] = useState<Riff | null>(
     activeRiff
   );
@@ -199,17 +217,99 @@ export default function ClubPageLayout({
               alignItems: "flex-start",
             }}
           >
-            <h1
-              style={{
-                fontFamily: "var(--font-dm-serif-text)",
-                fontSize: "32px",
-                fontWeight: 400,
-                color: "#FFFFFF",
-                margin: 0,
-              }}
-            >
-              {club.name}
-            </h1>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <h1
+                style={{
+                  fontFamily: "var(--font-dm-serif-text)",
+                  fontSize: "32px",
+                  fontWeight: 400,
+                  color: "#FFFFFF",
+                  margin: 0,
+                }}
+              >
+                {club.name}
+              </h1>
+              {isAdmin && (
+                <div ref={settingsDropdownRef} style={{ position: "relative" }}>
+                  <button
+                    onClick={() => setIsSettingsDropdownOpen((o) => !o)}
+                    aria-label="Club settings"
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: "4px",
+                      color: "#FFFFFF",
+                      fontSize: "18px",
+                      lineHeight: 1,
+                      opacity: 0.8,
+                    }}
+                  >
+                    ⚙
+                  </button>
+                  {isSettingsDropdownOpen && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "calc(100% + 4px)",
+                        left: 0,
+                        backgroundColor: "#FFFFFF",
+                        border: "2px solid #000000",
+                        boxShadow: "4px 4px 0px 0px #000000",
+                        minWidth: "160px",
+                        zIndex: 10,
+                      }}
+                    >
+                      <button
+                        onClick={() => {
+                          setIsSettingsDropdownOpen(false);
+                          setIsClubDetailsModalOpen(true);
+                        }}
+                        style={{
+                          display: "block",
+                          width: "100%",
+                          padding: "12px 16px",
+                          background: "none",
+                          border: "none",
+                          textAlign: "left",
+                          fontFamily: "var(--font-dm-sans)",
+                          fontSize: "14px",
+                          fontWeight: 300,
+                          color: "#000000",
+                          cursor: "pointer",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = "#F5F5F5";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = "transparent";
+                        }}
+                      >
+                        Club details
+                      </button>
+                      <button
+                        disabled
+                        style={{
+                          display: "block",
+                          width: "100%",
+                          padding: "12px 16px",
+                          background: "none",
+                          border: "none",
+                          textAlign: "left",
+                          fontFamily: "var(--font-dm-sans)",
+                          fontSize: "14px",
+                          fontWeight: 300,
+                          color: "#959595",
+                          cursor: "default",
+                        }}
+                      >
+                        Invite friends
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
             <div
               style={{
@@ -295,96 +395,179 @@ export default function ClubPageLayout({
       >
         {/* Club frame — only shown when no banner image */}
         {!club.bannerImage && (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "16px",
-            marginBottom: "48px",
-          }}
-        >
-          <h1
-            style={{
-              fontFamily: "var(--font-dm-serif-text)",
-              fontSize: "32px",
-              fontWeight: 400,
-              color: "#000000",
-              margin: 0,
-            }}
-          >
-            {club.name}
-          </h1>
-
           <div
             style={{
               display: "flex",
-              flexWrap: "wrap",
-              gap: "4px 12px",
-              alignItems: "start",
+              flexDirection: "column",
+              gap: "16px",
+              marginBottom: "48px",
             }}
           >
-            <p
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <h1
+                style={{
+                  fontFamily: "var(--font-dm-serif-text)",
+                  fontSize: "32px",
+                  fontWeight: 400,
+                  color: "#000000",
+                  margin: 0,
+                }}
+              >
+                {club.name}
+              </h1>
+              {isAdmin && (
+                <div ref={settingsDropdownRef} style={{ position: "relative" }}>
+                  <button
+                    onClick={() => setIsSettingsDropdownOpen((o) => !o)}
+                    aria-label="Club settings"
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: "4px",
+                      color: "#000000",
+                      fontSize: "18px",
+                      lineHeight: 1,
+                      opacity: 0.5,
+                    }}
+                  >
+                    ⚙
+                  </button>
+                  {isSettingsDropdownOpen && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "calc(100% + 4px)",
+                        left: 0,
+                        backgroundColor: "#FFFFFF",
+                        border: "2px solid #000000",
+                        boxShadow: "4px 4px 0px 0px #000000",
+                        minWidth: "160px",
+                        zIndex: 10,
+                      }}
+                    >
+                      <button
+                        onClick={() => {
+                          setIsSettingsDropdownOpen(false);
+                          setIsClubDetailsModalOpen(true);
+                        }}
+                        style={{
+                          display: "block",
+                          width: "100%",
+                          padding: "12px 16px",
+                          background: "none",
+                          border: "none",
+                          textAlign: "left",
+                          fontFamily: "var(--font-dm-sans)",
+                          fontSize: "14px",
+                          fontWeight: 300,
+                          color: "#000000",
+                          cursor: "pointer",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = "#F5F5F5";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = "transparent";
+                        }}
+                      >
+                        Club details
+                      </button>
+                      <button
+                        disabled
+                        style={{
+                          display: "block",
+                          width: "100%",
+                          padding: "12px 16px",
+                          background: "none",
+                          border: "none",
+                          textAlign: "left",
+                          fontFamily: "var(--font-dm-sans)",
+                          fontSize: "14px",
+                          fontWeight: 300,
+                          color: "#959595",
+                          cursor: "default",
+                        }}
+                      >
+                        Invite friends
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div
               style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 300,
-                color: "#000000",
-                margin: 0,
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "4px 12px",
+                alignItems: "start",
               }}
             >
-              <span style={{ fontWeight: 700 }}>{stats.riffCount}</span> riffs
-            </p>
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 300,
-                color: "#000000",
-                margin: 0,
-              }}
-            >
-              <span style={{ fontWeight: 700 }}>{stats.pieceCount}</span> pieces
-            </p>
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 300,
-                color: "#000000",
-                margin: 0,
-              }}
-            >
-              <span style={{ fontWeight: 700 }}>
-                {formatNumber(stats.wordCount)}
-              </span>{" "}
-              words
-            </p>
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 300,
+                  color: "#000000",
+                  margin: 0,
+                }}
+              >
+                <span style={{ fontWeight: 700 }}>{stats.riffCount}</span> riffs
+              </p>
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 300,
+                  color: "#000000",
+                  margin: 0,
+                }}
+              >
+                <span style={{ fontWeight: 700 }}>{stats.pieceCount}</span>{" "}
+                pieces
+              </p>
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 300,
+                  color: "#000000",
+                  margin: 0,
+                }}
+              >
+                <span style={{ fontWeight: 700 }}>
+                  {formatNumber(stats.wordCount)}
+                </span>{" "}
+                words
+              </p>
+            </div>
+
+            <AvatarStack
+              users={club.members.map((m) => m.user)}
+              size={48}
+              showBorder={true}
+              borderColor="#000000"
+              borderWidth={2}
+              onAvatarClick={handleAvatarClick}
+            />
+
+            {club.description && (
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 300,
+                  color: "#000000",
+                  margin: 0,
+                  lineHeight: "normal",
+                }}
+              >
+                {club.description}
+              </p>
+            )}
           </div>
-
-          <AvatarStack
-            users={club.members.map((m) => m.user)}
-            size={48}
-            showBorder={true}
-            borderColor="#000000"
-            borderWidth={2}
-            onAvatarClick={handleAvatarClick}
-          />
-
-          {club.description && (
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 300,
-                color: "#000000",
-                margin: 0,
-                lineHeight: "normal",
-              }}
-            >
-              {club.description}
-            </p>
-          )}
-        </div>
         )}
 
         {/* Onboarding checklist for admin of new clubs */}
@@ -495,7 +678,8 @@ export default function ClubPageLayout({
         {(() => {
           // Revealed riffs where user has read all pieces
           const fullyReadRevealed = revealedRiffs.filter(
-            (r) => r.pieces.length > 0 && (readCounts[r.id] || 0) >= r.pieces.length
+            (r) =>
+              r.pieces.length > 0 && (readCounts[r.id] || 0) >= r.pieces.length
           );
           const allCompleted = [...completedRiffs, ...fullyReadRevealed];
           return allCompleted.length > 0;
@@ -562,6 +746,19 @@ export default function ClubPageLayout({
           }
         }
       `}</style>
+
+      {/* Club Settings Modal */}
+      <ClubSettingsModal
+        isOpen={isClubDetailsModalOpen}
+        onClose={() => setIsClubDetailsModalOpen(false)}
+        onUpdated={() => router.refresh()}
+        club={{
+          id: club.id,
+          name: club.name,
+          description: club.description,
+          bannerImage: club.bannerImage,
+        }}
+      />
 
       {/* Create Riff Modal */}
       <CreateRiffModal
