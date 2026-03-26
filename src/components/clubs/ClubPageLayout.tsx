@@ -239,36 +239,42 @@ export default function ClubPageLayout({
                     aria-label="Club settings"
                     style={{
                       background: "transparent",
-                      border: "2px solid rgba(255,255,255,0.7)",
+                      border: "2px solid transparent",
                       cursor: "pointer",
-                      padding: "5px 10px",
+                      padding: "4px 6px",
                       color: "#FFFFFF",
                       lineHeight: 1,
                       display: "flex",
                       alignItems: "center",
+                      opacity: 0.7,
                       transition:
-                        "border-color 0.15s ease, box-shadow 0.15s ease",
+                        "opacity 0.15s ease, background-color 0.15s ease, box-shadow 0.1s ease",
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = "#FFFFFF";
+                      e.currentTarget.style.opacity = "1";
+                      e.currentTarget.style.backgroundColor = "#01EFFC";
+                      e.currentTarget.style.borderColor = "#000000";
+                      e.currentTarget.style.color = "#000000";
                       e.currentTarget.style.boxShadow =
-                        "3px 3px 0px 0px #FFFFFF";
+                        "3px 3px 0px 0px #000000";
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor =
-                        "rgba(255,255,255,0.7)";
+                      e.currentTarget.style.opacity = "0.7";
+                      e.currentTarget.style.backgroundColor = "transparent";
+                      e.currentTarget.style.borderColor = "transparent";
+                      e.currentTarget.style.color = "#FFFFFF";
                       e.currentTarget.style.boxShadow = "none";
                     }}
                   >
                     <svg
-                      width="16"
-                      height="4"
-                      viewBox="0 0 16 4"
+                      width="12"
+                      height="3"
+                      viewBox="0 0 12 3"
                       fill="currentColor"
                     >
-                      <circle cx="2" cy="2" r="2" />
-                      <circle cx="8" cy="2" r="2" />
-                      <circle cx="14" cy="2" r="2" />
+                      <circle cx="1.5" cy="1.5" r="1.5" />
+                      <circle cx="6" cy="1.5" r="1.5" />
+                      <circle cx="10.5" cy="1.5" r="1.5" />
                     </svg>
                   </button>
                   {isSettingsDropdownOpen && (
@@ -446,35 +452,40 @@ export default function ClubPageLayout({
                     aria-label="Club settings"
                     style={{
                       background: "transparent",
-                      border: "2px solid rgba(0,0,0,0.35)",
+                      border: "2px solid transparent",
                       cursor: "pointer",
-                      padding: "5px 10px",
+                      padding: "4px 6px",
                       color: "#000000",
                       lineHeight: 1,
                       display: "flex",
                       alignItems: "center",
+                      opacity: 0.4,
                       transition:
-                        "border-color 0.15s ease, box-shadow 0.15s ease",
+                        "opacity 0.15s ease, background-color 0.15s ease, box-shadow 0.1s ease",
                     }}
                     onMouseEnter={(e) => {
+                      e.currentTarget.style.opacity = "1";
+                      e.currentTarget.style.backgroundColor = "#01EFFC";
                       e.currentTarget.style.borderColor = "#000000";
                       e.currentTarget.style.boxShadow =
                         "3px 3px 0px 0px #000000";
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = "rgba(0,0,0,0.35)";
+                      e.currentTarget.style.opacity = "0.4";
+                      e.currentTarget.style.backgroundColor = "transparent";
+                      e.currentTarget.style.borderColor = "transparent";
                       e.currentTarget.style.boxShadow = "none";
                     }}
                   >
                     <svg
-                      width="16"
-                      height="4"
-                      viewBox="0 0 16 4"
+                      width="12"
+                      height="3"
+                      viewBox="0 0 12 3"
                       fill="currentColor"
                     >
-                      <circle cx="2" cy="2" r="2" />
-                      <circle cx="8" cy="2" r="2" />
-                      <circle cx="14" cy="2" r="2" />
+                      <circle cx="1.5" cy="1.5" r="1.5" />
+                      <circle cx="6" cy="1.5" r="1.5" />
+                      <circle cx="10.5" cy="1.5" r="1.5" />
                     </svg>
                   </button>
                   {isSettingsDropdownOpen && (
