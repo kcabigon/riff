@@ -77,7 +77,7 @@ src/app/api/
 ```
 src/components/
 ├── shared/        # Modal, Avatar, AvatarStack, AdminBadge, EnvironmentBadge
-├── clubs/         # ClubPageLayout, NavBar, ClubDropdown, AvatarDropdown, OnboardingChecklist, InviteOptions
+├── clubs/         # ClubPageLayout, NavBar, ClubDropdown, AvatarDropdown, OnboardingChecklist, InviteOptions, ClubSettingsModal
 ├── riffs/         # RiffCard, RiffPageLayout, CreateRiffModal, EditRiffModal, DeleteRiffConfirmModal,
 │                  # RevealCelebration, RevealConfirmModal, PieceCard, CompletedRiffCard, ReadyToRevealCard,
 │                  # MosaicCollage, PromptLibrary, EmptyRiffState, CountdownTimer
