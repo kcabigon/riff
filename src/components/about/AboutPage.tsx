@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import NoiseBackground from "@/components/NoiseBackground";
 import LandingNavBar from "@/components/LandingNavBar";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 
 const FILTERS = {
   yellow: "none",
@@ -47,6 +48,7 @@ function Highlight({
 
 export default function AboutPage() {
   const router = useRouter();
+  const isMobile = useIsMobile();
 
   return (
     <div
@@ -73,7 +75,7 @@ export default function AboutPage() {
         <h1
           style={{
             fontFamily: "var(--font-dm-serif-text)",
-            fontSize: "80px",
+            fontSize: isMobile ? "52px" : "80px",
             fontWeight: 400,
             color: "#000000",
             margin: "0 0 24px 0",
@@ -111,7 +113,7 @@ export default function AboutPage() {
         <p
           style={{
             fontFamily: "var(--font-dm-sans)",
-            fontSize: "28px",
+            fontSize: isMobile ? "20px" : "28px",
             fontWeight: 300,
             color: "#000000",
             margin: "0 0 48px 0",
@@ -250,7 +252,7 @@ export default function AboutPage() {
           <p
             style={{
               fontFamily: "var(--font-dm-serif-text)",
-              fontSize: "40px",
+              fontSize: isMobile ? "28px" : "40px",
               fontWeight: 400,
               color: "#000000",
               margin: "0 0 24px 0",
