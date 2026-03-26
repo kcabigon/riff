@@ -83,7 +83,7 @@ export default function ConversionModal({
                   style={{
                     fontFamily: "var(--font-dm-serif-text)",
                     fontSize: "30px",
-                    fontWeight: 700,
+                    fontWeight: 400,
                     color: "#000000",
                     margin: 0,
                     textAlign: "center",
@@ -97,6 +97,8 @@ export default function ConversionModal({
                   textColor="#000000"
                   width={310}
                   fontSize={30}
+                  fontFamily="var(--font-dm-serif-text)"
+                  fontWeight={700}
                 />
               </div>
 
@@ -168,7 +170,7 @@ export default function ConversionModal({
                   style={{
                     fontFamily: "var(--font-dm-serif-text)",
                     fontSize: "30px",
-                    fontWeight: 700,
+                    fontWeight: 400,
                     color: "#000000",
                     margin: 0,
                     textAlign: "center",
@@ -182,6 +184,8 @@ export default function ConversionModal({
                   textColor="#000000"
                   width={285}
                   fontSize={30}
+                  fontFamily="var(--font-dm-serif-text)"
+                  fontWeight={700}
                 />
               </div>
 

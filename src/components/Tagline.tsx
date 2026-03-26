@@ -8,6 +8,8 @@ interface TaglineProps {
   textColor?: string;
   width?: number;
   fontSize?: number;
+  fontFamily?: string;
+  fontWeight?: number;
 }
 
 /**
@@ -24,6 +26,8 @@ export default function Tagline({
   textColor,
   width = 262,
   fontSize = 20,
+  fontFamily = "var(--font-dm-sans)",
+  fontWeight = 300,
 }: TaglineProps) {
   const foregroundColor = textColor || (color ? "#FFFFFF" : "#000000");
 
@@ -71,9 +75,9 @@ export default function Tagline({
       />
       <p
         style={{
-          fontFamily: "var(--font-dm-sans)",
+          fontFamily,
           fontSize: `${fontSize}px`,
-          fontWeight: 300,
+          fontWeight,
           lineHeight: "normal",
           color: foregroundColor,
           margin: 0,
