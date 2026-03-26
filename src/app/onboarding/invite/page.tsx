@@ -65,7 +65,12 @@ function InvitePageContent() {
         />
 
         {/* Invite Options Component */}
-        {clubId && <InviteOptions clubId={clubId} />}
+        {clubId && (
+          <InviteOptions
+            clubId={clubId}
+            inviteUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/clubs/${clubId}/join`}
+          />
+        )}
 
         <div
           style={{
