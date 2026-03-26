@@ -30,6 +30,7 @@ A private essay-sharing platform for creative communities. Users create **clubs*
 - Settings page (edit profile, export data, delete account)
 - Notification system (bell + panel, polls every 30s)
 - Club invitations (email, link, SMS)
+- Public club join page (invite link flow)
 - Avatar system with admin badges
 - Mobile responsive across all views
 - Image uploads via Supabase Storage (persistent across deploys)
@@ -51,18 +52,19 @@ src/app/
 ├── login/page.tsx             # Magic link login
 ├── settings/page.tsx          # User settings
 ├── clubs/[id]/page.tsx        # Club detail (main hub)
+├── clubs/[id]/join/page.tsx   # Public club join page
 ├── riffs/[id]/page.tsx        # Riff detail (revealed pieces)
 ├── read/[pieceId]/page.tsx    # Reading page
 ├── write/[pieceId]/page.tsx   # Draft editor
 ├── profile/[userId]/page.tsx  # User profile
-└── onboarding/                # Onboarding flow (name, club-choice, create-club, banner, invite)
+└── onboarding/                # Onboarding flow (name, club-choice, create-club, banner, invite, join)
 ```
 
 ### API Routes
 ```
 src/app/api/
 ├── auth/                      # NextAuth (magic link)
-├── clubs/                     # Club CRUD + members + riffs
+├── clubs/                     # Club CRUD + members + riffs + join
 ├── riffs/[id]/                # Riff CRUD, participants, read tracking
 ├── drafts/                    # Draft creation
 ├── pieces/[id]/               # Piece CRUD, autosave, share/unshare, versions
@@ -77,7 +79,7 @@ src/app/api/
 ```
 src/components/
 ├── shared/        # Modal, Avatar, AvatarStack, AdminBadge, EnvironmentBadge
-├── clubs/         # ClubPageLayout, NavBar, ClubDropdown, AvatarDropdown, OnboardingChecklist, InviteOptions, ClubSettingsModal
+├── clubs/         # ClubPageLayout, NavBar, ClubDropdown, AvatarDropdown, OnboardingChecklist, InviteOptions, ClubSettingsModal, JoinClubClient
 ├── riffs/         # RiffCard, RiffPageLayout, CreateRiffModal, EditRiffModal, DeleteRiffConfirmModal,
 │                  # RevealCelebration, RevealConfirmModal, PieceCard, CompletedRiffCard, ReadyToRevealCard,
 │                  # MosaicCollage, PromptLibrary, EmptyRiffState, CountdownTimer
