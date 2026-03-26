@@ -43,8 +43,8 @@ export default function ConversionModal({
           onClick={onClose}
           style={{
             position: "absolute",
-            top: "40px",
-            right: "40px",
+            top: "12px",
+            right: "16px",
             background: "none",
             border: "none",
             cursor: "pointer",
