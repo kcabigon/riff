@@ -12,6 +12,7 @@ import RevealConfirmModal from "@/components/riffs/RevealConfirmModal";
 import ReadyToRevealCard from "@/components/riffs/ReadyToRevealCard";
 import OnboardingChecklist from "@/components/clubs/OnboardingChecklist";
 import ClubSettingsModal from "@/components/clubs/ClubSettingsModal";
+import InviteOptions from "@/components/clubs/InviteOptions";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
 
 interface ClubMember {
@@ -103,6 +104,7 @@ export default function ClubPageLayout({
   const [isRevealing, setIsRevealing] = useState(false);
   const [isSettingsDropdownOpen, setIsSettingsDropdownOpen] = useState(false);
   const [isClubDetailsModalOpen, setIsClubDetailsModalOpen] = useState(false);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const settingsDropdownRef = useRef<HTMLDivElement>(null);
 
   // Close settings dropdown when clicking outside
@@ -302,8 +304,12 @@ export default function ClubPageLayout({
                           fontFamily: "var(--font-dm-sans)",
                           fontSize: "14px",
                           fontWeight: 300,
-                          color: "#959595",
-                          cursor: "default",
+                          color: "#000000",
+                          cursor: "pointer",
+                        }}
+                        onClick={() => {
+                          setIsSettingsDropdownOpen(false);
+                          setIsInviteModalOpen(true);
                         }}
                       >
                         Invite friends
@@ -488,8 +494,12 @@ export default function ClubPageLayout({
                           fontFamily: "var(--font-dm-sans)",
                           fontSize: "14px",
                           fontWeight: 300,
-                          color: "#959595",
-                          cursor: "default",
+                          color: "#000000",
+                          cursor: "pointer",
+                        }}
+                        onClick={() => {
+                          setIsSettingsDropdownOpen(false);
+                          setIsInviteModalOpen(true);
                         }}
                       >
                         Invite friends
@@ -581,9 +591,7 @@ export default function ClubPageLayout({
             hasActiveRiff={!!activeRiff}
             hasCompletedRiff={completedRiffs.length > 0}
             onStartRiff={() => setIsCreateRiffModalOpen(true)}
-            onInvite={() =>
-              window.open(`/onboarding/invite?clubId=${club.id}`, "_self")
-            }
+            onInvite={() => setIsInviteModalOpen(true)}
           />
         )}
 
@@ -766,6 +774,75 @@ export default function ClubPageLayout({
           bannerImage: clubBannerImage,
         }}
       />
+
+      {/* Invite Friends Modal */}
+      {isInviteModalOpen && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            zIndex: 100,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "24px",
+          }}
+          onClick={() => setIsInviteModalOpen(false)}
+        >
+          <div
+            style={{
+              backgroundColor: "#FFFFFF",
+              border: "2px solid #000000",
+              padding: "32px",
+              width: "100%",
+              maxWidth: "480px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "24px",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <h2
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "20px",
+                  fontWeight: 300,
+                  color: "#000000",
+                  margin: 0,
+                }}
+              >
+                Invite friends
+              </h2>
+              <button
+                onClick={() => setIsInviteModalOpen(false)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  fontSize: "20px",
+                  cursor: "pointer",
+                  color: "#000000",
+                  lineHeight: 1,
+                }}
+              >
+                ×
+              </button>
+            </div>
+            <InviteOptions
+              clubId={club.id}
+              clubName={clubName}
+              inviteUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/clubs/${club.id}/join`}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Create Riff Modal */}
       <CreateRiffModal
