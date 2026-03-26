@@ -1,6 +1,6 @@
 # Riff — Master TODO
 
-Last updated: March 23, 2026 (updated to reflect recent work)
+Last updated: March 26, 2026 (Jarric's session — about page, club settings, invite/join)
 
 ---
 
@@ -14,6 +14,8 @@ Last updated: March 23, 2026 (updated to reflect recent work)
 ### About Page
 - [x] Remove noise background — put text on white background so it's readable
 - [x] Replace placeholder dashed-border boxes with actual photos
+- [x] Fix heading font size for mobile (too large on small screens)
+- [x] Show mobile-specific screenshot on small screens using `<picture>` element
 
 ### Onboarding
 - [ ] "Club name" field should auto-populate with first name (e.g. "Kyle's Club")
@@ -24,7 +26,11 @@ Last updated: March 23, 2026 (updated to reflect recent work)
 - [x] Top-left logo should be icon only (not full wordmark) — uses riff_logo.svg
 - [ ] Redesign club dropdown
 - [x] If club has banner photo: dark overlay + club details centered on photo in white text (dark scrim)
-- [ ] "Invite friends" should open a modal instead of navigating to onboarding
+- [x] Club Settings gear icon: admin can edit club name, description, and banner image
+- [x] Replace gear icon (⚙) with minimal three-dot SVG button with cyan hover effect
+- [x] "Invite friends" should open a modal instead of navigating to onboarding
+- [x] Public club join page at /clubs/[id]/join (no token needed — shareable link)
+- [x] New user join onboarding flow (/onboarding/join) — name setup then joins club
 - [ ] When riff is revealed, remove from "Current Riff" section
 
 ### Riff Creation / Management
@@ -70,7 +76,8 @@ Last updated: March 23, 2026 (updated to reflect recent work)
 - [ ] Toast notifications replacing `console.error` catches
 - [ ] Loading skeletons for ClubPageLayout, ProfilePage, RiffPageLayout
 - [ ] Deployment environment badge (dev/staging/production indicator)
-- [ ] Onboarding page refinements (create-club, invite, join-club pages)
+- [x] Onboarding invite step now generates /clubs/[id]/join links instead of single-use tokens
+- [ ] Onboarding page refinements (create-club, join-club pages)
 
 ---
 
