@@ -46,7 +46,7 @@ Last updated: March 26, 2026 (Jarric claiming invite/join + riff improvements)
 - [ ] 🔨 @jarric — Design riff participant progress view on the riff page
 
 ### Riff Page
-- [ ] Redesign riff page layout
+- [ ] 🔨 @jarric — Redesign riff page layout
 - [x] Change back button styling (shared BackButton component, used across all back navigation)
 - [ ] Share button doesn't work — wire up or remove
 
