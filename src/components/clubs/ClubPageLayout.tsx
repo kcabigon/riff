@@ -240,17 +240,44 @@ export default function ClubPageLayout({
                     onClick={() => setIsSettingsDropdownOpen((o) => !o)}
                     aria-label="Club settings"
                     style={{
-                      background: "none",
-                      border: "none",
+                      background: "transparent",
+                      border: "2px solid transparent",
                       cursor: "pointer",
-                      padding: "4px",
+                      padding: "4px 6px",
                       color: "#FFFFFF",
-                      fontSize: "18px",
                       lineHeight: 1,
-                      opacity: 0.8,
+                      display: "flex",
+                      alignItems: "center",
+                      opacity: 0.7,
+                      transition:
+                        "opacity 0.15s ease, background-color 0.15s ease, box-shadow 0.1s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.opacity = "1";
+                      e.currentTarget.style.backgroundColor = "#01EFFC";
+                      e.currentTarget.style.borderColor = "#000000";
+                      e.currentTarget.style.color = "#000000";
+                      e.currentTarget.style.boxShadow =
+                        "3px 3px 0px 0px #000000";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.opacity = "0.7";
+                      e.currentTarget.style.backgroundColor = "transparent";
+                      e.currentTarget.style.borderColor = "transparent";
+                      e.currentTarget.style.color = "#FFFFFF";
+                      e.currentTarget.style.boxShadow = "none";
                     }}
                   >
-                    ⚙
+                    <svg
+                      width="12"
+                      height="3"
+                      viewBox="0 0 12 3"
+                      fill="currentColor"
+                    >
+                      <circle cx="1.5" cy="1.5" r="1.5" />
+                      <circle cx="6" cy="1.5" r="1.5" />
+                      <circle cx="10.5" cy="1.5" r="1.5" />
+                    </svg>
                   </button>
                   {isSettingsDropdownOpen && (
                     <div
@@ -435,17 +462,42 @@ export default function ClubPageLayout({
                     onClick={() => setIsSettingsDropdownOpen((o) => !o)}
                     aria-label="Club settings"
                     style={{
-                      background: "none",
-                      border: "none",
+                      background: "transparent",
+                      border: "2px solid transparent",
                       cursor: "pointer",
-                      padding: "4px",
+                      padding: "4px 6px",
                       color: "#000000",
-                      fontSize: "18px",
                       lineHeight: 1,
-                      opacity: 0.5,
+                      display: "flex",
+                      alignItems: "center",
+                      opacity: 0.4,
+                      transition:
+                        "opacity 0.15s ease, background-color 0.15s ease, box-shadow 0.1s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.opacity = "1";
+                      e.currentTarget.style.backgroundColor = "#01EFFC";
+                      e.currentTarget.style.borderColor = "#000000";
+                      e.currentTarget.style.boxShadow =
+                        "3px 3px 0px 0px #000000";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.opacity = "0.4";
+                      e.currentTarget.style.backgroundColor = "transparent";
+                      e.currentTarget.style.borderColor = "transparent";
+                      e.currentTarget.style.boxShadow = "none";
                     }}
                   >
-                    ⚙
+                    <svg
+                      width="12"
+                      height="3"
+                      viewBox="0 0 12 3"
+                      fill="currentColor"
+                    >
+                      <circle cx="1.5" cy="1.5" r="1.5" />
+                      <circle cx="6" cy="1.5" r="1.5" />
+                      <circle cx="10.5" cy="1.5" r="1.5" />
+                    </svg>
                   </button>
                   {isSettingsDropdownOpen && (
                     <div
