@@ -238,17 +238,38 @@ export default function ClubPageLayout({
                     onClick={() => setIsSettingsDropdownOpen((o) => !o)}
                     aria-label="Club settings"
                     style={{
-                      background: "none",
-                      border: "none",
+                      background: "transparent",
+                      border: "2px solid rgba(255,255,255,0.7)",
                       cursor: "pointer",
-                      padding: "4px",
+                      padding: "5px 10px",
                       color: "#FFFFFF",
-                      fontSize: "18px",
                       lineHeight: 1,
-                      opacity: 0.8,
+                      display: "flex",
+                      alignItems: "center",
+                      transition:
+                        "border-color 0.15s ease, box-shadow 0.15s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = "#FFFFFF";
+                      e.currentTarget.style.boxShadow =
+                        "3px 3px 0px 0px #FFFFFF";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor =
+                        "rgba(255,255,255,0.7)";
+                      e.currentTarget.style.boxShadow = "none";
                     }}
                   >
-                    ⚙
+                    <svg
+                      width="16"
+                      height="4"
+                      viewBox="0 0 16 4"
+                      fill="currentColor"
+                    >
+                      <circle cx="2" cy="2" r="2" />
+                      <circle cx="8" cy="2" r="2" />
+                      <circle cx="14" cy="2" r="2" />
+                    </svg>
                   </button>
                   {isSettingsDropdownOpen && (
                     <div
@@ -424,17 +445,37 @@ export default function ClubPageLayout({
                     onClick={() => setIsSettingsDropdownOpen((o) => !o)}
                     aria-label="Club settings"
                     style={{
-                      background: "none",
-                      border: "none",
+                      background: "transparent",
+                      border: "2px solid rgba(0,0,0,0.35)",
                       cursor: "pointer",
-                      padding: "4px",
+                      padding: "5px 10px",
                       color: "#000000",
-                      fontSize: "18px",
                       lineHeight: 1,
-                      opacity: 0.5,
+                      display: "flex",
+                      alignItems: "center",
+                      transition:
+                        "border-color 0.15s ease, box-shadow 0.15s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = "#000000";
+                      e.currentTarget.style.boxShadow =
+                        "3px 3px 0px 0px #000000";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = "rgba(0,0,0,0.35)";
+                      e.currentTarget.style.boxShadow = "none";
                     }}
                   >
-                    ⚙
+                    <svg
+                      width="16"
+                      height="4"
+                      viewBox="0 0 16 4"
+                      fill="currentColor"
+                    >
+                      <circle cx="2" cy="2" r="2" />
+                      <circle cx="8" cy="2" r="2" />
+                      <circle cx="14" cy="2" r="2" />
+                    </svg>
                   </button>
                   {isSettingsDropdownOpen && (
                     <div
