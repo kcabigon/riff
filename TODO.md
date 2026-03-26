@@ -1,6 +1,6 @@
 # Riff — Master TODO
 
-Last updated: March 26, 2026 (Jarric's session — about page, club settings, invite/join)
+Last updated: March 26, 2026 (Jarric claiming invite/join + riff improvements)
 
 ---
 
@@ -31,12 +31,19 @@ Last updated: March 26, 2026 (Jarric's session — about page, club settings, in
 - [x] "Invite friends" should open a modal instead of navigating to onboarding
 - [x] Public club join page at /clubs/[id]/join (no token needed — shareable link)
 - [x] New user join onboarding flow (/onboarding/join) — name setup then joins club
+- [ ] 🔨 @jarric — Invite/join flow testing and improvements
 - [ ] When riff is revealed, remove from "Current Riff" section
 
 ### Riff Creation / Management
+- [ ] 🔨 @jarric — Volume number auto-assigned; riff name optional (not required to create)
+- [ ] 🔨 @jarric — Due date mandatory on riff creation, defaults to 1 month out, admin can edit later
 - [ ] Redesign prompts/inspiration UI
 - [ ] After creating a riff, host sees "Start writing" or "Invite friends" CTA
 - [ ] Don't show "Reveal pieces" until deadline passes OR all submissions are in
+
+### Riff Card & Riff Page
+- [ ] 🔨 @jarric — Update riff card: "waiting for X" / "submitted" states and CTA logic
+- [ ] 🔨 @jarric — Design riff participant progress view on the riff page
 
 ### Riff Page
 - [ ] Redesign riff page layout
