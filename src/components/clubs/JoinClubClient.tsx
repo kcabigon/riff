@@ -338,6 +338,7 @@ export default function JoinClubClient({
               padding: 0,
               textDecoration: "underline",
               textDecorationColor: "#959595",
+              marginTop: "16px",
             }}
           >
             Wait, what&apos;s a write club?
