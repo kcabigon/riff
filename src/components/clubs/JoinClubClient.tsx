@@ -333,11 +333,11 @@ export default function JoinClubClient({
               fontFamily: "var(--font-dm-sans)",
               fontSize: "14px",
               fontWeight: 300,
-              color: "#959595",
+              color: "#666666",
               cursor: "pointer",
               padding: 0,
               textDecoration: "underline",
-              textDecorationColor: "#959595",
+              textDecorationColor: "#666666",
               marginTop: "16px",
             }}
           >
