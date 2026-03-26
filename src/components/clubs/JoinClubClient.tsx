@@ -170,7 +170,7 @@ export default function JoinClubClient({
         style={{
           maxWidth: "1000px",
           margin: "0 auto",
-          padding: "32px 24px 64px",
+          padding: "64px 24px 64px",
         }}
       >
         {/* No-banner header */}
@@ -250,7 +250,7 @@ export default function JoinClubClient({
             flexDirection: "column",
             alignItems: "center",
             gap: "16px",
-            marginTop: club.bannerImage ? "48px" : "0",
+            marginTop: 0,
           }}
         >
           <p

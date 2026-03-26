@@ -81,9 +81,9 @@ export default function ConversionModal({
               >
                 <p
                   style={{
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "24px",
-                    fontWeight: 300,
+                    fontFamily: "var(--font-dm-serif-text)",
+                    fontSize: "30px",
+                    fontWeight: 700,
                     color: "#000000",
                     margin: 0,
                     textAlign: "center",
@@ -93,10 +93,10 @@ export default function ConversionModal({
                 </p>
                 <Tagline
                   text="your own stories"
-                  color="#00FF66"
+                  color="#EECF01"
                   textColor="#000000"
-                  width={248}
-                  fontSize={24}
+                  width={310}
+                  fontSize={30}
                 />
               </div>
 
@@ -166,9 +166,9 @@ export default function ConversionModal({
               >
                 <p
                   style={{
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "24px",
-                    fontWeight: 300,
+                    fontFamily: "var(--font-dm-serif-text)",
+                    fontSize: "30px",
+                    fontWeight: 700,
                     color: "#000000",
                     margin: 0,
                     textAlign: "center",
@@ -178,10 +178,10 @@ export default function ConversionModal({
                 </p>
                 <Tagline
                   text="feels like riffing"
-                  color="#01EFFC"
+                  color="#FF6B35"
                   textColor="#000000"
-                  width={228}
-                  fontSize={24}
+                  width={285}
+                  fontSize={30}
                 />
               </div>
 
