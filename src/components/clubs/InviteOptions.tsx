@@ -20,19 +20,28 @@ function useWindowWidth() {
 
 interface InviteOptionsProps {
   clubId: string;
+  clubName?: string;
+  /** If provided, use this URL directly instead of generating a token-based invite link */
+  inviteUrl?: string;
 }
 
-export default function InviteOptions({ clubId }: InviteOptionsProps) {
-  const [clubName, setClubName] = useState<string>("");
-  const [inviteUrl, setInviteUrl] = useState("");
+export default function InviteOptions({
+  clubId,
+  clubName: clubNameProp,
+  inviteUrl: inviteUrlProp,
+}: InviteOptionsProps) {
+  const [clubName, setClubName] = useState<string>(clubNameProp || "");
+  const [inviteUrl, setInviteUrl] = useState(inviteUrlProp || "");
   const [loading, setLoading] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   const [showLinkBox, setShowLinkBox] = useState(false);
   const windowWidth = useWindowWidth();
   const isMobile = windowWidth < 768;
 
-  // Fetch club name on mount
+  // Fetch club name on mount only if not provided as prop
   useEffect(() => {
+    if (clubNameProp) return;
+
     const fetchClubName = async () => {
       try {
         const response = await fetch(`/api/clubs/${clubId}`);
@@ -49,11 +58,17 @@ export default function InviteOptions({ clubId }: InviteOptionsProps) {
     if (clubId) {
       fetchClubName();
     }
-  }, [clubId]);
+  }, [clubId, clubNameProp]);
 
-  // Generate invite link
+  // Generate invite link — skipped if a static URL was provided
   const generateInviteLink = async () => {
-    if (inviteUrl) return inviteUrl; // Already generated
+    if (inviteUrl) return inviteUrl; // Already have a URL
+
+    // If a static join URL was passed as prop, use it
+    if (inviteUrlProp) {
+      setInviteUrl(inviteUrlProp);
+      return inviteUrlProp;
+    }
 
     setLoading(true);
     try {
