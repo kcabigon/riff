@@ -293,7 +293,6 @@ export default function ClubPageLayout({
                         Club details
                       </button>
                       <button
-                        disabled
                         style={{
                           display: "block",
                           width: "100%",
@@ -306,6 +305,12 @@ export default function ClubPageLayout({
                           fontWeight: 300,
                           color: "#000000",
                           cursor: "pointer",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = "#F5F5F5";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = "transparent";
                         }}
                         onClick={() => {
                           setIsSettingsDropdownOpen(false);
@@ -483,7 +488,6 @@ export default function ClubPageLayout({
                         Club details
                       </button>
                       <button
-                        disabled
                         style={{
                           display: "block",
                           width: "100%",
@@ -496,6 +500,12 @@ export default function ClubPageLayout({
                           fontWeight: 300,
                           color: "#000000",
                           cursor: "pointer",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = "#F5F5F5";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = "transparent";
                         }}
                         onClick={() => {
                           setIsSettingsDropdownOpen(false);
