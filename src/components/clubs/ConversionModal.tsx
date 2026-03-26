@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Modal from "@/components/shared/Modal";
 import NoiseBackground from "@/components/NoiseBackground";
-import OnboardingProgress from "@/components/onboarding/OnboardingProgress";
 import Tagline from "@/components/Tagline";
 
 interface ConversionModalProps {
@@ -69,10 +68,9 @@ export default function ConversionModal({
             gap: "24px",
           }}
         >
-          <OnboardingProgress currentStep={step} totalSteps={2} />
-
           {step === 1 ? (
             <>
+              {/* Heading */}
               <div
                 style={{
                   display: "flex",
@@ -83,9 +81,9 @@ export default function ConversionModal({
               >
                 <p
                   style={{
-                    fontFamily: "var(--font-dm-serif-text)",
-                    fontSize: "28px",
-                    fontWeight: 400,
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "24px",
+                    fontWeight: 300,
                     color: "#000000",
                     margin: 0,
                     textAlign: "center",
@@ -97,26 +95,36 @@ export default function ConversionModal({
                   text="your own stories"
                   color="#00FF66"
                   textColor="#000000"
-                  width={220}
+                  width={248}
+                  fontSize={24}
                 />
               </div>
 
-              <p
+              {/* Body text — white bg for legibility over noise */}
+              <div
                 style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#000000",
-                  margin: 0,
-                  textAlign: "center",
-                  lineHeight: "1.6",
+                  backgroundColor: "#FFFFFF",
+                  padding: "16px",
+                  width: "100%",
                 }}
               >
-                You and your friends, writing whatever you want, sharing once a
-                month, purely for fun. A write club gives your friend group a
-                shared purpose, some light structure, and total creative
-                freedom.
-              </p>
+                <p
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "16px",
+                    fontWeight: 300,
+                    color: "#000000",
+                    margin: 0,
+                    textAlign: "center",
+                    lineHeight: "1.6",
+                  }}
+                >
+                  You and your friends, writing whatever you want, sharing once
+                  a month, purely for fun. A write club gives your friend group
+                  a shared purpose, some light structure, and total creative
+                  freedom.
+                </p>
+              </div>
 
               <JoinButton
                 clubName={clubName}
@@ -124,26 +132,30 @@ export default function ConversionModal({
                 isJoining={isJoining}
               />
 
-              <button
-                onClick={() => setStep(2)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "14px",
-                  fontWeight: 300,
-                  color: "#959595",
-                  cursor: "pointer",
-                  padding: 0,
-                  textDecoration: "underline",
-                  textDecorationColor: "#959595",
-                }}
-              >
-                Cool, but what&apos;s a riff?
-              </button>
+              {/* Secondary CTA — white bg for legibility over noise */}
+              <div style={{ backgroundColor: "#FFFFFF", padding: "4px 16px" }}>
+                <button
+                  onClick={() => setStep(2)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "14px",
+                    fontWeight: 300,
+                    color: "#959595",
+                    cursor: "pointer",
+                    padding: 0,
+                    textDecoration: "underline",
+                    textDecorationColor: "#959595",
+                  }}
+                >
+                  Cool, but what&apos;s a riff?
+                </button>
+              </div>
             </>
           ) : (
             <>
+              {/* Heading */}
               <div
                 style={{
                   display: "flex",
@@ -154,9 +166,9 @@ export default function ConversionModal({
               >
                 <p
                   style={{
-                    fontFamily: "var(--font-dm-serif-text)",
-                    fontSize: "28px",
-                    fontWeight: 400,
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "24px",
+                    fontWeight: 300,
                     color: "#000000",
                     margin: 0,
                     textAlign: "center",
@@ -168,26 +180,36 @@ export default function ConversionModal({
                   text="feels like riffing"
                   color="#01EFFC"
                   textColor="#000000"
-                  width={210}
+                  width={228}
+                  fontSize={24}
                 />
               </div>
 
-              <p
+              {/* Body text — white bg for legibility over noise */}
+              <div
                 style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#000000",
-                  margin: 0,
-                  textAlign: "center",
-                  lineHeight: "1.6",
+                  backgroundColor: "#FFFFFF",
+                  padding: "16px",
+                  width: "100%",
                 }}
               >
-                Riffs give a rhythm to the club. Write solo, your own style on
-                your own time. Reveal together, on a set date that works for
-                everyone. Keep the riff going in the comments section. Then run
-                it back again.
-              </p>
+                <p
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "16px",
+                    fontWeight: 300,
+                    color: "#000000",
+                    margin: 0,
+                    textAlign: "center",
+                    lineHeight: "1.6",
+                  }}
+                >
+                  Riffs give a rhythm to the club. Write solo, your own style on
+                  your own time. Reveal together, on a set date that works for
+                  everyone. Keep the riff going in the comments section. Then
+                  run it back again.
+                </p>
+              </div>
 
               <JoinButton
                 clubName={clubName}
@@ -196,6 +218,22 @@ export default function ConversionModal({
               />
             </>
           )}
+
+          {/* Step dots — bottom */}
+          <div style={{ display: "flex", gap: "12px" }}>
+            {[1, 2].map((dot) => (
+              <div
+                key={dot}
+                style={{
+                  width: "12px",
+                  height: "12px",
+                  borderRadius: "50%",
+                  backgroundColor: dot <= step ? "#00FF66" : "#E6E6E6",
+                  border: "2px solid #000000",
+                }}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </Modal>
