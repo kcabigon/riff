@@ -6,14 +6,23 @@ import LandingNavBar from "@/components/LandingNavBar";
 
 const FILTERS = {
   yellow: "none",
-  orange: "brightness(0) saturate(100%) invert(57%) sepia(87%) saturate(2645%) hue-rotate(339deg) brightness(101%) contrast(101%)",
-  pink:   "brightness(0) saturate(100%) invert(18%) sepia(82%) saturate(3721%) hue-rotate(307deg) brightness(95%) contrast(98%)",
-  cyan:   "brightness(0) saturate(100%) invert(79%) sepia(91%) saturate(2670%) hue-rotate(137deg) brightness(103%) contrast(101%)",
-  purple: "brightness(0) saturate(100%) invert(42%) sepia(42%) saturate(887%) hue-rotate(232deg) brightness(94%) contrast(89%)",
-  green:  "brightness(0) saturate(100%) invert(61%) sepia(97%) saturate(431%) hue-rotate(91deg) brightness(109%) contrast(103%)",
+  orange:
+    "brightness(0) saturate(100%) invert(57%) sepia(87%) saturate(2645%) hue-rotate(339deg) brightness(101%) contrast(101%)",
+  pink: "brightness(0) saturate(100%) invert(18%) sepia(82%) saturate(3721%) hue-rotate(307deg) brightness(95%) contrast(98%)",
+  cyan: "brightness(0) saturate(100%) invert(79%) sepia(91%) saturate(2670%) hue-rotate(137deg) brightness(103%) contrast(101%)",
+  purple:
+    "brightness(0) saturate(100%) invert(42%) sepia(42%) saturate(887%) hue-rotate(232deg) brightness(94%) contrast(89%)",
+  green:
+    "brightness(0) saturate(100%) invert(61%) sepia(97%) saturate(431%) hue-rotate(91deg) brightness(109%) contrast(103%)",
 };
 
-function Highlight({ children, filter = FILTERS.yellow }: { children: string; filter?: string }) {
+function Highlight({
+  children,
+  filter = FILTERS.yellow,
+}: {
+  children: string;
+  filter?: string;
+}) {
   return (
     <span style={{ position: "relative", display: "inline-block" }}>
       <img
@@ -29,7 +38,9 @@ function Highlight({ children, filter = FILTERS.yellow }: { children: string; fi
           filter,
         }}
       />
-      <strong style={{ position: "relative", zIndex: 1, fontWeight: 700 }}>{children}</strong>
+      <strong style={{ position: "relative", zIndex: 1, fontWeight: 700 }}>
+        {children}
+      </strong>
     </span>
   );
 }
@@ -38,7 +49,13 @@ export default function AboutPage() {
   const router = useRouter();
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF", position: "relative" }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        backgroundColor: "#FFFFFF",
+        position: "relative",
+      }}
+    >
       <NoiseBackground fillMode="cover" style={{ position: "fixed" }} />
 
       <LandingNavBar sticky />
@@ -78,7 +95,9 @@ export default function AboutPage() {
                 filter: FILTERS.cyan,
               }}
             />
-            <strong style={{ fontWeight: 700, position: "relative", zIndex: 1 }}>
+            <strong
+              style={{ fontWeight: 700, position: "relative", zIndex: 1 }}
+            >
               Write clubs
             </strong>
           </span>
@@ -114,7 +133,13 @@ export default function AboutPage() {
         </p>
 
         {/* Top section CTA */}
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: "48px" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            marginBottom: "48px",
+          }}
+        >
           <button
             onClick={() => router.push("/login")}
             style={{
@@ -167,7 +192,13 @@ export default function AboutPage() {
         </div>
 
         {/* GIF caption */}
-        <div style={{ display: "flex", justifyContent: "center", margin: "0 0 48px 0" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            margin: "0 0 48px 0",
+          }}
+        >
           <p
             style={{
               fontFamily: "var(--font-dm-sans)",
@@ -182,10 +213,10 @@ export default function AboutPage() {
               display: "inline",
             }}
           >
-            (This is us. 5 of us are building Riff for the 8 of us in a write club.)
+            (This is us. 5 of us are building Riff for the 8 of us in a write
+            club.)
           </p>
         </div>
-
       </main>
 
       {/* Riff tagline band — full bleed */}
@@ -242,9 +273,9 @@ export default function AboutPage() {
               maxWidth: "560px",
             }}
           >
-            Create your club, invite friends, manage monthly riffs, write solo, reveal together, and comment on each others&apos; writing.
+            Create your club, invite friends, manage monthly riffs, write solo,
+            reveal together, and comment on each others&apos; writing.
           </p>
-
         </div>
 
         {/* Product screenshot — full bleed within band */}
@@ -258,18 +289,24 @@ export default function AboutPage() {
             boxSizing: "border-box",
           }}
         >
-          <img
-            src="/images/about/Riff_club_screenshot.png"
-            alt="Riff club page screenshot"
-            style={{
-              width: "100%",
-              height: "auto",
-              display: "block",
-              borderRadius: "4px",
-              border: "2px solid #000000",
-              boxShadow: "8px 8px 0px 0px #000000",
-            }}
-          />
+          <picture>
+            <source
+              srcSet="/images/about/Riff_club_mobile.png"
+              media="(max-width: 768px)"
+            />
+            <img
+              src="/images/about/Riff_club_screenshot.png"
+              alt="Riff club page screenshot"
+              style={{
+                width: "100%",
+                height: "auto",
+                display: "block",
+                borderRadius: "4px",
+                border: "2px solid #000000",
+                boxShadow: "8px 8px 0px 0px #000000",
+              }}
+            />
+          </picture>
           {/* Gradient fade */}
           <div
             style={{
@@ -371,7 +408,14 @@ export default function AboutPage() {
               "You can export all your writing at any time.",
               "You can delete your account and all your data whenever you want.",
             ].map((promise, i) => (
-              <div key={i} style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
+              <div
+                key={i}
+                style={{
+                  display: "flex",
+                  gap: "12px",
+                  alignItems: "flex-start",
+                }}
+              >
                 <span
                   style={{
                     fontFamily: "var(--font-dm-sans)",
@@ -404,4 +448,3 @@ export default function AboutPage() {
     </div>
   );
 }
-
