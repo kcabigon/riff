@@ -17,7 +17,12 @@ interface TaglineProps {
  * @param textColor - Text color (defaults to white for custom colors, black for default yellow)
  * @param width - Custom width in pixels (defaults to 262px)
  */
-export default function Tagline({ text, color, textColor, width = 262 }: TaglineProps) {
+export default function Tagline({
+  text,
+  color,
+  textColor,
+  width = 262,
+}: TaglineProps) {
   const foregroundColor = textColor || (color ? "#FFFFFF" : "#000000");
 
   // Generate CSS filter for color transformation
@@ -27,10 +32,16 @@ export default function Tagline({ text, color, textColor, width = 262 }: Tagline
 
     // Convert hex to filter for common colors
     const colorFilters: Record<string, string> = {
-      "#C01582": "brightness(0) saturate(100%) invert(18%) sepia(82%) saturate(3721%) hue-rotate(307deg) brightness(95%) contrast(98%)", // pink
-      "#955CB5": "brightness(0) saturate(100%) invert(42%) sepia(42%) saturate(887%) hue-rotate(232deg) brightness(94%) contrast(89%)", // purple
-      "#FF6B35": "brightness(0) saturate(100%) invert(57%) sepia(87%) saturate(2645%) hue-rotate(339deg) brightness(101%) contrast(101%)", // orange
-      "#01EFFC": "brightness(0) saturate(100%) invert(79%) sepia(91%) saturate(2670%) hue-rotate(137deg) brightness(103%) contrast(101%)", // cyan
+      "#C01582":
+        "brightness(0) saturate(100%) invert(18%) sepia(82%) saturate(3721%) hue-rotate(307deg) brightness(95%) contrast(98%)", // pink
+      "#955CB5":
+        "brightness(0) saturate(100%) invert(42%) sepia(42%) saturate(887%) hue-rotate(232deg) brightness(94%) contrast(89%)", // purple
+      "#FF6B35":
+        "brightness(0) saturate(100%) invert(57%) sepia(87%) saturate(2645%) hue-rotate(339deg) brightness(101%) contrast(101%)", // orange
+      "#01EFFC":
+        "brightness(0) saturate(100%) invert(79%) sepia(91%) saturate(2670%) hue-rotate(137deg) brightness(103%) contrast(101%)", // cyan
+      "#00FF66":
+        "brightness(0) saturate(100%) invert(61%) sepia(97%) saturate(1000%) hue-rotate(88deg) brightness(102%) contrast(101%)", // green
     };
 
     return colorFilters[hexColor] || "none";

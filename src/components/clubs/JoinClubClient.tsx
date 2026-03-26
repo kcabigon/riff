@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import AvatarStack from "@/components/shared/AvatarStack";
 import LandingNavBar from "@/components/LandingNavBar";
+import ConversionModal from "@/components/clubs/ConversionModal";
 
 interface ClubMember {
   user: {
@@ -38,6 +39,7 @@ export default function JoinClubClient({
   const router = useRouter();
   const [isJoining, setIsJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const formatNumber = (n: number) => n.toLocaleString();
 
@@ -322,8 +324,34 @@ export default function JoinClubClient({
               {error}
             </p>
           )}
+
+          <button
+            onClick={() => setIsModalOpen(true)}
+            style={{
+              background: "none",
+              border: "none",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "14px",
+              fontWeight: 300,
+              color: "#959595",
+              cursor: "pointer",
+              padding: 0,
+              textDecoration: "underline",
+              textDecorationColor: "#959595",
+            }}
+          >
+            Wait, what&apos;s a write club?
+          </button>
         </div>
       </div>
+
+      <ConversionModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        clubName={club.name}
+        onJoin={handleJoin}
+        isJoining={isJoining}
+      />
 
       <style>{`
         @media (max-width: 767px) {
