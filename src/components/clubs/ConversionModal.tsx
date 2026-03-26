@@ -222,22 +222,6 @@ export default function ConversionModal({
               />
             </>
           )}
-
-          {/* Step dots — bottom */}
-          <div style={{ display: "flex", gap: "12px" }}>
-            {[1, 2].map((dot) => (
-              <div
-                key={dot}
-                style={{
-                  width: "12px",
-                  height: "12px",
-                  borderRadius: "50%",
-                  backgroundColor: dot <= step ? "#00FF66" : "#E6E6E6",
-                  border: "2px solid #000000",
-                }}
-              />
-            ))}
-          </div>
         </div>
       </div>
     </Modal>
