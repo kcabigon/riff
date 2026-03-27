@@ -52,14 +52,12 @@ export default function ConversionModal({
             background: "none",
             border: "none",
             cursor: "pointer",
-            color: "#808080",
-            fontSize: "20px",
             zIndex: 2,
             padding: "4px",
             lineHeight: 1,
           }}
         >
-          ×
+          <img src="/icons/close.svg" alt="Close" width={24} height={24} />
         </button>
 
         <div

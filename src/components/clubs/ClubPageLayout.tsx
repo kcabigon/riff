@@ -14,6 +14,7 @@ import OnboardingChecklist from "@/components/clubs/OnboardingChecklist";
 import ClubSettingsModal from "@/components/clubs/ClubSettingsModal";
 import InviteOptions from "@/components/clubs/InviteOptions";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 import { getRiffDisplayTitle } from "@/lib/riff-utils";
 
 interface ClubMember {
@@ -126,6 +127,7 @@ export default function ClubPageLayout({
     activeRiff
   );
   const handleAvatarClick = useProfileNavigation();
+  const isMobile = useIsMobile();
 
   // After joining a riff, refresh the page to get updated state
   const handleJoinRiff = useCallback(() => {
@@ -190,7 +192,7 @@ export default function ClubPageLayout({
         />
       </div>
 
-      {/* Banner with overlay — full width, 320px height (180px on mobile) */}
+      {/* Banner — full width, 320px desktop / 200px mobile */}
       {clubBannerImage && (
         <div
           className="club-banner"
@@ -206,230 +208,450 @@ export default function ClubPageLayout({
             justifyContent: "center",
           }}
         >
-          {/* Dark overlay */}
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              backgroundColor: "rgba(0, 0, 0, 0.66)",
-            }}
-          />
-          {/* Club info overlaid on banner */}
-          <div
-            style={{
-              position: "relative",
-              display: "flex",
-              flexDirection: "column",
-              gap: "16px",
-              alignItems: "flex-start",
-              maxWidth: "360px",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <h1
+          {/* Dark overlay + metadata — desktop only */}
+          {!isMobile && (
+            <>
+              <div
                 style={{
-                  fontFamily: "var(--font-dm-serif-text)",
-                  fontSize: "32px",
-                  fontWeight: 400,
-                  color: "#FFFFFF",
-                  margin: 0,
+                  position: "absolute",
+                  inset: 0,
+                  backgroundColor: "rgba(0, 0, 0, 0.66)",
+                }}
+              />
+              <div
+                style={{
+                  position: "relative",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "16px",
+                  alignItems: "flex-start",
+                  maxWidth: "360px",
                 }}
               >
-                {clubName}
-              </h1>
-              {isAdmin && (
-                <div ref={settingsDropdownRef} style={{ position: "relative" }}>
-                  <button
-                    onClick={() => setIsSettingsDropdownOpen((o) => !o)}
-                    aria-label="Club settings"
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "12px" }}
+                >
+                  <h1
                     style={{
-                      background: "transparent",
-                      border: "2px solid transparent",
-                      cursor: "pointer",
-                      padding: "4px 6px",
+                      fontFamily: "var(--font-dm-serif-text)",
+                      fontSize: "32px",
+                      fontWeight: 400,
                       color: "#FFFFFF",
-                      lineHeight: 1,
-                      display: "flex",
-                      alignItems: "center",
-                      opacity: 0.7,
-                      transition:
-                        "opacity 0.15s ease, background-color 0.15s ease, box-shadow 0.1s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.opacity = "1";
-                      e.currentTarget.style.backgroundColor = "#01EFFC";
-                      e.currentTarget.style.borderColor = "#000000";
-                      e.currentTarget.style.color = "#000000";
-                      e.currentTarget.style.boxShadow =
-                        "3px 3px 0px 0px #000000";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.opacity = "0.7";
-                      e.currentTarget.style.backgroundColor = "transparent";
-                      e.currentTarget.style.borderColor = "transparent";
-                      e.currentTarget.style.color = "#FFFFFF";
-                      e.currentTarget.style.boxShadow = "none";
+                      margin: 0,
                     }}
                   >
-                    <svg
-                      width="12"
-                      height="3"
-                      viewBox="0 0 12 3"
-                      fill="currentColor"
-                    >
-                      <circle cx="1.5" cy="1.5" r="1.5" />
-                      <circle cx="6" cy="1.5" r="1.5" />
-                      <circle cx="10.5" cy="1.5" r="1.5" />
-                    </svg>
-                  </button>
-                  {isSettingsDropdownOpen && (
+                    {clubName}
+                  </h1>
+                  {isAdmin && (
                     <div
-                      style={{
-                        position: "absolute",
-                        top: "calc(100% + 4px)",
-                        left: 0,
-                        backgroundColor: "#FFFFFF",
-                        border: "2px solid #000000",
-                        boxShadow: "4px 4px 0px 0px #000000",
-                        minWidth: "160px",
-                        zIndex: 10,
-                      }}
+                      ref={settingsDropdownRef}
+                      style={{ position: "relative" }}
                     >
                       <button
-                        onClick={() => {
-                          setIsSettingsDropdownOpen(false);
-                          setIsClubDetailsModalOpen(true);
-                        }}
+                        onClick={() => setIsSettingsDropdownOpen((o) => !o)}
+                        aria-label="Club settings"
                         style={{
-                          display: "block",
-                          width: "100%",
-                          padding: "12px 16px",
-                          background: "none",
-                          border: "none",
-                          textAlign: "left",
-                          fontFamily: "var(--font-dm-sans)",
-                          fontSize: "14px",
-                          fontWeight: 300,
-                          color: "#000000",
+                          background: "transparent",
+                          border: "2px solid transparent",
                           cursor: "pointer",
+                          padding: "4px 6px",
+                          color: "#FFFFFF",
+                          lineHeight: 1,
+                          display: "flex",
+                          alignItems: "center",
+                          opacity: 0.7,
+                          transition:
+                            "opacity 0.15s ease, background-color 0.15s ease, box-shadow 0.1s ease",
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = "#F5F5F5";
+                          e.currentTarget.style.opacity = "1";
+                          e.currentTarget.style.backgroundColor = "#01EFFC";
+                          e.currentTarget.style.borderColor = "#000000";
+                          e.currentTarget.style.color = "#000000";
+                          e.currentTarget.style.boxShadow =
+                            "3px 3px 0px 0px #000000";
                         }}
                         onMouseLeave={(e) => {
+                          e.currentTarget.style.opacity = "0.7";
                           e.currentTarget.style.backgroundColor = "transparent";
+                          e.currentTarget.style.borderColor = "transparent";
+                          e.currentTarget.style.color = "#FFFFFF";
+                          e.currentTarget.style.boxShadow = "none";
                         }}
                       >
-                        Club details
+                        <svg
+                          width="12"
+                          height="3"
+                          viewBox="0 0 12 3"
+                          fill="currentColor"
+                        >
+                          <circle cx="1.5" cy="1.5" r="1.5" />
+                          <circle cx="6" cy="1.5" r="1.5" />
+                          <circle cx="10.5" cy="1.5" r="1.5" />
+                        </svg>
                       </button>
-                      <button
-                        style={{
-                          display: "block",
-                          width: "100%",
-                          padding: "12px 16px",
-                          background: "none",
-                          border: "none",
-                          textAlign: "left",
-                          fontFamily: "var(--font-dm-sans)",
-                          fontSize: "14px",
-                          fontWeight: 300,
-                          color: "#000000",
-                          cursor: "pointer",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = "#F5F5F5";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = "transparent";
-                        }}
-                        onClick={() => {
-                          setIsSettingsDropdownOpen(false);
-                          setIsInviteModalOpen(true);
-                        }}
-                      >
-                        Invite friends
-                      </button>
+                      {isSettingsDropdownOpen && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: "calc(100% + 4px)",
+                            left: 0,
+                            backgroundColor: "#FFFFFF",
+                            border: "2px solid #000000",
+                            boxShadow: "4px 4px 0px 0px #000000",
+                            minWidth: "160px",
+                            zIndex: 10,
+                          }}
+                        >
+                          <button
+                            onClick={() => {
+                              setIsSettingsDropdownOpen(false);
+                              setIsClubDetailsModalOpen(true);
+                            }}
+                            style={{
+                              display: "block",
+                              width: "100%",
+                              padding: "12px 16px",
+                              background: "none",
+                              border: "none",
+                              textAlign: "left",
+                              fontFamily: "var(--font-dm-sans)",
+                              fontSize: "14px",
+                              fontWeight: 300,
+                              color: "#000000",
+                              cursor: "pointer",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#F5F5F5";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor =
+                                "transparent";
+                            }}
+                          >
+                            Club details
+                          </button>
+                          <button
+                            style={{
+                              display: "block",
+                              width: "100%",
+                              padding: "12px 16px",
+                              background: "none",
+                              border: "none",
+                              textAlign: "left",
+                              fontFamily: "var(--font-dm-sans)",
+                              fontSize: "14px",
+                              fontWeight: 300,
+                              color: "#000000",
+                              cursor: "pointer",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#F5F5F5";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor =
+                                "transparent";
+                            }}
+                            onClick={() => {
+                              setIsSettingsDropdownOpen(false);
+                              setIsInviteModalOpen(true);
+                            }}
+                          >
+                            Invite friends
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
-              )}
-            </div>
 
-            <div
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: "4px 12px",
+                    alignItems: "start",
+                  }}
+                >
+                  <p
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "16px",
+                      fontWeight: 300,
+                      color: "#FFFFFF",
+                      margin: 0,
+                    }}
+                  >
+                    <span style={{ fontWeight: 700 }}>{stats.riffCount}</span>{" "}
+                    riffs
+                  </p>
+                  <p
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "16px",
+                      fontWeight: 300,
+                      color: "#FFFFFF",
+                      margin: 0,
+                    }}
+                  >
+                    <span style={{ fontWeight: 700 }}>{stats.pieceCount}</span>{" "}
+                    pieces
+                  </p>
+                  <p
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "16px",
+                      fontWeight: 300,
+                      color: "#FFFFFF",
+                      margin: 0,
+                    }}
+                  >
+                    <span style={{ fontWeight: 700 }}>
+                      {formatNumber(stats.wordCount)}
+                    </span>{" "}
+                    words
+                  </p>
+                </div>
+
+                <AvatarStack
+                  users={club.members.map((m) => m.user)}
+                  size={48}
+                  showBorder={true}
+                  borderColor="#FFFFFF"
+                  borderWidth={2}
+                  onAvatarClick={handleAvatarClick}
+                />
+
+                {clubDescription && (
+                  <p
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "16px",
+                      fontWeight: 300,
+                      color: "#FFFFFF",
+                      margin: 0,
+                      lineHeight: "1.4",
+                      display: "-webkit-box",
+                      WebkitLineClamp: 4,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {clubDescription}
+                  </p>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Mobile metadata — shown below banner on small screens */}
+      {clubBannerImage && isMobile && (
+        <div
+          style={{
+            padding: "24px 24px 0",
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <h1
               style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "4px 12px",
-                alignItems: "start",
+                fontFamily: "var(--font-dm-serif-text)",
+                fontSize: "28px",
+                fontWeight: 400,
+                color: "#000000",
+                margin: 0,
               }}
             >
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#FFFFFF",
-                  margin: 0,
-                }}
-              >
-                <span style={{ fontWeight: 700 }}>{stats.riffCount}</span> riffs
-              </p>
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#FFFFFF",
-                  margin: 0,
-                }}
-              >
-                <span style={{ fontWeight: 700 }}>{stats.pieceCount}</span>{" "}
-                pieces
-              </p>
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#FFFFFF",
-                  margin: 0,
-                }}
-              >
-                <span style={{ fontWeight: 700 }}>
-                  {formatNumber(stats.wordCount)}
-                </span>{" "}
-                words
-              </p>
-            </div>
-
-            <AvatarStack
-              users={club.members.map((m) => m.user)}
-              size={48}
-              showBorder={true}
-              borderColor="#FFFFFF"
-              borderWidth={2}
-              onAvatarClick={handleAvatarClick}
-            />
-
-            {clubDescription && (
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#FFFFFF",
-                  margin: 0,
-                  lineHeight: "1.4",
-                  display: "-webkit-box",
-                  WebkitLineClamp: 4,
-                  WebkitBoxOrient: "vertical",
-                  overflow: "hidden",
-                }}
-              >
-                {clubDescription}
-              </p>
+              {clubName}
+            </h1>
+            {isAdmin && (
+              <div ref={settingsDropdownRef} style={{ position: "relative" }}>
+                <button
+                  onClick={() => setIsSettingsDropdownOpen((o) => !o)}
+                  aria-label="Club settings"
+                  style={{
+                    background: "transparent",
+                    border: "2px solid transparent",
+                    cursor: "pointer",
+                    padding: "4px 6px",
+                    color: "#000000",
+                    lineHeight: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    opacity: 0.4,
+                    transition:
+                      "opacity 0.15s ease, background-color 0.15s ease, box-shadow 0.1s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.opacity = "1";
+                    e.currentTarget.style.backgroundColor = "#01EFFC";
+                    e.currentTarget.style.borderColor = "#000000";
+                    e.currentTarget.style.boxShadow = "3px 3px 0px 0px #000000";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.opacity = "0.4";
+                    e.currentTarget.style.backgroundColor = "transparent";
+                    e.currentTarget.style.borderColor = "transparent";
+                    e.currentTarget.style.boxShadow = "none";
+                  }}
+                >
+                  <svg
+                    width="12"
+                    height="3"
+                    viewBox="0 0 12 3"
+                    fill="currentColor"
+                  >
+                    <circle cx="1.5" cy="1.5" r="1.5" />
+                    <circle cx="6" cy="1.5" r="1.5" />
+                    <circle cx="10.5" cy="1.5" r="1.5" />
+                  </svg>
+                </button>
+                {isSettingsDropdownOpen && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "calc(100% + 4px)",
+                      left: 0,
+                      backgroundColor: "#FFFFFF",
+                      border: "2px solid #000000",
+                      boxShadow: "4px 4px 0px 0px #000000",
+                      minWidth: "160px",
+                      zIndex: 10,
+                    }}
+                  >
+                    <button
+                      onClick={() => {
+                        setIsSettingsDropdownOpen(false);
+                        setIsClubDetailsModalOpen(true);
+                      }}
+                      style={{
+                        display: "block",
+                        width: "100%",
+                        padding: "12px 16px",
+                        background: "none",
+                        border: "none",
+                        textAlign: "left",
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "14px",
+                        fontWeight: 300,
+                        color: "#000000",
+                        cursor: "pointer",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "#F5F5F5";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "transparent";
+                      }}
+                    >
+                      Club details
+                    </button>
+                    <button
+                      style={{
+                        display: "block",
+                        width: "100%",
+                        padding: "12px 16px",
+                        background: "none",
+                        border: "none",
+                        textAlign: "left",
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "14px",
+                        fontWeight: 300,
+                        color: "#000000",
+                        cursor: "pointer",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "#F5F5F5";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "transparent";
+                      }}
+                      onClick={() => {
+                        setIsSettingsDropdownOpen(false);
+                        setIsInviteModalOpen(true);
+                      }}
+                    >
+                      Invite friends
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
           </div>
+
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "4px 12px",
+              alignItems: "start",
+            }}
+          >
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "14px",
+                fontWeight: 300,
+                color: "#000000",
+                margin: 0,
+              }}
+            >
+              <span style={{ fontWeight: 700 }}>{stats.riffCount}</span> riffs
+            </p>
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "14px",
+                fontWeight: 300,
+                color: "#000000",
+                margin: 0,
+              }}
+            >
+              <span style={{ fontWeight: 700 }}>{stats.pieceCount}</span> pieces
+            </p>
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "14px",
+                fontWeight: 300,
+                color: "#000000",
+                margin: 0,
+              }}
+            >
+              <span style={{ fontWeight: 700 }}>
+                {formatNumber(stats.wordCount)}
+              </span>{" "}
+              words
+            </p>
+          </div>
+
+          <AvatarStack
+            users={club.members.map((m) => m.user)}
+            size={40}
+            showBorder={true}
+            borderColor="#000000"
+            borderWidth={2}
+            onAvatarClick={handleAvatarClick}
+          />
+
+          {clubDescription && (
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "15px",
+                fontWeight: 300,
+                color: "#000000",
+                margin: 0,
+                lineHeight: "1.4",
+              }}
+            >
+              {clubDescription}
+            </p>
+          )}
         </div>
       )}
 
@@ -826,7 +1048,7 @@ export default function ClubPageLayout({
       <style>{`
         @media (max-width: 767px) {
           .club-banner {
-            height: 180px !important;
+            height: 200px !important;
           }
         }
       `}</style>

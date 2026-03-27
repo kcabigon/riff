@@ -21,9 +21,15 @@ interface NavBarProps {
     id: string;
     name: string;
   } | null;
+  showClubDropdown?: boolean;
 }
 
-export default function NavBar({ user, clubs, currentClub }: NavBarProps) {
+export default function NavBar({
+  user,
+  clubs,
+  currentClub,
+  showClubDropdown = true,
+}: NavBarProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   return (
@@ -75,7 +81,7 @@ export default function NavBar({ user, clubs, currentClub }: NavBarProps) {
           </div>
 
           {/* Club Dropdown */}
-          {currentClub && (
+          {showClubDropdown && currentClub && (
             <ClubDropdown
               clubs={clubs}
               currentClub={currentClub}
