@@ -6,11 +6,14 @@ import CountdownTimer from "./CountdownTimer";
 import AvatarStack from "@/components/shared/AvatarStack";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
 import { useDraftCreation } from "@/hooks/useDraftCreation";
+import { getRiffDisplayTitle } from "@/lib/riff-utils";
 
 interface RiffCardProps {
   riff: {
     id: string;
     title: string | null;
+    volumeNumber?: number | null;
+    status: string;
     prompt?: string | null;
     deadline?: Date | null;
     createdAt: Date;
@@ -167,7 +170,7 @@ export default function RiffCard({
               margin: 0,
             }}
           >
-            {riff.title || "Untitled"}
+            {getRiffDisplayTitle(riff)}
           </h3>
 
           {/* Date/Deadline */}
