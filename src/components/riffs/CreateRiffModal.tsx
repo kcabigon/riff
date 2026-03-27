@@ -96,7 +96,6 @@ export default function CreateRiffModal({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Volume 4: Summer Stories"
-              required
               style={{
                 fontFamily: "var(--font-dm-sans)",
                 fontSize: "16px",
@@ -128,8 +127,7 @@ export default function CreateRiffModal({
                 color: "#000000",
               }}
             >
-              Prompt{" "}
-              <span style={{ color: "#959595" }}>(optional)</span>
+              Prompt <span style={{ color: "#959595" }}>(optional)</span>
             </label>
             <textarea
               value={prompt}
@@ -171,8 +169,7 @@ export default function CreateRiffModal({
                 color: "#000000",
               }}
             >
-              Deadline{" "}
-              <span style={{ color: "#959595" }}>(optional)</span>
+              Deadline <span style={{ color: "#959595" }}>(optional)</span>
             </label>
             <input
               type="date"
@@ -217,19 +214,17 @@ export default function CreateRiffModal({
           {/* Submit button */}
           <button
             type="submit"
-            disabled={isSubmitting || !title.trim()}
+            disabled={isSubmitting}
             style={{
-              backgroundColor: isSubmitting || !title.trim() ? "#E6E6E6" : "#FFFFFF",
+              backgroundColor: isSubmitting ? "#E6E6E6" : "#FFFFFF",
               border: "2px solid #000000",
-              boxShadow: isSubmitting || !title.trim()
-                ? "none"
-                : "8px 8px 0px 0px #00FF66",
+              boxShadow: isSubmitting ? "none" : "8px 8px 0px 0px #00FF66",
               padding: "12px 48px",
               fontFamily: "var(--font-dm-sans)",
               fontSize: "16px",
               fontWeight: 300,
               color: "#000000",
-              cursor: isSubmitting || !title.trim() ? "not-allowed" : "pointer",
+              cursor: isSubmitting ? "not-allowed" : "pointer",
               transition: "none",
               width: "100%",
             }}

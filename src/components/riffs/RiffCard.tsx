@@ -10,7 +10,7 @@ import { useDraftCreation } from "@/hooks/useDraftCreation";
 interface RiffCardProps {
   riff: {
     id: string;
-    title: string;
+    title: string | null;
     prompt?: string | null;
     deadline?: Date | null;
     createdAt: Date;
@@ -58,7 +58,8 @@ export default function RiffCard({
     : false;
 
   // Host can reveal riffs with no deadline if at least 1 piece submitted
-  const canRevealNoDeadline = !riff.deadline && isAdmin && riff.pieces.length > 0;
+  const canRevealNoDeadline =
+    !riff.deadline && isAdmin && riff.pieces.length > 0;
 
   // Format date
   const formatDate = (date: Date) => {
@@ -166,7 +167,7 @@ export default function RiffCard({
               margin: 0,
             }}
           >
-            {riff.title}
+            {riff.title || "Untitled"}
           </h3>
 
           {/* Date/Deadline */}
@@ -325,7 +326,7 @@ export default function RiffCard({
           >
             Reveal pieces
           </button>
-        ) : (isPastDeadline) && !isAdmin ? (
+        ) : isPastDeadline && !isAdmin ? (
           <button
             disabled
             style={{

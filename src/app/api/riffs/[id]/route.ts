@@ -138,7 +138,10 @@ export async function PATCH(
     }
 
     // Only DRAFT or ACTIVE riffs can have details edited
-    if ((title || prompt || deadline !== undefined) && !["DRAFT", "ACTIVE"].includes(riff.status)) {
+    if (
+      (title || prompt || deadline !== undefined) &&
+      !["DRAFT", "ACTIVE"].includes(riff.status)
+    ) {
       return NextResponse.json(
         { error: "Can only edit draft or active riffs" },
         { status: 400 }
@@ -146,7 +149,10 @@ export async function PATCH(
     }
 
     // Only creator can update title, prompt, deadline
-    if ((title || prompt || deadline !== undefined) && riff.creatorId !== (user as any).id) {
+    if (
+      (title || prompt || deadline !== undefined) &&
+      riff.creatorId !== (user as any).id
+    ) {
       return NextResponse.json(
         { error: "Only the riff creator can update riff details" },
         { status: 403 }
@@ -204,27 +210,31 @@ export async function PATCH(
     }
 
     // Validate input
-    if (title !== undefined) {
-      if (!title || title.trim().length === 0) {
-        return NextResponse.json(
-          { error: "Riff title cannot be empty" },
-          { status: 400 }
-        );
-      }
+    if (title !== undefined && title && title.length > 200) {
+      return NextResponse.json(
+        { error: "Riff title must be 200 characters or less" },
+        { status: 400 }
+      );
+    }
 
-      if (title.length > 200) {
-        return NextResponse.json(
-          { error: "Riff title must be 200 characters or less" },
-          { status: 400 }
-        );
-      }
+    // Assign volumeNumber at reveal time
+    let volumeNumber: number | undefined;
+    if (status === "REVEALED" && riff.status === "ACTIVE") {
+      const revealedCount = await prisma.riff.count({
+        where: {
+          clubId: riff.clubId,
+          status: { in: ["REVEALED", "COMPLETED"] },
+        },
+      });
+      volumeNumber = revealedCount + 1;
     }
 
     // Update riff
     const updatedRiff = await prisma.riff.update({
       where: { id: riffId },
       data: {
-        ...(title !== undefined && { title: title.trim() }),
+        ...(title !== undefined && { title: title?.trim() || null }),
+        ...(volumeNumber !== undefined && { volumeNumber }),
         ...(prompt !== undefined && { prompt: prompt?.trim() || null }),
         ...(deadline !== undefined && {
           deadline: deadline ? new Date(deadline) : null,
@@ -259,9 +269,15 @@ export async function PATCH(
     if (status && status !== riff.status) {
       const actorId = (user as any).id;
       if (status === "ACTIVE") {
-        notifyClubMembers(riff.clubId, NotificationType.RIFF_CREATED, actorId, { riffId }).catch(() => {});
+        notifyClubMembers(riff.clubId, NotificationType.RIFF_CREATED, actorId, {
+          riffId,
+        }).catch(() => {});
       } else if (status === "REVEALED") {
-        notifyRiffParticipants(riffId, NotificationType.RIFF_COMPLETED, actorId).catch(() => {});
+        notifyRiffParticipants(
+          riffId,
+          NotificationType.RIFF_COMPLETED,
+          actorId
+        ).catch(() => {});
       }
     }
 

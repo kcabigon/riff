@@ -8,7 +8,7 @@ import MosaicCollage from "./MosaicCollage";
 interface ReadyToRevealCardProps {
   riff: {
     id: string;
-    title: string;
+    title: string | null;
     participants: Array<{
       user: {
         id: string;
@@ -85,7 +85,7 @@ export default function ReadyToRevealCard({
           textAlign: "center",
         }}
       >
-        {riff.title}
+        {riff.title || "Untitled"}
       </h3>
 
       {/* Writer avatars */}

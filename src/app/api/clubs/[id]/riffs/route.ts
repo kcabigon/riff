@@ -107,14 +107,7 @@ export async function POST(
     const { title, prompt, deadline } = await req.json();
 
     // Validate input
-    if (!title || title.trim().length === 0) {
-      return NextResponse.json(
-        { error: "Riff title is required" },
-        { status: 400 }
-      );
-    }
-
-    if (title.length > 200) {
+    if (title && title.length > 200) {
       return NextResponse.json(
         { error: "Riff title must be 200 characters or less" },
         { status: 400 }
@@ -139,7 +132,7 @@ export async function POST(
       data: {
         clubId,
         creatorId: (user as any).id,
-        title: title.trim(),
+        title: title?.trim() || null,
         prompt: prompt?.trim() || null,
         deadline: deadline ? new Date(deadline) : null,
         status: "DRAFT", // Starts in DRAFT status
