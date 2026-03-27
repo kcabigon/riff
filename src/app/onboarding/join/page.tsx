@@ -51,9 +51,17 @@ function JoinOnboardingContent() {
         body: JSON.stringify({ step: "COMPLETED" }),
       });
 
-      // Send them back to the join page to complete the join
+      // Auto-join the club since they already expressed intent
       if (clubId) {
-        router.push(`/clubs/${clubId}/join`);
+        const joinRes = await fetch(`/api/clubs/${clubId}/join`, {
+          method: "POST",
+        });
+        if (joinRes.ok) {
+          router.push(`/clubs/${clubId}`);
+        } else {
+          // Fall back to join page so they can retry
+          router.push(`/clubs/${clubId}/join`);
+        }
       } else {
         router.push("/clubs");
       }
