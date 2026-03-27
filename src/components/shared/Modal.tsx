@@ -167,13 +167,17 @@ export default function Modal({
                   background: "none",
                   border: "none",
                   cursor: "pointer",
-                  fontSize: "20px",
-                  color: "#808080",
                   padding: "4px",
                   lineHeight: 1,
+                  display: "flex",
                 }}
               >
-                &times;
+                <img
+                  src="/icons/close.svg"
+                  alt="Close"
+                  width={24}
+                  height={24}
+                />
               </button>
             </div>
           )}
