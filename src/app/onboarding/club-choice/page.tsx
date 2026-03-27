@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import OnboardingCard from "@/components/onboarding/OnboardingCard";
 import PrimaryButton from "@/components/PrimaryButton";
 import ConversionModal from "@/components/clubs/ConversionModal";
+import Tagline from "@/components/Tagline";
 
 export default function OnboardingClubChoicePage() {
   const router = useRouter();
@@ -24,18 +25,36 @@ export default function OnboardingClubChoicePage() {
         }}
       >
         {/* Heading */}
-        <p
+        <div
           style={{
-            fontFamily: "var(--font-dm-serif-text)",
-            fontSize: "28px",
-            fontWeight: 400,
-            color: "#000000",
-            margin: 0,
-            textAlign: "center",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "4px",
           }}
         >
-          Every write club needs a host
-        </p>
+          <p
+            style={{
+              fontFamily: "var(--font-dm-serif-text)",
+              fontSize: "28px",
+              fontWeight: 400,
+              color: "#000000",
+              margin: 0,
+              textAlign: "center",
+            }}
+          >
+            Every write club needs a
+          </p>
+          <Tagline
+            text="host"
+            color="#FF6B35"
+            textColor="#000000"
+            width={85}
+            fontSize={28}
+            fontFamily="var(--font-dm-serif-text)"
+            fontWeight={400}
+          />
+        </div>
 
         {/* Body */}
         <p
