@@ -19,6 +19,9 @@ interface TaglineProps {
  * @param color - Background vector color (hex format, e.g., "#EECF01") - uses CSS filter to tint
  * @param textColor - Text color (defaults to white for custom colors, black for default yellow)
  * @param width - Custom width in pixels (defaults to 262px)
+ * @param fontSize - Font size in pixels (defaults to 20px)
+ * @param fontFamily - Font family (defaults to DM Sans)
+ * @param fontWeight - Font weight (defaults to 300)
  */
 export default function Tagline({
   text,

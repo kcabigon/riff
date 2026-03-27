@@ -8,7 +8,8 @@ import Tagline from "@/components/Tagline";
 interface ConversionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  clubName: string;
+  clubName?: string;
+  ctaLabel?: string;
   onJoin: () => void;
   isJoining: boolean;
 }
@@ -17,6 +18,7 @@ export default function ConversionModal({
   isOpen,
   onClose,
   clubName,
+  ctaLabel,
   onJoin,
   isJoining,
 }: ConversionModalProps) {
@@ -25,6 +27,8 @@ export default function ConversionModal({
   useEffect(() => {
     if (isOpen) setStep(1);
   }, [isOpen]);
+
+  const resolvedCtaLabel = ctaLabel ?? `Join ${clubName ?? ""}`;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="md">
@@ -70,7 +74,6 @@ export default function ConversionModal({
         >
           {step === 1 ? (
             <>
-              {/* Heading */}
               <div
                 style={{
                   display: "flex",
@@ -102,7 +105,6 @@ export default function ConversionModal({
                 />
               </div>
 
-              {/* Body text — white bg for legibility over noise */}
               <div
                 style={{
                   backgroundColor: "#FFFFFF",
@@ -128,13 +130,12 @@ export default function ConversionModal({
                 </p>
               </div>
 
-              <JoinButton
-                clubName={clubName}
+              <CtaButton
+                label={resolvedCtaLabel}
                 onJoin={onJoin}
                 isJoining={isJoining}
               />
 
-              {/* Secondary CTA — white bg for legibility over noise */}
               <div style={{ backgroundColor: "#FFFFFF", padding: "4px 16px" }}>
                 <button
                   onClick={() => setStep(2)}
@@ -157,7 +158,6 @@ export default function ConversionModal({
             </>
           ) : (
             <>
-              {/* Heading */}
               <div
                 style={{
                   display: "flex",
@@ -189,7 +189,6 @@ export default function ConversionModal({
                 />
               </div>
 
-              {/* Body text — white bg for legibility over noise */}
               <div
                 style={{
                   backgroundColor: "#FFFFFF",
@@ -208,15 +207,15 @@ export default function ConversionModal({
                     lineHeight: "1.6",
                   }}
                 >
-                  Riffs give a rhythm to the club. Write solo, your own style on
-                  your own time. Reveal together, on a set date that works for
-                  everyone. Keep the riff going in the comments section. Then
-                  run it back again.
+                  Riffs give a rhythm to the club. Write solo, on your own time.
+                  Reveal together, on a set date that works for everyone. Keep
+                  the riff going in the comments section. Then run it back
+                  again.
                 </p>
               </div>
 
-              <JoinButton
-                clubName={clubName}
+              <CtaButton
+                label={resolvedCtaLabel}
                 onJoin={onJoin}
                 isJoining={isJoining}
               />
@@ -228,12 +227,12 @@ export default function ConversionModal({
   );
 }
 
-function JoinButton({
-  clubName,
+function CtaButton({
+  label,
   onJoin,
   isJoining,
 }: {
-  clubName: string;
+  label: string;
   onJoin: () => void;
   isJoining: boolean;
 }) {
@@ -280,7 +279,7 @@ function JoinButton({
         }
       }}
     >
-      {isJoining ? "Joining..." : `Join ${clubName}`}
+      {isJoining ? "Loading..." : label}
     </button>
   );
 }
