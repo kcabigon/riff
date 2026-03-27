@@ -6,9 +6,14 @@ import Image from "next/image";
 interface BackButtonProps {
   href?: string;
   onClick?: () => void;
+  size?: number;
 }
 
-export default function BackButton({ href, onClick }: BackButtonProps) {
+export default function BackButton({
+  href,
+  onClick,
+  size = 32,
+}: BackButtonProps) {
   const router = useRouter();
 
   const handleClick = () => {
@@ -25,8 +30,8 @@ export default function BackButton({ href, onClick }: BackButtonProps) {
     <button
       onClick={handleClick}
       style={{
-        width: "32px",
-        height: "32px",
+        width: `${size}px`,
+        height: `${size}px`,
         backgroundColor: "transparent",
         border: "none",
         cursor: "pointer",
@@ -40,8 +45,8 @@ export default function BackButton({ href, onClick }: BackButtonProps) {
       <Image
         src="/icons/back_arrow.svg"
         alt="Back"
-        width={32}
-        height={32}
+        width={size}
+        height={size}
         style={{ display: "block" }}
       />
     </button>

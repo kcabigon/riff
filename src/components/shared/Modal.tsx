@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useCallback, ReactNode } from "react";
+import CloseButton from "@/components/CloseButton";
 
 interface ModalProps {
   isOpen: boolean;
@@ -141,21 +142,7 @@ export default function Modal({
             >
               {title}
             </h2>
-            <button
-              onClick={onClose}
-              aria-label="Close"
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                fontSize: "20px",
-                color: "#808080",
-                padding: "4px",
-                lineHeight: 1,
-              }}
-            >
-              &times;
-            </button>
+            <CloseButton onClick={onClose} />
           </div>
         )}
 
