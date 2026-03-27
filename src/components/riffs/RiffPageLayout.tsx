@@ -16,7 +16,7 @@ import { useDraftCreation } from "@/hooks/useDraftCreation";
 interface RiffPageLayoutProps {
   riff: {
     id: string;
-    title: string;
+    title: string | null;
     prompt: string | null;
     deadline: string | null;
     status: string;
@@ -87,7 +87,8 @@ export default function RiffPageLayout({
     ? new Date(riff.deadline).getTime() < Date.now()
     : false;
 
-  const canRevealNoDeadline = !riff.deadline && isAdmin && riff.pieces.length > 0;
+  const canRevealNoDeadline =
+    !riff.deadline && isAdmin && riff.pieces.length > 0;
 
   const handleJoinRiff = async () => {
     try {
@@ -214,7 +215,9 @@ export default function RiffPageLayout({
             }}
           >
             {/* Title & dates */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "4px" }}
+            >
               <h1
                 style={{
                   fontFamily: "var(--font-dm-serif-text)",
@@ -224,7 +227,7 @@ export default function RiffPageLayout({
                   margin: 0,
                 }}
               >
-                {riff.title}
+                {riff.title || "Untitled"}
               </h1>
               <p
                 style={{
@@ -244,34 +247,11 @@ export default function RiffPageLayout({
             </div>
 
             {/* Admin actions */}
-            {isAdmin && (riff.status === "ACTIVE" || riff.status === "DRAFT") && (
-              <div style={{ display: "flex", gap: "12px" }}>
-                <button
-                  onClick={() => setIsEditModalOpen(true)}
-                  style={{
-                    background: "none",
-                    border: "1px solid #E6E6E6",
-                    padding: "6px 16px",
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "13px",
-                    fontWeight: 300,
-                    color: "#808080",
-                    cursor: "pointer",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "#000000";
-                    e.currentTarget.style.color = "#000000";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = "#E6E6E6";
-                    e.currentTarget.style.color = "#808080";
-                  }}
-                >
-                  Edit
-                </button>
-                {riff.status === "DRAFT" && (
+            {isAdmin &&
+              (riff.status === "ACTIVE" || riff.status === "DRAFT") && (
+                <div style={{ display: "flex", gap: "12px" }}>
                   <button
-                    onClick={() => setIsDeleteModalOpen(true)}
+                    onClick={() => setIsEditModalOpen(true)}
                     style={{
                       background: "none",
                       border: "1px solid #E6E6E6",
@@ -283,19 +263,43 @@ export default function RiffPageLayout({
                       cursor: "pointer",
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = "#FF4444";
-                      e.currentTarget.style.color = "#FF4444";
+                      e.currentTarget.style.borderColor = "#000000";
+                      e.currentTarget.style.color = "#000000";
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.borderColor = "#E6E6E6";
                       e.currentTarget.style.color = "#808080";
                     }}
                   >
-                    Delete
+                    Edit
                   </button>
-                )}
-              </div>
-            )}
+                  {riff.status === "DRAFT" && (
+                    <button
+                      onClick={() => setIsDeleteModalOpen(true)}
+                      style={{
+                        background: "none",
+                        border: "1px solid #E6E6E6",
+                        padding: "6px 16px",
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "13px",
+                        fontWeight: 300,
+                        color: "#808080",
+                        cursor: "pointer",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = "#FF4444";
+                        e.currentTarget.style.color = "#FF4444";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = "#E6E6E6";
+                        e.currentTarget.style.color = "#808080";
+                      }}
+                    >
+                      Delete
+                    </button>
+                  )}
+                </div>
+              )}
 
             {/* Prompt */}
             {riff.prompt && (
@@ -322,7 +326,9 @@ export default function RiffPageLayout({
 
             {/* Participants */}
             {riff.participants.length > 0 && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: "8px" }}
+              >
                 {submittedUsers.length > 0 && (
                   <div
                     style={{
@@ -421,7 +427,9 @@ export default function RiffPageLayout({
               minWidth: "200px",
             }}
           >
-            {(isPastDeadline || canRevealNoDeadline) && isAdmin && riff.status === "ACTIVE" ? (
+            {(isPastDeadline || canRevealNoDeadline) &&
+            isAdmin &&
+            riff.status === "ACTIVE" ? (
               <button
                 onClick={handleRevealClick}
                 onMouseEnter={() => setIsButtonHovered(true)}
@@ -576,9 +584,7 @@ export default function RiffPageLayout({
                   }}
                   isRead={readPieceIds.includes(pieceRiff.piece.id)}
                   onClick={() =>
-                    router.push(
-                      `/read/${pieceRiff.piece.id}?riff=${riff.id}`
-                    )
+                    router.push(`/read/${pieceRiff.piece.id}?riff=${riff.id}`)
                   }
                 />
               ))}
@@ -622,9 +628,7 @@ export default function RiffPageLayout({
         waitingUsers={riff.participants
           .filter(
             (p) =>
-              !riff.pieces.some(
-                (piece) => piece.piece.authorId === p.user.id
-              )
+              !riff.pieces.some((piece) => piece.piece.authorId === p.user.id)
           )
           .map((p) => ({
             id: p.user.id,
@@ -633,9 +637,7 @@ export default function RiffPageLayout({
           }))}
         submittedCount={
           riff.participants.filter((p) =>
-            riff.pieces.some(
-              (piece) => piece.piece.authorId === p.user.id
-            )
+            riff.pieces.some((piece) => piece.piece.authorId === p.user.id)
           ).length
         }
         totalParticipants={riff.participants.length}

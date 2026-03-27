@@ -79,75 +79,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       return session;
     },
-    // Redirect based on onboarding status
+    // Simple redirect — post-login routing is handled by /auth/post-login page
     async redirect({ url, baseUrl }) {
-      // Allow specific URLs through without override
-      const skipSmartRedirect = ["/login", "/auth/check-email", "/auth/error"];
-      const pathname = url.startsWith(baseUrl)
-        ? url.slice(baseUrl.length)
-        : url;
-      if (
-        url.startsWith(baseUrl) &&
-        !skipSmartRedirect.some((p) => pathname.startsWith(p)) &&
-        pathname !== "/"
-      ) {
+      // Allow same-origin URLs through
+      if (url.startsWith(baseUrl)) {
         return url;
       }
-
-      // Get user to check onboarding status
-      const session = await auth();
-      if (session?.user) {
-        const user = await prisma.user.findUnique({
-          where: { id: session.user.id },
-          select: {
-            onboardingCompleted: true,
-            onboardingStep: true,
-            lastActiveClubId: true,
-            clubMemberships: {
-              select: { clubId: true },
-              orderBy: { joinedAt: "asc" },
-              take: 1,
-            },
-          },
-        });
-
-        if (!user?.onboardingCompleted) {
-          // Redirect to appropriate onboarding step
-          const step = user?.onboardingStep || "NAME";
-          const stepRoutes = {
-            NAME: "/onboarding/name",
-            CLUB_CHOICE: "/onboarding/club-choice",
-            INVITE: "/onboarding/invite",
-            COMPLETED: "/clubs",
-          };
-          return `${baseUrl}${stepRoutes[step as keyof typeof stepRoutes]}`;
-        }
-
-        // User has completed onboarding
-        if (user.lastActiveClubId) {
-          // Check if user is still a member of last active club
-          const isMember = await prisma.clubMember.findFirst({
-            where: {
-              userId: session.user.id,
-              clubId: user.lastActiveClubId,
-            },
-          });
-          if (isMember) {
-            return `${baseUrl}/clubs/${user.lastActiveClubId}`;
-          }
-        }
-
-        // Fallback to first club
-        if (user.clubMemberships.length > 0) {
-          return `${baseUrl}/clubs/${user.clubMemberships[0].clubId}`;
-        }
-
-        // No clubs - redirect to create club (edge case)
-        return `${baseUrl}/onboarding/create-club`;
+      // Allow relative URLs
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
       }
-
-      // Default fallback
-      return `${baseUrl}/login`;
+      // Default to post-login routing
+      return `${baseUrl}/auth/post-login`;
     },
   },
 });

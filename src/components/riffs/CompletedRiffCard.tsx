@@ -14,7 +14,7 @@ interface CompletedRiffPiece {
 interface CompletedRiffCardProps {
   riff: {
     id: string;
-    title: string;
+    title: string | null;
     createdAt: Date;
     deadline?: Date | null;
   };
@@ -75,7 +75,7 @@ export default function CompletedRiffCard({
               textOverflow: "ellipsis",
             }}
           >
-            {clubName} | {riff.title}
+            {clubName} | {riff.title || "Untitled"}
           </p>
         </div>
       </div>
@@ -123,7 +123,7 @@ export default function CompletedRiffCard({
             textOverflow: "ellipsis",
           }}
         >
-          {clubName} | {riff.title}
+          {clubName} | {riff.title || "Untitled"}
         </p>
       </div>
     </div>

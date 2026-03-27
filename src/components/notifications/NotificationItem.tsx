@@ -11,7 +11,7 @@ interface NotificationItemProps {
     createdAt: string;
     actor: { id: string; name: string | null; avatarUrl: string | null } | null;
     club: { id: string; name: string } | null;
-    riff: { id: string; title: string; clubId: string } | null;
+    riff: { id: string; title: string | null; clubId: string } | null;
     piece: { id: string; title: string } | null;
   };
   onClose: () => void;

@@ -8,7 +8,7 @@ interface CollectionPiece {
   createdAt: string;
   updatedAt: string;
   isShared: boolean;
-  riffs: Array<{ id: string; title: string }>;
+  riffs: Array<{ id: string; title: string | null }>;
 }
 
 interface Collection {
@@ -29,9 +29,7 @@ function formatDate(dateStr: string): string {
   });
 }
 
-export default function CollectionsList({
-  collections,
-}: CollectionsListProps) {
+export default function CollectionsList({ collections }: CollectionsListProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
   const toggleCollection = (id: string) => {
@@ -204,7 +202,12 @@ export default function CollectionsList({
                           flexWrap: "wrap",
                         }}
                       >
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 20 20"
+                          fill="none"
+                        >
                           {piece.isShared ? (
                             <path
                               d="M10 2C5.58 2 2 5.58 2 10s3.58 8 8 8 8-3.58 8-8-3.58-8-8-8zm0 14.5c-.28 0-1.48-.9-2.15-3.5H12.15c-.67 2.6-1.87 3.5-2.15 3.5zM7.6 11.5c-.03-.47-.1-1-.1-1.5s.07-1.03.1-1.5h4.8c.03.47.1 1 .1 1.5s-.07 1.03-.1 1.5H7.6zm.55-5.5c.67-2.6 1.87-3.5 2.15-3.5s1.48.9 2.15 3.5H8.15zM5.5 6c.6-.84 1.52-1.47 2.58-1.78-.58.93-1 2.2-1.1 3.28H5.5V6zm0 5.5h1.48c-.03.47-.08.96-.08 1.5s.05 1.03.08 1.5H5.5c0-1 0-2 0-3zm8.52-5.5V6c-1.06.31-1.98.94-2.58 1.78-.1-1.08-.52-2.35-1.1-3.28 1.06.31 1.98.94 2.58 1.78h1.1zm0 5.5h-1.48c.03.47.08.96.08 1.5s-.05 1.03-.08 1.5h1.48c0-1 0-2 0-3z"

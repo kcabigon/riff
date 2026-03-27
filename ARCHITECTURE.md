@@ -76,7 +76,7 @@ src/app/api/
 ### Components
 ```
 src/components/
-├── shared/        # Modal, Avatar, AvatarStack, AdminBadge, EnvironmentBadge
+├── shared/        # Modal, Avatar, AvatarStack, AdminBadge, EnvironmentBadge, Dropdown
 ├── clubs/         # ClubPageLayout, NavBar, ClubDropdown, AvatarDropdown, OnboardingChecklist, InviteOptions
 ├── riffs/         # RiffCard, RiffPageLayout, CreateRiffModal, EditRiffModal, DeleteRiffConfirmModal,
 │                  # RevealCelebration, RevealConfirmModal, PieceCard, CompletedRiffCard, ReadyToRevealCard,
@@ -144,6 +144,7 @@ User         → email, username, firstName, lastName, bio, avatarUrl, onboardin
 ### Component Patterns
 - **PrimaryButton**: Green bg, white hover with green shadow
 - **Modal**: 2px border, 8px shadow, white bg, focus trap, ESC close
+- **Dropdown**: 2px black border, 4px hard black shadow, white bg, ESC/click-outside close. Items: action (with optional icon, active state), divider. Supports controlled and uncontrolled modes.
 - **CTA layout**: Row on desktop (text left, button right), column on mobile (text top, button full-width)
 
 ---

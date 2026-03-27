@@ -30,7 +30,7 @@ export default function LoginPage() {
       const result = await signIn("resend", {
         email,
         redirect: false,
-        callbackUrl: "/",
+        callbackUrl: "/auth/post-login",
       });
 
       if (result?.error) {

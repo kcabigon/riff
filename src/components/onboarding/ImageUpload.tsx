@@ -123,7 +123,14 @@ export default function ImageUpload({
   };
 
   return (
-    <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "8px" }}>
+    <div
+      style={{
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        gap: "8px",
+      }}
+    >
       {/* Upload area */}
       <div
         onClick={handleClick}
@@ -149,7 +156,6 @@ export default function ImageUpload({
         }}
       >
         {preview ? (
-          // Show preview
           <>
             <div
               style={{
@@ -168,6 +174,8 @@ export default function ImageUpload({
                 style={{ objectFit: "contain" }}
               />
             </div>
+
+            {/* Trash icon button */}
             <button
               type="button"
               onClick={(e) => {
@@ -176,17 +184,27 @@ export default function ImageUpload({
               }}
               disabled={disabled || uploading}
               style={{
-                padding: "8px 16px",
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: 300,
-                color: "#FF0000",
-                backgroundColor: "#FFFFFF",
-                border: "2px solid #FF0000",
+                position: "absolute",
+                top: "8px",
+                right: "8px",
+                width: "36px",
+                height: "36px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: "transparent",
+                border: "none",
                 cursor: disabled || uploading ? "not-allowed" : "pointer",
+                opacity: disabled || uploading ? 0.5 : 1,
+                zIndex: 2,
               }}
             >
-              Delete Image
+              <Image
+                src="/icons/trash.svg"
+                alt="Delete image"
+                width={28}
+                height={30}
+              />
             </button>
           </>
         ) : (

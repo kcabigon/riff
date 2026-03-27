@@ -8,7 +8,7 @@ interface DeleteRiffConfirmModalProps {
   onClose: () => void;
   onDeleted: () => void;
   riffId: string;
-  riffTitle: string;
+  riffTitle: string | null;
 }
 
 export default function DeleteRiffConfirmModal({
@@ -57,8 +57,8 @@ export default function DeleteRiffConfirmModal({
           lineHeight: 1.5,
         }}
       >
-        Are you sure you want to delete &ldquo;{riffTitle}&rdquo;? This
-        can&apos;t be undone.
+        Are you sure you want to delete &ldquo;{riffTitle || "Untitled"}&rdquo;?
+        This can&apos;t be undone.
       </p>
 
       {error && (

@@ -88,10 +88,11 @@ export interface Riff {
   id: RiffId;
   clubId: ClubId;
   creatorId: UserId;
-  title: string;
+  title: string | null;
   prompt?: string;
   deadline?: Date;
   status: RiffStatus;
+  volumeNumber?: number | null;
   createdAt: Date;
   updatedAt: Date;
 
@@ -455,7 +456,7 @@ export interface InviteToClubInput {
 
 export interface CreateRiffInput {
   clubId: ClubId;
-  title: string;
+  title?: string;
   prompt?: string;
   deadline?: Date;
 }
