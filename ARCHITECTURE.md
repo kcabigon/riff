@@ -154,7 +154,19 @@ User         → email, username, firstName, lastName, bio, avatarUrl, onboardin
 - **Session**: JWT (client-side)
 - **Adapter**: PrismaAdapter
 - **Protected routes**: Use `requireAuth()` from `@/lib/auth-utils`
-- **Login flow**: Email → magic link → JWT → onboarding check → redirect to club or onboarding step
+- **Env vars**: Both `AUTH_SECRET` and `NEXTAUTH_SECRET` must be set (same value) — NextAuth v5 requires `AUTH_SECRET` for token verification
+
+### Login flow
+Email → magic link → NextAuth verifies token → `/auth/post-login` routes user:
+- New user → `/onboarding/name`
+- Returning user, onboarding incomplete → resume at their `onboardingStep`
+- Returning user, onboarding complete → `/clubs/{lastActiveClubId}`
+
+### Post-login routing
+Handled by `/auth/post-login` server component (NOT the NextAuth `redirect` callback — calling `auth()` inside the callback causes infinite recursion and OOM crashes). Middleware (`src/middleware.ts`) protects routes by checking session cookie.
+
+### Dev sign-in
+`/dev-signin` page with test scenarios — sets `dev-user-email` cookie for instant user switching. `getSession()` checks this cookie before NextAuth (dev only, blocked in production).
 
 ---
 
