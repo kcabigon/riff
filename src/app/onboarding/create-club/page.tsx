@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, FormEvent, useEffect } from "react";
+import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
 import OnboardingCard from "@/components/onboarding/OnboardingCard";
 import TextInput from "@/components/TextInput";
 import Tagline from "@/components/Tagline";
@@ -12,28 +11,17 @@ export const dynamic = "force-dynamic";
 
 export default function OnboardingCreateClubPage() {
   const router = useRouter();
-  const { data: session } = useSession();
   const [clubName, setClubName] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  // Generate default club name from user's first name
-  useEffect(() => {
-    if (session?.user) {
-      const firstName = session.user.firstName || "My";
-      setClubName(`${firstName}'s write club`);
-    }
-  }, [session]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    // Use default name if not changed
-    const finalClubName =
-      clubName.trim() || `${session?.user?.firstName || "My"}'s write club`;
+    const finalClubName = clubName.trim() || "My Write Club";
 
     // Store club data in sessionStorage for next step
     sessionStorage.setItem(
@@ -88,7 +76,7 @@ export default function OnboardingCreateClubPage() {
             <TextInput
               type="text"
               name="clubName"
-              placeholder="Write Club"
+              placeholder="Dead Poets Society"
               value={clubName}
               onChange={(e) => setClubName(e.target.value)}
               disabled={loading}
@@ -110,11 +98,22 @@ export default function OnboardingCreateClubPage() {
               multiline
               rows={3}
               name="description"
-              placeholder="A little blurb about this club."
+              placeholder="We don't read and write poetry because it's cute. We read and write poetry because we are members of the human race."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               disabled={loading}
             />
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "13px",
+                fontWeight: 300,
+                color: "#959595",
+                margin: 0,
+              }}
+            >
+              Chill out, you can change both of these later if you want.
+            </p>
           </div>
 
           {error && (
