@@ -14,6 +14,7 @@ import OnboardingChecklist from "@/components/clubs/OnboardingChecklist";
 import ClubSettingsModal from "@/components/clubs/ClubSettingsModal";
 import InviteOptions from "@/components/clubs/InviteOptions";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
+import { getRiffDisplayTitle } from "@/lib/riff-utils";
 
 interface ClubMember {
   user: {
@@ -47,6 +48,7 @@ interface RiffParticipant {
 interface Riff {
   id: string;
   title: string | null;
+  volumeNumber?: number | null;
   prompt: string | null;
   deadline: string | null;
   status: string;
@@ -686,6 +688,8 @@ export default function ClubPageLayout({
               riff={{
                 id: activeRiff.id,
                 title: activeRiff.title,
+                volumeNumber: activeRiff.volumeNumber,
+                status: activeRiff.status,
                 prompt: activeRiff.prompt,
                 deadline: activeRiff.deadline
                   ? new Date(activeRiff.deadline)
@@ -799,6 +803,8 @@ export default function ClubPageLayout({
                   riff={{
                     id: riff.id,
                     title: riff.title,
+                    volumeNumber: riff.volumeNumber,
+                    status: riff.status,
                     createdAt: new Date(riff.createdAt),
                     deadline: riff.deadline ? new Date(riff.deadline) : null,
                   }}
@@ -926,7 +932,7 @@ export default function ClubPageLayout({
           onClose={() => setIsRevealModalOpen(false)}
           onConfirm={handleRevealConfirm}
           isRevealing={isRevealing}
-          riffTitle={activeRiff.title}
+          riffTitle={getRiffDisplayTitle(activeRiff)}
           waitingUsers={activeRiff.participants
             .filter(
               (p) =>

@@ -39,7 +39,7 @@ export default function EditRiffModal({
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: title.trim(),
+          title: title.trim() || null,
           prompt: prompt.trim() || null,
           deadline: deadline || null,
         }),
@@ -75,7 +75,7 @@ export default function EditRiffModal({
                 color: "#000000",
               }}
             >
-              Title
+              Riff name <span style={{ color: "#959595" }}>(optional)</span>
             </label>
             <input
               type="text"

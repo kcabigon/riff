@@ -217,52 +217,53 @@ export async function PATCH(
       );
     }
 
-    // Assign volumeNumber at reveal time
-    let volumeNumber: number | undefined;
-    if (status === "REVEALED" && riff.status === "ACTIVE") {
-      const revealedCount = await prisma.riff.count({
-        where: {
-          clubId: riff.clubId,
-          status: { in: ["REVEALED", "COMPLETED"] },
+    // Update riff — assign volumeNumber atomically at reveal time to prevent race conditions
+    const updatedRiff = await prisma.$transaction(async (tx) => {
+      let volumeNumber: number | undefined;
+      if (status === "REVEALED" && riff.status === "ACTIVE") {
+        const revealedCount = await tx.riff.count({
+          where: {
+            clubId: riff.clubId,
+            status: { in: ["REVEALED", "COMPLETED"] },
+          },
+        });
+        volumeNumber = revealedCount + 1;
+      }
+
+      return tx.riff.update({
+        where: { id: riffId },
+        data: {
+          ...(title !== undefined && { title: title?.trim() || null }),
+          ...(volumeNumber !== undefined && { volumeNumber }),
+          ...(prompt !== undefined && { prompt: prompt?.trim() || null }),
+          ...(deadline !== undefined && {
+            deadline: deadline ? new Date(deadline) : null,
+          }),
+          ...(status !== undefined && { status }),
+        },
+        include: {
+          creator: {
+            select: {
+              id: true,
+              name: true,
+              username: true,
+              avatarUrl: true,
+            },
+          },
+          club: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          _count: {
+            select: {
+              participants: true,
+              pieces: true,
+            },
+          },
         },
       });
-      volumeNumber = revealedCount + 1;
-    }
-
-    // Update riff
-    const updatedRiff = await prisma.riff.update({
-      where: { id: riffId },
-      data: {
-        ...(title !== undefined && { title: title?.trim() || null }),
-        ...(volumeNumber !== undefined && { volumeNumber }),
-        ...(prompt !== undefined && { prompt: prompt?.trim() || null }),
-        ...(deadline !== undefined && {
-          deadline: deadline ? new Date(deadline) : null,
-        }),
-        ...(status !== undefined && { status }),
-      },
-      include: {
-        creator: {
-          select: {
-            id: true,
-            name: true,
-            username: true,
-            avatarUrl: true,
-          },
-        },
-        club: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        _count: {
-          select: {
-            participants: true,
-            pieces: true,
-          },
-        },
-      },
     });
 
     // Fire notifications for status changes (non-blocking)

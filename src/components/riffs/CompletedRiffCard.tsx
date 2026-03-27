@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import MosaicCollage from "./MosaicCollage";
+import { getRiffDisplayTitle } from "@/lib/riff-utils";
 
 interface CompletedRiffPiece {
   id: string;
@@ -15,6 +16,8 @@ interface CompletedRiffCardProps {
   riff: {
     id: string;
     title: string | null;
+    volumeNumber?: number | null;
+    status: string;
     createdAt: Date;
     deadline?: Date | null;
   };
@@ -75,7 +78,7 @@ export default function CompletedRiffCard({
               textOverflow: "ellipsis",
             }}
           >
-            {clubName} | {riff.title || "Untitled"}
+            {clubName} | {getRiffDisplayTitle(riff)}
           </p>
         </div>
       </div>

@@ -37,7 +37,7 @@ Last updated: March 26, 2026 (Jarric claiming invite/join + riff improvements)
 - [ ] When riff is revealed, remove from "Current Riff" section
 
 ### Riff Creation / Management
-- [ ] 🔨 @jarric — Volume number auto-assigned; riff name optional (not required to create)
+- [x] Volume number auto-assigned; riff name optional (not required to create)
 - [ ] 🔨 @jarric — Due date mandatory on riff creation, defaults to 1 month out, admin can edit later
 - [ ] Redesign prompts/inspiration UI
 - [ ] After creating a riff, host sees "Start writing" or "Invite friends" CTA

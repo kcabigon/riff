@@ -34,7 +34,7 @@ export default function CreateRiffModal({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: title.trim(),
+          title: title.trim() || null,
           prompt: prompt.trim() || null,
           deadline: deadline || null,
         }),
@@ -89,13 +89,13 @@ export default function CreateRiffModal({
                 color: "#000000",
               }}
             >
-              Title
+              Riff name <span style={{ color: "#959595" }}>(optional)</span>
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Volume 4: Summer Stories"
+              placeholder="e.g. Summer Stories"
               style={{
                 fontFamily: "var(--font-dm-sans)",
                 fontSize: "16px",
