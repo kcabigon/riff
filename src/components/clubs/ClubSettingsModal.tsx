@@ -98,7 +98,7 @@ export default function ClubSettingsModal({
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             <Tagline
               text="Club name"
-              color="#FF6B35"
+              color="#01EFFC"
               textColor="#000000"
               fontSize={14}
               width={105}
@@ -135,7 +135,7 @@ export default function ClubSettingsModal({
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <Tagline
                 text="Description"
-                color="#955CB5"
+                color="#00FF66"
                 textColor="#000000"
                 fontSize={14}
                 width={115}
@@ -182,7 +182,7 @@ export default function ClubSettingsModal({
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <Tagline
                 text="Banner image"
-                color="#C01582"
+                color="#EECF01"
                 textColor="#000000"
                 fontSize={14}
                 width={125}
