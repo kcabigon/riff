@@ -86,6 +86,7 @@ Last updated: March 26, 2026 (Jarric claiming invite/join + riff improvements)
 - [ ] Loading skeletons for ClubPageLayout, ProfilePage, RiffPageLayout
 - [ ] Deployment environment badge (dev/staging/production indicator)
 - [x] Onboarding invite step now generates /clubs/[id]/join links instead of single-use tokens
+- [ ] 🔨 @jarric — Self-contained join page (email + name inline, no redirect to login/onboarding)
 - [ ] Onboarding page refinements (create-club, join-club pages)
 
 ---
