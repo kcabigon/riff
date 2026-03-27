@@ -52,6 +52,7 @@ src/app/
 ├── page.tsx                   # Landing page
 ├── about/page.tsx             # About page
 ├── login/page.tsx             # Magic link login
+├── auth/post-login/page.tsx   # Post-login routing (onboarding vs club)
 ├── settings/page.tsx          # User settings
 ├── clubs/[id]/page.tsx        # Club detail (main hub)
 ├── clubs/[id]/join/page.tsx   # Public club join page
