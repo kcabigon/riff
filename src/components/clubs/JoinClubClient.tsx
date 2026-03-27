@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import AvatarStack from "@/components/shared/AvatarStack";
 import LandingNavBar from "@/components/LandingNavBar";
 import ConversionModal from "@/components/clubs/ConversionModal";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 
 interface ClubMember {
   user: {
@@ -40,6 +41,7 @@ export default function JoinClubClient({
   const [isJoining, setIsJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const formatNumber = (n: number) => n.toLocaleString();
 
@@ -88,80 +90,155 @@ export default function JoinClubClient({
             justifyContent: "center",
           }}
         >
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              backgroundColor: "rgba(0, 0, 0, 0.66)",
-            }}
-          />
-          <div
-            style={{
-              position: "relative",
-              display: "flex",
-              flexDirection: "column",
-              gap: "16px",
-              alignItems: "flex-start",
-            }}
-          >
-            <h1
-              style={{
-                fontFamily: "var(--font-dm-serif-text)",
-                fontSize: "32px",
-                fontWeight: 400,
-                color: "#FFFFFF",
-                margin: 0,
-              }}
-            >
-              {club.name}
-            </h1>
-
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "4px 12px",
-                alignItems: "start",
-              }}
-            >
-              <p style={statStyle("#FFFFFF")}>
-                <span style={{ fontWeight: 700 }}>{stats.riffCount}</span> riffs
-              </p>
-              <p style={statStyle("#FFFFFF")}>
-                <span style={{ fontWeight: 700 }}>{stats.pieceCount}</span>{" "}
-                pieces
-              </p>
-              <p style={statStyle("#FFFFFF")}>
-                <span style={{ fontWeight: 700 }}>
-                  {formatNumber(stats.wordCount)}
-                </span>{" "}
-                words
-              </p>
-            </div>
-
-            <AvatarStack
-              users={club.members.map((m) => m.user)}
-              size={48}
-              showBorder={true}
-              borderColor="#FFFFFF"
-              borderWidth={2}
-            />
-
-            {club.description && (
-              <p
+          {/* Dark overlay + metadata — desktop only */}
+          {!isMobile && (
+            <>
+              <div
                 style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#FFFFFF",
-                  margin: 0,
-                  lineHeight: "normal",
+                  position: "absolute",
+                  inset: 0,
+                  backgroundColor: "rgba(0, 0, 0, 0.66)",
+                }}
+              />
+              <div
+                style={{
+                  position: "relative",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "16px",
+                  alignItems: "flex-start",
                 }}
               >
-                {club.description}
-              </p>
-            )}
+                <h1
+                  style={{
+                    fontFamily: "var(--font-dm-serif-text)",
+                    fontSize: "32px",
+                    fontWeight: 400,
+                    color: "#FFFFFF",
+                    margin: 0,
+                  }}
+                >
+                  {club.name}
+                </h1>
+
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: "4px 12px",
+                    alignItems: "start",
+                  }}
+                >
+                  <p style={statStyle("#FFFFFF")}>
+                    <span style={{ fontWeight: 700 }}>{stats.riffCount}</span>{" "}
+                    riffs
+                  </p>
+                  <p style={statStyle("#FFFFFF")}>
+                    <span style={{ fontWeight: 700 }}>{stats.pieceCount}</span>{" "}
+                    pieces
+                  </p>
+                  <p style={statStyle("#FFFFFF")}>
+                    <span style={{ fontWeight: 700 }}>
+                      {formatNumber(stats.wordCount)}
+                    </span>{" "}
+                    words
+                  </p>
+                </div>
+
+                <AvatarStack
+                  users={club.members.map((m) => m.user)}
+                  size={48}
+                  showBorder={true}
+                  borderColor="#FFFFFF"
+                  borderWidth={2}
+                />
+
+                {club.description && (
+                  <p
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "16px",
+                      fontWeight: 300,
+                      color: "#FFFFFF",
+                      margin: 0,
+                      lineHeight: "normal",
+                    }}
+                  >
+                    {club.description}
+                  </p>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Mobile metadata — shown below banner on small screens */}
+      {club.bannerImage && isMobile && (
+        <div
+          style={{
+            padding: "24px 24px 0",
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+          }}
+        >
+          <h1
+            style={{
+              fontFamily: "var(--font-dm-serif-text)",
+              fontSize: "28px",
+              fontWeight: 400,
+              color: "#000000",
+              margin: 0,
+            }}
+          >
+            {club.name}
+          </h1>
+
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "4px 12px",
+              alignItems: "start",
+            }}
+          >
+            <p style={statStyle("#000000", "14px")}>
+              <span style={{ fontWeight: 700 }}>{stats.riffCount}</span> riffs
+            </p>
+            <p style={statStyle("#000000", "14px")}>
+              <span style={{ fontWeight: 700 }}>{stats.pieceCount}</span> pieces
+            </p>
+            <p style={statStyle("#000000", "14px")}>
+              <span style={{ fontWeight: 700 }}>
+                {formatNumber(stats.wordCount)}
+              </span>{" "}
+              words
+            </p>
           </div>
+
+          <AvatarStack
+            users={club.members.map((m) => m.user)}
+            size={40}
+            showBorder={true}
+            borderColor="#000000"
+            borderWidth={2}
+          />
+
+          {club.description && (
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "15px",
+                fontWeight: 300,
+                color: "#000000",
+                margin: 0,
+                lineHeight: "1.4",
+              }}
+            >
+              {club.description}
+            </p>
+          )}
         </div>
       )}
 
@@ -357,7 +434,7 @@ export default function JoinClubClient({
       <style>{`
         @media (max-width: 767px) {
           .club-banner {
-            height: 180px !important;
+            height: 200px !important;
           }
         }
       `}</style>
@@ -365,9 +442,12 @@ export default function JoinClubClient({
   );
 }
 
-const statStyle = (color: string): React.CSSProperties => ({
+const statStyle = (
+  color: string,
+  fontSize: string = "16px"
+): React.CSSProperties => ({
   fontFamily: "var(--font-dm-sans)",
-  fontSize: "16px",
+  fontSize,
   fontWeight: 300,
   color,
   margin: 0,
