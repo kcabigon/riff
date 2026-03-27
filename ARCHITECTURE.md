@@ -107,6 +107,7 @@ src/lib/
 ├── auth.ts                    # NextAuth config (Resend magic link)
 ├── auth-utils.ts              # requireAuth(), getSession(), getCurrentUser()
 ├── resend.ts                  # Email: signIn, onboarding, club invite
+├── riff-utils.ts              # getRiffDisplayTitle (volume number + title formatting)
 ├── notifications.ts           # createNotification, notifyClubMembers, notifyRiffParticipants
 ├── supabase.ts                # Supabase admin client (Storage uploads)
 └── prompt-suggestions.ts      # 27 curated writing prompts
