@@ -19,8 +19,8 @@ Last updated: March 26, 2026 (Jarric claiming invite/join + riff improvements)
 
 ### Onboarding
 - [x] "Club name" field should auto-populate with first name (e.g. "Kyle's Club")
-- [ ] Club photo: show visual preview by device
-- [ ] Club photo: "delete" button should be a trash icon
+- [ ] 🔨 @chris Club photo: show visual preview by device
+- [x] Club photo: "delete" button should be a trash icon
 - [x] Redesign club-choice page to convert new users to hosts
 
 ### Club Page
