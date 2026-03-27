@@ -55,6 +55,9 @@ export default async function JoinClubPage({
 
   const session = await getSession();
 
+  let hasName = false;
+  let needsOnboarding = false;
+
   // Logged in — check membership and onboarding state
   if (session?.user) {
     const userId = session.user.id;
@@ -67,14 +70,13 @@ export default async function JoinClubPage({
       redirect(`/clubs/${clubId}`);
     }
 
-    // Hasn't completed onboarding → send through join-specific onboarding
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { onboardingCompleted: true },
+      select: { firstName: true, onboardingCompleted: true },
     });
-    if (!user?.onboardingCompleted) {
-      redirect(`/onboarding/join?clubId=${clubId}`);
-    }
+
+    hasName = !!user?.firstName;
+    needsOnboarding = !user?.onboardingCompleted;
   }
 
   return (
@@ -88,6 +90,8 @@ export default async function JoinClubPage({
       }}
       stats={{ riffCount, pieceCount, wordCount }}
       isLoggedIn={!!session?.user}
+      hasName={hasName}
+      needsOnboarding={needsOnboarding}
     />
   );
 }
