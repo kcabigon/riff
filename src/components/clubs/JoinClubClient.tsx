@@ -2,10 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import AvatarStack from "@/components/shared/AvatarStack";
 import LandingNavBar from "@/components/LandingNavBar";
 import ConversionModal from "@/components/clubs/ConversionModal";
 import { useIsMobile } from "@/hooks/useMediaQuery";
+import TextInput from "@/components/TextInput";
+
+type JoinStep = "email" | "check-email" | "name" | "join";
 
 interface ClubMember {
   user: {
@@ -30,43 +34,136 @@ interface JoinClubClientProps {
     wordCount: number;
   };
   isLoggedIn: boolean;
+  hasName: boolean;
+  needsOnboarding: boolean;
 }
 
 export default function JoinClubClient({
   club,
   stats,
   isLoggedIn,
+  hasName,
+  needsOnboarding,
 }: JoinClubClientProps) {
   const router = useRouter();
-  const [isJoining, setIsJoining] = useState(false);
+
+  const getInitialStep = (): JoinStep => {
+    if (!isLoggedIn) return "email";
+    if (!hasName) return "name";
+    return "join";
+  };
+
+  const [step, setStep] = useState<JoinStep>(getInitialStep);
+  const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const isMobile = useIsMobile();
 
   const formatNumber = (n: number) => n.toLocaleString();
 
-  const handleJoin = async () => {
-    if (!isLoggedIn) {
-      router.push(`/login?callbackUrl=/clubs/${club.id}/join`);
+  // Step 1: send magic link back to this join page
+  const handleEmailSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError("Please enter a valid email address");
       return;
     }
-
-    setIsJoining(true);
+    setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/clubs/${club.id}/join`, {
+      const result = await signIn("resend", {
+        email,
+        redirect: false,
+        callbackUrl: `/clubs/${club.id}/join`,
+      });
+      if (result?.error) {
+        setError("Failed to send magic link. Please try again.");
+        setLoading(false);
+      } else {
+        setStep("check-email");
+      }
+    } catch {
+      setError("Something went wrong. Please try again.");
+      setLoading(false);
+    }
+  };
+
+  // Step 2 (new user): save name, mark onboarding complete, join club
+  const handleNameSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!firstName.trim() || !lastName.trim()) {
+      setError("Please enter both first and last name");
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const nameRes = await fetch("/api/onboarding/name", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+        }),
+      });
+      if (!nameRes.ok) {
+        const data = await nameRes.json();
+        throw new Error(data.error || "Failed to save name");
+      }
+
+      await fetch("/api/onboarding/complete", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ step: "COMPLETED" }),
+      });
+
+      const joinRes = await fetch(`/api/clubs/${club.id}/join`, {
         method: "POST",
       });
+      if (joinRes.ok) {
+        router.push(`/clubs/${club.id}`);
+      } else {
+        const data = await joinRes.json();
+        throw new Error(data.error || "Failed to join club");
+      }
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong. Please try again."
+      );
+      setLoading(false);
+    }
+  };
+
+  // Step 3 (existing user or abandoned onboarding): join club
+  const handleJoin = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // If they have a name but never finished onboarding, mark it complete now
+      if (needsOnboarding) {
+        await fetch("/api/onboarding/complete", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ step: "COMPLETED" }),
+        });
+      }
+
+      const res = await fetch(`/api/clubs/${club.id}/join`, { method: "POST" });
       if (res.ok) {
         router.push(`/clubs/${club.id}`);
       } else {
         const data = await res.json();
         setError(data.error || "Something went wrong. Try again.");
-        setIsJoining(false);
+        setLoading(false);
       }
     } catch {
       setError("Something went wrong. Try again.");
-      setIsJoining(false);
+      setLoading(false);
     }
   };
 
@@ -325,106 +422,140 @@ export default function JoinClubClient({
           </div>
         )}
 
-        {/* Join CTA */}
+        {/* CTA area — changes based on auth/onboarding state */}
         <div
           style={{
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
             gap: "16px",
-            marginTop: 0,
           }}
         >
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "18px",
-              fontWeight: 300,
-              color: "#000000",
-              margin: 0,
-              textAlign: "center",
-            }}
-          >
-            You&apos;ve been invited to join this write club.
-          </p>
-
-          <button
-            onClick={handleJoin}
-            disabled={isJoining}
-            style={{
-              backgroundColor: "#01EFFC",
-              border: "2px solid #000000",
-              boxShadow: "8px 8px 0px 0px #000000",
-              padding: "12px 48px",
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              color: "#000000",
-              cursor: isJoining ? "not-allowed" : "pointer",
-              opacity: isJoining ? 0.7 : 1,
-              transition: "background-color 0.2s ease, box-shadow 0.2s ease",
-              whiteSpace: "nowrap",
-            }}
-            onMouseEnter={(e) => {
-              if (!isJoining) {
-                e.currentTarget.style.backgroundColor = "#FFFFFF";
-                e.currentTarget.style.boxShadow = "8px 8px 0px 0px #01EFFC";
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!isJoining) {
-                e.currentTarget.style.backgroundColor = "#01EFFC";
-                e.currentTarget.style.boxShadow = "8px 8px 0px 0px #000000";
-              }
-            }}
-            onMouseDown={(e) => {
-              if (!isJoining) {
-                e.currentTarget.style.transform = "translate(4px, 4px)";
-                e.currentTarget.style.boxShadow = "4px 4px 0px 0px #000000";
-              }
-            }}
-            onMouseUp={(e) => {
-              if (!isJoining) {
-                e.currentTarget.style.transform = "translate(0, 0)";
-                e.currentTarget.style.boxShadow = "8px 8px 0px 0px #01EFFC";
-              }
-            }}
-          >
-            {isJoining ? "Joining..." : `Join ${club.name}`}
-          </button>
-
-          {error && (
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: 300,
-                color: "#FF0000",
-                margin: 0,
-              }}
-            >
-              {error}
-            </p>
+          {/* Email step: not logged in */}
+          {step === "email" && (
+            <>
+              <p style={ctaTextStyle}>
+                You&apos;ve been invited to join this write club.
+              </p>
+              <form
+                onSubmit={handleEmailSubmit}
+                style={{
+                  width: "100%",
+                  maxWidth: "344px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "16px",
+                }}
+              >
+                <TextInput
+                  type="email"
+                  name="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  error={error ?? undefined}
+                  disabled={loading}
+                  required
+                  autoFocus
+                  autoComplete="email"
+                />
+                <JoinButton loading={loading} label={`Join ${club.name}`} />
+              </form>
+              <button
+                onClick={() => setIsModalOpen(true)}
+                style={whatIsItStyle}
+              >
+                Wait, what&apos;s a write club?
+              </button>
+            </>
           )}
 
-          <button
-            onClick={() => setIsModalOpen(true)}
-            style={{
-              background: "none",
-              border: "none",
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              fontWeight: 300,
-              color: "#666666",
-              cursor: "pointer",
-              padding: 0,
-              textDecoration: "underline",
-              textDecorationColor: "#666666",
-              marginTop: "16px",
-            }}
-          >
-            Wait, what&apos;s a write club?
-          </button>
+          {/* Check-email step: magic link sent */}
+          {step === "check-email" && (
+            <div
+              style={{
+                maxWidth: "344px",
+                textAlign: "center",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+              }}
+            >
+              <p style={ctaTextStyle}>Check your inbox.</p>
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "14px",
+                  fontWeight: 300,
+                  color: "#666666",
+                  margin: 0,
+                }}
+              >
+                We sent a magic link to <strong>{email}</strong>. Click it to
+                continue joining {club.name}.
+              </p>
+            </div>
+          )}
+
+          {/* Name step: logged in but no name yet */}
+          {step === "name" && (
+            <>
+              <p style={ctaTextStyle}>First, tell us your name.</p>
+              <form
+                onSubmit={handleNameSubmit}
+                style={{
+                  width: "100%",
+                  maxWidth: "344px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "16px",
+                }}
+              >
+                <TextInput
+                  type="text"
+                  name="firstName"
+                  placeholder="First name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  disabled={loading}
+                  required
+                  autoFocus
+                />
+                <TextInput
+                  type="text"
+                  name="lastName"
+                  placeholder="Last name"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  disabled={loading}
+                  required
+                />
+                {error && <p style={errorStyle}>{error}</p>}
+                <JoinButton loading={loading} label={`Join ${club.name}`} />
+              </form>
+            </>
+          )}
+
+          {/* Join step: logged in with name */}
+          {step === "join" && (
+            <>
+              <p style={ctaTextStyle}>
+                You&apos;ve been invited to join this write club.
+              </p>
+              {error && <p style={errorStyle}>{error}</p>}
+              <JoinButton
+                loading={loading}
+                label={`Join ${club.name}`}
+                onClick={handleJoin}
+              />
+              <button
+                onClick={() => setIsModalOpen(true)}
+                style={whatIsItStyle}
+              >
+                Wait, what&apos;s a write club?
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -433,7 +564,7 @@ export default function JoinClubClient({
         onClose={() => setIsModalOpen(false)}
         clubName={club.name}
         onJoin={handleJoin}
-        isJoining={isJoining}
+        isJoining={loading}
       />
 
       <style>{`
@@ -447,6 +578,66 @@ export default function JoinClubClient({
   );
 }
 
+// Shared button used across multiple steps
+function JoinButton({
+  loading,
+  label,
+  onClick,
+}: {
+  loading: boolean;
+  label: string;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      type={onClick ? "button" : "submit"}
+      onClick={onClick}
+      disabled={loading}
+      style={{
+        backgroundColor: "#01EFFC",
+        border: "2px solid #000000",
+        boxShadow: "8px 8px 0px 0px #000000",
+        padding: "12px 48px",
+        fontFamily: "var(--font-dm-sans)",
+        fontSize: "16px",
+        fontWeight: 300,
+        color: "#000000",
+        cursor: loading ? "not-allowed" : "pointer",
+        opacity: loading ? 0.7 : 1,
+        transition: "background-color 0.2s ease, box-shadow 0.2s ease",
+        whiteSpace: "nowrap",
+        width: "100%",
+      }}
+      onMouseEnter={(e) => {
+        if (!loading) {
+          e.currentTarget.style.backgroundColor = "#FFFFFF";
+          e.currentTarget.style.boxShadow = "8px 8px 0px 0px #01EFFC";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!loading) {
+          e.currentTarget.style.backgroundColor = "#01EFFC";
+          e.currentTarget.style.boxShadow = "8px 8px 0px 0px #000000";
+        }
+      }}
+      onMouseDown={(e) => {
+        if (!loading) {
+          e.currentTarget.style.transform = "translate(4px, 4px)";
+          e.currentTarget.style.boxShadow = "4px 4px 0px 0px #000000";
+        }
+      }}
+      onMouseUp={(e) => {
+        if (!loading) {
+          e.currentTarget.style.transform = "translate(0, 0)";
+          e.currentTarget.style.boxShadow = "8px 8px 0px 0px #01EFFC";
+        }
+      }}
+    >
+      {loading ? "Joining..." : label}
+    </button>
+  );
+}
+
 const statStyle = (
   color: string,
   fontSize: string = "16px"
@@ -457,3 +648,35 @@ const statStyle = (
   color,
   margin: 0,
 });
+
+const ctaTextStyle: React.CSSProperties = {
+  fontFamily: "var(--font-dm-sans)",
+  fontSize: "18px",
+  fontWeight: 300,
+  color: "#000000",
+  margin: 0,
+  textAlign: "center",
+};
+
+const errorStyle: React.CSSProperties = {
+  fontFamily: "var(--font-dm-sans)",
+  fontSize: "14px",
+  fontWeight: 300,
+  color: "#FF0000",
+  margin: 0,
+  textAlign: "center",
+};
+
+const whatIsItStyle: React.CSSProperties = {
+  background: "none",
+  border: "none",
+  fontFamily: "var(--font-dm-sans)",
+  fontSize: "14px",
+  fontWeight: 300,
+  color: "#666666",
+  cursor: "pointer",
+  padding: 0,
+  textDecoration: "underline",
+  textDecorationColor: "#666666",
+  marginTop: "16px",
+};

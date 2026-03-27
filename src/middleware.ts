@@ -13,6 +13,8 @@ const protectedPrefixes = [
 ];
 
 function isProtectedRoute(pathname: string): boolean {
+  // Club join pages are publicly accessible without auth
+  if (/^\/clubs\/[^/]+\/join$/.test(pathname)) return false;
   return protectedPrefixes.some(
     (prefix) => pathname === prefix || pathname.startsWith(prefix + "/")
   );
