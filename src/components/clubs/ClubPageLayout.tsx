@@ -220,6 +220,7 @@ export default function ClubPageLayout({
               flexDirection: "column",
               gap: "16px",
               alignItems: "flex-start",
+              maxWidth: "360px",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -416,7 +417,11 @@ export default function ClubPageLayout({
                   fontWeight: 300,
                   color: "#FFFFFF",
                   margin: 0,
-                  lineHeight: "normal",
+                  lineHeight: "1.4",
+                  display: "-webkit-box",
+                  WebkitLineClamp: 4,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
                 }}
               >
                 {clubDescription}
