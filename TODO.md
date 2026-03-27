@@ -33,6 +33,7 @@ Last updated: March 26, 2026 (Jarric claiming invite/join + riff improvements)
 - [x] Public club join page at /clubs/[id]/join (no token needed — shareable link)
 - [x] New user join onboarding flow (/onboarding/join) — name setup then joins club
 - [ ] 🔨 @jarric — Invite/join flow testing and improvements
+- [x] Join page conversion modal ("what's a write club?" education flow)
 - [ ] When riff is revealed, remove from "Current Riff" section
 
 ### Riff Creation / Management
