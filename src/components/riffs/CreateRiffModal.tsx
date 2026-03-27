@@ -17,16 +17,35 @@ export default function CreateRiffModal({
   onClose,
   onCreated,
 }: CreateRiffModalProps) {
+  const getDefaultDeadline = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 30);
+    return d.toISOString().split("T")[0];
+  };
+
   const [title, setTitle] = useState("");
   const [prompt, setPrompt] = useState("");
-  const [deadline, setDeadline] = useState("");
+  const [deadline, setDeadline] = useState(getDefaultDeadline);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const daysUntilDeadline = deadline
+    ? Math.round(
+        (new Date(deadline).getTime() - new Date().setHours(0, 0, 0, 0)) /
+          (1000 * 60 * 60 * 24)
+      )
+    : 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
+
+    if (!deadline) {
+      setError("Please set a deadline");
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       // Step 1: Create riff (starts as DRAFT)
@@ -65,7 +84,7 @@ export default function CreateRiffModal({
       // Success — reset and notify parent
       setTitle("");
       setPrompt("");
-      setDeadline("");
+      setDeadline(getDefaultDeadline());
       setIsSubmitting(false);
       onCreated();
     } catch (err) {
@@ -79,6 +98,55 @@ export default function CreateRiffModal({
     <Modal isOpen={isOpen} onClose={onClose} title="Start a new riff">
       <form onSubmit={handleSubmit}>
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+          {/* Deadline */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <label
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "14px",
+                fontWeight: 300,
+                color: "#000000",
+              }}
+            >
+              Deadline
+            </label>
+            <input
+              type="date"
+              value={deadline}
+              onChange={(e) => setDeadline(e.target.value)}
+              required
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "16px",
+                fontWeight: 300,
+                color: "#000000",
+                backgroundColor: "#FFFFFF",
+                border: "2px solid #000000",
+                padding: "12px 16px",
+                outline: "none",
+                width: "100%",
+                boxSizing: "border-box",
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = "#00FF66";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = "#000000";
+              }}
+            />
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "13px",
+                fontWeight: 300,
+                color: "#959595",
+                margin: 0,
+              }}
+            >
+              {daysUntilDeadline} days from today
+            </p>
+          </div>
+
           {/* Title */}
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             <label
@@ -158,43 +226,6 @@ export default function CreateRiffModal({
 
           {/* Prompt library */}
           <PromptLibrary onSelect={(text) => setPrompt(text)} />
-
-          {/* Deadline (optional) */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <label
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: 300,
-                color: "#000000",
-              }}
-            >
-              Deadline <span style={{ color: "#959595" }}>(optional)</span>
-            </label>
-            <input
-              type="date"
-              value={deadline}
-              onChange={(e) => setDeadline(e.target.value)}
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 300,
-                color: "#000000",
-                backgroundColor: "#FFFFFF",
-                border: "2px solid #000000",
-                padding: "12px 16px",
-                outline: "none",
-                width: "100%",
-                boxSizing: "border-box",
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = "#00FF66";
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = "#000000";
-              }}
-            />
-          </div>
 
           {/* Error */}
           {error && (
