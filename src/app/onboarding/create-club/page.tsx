@@ -103,17 +103,19 @@ export default function OnboardingCreateClubPage() {
               onChange={(e) => setDescription(e.target.value)}
               disabled={loading}
             />
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "13px",
-                fontWeight: 300,
-                color: "#959595",
-                margin: 0,
-              }}
-            >
-              Chill out, you can change both of these later if you want.
-            </p>
+            <div style={{ backgroundColor: "#FFFFFF", padding: "4px 8px" }}>
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "13px",
+                  fontWeight: 300,
+                  color: "#959595",
+                  margin: 0,
+                }}
+              >
+                Chill out, you can change both of these later if you want.
+              </p>
+            </div>
           </div>
 
           {error && (
