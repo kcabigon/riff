@@ -21,7 +21,7 @@ Last updated: March 26, 2026 (Jarric claiming invite/join + riff improvements)
 - [x] "Club name" field should auto-populate with first name (e.g. "Kyle's Club")
 - [ ] Club photo: show visual preview by device
 - [ ] Club photo: "delete" button should be a trash icon
-- [ ] 🔨 @jarric — Redesign club-choice page to convert new users to hosts
+- [x] Redesign club-choice page to convert new users to hosts
 
 ### Club Page
 - [x] Top-left logo should be icon only (not full wordmark) — uses riff_logo.svg
