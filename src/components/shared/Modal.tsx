@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useCallback, ReactNode } from "react";
+import NoiseBackground from "@/components/NoiseBackground";
 
 interface ModalProps {
   isOpen: boolean;
@@ -9,6 +10,7 @@ interface ModalProps {
   size?: "sm" | "md" | "lg";
   children: ReactNode;
   footer?: ReactNode;
+  noiseBackground?: boolean;
 }
 
 const SIZE_MAP = { sm: 400, md: 480, lg: 600 };
@@ -20,6 +22,7 @@ export default function Modal({
   size = "md",
   children,
   footer,
+  noiseBackground = false,
 }: ModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
@@ -120,50 +123,67 @@ export default function Modal({
           zIndex: 101,
         }}
       >
-        {/* Header */}
-        {title && (
+        {/* Noise background layer */}
+        {noiseBackground && (
           <div
             style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "32px",
+              position: "absolute",
+              inset: 0,
+              zIndex: 0,
+              pointerEvents: "none",
             }}
           >
-            <h2
-              style={{
-                fontFamily: "var(--font-dm-serif-text)",
-                fontSize: "24px",
-                fontWeight: 400,
-                color: "#000000",
-                margin: 0,
-              }}
-            >
-              {title}
-            </h2>
-            <button
-              onClick={onClose}
-              aria-label="Close"
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                fontSize: "20px",
-                color: "#808080",
-                padding: "4px",
-                lineHeight: 1,
-              }}
-            >
-              &times;
-            </button>
+            <NoiseBackground fillMode="cover" />
           </div>
         )}
 
-        {/* Body */}
-        {children}
+        {/* Content above noise */}
+        <div style={{ position: "relative", zIndex: 1 }}>
+          {/* Header */}
+          {title && (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "32px",
+              }}
+            >
+              <h2
+                style={{
+                  fontFamily: "var(--font-dm-serif-text)",
+                  fontSize: "24px",
+                  fontWeight: 400,
+                  color: "#000000",
+                  margin: 0,
+                }}
+              >
+                {title}
+              </h2>
+              <button
+                onClick={onClose}
+                aria-label="Close"
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: "20px",
+                  color: "#808080",
+                  padding: "4px",
+                  lineHeight: 1,
+                }}
+              >
+                &times;
+              </button>
+            </div>
+          )}
 
-        {/* Footer */}
-        {footer && <div style={{ marginTop: "24px" }}>{footer}</div>}
+          {/* Body */}
+          {children}
+
+          {/* Footer */}
+          {footer && <div style={{ marginTop: "24px" }}>{footer}</div>}
+        </div>
       </div>
     </>
   );

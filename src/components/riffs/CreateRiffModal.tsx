@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Modal from "@/components/shared/Modal";
 import PromptLibrary from "./PromptLibrary";
+import Tagline from "@/components/Tagline";
 
 interface CreateRiffModalProps {
   clubId: string;
@@ -95,21 +96,23 @@ export default function CreateRiffModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Start a new riff">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Start a new riff"
+      noiseBackground
+    >
       <form onSubmit={handleSubmit}>
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           {/* Deadline */}
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <label
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: 300,
-                color: "#000000",
-              }}
-            >
-              Deadline
-            </label>
+            <Tagline
+              text="Deadline"
+              color="#01EFFC"
+              textColor="#000000"
+              fontSize={14}
+              width={100}
+            />
             <input
               type="date"
               value={deadline}
@@ -134,31 +137,43 @@ export default function CreateRiffModal({
                 e.target.style.borderColor = "#000000";
               }}
             />
-            <p
+            <span
               style={{
+                display: "inline-block",
+                backgroundColor: "#FFFFFF",
+                padding: "2px 8px",
                 fontFamily: "var(--font-dm-sans)",
                 fontSize: "13px",
                 fontWeight: 300,
                 color: "#959595",
-                margin: 0,
+                alignSelf: "flex-start",
               }}
             >
               {daysUntilDeadline} days from today
-            </p>
+            </span>
           </div>
 
           {/* Title */}
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <label
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: 300,
-                color: "#000000",
-              }}
-            >
-              Riff name <span style={{ color: "#959595" }}>(optional)</span>
-            </label>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <Tagline
+                text="Riff name"
+                color="#00FF66"
+                textColor="#000000"
+                fontSize={14}
+                width={108}
+              />
+              <span
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "14px",
+                  fontWeight: 300,
+                  color: "#959595",
+                }}
+              >
+                (optional)
+              </span>
+            </div>
             <input
               type="text"
               value={title}
@@ -187,16 +202,25 @@ export default function CreateRiffModal({
 
           {/* Prompt (optional) */}
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <label
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: 300,
-                color: "#000000",
-              }}
-            >
-              Prompt <span style={{ color: "#959595" }}>(optional)</span>
-            </label>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <Tagline
+                text="Prompt"
+                color="#EECF01"
+                textColor="#000000"
+                fontSize={14}
+                width={80}
+              />
+              <span
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "14px",
+                  fontWeight: 300,
+                  color: "#959595",
+                }}
+              >
+                (optional)
+              </span>
+            </div>
             <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
@@ -224,8 +248,10 @@ export default function CreateRiffModal({
             />
           </div>
 
-          {/* Prompt library */}
-          <PromptLibrary onSelect={(text) => setPrompt(text)} />
+          {/* Prompt library — white background so it reads over noise */}
+          <div style={{ backgroundColor: "#FFFFFF", padding: "12px" }}>
+            <PromptLibrary onSelect={(text) => setPrompt(text)} />
+          </div>
 
           {/* Error */}
           {error && (
