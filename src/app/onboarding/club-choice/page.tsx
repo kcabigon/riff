@@ -15,8 +15,11 @@ export default function OnboardingClubChoicePage() {
       <div
         style={{
           width: "100%",
+          backgroundColor: "#FFFFFF",
+          padding: "32px",
           display: "flex",
           flexDirection: "column",
+          alignItems: "center",
           gap: "24px",
         }}
       >
@@ -28,6 +31,7 @@ export default function OnboardingClubChoicePage() {
             fontWeight: 400,
             color: "#000000",
             margin: 0,
+            textAlign: "center",
           }}
         >
           Every write club needs a host
@@ -42,6 +46,7 @@ export default function OnboardingClubChoicePage() {
             color: "#000000",
             margin: 0,
             lineHeight: "1.6",
+            textAlign: "center",
           }}
         >
           Be the one to rally the crew and get the party started. Riff will
@@ -62,6 +67,7 @@ export default function OnboardingClubChoicePage() {
             color: "#666666",
             margin: 0,
             lineHeight: "1.5",
+            textAlign: "center",
           }}
         >
           Want to join an existing write club? Have the club host send you an
@@ -82,7 +88,7 @@ export default function OnboardingClubChoicePage() {
             padding: 0,
             textDecoration: "underline",
             textDecorationColor: "#666666",
-            textAlign: "left",
+            textAlign: "center",
             marginTop: "-8px",
           }}
         >
