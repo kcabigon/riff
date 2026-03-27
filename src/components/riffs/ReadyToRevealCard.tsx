@@ -4,11 +4,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import AvatarStack from "@/components/shared/AvatarStack";
 import MosaicCollage from "./MosaicCollage";
+import { getRiffDisplayTitle } from "@/lib/riff-utils";
 
 interface ReadyToRevealCardProps {
   riff: {
     id: string;
     title: string | null;
+    volumeNumber?: number | null;
+    status: string;
     participants: Array<{
       user: {
         id: string;
@@ -85,7 +88,7 @@ export default function ReadyToRevealCard({
           textAlign: "center",
         }}
       >
-        {riff.title || "Untitled"}
+        {getRiffDisplayTitle(riff)}
       </h3>
 
       {/* Writer avatars */}

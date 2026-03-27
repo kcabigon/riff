@@ -12,11 +12,13 @@ import BackButton from "@/components/BackButton";
 import RevealCelebration from "./RevealCelebration";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
 import { useDraftCreation } from "@/hooks/useDraftCreation";
+import { getRiffDisplayTitle } from "@/lib/riff-utils";
 
 interface RiffPageLayoutProps {
   riff: {
     id: string;
     title: string | null;
+    volumeNumber?: number | null;
     prompt: string | null;
     deadline: string | null;
     status: string;
@@ -227,7 +229,7 @@ export default function RiffPageLayout({
                   margin: 0,
                 }}
               >
-                {riff.title || "Untitled"}
+                {getRiffDisplayTitle(riff)}
               </h1>
               <p
                 style={{
@@ -624,7 +626,7 @@ export default function RiffPageLayout({
         onClose={() => setIsRevealModalOpen(false)}
         onConfirm={handleRevealConfirm}
         isRevealing={isRevealing}
-        riffTitle={riff.title}
+        riffTitle={getRiffDisplayTitle(riff)}
         waitingUsers={riff.participants
           .filter(
             (p) =>
@@ -682,7 +684,7 @@ export default function RiffPageLayout({
             router.push(`/clubs/${riff.clubId}`);
           }}
           riffId={riff.id}
-          riffTitle={riff.title}
+          riffTitle={getRiffDisplayTitle(riff)}
         />
       )}
 
