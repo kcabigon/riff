@@ -248,9 +248,17 @@ export default function CreateRiffModal({
             />
           </div>
 
-          {/* Prompt library — white background so it reads over noise */}
-          <div style={{ backgroundColor: "#FFFFFF", padding: "12px" }}>
-            <PromptLibrary onSelect={(text) => setPrompt(text)} />
+          {/* Prompt library — white background sized to content, centered */}
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <div
+              style={{
+                display: "inline-block",
+                backgroundColor: "#FFFFFF",
+                padding: "2px 8px",
+              }}
+            >
+              <PromptLibrary onSelect={(text) => setPrompt(text)} />
+            </div>
           </div>
 
           {/* Error */}
