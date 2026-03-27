@@ -103,7 +103,7 @@ export default function Dropdown({
             [align === "right" ? "right" : "left"]: 0,
             backgroundColor: "#FFFFFF",
             border: "2px solid #000000",
-            boxShadow: "4px 4px 0px 0px #000000",
+            boxShadow: "8px 8px 0px 0px #000000",
             minWidth: `${minWidth}px`,
             zIndex: 60,
           }}
@@ -150,7 +150,7 @@ export default function Dropdown({
                 }}
                 onMouseEnter={(e) => {
                   if (!item.active) {
-                    e.currentTarget.style.backgroundColor = "#F5F5F5";
+                    e.currentTarget.style.backgroundColor = "#01EFFC";
                   }
                 }}
                 onMouseLeave={(e) => {

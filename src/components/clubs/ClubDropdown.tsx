@@ -42,14 +42,14 @@ export default function ClubDropdown({
     {
       type: "action",
       label: "Start new club",
-      color: "#808080",
+      color: "#00FF66",
       icon: (
         <svg
           width="16"
           height="16"
           viewBox="0 0 16 16"
           fill="none"
-          style={{ color: "#808080" }}
+          style={{ color: "#00FF66" }}
         >
           <path
             d="M8 3V13M3 8H13"
