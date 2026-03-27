@@ -18,7 +18,7 @@ Last updated: March 26, 2026 (Jarric claiming invite/join + riff improvements)
 - [x] Show mobile-specific screenshot on small screens using `<picture>` element
 
 ### Onboarding
-- [ ] "Club name" field should auto-populate with first name (e.g. "Kyle's Club")
+- [x] "Club name" field should auto-populate with first name (e.g. "Kyle's Club")
 - [ ] Club photo: show visual preview by device
 - [ ] Club photo: "delete" button should be a trash icon
 
