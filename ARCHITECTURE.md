@@ -31,6 +31,8 @@ A private essay-sharing platform for creative communities. Users create **clubs*
 - Notification system (bell + panel, polls every 30s)
 - Club invitations (email, link, SMS)
 - Public club join page (invite link flow)
+- Join page conversion modal ("what's a write club?")
+- Club name placeholder with helper hints
 - Avatar system with admin badges
 - Mobile responsive across all views
 - Image uploads via Supabase Storage (persistent across deploys)
@@ -79,7 +81,7 @@ src/app/api/
 ```
 src/components/
 ├── shared/        # Modal, Avatar, AvatarStack, AdminBadge, EnvironmentBadge, Dropdown
-├── clubs/         # ClubPageLayout, NavBar, ClubDropdown, AvatarDropdown, OnboardingChecklist, InviteOptions, ClubSettingsModal, JoinClubClient
+├── clubs/         # ClubPageLayout, NavBar, ClubDropdown, AvatarDropdown, OnboardingChecklist, InviteOptions, ClubSettingsModal, JoinClubClient, ConversionModal
 ├── riffs/         # RiffCard, RiffPageLayout, CreateRiffModal, EditRiffModal, DeleteRiffConfirmModal,
 │                  # RevealCelebration, RevealConfirmModal, PieceCard, CompletedRiffCard, ReadyToRevealCard,
 │                  # MosaicCollage, PromptLibrary, EmptyRiffState, CountdownTimer
