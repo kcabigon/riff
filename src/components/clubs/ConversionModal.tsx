@@ -207,10 +207,10 @@ export default function ConversionModal({
                     lineHeight: "1.6",
                   }}
                 >
-                  Riffs give a rhythm to the club. Write solo, your own style on
-                  your own time. Reveal together, on a set date that works for
-                  everyone. Keep the riff going in the comments section. Then
-                  run it back again.
+                  Riffs give a rhythm to the club. Write solo, on your own time.
+                  Reveal together, on a set date that works for everyone. Keep
+                  the riff going in the comments section. Then run it back
+                  again.
                 </p>
               </div>
 
