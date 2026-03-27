@@ -57,6 +57,14 @@ export default async function JoinClubPage({
 
   let hasName = false;
   let needsOnboarding = false;
+  let loggedInUser: {
+    id: string;
+    name: string | null;
+    username: string | null;
+    avatarUrl: string | null;
+  } | null = null;
+  let userClubs: Array<{ id: string; name: string }> = [];
+  let lastActiveClubId: string | null = null;
 
   // Logged in — check membership and onboarding state
   if (session?.user) {
@@ -72,11 +80,35 @@ export default async function JoinClubPage({
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { firstName: true, onboardingCompleted: true },
+      select: {
+        id: true,
+        firstName: true,
+        name: true,
+        username: true,
+        avatarUrl: true,
+        onboardingCompleted: true,
+        lastActiveClubId: true,
+        clubMemberships: {
+          select: {
+            club: { select: { id: true, name: true } },
+          },
+        },
+      },
     });
 
     hasName = !!user?.firstName;
     needsOnboarding = !user?.onboardingCompleted;
+
+    if (user) {
+      loggedInUser = {
+        id: user.id,
+        name: user.name,
+        username: user.username,
+        avatarUrl: user.avatarUrl,
+      };
+      userClubs = user.clubMemberships.map((m) => m.club);
+      lastActiveClubId = user.lastActiveClubId;
+    }
   }
 
   return (
@@ -92,6 +124,9 @@ export default async function JoinClubPage({
       isLoggedIn={!!session?.user}
       hasName={hasName}
       needsOnboarding={needsOnboarding}
+      user={loggedInUser}
+      userClubs={userClubs}
+      lastActiveClubId={lastActiveClubId}
     />
   );
 }

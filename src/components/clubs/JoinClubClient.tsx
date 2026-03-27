@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import AvatarStack from "@/components/shared/AvatarStack";
 import LandingNavBar from "@/components/LandingNavBar";
+import NavBar from "@/components/clubs/NavBar";
 import ConversionModal from "@/components/clubs/ConversionModal";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import TextInput from "@/components/TextInput";
@@ -36,6 +37,14 @@ interface JoinClubClientProps {
   isLoggedIn: boolean;
   hasName: boolean;
   needsOnboarding: boolean;
+  user?: {
+    id: string;
+    name: string | null;
+    username: string | null;
+    avatarUrl: string | null;
+  } | null;
+  userClubs?: Array<{ id: string; name: string }>;
+  lastActiveClubId?: string | null;
 }
 
 export default function JoinClubClient({
@@ -44,6 +53,9 @@ export default function JoinClubClient({
   isLoggedIn,
   hasName,
   needsOnboarding,
+  user,
+  userClubs = [],
+  lastActiveClubId,
 }: JoinClubClientProps) {
   const router = useRouter();
 
@@ -169,7 +181,22 @@ export default function JoinClubClient({
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
-      <LandingNavBar sticky />
+      {isLoggedIn && user ? (
+        <div style={{ position: "sticky", top: 0, zIndex: 50 }}>
+          <NavBar
+            user={user}
+            clubs={userClubs}
+            currentClub={
+              userClubs.find((c) => c.id === lastActiveClubId) ??
+              userClubs[0] ??
+              null
+            }
+            showClubDropdown={userClubs.length > 0}
+          />
+        </div>
+      ) : (
+        <LandingNavBar sticky />
+      )}
 
       {/* Banner */}
       {club.bannerImage && (
@@ -538,7 +565,16 @@ export default function JoinClubClient({
 
           {/* Join step: logged in with name */}
           {step === "join" && (
-            <>
+            <div
+              style={{
+                width: "100%",
+                maxWidth: "344px",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "16px",
+              }}
+            >
               <p style={ctaTextStyle}>
                 You&apos;ve been invited to join this write club.
               </p>
@@ -554,7 +590,7 @@ export default function JoinClubClient({
               >
                 Wait, what&apos;s a write club?
               </button>
-            </>
+            </div>
           )}
         </div>
       </div>
