@@ -9,7 +9,7 @@ interface EditRiffModalProps {
   onUpdated: () => void;
   riff: {
     id: string;
-    title: string;
+    title: string | null;
     prompt: string | null;
     deadline: string | null;
   };
@@ -21,7 +21,7 @@ export default function EditRiffModal({
   onUpdated,
   riff,
 }: EditRiffModalProps) {
-  const [title, setTitle] = useState(riff.title);
+  const [title, setTitle] = useState(riff.title || "");
   const [prompt, setPrompt] = useState(riff.prompt || "");
   const [deadline, setDeadline] = useState(
     riff.deadline ? new Date(riff.deadline).toISOString().split("T")[0] : ""
@@ -81,7 +81,6 @@ export default function EditRiffModal({
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              required
               style={{
                 fontFamily: "var(--font-dm-sans)",
                 fontSize: "16px",
@@ -94,8 +93,12 @@ export default function EditRiffModal({
                 width: "100%",
                 boxSizing: "border-box",
               }}
-              onFocus={(e) => { e.target.style.borderColor = "#00FF66"; }}
-              onBlur={(e) => { e.target.style.borderColor = "#000000"; }}
+              onFocus={(e) => {
+                e.target.style.borderColor = "#00FF66";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = "#000000";
+              }}
             />
           </div>
 
@@ -128,8 +131,12 @@ export default function EditRiffModal({
                 resize: "vertical",
                 boxSizing: "border-box",
               }}
-              onFocus={(e) => { e.target.style.borderColor = "#00FF66"; }}
-              onBlur={(e) => { e.target.style.borderColor = "#000000"; }}
+              onFocus={(e) => {
+                e.target.style.borderColor = "#00FF66";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = "#000000";
+              }}
             />
           </div>
 
@@ -161,8 +168,12 @@ export default function EditRiffModal({
                 width: "100%",
                 boxSizing: "border-box",
               }}
-              onFocus={(e) => { e.target.style.borderColor = "#00FF66"; }}
-              onBlur={(e) => { e.target.style.borderColor = "#000000"; }}
+              onFocus={(e) => {
+                e.target.style.borderColor = "#00FF66";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = "#000000";
+              }}
             />
           </div>
 
@@ -182,17 +193,17 @@ export default function EditRiffModal({
 
           <button
             type="submit"
-            disabled={isSubmitting || !title.trim()}
+            disabled={isSubmitting}
             style={{
-              backgroundColor: isSubmitting || !title.trim() ? "#E6E6E6" : "#FFFFFF",
+              backgroundColor: isSubmitting ? "#E6E6E6" : "#FFFFFF",
               border: "2px solid #000000",
-              boxShadow: isSubmitting || !title.trim() ? "none" : "8px 8px 0px 0px #00FF66",
+              boxShadow: isSubmitting ? "none" : "8px 8px 0px 0px #00FF66",
               padding: "12px 48px",
               fontFamily: "var(--font-dm-sans)",
               fontSize: "16px",
               fontWeight: 300,
               color: "#000000",
-              cursor: isSubmitting || !title.trim() ? "not-allowed" : "pointer",
+              cursor: isSubmitting ? "not-allowed" : "pointer",
               transition: "none",
               width: "100%",
             }}

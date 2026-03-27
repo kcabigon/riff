@@ -46,7 +46,7 @@ interface RiffParticipant {
 
 interface Riff {
   id: string;
-  title: string;
+  title: string | null;
   prompt: string | null;
   deadline: string | null;
   status: string;

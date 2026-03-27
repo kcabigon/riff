@@ -9,7 +9,7 @@ interface RevealConfirmModalProps {
   onClose: () => void;
   onConfirm: () => void;
   isRevealing: boolean;
-  riffTitle: string;
+  riffTitle: string | null;
   waitingUsers: Array<{
     id: string;
     name: string | null;
@@ -46,7 +46,7 @@ export default function RevealConfirmModal({
       >
         <span style={{ fontWeight: 700 }}>{submittedCount}</span> of{" "}
         <span style={{ fontWeight: 700 }}>{totalParticipants}</span> members
-        have submitted to &ldquo;{riffTitle}&rdquo;.
+        have submitted to &ldquo;{riffTitle || "Untitled"}&rdquo;.
       </p>
 
       {/* Waiting users */}
@@ -87,9 +87,7 @@ export default function RevealConfirmModal({
                 margin: 0,
               }}
             >
-              {waitingUsers
-                .map((u) => u.name || "Unknown")
-                .join(", ")}
+              {waitingUsers.map((u) => u.name || "Unknown").join(", ")}
             </p>
           </div>
         </div>

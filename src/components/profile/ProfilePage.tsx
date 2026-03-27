@@ -37,7 +37,7 @@ interface ProfilePageProps {
     createdAt: string;
     updatedAt: string;
     isShared: boolean;
-    riffs: Array<{ id: string; title: string }>;
+    riffs: Array<{ id: string; title: string | null }>;
   }>;
   collections: Array<{
     id: string;
@@ -48,7 +48,7 @@ interface ProfilePageProps {
       createdAt: string;
       updatedAt: string;
       isShared: boolean;
-      riffs: Array<{ id: string; title: string }>;
+      riffs: Array<{ id: string; title: string | null }>;
     }>;
   }>;
   isOwnProfile: boolean;

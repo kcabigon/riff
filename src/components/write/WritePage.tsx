@@ -20,7 +20,7 @@ import { convertHeicToJpeg } from "@/lib/convert-heic";
 
 interface RiffConnection {
   id: string;
-  title: string;
+  title: string | null;
   prompt: string | null;
   deadline: string | null;
   clubId: string;
@@ -497,7 +497,7 @@ export default function WritePage({ piece }: WritePageProps) {
                   padding: "4px 12px",
                 }}
               >
-                {riff.title}
+                {riff.title || "Untitled"}
               </span>
             ))}
           </div>

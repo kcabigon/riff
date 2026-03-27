@@ -6,7 +6,7 @@ interface DraftPiece {
   createdAt: string;
   updatedAt: string;
   isShared: boolean;
-  riffs: Array<{ id: string; title: string }>;
+  riffs: Array<{ id: string; title: string | null }>;
 }
 
 interface DraftsListProps {
