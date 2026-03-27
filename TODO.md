@@ -19,7 +19,7 @@ Last updated: March 26, 2026 (Jarric claiming invite/join + riff improvements)
 
 ### Onboarding
 - [x] "Club name" field should auto-populate with first name (e.g. "Kyle's Club")
-- [ ] 🔨 @chris Club photo: show visual preview by device
+- [ ] Club photo: show visual preview by device
 - [x] Club photo: "delete" button should be a trash icon
 
 ### Club Page
