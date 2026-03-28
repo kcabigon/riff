@@ -153,12 +153,14 @@ export async function sendRiffRevealedEmail({
   clubName,
   riffUrl,
   riffTitle,
+  volumeNumber,
   pieceCount,
 }: {
   email: string;
   clubName: string;
   riffUrl: string;
   riffTitle?: string | null;
+  volumeNumber?: number | null;
   pieceCount: number;
 }): Promise<void> {
   try {
@@ -170,6 +172,7 @@ export async function sendRiffRevealedEmail({
         clubName,
         riffUrl,
         riffTitle,
+        volumeNumber,
         pieceCount,
       }),
     });
@@ -568,15 +571,23 @@ function getRiffRevealedEmailTemplate({
   clubName,
   riffUrl,
   riffTitle,
+  volumeNumber,
   pieceCount,
 }: {
   clubName: string;
   riffUrl: string;
   riffTitle?: string | null;
+  volumeNumber?: number | null;
   pieceCount: number;
 }): string {
-  const titleBlock = riffTitle
-    ? `<p style="font-size: 20px; font-weight: 500; color: #000000; margin: 0 0 12px 0;">${riffTitle}</p>`
+  const displayTitle = volumeNumber
+    ? riffTitle
+      ? `Volume ${volumeNumber}: ${riffTitle}`
+      : `Volume ${volumeNumber}`
+    : riffTitle || null;
+
+  const titleBlock = displayTitle
+    ? `<p style="font-size: 20px; font-weight: 500; color: #000000; margin: 0 0 12px 0;">${displayTitle}</p>`
     : "";
 
   const pieceLabel = pieceCount === 1 ? "1 piece" : `${pieceCount} pieces`;
@@ -657,7 +668,6 @@ function getRiffRevealedEmailTemplate({
   <div class="container">
     <div class="header">
       <h1 class="title">The pieces are in.</h1>
-      <p class="subtitle">For friends who write for fun.</p>
     </div>
 
     <div class="content">

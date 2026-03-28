@@ -324,6 +324,7 @@ export async function PATCH(
                   clubName: updatedRiff.club.name,
                   riffUrl,
                   riffTitle: updatedRiff.title,
+                  volumeNumber: updatedRiff.volumeNumber,
                   pieceCount: updatedRiff._count.pieces,
                 })
               )
