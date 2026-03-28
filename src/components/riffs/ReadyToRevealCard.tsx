@@ -50,13 +50,14 @@ export default function ReadyToRevealCard({ riff }: ReadyToRevealCardProps) {
       style={{
         position: "relative",
         cursor: "pointer",
+        width: "400px",
+        height: "440px",
         border: "1px solid #000000",
         boxShadow: isHovered
           ? "8px 8px 0px 0px #01EFFC"
           : "8px 8px 0px 0px #000000",
         overflow: "hidden",
         transition: "none",
-        display: "inline-block",
       }}
     >
       <MosaicCollage
