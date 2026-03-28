@@ -276,7 +276,8 @@ export async function PATCH(
         }).catch(() => {});
 
         // Send riff created emails to all club members except the creator
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
+        const appUrl =
+          process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
         const clubUrl = `${appUrl}/clubs/${riff.clubId}`;
         prisma.clubMember
           .findMany({
@@ -307,7 +308,8 @@ export async function PATCH(
           { riffId }
         ).catch(() => {});
 
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
+        const appUrl =
+          process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
         const riffUrl = `${appUrl}/riffs/${riffId}`;
         prisma.clubMember
           .findMany({
