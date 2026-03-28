@@ -124,52 +124,55 @@ export default function Modal({
           zIndex: 101,
         }}
       >
-        {/* Noise background layer */}
-        {noiseBackground && (
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              zIndex: 0,
-              pointerEvents: "none",
-            }}
-          >
-            <NoiseBackground fillMode="cover" />
-          </div>
-        )}
-
-        {/* Content above noise */}
-        <div style={{ position: "relative", zIndex: 1 }}>
-          {/* Header */}
-          {title && (
+        {/* Wrapper grows to full content height so noise covers it all */}
+        <div style={{ position: "relative" }}>
+          {/* Noise background layer */}
+          {noiseBackground && (
             <div
               style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: "32px",
+                position: "absolute",
+                inset: 0,
+                zIndex: 0,
+                pointerEvents: "none",
               }}
             >
-              <h2
-                style={{
-                  fontFamily: "var(--font-dm-serif-text)",
-                  fontSize: "24px",
-                  fontWeight: 400,
-                  color: "#000000",
-                  margin: 0,
-                }}
-              >
-                {title}
-              </h2>
-              <CloseButton onClick={onClose} size={24} />
+              <NoiseBackground fillMode="cover" />
             </div>
           )}
 
-          {/* Body */}
-          {children}
+          {/* Content above noise */}
+          <div style={{ position: "relative", zIndex: 1 }}>
+            {/* Header */}
+            {title && (
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "32px",
+                }}
+              >
+                <h2
+                  style={{
+                    fontFamily: "var(--font-dm-serif-text)",
+                    fontSize: "24px",
+                    fontWeight: 400,
+                    color: "#000000",
+                    margin: 0,
+                  }}
+                >
+                  {title}
+                </h2>
+                <CloseButton onClick={onClose} size={24} />
+              </div>
+            )}
 
-          {/* Footer */}
-          {footer && <div style={{ marginTop: "24px" }}>{footer}</div>}
+            {/* Body */}
+            {children}
+
+            {/* Footer */}
+            {footer && <div style={{ marginTop: "24px" }}>{footer}</div>}
+          </div>
         </div>
       </div>
     </>
