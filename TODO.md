@@ -25,7 +25,7 @@ Last updated: March 26, 2026 (Jarric claiming invite/join + riff improvements)
 
 ### Club Page
 - [x] Top-left logo should be icon only (not full wordmark) — uses riff_logo.svg
-- [ ] Redesign club dropdown
+- [x] Redesign club dropdown
 - [x] If club has banner photo: dark overlay + club details centered on photo in white text (dark scrim)
 - [x] Club Settings gear icon: admin can edit club name, description, and banner image
 - [x] Replace gear icon (⚙) with minimal three-dot SVG button with cyan hover effect
