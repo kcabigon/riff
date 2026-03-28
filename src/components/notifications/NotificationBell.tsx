@@ -58,8 +58,8 @@ export default function NotificationBell() {
         <Image
           src="/icons/notification.svg"
           alt="Notifications"
-          width={24}
-          height={24}
+          width={40}
+          height={40}
         />
 
         {unreadCount > 0 && (
