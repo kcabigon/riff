@@ -5,7 +5,9 @@
 
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY);
+}
 
 /**
  * Send a magic link email for authentication (existing users)
@@ -17,7 +19,7 @@ export async function sendSignInEmail(
   magicLink: string
 ): Promise<void> {
   try {
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResend().emails.send({
       from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
       to: email,
       subject: "Sign in to Riff",
@@ -46,7 +48,7 @@ export async function sendOnboardingEmail(
   magicLink: string
 ): Promise<void> {
   try {
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResend().emails.send({
       from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
       to: email,
       subject: "Welcome to Riff!",
@@ -79,7 +81,7 @@ export async function sendClubInviteEmail(
   inviterName: string
 ): Promise<void> {
   try {
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResend().emails.send({
       from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
       to: email,
       subject: `${inviterName} invited you to join ${clubName} on Riff`,
@@ -132,7 +134,7 @@ function getSignInEmailTemplate(magicLink: string): string {
           <!-- Logo section -->
           <tr>
             <td align="center" style="padding:48px 40px 32px;">
-              <img src="https://letsriff.app/images/riff_logo_email.png" alt="Riff" width="160" height="149" style="display:block;margin:0 auto;" />
+              <img src="https://raw.githubusercontent.com/kcabigon/riff/feature/signin-email-redesign/public/images/riff_logo_email.png" alt="Riff" width="160" height="149" style="display:block;margin:0 auto;" />
             </td>
           </tr>
 
