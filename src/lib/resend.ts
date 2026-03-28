@@ -818,7 +818,6 @@ function getRiffCreatedEmailTemplate({
   <div class="container">
     <div class="header">
       <h1 class="title">New riff dropped.</h1>
-      <p class="subtitle">For friends who write for fun.</p>
     </div>
 
     <div class="content">
