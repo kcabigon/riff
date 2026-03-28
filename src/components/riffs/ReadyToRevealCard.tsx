@@ -35,7 +35,11 @@ interface ReadyToRevealCardProps {
   totalPieces: number;
 }
 
-export default function ReadyToRevealCard({ riff }: ReadyToRevealCardProps) {
+export default function ReadyToRevealCard({
+  riff,
+  readCount,
+  totalPieces,
+}: ReadyToRevealCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const router = useRouter();
   const isMobile = useIsMobile();
@@ -49,60 +53,82 @@ export default function ReadyToRevealCard({ riff }: ReadyToRevealCardProps) {
 
   return (
     <div
-      onClick={handleClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
       style={{
-        position: "relative",
-        cursor: "pointer",
-        width: `${cardWidth}px`,
-        height: `${cardHeight}px`,
-        margin: "0 auto",
-        border: "1px solid #000000",
-        boxShadow: isHovered
-          ? "8px 8px 0px 0px #01EFFC"
-          : "8px 8px 0px 0px #000000",
-        overflow: "hidden",
-        transition: "none",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: "12px",
       }}
     >
-      <MosaicCollage
-        pieces={riff.pieces.map((p) => ({
-          id: p.piece.id,
-          currentContent: p.piece.currentContent,
-          coverImage: p.piece.coverImage,
-        }))}
-        width={cardWidth}
-        height={cardHeight}
-      />
-
-      {/* Label strip — vertically centered */}
       <div
+        onClick={handleClick}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
         style={{
-          position: "absolute",
-          top: "50%",
-          left: 0,
-          width: "100%",
-          transform: "translateY(-50%)",
-          backgroundColor: "#000000",
-          padding: "13px 20px",
-          zIndex: 1,
-          boxSizing: "border-box",
+          position: "relative",
+          cursor: "pointer",
+          width: `${cardWidth}px`,
+          height: `${cardHeight}px`,
+          margin: "0 auto",
+          border: "1px solid #000000",
+          boxShadow: isHovered
+            ? "8px 8px 0px 0px #01EFFC"
+            : "8px 8px 0px 0px #000000",
+          overflow: "hidden",
+          transition: "none",
         }}
       >
-        <p
+        <MosaicCollage
+          pieces={riff.pieces.map((p) => ({
+            id: p.piece.id,
+            currentContent: p.piece.currentContent,
+            coverImage: p.piece.coverImage,
+          }))}
+          width={cardWidth}
+          height={cardHeight}
+        />
+
+        {/* Label strip — vertically centered */}
+        <div
           style={{
-            fontFamily: "var(--font-dm-serif-text)",
-            fontSize: "20px",
-            fontWeight: 400,
-            color: "#FFFFFF",
-            margin: 0,
-            textAlign: "center",
+            position: "absolute",
+            top: "50%",
+            left: 0,
+            width: "100%",
+            transform: "translateY(-50%)",
+            backgroundColor: "#000000",
+            padding: "13px 20px",
+            zIndex: 1,
+            boxSizing: "border-box",
           }}
         >
-          {getRiffDisplayTitle(riff)}
-        </p>
+          <p
+            style={{
+              fontFamily: "var(--font-dm-serif-text)",
+              fontSize: "20px",
+              fontWeight: 400,
+              color: "#FFFFFF",
+              margin: 0,
+              textAlign: "center",
+            }}
+          >
+            {getRiffDisplayTitle(riff)}
+          </p>
+        </div>
       </div>
+
+      {/* Read progress */}
+      <p
+        style={{
+          fontFamily: "var(--font-dm-sans)",
+          fontSize: "14px",
+          fontWeight: 300,
+          color: "#808080",
+          margin: 0,
+        }}
+      >
+        {readCount} of {totalPieces} read
+      </p>
     </div>
   );
 }
