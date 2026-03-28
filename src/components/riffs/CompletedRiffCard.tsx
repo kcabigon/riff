@@ -58,12 +58,13 @@ export default function CompletedRiffCard({
           style={{
             position: "absolute",
             top: "50%",
-            left: "-1px",
-            width: "240px",
+            left: 0,
+            width: "100%",
             transform: "translateY(-50%)",
             backgroundColor: "#000000",
             padding: "8px 12px",
             zIndex: 1,
+            boxSizing: "border-box",
           }}
         >
           <p
@@ -73,12 +74,10 @@ export default function CompletedRiffCard({
               fontWeight: 400,
               color: "#FFFFFF",
               margin: 0,
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
+              textAlign: "center",
             }}
           >
-            {clubName} | {getRiffDisplayTitle(riff)}
+            {getRiffDisplayTitle(riff)}
           </p>
         </div>
       </div>
@@ -106,12 +105,13 @@ export default function CompletedRiffCard({
         style={{
           position: "absolute",
           top: "50%",
-          left: "-1px",
-          width: "240px",
+          left: 0,
+          width: "100%",
           transform: "translateY(-50%)",
           backgroundColor: "#000000",
           padding: "8px 12px",
           zIndex: 1,
+          boxSizing: "border-box",
         }}
       >
         <p
@@ -121,12 +121,10 @@ export default function CompletedRiffCard({
             fontWeight: 400,
             color: "#FFFFFF",
             margin: 0,
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
+            textAlign: "center",
           }}
         >
-          {clubName} | {riff.title || "Untitled"}
+          {getRiffDisplayTitle(riff)}
         </p>
       </div>
     </div>
