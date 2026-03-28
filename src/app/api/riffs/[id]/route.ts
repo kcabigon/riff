@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
 import { notifyClubMembers, notifyRiffParticipants } from "@/lib/notifications";
+import { sendRiffCreatedEmail } from "@/lib/resend";
 import { NotificationType } from "@prisma/client";
 
 // GET /api/riffs/[id] - Get riff details
@@ -273,6 +274,31 @@ export async function PATCH(
         notifyClubMembers(riff.clubId, NotificationType.RIFF_CREATED, actorId, {
           riffId,
         }).catch(() => {});
+
+        // Send riff created emails to all club members except the creator
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
+        const clubUrl = `${appUrl}/clubs/${riff.clubId}`;
+        prisma.clubMember
+          .findMany({
+            where: { clubId: riff.clubId, userId: { not: actorId } },
+            include: { user: { select: { email: true, name: true } } },
+          })
+          .then((members) =>
+            Promise.allSettled(
+              members.map((m) =>
+                sendRiffCreatedEmail({
+                  email: m.user.email,
+                  actorName: updatedRiff.creator.name || "Your host",
+                  clubName: updatedRiff.club.name,
+                  clubUrl,
+                  riffTitle: riff.title,
+                  prompt: riff.prompt,
+                  deadline: riff.deadline ?? null,
+                })
+              )
+            )
+          )
+          .catch(() => {});
       } else if (status === "REVEALED") {
         notifyRiffParticipants(
           riffId,
