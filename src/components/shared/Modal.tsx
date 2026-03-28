@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useCallback, ReactNode } from "react";
 import NoiseBackground from "@/components/NoiseBackground";
+import CloseButton from "@/components/CloseButton";
 
 interface ModalProps {
   isOpen: boolean;
@@ -160,25 +161,7 @@ export default function Modal({
               >
                 {title}
               </h2>
-              <button
-                onClick={onClose}
-                aria-label="Close"
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  padding: "4px",
-                  lineHeight: 1,
-                  display: "flex",
-                }}
-              >
-                <img
-                  src="/icons/close.svg"
-                  alt="Close"
-                  width={24}
-                  height={24}
-                />
-              </button>
+              <CloseButton onClick={onClose} size={24} />
             </div>
           )}
 

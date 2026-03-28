@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Modal from "@/components/shared/Modal";
+import CloseButton from "@/components/CloseButton";
 import NoiseBackground from "@/components/NoiseBackground";
 import Tagline from "@/components/Tagline";
 
@@ -43,22 +44,16 @@ export default function ConversionModal({
         <NoiseBackground fillMode="cover" />
 
         {/* Close button */}
-        <button
-          onClick={onClose}
+        <div
           style={{
             position: "absolute",
             top: "12px",
             right: "16px",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
             zIndex: 2,
-            padding: "4px",
-            lineHeight: 1,
           }}
         >
-          <img src="/icons/close.svg" alt="Close" width={24} height={24} />
-        </button>
+          <CloseButton onClick={onClose} />
+        </div>
 
         <div
           style={{

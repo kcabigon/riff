@@ -13,6 +13,7 @@ import ReadyToRevealCard from "@/components/riffs/ReadyToRevealCard";
 import OnboardingChecklist from "@/components/clubs/OnboardingChecklist";
 import ClubSettingsModal from "@/components/clubs/ClubSettingsModal";
 import InviteOptions from "@/components/clubs/InviteOptions";
+import CloseButton from "@/components/CloseButton";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import { getRiffDisplayTitle } from "@/lib/riff-utils";
@@ -1116,19 +1117,7 @@ export default function ClubPageLayout({
               >
                 Invite friends
               </h2>
-              <button
-                onClick={() => setIsInviteModalOpen(false)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  fontSize: "20px",
-                  cursor: "pointer",
-                  color: "#000000",
-                  lineHeight: 1,
-                }}
-              >
-                ×
-              </button>
+              <CloseButton onClick={() => setIsInviteModalOpen(false)} />
             </div>
             <InviteOptions
               clubId={club.id}

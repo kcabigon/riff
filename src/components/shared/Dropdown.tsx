@@ -10,6 +10,7 @@ interface DropdownActionItem {
   icon?: ReactNode;
   active?: boolean;
   color?: string;
+  backgroundColor?: string;
   onClick: () => void;
 }
 
@@ -138,7 +139,7 @@ export default function Dropdown({
                   gap: "8px",
                   width: "100%",
                   textAlign: "left",
-                  background: "none",
+                  background: item.backgroundColor || "none",
                   border: "none",
                   borderBottom: isLast ? "none" : "1px solid #E6E6E6",
                   padding: "12px 16px",
@@ -150,11 +151,12 @@ export default function Dropdown({
                 }}
                 onMouseEnter={(e) => {
                   if (!item.active) {
-                    e.currentTarget.style.backgroundColor = "#F5F5F5";
+                    e.currentTarget.style.backgroundColor = "#01EFFC";
                   }
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.backgroundColor =
+                    item.backgroundColor || "transparent";
                 }}
               >
                 {item.icon && item.icon}

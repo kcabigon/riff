@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import CloseButton from "@/components/CloseButton";
 import {
   PROMPT_SUGGESTIONS,
   PROMPT_CATEGORIES,
@@ -68,21 +69,7 @@ export default function PromptLibrary({ onSelect }: PromptLibraryProps) {
         >
           Tap a prompt to use it
         </p>
-        <button
-          onClick={() => setIsExpanded(false)}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            fontSize: "16px",
-            color: "#808080",
-            padding: "2px",
-            lineHeight: 1,
-          }}
-          aria-label="Close prompt library"
-        >
-          &times;
-        </button>
+        <CloseButton onClick={() => setIsExpanded(false)} />
       </div>
 
       {/* Category tabs */}
