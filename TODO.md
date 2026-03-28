@@ -67,7 +67,7 @@ Last updated: March 26, 2026 (Jarric claiming invite/join + riff improvements)
 
 ### Notifications
 - [x] Notification bell uses SVG icon with unread count badge
-- [ ] Clicking a notification should navigate to the relevant page
+- [x] Clicking a notification should navigate to the relevant page
 
 ### Settings
 - [x] Avatar upload and management
