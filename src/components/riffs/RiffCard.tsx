@@ -78,15 +78,6 @@ export default function RiffCard({
     return `${formatDate(riff.createdAt)} - ${formatDate(riff.deadline)}`;
   };
 
-  // Get submitted and waiting participants
-  const submittedUsers = riff.participants.filter((p) =>
-    riff.pieces.some((piece) => piece.piece.authorId === p.user.id)
-  );
-
-  const waitingUsers = riff.participants.filter(
-    (p) => !riff.pieces.some((piece) => piece.piece.authorId === p.user.id)
-  );
-
   const handleCardClick = () => {
     router.push(`/riffs/${riff.id}`);
   };
