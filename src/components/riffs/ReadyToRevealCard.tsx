@@ -57,7 +57,7 @@ export default function ReadyToRevealCard({
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        gap: "12px",
+        gap: "20px",
       }}
     >
       <div
