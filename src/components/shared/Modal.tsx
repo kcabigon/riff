@@ -116,7 +116,7 @@ export default function Modal({
           backgroundColor: "#FFFFFF",
           border: "2px solid #000000",
           boxShadow: "8px 8px 0px 0px #000000",
-          padding: "40px",
+          padding: 0,
           width: `${SIZE_MAP[size]}px`,
           maxWidth: "90vw",
           maxHeight: "85vh",
@@ -124,8 +124,8 @@ export default function Modal({
           zIndex: 101,
         }}
       >
-        {/* Wrapper grows to full content height so noise covers it all */}
-        <div style={{ position: "relative" }}>
+        {/* Padding lives here so noise covers edge-to-edge and full scroll height */}
+        <div style={{ position: "relative", padding: "40px" }}>
           {/* Noise background layer */}
           {noiseBackground && (
             <div
