@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import MosaicCollage from "./MosaicCollage";
 import { getRiffDisplayTitle } from "@/lib/riff-utils";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 
 interface ReadyToRevealCardProps {
   riff: {
@@ -37,6 +38,10 @@ interface ReadyToRevealCardProps {
 export default function ReadyToRevealCard({ riff }: ReadyToRevealCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const router = useRouter();
+  const isMobile = useIsMobile();
+
+  const cardWidth = isMobile ? 320 : 400;
+  const cardHeight = isMobile ? 352 : 440;
 
   const handleClick = () => {
     router.push(`/riffs/${riff.id}`);
@@ -50,8 +55,9 @@ export default function ReadyToRevealCard({ riff }: ReadyToRevealCardProps) {
       style={{
         position: "relative",
         cursor: "pointer",
-        width: "400px",
-        height: "440px",
+        width: `${cardWidth}px`,
+        height: `${cardHeight}px`,
+        margin: "0 auto",
         border: "1px solid #000000",
         boxShadow: isHovered
           ? "8px 8px 0px 0px #01EFFC"
@@ -66,8 +72,8 @@ export default function ReadyToRevealCard({ riff }: ReadyToRevealCardProps) {
           currentContent: p.piece.currentContent,
           coverImage: p.piece.coverImage,
         }))}
-        width={400}
-        height={440}
+        width={cardWidth}
+        height={cardHeight}
       />
 
       {/* Label strip — vertically centered */}
