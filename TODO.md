@@ -1,6 +1,6 @@
 # Riff — Master TODO
 
-Last updated: March 26, 2026 (Jarric claiming invite/join + riff improvements)
+Last updated: March 27, 2026 (Jarric adding profile access control + profile banner TODOs)
 
 ---
 
@@ -25,7 +25,7 @@ Last updated: March 26, 2026 (Jarric claiming invite/join + riff improvements)
 
 ### Club Page
 - [x] Top-left logo should be icon only (not full wordmark) — uses riff_logo.svg
-- [ ] Redesign club dropdown
+- [x] Redesign club dropdown
 - [x] If club has banner photo: dark overlay + club details centered on photo in white text (dark scrim)
 - [x] Club Settings gear icon: admin can edit club name, description, and banner image
 - [x] Replace gear icon (⚙) with minimal three-dot SVG button with cyan hover effect
@@ -38,13 +38,13 @@ Last updated: March 26, 2026 (Jarric claiming invite/join + riff improvements)
 
 ### Riff Creation / Management
 - [x] Volume number auto-assigned; riff name optional (not required to create)
-- [ ] 🔨 @jarric — Due date mandatory on riff creation, defaults to 1 month out, admin can edit later
+- [x] Due date mandatory on riff creation, defaults to 1 month out, admin can edit later
 - [ ] Redesign prompts/inspiration UI
 - [ ] After creating a riff, host sees "Start writing" or "Invite friends" CTA
 - [ ] Don't show "Reveal pieces" until deadline passes OR all submissions are in
 
 ### Riff Card & Riff Page
-- [ ] 🔨 @jarric — Update riff card: "waiting for X" / "submitted" states and CTA logic
+- [x] Update riff card: simplified to "Joined by" + avatars
 - [ ] 🔨 @jarric — Design riff participant progress view on the riff page
 
 ### Riff Page
@@ -57,9 +57,12 @@ Last updated: March 26, 2026 (Jarric claiming invite/join + riff improvements)
 - [x] Cover image upload UI (CoverImageModal with upload, crop, piece image picker, HEIC support)
 
 ### Profile Page
-- [ ] Change tab order to: Drafts, Pieces, Collections
+- [x] Change tab order to: Drafts, Pieces, Collections
 - [ ] Drafts list not updating immediately after new piece is created
 - [x] Add way to get back to club page from profile (BackButton using lastActiveClubId)
+- [ ] Access control deep dive — profile pages (and likely other pages) are wide open to any logged-in user; audit and enforce correct visibility rules across the app
+- [ ] Drafts tab visible to any logged-in user on someone else's profile — should be owner-only
+- [ ] Profile banner image — reuse club banner upload component (ImageUploadModal)
 
 ### Piece Management
 - [ ] Let users manage piece state: draft vs. published, shared in riff vs. not ready to share
@@ -67,7 +70,7 @@ Last updated: March 26, 2026 (Jarric claiming invite/join + riff improvements)
 
 ### Notifications
 - [x] Notification bell uses SVG icon with unread count badge
-- [ ] Clicking a notification should navigate to the relevant page
+- [x] Clicking a notification should navigate to the relevant page
 
 ### Settings
 - [x] Avatar upload and management
@@ -80,12 +83,14 @@ Last updated: March 26, 2026 (Jarric claiming invite/join + riff improvements)
 
 ## Soon (post-staging, pre-launch)
 
-- [ ] Notification emails via Resend (riff created, deadline approaching, pieces revealed, new comment)
+- [x] Notification emails via Resend — riff created, pieces revealed
+- [ ] Notification emails via Resend — deadline approaching, new comment
 - [ ] Deadline reminder cron job (Vercel Cron, 24h before deadline)
 - [ ] Toast notifications replacing `console.error` catches
 - [ ] Loading skeletons for ClubPageLayout, ProfilePage, RiffPageLayout
 - [ ] Deployment environment badge (dev/staging/production indicator)
 - [x] Onboarding invite step now generates /clubs/[id]/join links instead of single-use tokens
+- [x] Self-contained join page (email + name inline, no redirect to login/onboarding)
 - [ ] Onboarding page refinements (create-club, join-club pages)
 
 ---

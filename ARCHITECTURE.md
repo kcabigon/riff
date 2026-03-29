@@ -81,7 +81,7 @@ src/app/api/
 ### Components
 ```
 src/components/
-├── shared/        # Modal, Avatar, AvatarStack, AdminBadge, EnvironmentBadge, Dropdown
+├── shared/        # Modal, Avatar, AvatarStack, AdminBadge, EnvironmentBadge, Dropdown, ImageUploadModal
 ├── clubs/         # ClubPageLayout, NavBar, ClubDropdown, AvatarDropdown, OnboardingChecklist, InviteOptions, ClubSettingsModal, JoinClubClient, ConversionModal
 ├── riffs/         # RiffCard, RiffPageLayout, CreateRiffModal, EditRiffModal, DeleteRiffConfirmModal,
 │                  # RevealCelebration, RevealConfirmModal, PieceCard, CompletedRiffCard, ReadyToRevealCard,
@@ -93,6 +93,45 @@ src/components/
 ├── about/         # AboutPage
 └── editor/        # TiptapEditor, EditorToolbar, extensions/Spotify
 ```
+
+### Reusable Component Catalog
+
+**IMPORTANT: Always reuse these components before building anything new.**
+
+#### Core UI (`src/components/`)
+| Component | File | Use for |
+|-----------|------|---------|
+| **PrimaryButton** | `PrimaryButton.tsx` | Primary actions (green, neo-brutalist). Props: `loading`, `disabled` |
+| **SecondaryButton** | `SecondaryButton.tsx` | Secondary actions (cyan). Same props as PrimaryButton |
+| **TextInput** | `TextInput.tsx` | All form inputs. Props: `error`, `multiline`, `rows` |
+| **BackButton** | `BackButton.tsx` | Back navigation. Props: `href`, `onClick`, `size` |
+| **CloseButton** | `CloseButton.tsx` | Close/dismiss actions. Props: `onClick`, `size` |
+| **NoiseBackground** | `NoiseBackground.tsx` | Fractal noise SVG backdrop. Props: `fillMode` |
+| **Tagline** | `Tagline.tsx` | Colored vector highlight text. Props: `text`, `color` |
+| **WelcomeNote** | `WelcomeNote.tsx` | Handwriting-font message box |
+
+#### Shared (`src/components/shared/`)
+| Component | File | Use for |
+|-----------|------|---------|
+| **Modal** | `Modal.tsx` | All modals/dialogs. Props: `isOpen`, `onClose`, `title`, `size` ("sm"\|"md"\|"lg"), `footer` |
+| **Avatar** | `Avatar.tsx` | User avatars everywhere. Props: `user`, `size` (24\|32\|40\|48), `badge` ("admin"\|"moderator") |
+| **AvatarStack** | `AvatarStack.tsx` | Overlapping avatar groups. Props: `users`, `size`, `onAvatarClick` |
+| **Dropdown** | `Dropdown.tsx` | All dropdown menus. Props: `trigger`, `items`, `align` ("left"\|"right") |
+| **ImageUploadModal** | `ImageUploadModal.tsx` | **Go-to modal for all image uploads.** Crop, drag-drop, HEIC/GIF support. Props: `isOpen`, `onClose`, `onSelect`, `title`, `aspectRatio` (16/9 for covers, 1 for avatars), `cropShape` ("rect"\|"round"), `currentImage`, `existingImages` |
+| **AdminBadge** | `AdminBadge.tsx` | Host/moderator role indicator. Props: `type`, `size` |
+| **EnvironmentBadge** | `EnvironmentBadge.tsx` | Dev/staging/prod label |
+
+#### Onboarding (`src/components/onboarding/`)
+| Component | File | Use for |
+|-----------|------|---------|
+| **ImageUpload** | `ImageUpload.tsx` | Drag-and-drop image upload with preview. Props: `onUpload`, `currentImage` |
+| **OnboardingCard** | `OnboardingCard.tsx` | Full-screen onboarding layout. Props: `showLogo`, `headerContent` |
+| **OnboardingProgress** | `OnboardingProgress.tsx` | Step dots. Props: `currentStep`, `totalSteps` |
+
+#### Auth (`src/components/auth/`)
+| Component | File | Use for |
+|-----------|------|---------|
+| **AuthCard** | `AuthCard.tsx` | Full-screen auth layout with noise background and logo |
 
 ### Hooks & Lib
 ```
