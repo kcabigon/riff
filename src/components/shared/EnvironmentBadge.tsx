@@ -1,8 +1,13 @@
 "use client";
 
+import { usePathname } from "next/navigation";
+
 export default function EnvironmentBadge() {
+  const pathname = usePathname();
   const label = process.env.NEXT_PUBLIC_ENV_LABEL;
 
+  // Leaderboard page renders its own badge
+  if (pathname === "/leaderboard") return null;
   if (!label) return null;
 
   return (
