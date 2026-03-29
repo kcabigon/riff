@@ -10,6 +10,17 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: "/",
+          has: [{ type: "host", value: "commits.letsriff.app" }],
+          destination: "/leaderboard",
+        },
+      ],
+    };
+  },
 };
 
 export default nextConfig;
