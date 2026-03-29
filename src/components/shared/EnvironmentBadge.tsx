@@ -7,7 +7,11 @@ export default function EnvironmentBadge() {
   const label = process.env.NEXT_PUBLIC_ENV_LABEL;
 
   // Leaderboard page renders its own badge
-  if (pathname === "/leaderboard") return null;
+  const isLeaderboard =
+    pathname === "/leaderboard" ||
+    (typeof window !== "undefined" &&
+      window.location.hostname === "commits.letsriff.app");
+  if (isLeaderboard) return null;
   if (!label) return null;
 
   return (
