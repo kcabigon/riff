@@ -56,8 +56,8 @@ interface ProfilePageProps {
 }
 
 const TABS: { id: TabId; label: string }[] = [
-  { id: "pieces", label: "PIECES" },
   { id: "drafts", label: "DRAFTS" },
+  { id: "pieces", label: "PIECES" },
   { id: "collections", label: "COLLECTIONS" },
 ];
 
@@ -70,7 +70,7 @@ export default function ProfilePage({
   isOwnProfile,
   lastActiveClubId,
 }: ProfilePageProps) {
-  const [activeTab, setActiveTab] = useState<TabId>("pieces");
+  const [activeTab, setActiveTab] = useState<TabId>("drafts");
   const { createDraft, isCreating } = useDraftCreation();
 
   return (

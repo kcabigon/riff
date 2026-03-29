@@ -956,7 +956,7 @@ export default function ClubPageLayout({
                   letterSpacing: "0.05em",
                 }}
               >
-                Ready to Reveal
+                Current Read
               </h2>
 
               <div

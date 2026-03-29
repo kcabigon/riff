@@ -78,15 +78,6 @@ export default function RiffCard({
     return `${formatDate(riff.createdAt)} - ${formatDate(riff.deadline)}`;
   };
 
-  // Get submitted and waiting participants
-  const submittedUsers = riff.participants.filter((p) =>
-    riff.pieces.some((piece) => piece.piece.authorId === p.user.id)
-  );
-
-  const waitingUsers = riff.participants.filter(
-    (p) => !riff.pieces.some((piece) => piece.piece.authorId === p.user.id)
-  );
-
   const handleCardClick = () => {
     router.push(`/riffs/${riff.id}`);
   };
@@ -138,7 +129,9 @@ export default function RiffCard({
         alignItems: "center",
         justifyContent: "space-between",
         cursor: "pointer",
-        boxShadow: isCardHovered ? "4px 4px 0px 0px #000000" : "none",
+        boxShadow: isCardHovered
+          ? "4px 4px 0px 0px #01EFFC"
+          : "4px 4px 0px 0px #000000",
         transition: "box-shadow 0.1s ease",
       }}
     >
@@ -194,17 +187,24 @@ export default function RiffCard({
           </p>
         </div>
 
-        {/* Not Joined: Participants Section */}
-        {!isJoined && riff.participants.length > 0 && (
-          <div style={{ marginTop: "8px" }}>
+        {/* Participants */}
+        {riff.participants.length > 0 && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              marginTop: "8px",
+            }}
+          >
             <p
               style={{
                 fontFamily: "var(--font-dm-sans)",
                 fontSize: "16px",
                 fontWeight: 300,
-                lineHeight: 1.6,
+                lineHeight: "normal",
                 color: "#000000",
-                marginBottom: "12px",
+                margin: 0,
               }}
             >
               Joined by
@@ -215,79 +215,6 @@ export default function RiffCard({
               showBorder={false}
               onAvatarClick={handleAvatarClick}
             />
-          </div>
-        )}
-
-        {/* Joined: Progress Section */}
-        {isJoined && (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "8px",
-            }}
-          >
-            {/* Submitted Row */}
-            {submittedUsers.length > 0 && (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "12px",
-                  height: "32px",
-                }}
-              >
-                <p
-                  style={{
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "16px",
-                    fontWeight: 300,
-                    lineHeight: "normal",
-                    color: "#000000",
-                    margin: 0,
-                  }}
-                >
-                  Submitted
-                </p>
-                <AvatarStack
-                  users={submittedUsers.slice(0, 5).map((p) => p.user)}
-                  size={32}
-                  showBorder={false}
-                  onAvatarClick={handleAvatarClick}
-                />
-              </div>
-            )}
-
-            {/* Waiting For Row */}
-            {waitingUsers.length > 0 && (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "12px",
-                  height: "32px",
-                }}
-              >
-                <p
-                  style={{
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "16px",
-                    fontWeight: 300,
-                    lineHeight: "normal",
-                    color: "#000000",
-                    margin: 0,
-                  }}
-                >
-                  Waiting for
-                </p>
-                <AvatarStack
-                  users={waitingUsers.slice(0, 5).map((p) => p.user)}
-                  size={32}
-                  showBorder={false}
-                  onAvatarClick={handleAvatarClick}
-                />
-              </div>
-            )}
           </div>
         )}
       </div>
