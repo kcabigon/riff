@@ -38,13 +38,13 @@ Last updated: March 27, 2026 (Jarric adding profile access control + profile ban
 
 ### Riff Creation / Management
 - [x] Volume number auto-assigned; riff name optional (not required to create)
-- [ ] 🔨 @jarric — Due date mandatory on riff creation, defaults to 1 month out, admin can edit later
+- [x] Due date mandatory on riff creation, defaults to 1 month out, admin can edit later
 - [ ] Redesign prompts/inspiration UI
 - [ ] After creating a riff, host sees "Start writing" or "Invite friends" CTA
 - [ ] Don't show "Reveal pieces" until deadline passes OR all submissions are in
 
 ### Riff Card & Riff Page
-- [ ] 🔨 @jarric — Update riff card: "waiting for X" / "submitted" states and CTA logic
+- [x] Update riff card: simplified to "Joined by" + avatars
 - [ ] 🔨 @jarric — Design riff participant progress view on the riff page
 
 ### Riff Page

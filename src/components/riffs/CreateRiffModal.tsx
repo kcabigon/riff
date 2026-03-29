@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Modal from "@/components/shared/Modal";
 import PromptLibrary from "./PromptLibrary";
+import Tagline from "@/components/Tagline";
 
 interface CreateRiffModalProps {
   clubId: string;
@@ -17,16 +18,35 @@ export default function CreateRiffModal({
   onClose,
   onCreated,
 }: CreateRiffModalProps) {
+  const getDefaultDeadline = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 30);
+    return d.toISOString().split("T")[0];
+  };
+
   const [title, setTitle] = useState("");
   const [prompt, setPrompt] = useState("");
-  const [deadline, setDeadline] = useState("");
+  const [deadline, setDeadline] = useState(getDefaultDeadline);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const daysUntilDeadline = deadline
+    ? Math.round(
+        (new Date(deadline).getTime() - new Date().setHours(0, 0, 0, 0)) /
+          (1000 * 60 * 60 * 24)
+      )
+    : 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
+
+    if (!deadline) {
+      setError("Please set a deadline");
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       // Step 1: Create riff (starts as DRAFT)
@@ -62,10 +82,16 @@ export default function CreateRiffModal({
         return;
       }
 
+      // Step 3: Auto-join the creator as a participant
+      await fetch(`/api/riffs/${riff.id}/participants`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
       // Success — reset and notify parent
       setTitle("");
       setPrompt("");
-      setDeadline("");
+      setDeadline(getDefaultDeadline());
       setIsSubmitting(false);
       onCreated();
     } catch (err) {
@@ -76,21 +102,84 @@ export default function CreateRiffModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Start a new riff">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Start a new riff"
+      noiseBackground
+    >
       <form onSubmit={handleSubmit}>
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-          {/* Title */}
+          {/* Deadline */}
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <label
+            <Tagline
+              text="Deadline"
+              color="#01EFFC"
+              textColor="#000000"
+              fontSize={14}
+              width={100}
+            />
+            <input
+              type="date"
+              value={deadline}
+              onChange={(e) => setDeadline(e.target.value)}
+              required
               style={{
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
+                fontSize: "16px",
                 fontWeight: 300,
                 color: "#000000",
+                backgroundColor: "#FFFFFF",
+                border: "2px solid #000000",
+                padding: "12px 16px",
+                outline: "none",
+                width: "100%",
+                boxSizing: "border-box",
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = "#00FF66";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = "#000000";
+              }}
+            />
+            <span
+              style={{
+                display: "inline-block",
+                backgroundColor: "#FFFFFF",
+                padding: "2px 8px",
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "13px",
+                fontWeight: 300,
+                color: "#959595",
+                alignSelf: "flex-start",
               }}
             >
-              Riff name <span style={{ color: "#959595" }}>(optional)</span>
-            </label>
+              {daysUntilDeadline} days from today
+            </span>
+          </div>
+
+          {/* Title */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <Tagline
+                text="Riff name"
+                color="#00FF66"
+                textColor="#000000"
+                fontSize={14}
+                width={108}
+              />
+              <span
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "14px",
+                  fontWeight: 300,
+                  color: "#959595",
+                }}
+              >
+                (optional)
+              </span>
+            </div>
             <input
               type="text"
               value={title}
@@ -119,16 +208,25 @@ export default function CreateRiffModal({
 
           {/* Prompt (optional) */}
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <label
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: 300,
-                color: "#000000",
-              }}
-            >
-              Prompt <span style={{ color: "#959595" }}>(optional)</span>
-            </label>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <Tagline
+                text="Prompt"
+                color="#EECF01"
+                textColor="#000000"
+                fontSize={14}
+                width={80}
+              />
+              <span
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "14px",
+                  fontWeight: 300,
+                  color: "#959595",
+                }}
+              >
+                (optional)
+              </span>
+            </div>
             <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
@@ -156,44 +254,17 @@ export default function CreateRiffModal({
             />
           </div>
 
-          {/* Prompt library */}
-          <PromptLibrary onSelect={(text) => setPrompt(text)} />
-
-          {/* Deadline (optional) */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <label
+          {/* Prompt library — white background sized to content, centered */}
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <div
               style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: 300,
-                color: "#000000",
+                display: "inline-block",
+                backgroundColor: "#FFFFFF",
+                padding: "2px 8px",
               }}
             >
-              Deadline <span style={{ color: "#959595" }}>(optional)</span>
-            </label>
-            <input
-              type="date"
-              value={deadline}
-              onChange={(e) => setDeadline(e.target.value)}
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 300,
-                color: "#000000",
-                backgroundColor: "#FFFFFF",
-                border: "2px solid #000000",
-                padding: "12px 16px",
-                outline: "none",
-                width: "100%",
-                boxSizing: "border-box",
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = "#00FF66";
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = "#000000";
-              }}
-            />
+              <PromptLibrary onSelect={(text) => setPrompt(text)} />
+            </div>
           </div>
 
           {/* Error */}
