@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Modal from "@/components/shared/Modal";
 import ImageUpload from "@/components/onboarding/ImageUpload";
+import Tagline from "@/components/Tagline";
 
 interface ClubUpdatedData {
   name: string;
@@ -84,21 +85,24 @@ export default function ClubSettingsModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Club details" size="md">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Club details"
+      size="md"
+      noiseBackground
+    >
       <form onSubmit={handleSubmit}>
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           {/* Club name */}
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <label
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: 300,
-                color: "#000000",
-              }}
-            >
-              Club name
-            </label>
+            <Tagline
+              text="Club name"
+              color="#01EFFC"
+              textColor="#000000"
+              fontSize={14}
+              width={105}
+            />
             <input
               type="text"
               value={name}
@@ -128,16 +132,25 @@ export default function ClubSettingsModal({
 
           {/* Description */}
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <label
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: 300,
-                color: "#000000",
-              }}
-            >
-              Description <span style={{ color: "#959595" }}>(optional)</span>
-            </label>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <Tagline
+                text="Description"
+                color="#00FF66"
+                textColor="#000000"
+                fontSize={14}
+                width={115}
+              />
+              <span
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "14px",
+                  fontWeight: 300,
+                  color: "#959595",
+                }}
+              >
+                (optional)
+              </span>
+            </div>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -166,23 +179,34 @@ export default function ClubSettingsModal({
 
           {/* Banner image */}
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <label
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: 300,
-                color: "#000000",
-              }}
-            >
-              Banner image <span style={{ color: "#959595" }}>(optional)</span>
-            </label>
-            <ImageUpload
-              onUpload={setBannerImage}
-              currentImage={bannerImage}
-              disabled={isSubmitting}
-              uploadText="Upload a banner photo"
-              hideRecommendedText={true}
-            />
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <Tagline
+                text="Banner image"
+                color="#EECF01"
+                textColor="#000000"
+                fontSize={14}
+                width={125}
+              />
+              <span
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "14px",
+                  fontWeight: 300,
+                  color: "#959595",
+                }}
+              >
+                (optional)
+              </span>
+            </div>
+            <div style={{ backgroundColor: "#FFFFFF", padding: "12px" }}>
+              <ImageUpload
+                onUpload={setBannerImage}
+                currentImage={bannerImage}
+                disabled={isSubmitting}
+                uploadText="Upload a banner photo"
+                hideRecommendedText={true}
+              />
+            </div>
           </div>
 
           {error && (

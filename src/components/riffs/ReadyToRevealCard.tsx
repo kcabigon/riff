@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import AvatarStack from "@/components/shared/AvatarStack";
 import MosaicCollage from "./MosaicCollage";
 import { getRiffDisplayTitle } from "@/lib/riff-utils";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 
 interface ReadyToRevealCardProps {
   riff: {
@@ -42,24 +42,10 @@ export default function ReadyToRevealCard({
 }: ReadyToRevealCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const router = useRouter();
+  const isMobile = useIsMobile();
 
-  // Get submitters (participants who have submitted pieces)
-  const submitters = riff.participants.filter((p) =>
-    riff.pieces.some((piece) => piece.piece.authorId === p.user.id)
-  );
-
-  // Calculate total word count
-  const totalWords = riff.pieces.reduce(
-    (sum, p) => sum + (p.piece.wordCount || 0),
-    0
-  );
-
-  // Format word count
-  const formatNumber = (n: number): string => n.toLocaleString();
-
-  // CTA label
-  const ctaLabel = readCount === 0 ? "Reveal" : "Continue reading";
-  const ctaShadowColor = readCount === 0 ? "#01EFFC" : "#00FF66";
+  const cardWidth = isMobile ? 320 : 400;
+  const cardHeight = isMobile ? 352 : 440;
 
   const handleClick = () => {
     router.push(`/riffs/${riff.id}`);
@@ -71,56 +57,25 @@ export default function ReadyToRevealCard({
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        gap: "16px",
-        padding: "32px",
-        maxWidth: "440px",
-        margin: "0 auto",
+        gap: "20px",
       }}
     >
-      {/* Title */}
-      <h3
-        style={{
-          fontFamily: "var(--font-dm-serif-text)",
-          fontSize: "28px",
-          fontWeight: 400,
-          color: "#000000",
-          margin: 0,
-          textAlign: "center",
-        }}
-      >
-        {getRiffDisplayTitle(riff)}
-      </h3>
-
-      {/* Writer avatars */}
-      {submitters.length > 0 && (
-        <AvatarStack
-          users={submitters.map((p) => p.user)}
-          size={32}
-          showBorder={false}
-        />
-      )}
-
-      {/* Stats */}
-      <p
-        style={{
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "16px",
-          fontWeight: 300,
-          color: "#000000",
-          margin: 0,
-          textAlign: "center",
-        }}
-      >
-        <span style={{ fontWeight: 700 }}>{totalPieces}</span> pieces{" "}
-        <span style={{ fontWeight: 700 }}>{formatNumber(totalWords)}</span>{" "}
-        words
-      </p>
-
-      {/* Mosaic collage */}
       <div
+        onClick={handleClick}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
         style={{
+          position: "relative",
+          cursor: "pointer",
+          width: `${cardWidth}px`,
+          height: `${cardHeight}px`,
+          margin: "0 auto",
           border: "1px solid #000000",
+          boxShadow: isHovered
+            ? "8px 8px 0px 0px #01EFFC"
+            : "8px 8px 0px 0px #000000",
           overflow: "hidden",
+          transition: "none",
         }}
       >
         <MosaicCollage
@@ -129,36 +84,51 @@ export default function ReadyToRevealCard({
             currentContent: p.piece.currentContent,
             coverImage: p.piece.coverImage,
           }))}
-          width={400}
-          height={440}
+          width={cardWidth}
+          height={cardHeight}
         />
+
+        {/* Label strip — vertically centered */}
+        <div
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: 0,
+            width: "100%",
+            transform: "translateY(-50%)",
+            backgroundColor: "#000000",
+            padding: "13px 20px",
+            zIndex: 1,
+            boxSizing: "border-box",
+          }}
+        >
+          <p
+            style={{
+              fontFamily: "var(--font-dm-serif-text)",
+              fontSize: "20px",
+              fontWeight: 400,
+              color: "#FFFFFF",
+              margin: 0,
+              textAlign: "center",
+            }}
+          >
+            {getRiffDisplayTitle(riff)}
+          </p>
+        </div>
       </div>
 
-      {/* CTA button */}
-      <button
-        onClick={handleClick}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+      {/* Read progress */}
+      <p
         style={{
-          width: "400px",
-          maxWidth: "100%",
-          padding: "12px 48px",
-          backgroundColor: isHovered ? "#00FF66" : "#FFFFFF",
-          border: "2px solid #000000",
-          boxShadow: isHovered
-            ? "8px 8px 0px 0px #000000"
-            : `8px 8px 0px 0px ${ctaShadowColor}`,
           fontFamily: "var(--font-dm-sans)",
-          fontSize: "16px",
+          fontSize: "14px",
           fontWeight: 300,
-          color: "#000000",
-          cursor: "pointer",
-          transition: "none",
-          textAlign: "center",
+          color: "#808080",
+          margin: 0,
         }}
       >
-        {ctaLabel}
-      </button>
+        {readCount} of {totalPieces} read
+      </p>
     </div>
   );
 }

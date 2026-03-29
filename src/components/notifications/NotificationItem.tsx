@@ -41,8 +41,22 @@ function getMessage(n: NotificationItemProps["notification"]): string {
 }
 
 function getLink(n: NotificationItemProps["notification"]): string {
-  if (n.riff) return `/riffs/${n.riff.id}`;
-  if (n.club) return `/clubs/${n.club.id}`;
+  switch (n.type) {
+    case "NEW_COMMENT":
+    case "COMMENT_REPLY":
+      if (n.piece) return `/read/${n.piece.id}`;
+      if (n.riff) return `/riffs/${n.riff.id}`;
+      break;
+    case "CLUB_INVITATION":
+      if (n.club) return `/clubs/${n.club.id}`;
+      break;
+    case "RIFF_CREATED":
+      if (n.riff) return `/clubs/${n.riff.clubId}`;
+      break;
+    default:
+      if (n.riff) return `/riffs/${n.riff.id}`;
+      if (n.club) return `/clubs/${n.club.id}`;
+  }
   return "#";
 }
 

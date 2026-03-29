@@ -107,6 +107,13 @@ export async function POST(
     const { title, prompt, deadline } = await req.json();
 
     // Validate input
+    if (!deadline) {
+      return NextResponse.json(
+        { error: "Deadline is required" },
+        { status: 400 }
+      );
+    }
+
     if (title && title.length > 200) {
       return NextResponse.json(
         { error: "Riff title must be 200 characters or less" },
