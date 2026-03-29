@@ -1,6 +1,6 @@
 # Riff — Architecture & Project Reference
 
-**Last Updated**: March 23, 2026
+**Last Updated**: March 29, 2026
 
 This file is the single source of truth for project context. The `/letsriff` slash command reads this automatically at the start of each session.
 
@@ -14,7 +14,7 @@ A private essay-sharing platform for creative communities. Users create **clubs*
 
 ---
 
-## Current State (March 23, 2026)
+## Current State (March 29, 2026)
 
 ### What's Working
 - Landing page + About page
@@ -36,10 +36,12 @@ A private essay-sharing platform for creative communities. Users create **clubs*
 - Avatar system with admin badges
 - Mobile responsive across all views
 - Image uploads via Supabase Storage (persistent across deploys)
+- Notification click-through (routes to piece, riff, or club by type)
+- Notification emails (riff created, riff revealed via Resend)
+- Mandatory riff deadlines with live day countdown
+- Redesigned navbar, club dropdown, and sign-in email
 
 ### What's Incomplete
-- Notification click-through (clicking doesn't navigate yet)
-- Notification emails (in-app only, Resend templates not wired)
 - Deadline reminder cron (planned, not implemented)
 
 ---
