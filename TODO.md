@@ -46,6 +46,7 @@ Last updated: March 27, 2026 (Jarric adding profile access control + profile ban
 ### Riff Card & Riff Page
 - [x] Update riff card: simplified to "Joined by" + avatars
 - [ ] 🔨 @jarric — Design riff participant progress view on the riff page
+- [x] Redesign PieceCard as book cover (4:5 portrait, full-bleed image, overlay title, author avatar)
 
 ### Riff Page
 - [ ] 🔨 @jarric — Redesign riff page layout
@@ -55,6 +56,8 @@ Last updated: March 27, 2026 (Jarric adding profile access control + profile ban
 ### Read / Write Experience
 - [ ] YouTube embeds, images, Spotify links need to be mobile responsive
 - [x] Cover image upload UI (CoverImageModal with upload, crop, piece image picker, HEIC support)
+- [ ] Cover image: update editor UI to show current cover image preview inline (e.g. thumbnail next to the "Cover image" button)
+- [ ] Cover image: test all three fallbacks end-to-end (explicit cover → first content image → placeholder color) with correct overlay + white title
 
 ### Profile Page
 - [x] Change tab order to: Drafts, Pieces, Collections
@@ -63,6 +66,7 @@ Last updated: March 27, 2026 (Jarric adding profile access control + profile ban
 - [ ] Access control deep dive — profile pages (and likely other pages) are wide open to any logged-in user; audit and enforce correct visibility rules across the app
 - [ ] Drafts tab visible to any logged-in user on someone else's profile — should be owner-only
 - [ ] Profile banner image — reuse club banner upload component (ImageUploadModal)
+- [ ] After PieceRiff schema migration (DRAFT/SUBMITTED status field): fix profile Pieces tab to only show pieces that are SUBMITTED + riff is REVEALED — prevents sneak peeks on other users' profiles
 
 ### Piece Management
 - [ ] Let users manage piece state: draft vs. published, shared in riff vs. not ready to share
