@@ -306,8 +306,8 @@ model PieceRiff {
   id          String   @id @default(cuid())
   pieceId     String
   riffId      String
-  versionId   String?  // Optional: specific version submitted to riff
-  submittedAt DateTime @default(now())
+  versionId   String?   // Optional: specific version submitted to riff
+  submittedAt DateTime? // Null = attached but not finalized, non-null = submitted and ready for reveal
 
   // Relations
   piece   Piece         @relation(fields: [pieceId], references: [id], onDelete: Cascade)
