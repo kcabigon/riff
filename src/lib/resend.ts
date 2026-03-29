@@ -121,7 +121,7 @@ export async function sendRiffCreatedEmail({
   deadline?: Date | null;
 }): Promise<void> {
   try {
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResend().emails.send({
       from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
       to: email,
       subject: `New riff in ${clubName}`,
@@ -166,7 +166,7 @@ export async function sendRiffRevealedEmail({
   pieceCount: number;
 }): Promise<void> {
   try {
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResend().emails.send({
       from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
       to: email,
       subject: `Riff revealed in ${clubName}`,
