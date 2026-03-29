@@ -57,7 +57,7 @@ Last updated: March 27, 2026 (Jarric adding profile access control + profile ban
 - [x] Cover image upload UI (CoverImageModal with upload, crop, piece image picker, HEIC support)
 
 ### Profile Page
-- [ ] 🔨 @chris — Change tab order to: Drafts, Pieces, Collections
+- [x] Change tab order to: Drafts, Pieces, Collections
 - [ ] Drafts list not updating immediately after new piece is created
 - [x] Add way to get back to club page from profile (BackButton using lastActiveClubId)
 - [ ] Access control deep dive — profile pages (and likely other pages) are wide open to any logged-in user; audit and enforce correct visibility rules across the app
