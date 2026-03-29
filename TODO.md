@@ -46,6 +46,7 @@ Last updated: March 27, 2026 (Jarric adding profile access control + profile ban
 ### Riff Card & Riff Page
 - [ ] 🔨 @jarric — Update riff card: "waiting for X" / "submitted" states and CTA logic
 - [ ] 🔨 @jarric — Design riff participant progress view on the riff page
+- [ ] 🔨 @jarric — Redesign PieceCard as book cover (4:5 portrait, full-bleed image, overlay title, author avatar)
 
 ### Riff Page
 - [ ] 🔨 @jarric — Redesign riff page layout
