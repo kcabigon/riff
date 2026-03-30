@@ -11,9 +11,8 @@ import DeleteRiffConfirmModal from "./DeleteRiffConfirmModal";
 import BackButton from "@/components/BackButton";
 import RevealCelebration from "./RevealCelebration";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
-import { useDraftCreation } from "@/hooks/useDraftCreation";
 import { getRiffDisplayTitle } from "@/lib/riff-utils";
-import Dropdown from "@/components/shared/Dropdown";
+import RiffCTAButton from "@/components/riffs/RiffCTAButton";
 
 interface RiffPageLayoutProps {
   riff: {
@@ -78,7 +77,7 @@ export default function RiffPageLayout({
   onReveal,
 }: RiffPageLayoutProps) {
   const [isJoined, setIsJoined] = useState(initialIsJoined);
-  const [isButtonHovered, setIsButtonHovered] = useState(false);
+  const [isRevealButtonHovered, setIsRevealButtonHovered] = useState(false);
   const [isRevealModalOpen, setIsRevealModalOpen] = useState(false);
   const [isRevealing, setIsRevealing] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -86,7 +85,6 @@ export default function RiffPageLayout({
   const [showCelebration, setShowCelebration] = useState(false);
   const router = useRouter();
   const handleAvatarClick = useProfileNavigation();
-  const { createDraft } = useDraftCreation();
 
   // Deadline detection
   const isPastDeadline = riff.deadline
@@ -95,39 +93,6 @@ export default function RiffPageLayout({
 
   const canRevealNoDeadline =
     !riff.deadline && isAdmin && riff.pieces.length > 0;
-
-  const handleJoinRiff = async () => {
-    try {
-      const res = await fetch(`/api/riffs/${riff.id}/participants`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (res.ok) {
-        setIsJoined(true);
-      }
-    } catch (err) {
-      console.error("Error joining riff:", err);
-    }
-  };
-
-  const handleContinueWriting = () => {
-    const existingPiece = riff.pieces.find(
-      (p) => p.piece.authorId === currentUserId
-    );
-    if (existingPiece) {
-      router.push(`/write/${existingPiece.piece.id}`);
-    } else {
-      createDraft(riff.id);
-    }
-  };
-
-  const handleButtonClick = () => {
-    if (!isJoined) {
-      handleJoinRiff();
-    } else {
-      handleContinueWriting();
-    }
-  };
 
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString("en-US", {
@@ -178,13 +143,9 @@ export default function RiffPageLayout({
     }
   };
 
-  const buttonLabel = !isJoined
-    ? "Join riff"
-    : hasSubmitted
-      ? "View submission"
-      : hasDraft
-        ? "Continue writing"
-        : "Start writing";
+  const existingPieceId =
+    riff.pieces.find((p) => p.piece.authorId === currentUserId)?.piece.id ??
+    null;
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
@@ -447,12 +408,14 @@ export default function RiffPageLayout({
             riff.status === "ACTIVE" ? (
               <button
                 onClick={handleRevealClick}
-                onMouseEnter={() => setIsButtonHovered(true)}
-                onMouseLeave={() => setIsButtonHovered(false)}
+                onMouseEnter={() => setIsRevealButtonHovered(true)}
+                onMouseLeave={() => setIsRevealButtonHovered(false)}
                 style={{
-                  backgroundColor: isButtonHovered ? "#00FF66" : "#FFFFFF",
+                  backgroundColor: isRevealButtonHovered
+                    ? "#00FF66"
+                    : "#FFFFFF",
                   border: "2px solid #000000",
-                  boxShadow: isButtonHovered
+                  boxShadow: isRevealButtonHovered
                     ? "8px 8px 0px 0px #000000"
                     : "8px 8px 0px 0px #01EFFC",
                   padding: "12px 48px",
@@ -487,75 +450,14 @@ export default function RiffPageLayout({
                 Waiting for the host to reveal
               </button>
             ) : riff.status !== "REVEALED" ? (
-              buttonLabel === "Start writing" ? (
-                <Dropdown
-                  align="right"
-                  minWidth={200}
-                  trigger={
-                    <button
-                      onMouseEnter={() => setIsButtonHovered(true)}
-                      onMouseLeave={() => setIsButtonHovered(false)}
-                      style={{
-                        backgroundColor: isButtonHovered
-                          ? "#00FF66"
-                          : "#FFFFFF",
-                        border: "2px solid #000000",
-                        boxShadow: isButtonHovered
-                          ? "8px 8px 0px 0px #000000"
-                          : "8px 8px 0px 0px #01EFFC",
-                        padding: "12px 48px",
-                        fontFamily: "var(--font-dm-sans)",
-                        fontSize: "16px",
-                        fontWeight: 300,
-                        color: "#000000",
-                        cursor: "pointer",
-                        transition: "none",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      Start writing
-                    </button>
-                  }
-                  items={[
-                    {
-                      type: "action",
-                      label: "New draft",
-                      onClick: () => createDraft(riff.id),
-                    },
-                    {
-                      type: "action",
-                      label: "Existing draft",
-                      color: "#AAAAAA",
-                      onClick: () => {},
-                    },
-                  ]}
-                />
-              ) : (
-                <button
-                  onClick={handleButtonClick}
-                  onMouseEnter={() => setIsButtonHovered(true)}
-                  onMouseLeave={() => setIsButtonHovered(false)}
-                  style={{
-                    backgroundColor: isButtonHovered ? "#00FF66" : "#FFFFFF",
-                    border: "2px solid #000000",
-                    boxShadow: isButtonHovered
-                      ? "8px 8px 0px 0px #000000"
-                      : isJoined
-                        ? "8px 8px 0px 0px #00FF66"
-                        : "8px 8px 0px 0px #01EFFC",
-                    padding: "12px 48px",
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "16px",
-                    fontWeight: 300,
-                    color: "#000000",
-                    cursor: "pointer",
-                    transition: "none",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {buttonLabel}
-                </button>
-              )
+              <RiffCTAButton
+                riffId={riff.id}
+                isJoined={isJoined}
+                hasDraft={hasDraft}
+                hasSubmitted={hasSubmitted}
+                existingPieceId={existingPieceId}
+                onJoin={() => setIsJoined(true)}
+              />
             ) : null}
 
             {isJoined && riff.deadline && !isPastDeadline && (
