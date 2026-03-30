@@ -194,19 +194,22 @@ export default function ProgressCard({ user, piece }: ProgressCardProps) {
 
   // ── In progress ──────────────────────────────────────────────────────────
   return (
-    <div style={{ ...cardBase, backgroundColor: "#FFFFFF" }}>
-      {/* Title + stats — centered in full card, padded away from avatar */}
+    <div
+      style={{
+        ...cardBase,
+        backgroundColor: "#FFFFFF",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      {/* Title — centered in its own zone */}
       <div
         style={{
-          position: "absolute",
-          inset: 0,
+          flex: 1,
           display: "flex",
-          flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          padding: "24px",
-          paddingBottom: "56px",
-          gap: "8px",
+          padding: "24px 24px 0",
         }}
       >
         <h4
@@ -222,6 +225,19 @@ export default function ProgressCard({ user, piece }: ProgressCardProps) {
         >
           {piece.title}
         </h4>
+      </div>
+
+      {/* Progress data — centered between title and avatar */}
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "6px",
+        }}
+      >
         <p
           style={{
             fontFamily: "var(--font-dm-sans)",
@@ -247,14 +263,12 @@ export default function ProgressCard({ user, piece }: ProgressCardProps) {
         </p>
       </div>
 
-      {/* Author avatar — bottom center */}
+      {/* Avatar — fixed zone at bottom */}
       <div
         style={{
-          position: "absolute",
-          bottom: "16px",
-          left: 0,
-          right: 0,
+          height: "56px",
           display: "flex",
+          alignItems: "center",
           justifyContent: "center",
         }}
       >
