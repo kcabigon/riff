@@ -80,32 +80,37 @@ export default function RiffCTAButton({
   // "Start writing" — dropdown with New draft / Existing draft placeholder
   if (isJoined && !hasDraft && !hasSubmitted) {
     return (
-      <Dropdown
-        align="right"
-        minWidth={200}
-        trigger={
-          <button
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-            style={buttonStyle}
-          >
-            Start writing
-          </button>
-        }
-        items={[
-          {
-            type: "action",
-            label: "New draft",
-            onClick: () => createDraft(riffId),
-          },
-          {
-            type: "action",
-            label: "Existing draft",
-            color: "#AAAAAA",
-            onClick: () => {},
-          },
-        ]}
-      />
+      <div
+        onClick={stopPropagation ? (e) => e.stopPropagation() : undefined}
+        style={{ display: "contents" }}
+      >
+        <Dropdown
+          align="right"
+          minWidth={200}
+          trigger={
+            <button
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+              style={buttonStyle}
+            >
+              Start writing
+            </button>
+          }
+          items={[
+            {
+              type: "action",
+              label: "New draft",
+              onClick: () => createDraft(riffId),
+            },
+            {
+              type: "action",
+              label: "Existing draft",
+              color: "#AAAAAA",
+              onClick: () => {},
+            },
+          ]}
+        />
+      </div>
     );
   }
 
