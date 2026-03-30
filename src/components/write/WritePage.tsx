@@ -368,120 +368,144 @@ export default function WritePage({ piece }: WritePageProps) {
           minHeight: "100vh",
         }}
       >
-        {/* Top bar: back + actions */}
+        {/* Top bar: back + actions + toolbar (mobile) */}
         <div
           style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "40px",
             position: "sticky",
             top: 0,
             zIndex: 40,
             background: "#FFFFFF",
-            padding: "8px 0",
+            paddingTop: "env(safe-area-inset-top)",
           }}
         >
-          <BackButton onClick={handleBack} />
-
-          {/* Right side: save status + cover + share */}
           <div
             style={{
               display: "flex",
+              justifyContent: "space-between",
               alignItems: "center",
-              gap: "12px",
-              flexWrap: "wrap",
-              justifyContent: "flex-end",
+              padding: "8px 0",
             }}
           >
-            {/* Save status */}
+            <BackButton onClick={handleBack} />
+
+            {/* Right side: save status + cover + share */}
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "6px",
+                gap: "12px",
+                flexWrap: "wrap",
+                justifyContent: "flex-end",
               }}
             >
+              {/* Save status */}
               <div
                 style={{
-                  width: "6px",
-                  height: "6px",
-                  borderRadius: "50%",
-                  background:
-                    saveStatus === "saved"
-                      ? "#22c55e"
-                      : saveStatus === "saving"
-                        ? "#eab308"
-                        : "#9ca3af",
-                  animation:
-                    saveStatus === "saving"
-                      ? "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite"
-                      : "none",
-                }}
-              />
-              <span
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "14px",
-                  fontWeight: 400,
-                  color: "#999999",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
                 }}
               >
-                {saveStatus === "saved"
-                  ? "Saved"
-                  : saveStatus === "saving"
-                    ? "Saving..."
-                    : "Unsaved"}
-              </span>
-            </div>
-
-            {/* Cover button */}
-            <IconButton
-              src="/icons/cover_photo.svg"
-              label={coverImage ? "Change cover image" : "Add cover image"}
-              onClick={() => setShowCoverModal(true)}
-              size={24}
-            />
-
-            {/* Share button */}
-            {piece.riffs.length > 0 &&
-              (isSubmitted ? (
+                <div
+                  style={{
+                    width: "6px",
+                    height: "6px",
+                    borderRadius: "50%",
+                    background:
+                      saveStatus === "saved"
+                        ? "#22c55e"
+                        : saveStatus === "saving"
+                          ? "#eab308"
+                          : "#9ca3af",
+                    animation:
+                      saveStatus === "saving"
+                        ? "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite"
+                        : "none",
+                  }}
+                />
                 <span
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "4px",
                     fontFamily: "var(--font-dm-sans)",
-                    fontSize: "12px",
-                    fontWeight: 300,
-                    color: "#000000",
-                    background: "#00FF66",
-                    border: "1px solid #000000",
-                    borderRadius: "2px",
-                    padding: "2px 8px",
+                    fontSize: "14px",
+                    fontWeight: 400,
+                    color: "#999999",
                   }}
                 >
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <path
-                      d="M2 6L5 9L10 3"
-                      stroke="#000000"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                  Shared
+                  {saveStatus === "saved"
+                    ? "Saved"
+                    : saveStatus === "saving"
+                      ? "Saving..."
+                      : "Unsaved"}
                 </span>
-              ) : (
-                <IconButton
-                  src="/icons/share.svg"
-                  label="Share to riff"
-                  onClick={() => setShowShareModal(true)}
-                  size={24}
-                />
-              ))}
+              </div>
+
+              {/* Cover button */}
+              <IconButton
+                src="/icons/cover_photo.svg"
+                label={coverImage ? "Change cover image" : "Add cover image"}
+                onClick={() => setShowCoverModal(true)}
+                size={24}
+              />
+
+              {/* Share button */}
+              {piece.riffs.length > 0 &&
+                (isSubmitted ? (
+                  <span
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "12px",
+                      fontWeight: 300,
+                      color: "#000000",
+                      background: "#00FF66",
+                      border: "1px solid #000000",
+                      borderRadius: "2px",
+                      padding: "2px 8px",
+                    }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <path
+                        d="M2 6L5 9L10 3"
+                        stroke="#000000"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    Shared
+                  </span>
+                ) : (
+                  <IconButton
+                    src="/icons/share.svg"
+                    label="Share to riff"
+                    onClick={() => setShowShareModal(true)}
+                    size={24}
+                  />
+                ))}
+            </div>
           </div>
+
+          {/* Mobile toolbar — pinned under top bar */}
+          {isMobile && (
+            <div
+              style={{
+                borderBottom: "2px solid #000000",
+                paddingBottom: "8px",
+              }}
+            >
+              <StickyToolbar
+                editor={editor}
+                fileInputRef={fileInputRef}
+                inline
+              />
+            </div>
+          )}
         </div>
+
+        {/* Spacer between sticky bar and content */}
+        {isMobile && <div style={{ height: "24px" }} />}
 
         {/* Writing area */}
         <div
@@ -489,7 +513,7 @@ export default function WritePage({ piece }: WritePageProps) {
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            paddingBottom: isMobile ? "120px" : "100px",
+            paddingBottom: isMobile ? "48px" : "100px",
           }}
         >
           {/* Title */}
@@ -583,8 +607,10 @@ export default function WritePage({ piece }: WritePageProps) {
         </div>
       </div>
 
-      {/* Sticky toolbar — same on desktop and mobile */}
-      <StickyToolbar editor={editor} fileInputRef={fileInputRef} />
+      {/* Floating toolbar — desktop only */}
+      {!isMobile && (
+        <StickyToolbar editor={editor} fileInputRef={fileInputRef} />
+      )}
 
       <CoverImageModal
         isOpen={showCoverModal}

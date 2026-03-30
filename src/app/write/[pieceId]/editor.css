@@ -193,19 +193,9 @@
   display: none;
 }
 
-@media (max-width: 767px) {
-  .write-sticky-toolbar {
-    bottom: 0;
-    left: 0;
-    right: 0;
-    transform: none;
-    max-width: 100%;
-    padding-bottom: calc(8px + env(safe-area-inset-bottom));
-  }
-
-  .write-sticky-toolbar-inner {
-    justify-content: flex-start;
-  }
+/* Inline toolbar (mobile — pinned under top bar) */
+.write-inline-toolbar .write-sticky-toolbar-inner {
+  justify-content: flex-start;
 }
 
 /* Saving status pulse animation */
