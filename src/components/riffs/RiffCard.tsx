@@ -108,8 +108,8 @@ export default function RiffCard({
         justifyContent: "space-between",
         cursor: "pointer",
         boxShadow: isCardHovered
-          ? "4px 4px 0px 0px #01EFFC"
-          : "4px 4px 0px 0px #000000",
+          ? "8px 8px 0px 0px #01EFFC"
+          : "8px 8px 0px 0px #000000",
         transition: "box-shadow 0.1s ease",
       }}
     >
