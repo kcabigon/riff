@@ -106,7 +106,7 @@ export default async function ClubPage({
             },
           },
         },
-        orderBy: { submittedAt: "desc" },
+        orderBy: { id: "desc" },
       },
     },
     orderBy: { createdAt: "desc" },
