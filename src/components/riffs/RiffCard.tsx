@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import CountdownTimer from "./CountdownTimer";
 import AvatarStack from "@/components/shared/AvatarStack";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
-import { useDraftCreation } from "@/hooks/useDraftCreation";
 import { getRiffDisplayTitle } from "@/lib/riff-utils";
+import RiffCTAButton from "@/components/riffs/RiffCTAButton";
 
 interface RiffCardProps {
   riff: {
@@ -55,7 +55,6 @@ export default function RiffCard({
   const [isCardHovered, setIsCardHovered] = useState(false);
   const router = useRouter();
   const handleAvatarClick = useProfileNavigation();
-  const { createDraft, isCreating } = useDraftCreation();
 
   // Deadline detection
   const isPastDeadline = riff.deadline
@@ -84,32 +83,9 @@ export default function RiffCard({
     router.push(`/riffs/${riff.id}`);
   };
 
-  const handleJoinRiff = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    try {
-      const res = await fetch(`/api/riffs/${riff.id}/participants`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (res.ok && onJoin) {
-        onJoin();
-      }
-    } catch (err) {
-      console.error("Error joining riff:", err);
-    }
-  };
-
-  const handleContinueWriting = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const existingPiece = riff.pieces.find(
-      (p) => p.piece.authorId === currentUserId
-    );
-    if (existingPiece) {
-      router.push(`/write/${existingPiece.piece.id}`);
-    } else {
-      createDraft(riff.id);
-    }
-  };
+  const existingPieceId =
+    riff.pieces.find((p) => p.piece.authorId === currentUserId)?.piece.id ??
+    null;
 
   const handleRevealClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -279,37 +255,15 @@ export default function RiffCard({
             Waiting for the host to reveal
           </button>
         ) : (
-          <button
-            onClick={isJoined ? handleContinueWriting : handleJoinRiff}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-            style={{
-              backgroundColor: isHovered ? "#00FF66" : "#FFFFFF",
-              border: "2px solid #000000",
-              boxShadow: isHovered
-                ? "8px 8px 0px 0px #000000"
-                : isJoined
-                  ? "8px 8px 0px 0px #00FF66"
-                  : "8px 8px 0px 0px #01EFFC",
-              padding: "12px 48px",
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              lineHeight: "normal",
-              color: "#000000",
-              cursor: "pointer",
-              transition: "none",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {!isJoined
-              ? "Join riff"
-              : hasSubmitted
-                ? "View submission"
-                : hasDraft
-                  ? "Continue writing"
-                  : "Start writing"}
-          </button>
+          <RiffCTAButton
+            riffId={riff.id}
+            isJoined={isJoined}
+            hasDraft={hasDraft}
+            hasSubmitted={hasSubmitted}
+            existingPieceId={existingPieceId}
+            onJoin={onJoin}
+            stopPropagation
+          />
         )}
 
         {/* Countdown Timer or Time's up */}
