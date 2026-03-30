@@ -1,11 +1,11 @@
-/* Write page editor styles — black canvas on white page */
+/* Write page editor styles — white canvas */
 
 /* ProseMirror editor styles */
 .write-editor .ProseMirror {
   padding: 0;
   margin: 0;
   background: transparent;
-  color: #ffffff;
+  color: #000000;
   font-family: var(--font-playfair), serif;
   font-size: 18px;
   line-height: normal;
@@ -24,7 +24,7 @@
 
 .write-editor .ProseMirror p {
   margin: 0 0 1em 0;
-  color: #ffffff;
+  color: #000000;
   font-family: var(--font-playfair), serif;
   font-size: 18px;
   line-height: normal;
@@ -41,7 +41,7 @@
 .write-editor .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   float: left;
-  color: #666666;
+  color: #cccccc;
   pointer-events: none;
   height: 0;
   font-family: var(--font-playfair), serif;
@@ -54,7 +54,7 @@
 .write-editor .ProseMirror h3 {
   margin: 0 0 0.5em 0;
   padding: 0;
-  color: #ffffff;
+  color: #000000;
   font-family: var(--font-playfair), serif;
   line-height: normal;
   font-weight: bold;
@@ -77,13 +77,13 @@
 .write-editor .ProseMirror ol {
   margin: 0 0 1em 0;
   padding-left: 1.5em;
-  color: #ffffff;
+  color: #000000;
 }
 
 .write-editor .ProseMirror li {
   margin: 0;
   padding: 0;
-  color: #ffffff;
+  color: #000000;
   font-family: var(--font-playfair), serif;
   font-size: 18px;
   line-height: normal;
@@ -91,12 +91,12 @@
 
 /* Links */
 .write-editor .ProseMirror a {
-  color: #60a5fa;
+  color: #3b82f6;
   text-decoration: underline;
 }
 
 .write-editor .ProseMirror a:hover {
-  color: #93c5fd;
+  color: #60a5fa;
 }
 
 /* Focus */
@@ -104,25 +104,50 @@
   outline: none;
 }
 
-/* Inherit color */
-.write-editor .ProseMirror * {
-  color: inherit;
-}
-
 /* Images */
 .write-editor .ProseMirror img {
   max-width: 100%;
   height: auto;
   display: block;
-  margin: 1em 0;
+  margin: 1em auto;
+  cursor: pointer;
+  transition: outline 0.1s;
+}
+
+/* Selected image — green outline matching design system */
+.write-editor .ProseMirror img.ProseMirror-selectednode {
+  outline: 2px solid #00FF66;
+}
+
+/* Ensure images respect text-align for positioning */
+.write-editor .ProseMirror [style*="text-align: center"] img {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.write-editor .ProseMirror [style*="text-align: right"] img {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.write-editor .ProseMirror [style*="text-align: left"] img {
+  margin-left: 0;
+  margin-right: auto;
 }
 
 /* YouTube embeds */
-.write-editor .ProseMirror iframe[src*="youtube.com"],
-.write-editor .ProseMirror iframe[src*="youtu.be"] {
+.write-editor .ProseMirror div[data-youtube-video] {
+  width: 100% !important;
   max-width: 100%;
-  display: block;
   margin: 1em auto;
+  overflow: hidden;
+}
+
+.write-editor .ProseMirror div[data-youtube-video] iframe {
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 16 / 9;
+  display: block;
 }
 
 /* Spotify embeds */
@@ -137,72 +162,26 @@
   display: block;
 }
 
-/* ==================== Bubble Menu (desktop) ==================== */
+/* ==================== Floating Toolbar (desktop + mobile) ==================== */
 
-.write-bubble-menu {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-  background: #000000;
-  border: 1px solid #333333;
-  border-radius: 8px;
-  padding: 4px 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-/* ==================== Floating Insert Menu (desktop) ==================== */
-
-.write-floating-insert {
-  display: flex;
-  align-items: center;
-}
-
-.write-floating-insert-trigger {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #000000;
-  border: 1px solid #333333;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: border-color 0.2s;
-}
-
-.write-floating-insert-trigger:hover {
-  border-color: #ffffff;
-}
-
-.write-floating-insert-buttons {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-  background: #000000;
-  border: 1px solid #333333;
-  border-radius: 8px;
-  padding: 4px 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-/* ==================== Mobile Bottom Toolbar ==================== */
-
-.write-mobile-toolbar {
+.write-sticky-toolbar {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 50;
-  background: #000000;
-  border-top: 1px solid #333333;
-  padding: 8px 12px;
-  padding-bottom: calc(8px + env(safe-area-inset-bottom));
+  background: #FFFFFF;
+  border: 2px solid #000000;
+  box-shadow: 4px 4px 0px 0px #000000;
+  padding: 8px 16px;
+  max-width: calc(100% - 32px);
 }
 
-.write-mobile-toolbar-inner {
+.write-sticky-toolbar-inner {
   display: flex;
   gap: 8px;
   align-items: center;
+  justify-content: center;
   overflow-x: auto;
   overflow-y: hidden;
   height: 32px;
@@ -210,8 +189,23 @@
   -ms-overflow-style: none;
 }
 
-.write-mobile-toolbar-inner::-webkit-scrollbar {
+.write-sticky-toolbar-inner::-webkit-scrollbar {
   display: none;
+}
+
+@media (max-width: 767px) {
+  .write-sticky-toolbar {
+    bottom: 0;
+    left: 0;
+    right: 0;
+    transform: none;
+    max-width: 100%;
+    padding-bottom: calc(8px + env(safe-area-inset-bottom));
+  }
+
+  .write-sticky-toolbar-inner {
+    justify-content: flex-start;
+  }
 }
 
 /* Saving status pulse animation */
