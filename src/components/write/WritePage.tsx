@@ -523,7 +523,7 @@ export default function WritePage({ piece }: WritePageProps) {
                   padding: "4px 12px",
                 }}
               >
-                {riff.title || "Untitled"}
+                {riff.title || "Active Riff"}
               </span>
             ))}
           </div>
