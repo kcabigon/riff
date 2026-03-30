@@ -10,13 +10,18 @@ export async function PATCH(
   try {
     const user = await requireAuth();
     const { id: pieceId } = await params;
-    const { currentContent, title, coverImage } = await req.json();
+    const { currentContent, title, subtitle, coverImage } = await req.json();
 
-    if (!currentContent && title === undefined && coverImage === undefined) {
+    if (
+      !currentContent &&
+      title === undefined &&
+      subtitle === undefined &&
+      coverImage === undefined
+    ) {
       return NextResponse.json(
         {
           error:
-            "At least one of currentContent, title, or coverImage is required",
+            "At least one of currentContent, title, subtitle, or coverImage is required",
         },
         { status: 400 }
       );
@@ -28,10 +33,7 @@ export async function PATCH(
     });
 
     if (!piece) {
-      return NextResponse.json(
-        { error: "Piece not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Piece not found" }, { status: 404 });
     }
 
     if (piece.authorId !== (user as any).id) {
@@ -45,6 +47,7 @@ export async function PATCH(
     const data: {
       currentContent?: string;
       title?: string;
+      subtitle?: string | null;
       coverImage?: string | null;
     } = {};
     if (currentContent) {
@@ -52,6 +55,9 @@ export async function PATCH(
     }
     if (title !== undefined) {
       data.title = title.trim() || "Untitled";
+    }
+    if (subtitle !== undefined) {
+      data.subtitle = subtitle.trim() || null;
     }
     if (coverImage !== undefined) {
       data.coverImage = coverImage || null;
