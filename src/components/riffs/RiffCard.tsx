@@ -33,6 +33,7 @@ interface RiffCardProps {
     }>;
   };
   isJoined: boolean;
+  hasDraft: boolean;
   hasSubmitted: boolean;
   currentUserId: string;
   isAdmin: boolean;
@@ -43,6 +44,7 @@ interface RiffCardProps {
 export default function RiffCard({
   riff,
   isJoined,
+  hasDraft,
   hasSubmitted,
   currentUserId,
   isAdmin,
@@ -300,11 +302,13 @@ export default function RiffCard({
               whiteSpace: "nowrap",
             }}
           >
-            {isJoined
-              ? hasSubmitted
+            {!isJoined
+              ? "Join riff"
+              : hasSubmitted
                 ? "View submission"
-                : "Continue writing"
-              : "Join riff"}
+                : hasDraft
+                  ? "Continue writing"
+                  : "Start writing"}
           </button>
         )}
 
