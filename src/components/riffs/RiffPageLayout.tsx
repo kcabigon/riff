@@ -13,6 +13,7 @@ import RevealCelebration from "./RevealCelebration";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
 import { getRiffDisplayTitle } from "@/lib/riff-utils";
 import RiffCTAButton from "@/components/riffs/RiffCTAButton";
+import ProgressCard from "@/components/riffs/ProgressCard";
 
 interface RiffPageLayoutProps {
   riff: {
@@ -47,7 +48,8 @@ interface RiffPageLayoutProps {
         authorId: string;
         wordCount: number;
         coverImage?: string | null;
-        currentContent?: string;
+        currentContent?: string | null;
+        updatedAt?: string;
         commentCount?: number;
         author?: {
           id: string;
@@ -554,30 +556,68 @@ export default function RiffPageLayout({
           </div>
         )}
 
-        {/* Placeholder for non-revealed riffs */}
-        {riff.status !== "REVEALED" && (
-          <div
-            style={{
-              marginTop: "48px",
-              padding: "40px",
-              backgroundColor: "#F9F9F9",
-              border: "2px dashed #E6E6E6",
-              textAlign: "center",
-            }}
-          >
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 300,
-                color: "#959595",
-                margin: 0,
-              }}
-            >
-              More riff details coming soon.
-            </p>
-          </div>
-        )}
+        {/* Progress view for non-revealed riffs */}
+        {riff.status !== "REVEALED" &&
+          riff.participants.length > 0 &&
+          (() => {
+            // Build a map from authorId → piece data for quick lookup
+            const pieceByAuthor = Object.fromEntries(
+              riff.pieces.map((pr) => [
+                pr.piece.authorId,
+                {
+                  id: pr.piece.id,
+                  title: pr.piece.title,
+                  wordCount: pr.piece.wordCount,
+                  updatedAt: pr.piece.updatedAt ?? new Date().toISOString(),
+                  submittedAt: pr.submittedAt,
+                  coverImage: pr.piece.coverImage,
+                },
+              ])
+            );
+
+            // Sort: submitted (0) → in-progress (1) → not-started (2)
+            const sorted = [...riff.participants].sort((a, b) => {
+              const pa = pieceByAuthor[a.user.id];
+              const pb = pieceByAuthor[b.user.id];
+              const tierA = !pa ? 2 : pa.submittedAt ? 0 : 1;
+              const tierB = !pb ? 2 : pb.submittedAt ? 0 : 1;
+              if (tierA !== tierB) return tierA - tierB;
+              // Within submitted: most recent first
+              if (tierA === 0)
+                return (
+                  new Date(pb.submittedAt!).getTime() -
+                  new Date(pa.submittedAt!).getTime()
+                );
+              // Within in-progress: most recently active first
+              if (tierA === 1)
+                return (
+                  new Date(pb.updatedAt).getTime() -
+                  new Date(pa.updatedAt).getTime()
+                );
+              return 0; // not-started: keep join order
+            });
+
+            return (
+              <div style={{ marginTop: "48px" }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns:
+                      "repeat(auto-fill, minmax(200px, 1fr))",
+                    gap: "24px",
+                  }}
+                >
+                  {sorted.map((p) => (
+                    <ProgressCard
+                      key={p.user.id}
+                      user={p.user}
+                      piece={pieceByAuthor[p.user.id] ?? null}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
       </div>
 
       {/* Reveal Confirm Modal (for riff detail page) */}

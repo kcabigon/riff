@@ -1,0 +1,275 @@
+"use client";
+
+import Avatar from "@/components/shared/Avatar";
+import NoiseBackground from "@/components/NoiseBackground";
+
+interface ProgressCardProps {
+  user: {
+    id: string;
+    name: string | null;
+    avatarUrl: string | null;
+  };
+  piece?: {
+    id: string;
+    title: string;
+    wordCount: number;
+    updatedAt: string;
+    submittedAt: string | null;
+    coverImage?: string | null;
+  } | null;
+}
+
+const PLACEHOLDER_COLORS = [
+  "#E8E0D5",
+  "#D5E0E8",
+  "#E0E8D5",
+  "#E8D5E0",
+  "#D5E8E0",
+  "#E0D5E8",
+];
+
+function relativeTime(isoString: string): string {
+  const diff = Date.now() - new Date(isoString).getTime();
+  const minutes = Math.floor(diff / 60_000);
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return "Yesterday";
+  return `${days} days ago`;
+}
+
+export default function ProgressCard({ user, piece }: ProgressCardProps) {
+  const cardBase: React.CSSProperties = {
+    position: "relative",
+    border: "1px solid #000000",
+    overflow: "hidden",
+    aspectRatio: "4 / 5",
+  };
+
+  // ── Not started ──────────────────────────────────────────────────────────
+  if (!piece) {
+    return (
+      <div style={cardBase}>
+        <NoiseBackground fillMode="cover" />
+        {/* Avatar centered */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1,
+          }}
+        >
+          <Avatar
+            user={{
+              id: user.id,
+              name: user.name,
+              username: null,
+              avatarUrl: user.avatarUrl,
+            }}
+            size={40}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // ── Submitted (locked) ───────────────────────────────────────────────────
+  if (piece.submittedAt !== null) {
+    const placeholderColor =
+      PLACEHOLDER_COLORS[piece.id.charCodeAt(0) % PLACEHOLDER_COLORS.length];
+
+    return (
+      <div
+        style={{
+          ...cardBase,
+          backgroundColor: piece.coverImage ? undefined : placeholderColor,
+          cursor: "default",
+        }}
+      >
+        {/* Cover image */}
+        {piece.coverImage && (
+          <img
+            src={piece.coverImage}
+            alt=""
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+            }}
+          />
+        )}
+
+        {/* Dark overlay */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+          }}
+        />
+
+        {/* Lock icon — top center */}
+        <div
+          style={{
+            position: "absolute",
+            top: "12px",
+            left: 0,
+            right: 0,
+            display: "flex",
+            justifyContent: "center",
+            zIndex: 3,
+          }}
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="white"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
+          </svg>
+        </div>
+
+        {/* Title — vertically centered */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "24px",
+            paddingBottom: "56px",
+            zIndex: 1,
+          }}
+        >
+          <h4
+            style={{
+              fontFamily: "var(--font-dm-serif-text)",
+              fontSize: "20px",
+              fontWeight: 400,
+              color: "#FFFFFF",
+              margin: 0,
+              textAlign: "center",
+              lineHeight: 1.3,
+            }}
+          >
+            {piece.title}
+          </h4>
+        </div>
+
+        {/* Author avatar — bottom center */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: "16px",
+            left: 0,
+            right: 0,
+            display: "flex",
+            justifyContent: "center",
+            zIndex: 2,
+          }}
+        >
+          <Avatar
+            user={{
+              id: user.id,
+              name: user.name,
+              username: null,
+              avatarUrl: user.avatarUrl,
+            }}
+            size={32}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // ── In progress ──────────────────────────────────────────────────────────
+  return (
+    <div style={{ ...cardBase, backgroundColor: "#FFFFFF" }}>
+      {/* Title + stats — upper portion */}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: "56px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "24px",
+          gap: "8px",
+        }}
+      >
+        <h4
+          style={{
+            fontFamily: "var(--font-dm-serif-text)",
+            fontSize: "20px",
+            fontWeight: 400,
+            color: "#000000",
+            margin: 0,
+            textAlign: "center",
+            lineHeight: 1.3,
+          }}
+        >
+          {piece.title}
+        </h4>
+        <p
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "14px",
+            fontWeight: 300,
+            color: "#808080",
+            margin: 0,
+          }}
+        >
+          {piece.wordCount.toLocaleString()}{" "}
+          {piece.wordCount === 1 ? "word" : "words"}
+        </p>
+        <p
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "13px",
+            fontWeight: 300,
+            color: "#808080",
+            margin: 0,
+          }}
+        >
+          {relativeTime(piece.updatedAt)}
+        </p>
+      </div>
+
+      {/* Author avatar — bottom center */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: "16px",
+          left: 0,
+          right: 0,
+          display: "flex",
+          justifyContent: "center",
+        }}
+      >
+        <Avatar
+          user={{
+            id: user.id,
+            name: user.name,
+            username: null,
+            avatarUrl: user.avatarUrl,
+          }}
+          size={32}
+        />
+      </div>
+    </div>
+  );
+}
