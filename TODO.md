@@ -51,7 +51,7 @@ Last updated: March 27, 2026 (Jarric adding profile access control + profile ban
 ### Riff Page
 - [ ] 🔨 @jarric — Redesign riff page layout
 - [x] Change back button styling (shared BackButton component, used across all back navigation)
-- [ ] Share button doesn't work — wire up or remove
+- [ ] 🔨 @jarric — Share button: confirmation modal + PATCH submittedAt on PieceRiff + fix reveal submitted count
 
 ### Read / Write Experience
 - [ ] YouTube embeds, images, Spotify links need to be mobile responsive
