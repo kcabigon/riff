@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import AvatarStack from "@/components/shared/AvatarStack";
 import CountdownTimer from "./CountdownTimer";
 import PieceCard from "./PieceCard";
 import RevealConfirmModal from "./RevealConfirmModal";
@@ -10,7 +9,6 @@ import EditRiffModal from "./EditRiffModal";
 import DeleteRiffConfirmModal from "./DeleteRiffConfirmModal";
 import BackButton from "@/components/BackButton";
 import RevealCelebration from "./RevealCelebration";
-import { useProfileNavigation } from "@/hooks/useProfileNavigation";
 import { getRiffDisplayTitle } from "@/lib/riff-utils";
 import RiffCTAButton from "@/components/riffs/RiffCTAButton";
 import ProgressCard from "@/components/riffs/ProgressCard";
@@ -86,8 +84,6 @@ export default function RiffPageLayout({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const router = useRouter();
-  const handleAvatarClick = useProfileNavigation();
-
   // Deadline detection
   const isPastDeadline = riff.deadline
     ? new Date(riff.deadline).getTime() < Date.now()
@@ -299,98 +295,6 @@ export default function RiffPageLayout({
                 >
                   {riff.prompt}
                 </p>
-              </div>
-            )}
-
-            {/* Participants */}
-            {riff.participants.length > 0 && (
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: "8px" }}
-              >
-                {submittedUsers.length > 0 && (
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "12px",
-                      height: "32px",
-                    }}
-                  >
-                    <p
-                      style={{
-                        fontFamily: "var(--font-dm-sans)",
-                        fontSize: "16px",
-                        fontWeight: 300,
-                        color: "#000000",
-                        margin: 0,
-                      }}
-                    >
-                      Submitted
-                    </p>
-                    <AvatarStack
-                      users={submittedUsers.slice(0, 5).map((p) => p.user)}
-                      size={32}
-                      showBorder={false}
-                      onAvatarClick={handleAvatarClick}
-                    />
-                  </div>
-                )}
-                {waitingUsers.length > 0 && (
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "12px",
-                      height: "32px",
-                    }}
-                  >
-                    <p
-                      style={{
-                        fontFamily: "var(--font-dm-sans)",
-                        fontSize: "16px",
-                        fontWeight: 300,
-                        color: "#000000",
-                        margin: 0,
-                      }}
-                    >
-                      Waiting for
-                    </p>
-                    <AvatarStack
-                      users={waitingUsers.slice(0, 5).map((p) => p.user)}
-                      size={32}
-                      showBorder={false}
-                      onAvatarClick={handleAvatarClick}
-                    />
-                  </div>
-                )}
-                {!isJoined && (
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "12px",
-                      height: "32px",
-                    }}
-                  >
-                    <p
-                      style={{
-                        fontFamily: "var(--font-dm-sans)",
-                        fontSize: "16px",
-                        fontWeight: 300,
-                        color: "#000000",
-                        margin: 0,
-                      }}
-                    >
-                      Joined by
-                    </p>
-                    <AvatarStack
-                      users={riff.participants.slice(0, 5).map((p) => p.user)}
-                      size={32}
-                      showBorder={false}
-                      onAvatarClick={handleAvatarClick}
-                    />
-                  </div>
-                )}
               </div>
             )}
           </div>
