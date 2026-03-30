@@ -109,7 +109,7 @@ export default function ShareConfirmModal({
           textAlign: "center",
         }}
       >
-        {riff.title ? `"${riff.title}"` : "Untitled riff"} · {riff.clubName}
+        {riff.title ? `"${riff.title}"` : "Active Riff"} · {riff.clubName}
       </p>
 
       {/* Reveal note */}
