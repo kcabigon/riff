@@ -53,13 +53,40 @@ export default function ProgressCard({ user, piece }: ProgressCardProps) {
     return (
       <div style={cardBase}>
         <NoiseBackground fillMode="cover" />
-        {/* Avatar centered */}
+
+        {/* "Not started" status — same position as last active line */}
         <div
           style={{
             position: "absolute",
-            inset: 0,
+            bottom: "56px",
+            left: 0,
+            right: 0,
             display: "flex",
-            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1,
+          }}
+        >
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "15px",
+              fontWeight: 300,
+              color: "#808080",
+              margin: 0,
+            }}
+          >
+            Not started
+          </p>
+        </div>
+
+        {/* Avatar — bottom */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: "16px",
+            left: 0,
+            right: 0,
+            display: "flex",
             justifyContent: "center",
             zIndex: 1,
           }}
@@ -71,7 +98,8 @@ export default function ProgressCard({ user, piece }: ProgressCardProps) {
               username: null,
               avatarUrl: user.avatarUrl,
             }}
-            size={40}
+            size={32}
+            borderColor="#FFFFFF"
           />
         </div>
       </div>
@@ -191,6 +219,7 @@ export default function ProgressCard({ user, piece }: ProgressCardProps) {
               avatarUrl: user.avatarUrl,
             }}
             size={32}
+            borderColor="#FFFFFF"
           />
         </div>
       </div>
@@ -199,7 +228,22 @@ export default function ProgressCard({ user, piece }: ProgressCardProps) {
 
   // ── In progress ──────────────────────────────────────────────────────────
   return (
-    <div style={{ ...cardBase, backgroundColor: "#FFFFFF" }}>
+    <div style={{ ...cardBase }}>
+      <NoiseBackground fillMode="cover" />
+
+      {/* Dark overlay */}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          right: 0,
+          bottom: 0,
+          left: 0,
+          backgroundColor: "rgba(0, 0, 0, 0.5)",
+          zIndex: 1,
+        }}
+      />
+
       {/* Title — vertically centered */}
       <div
         style={{
@@ -215,7 +259,7 @@ export default function ProgressCard({ user, piece }: ProgressCardProps) {
           paddingRight: "24px",
           paddingBottom: "24px",
           paddingLeft: "24px",
-          zIndex: 1,
+          zIndex: 2,
         }}
       >
         <h4
@@ -223,7 +267,7 @@ export default function ProgressCard({ user, piece }: ProgressCardProps) {
             fontFamily: "var(--font-dm-serif-text)",
             fontSize: "20px",
             fontWeight: 400,
-            color: "#000000",
+            color: "#FFFFFF",
             margin: 0,
             textAlign: "center",
             lineHeight: 1.3,
@@ -244,15 +288,15 @@ export default function ProgressCard({ user, piece }: ProgressCardProps) {
           flexDirection: "column",
           alignItems: "center",
           gap: "4px",
-          zIndex: 2,
+          zIndex: 3,
         }}
       >
         <p
           style={{
             fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
+            fontSize: "16px",
             fontWeight: 300,
-            color: "#808080",
+            color: "rgba(255, 255, 255, 0.7)",
             margin: 0,
           }}
         >
@@ -262,9 +306,9 @@ export default function ProgressCard({ user, piece }: ProgressCardProps) {
         <p
           style={{
             fontFamily: "var(--font-dm-sans)",
-            fontSize: "13px",
+            fontSize: "16px",
             fontWeight: 300,
-            color: "#808080",
+            color: "rgba(255, 255, 255, 0.7)",
             margin: 0,
           }}
         >
@@ -281,7 +325,7 @@ export default function ProgressCard({ user, piece }: ProgressCardProps) {
           right: 0,
           display: "flex",
           justifyContent: "center",
-          zIndex: 2,
+          zIndex: 3,
         }}
       >
         <Avatar
@@ -292,6 +336,7 @@ export default function ProgressCard({ user, piece }: ProgressCardProps) {
             avatarUrl: user.avatarUrl,
           }}
           size={32}
+          borderColor="#FFFFFF"
         />
       </div>
     </div>

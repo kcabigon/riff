@@ -141,7 +141,7 @@ export default function NoiseBackground({
         backgroundImage: `url("${svgDataUrl}")`,
         backgroundRepeat: "repeat",
         backgroundSize: "1438px 1024px",
-        backgroundColor: "#FFFFFF",
+        backgroundColor: "white",
         ...style,
       }}
     />

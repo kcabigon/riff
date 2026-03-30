@@ -156,6 +156,7 @@ export default function PieceCard({ piece, isRead, onClick }: PieceCardProps) {
               avatarUrl: piece.author.avatarUrl,
             }}
             size={32}
+            borderColor="#FFFFFF"
           />
         </div>
       )}
