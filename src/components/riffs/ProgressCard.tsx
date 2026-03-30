@@ -195,15 +195,16 @@ export default function ProgressCard({ user, piece }: ProgressCardProps) {
   // ── In progress ──────────────────────────────────────────────────────────
   return (
     <div style={{ ...cardBase, backgroundColor: "#FFFFFF" }}>
-      {/* Title — true center of card */}
+      {/* Title — same centering technique as PieceCard: inset 0, flex center */}
       <div
         style={{
           position: "absolute",
-          top: "50%",
-          left: "24px",
-          right: "24px",
-          transform: "translateY(-50%)",
-          textAlign: "center",
+          inset: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "24px",
+          zIndex: 1,
         }}
       >
         <h4
@@ -213,6 +214,7 @@ export default function ProgressCard({ user, piece }: ProgressCardProps) {
             fontWeight: 400,
             color: "#000000",
             margin: 0,
+            textAlign: "center",
             lineHeight: 1.3,
           }}
         >
@@ -220,20 +222,18 @@ export default function ProgressCard({ user, piece }: ProgressCardProps) {
         </h4>
       </div>
 
-      {/* Progress data — centered between title and avatar */}
+      {/* Progress data — fixed position above avatar, doesn't shift with title */}
       <div
         style={{
           position: "absolute",
-          top: "50%",
           bottom: "56px",
           left: 0,
           right: 0,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          justifyContent: "center",
-          gap: "6px",
-          paddingTop: "24px",
+          gap: "4px",
+          zIndex: 2,
         }}
       >
         <p
@@ -270,6 +270,7 @@ export default function ProgressCard({ user, piece }: ProgressCardProps) {
           right: 0,
           display: "flex",
           justifyContent: "center",
+          zIndex: 2,
         }}
       >
         <Avatar
