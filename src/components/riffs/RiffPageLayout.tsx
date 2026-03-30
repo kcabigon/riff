@@ -603,7 +603,7 @@ export default function RiffPageLayout({
                   style={{
                     display: "grid",
                     gridTemplateColumns:
-                      "repeat(auto-fill, minmax(200px, 1fr))",
+                      "repeat(auto-fill, minmax(280px, 1fr))",
                     gap: "24px",
                   }}
                 >

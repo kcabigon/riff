@@ -195,19 +195,17 @@ export default function ProgressCard({ user, piece }: ProgressCardProps) {
   // ── In progress ──────────────────────────────────────────────────────────
   return (
     <div style={{ ...cardBase, backgroundColor: "#FFFFFF" }}>
-      {/* Title + stats — upper portion */}
+      {/* Title + stats — centered in full card, padded away from avatar */}
       <div
         style={{
           position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: "56px",
+          inset: 0,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
           padding: "24px",
+          paddingBottom: "56px",
           gap: "8px",
         }}
       >
