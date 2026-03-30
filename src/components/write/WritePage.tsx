@@ -89,19 +89,24 @@ export default function WritePage({ piece }: WritePageProps) {
 
       saveTimerRef.current = setTimeout(() => {
         const html = editor.getHTML();
-        autosaveContent(html);
+        const wc = editor.storage.characterCount.words();
+        autosaveContent(html, wc, Math.max(1, Math.round(wc / 200)));
       }, 500);
     },
   });
 
   const autosaveContent = useCallback(
-    async (content: string) => {
+    async (content: string, wordCount: number, readLengthMin: number) => {
       setSaveStatus("saving");
       try {
         const res = await fetch(`/api/pieces/${piece.id}/autosave`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ currentContent: content }),
+          body: JSON.stringify({
+            currentContent: content,
+            wordCount,
+            readLengthMin,
+          }),
         });
         if (res.ok) {
           setSaveStatus("saved");

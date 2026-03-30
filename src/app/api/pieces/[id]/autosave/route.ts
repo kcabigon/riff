@@ -10,7 +10,8 @@ export async function PATCH(
   try {
     const user = await requireAuth();
     const { id: pieceId } = await params;
-    const { currentContent, title, coverImage } = await req.json();
+    const { currentContent, title, coverImage, wordCount, readLengthMin } =
+      await req.json();
 
     if (!currentContent && title === undefined && coverImage === undefined) {
       return NextResponse.json(
@@ -28,10 +29,7 @@ export async function PATCH(
     });
 
     if (!piece) {
-      return NextResponse.json(
-        { error: "Piece not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Piece not found" }, { status: 404 });
     }
 
     if (piece.authorId !== (user as any).id) {
@@ -46,6 +44,8 @@ export async function PATCH(
       currentContent?: string;
       title?: string;
       coverImage?: string | null;
+      wordCount?: number;
+      readLengthMin?: number;
     } = {};
     if (currentContent) {
       data.currentContent = currentContent;
@@ -55,6 +55,11 @@ export async function PATCH(
     }
     if (coverImage !== undefined) {
       data.coverImage = coverImage || null;
+    }
+    if (typeof wordCount === "number") {
+      data.wordCount = wordCount;
+      data.readLengthMin =
+        readLengthMin ?? Math.max(1, Math.round(wordCount / 200));
     }
 
     const updatedPiece = await prisma.piece.update({
