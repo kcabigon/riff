@@ -158,6 +158,83 @@
   display: block;
 }
 
+/* ==================== Bubble Menu (desktop) ==================== */
+
+.write-bubble-menu {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  background: #000000;
+  border: 1px solid #333333;
+  border-radius: 8px;
+  padding: 4px 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* ==================== Floating Insert Menu (desktop) ==================== */
+
+.write-floating-insert {
+  display: flex;
+  align-items: center;
+}
+
+.write-floating-insert-trigger {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000000;
+  border: 1px solid #333333;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.write-floating-insert-trigger:hover {
+  border-color: #ffffff;
+}
+
+.write-floating-insert-buttons {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  background: #000000;
+  border: 1px solid #333333;
+  border-radius: 8px;
+  padding: 4px 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* ==================== Mobile Bottom Toolbar ==================== */
+
+.write-mobile-toolbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: #000000;
+  border-top: 1px solid #333333;
+  padding: 8px 12px;
+  padding-bottom: calc(8px + env(safe-area-inset-bottom));
+}
+
+.write-mobile-toolbar-inner {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  overflow-x: auto;
+  overflow-y: hidden;
+  height: 32px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.write-mobile-toolbar-inner::-webkit-scrollbar {
+  display: none;
+}
+
 /* Saving status pulse animation */
 @keyframes pulse {
   0%, 100% { opacity: 1; }
