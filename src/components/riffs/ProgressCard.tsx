@@ -142,11 +142,17 @@ export default function ProgressCard({ user, piece }: ProgressCardProps) {
         <div
           style={{
             position: "absolute",
-            inset: 0,
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            padding: "24px",
+            paddingTop: "24px",
+            paddingRight: "24px",
+            paddingBottom: "24px",
+            paddingLeft: "24px",
             zIndex: 1,
           }}
         >
@@ -194,15 +200,21 @@ export default function ProgressCard({ user, piece }: ProgressCardProps) {
   // ── In progress ──────────────────────────────────────────────────────────
   return (
     <div style={{ ...cardBase, backgroundColor: "#FFFFFF" }}>
-      {/* Title — same centering technique as PieceCard: inset 0, flex center */}
+      {/* Title — vertically centered */}
       <div
         style={{
           position: "absolute",
-          inset: 0,
+          top: 0,
+          right: 0,
+          bottom: 0,
+          left: 0,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          padding: "24px",
+          paddingTop: "24px",
+          paddingRight: "24px",
+          paddingBottom: "24px",
+          paddingLeft: "24px",
           zIndex: 1,
         }}
       >
