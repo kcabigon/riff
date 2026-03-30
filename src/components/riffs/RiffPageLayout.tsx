@@ -203,77 +203,98 @@ export default function RiffPageLayout({
               >
                 {getRiffDisplayTitle(riff)}
               </h1>
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: isPastDeadline ? "#FF4444" : "#808080",
-                  margin: 0,
-                }}
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "8px" }}
               >
-                {isPastDeadline
-                  ? "Deadline passed"
-                  : riff.deadline
-                    ? `${formatDate(riff.createdAt)} - ${formatDate(riff.deadline)}`
-                    : formatDate(riff.createdAt)}
-              </p>
-            </div>
-
-            {/* Admin actions */}
-            {isAdmin &&
-              (riff.status === "ACTIVE" || riff.status === "DRAFT") && (
-                <div style={{ display: "flex", gap: "12px" }}>
-                  <button
-                    onClick={() => setIsEditModalOpen(true)}
-                    style={{
-                      background: "none",
-                      border: "1px solid #E6E6E6",
-                      padding: "6px 16px",
-                      fontFamily: "var(--font-dm-sans)",
-                      fontSize: "13px",
-                      fontWeight: 300,
-                      color: "#808080",
-                      cursor: "pointer",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = "#000000";
-                      e.currentTarget.style.color = "#000000";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = "#E6E6E6";
-                      e.currentTarget.style.color = "#808080";
-                    }}
-                  >
-                    Edit
-                  </button>
-                  {riff.status === "DRAFT" && (
+                <p
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "16px",
+                    fontWeight: 300,
+                    color: isPastDeadline ? "#FF4444" : "#808080",
+                    margin: 0,
+                  }}
+                >
+                  {isPastDeadline
+                    ? "Deadline passed"
+                    : riff.deadline
+                      ? `${formatDate(riff.createdAt)} - ${formatDate(riff.deadline)}`
+                      : formatDate(riff.createdAt)}
+                </p>
+                {isAdmin &&
+                  (riff.status === "ACTIVE" || riff.status === "DRAFT") && (
                     <button
-                      onClick={() => setIsDeleteModalOpen(true)}
+                      onClick={() => setIsEditModalOpen(true)}
+                      aria-label="Edit riff"
                       style={{
-                        background: "none",
-                        border: "1px solid #E6E6E6",
-                        padding: "6px 16px",
-                        fontFamily: "var(--font-dm-sans)",
-                        fontSize: "13px",
-                        fontWeight: 300,
-                        color: "#808080",
+                        background: "transparent",
+                        border: "2px solid transparent",
                         cursor: "pointer",
+                        padding: "4px 6px",
+                        color: "#808080",
+                        lineHeight: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        transition:
+                          "background-color 0.15s ease, box-shadow 0.1s ease",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.borderColor = "#FF4444";
-                        e.currentTarget.style.color = "#FF4444";
+                        e.currentTarget.style.backgroundColor = "#01EFFC";
+                        e.currentTarget.style.borderColor = "#000000";
+                        e.currentTarget.style.color = "#000000";
+                        e.currentTarget.style.boxShadow =
+                          "3px 3px 0px 0px #000000";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.borderColor = "#E6E6E6";
+                        e.currentTarget.style.backgroundColor = "transparent";
+                        e.currentTarget.style.borderColor = "transparent";
                         e.currentTarget.style.color = "#808080";
+                        e.currentTarget.style.boxShadow = "none";
                       }}
                     >
-                      Delete
+                      <svg
+                        width="12"
+                        height="3"
+                        viewBox="0 0 12 3"
+                        fill="currentColor"
+                      >
+                        <circle cx="1.5" cy="1.5" r="1.5" />
+                        <circle cx="6" cy="1.5" r="1.5" />
+                        <circle cx="10.5" cy="1.5" r="1.5" />
+                      </svg>
                     </button>
                   )}
-                </div>
-              )}
+              </div>
+            </div>
+
+            {/* Delete — DRAFT only, admin only */}
+            {isAdmin && riff.status === "DRAFT" && (
+              <div>
+                <button
+                  onClick={() => setIsDeleteModalOpen(true)}
+                  style={{
+                    background: "none",
+                    border: "1px solid #E6E6E6",
+                    padding: "6px 16px",
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "13px",
+                    fontWeight: 300,
+                    color: "#808080",
+                    cursor: "pointer",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = "#FF4444";
+                    e.currentTarget.style.color = "#FF4444";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = "#E6E6E6";
+                    e.currentTarget.style.color = "#808080";
+                  }}
+                >
+                  Delete
+                </button>
+              </div>
+            )}
 
             {/* Prompt */}
             {riff.prompt && (
