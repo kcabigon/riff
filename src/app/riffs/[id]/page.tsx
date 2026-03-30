@@ -100,6 +100,7 @@ export default async function RiffPage({
     deadline: riff.deadline ? riff.deadline.toISOString() : null,
     pieces: riff.pieces.map((pr) => ({
       ...pr,
+      submittedAt: pr.submittedAt ? pr.submittedAt.toISOString() : null,
       piece: {
         ...pr.piece,
         commentCount: pr.piece._count?.comments ?? 0,

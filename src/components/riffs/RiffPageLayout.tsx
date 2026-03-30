@@ -40,6 +40,7 @@ interface RiffPageLayoutProps {
       };
     }>;
     pieces: Array<{
+      submittedAt: string | null;
       piece: {
         id: string;
         title: string;
@@ -133,11 +134,18 @@ export default function RiffPageLayout({
   };
 
   const submittedUsers = riff.participants.filter((p) =>
-    riff.pieces.some((piece) => piece.piece.authorId === p.user.id)
+    riff.pieces.some(
+      (piece) =>
+        piece.submittedAt !== null && piece.piece.authorId === p.user.id
+    )
   );
 
   const waitingUsers = riff.participants.filter(
-    (p) => !riff.pieces.some((piece) => piece.piece.authorId === p.user.id)
+    (p) =>
+      !riff.pieces.some(
+        (piece) =>
+          piece.submittedAt !== null && piece.piece.authorId === p.user.id
+      )
   );
 
   const handleRevealClick = () => {
@@ -630,7 +638,11 @@ export default function RiffPageLayout({
         waitingUsers={riff.participants
           .filter(
             (p) =>
-              !riff.pieces.some((piece) => piece.piece.authorId === p.user.id)
+              !riff.pieces.some(
+                (piece) =>
+                  piece.submittedAt !== null &&
+                  piece.piece.authorId === p.user.id
+              )
           )
           .map((p) => ({
             id: p.user.id,
@@ -639,7 +651,10 @@ export default function RiffPageLayout({
           }))}
         submittedCount={
           riff.participants.filter((p) =>
-            riff.pieces.some((piece) => piece.piece.authorId === p.user.id)
+            riff.pieces.some(
+              (piece) =>
+                piece.submittedAt !== null && piece.piece.authorId === p.user.id
+            )
           ).length
         }
         totalParticipants={riff.participants.length}

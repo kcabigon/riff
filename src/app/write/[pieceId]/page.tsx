@@ -64,6 +64,7 @@ export default async function WritePageRoute({
       deadline: pr.riff.deadline ? pr.riff.deadline.toISOString() : null,
       clubId: pr.riff.clubId,
       clubName: pr.riff.club.name,
+      submittedAt: pr.submittedAt ? pr.submittedAt.toISOString() : null,
     })),
   };
 
