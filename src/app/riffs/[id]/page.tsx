@@ -80,7 +80,10 @@ export default async function RiffPage({
   }
 
   const isJoined = riff.participants.some((p) => p.user.id === userId);
-  const hasSubmitted = riff.pieces.some((p) => p.piece.authorId === userId);
+  const hasDraft = riff.pieces.some((p) => p.piece.authorId === userId);
+  const hasSubmitted = riff.pieces.some(
+    (p) => p.piece.authorId === userId && p.submittedAt !== null
+  );
   const isAdmin = riff.club.adminId === userId;
 
   // Fetch read piece IDs for REVEALED riffs
@@ -100,6 +103,7 @@ export default async function RiffPage({
     deadline: riff.deadline ? riff.deadline.toISOString() : null,
     pieces: riff.pieces.map((pr) => ({
       ...pr,
+      submittedAt: pr.submittedAt ? pr.submittedAt.toISOString() : null,
       piece: {
         ...pr.piece,
         commentCount: pr.piece._count?.comments ?? 0,
@@ -114,6 +118,7 @@ export default async function RiffPage({
       currentUserId={userId}
       isAdmin={isAdmin}
       isJoined={isJoined}
+      hasDraft={hasDraft}
       hasSubmitted={hasSubmitted}
       readPieceIds={readPieceIds}
     />

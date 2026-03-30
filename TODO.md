@@ -1,6 +1,6 @@
 # Riff — Master TODO
 
-Last updated: March 27, 2026 (Jarric adding profile access control + profile banner TODOs)
+Last updated: March 29, 2026 (Jarric adding modal design system TODOs)
 
 ---
 
@@ -51,7 +51,13 @@ Last updated: March 27, 2026 (Jarric adding profile access control + profile ban
 ### Riff Page
 - [ ] 🔨 @jarric — Redesign riff page layout
 - [x] Change back button styling (shared BackButton component, used across all back navigation)
-- [ ] Share button doesn't work — wire up or remove
+- [x] Share button: confirmation modal + PATCH submittedAt on PieceRiff + fix reveal submitted count
+
+### Modal Design System
+- [ ] Audit and update Modal component — ensure noise background, tagline highlights, and CTA styling are consistent across all usages
+- [ ] Cover image modal: update to match Modal component (noise background, CTA style, border/shadow spec)
+- [ ] Share piece modal: update to match Modal component (noise background, CTA style, border/shadow spec)
+- [ ] Review all modals (RevealConfirmModal, EditRiffModal, DeleteRiffConfirmModal, ClubSettingsModal, CreateRiffModal, InviteOptions) and bring into alignment with updated Modal component
 
 ### Read / Write Experience
 - [ ] YouTube embeds, images, Spotify links need to be mobile responsive
