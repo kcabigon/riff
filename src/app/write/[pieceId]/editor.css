@@ -1,26 +1,5 @@
 /* Write page editor styles — black canvas on white page */
 
-/* Toolbar responsive alignment */
-.write-toolbar-container {
-  justify-content: flex-start;
-}
-
-@media (min-width: 667px) {
-  .write-toolbar-container {
-    justify-content: center;
-  }
-}
-
-/* Hide scrollbar but keep scroll functionality */
-.write-toolbar-container {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.write-toolbar-container::-webkit-scrollbar {
-  display: none;
-}
-
 /* ProseMirror editor styles */
 .write-editor .ProseMirror {
   padding: 0;
