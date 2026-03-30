@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDraftCreation } from "@/hooks/useDraftCreation";
 import Dropdown from "@/components/shared/Dropdown";
+import ExistingDraftPickerModal from "@/components/riffs/ExistingDraftPickerModal";
 
 interface RiffCTAButtonProps {
   riffId: string;
@@ -25,6 +26,8 @@ export default function RiffCTAButton({
   stopPropagation = false,
 }: RiffCTAButtonProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [isDraftPickerOpen, setIsDraftPickerOpen] = useState(false);
+  const [isChangingDraft, setIsChangingDraft] = useState(false);
   const router = useRouter();
   const { createDraft } = useDraftCreation();
 
@@ -77,7 +80,7 @@ export default function RiffCTAButton({
     }
   };
 
-  // "Start writing" — dropdown with New draft / Existing draft placeholder
+  // "Start writing" — dropdown with New draft / Existing draft
   if (isJoined && !hasDraft && !hasSubmitted) {
     return (
       <div
@@ -105,10 +108,71 @@ export default function RiffCTAButton({
             {
               type: "action",
               label: "Existing draft",
-              color: "#AAAAAA",
-              onClick: () => {},
+              onClick: () => setIsDraftPickerOpen(true),
             },
           ]}
+        />
+        <ExistingDraftPickerModal
+          isOpen={isDraftPickerOpen}
+          onClose={() => setIsDraftPickerOpen(false)}
+          riffId={riffId}
+        />
+      </div>
+    );
+  }
+
+  // "Continue writing" — dropdown with change/remove options
+  if (isJoined && hasDraft && !hasSubmitted) {
+    return (
+      <div
+        onClick={stopPropagation ? (e) => e.stopPropagation() : undefined}
+        style={{ display: "contents" }}
+      >
+        <Dropdown
+          align="right"
+          minWidth={200}
+          trigger={
+            <button
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+              style={buttonStyle}
+            >
+              Continue writing
+            </button>
+          }
+          items={[
+            {
+              type: "action",
+              label: "Continue writing",
+              onClick: () =>
+                existingPieceId && router.push(`/write/${existingPieceId}`),
+            },
+            {
+              type: "action",
+              label: "Change draft",
+              onClick: () => setIsChangingDraft(true),
+            },
+            { type: "divider" },
+            {
+              type: "action",
+              label: "Remove from riff",
+              color: "#FF6B35",
+              onClick: async () => {
+                if (!existingPieceId) return;
+                if (stopPropagation) return; // riff card context — skip, too destructive
+                await fetch(`/api/riffs/${riffId}/pieces/${existingPieceId}`, {
+                  method: "DELETE",
+                });
+                router.refresh();
+              },
+            },
+          ]}
+        />
+        <ExistingDraftPickerModal
+          isOpen={isChangingDraft}
+          onClose={() => setIsChangingDraft(false)}
+          riffId={riffId}
+          existingPieceId={existingPieceId}
         />
       </div>
     );
