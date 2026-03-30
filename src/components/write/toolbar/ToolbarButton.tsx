@@ -23,18 +23,17 @@ export default function ToolbarButton({
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        borderRadius: "6px",
-        border: "0.5px solid transparent",
-        background: isActive ? "#e5e7eb" : "transparent",
+        border: isActive ? "none" : "1px solid transparent",
+        background: isActive ? "#000000" : "transparent",
         cursor: "pointer",
         transition: "background 0.2s",
         flexShrink: 0,
       }}
       onMouseEnter={(e) => {
-        if (!isActive) e.currentTarget.style.border = "0.5px solid #ffffff";
+        if (!isActive) e.currentTarget.style.border = "2px solid #000000";
       }}
       onMouseLeave={(e) => {
-        if (!isActive) e.currentTarget.style.border = "0.5px solid transparent";
+        if (!isActive) e.currentTarget.style.border = "1px solid transparent";
       }}
       title={title}
     >
@@ -49,12 +48,14 @@ export function TextLabel({
   italic,
   underline,
   strikethrough,
+  color = "#000",
 }: {
   text: string;
   bold?: boolean;
   italic?: boolean;
   underline?: boolean;
   strikethrough?: boolean;
+  color?: string;
 }) {
   return (
     <span
@@ -68,7 +69,7 @@ export function TextLabel({
           : strikethrough
             ? "line-through"
             : "none",
-        color: "#fff",
+        color,
       }}
     >
       {text}
