@@ -491,7 +491,7 @@ export default function WritePage({ piece }: WritePageProps) {
           {isMobile && (
             <div
               style={{
-                borderBottom: "1px solid #000000",
+                borderBottom: "2px solid #000000",
                 paddingBottom: "8px",
               }}
             >
