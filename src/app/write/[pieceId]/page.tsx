@@ -22,6 +22,7 @@ export default async function WritePageRoute({
     select: {
       id: true,
       title: true,
+      subtitle: true,
       currentContent: true,
       coverImage: true,
       authorId: true,
@@ -55,6 +56,7 @@ export default async function WritePageRoute({
   const serializedPiece = {
     id: piece.id,
     title: piece.title,
+    subtitle: piece.subtitle,
     currentContent: piece.currentContent,
     coverImage: piece.coverImage,
     riffs: piece.riffs.map((pr) => ({

@@ -38,6 +38,7 @@ interface WritePageProps {
   piece: {
     id: string;
     title: string;
+    subtitle: string | null;
     currentContent: string;
     coverImage: string | null;
     riffs: RiffConnection[];
@@ -49,7 +50,7 @@ export default function WritePage({ piece }: WritePageProps) {
     "saved"
   );
   const [title, setTitle] = useState(piece.title || "Untitled");
-  const [subtitle, setSubtitle] = useState("");
+  const [subtitle, setSubtitle] = useState(piece.subtitle || "");
   const [coverImage, setCoverImage] = useState<string | null>(piece.coverImage);
   const [showCoverModal, setShowCoverModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -59,6 +60,7 @@ export default function WritePage({ piece }: WritePageProps) {
   const subtitleRef = useRef<HTMLTextAreaElement>(null);
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const titleSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const subtitleSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
   const isMobile = useIsMobile();
 
@@ -172,6 +174,27 @@ export default function WritePage({ piece }: WritePageProps) {
     [piece.id]
   );
 
+  const autosaveSubtitle = useCallback(
+    async (newSubtitle: string) => {
+      setSaveStatus("saving");
+      try {
+        const res = await fetch(`/api/pieces/${piece.id}/autosave`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ subtitle: newSubtitle }),
+        });
+        if (res.ok) {
+          setSaveStatus("saved");
+        } else {
+          setSaveStatus("unsaved");
+        }
+      } catch {
+        setSaveStatus("unsaved");
+      }
+    },
+    [piece.id]
+  );
+
   const autosaveCoverImage = useCallback(
     async (newCoverImage: string | null) => {
       setSaveStatus("saving");
@@ -244,6 +267,21 @@ export default function WritePage({ piece }: WritePageProps) {
       }
     };
   }, [title, autosaveTitle]);
+
+  // Debounced subtitle autosave
+  useEffect(() => {
+    if (subtitleSaveTimerRef.current) {
+      clearTimeout(subtitleSaveTimerRef.current);
+    }
+    subtitleSaveTimerRef.current = setTimeout(() => {
+      autosaveSubtitle(subtitle);
+    }, 2000);
+    return () => {
+      if (subtitleSaveTimerRef.current) {
+        clearTimeout(subtitleSaveTimerRef.current);
+      }
+    };
+  }, [subtitle, autosaveSubtitle]);
 
   const handleImageUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -491,7 +529,10 @@ export default function WritePage({ piece }: WritePageProps) {
           <textarea
             ref={subtitleRef}
             value={subtitle}
-            onChange={(e) => setSubtitle(e.target.value)}
+            onChange={(e) => {
+              setSubtitle(e.target.value);
+              setSaveStatus("unsaved");
+            }}
             placeholder="Add a subtitle..."
             style={{
               fontFamily: "var(--font-dm-sans)",
