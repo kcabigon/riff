@@ -194,22 +194,16 @@ export default function ProgressCard({ user, piece }: ProgressCardProps) {
 
   // ── In progress ──────────────────────────────────────────────────────────
   return (
-    <div
-      style={{
-        ...cardBase,
-        backgroundColor: "#FFFFFF",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      {/* Title — centered in its own zone */}
+    <div style={{ ...cardBase, backgroundColor: "#FFFFFF" }}>
+      {/* Title — true center of card */}
       <div
         style={{
-          flex: 1,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "24px 24px 0",
+          position: "absolute",
+          top: "50%",
+          left: "24px",
+          right: "24px",
+          transform: "translateY(-50%)",
+          textAlign: "center",
         }}
       >
         <h4
@@ -219,7 +213,6 @@ export default function ProgressCard({ user, piece }: ProgressCardProps) {
             fontWeight: 400,
             color: "#000000",
             margin: 0,
-            textAlign: "center",
             lineHeight: 1.3,
           }}
         >
@@ -230,12 +223,17 @@ export default function ProgressCard({ user, piece }: ProgressCardProps) {
       {/* Progress data — centered between title and avatar */}
       <div
         style={{
-          flex: 1,
+          position: "absolute",
+          top: "50%",
+          bottom: "56px",
+          left: 0,
+          right: 0,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
           gap: "6px",
+          paddingTop: "24px",
         }}
       >
         <p
@@ -263,12 +261,14 @@ export default function ProgressCard({ user, piece }: ProgressCardProps) {
         </p>
       </div>
 
-      {/* Avatar — fixed zone at bottom */}
+      {/* Avatar — bottom */}
       <div
         style={{
-          height: "56px",
+          position: "absolute",
+          bottom: "16px",
+          left: 0,
+          right: 0,
           display: "flex",
-          alignItems: "center",
           justifyContent: "center",
         }}
       >
