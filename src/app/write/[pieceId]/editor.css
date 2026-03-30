@@ -162,6 +162,16 @@
   display: block;
 }
 
+/* ==================== Top Bar ==================== */
+
+.write-top-bar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: #FFFFFF;
+  padding-top: env(safe-area-inset-top);
+}
+
 /* ==================== Floating Toolbar (desktop + mobile) ==================== */
 
 .write-sticky-toolbar {

@@ -369,15 +369,7 @@ export default function WritePage({ piece }: WritePageProps) {
         }}
       >
         {/* Top bar: back + actions + toolbar (mobile) */}
-        <div
-          style={{
-            position: "sticky",
-            top: 0,
-            zIndex: 40,
-            background: "#FFFFFF",
-            paddingTop: "env(safe-area-inset-top)",
-          }}
-        >
+        <div className="write-top-bar">
           <div
             style={{
               display: "flex",
