@@ -147,7 +147,6 @@ export default function ProgressCard({ user, piece }: ProgressCardProps) {
             alignItems: "center",
             justifyContent: "center",
             padding: "24px",
-            paddingBottom: "56px",
             zIndex: 1,
           }}
         >

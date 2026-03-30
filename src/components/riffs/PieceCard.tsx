@@ -112,7 +112,6 @@ export default function PieceCard({ piece, isRead, onClick }: PieceCardProps) {
           justifyContent: "center",
           padding: "24px",
           zIndex: 1,
-          ...(piece.author ? { paddingBottom: "56px" } : {}),
         }}
       >
         <h4
