@@ -13,6 +13,7 @@ import RevealCelebration from "./RevealCelebration";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
 import { useDraftCreation } from "@/hooks/useDraftCreation";
 import { getRiffDisplayTitle } from "@/lib/riff-utils";
+import Dropdown from "@/components/shared/Dropdown";
 
 interface RiffPageLayoutProps {
   riff: {
@@ -60,6 +61,7 @@ interface RiffPageLayoutProps {
   currentUserId: string;
   isAdmin: boolean;
   isJoined: boolean;
+  hasDraft: boolean;
   hasSubmitted: boolean;
   readPieceIds?: string[];
   onReveal?: () => void;
@@ -70,6 +72,7 @@ export default function RiffPageLayout({
   currentUserId,
   isAdmin,
   isJoined: initialIsJoined,
+  hasDraft,
   hasSubmitted,
   readPieceIds = [],
   onReveal,
@@ -175,11 +178,13 @@ export default function RiffPageLayout({
     }
   };
 
-  const buttonLabel = isJoined
-    ? hasSubmitted
+  const buttonLabel = !isJoined
+    ? "Join riff"
+    : hasSubmitted
       ? "View submission"
-      : "Continue writing"
-    : "Join riff";
+      : hasDraft
+        ? "Continue writing"
+        : "Start writing";
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
@@ -482,30 +487,75 @@ export default function RiffPageLayout({
                 Waiting for the host to reveal
               </button>
             ) : riff.status !== "REVEALED" ? (
-              <button
-                onClick={handleButtonClick}
-                onMouseEnter={() => setIsButtonHovered(true)}
-                onMouseLeave={() => setIsButtonHovered(false)}
-                style={{
-                  backgroundColor: isButtonHovered ? "#00FF66" : "#FFFFFF",
-                  border: "2px solid #000000",
-                  boxShadow: isButtonHovered
-                    ? "8px 8px 0px 0px #000000"
-                    : isJoined
-                      ? "8px 8px 0px 0px #00FF66"
-                      : "8px 8px 0px 0px #01EFFC",
-                  padding: "12px 48px",
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#000000",
-                  cursor: "pointer",
-                  transition: "none",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {buttonLabel}
-              </button>
+              buttonLabel === "Start writing" ? (
+                <Dropdown
+                  align="right"
+                  minWidth={200}
+                  trigger={
+                    <button
+                      onMouseEnter={() => setIsButtonHovered(true)}
+                      onMouseLeave={() => setIsButtonHovered(false)}
+                      style={{
+                        backgroundColor: isButtonHovered
+                          ? "#00FF66"
+                          : "#FFFFFF",
+                        border: "2px solid #000000",
+                        boxShadow: isButtonHovered
+                          ? "8px 8px 0px 0px #000000"
+                          : "8px 8px 0px 0px #01EFFC",
+                        padding: "12px 48px",
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "16px",
+                        fontWeight: 300,
+                        color: "#000000",
+                        cursor: "pointer",
+                        transition: "none",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      Start writing
+                    </button>
+                  }
+                  items={[
+                    {
+                      type: "action",
+                      label: "New draft",
+                      onClick: () => createDraft(riff.id),
+                    },
+                    {
+                      type: "action",
+                      label: "Existing draft",
+                      color: "#AAAAAA",
+                      onClick: () => {},
+                    },
+                  ]}
+                />
+              ) : (
+                <button
+                  onClick={handleButtonClick}
+                  onMouseEnter={() => setIsButtonHovered(true)}
+                  onMouseLeave={() => setIsButtonHovered(false)}
+                  style={{
+                    backgroundColor: isButtonHovered ? "#00FF66" : "#FFFFFF",
+                    border: "2px solid #000000",
+                    boxShadow: isButtonHovered
+                      ? "8px 8px 0px 0px #000000"
+                      : isJoined
+                        ? "8px 8px 0px 0px #00FF66"
+                        : "8px 8px 0px 0px #01EFFC",
+                    padding: "12px 48px",
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "16px",
+                    fontWeight: 300,
+                    color: "#000000",
+                    cursor: "pointer",
+                    transition: "none",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {buttonLabel}
+                </button>
+              )
             ) : null}
 
             {isJoined && riff.deadline && !isPastDeadline && (
