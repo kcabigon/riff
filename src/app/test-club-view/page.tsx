@@ -18,10 +18,30 @@ import ClubPageLayout from "@/components/clubs/ClubPageLayout";
 // Fake users
 // ---------------------------------------------------------------------------
 const ME = { id: "user-me", name: "You", username: "youuser", avatarUrl: null };
-const ALICE = { id: "user-alice", name: "Alice Chen", username: "alicechen", avatarUrl: null };
-const BOB = { id: "user-bob", name: "Bob Rivera", username: "bobrivera", avatarUrl: null };
-const CAROL = { id: "user-carol", name: "Carol Kim", username: "carolkim", avatarUrl: null };
-const DAVE = { id: "user-dave", name: "Dave Okafor", username: "daveokafor", avatarUrl: null };
+const ALICE = {
+  id: "user-alice",
+  name: "Alice Chen",
+  username: "alicechen",
+  avatarUrl: null,
+};
+const BOB = {
+  id: "user-bob",
+  name: "Bob Rivera",
+  username: "bobrivera",
+  avatarUrl: null,
+};
+const CAROL = {
+  id: "user-carol",
+  name: "Carol Kim",
+  username: "carolkim",
+  avatarUrl: null,
+};
+const DAVE = {
+  id: "user-dave",
+  name: "Dave Okafor",
+  username: "daveokafor",
+  avatarUrl: null,
+};
 
 // ---------------------------------------------------------------------------
 // Club
@@ -54,20 +74,16 @@ const activeRiff = {
   status: "ACTIVE",
   createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
   creator: ME,
-  participants: [
-    { user: ME },
-    { user: ALICE },
-    { user: BOB },
-    { user: CAROL },
-  ],
+  participants: [{ user: ME }, { user: ALICE }, { user: BOB }, { user: CAROL }],
   pieces: [
     {
+      submittedAt: new Date(),
       piece: {
         id: "piece-alice-active",
         title: "The Train Station in Prague",
         authorId: ALICE.id,
         currentContent:
-          '<p>I first arrived at Prague\'s main station on a grey Tuesday in March. The ceiling arches above you like the ribcage of some enormous creature.</p>',
+          "<p>I first arrived at Prague's main station on a grey Tuesday in March. The ceiling arches above you like the ribcage of some enormous creature.</p>",
         wordCount: 58,
       },
     },
@@ -85,13 +101,10 @@ const completedRiff1 = {
   status: "COMPLETED",
   createdAt: new Date("2025-12-01T10:00:00Z").toISOString(),
   creator: ME,
-  participants: [
-    { user: ME },
-    { user: ALICE },
-    { user: BOB },
-  ],
+  participants: [{ user: ME }, { user: ALICE }, { user: BOB }],
   pieces: [
     {
+      submittedAt: new Date(),
       piece: {
         id: "piece-me-cr1",
         title: "The Red Bicycle",
@@ -102,6 +115,7 @@ const completedRiff1 = {
       },
     },
     {
+      submittedAt: new Date(),
       piece: {
         id: "piece-alice-cr1",
         title: "Saturday Mornings",
@@ -112,6 +126,7 @@ const completedRiff1 = {
       },
     },
     {
+      submittedAt: new Date(),
       piece: {
         id: "piece-bob-cr1",
         title: "Grandma's Kitchen",
@@ -135,12 +150,10 @@ const completedRiff2 = {
   status: "COMPLETED",
   createdAt: new Date("2025-11-10T10:00:00Z").toISOString(),
   creator: ME,
-  participants: [
-    { user: CAROL },
-    { user: DAVE },
-  ],
+  participants: [{ user: CAROL }, { user: DAVE }],
   pieces: [
     {
+      submittedAt: new Date(),
       piece: {
         id: "piece-carol-cr2",
         title: "The Compass",
@@ -151,6 +164,7 @@ const completedRiff2 = {
       },
     },
     {
+      submittedAt: new Date(),
       piece: {
         id: "piece-dave-cr2",
         title: "A Letter I Never Sent",

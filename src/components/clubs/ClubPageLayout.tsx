@@ -28,6 +28,7 @@ interface ClubMember {
 }
 
 interface RiffPiece {
+  submittedAt: Date | string | null;
   piece: {
     id: string;
     title: string;
@@ -166,8 +167,13 @@ export default function ClubPageLayout({
   const isJoined = activeRiff
     ? activeRiff.participants.some((p) => p.user.id === currentUserId)
     : false;
-  const hasSubmitted = activeRiff
+  const hasDraft = activeRiff
     ? activeRiff.pieces.some((p) => p.piece.authorId === currentUserId)
+    : false;
+  const hasSubmitted = activeRiff
+    ? activeRiff.pieces.some(
+        (p) => p.piece.authorId === currentUserId && p.submittedAt !== null
+      )
     : false;
 
   // Format word count with commas
@@ -922,6 +928,7 @@ export default function ClubPageLayout({
                 pieces: activeRiff.pieces,
               }}
               isJoined={isJoined}
+              hasDraft={hasDraft}
               hasSubmitted={hasSubmitted}
               currentUserId={currentUserId}
               isAdmin={isAdmin}
