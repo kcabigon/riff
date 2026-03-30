@@ -16,6 +16,7 @@ import "@/app/write/[pieceId]/editor.css";
 import NoiseBackground from "@/components/NoiseBackground";
 import BackButton from "@/components/BackButton";
 import CoverImageModal from "@/components/write/CoverImageModal";
+import ShareConfirmModal from "@/components/write/ShareConfirmModal";
 import { convertHeicToJpeg } from "@/lib/convert-heic";
 
 interface RiffConnection {
@@ -25,6 +26,7 @@ interface RiffConnection {
   deadline: string | null;
   clubId: string;
   clubName: string;
+  submittedAt: string | null;
 }
 
 interface WritePageProps {
@@ -44,6 +46,8 @@ export default function WritePage({ piece }: WritePageProps) {
   const [title, setTitle] = useState(piece.title || "Untitled");
   const [coverImage, setCoverImage] = useState<string | null>(piece.coverImage);
   const [showCoverModal, setShowCoverModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const isSubmitted = piece.riffs.some((r) => r.submittedAt !== null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const titleRef = useRef<HTMLTextAreaElement>(null);
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -445,32 +449,54 @@ export default function WritePage({ piece }: WritePageProps) {
               </>
             )}
           </button>
-          <button
-            style={{
-              background: "#FFFFFF",
-              border: "1px dashed #000000",
-              borderRadius: "0",
-              padding: "4px 12px",
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "12px",
-              fontWeight: 300,
-              color: "#000000",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-            }}
-          >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path
-                d="M6 1V11M1 6H11"
-                stroke="#000000"
-                strokeWidth="1"
-                strokeLinecap="round"
-              />
-            </svg>
-            Share
-          </button>
+          {piece.riffs.length > 0 && (
+            <button
+              onClick={isSubmitted ? undefined : () => setShowShareModal(true)}
+              style={{
+                background: isSubmitted ? "#00FF66" : "#FFFFFF",
+                border: isSubmitted
+                  ? "1px solid #000000"
+                  : "1px dashed #000000",
+                borderRadius: "0",
+                padding: "4px 12px",
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "12px",
+                fontWeight: 300,
+                color: "#000000",
+                cursor: isSubmitted ? "default" : "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              {isSubmitted ? (
+                <>
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path
+                      d="M2 6L5 9L10 3"
+                      stroke="#000000"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  Shared
+                </>
+              ) : (
+                <>
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path
+                      d="M6 1V11M1 6H11"
+                      stroke="#000000"
+                      strokeWidth="1"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  Share
+                </>
+              )}
+            </button>
+          )}
         </div>
 
         {/* Riff pills */}
@@ -821,6 +847,25 @@ export default function WritePage({ piece }: WritePageProps) {
         pieceContent={editor.getHTML()}
         currentCoverImage={coverImage}
       />
+      {piece.riffs.length > 0 && (
+        <ShareConfirmModal
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          onConfirm={async () => {
+            const riff = piece.riffs[0];
+            await fetch(`/api/riffs/${riff.id}/pieces/${piece.id}`, {
+              method: "PATCH",
+            });
+          }}
+          piece={{
+            id: piece.id,
+            title,
+            coverImage,
+            currentContent: editor?.getHTML() ?? piece.currentContent,
+          }}
+          riff={piece.riffs[0]}
+        />
+      )}
     </div>
   );
 }
