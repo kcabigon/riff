@@ -51,7 +51,7 @@ Last updated: March 29, 2026 (Jarric adding modal design system TODOs)
 ### Riff Page
 - [ ] 🔨 @jarric — Redesign riff page layout
 - [x] Change back button styling (shared BackButton component, used across all back navigation)
-- [ ] 🔨 @jarric — Share button: confirmation modal + PATCH submittedAt on PieceRiff + fix reveal submitted count
+- [x] Share button: confirmation modal + PATCH submittedAt on PieceRiff + fix reveal submitted count
 
 ### Modal Design System
 - [ ] Audit and update Modal component — ensure noise background, tagline highlights, and CTA styling are consistent across all usages
