@@ -106,13 +106,18 @@ export default function PieceCard({ piece, isRead, onClick }: PieceCardProps) {
       <div
         style={{
           position: "absolute",
-          inset: 0,
+          top: 0,
+          right: 0,
+          bottom: 0,
+          left: 0,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          padding: "24px",
+          paddingTop: "24px",
+          paddingRight: "24px",
+          paddingBottom: "24px",
+          paddingLeft: "24px",
           zIndex: 1,
-          ...(piece.author ? { paddingBottom: "56px" } : {}),
         }}
       >
         <h4
@@ -151,6 +156,7 @@ export default function PieceCard({ piece, isRead, onClick }: PieceCardProps) {
               avatarUrl: piece.author.avatarUrl,
             }}
             size={32}
+            borderColor="#FFFFFF"
           />
         </div>
       )}

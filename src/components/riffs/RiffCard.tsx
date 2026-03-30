@@ -190,7 +190,6 @@ export default function RiffCard({
             <AvatarStack
               users={riff.participants.slice(0, 5).map((p) => p.user)}
               size={32}
-              showBorder={false}
               onAvatarClick={handleAvatarClick}
             />
           </div>

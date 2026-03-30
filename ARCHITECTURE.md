@@ -1,6 +1,6 @@
 # Riff — Architecture & Project Reference
 
-**Last Updated**: March 23, 2026
+**Last Updated**: March 29, 2026
 
 This file is the single source of truth for project context. The `/letsriff` slash command reads this automatically at the start of each session.
 
@@ -14,7 +14,7 @@ A private essay-sharing platform for creative communities. Users create **clubs*
 
 ---
 
-## Current State (March 23, 2026)
+## Current State (March 29, 2026)
 
 ### What's Working
 - Landing page + About page
@@ -24,8 +24,9 @@ A private essay-sharing platform for creative communities. Users create **clubs*
 - Riff lifecycle: DRAFT → ACTIVE → REVEALED → COMPLETED (with confetti)
 - Read page with progress bar, piece navigation, comment toggle
 - Comment system with text selection anchoring
-- Rich text editor (Tiptap: images, YouTube, Spotify, resize)
-- Draft editor with autosave and cover image upload (crop, HEIC support)
+- Rich text editor (Tiptap: resizable images, YouTube, Spotify embeds)
+- Write page with white canvas, floating toolbar, subtitle, keyboard-aware mobile toolbar
+- Draft editor with autosave (content, title, subtitle, cover image) and HEIC support
 - Profile page (pieces, drafts, collections)
 - Settings page (edit profile, export data, delete account)
 - Notification system (bell + panel, polls every 30s)
@@ -78,14 +79,17 @@ src/app/api/
 src/components/
 ├── shared/        # Modal, Avatar, AvatarStack, AdminBadge, EnvironmentBadge, Dropdown, ImageUploadModal
 ├── clubs/         # ClubPageLayout, NavBar, ClubDropdown, AvatarDropdown, OnboardingChecklist, InviteOptions, ClubSettingsModal, JoinClubClient
-├── riffs/         # RiffCard, RiffPageLayout, CreateRiffModal, EditRiffModal, DeleteRiffConfirmModal,
-│                  # RevealCelebration, RevealConfirmModal, PieceCard, CompletedRiffCard, ReadyToRevealCard,
-│                  # MosaicCollage, PromptLibrary, EmptyRiffState, CountdownTimer
+├── riffs/         # RiffCard, RiffCTAButton, RiffPageLayout, CreateRiffModal, EditRiffModal,
+│                  # DeleteRiffConfirmModal, RevealCelebration, RevealConfirmModal, PieceCard,
+│                  # CompletedRiffCard, ReadyToRevealCard, MosaicCollage, PromptLibrary,
+│                  # EmptyRiffState, CountdownTimer
 ├── read/          # ReadPageLayout, ReadToggle, ReadingProgress, PieceNavigation,
 │                  # CommentAnchor, CommentPopover, CommentSidebar, CommentDrawer
 ├── notifications/ # NotificationBell, NotificationPanel, NotificationItem
 ├── settings/      # SettingsPage, ProfileSection, DataSection
 ├── about/         # AboutPage
+├── write/         # WritePage, CoverImageModal, ShareConfirmModal, ResizableImageView,
+│                  # toolbar/StickyToolbar, toolbar/ToolbarButton, toolbar/toolbarButtons
 └── editor/        # TiptapEditor, EditorToolbar, extensions/Spotify
 ```
 
@@ -101,6 +105,7 @@ src/components/
 | **TextInput** | `TextInput.tsx` | All form inputs. Props: `error`, `multiline`, `rows` |
 | **BackButton** | `BackButton.tsx` | Back navigation. Props: `href`, `onClick`, `size` |
 | **CloseButton** | `CloseButton.tsx` | Close/dismiss actions. Props: `onClick`, `size` |
+| **IconButton** | `IconButton.tsx` | Generic icon button with 44px min tap target. Props: `src`, `label`, `onClick`, `size` |
 | **NoiseBackground** | `NoiseBackground.tsx` | Fractal noise SVG backdrop. Props: `fillMode` |
 | **Tagline** | `Tagline.tsx` | Colored vector highlight text. Props: `text`, `color` |
 | **WelcomeNote** | `WelcomeNote.tsx` | Handwriting-font message box |

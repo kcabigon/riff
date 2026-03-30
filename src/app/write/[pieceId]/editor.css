@@ -1,32 +1,11 @@
-/* Write page editor styles — black canvas on white page */
-
-/* Toolbar responsive alignment */
-.write-toolbar-container {
-  justify-content: flex-start;
-}
-
-@media (min-width: 667px) {
-  .write-toolbar-container {
-    justify-content: center;
-  }
-}
-
-/* Hide scrollbar but keep scroll functionality */
-.write-toolbar-container {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.write-toolbar-container::-webkit-scrollbar {
-  display: none;
-}
+/* Write page editor styles — white canvas */
 
 /* ProseMirror editor styles */
 .write-editor .ProseMirror {
   padding: 0;
   margin: 0;
   background: transparent;
-  color: #ffffff;
+  color: #000000;
   font-family: var(--font-playfair), serif;
   font-size: 18px;
   line-height: normal;
@@ -45,7 +24,7 @@
 
 .write-editor .ProseMirror p {
   margin: 0 0 1em 0;
-  color: #ffffff;
+  color: #000000;
   font-family: var(--font-playfair), serif;
   font-size: 18px;
   line-height: normal;
@@ -62,7 +41,7 @@
 .write-editor .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   float: left;
-  color: #666666;
+  color: #cccccc;
   pointer-events: none;
   height: 0;
   font-family: var(--font-playfair), serif;
@@ -75,7 +54,7 @@
 .write-editor .ProseMirror h3 {
   margin: 0 0 0.5em 0;
   padding: 0;
-  color: #ffffff;
+  color: #000000;
   font-family: var(--font-playfair), serif;
   line-height: normal;
   font-weight: bold;
@@ -98,13 +77,13 @@
 .write-editor .ProseMirror ol {
   margin: 0 0 1em 0;
   padding-left: 1.5em;
-  color: #ffffff;
+  color: #000000;
 }
 
 .write-editor .ProseMirror li {
   margin: 0;
   padding: 0;
-  color: #ffffff;
+  color: #000000;
   font-family: var(--font-playfair), serif;
   font-size: 18px;
   line-height: normal;
@@ -112,12 +91,12 @@
 
 /* Links */
 .write-editor .ProseMirror a {
-  color: #60a5fa;
+  color: #3b82f6;
   text-decoration: underline;
 }
 
 .write-editor .ProseMirror a:hover {
-  color: #93c5fd;
+  color: #60a5fa;
 }
 
 /* Focus */
@@ -125,25 +104,50 @@
   outline: none;
 }
 
-/* Inherit color */
-.write-editor .ProseMirror * {
-  color: inherit;
-}
-
 /* Images */
 .write-editor .ProseMirror img {
   max-width: 100%;
   height: auto;
   display: block;
-  margin: 1em 0;
+  margin: 1em auto;
+  cursor: pointer;
+  transition: outline 0.1s;
+}
+
+/* Selected image — green outline matching design system */
+.write-editor .ProseMirror img.ProseMirror-selectednode {
+  outline: 2px solid #00FF66;
+}
+
+/* Ensure images respect text-align for positioning */
+.write-editor .ProseMirror [style*="text-align: center"] img {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.write-editor .ProseMirror [style*="text-align: right"] img {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.write-editor .ProseMirror [style*="text-align: left"] img {
+  margin-left: 0;
+  margin-right: auto;
 }
 
 /* YouTube embeds */
-.write-editor .ProseMirror iframe[src*="youtube.com"],
-.write-editor .ProseMirror iframe[src*="youtu.be"] {
+.write-editor .ProseMirror div[data-youtube-video] {
+  width: 100% !important;
   max-width: 100%;
-  display: block;
   margin: 1em auto;
+  overflow: hidden;
+}
+
+.write-editor .ProseMirror div[data-youtube-video] iframe {
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 16 / 9;
+  display: block;
 }
 
 /* Spotify embeds */
@@ -156,6 +160,52 @@
   max-width: 100%;
   height: 152px !important;
   display: block;
+}
+
+/* ==================== Top Bar ==================== */
+
+.write-top-bar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: #FFFFFF;
+  padding-top: env(safe-area-inset-top);
+}
+
+/* ==================== Floating Toolbar (desktop + mobile) ==================== */
+
+.write-sticky-toolbar {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  background: #FFFFFF;
+  border: 2px solid #000000;
+  box-shadow: 4px 4px 0px 0px #000000;
+  padding: 8px 16px;
+  max-width: calc(100% - 32px);
+}
+
+.write-sticky-toolbar-inner {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  overflow-x: auto;
+  overflow-y: hidden;
+  height: 32px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.write-sticky-toolbar-inner::-webkit-scrollbar {
+  display: none;
+}
+
+/* Inline toolbar (mobile — pinned under top bar) */
+.write-inline-toolbar .write-sticky-toolbar-inner {
+  justify-content: flex-start;
 }
 
 /* Saving status pulse animation */
