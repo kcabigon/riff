@@ -134,10 +134,9 @@ export default function ReadPageLayout({
   }, []);
 
   // Click sidebar comment → scroll to highlight in content
-  const handleHighlightClick = useCallback((commentId: string) => {
+  const handleSidebarCommentClick = useCallback((commentId: string) => {
     setActiveHighlightId(commentId);
 
-    // Scroll the highlighted mark into view
     setTimeout(() => {
       const mark = document.querySelector(
         `mark[data-comment-id="${commentId}"]`
@@ -146,6 +145,22 @@ export default function ReadPageLayout({
         mark.scrollIntoView({ behavior: "smooth", block: "center" });
       }
     }, 50);
+  }, []);
+
+  // Click highlight in content → activate comment and ensure both are visible
+  const handleHighlightClick = useCallback((commentId: string) => {
+    setActiveHighlightId(commentId);
+
+    // After positions recalculate, scroll the highlight into center view
+    // The sidebar comment will be repositioned next to it
+    setTimeout(() => {
+      const mark = document.querySelector(
+        `mark[data-comment-id="${commentId}"]`
+      );
+      if (mark) {
+        mark.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 150);
   }, []);
 
   // Handle image comment
@@ -180,12 +195,12 @@ export default function ReadPageLayout({
           right: isMobile ? 0 : undefined,
           zIndex: 50,
           width: "100%",
-          maxWidth: isMobile ? "100%" : "720px",
+          maxWidth: isMobile ? "100%" : isRiffMode ? "1100px" : "720px",
           margin: isMobile ? undefined : "0 auto",
           backgroundColor: "#FFFFFF",
           transform:
             isMobile && !navVisible ? "translateY(-100%)" : "translateY(0)",
-          transition: "transform 200ms ease",
+          transition: "transform 200ms ease, max-width 0.3s ease",
           willChange: isMobile ? "transform" : undefined,
         }}
       >
@@ -320,21 +335,13 @@ export default function ReadPageLayout({
             </p>
           </div>
 
-          {/* Horizontal rule */}
-          <hr
-            style={{
-              border: "none",
-              borderTop: "1px solid #E6E6E6",
-              margin: "0 0 32px 0",
-            }}
-          />
-
           {/* Content — Tiptap read-only */}
           <ReadOnlyEditor
             content={piece.currentContent}
             comments={isRiffMode ? comments : []}
             isRiffMode={isRiffMode}
             activeHighlightId={activeHighlightId}
+            pendingSelection={pendingSelection}
             onSelection={setPendingSelection}
             onHighlightClick={handleHighlightClick}
             onImageComment={handleImageComment}
@@ -346,34 +353,28 @@ export default function ReadPageLayout({
 
         {/* Sidebar — desktop riff mode only */}
         {isRiffMode && !isMobile && (
-          <div
-            style={{
-              width: "300px",
-              flexShrink: 0,
-              position: "relative",
-            }}
-          >
-            {/* Comment compose — positioned at selection height */}
-            {pendingSelection && (
-              <CommentPopover
-                selection={pendingSelection}
-                currentUser={currentUser}
-                pieceId={piece.id}
-                riffId={riffId}
-                clubId={clubId}
-                onSubmit={handleNewComment}
-                onClose={() => setPendingSelection(null)}
-              />
-            )}
-
-            <CommentSidebar
-              comments={comments}
-              activeHighlightId={activeHighlightId}
-              currentUserId={currentUser.id}
-              onDelete={handleDeleteComment}
-              onCommentClick={handleHighlightClick}
-            />
-          </div>
+          <CommentSidebar
+            comments={comments}
+            activeHighlightId={activeHighlightId}
+            currentUserId={currentUser.id}
+            onDelete={handleDeleteComment}
+            onCommentClick={handleSidebarCommentClick}
+            contentColumnRef={contentColumnRef}
+            pendingSelection={pendingSelection}
+            pendingCommentProps={
+              pendingSelection
+                ? {
+                    selection: pendingSelection,
+                    currentUser,
+                    pieceId: piece.id,
+                    riffId,
+                    clubId,
+                    onSubmit: handleNewComment,
+                    onClose: () => setPendingSelection(null),
+                  }
+                : null
+            }
+          />
         )}
       </div>
 

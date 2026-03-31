@@ -64,7 +64,10 @@ export default function CommentPopover({
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
   useEffect(() => {
-    textareaRef.current?.focus();
+    // Delay focus to let positioning settle, and prevent scroll jump
+    setTimeout(() => {
+      textareaRef.current?.focus({ preventScroll: true });
+    }, 100);
   }, []);
 
   // Click-outside to dismiss
@@ -141,39 +144,29 @@ export default function CommentPopover({
     }
   };
 
-  // Desktop: position in the sidebar area, aligned with the selection
-  const desktopStyle: React.CSSProperties = isMobile
-    ? {}
-    : {
-        position: "absolute",
-        top: selection.rect.top + window.scrollY - 10,
-        right: 0,
-        width: "300px",
-        zIndex: 1000,
-      };
-
+  // Desktop: no positioning (parent sidebar handles it)
   // Mobile: bottom sheet
-  const mobileStyle: React.CSSProperties = isMobile
+  const style: React.CSSProperties = isMobile
     ? {
         position: "fixed",
         bottom: 0,
         left: 0,
         right: 0,
         zIndex: 1000,
+        backgroundColor: "#FFFFFF",
+        border: "2px solid #000000",
+        boxShadow: "4px 4px 0 #000",
+        padding: "12px",
       }
-    : {};
-
-  const combinedStyle: React.CSSProperties = {
-    ...desktopStyle,
-    ...mobileStyle,
-    backgroundColor: "#FFFFFF",
-    border: "2px solid #000000",
-    boxShadow: "4px 4px 0 #000",
-    padding: "12px",
-  };
+    : {
+        backgroundColor: "#FFFFFF",
+        border: "2px solid #000000",
+        boxShadow: "4px 4px 0 #000",
+        padding: "12px",
+      };
 
   return (
-    <div ref={popoverRef} style={combinedStyle}>
+    <div ref={popoverRef} style={style}>
       {/* Input row */}
       <div style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
         {/* Avatar */}
@@ -182,7 +175,7 @@ export default function CommentPopover({
             width: "28px",
             height: "28px",
             borderRadius: "50%",
-            backgroundColor: "#00FF66",
+            backgroundColor: "#01EFFC",
             border: "1px solid #000",
             flexShrink: 0,
             display: "flex",
@@ -267,7 +260,29 @@ export default function CommentPopover({
             height: "32px",
             padding: "4px 20px",
             fontSize: "13px",
-            boxShadow: "4px 4px 0px 0px #000000",
+            boxShadow: text.trim() ? "4px 4px 0px 0px #000000" : "none",
+          }}
+          onMouseEnter={(e) => {
+            if (text.trim()) {
+              e.currentTarget.style.boxShadow = "4px 4px 0px 0px #01EFFC";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (text.trim()) {
+              e.currentTarget.style.boxShadow = "4px 4px 0px 0px #000000";
+            }
+          }}
+          onMouseDown={(e) => {
+            if (text.trim()) {
+              e.currentTarget.style.boxShadow = "2px 2px 0px 0px #01EFFC";
+              e.currentTarget.style.transform = "translate(2px, 2px)";
+            }
+          }}
+          onMouseUp={(e) => {
+            if (text.trim()) {
+              e.currentTarget.style.boxShadow = "4px 4px 0px 0px #01EFFC";
+              e.currentTarget.style.transform = "translate(0, 0)";
+            }
           }}
         >
           Post

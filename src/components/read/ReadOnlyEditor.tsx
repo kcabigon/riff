@@ -24,6 +24,7 @@ interface ReadOnlyEditorProps {
   comments: CommentData[];
   isRiffMode: boolean;
   activeHighlightId: string | null;
+  pendingSelection: PendingSelection | null;
   onSelection: (selection: PendingSelection) => void;
   onHighlightClick: (commentId: string) => void;
   onImageComment?: (rect: DOMRect) => void;
@@ -57,6 +58,7 @@ export default function ReadOnlyEditor({
   comments,
   isRiffMode,
   activeHighlightId,
+  pendingSelection,
   onSelection,
   onHighlightClick,
   onImageComment,
@@ -77,6 +79,9 @@ export default function ReadOnlyEditor({
     const proseMirror = containerRef.current.querySelector(".ProseMirror");
     if (!proseMirror) return;
 
+    // Preserve scroll position during DOM manipulation
+    const scrollY = window.scrollY;
+
     // Remove existing marks
     proseMirror.querySelectorAll("mark[data-comment-id]").forEach((m) => {
       const parent = m.parentNode;
@@ -88,28 +93,60 @@ export default function ReadOnlyEditor({
     // Normalize text nodes after unwrapping marks
     proseMirror.normalize();
 
-    if (!isRiffMode || comments.length === 0) return;
+    if (!isRiffMode) return;
 
-    // Sort comments by selectionStart descending so we inject from back to front
-    // This prevents offset drift when DOM is mutated
-    const sorted = [...comments]
+    // Build all items to highlight: existing comments + pending selection
+    const allHighlights: {
+      id: string;
+      selectedText: string;
+      selectionStart: number;
+      isActive: boolean;
+      isPending: boolean;
+    }[] = comments
       .filter((c) => c.selectedText && c.selectionStart != null)
-      .sort((a, b) => b.selectionStart - a.selectionStart);
+      .map((c) => ({
+        id: c.id,
+        selectedText: c.selectedText,
+        selectionStart: c.selectionStart,
+        isActive: c.id === activeHighlightId,
+        isPending: false,
+      }));
 
-    for (const comment of sorted) {
-      // Rebuild text node map fresh for each comment (DOM may have changed)
+    // Add pending selection as a temporary highlight
+    if (
+      pendingSelection &&
+      pendingSelection.text &&
+      pendingSelection.start >= 0
+    ) {
+      allHighlights.push({
+        id: "__pending__",
+        selectedText: pendingSelection.text,
+        selectionStart: pendingSelection.start,
+        isActive: false,
+        isPending: true,
+      });
+    }
+
+    if (allHighlights.length === 0) return;
+
+    // Sort by selectionStart descending so we inject from back to front
+    // This prevents offset drift when DOM is mutated
+    const sorted = [...allHighlights].sort(
+      (a, b) => b.selectionStart - a.selectionStart
+    );
+
+    for (const highlight of sorted) {
       const textNodes = buildTextNodeMap(proseMirror);
       const fullText = textNodes.map((t) => t.node.textContent).join("");
 
       const idx = fullText.indexOf(
-        comment.selectedText,
-        Math.max(0, comment.selectionStart - 10)
+        highlight.selectedText,
+        Math.max(0, highlight.selectionStart - 10)
       );
       if (idx === -1) continue;
 
       const selStart = idx;
-      const selEnd = idx + comment.selectedText.length;
-      const isActive = comment.id === activeHighlightId;
+      const selEnd = idx + highlight.selectedText.length;
 
       // Find text nodes that overlap and wrap them
       for (const tn of textNodes) {
@@ -128,10 +165,12 @@ export default function ReadOnlyEditor({
           range.setEnd(tn.node, nodeEnd);
 
           const mark = document.createElement("mark");
-          mark.setAttribute("data-comment-id", comment.id);
-          mark.style.background = isActive
-            ? "rgba(0,255,102,0.45)"
-            : "rgba(0,255,102,0.2)";
+          mark.setAttribute("data-comment-id", highlight.id);
+          mark.style.background = highlight.isPending
+            ? "rgba(1,239,252,0.4)"
+            : highlight.isActive
+              ? "rgba(1,239,252,0.4)"
+              : "rgba(1,239,252,0.2)";
           mark.style.cursor = "pointer";
           mark.style.padding = "0";
           mark.style.transition = "background 0.15s ease";
@@ -145,7 +184,10 @@ export default function ReadOnlyEditor({
         break;
       }
     }
-  }, [editor, comments, isRiffMode, activeHighlightId]);
+
+    // Restore scroll position after DOM manipulation
+    window.scrollTo(0, scrollY);
+  }, [editor, comments, isRiffMode, activeHighlightId, pendingSelection]);
 
   // Handle clicks on highlights and images
   const handleClick = useCallback(
@@ -190,7 +232,12 @@ export default function ReadOnlyEditor({
     const text = selection.toString().trim();
     if (!text) return;
 
-    if (!proseMirror.contains(range.commonAncestorContainer)) return;
+    // Check that at least part of the selection is within our editor
+    if (
+      !proseMirror.contains(range.startContainer) &&
+      !proseMirror.contains(range.endContainer)
+    )
+      return;
 
     const start = getCharOffset(
       proseMirror as HTMLElement,
@@ -213,11 +260,11 @@ export default function ReadOnlyEditor({
     if (!el) return;
 
     el.addEventListener("click", handleClick);
-    el.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener("mouseup", handleMouseUp);
 
     return () => {
       el.removeEventListener("click", handleClick);
-      el.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("mouseup", handleMouseUp);
     };
   }, [handleClick, handleMouseUp]);
 
