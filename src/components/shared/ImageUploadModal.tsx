@@ -4,7 +4,6 @@ import { useState, useRef, useCallback } from "react";
 import Cropper, { Area } from "react-easy-crop";
 import Modal from "@/components/shared/Modal";
 import PrimaryButton from "@/components/PrimaryButton";
-import PieceCard from "@/components/riffs/PieceCard";
 import { getCroppedImg } from "@/lib/crop-image";
 import { convertHeicToJpeg, isHeicFile } from "@/lib/convert-heic";
 
@@ -19,11 +18,7 @@ interface ImageUploadModalProps {
   cropShape?: "rect" | "round";
   existingImages?: string[];
   existingImagesLabel?: string;
-  piecePreview?: {
-    id: string;
-    title: string;
-    currentContent: string;
-  };
+  inlinePreview?: boolean;
 }
 
 function isGif(url: string): boolean {
@@ -41,7 +36,7 @@ export default function ImageUploadModal({
   cropShape = "rect",
   existingImages,
   existingImagesLabel = "Choose existing",
-  piecePreview,
+  inlinePreview = false,
 }: ImageUploadModalProps) {
   const showTabs = existingImages && existingImages.length > 0;
   type Tab = "upload" | "existing";
@@ -166,7 +161,7 @@ export default function ImageUploadModal({
         alignItems: "center",
       }}
     >
-      {currentImage && !piecePreview ? (
+      {currentImage && !inlinePreview ? (
         <button
           onClick={() => {
             onSelect("");
@@ -221,58 +216,6 @@ export default function ImageUploadModal({
       size="lg"
       footer={footer}
     >
-      {/* PieceCard preview — shown when piecePreview prop is provided */}
-      {piecePreview && (
-        <div
-          style={{
-            width: "180px",
-            margin: "0 auto 24px",
-            position: "relative",
-          }}
-        >
-          <PieceCard
-            piece={{
-              id: piecePreview.id,
-              title: piecePreview.title || "Untitled",
-              coverImage: currentImage,
-              currentContent: piecePreview.currentContent,
-            }}
-            isRead={true}
-            onClick={() => {}}
-          />
-          {currentImage && (
-            <button
-              onClick={() => {
-                onSelect("");
-                resetCropper();
-              }}
-              style={{
-                position: "absolute",
-                top: "-10px",
-                right: "-10px",
-                width: "24px",
-                height: "24px",
-                borderRadius: "50%",
-                backgroundColor: "#000000",
-                border: "2px solid #FFFFFF",
-                color: "#FFFFFF",
-                fontSize: "12px",
-                lineHeight: 1,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: 0,
-                zIndex: 2,
-              }}
-              aria-label="Remove cover image"
-            >
-              ✕
-            </button>
-          )}
-        </div>
-      )}
-
       {/* White upload area — keeps the crop/upload UI clean over the noise background */}
       <div
         style={{
@@ -281,8 +224,8 @@ export default function ImageUploadModal({
           padding: "0 40px 40px",
         }}
       >
-        {/* Tabs (only shown if existingImages provided) */}
-        {showTabs && (
+        {/* Tabs — hidden when an inline preview image is set */}
+        {showTabs && !(inlinePreview && currentImage) && (
           <div
             style={{
               display: "flex",
@@ -376,6 +319,56 @@ export default function ImageUploadModal({
                 style={{ flex: 1 }}
               />
             </div>
+          </div>
+        ) : inlinePreview && currentImage ? (
+          /* Inline image preview — image fills the box, X to remove */
+          <div
+            style={{
+              position: "relative",
+              width: "100%",
+              height: "300px",
+              overflow: "hidden",
+              marginTop: "16px",
+            }}
+          >
+            <img
+              src={currentImage}
+              alt="Cover preview"
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                display: "block",
+              }}
+            />
+            <button
+              onClick={() => {
+                onSelect("");
+                resetCropper();
+              }}
+              style={{
+                position: "absolute",
+                top: "8px",
+                right: "8px",
+                width: "28px",
+                height: "28px",
+                borderRadius: "50%",
+                backgroundColor: "#000000",
+                border: "2px solid #FFFFFF",
+                color: "#FFFFFF",
+                fontSize: "12px",
+                lineHeight: 1,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 0,
+                zIndex: 2,
+              }}
+              aria-label="Remove cover image"
+            >
+              ✕
+            </button>
           </div>
         ) : tab === "upload" ? (
           /* Upload drop zone */

@@ -642,8 +642,6 @@ export default function WritePage({ piece }: WritePageProps) {
         isOpen={showCoverModal}
         onClose={() => setShowCoverModal(false)}
         onSelect={handleCoverImageSelect}
-        pieceId={piece.id}
-        pieceTitle={title}
         pieceContent={editor.getHTML()}
         currentCoverImage={coverImage}
       />
