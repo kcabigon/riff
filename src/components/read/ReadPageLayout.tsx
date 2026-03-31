@@ -82,6 +82,22 @@ export default function ReadPageLayout({
   const isMobile = useIsMobile();
   useThemeColor("#FFFFFF");
   const navVisible = useScrollDirection({ threshold: 15 });
+  const metadataRef = useRef<HTMLDivElement>(null);
+  const [showNavTitle, setShowNavTitle] = useState(false);
+
+  // Show title in nav bar when metadata scrolls out of view (desktop only)
+  useEffect(() => {
+    if (isMobile) return;
+    const el = metadataRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowNavTitle(!entry.isIntersecting),
+      { threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [isMobile]);
 
   const markAsRead = useCallback(async () => {
     if (markedRead) return;
@@ -222,6 +238,50 @@ export default function ReadPageLayout({
             }}
           >
             <BackButton href={`/riffs/${riffId}`} />
+
+            {/* Nav title + author avatar — appears when metadata scrolls out */}
+            {!isMobile && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  marginLeft: "32px",
+                  flex: 1,
+                  minWidth: 0,
+                  opacity: showNavTitle ? 1 : 0,
+                  transition: "opacity 200ms ease",
+                  pointerEvents: showNavTitle ? "auto" : "none",
+                }}
+              >
+                <p
+                  style={{
+                    fontFamily: "var(--font-playfair)",
+                    fontSize: "16px",
+                    fontWeight: 400,
+                    color: "#000000",
+                    margin: 0,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {piece.title}
+                </p>
+                <div style={{ flexShrink: 0 }}>
+                  <Avatar
+                    user={{
+                      id: piece.author.id,
+                      name: piece.author.name,
+                      username: piece.author.username,
+                      avatarUrl: piece.author.avatarUrl,
+                    }}
+                    size={24}
+                  />
+                </div>
+              </div>
+            )}
+
             <ReadToggle isRiffMode={isRiffMode} onToggle={setIsRiffMode} />
           </div>
         </div>
@@ -253,86 +313,89 @@ export default function ReadPageLayout({
             minWidth: 0,
           }}
         >
-          {/* Title */}
-          <h1
-            style={{
-              fontFamily: "var(--font-playfair)",
-              fontSize: "32px",
-              fontWeight: "bold",
-              color: "#000000",
-              margin: 0,
-              textAlign: "center",
-              lineHeight: 1.2,
-            }}
-          >
-            {piece.title}
-          </h1>
-
-          {/* Subtitle */}
-          {piece.subtitle && (
-            <p
+          {/* Metadata section — tracked for nav title visibility */}
+          <div ref={metadataRef} style={{ width: "100%" }}>
+            {/* Title */}
+            <h1
               style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 300,
-                color: "#666666",
-                margin: "8px 0 0",
-                textAlign: "center",
-                lineHeight: "1.4",
-              }}
-            >
-              {piece.subtitle}
-            </p>
-          )}
-
-          {/* Reading metadata */}
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              color: "#999999",
-              margin: "12px 0 0",
-              textAlign: "center",
-            }}
-          >
-            <span style={{ fontWeight: "bold" }}>{readMinutes}</span> min read
-            {" \u2022 "}
-            <span style={{ fontWeight: "bold" }}>
-              {piece.wordCount.toLocaleString()}
-            </span>{" "}
-            words
-          </p>
-
-          {/* Author */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "10px",
-              margin: "16px 0 24px",
-            }}
-          >
-            <Avatar
-              user={{
-                id: piece.author.id,
-                name: piece.author.name,
-                username: piece.author.username,
-                avatarUrl: piece.author.avatarUrl,
-              }}
-              size={32}
-            />
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 300,
+                fontFamily: "var(--font-playfair)",
+                fontSize: "32px",
+                fontWeight: "bold",
                 color: "#000000",
                 margin: 0,
+                textAlign: "center",
+                lineHeight: 1.2,
               }}
             >
-              {piece.author.name || piece.author.username || "Unknown"}
+              {piece.title}
+            </h1>
+
+            {/* Subtitle */}
+            {piece.subtitle && (
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 300,
+                  color: "#666666",
+                  margin: "8px 0 0",
+                  textAlign: "center",
+                  lineHeight: "1.4",
+                }}
+              >
+                {piece.subtitle}
+              </p>
+            )}
+
+            {/* Reading metadata */}
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "14px",
+                color: "#999999",
+                margin: "12px 0 0",
+                textAlign: "center",
+              }}
+            >
+              <span style={{ fontWeight: "bold" }}>{readMinutes}</span> min read
+              {" \u2022 "}
+              <span style={{ fontWeight: "bold" }}>
+                {piece.wordCount.toLocaleString()}
+              </span>{" "}
+              words
             </p>
+
+            {/* Author */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "10px",
+                margin: "16px 0 24px",
+              }}
+            >
+              <Avatar
+                user={{
+                  id: piece.author.id,
+                  name: piece.author.name,
+                  username: piece.author.username,
+                  avatarUrl: piece.author.avatarUrl,
+                }}
+                size={32}
+              />
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 300,
+                  color: "#000000",
+                  margin: 0,
+                }}
+              >
+                {piece.author.name || piece.author.username || "Unknown"}
+              </p>
+            </div>
           </div>
 
           {/* Content — Tiptap read-only */}

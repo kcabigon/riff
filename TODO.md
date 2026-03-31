@@ -43,6 +43,9 @@ Last updated: March 29, 2026 (Jarric adding modal design system TODOs)
 - [ ] After creating a riff, host sees "Start writing" or "Invite friends" CTA
 - [ ] Don't show "Reveal pieces" until deadline passes OR all submissions are in
 
+### Mobile Comments
+- [ ] Redesign mobile comment experience — easy commenting and navigation between comments in "comment" mode
+
 ### Riff Card & Riff Page
 - [x] Update riff card: simplified to "Joined by" + avatars
 - [x] Design riff participant progress view on the riff page
@@ -61,6 +64,7 @@ Last updated: March 29, 2026 (Jarric adding modal design system TODOs)
 
 ### Read / Write Experience
 - [x] Write page redesign: white canvas, floating toolbar, subtitle, resizable images, hide-on-scroll mobile nav
+- [x] Read page redesign: Tiptap read-only, shared extensions, bidirectional comment positioning
 - [x] YouTube embeds, images, Spotify links mobile responsive
 - [x] Cover image upload UI (CoverImageModal with upload, crop, piece image picker, HEIC support)
 - [ ] Cover image: update editor UI to show current cover image preview inline (e.g. thumbnail next to the "Cover image" button)
