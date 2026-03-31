@@ -234,15 +234,18 @@ export default function ImageUploadModal({
         onClose();
       }}
       title={title}
-      size="lg"
+      size="md"
       footer={footer}
     >
-      {/* White upload area — keeps the crop/upload UI clean over the noise background */}
+      {/* White upload area — floats on noise background as a contained component */}
       <div
         style={{
           backgroundColor: "#FFFFFF",
-          margin: "0 -40px -40px",
-          padding: "0 40px 40px",
+          padding: "20px",
+          marginTop: "16px",
+          ...(inlinePreview && currentImage && !cropSrc
+            ? { width: "fit-content", marginLeft: "auto", marginRight: "auto" }
+            : {}),
         }}
       >
         {/* Tabs — hidden when an inline preview image is set */}
@@ -253,7 +256,6 @@ export default function ImageUploadModal({
               gap: "0",
               borderBottom: "1px solid #E5E5E5",
               marginBottom: "24px",
-              paddingTop: "16px",
             }}
           >
             {(["upload", "existing"] as Tab[]).map((t) => (
@@ -291,7 +293,6 @@ export default function ImageUploadModal({
               display: "flex",
               flexDirection: "column",
               gap: "16px",
-              paddingTop: showTabs ? 0 : "16px",
             }}
           >
             <div
@@ -348,7 +349,7 @@ export default function ImageUploadModal({
               position: "relative",
               width: "240px",
               aspectRatio: "4 / 5",
-              margin: "16px auto 0",
+              margin: "0 auto",
               overflow: "hidden",
             }}
           >
@@ -404,7 +405,6 @@ export default function ImageUploadModal({
               style={{
                 border: `2px dashed ${dragOver ? "#000" : "#CCCCCC"}`,
                 padding: "48px 24px",
-                marginTop: showTabs ? 0 : "16px",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
