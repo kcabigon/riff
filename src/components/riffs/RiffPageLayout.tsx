@@ -141,9 +141,17 @@ export default function RiffPageLayout({
     }
   };
 
-  const existingPieceId =
-    riff.pieces.find((p) => p.piece.authorId === currentUserId)?.piece.id ??
-    null;
+  const existingPieceMatch = riff.pieces.find(
+    (p) => p.piece.authorId === currentUserId
+  );
+  const existingPieceId = existingPieceMatch?.piece.id ?? null;
+  const existingPiece = existingPieceMatch
+    ? {
+        id: existingPieceMatch.piece.id,
+        title: existingPieceMatch.piece.title,
+        wordCount: existingPieceMatch.piece.wordCount,
+      }
+    : null;
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
@@ -383,6 +391,7 @@ export default function RiffPageLayout({
                 hasDraft={hasDraft}
                 hasSubmitted={hasSubmitted}
                 existingPieceId={existingPieceId}
+                existingPiece={existingPiece}
                 onJoin={() => setIsJoined(true)}
               />
             ) : null}

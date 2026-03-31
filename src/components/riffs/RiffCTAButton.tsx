@@ -12,6 +12,7 @@ interface RiffCTAButtonProps {
   hasDraft: boolean;
   hasSubmitted: boolean;
   existingPieceId?: string | null;
+  existingPiece?: { id: string; title: string; wordCount: number } | null;
   onJoin?: () => void;
   stopPropagation?: boolean;
 }
@@ -22,6 +23,7 @@ export default function RiffCTAButton({
   hasDraft,
   hasSubmitted,
   existingPieceId,
+  existingPiece,
   onJoin,
   stopPropagation = false,
 }: RiffCTAButtonProps) {
@@ -173,6 +175,7 @@ export default function RiffCTAButton({
           onClose={() => setIsChangingDraft(false)}
           riffId={riffId}
           existingPieceId={existingPieceId}
+          existingPiece={existingPiece}
         />
       </div>
     );

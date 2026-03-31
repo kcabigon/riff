@@ -18,6 +18,7 @@ interface ExistingDraftPickerModalProps {
   onClose: () => void;
   riffId: string;
   existingPieceId?: string | null;
+  existingPiece?: { id: string; title: string; wordCount: number } | null;
 }
 
 export default function ExistingDraftPickerModal({
@@ -25,6 +26,7 @@ export default function ExistingDraftPickerModal({
   onClose,
   riffId,
   existingPieceId,
+  existingPiece,
 }: ExistingDraftPickerModalProps) {
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [loading, setLoading] = useState(false);
@@ -35,18 +37,24 @@ export default function ExistingDraftPickerModal({
   useEffect(() => {
     if (!isOpen) return;
     setLoading(true);
-    setSelectedId(null);
+    // Pre-select the currently attached draft if there is one
+    setSelectedId(existingPieceId ?? null);
     fetch(`/api/riffs/${riffId}/eligible-drafts`)
       .then((res) => res.json())
       .then((data) => setDrafts(data.pieces ?? []))
       .finally(() => setLoading(false));
-  }, [isOpen, riffId]);
+  }, [isOpen, riffId, existingPieceId]);
 
   const handleAttach = async () => {
     if (!selectedId) return;
+    // If the selected draft is already the attached one, just navigate to it
+    if (selectedId === existingPieceId) {
+      router.push(`/write/${selectedId}`);
+      return;
+    }
     setAttaching(true);
     try {
-      // If swapping, unlink the old piece first
+      // Unlink the old piece first if swapping
       if (existingPieceId) {
         await fetch(`/api/riffs/${riffId}/pieces/${existingPieceId}`, {
           method: "DELETE",
@@ -64,6 +72,90 @@ export default function ExistingDraftPickerModal({
       setAttaching(false);
     }
   };
+
+  const DraftRow = ({
+    id,
+    title,
+    wordCount,
+    isCurrent,
+  }: {
+    id: string;
+    title: string;
+    wordCount: number;
+    isCurrent?: boolean;
+  }) => {
+    const isSelected = selectedId === id;
+    return (
+      <button
+        onClick={() => setSelectedId(id)}
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "12px 16px",
+          border: `2px solid ${isSelected ? "#000000" : "#E0E0E0"}`,
+          backgroundColor: isSelected ? "#F5F5F5" : "#FFFFFF",
+          boxShadow: isSelected ? "4px 4px 0px 0px #000000" : "none",
+          cursor: "pointer",
+          textAlign: "left",
+          width: "100%",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            minWidth: 0,
+          }}
+        >
+          <span
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontWeight: 500,
+              fontSize: "15px",
+              color: "#000000",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {title || "Untitled"}
+          </span>
+          {isCurrent && (
+            <span
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "11px",
+                fontWeight: 400,
+                color: "#FFFFFF",
+                backgroundColor: "#000000",
+                padding: "2px 6px",
+                borderRadius: "2px",
+                flexShrink: 0,
+              }}
+            >
+              current
+            </span>
+          )}
+        </div>
+        <span
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "13px",
+            color: "#888888",
+            flexShrink: 0,
+            marginLeft: "12px",
+          }}
+        >
+          {wordCount > 0 ? `${wordCount} words` : "empty"}
+        </span>
+      </button>
+    );
+  };
+
+  const hasOtherDrafts = drafts.length > 0;
+  const isEmpty = !existingPiece && !hasOtherDrafts;
 
   return (
     <Modal
@@ -97,7 +189,7 @@ export default function ExistingDraftPickerModal({
         >
           Loading drafts...
         </p>
-      ) : drafts.length === 0 ? (
+      ) : isEmpty ? (
         <p
           style={{
             fontFamily: "var(--font-dm-sans)",
@@ -105,51 +197,38 @@ export default function ExistingDraftPickerModal({
             margin: 0,
           }}
         >
-          No other drafts available. Start a new one instead.
+          No drafts available. Start a new one instead.
         </p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          {drafts.map((draft) => (
-            <button
-              key={draft.id}
-              onClick={() => setSelectedId(draft.id)}
+          {/* Currently attached draft — always shown first */}
+          {existingPiece && (
+            <DraftRow
+              id={existingPiece.id}
+              title={existingPiece.title}
+              wordCount={existingPiece.wordCount}
+              isCurrent
+            />
+          )}
+
+          {/* Divider if there are other drafts too */}
+          {existingPiece && hasOtherDrafts && (
+            <div
               style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                padding: "12px 16px",
-                border: `2px solid ${selectedId === draft.id ? "#000000" : "#E0E0E0"}`,
-                backgroundColor:
-                  selectedId === draft.id ? "#F5F5F5" : "#FFFFFF",
-                boxShadow:
-                  selectedId === draft.id ? "4px 4px 0px 0px #000000" : "none",
-                cursor: "pointer",
-                textAlign: "left",
-                width: "100%",
+                borderTop: "1px solid #E0E0E0",
+                margin: "4px 0",
               }}
-            >
-              <span
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontWeight: 500,
-                  fontSize: "15px",
-                  color: "#000000",
-                }}
-              >
-                {draft.title || "Untitled"}
-              </span>
-              <span
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "13px",
-                  color: "#888888",
-                  flexShrink: 0,
-                  marginLeft: "12px",
-                }}
-              >
-                {draft.wordCount > 0 ? `${draft.wordCount} words` : "empty"}
-              </span>
-            </button>
+            />
+          )}
+
+          {/* Other eligible drafts */}
+          {drafts.map((draft) => (
+            <DraftRow
+              key={draft.id}
+              id={draft.id}
+              title={draft.title}
+              wordCount={draft.wordCount}
+            />
           ))}
         </div>
       )}
