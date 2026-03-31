@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Avatar from "@/components/shared/Avatar";
-import { extractFirstImage } from "@/lib/extract-first-image";
 
 interface PieceCardProps {
   piece: {
@@ -35,7 +34,7 @@ const PLACEHOLDER_COLORS = [
 export default function PieceCard({ piece, isRead, onClick }: PieceCardProps) {
   const [isHovered, setIsHovered] = useState(false);
 
-  const imageUrl = piece.coverImage || extractFirstImage(piece.currentContent);
+  const imageUrl = piece.coverImage;
   const placeholderColor =
     PLACEHOLDER_COLORS[piece.id.charCodeAt(0) % PLACEHOLDER_COLORS.length];
 

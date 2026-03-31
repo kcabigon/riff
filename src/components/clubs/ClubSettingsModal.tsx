@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Modal from "@/components/shared/Modal";
 import ImageUpload from "@/components/onboarding/ImageUpload";
 import Tagline from "@/components/Tagline";
+import PrimaryButton from "@/components/PrimaryButton";
 
 interface ClubUpdatedData {
   name: string;
@@ -85,13 +86,7 @@ export default function ClubSettingsModal({
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Club details"
-      size="md"
-      noiseBackground
-    >
+    <Modal isOpen={isOpen} onClose={onClose} title="Club details" size="md">
       <form onSubmit={handleSubmit}>
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           {/* Club name */}
@@ -100,8 +95,9 @@ export default function ClubSettingsModal({
               text="Club name"
               color="#01EFFC"
               textColor="#000000"
-              fontSize={14}
-              width={105}
+              fontSize={16}
+              width={120}
+              align="left"
             />
             <input
               type="text"
@@ -137,11 +133,15 @@ export default function ClubSettingsModal({
                 text="Description"
                 color="#00FF66"
                 textColor="#000000"
-                fontSize={14}
-                width={115}
+                fontSize={16}
+                width={132}
+                align="left"
               />
               <span
                 style={{
+                  display: "inline-block",
+                  backgroundColor: "#FFFFFF",
+                  padding: "2px 8px",
                   fontFamily: "var(--font-dm-sans)",
                   fontSize: "14px",
                   fontWeight: 300,
@@ -184,11 +184,15 @@ export default function ClubSettingsModal({
                 text="Banner image"
                 color="#EECF01"
                 textColor="#000000"
-                fontSize={14}
-                width={125}
+                fontSize={16}
+                width={144}
+                align="left"
               />
               <span
                 style={{
+                  display: "inline-block",
+                  backgroundColor: "#FFFFFF",
+                  padding: "2px 8px",
                   fontFamily: "var(--font-dm-sans)",
                   fontSize: "14px",
                   fontWeight: 300,
@@ -223,29 +227,13 @@ export default function ClubSettingsModal({
             </p>
           )}
 
-          <button
+          <PrimaryButton
             type="submit"
-            disabled={isSubmitting || !name.trim()}
-            style={{
-              backgroundColor:
-                isSubmitting || !name.trim() ? "#E6E6E6" : "#FFFFFF",
-              border: "2px solid #000000",
-              boxShadow:
-                isSubmitting || !name.trim()
-                  ? "none"
-                  : "8px 8px 0px 0px #00FF66",
-              padding: "12px 48px",
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              color: "#000000",
-              cursor: isSubmitting || !name.trim() ? "not-allowed" : "pointer",
-              transition: "none",
-              width: "100%",
-            }}
+            loading={isSubmitting}
+            disabled={!name.trim()}
           >
             {isSubmitting ? "Saving..." : "Save changes"}
-          </button>
+          </PrimaryButton>
         </div>
       </form>
     </Modal>
