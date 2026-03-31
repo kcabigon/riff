@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import CommentPopover from "./CommentPopover";
+import { AUTHOR_COLORS, buildAuthorColorMap } from "./ReadOnlyEditor";
 
 interface CommentAuthor {
   id: string;
@@ -71,11 +72,13 @@ function CommentCard({
   isActive,
   isOwn,
   onDelete,
+  color,
 }: {
   comment: CommentData;
   isActive: boolean;
   isOwn: boolean;
   onDelete: () => void;
+  color: string;
 }) {
   const [hovered, setHovered] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -98,7 +101,7 @@ function CommentCard({
       style={{
         border: isActive || hovered ? "2px solid #000000" : "2px solid #E6E6E6",
         backgroundColor: "#FFFFFF",
-        boxShadow: isActive ? "4px 4px 0 #01EFFC" : "none",
+        boxShadow: isActive ? `4px 4px 0 ${color}` : "none",
         padding: "12px",
         transition:
           "border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease",
@@ -226,6 +229,7 @@ export default function CommentSidebar({
 }: CommentSidebarProps) {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const authorColors = useMemo(() => buildAuthorColorMap(comments), [comments]);
   const [positions, setPositions] = useState<Record<string, number>>({});
   const [minHeight, setMinHeight] = useState(0);
 
@@ -251,24 +255,56 @@ export default function CommentSidebar({
     const items: { id: string; markTop: number }[] = [];
 
     for (const comment of comments) {
-      const mark = document.querySelector(
-        `mark[data-comment-id="${comment.id}"]`
+      // Check both text highlights (mark) and image highlights (img)
+      const el = document.querySelector(
+        `mark[data-comment-id="${comment.id}"], img[data-comment-id="${comment.id}"]`
       );
-      if (!mark) continue;
-
-      const markRect = mark.getBoundingClientRect();
-      const markTop = markRect.top + window.scrollY - sidebarScrollTop;
-      items.push({ id: comment.id, markTop });
+      if (el) {
+        const elRect = el.getBoundingClientRect();
+        const markTop = elRect.top + window.scrollY - sidebarScrollTop;
+        items.push({ id: comment.id, markTop });
+      } else if (comment.selectedText === "[Image]") {
+        // Image comment whose data-comment-id was overwritten by another —
+        // find the image that another comment on the same image is attached to
+        const allCommentedImgs = document.querySelectorAll(
+          "img[data-comment-id]"
+        );
+        // Find the image whose sibling comments share a similar selectionStart
+        let bestImg: Element | null = null;
+        let bestDist = Infinity;
+        for (const img of allCommentedImgs) {
+          const imgRect = img.getBoundingClientRect();
+          // Use vertical position as a proxy — all comments on the same image
+          // will have similar selectionStart values
+          const otherCommentId = img.getAttribute("data-comment-id");
+          const otherComment = comments.find((c) => c.id === otherCommentId);
+          if (otherComment) {
+            const dist = Math.abs(
+              otherComment.selectionStart - comment.selectionStart
+            );
+            if (dist < bestDist) {
+              bestDist = dist;
+              bestImg = img;
+            }
+          }
+        }
+        if (bestImg) {
+          const elRect = bestImg.getBoundingClientRect();
+          const markTop = elRect.top + window.scrollY - sidebarScrollTop;
+          items.push({ id: comment.id, markTop });
+        }
+      }
     }
 
     // Add pending selection
     if (pendingSelection && pendingSelection.start >= 0) {
-      const pendingMark = document.querySelector(
-        `mark[data-comment-id="__pending__"]`
+      // Check for text highlight or image highlight
+      const pendingEl = document.querySelector(
+        `mark[data-comment-id="__pending__"], img[data-comment-id="__pending__"]`
       );
-      if (pendingMark) {
-        const markRect = pendingMark.getBoundingClientRect();
-        const markTop = markRect.top + window.scrollY - sidebarScrollTop;
+      if (pendingEl) {
+        const elRect = pendingEl.getBoundingClientRect();
+        const markTop = elRect.top + window.scrollY - sidebarScrollTop;
         items.push({ id: "__pending__", markTop });
       } else {
         const markTop =
@@ -421,6 +457,7 @@ export default function CommentSidebar({
               isActive={isActive}
               isOwn={comment.authorId === currentUserId}
               onDelete={() => onDelete(comment.id)}
+              color={authorColors[comment.authorId] || AUTHOR_COLORS[0]}
             />
           </div>
         );

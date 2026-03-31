@@ -180,14 +180,17 @@ export default function ReadPageLayout({
   }, []);
 
   // Handle image comment
-  const handleImageComment = useCallback((rect: DOMRect) => {
-    setPendingSelection({
-      text: "[Image]",
-      start: -1,
-      end: -1,
-      rect,
-    });
-  }, []);
+  const handleImageComment = useCallback(
+    (rect: DOMRect, charOffset: number) => {
+      setPendingSelection({
+        text: "[Image]",
+        start: charOffset,
+        end: charOffset,
+        rect,
+      });
+    },
+    []
+  );
 
   const readMinutes = Math.max(1, piece.readLengthMin);
 
@@ -405,6 +408,7 @@ export default function ReadPageLayout({
             isRiffMode={isRiffMode}
             activeHighlightId={activeHighlightId}
             pendingSelection={pendingSelection}
+            currentUserId={currentUser.id}
             onSelection={setPendingSelection}
             onHighlightClick={handleHighlightClick}
             onImageComment={handleImageComment}
