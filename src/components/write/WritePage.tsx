@@ -230,7 +230,7 @@ export default function WritePage({ piece }: WritePageProps) {
       const value = url || null;
       setCoverImage(value);
       autosaveCoverImage(value);
-      setShowCoverModal(false);
+      if (url) setShowCoverModal(false);
     },
     [autosaveCoverImage]
   );

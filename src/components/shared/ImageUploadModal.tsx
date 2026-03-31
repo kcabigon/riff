@@ -321,14 +321,14 @@ export default function ImageUploadModal({
             </div>
           </div>
         ) : inlinePreview && currentImage ? (
-          /* Inline image preview — image fills the box, X to remove */
+          /* Inline image preview — portrait 4:5, X to remove */
           <div
             style={{
               position: "relative",
-              width: "100%",
-              height: "300px",
+              width: "240px",
+              aspectRatio: "4 / 5",
+              margin: "16px auto 0",
               overflow: "hidden",
-              marginTop: "16px",
             }}
           >
             <img
