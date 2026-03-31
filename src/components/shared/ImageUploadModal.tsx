@@ -4,6 +4,7 @@ import { useState, useRef, useCallback } from "react";
 import Cropper, { Area } from "react-easy-crop";
 import Modal from "@/components/shared/Modal";
 import PrimaryButton from "@/components/PrimaryButton";
+import CloseButton from "@/components/CloseButton";
 import { getCroppedImg } from "@/lib/crop-image";
 import { convertHeicToJpeg, isHeicFile } from "@/lib/convert-heic";
 
@@ -155,10 +156,22 @@ export default function ImageUploadModal({
 
   const footer =
     cropSrc && inlinePreview ? (
-      /* Centered save — no cancel, user can close via modal X */
+      /* Centered save during crop — no cancel, user can close via modal X */
       <div style={{ display: "flex", justifyContent: "center" }}>
         <PrimaryButton onClick={handleSaveCrop} loading={isUploading}>
           {isUploading ? "Saving..." : "Save"}
+        </PrimaryButton>
+      </div>
+    ) : !cropSrc && inlinePreview && currentImage ? (
+      /* Centered "Use Image" — image already saved, closes modal */
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <PrimaryButton
+          onClick={() => {
+            resetCropper();
+            onClose();
+          }}
+        >
+          Use Image
         </PrimaryButton>
       </div>
     ) : (
@@ -349,34 +362,22 @@ export default function ImageUploadModal({
                 display: "block",
               }}
             />
-            <button
-              onClick={() => {
-                onSelect("");
-                resetCropper();
-              }}
+            <div
               style={{
                 position: "absolute",
-                top: "8px",
-                right: "8px",
-                width: "28px",
-                height: "28px",
-                borderRadius: "50%",
-                backgroundColor: "#000000",
-                border: "2px solid #FFFFFF",
-                color: "#FFFFFF",
-                fontSize: "12px",
-                lineHeight: 1,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: 0,
+                top: "4px",
+                right: "4px",
                 zIndex: 2,
               }}
-              aria-label="Remove cover image"
             >
-              ✕
-            </button>
+              <CloseButton
+                onClick={() => {
+                  onSelect("");
+                  resetCropper();
+                }}
+                size={28}
+              />
+            </div>
           </div>
         ) : tab === "upload" ? (
           /* Upload drop zone */
