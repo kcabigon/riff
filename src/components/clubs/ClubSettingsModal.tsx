@@ -97,6 +97,7 @@ export default function ClubSettingsModal({
               textColor="#000000"
               fontSize={16}
               width={120}
+              align="left"
             />
             <input
               type="text"
@@ -134,6 +135,7 @@ export default function ClubSettingsModal({
                 textColor="#000000"
                 fontSize={16}
                 width={132}
+                align="left"
               />
               <span
                 style={{
@@ -184,6 +186,7 @@ export default function ClubSettingsModal({
                 textColor="#000000"
                 fontSize={16}
                 width={144}
+                align="left"
               />
               <span
                 style={{

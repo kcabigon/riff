@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import Modal from "@/components/shared/Modal";
-import PromptLibrary from "./PromptLibrary";
-import Tagline from "@/components/Tagline";
+import RiffFormFields from "./RiffFormFields";
 import PrimaryButton from "@/components/PrimaryButton";
 
 interface CreateRiffModalProps {
@@ -30,13 +29,6 @@ export default function CreateRiffModal({
   const [deadline, setDeadline] = useState(getDefaultDeadline);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const daysUntilDeadline = deadline
-    ? Math.round(
-        (new Date(deadline).getTime() - new Date().setHours(0, 0, 0, 0)) /
-          (1000 * 60 * 60 * 24)
-      )
-    : 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,170 +98,17 @@ export default function CreateRiffModal({
     <Modal isOpen={isOpen} onClose={onClose} title="Start a new riff">
       <form onSubmit={handleSubmit}>
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-          {/* Deadline */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <Tagline
-              text="Deadline"
-              color="#01EFFC"
-              textColor="#000000"
-              fontSize={16}
-              width={116}
-            />
-            <input
-              type="date"
-              value={deadline}
-              onChange={(e) => setDeadline(e.target.value)}
-              required
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 300,
-                color: "#000000",
-                backgroundColor: "#FFFFFF",
-                border: "2px solid #000000",
-                padding: "12px 16px",
-                outline: "none",
-                width: "100%",
-                boxSizing: "border-box",
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = "#00FF66";
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = "#000000";
-              }}
-            />
-            <span
-              style={{
-                display: "inline-block",
-                backgroundColor: "#FFFFFF",
-                padding: "2px 8px",
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: 300,
-                color: "#959595",
-                alignSelf: "flex-start",
-              }}
-            >
-              {daysUntilDeadline} days from today
-            </span>
-          </div>
+          <RiffFormFields
+            title={title}
+            setTitle={setTitle}
+            prompt={prompt}
+            setPrompt={setPrompt}
+            deadline={deadline}
+            setDeadline={setDeadline}
+            deadlineRequired
+            showPromptLibrary
+          />
 
-          {/* Title */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <Tagline
-                text="Riff name"
-                color="#00FF66"
-                textColor="#000000"
-                fontSize={16}
-                width={124}
-              />
-              <span
-                style={{
-                  display: "inline-block",
-                  backgroundColor: "#FFFFFF",
-                  padding: "2px 8px",
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "14px",
-                  fontWeight: 300,
-                  color: "#959595",
-                }}
-              >
-                (optional)
-              </span>
-            </div>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Summer Stories"
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 300,
-                color: "#000000",
-                backgroundColor: "#FFFFFF",
-                border: "2px solid #000000",
-                padding: "12px 16px",
-                outline: "none",
-                width: "100%",
-                boxSizing: "border-box",
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = "#00FF66";
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = "#000000";
-              }}
-            />
-          </div>
-
-          {/* Prompt (optional) */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <Tagline
-                text="Prompt"
-                color="#EECF01"
-                textColor="#000000"
-                fontSize={16}
-                width={96}
-              />
-              <span
-                style={{
-                  display: "inline-block",
-                  backgroundColor: "#FFFFFF",
-                  padding: "2px 8px",
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "14px",
-                  fontWeight: 300,
-                  color: "#959595",
-                }}
-              >
-                (optional)
-              </span>
-            </div>
-            <textarea
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="What should club members write about?"
-              rows={3}
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 300,
-                color: "#000000",
-                backgroundColor: "#FFFFFF",
-                border: "2px solid #000000",
-                padding: "12px 16px",
-                outline: "none",
-                width: "100%",
-                resize: "vertical",
-                boxSizing: "border-box",
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = "#00FF66";
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = "#000000";
-              }}
-            />
-          </div>
-
-          {/* Prompt library — white background, centered */}
-          <div style={{ display: "flex", justifyContent: "center" }}>
-            <div
-              style={{
-                display: "inline-block",
-                backgroundColor: "#FFFFFF",
-                padding: "2px 8px",
-              }}
-            >
-              <PromptLibrary onSelect={(text) => setPrompt(text)} />
-            </div>
-          </div>
-
-          {/* Error */}
           {error && (
             <p
               style={{
@@ -284,7 +123,6 @@ export default function CreateRiffModal({
             </p>
           )}
 
-          {/* Submit */}
           <PrimaryButton type="submit" loading={isSubmitting}>
             {isSubmitting ? "Creating..." : "Start riff"}
           </PrimaryButton>
