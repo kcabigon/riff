@@ -8,12 +8,18 @@ interface StickyToolbarProps {
   editor: Editor;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   inline?: boolean;
+  onOpenLinkModal?: () => void;
+  onOpenYoutubeModal?: () => void;
+  onOpenSpotifyModal?: () => void;
 }
 
 export default function StickyToolbar({
   editor,
   fileInputRef,
   inline = false,
+  onOpenLinkModal,
+  onOpenYoutubeModal,
+  onOpenSpotifyModal,
 }: StickyToolbarProps) {
   return (
     <div className={inline ? "write-inline-toolbar" : "write-sticky-toolbar"}>
@@ -22,7 +28,13 @@ export default function StickyToolbar({
           <ToolbarButton
             key={btn.key}
             isActive={btn.isActive(editor)}
-            onClick={() => btn.action(editor, fileInputRef)}
+            onClick={() =>
+              btn.action(editor, fileInputRef, {
+                onOpenLinkModal,
+                onOpenYoutubeModal,
+                onOpenSpotifyModal,
+              })
+            }
             title={btn.title}
           >
             {btn.icon(btn.isActive(editor))}
