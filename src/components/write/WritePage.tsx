@@ -23,6 +23,7 @@ import { convertHeicToJpeg } from "@/lib/convert-heic";
 import NoiseBackground from "@/components/NoiseBackground";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import StickyToolbar from "@/components/write/toolbar/StickyToolbar";
+import { useThemeColor } from "@/hooks/useThemeColor";
 
 interface RiffConnection {
   id: string;
@@ -63,6 +64,7 @@ export default function WritePage({ piece }: WritePageProps) {
   const subtitleSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
   const isMobile = useIsMobile();
+  useThemeColor("#FFFFFF");
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -127,19 +129,24 @@ export default function WritePage({ piece }: WritePageProps) {
 
       saveTimerRef.current = setTimeout(() => {
         const html = editor.getHTML();
-        autosaveContent(html);
+        const wc = editor.storage.characterCount.words();
+        autosaveContent(html, wc, Math.max(1, Math.round(wc / 200)));
       }, 500);
     },
   });
 
   const autosaveContent = useCallback(
-    async (content: string) => {
+    async (content: string, wordCount: number, readLengthMin: number) => {
       setSaveStatus("saving");
       try {
         const res = await fetch(`/api/pieces/${piece.id}/autosave`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ currentContent: content }),
+          body: JSON.stringify({
+            currentContent: content,
+            wordCount,
+            readLengthMin,
+          }),
         });
         if (res.ok) {
           setSaveStatus("saved");
@@ -355,27 +362,33 @@ export default function WritePage({ piece }: WritePageProps) {
         style={{ display: "none" }}
       />
 
-      {/* Content area */}
+      {/* Sticky top bar — full viewport width on mobile, content-width on desktop */}
       <div
+        className="write-sticky-nav"
         style={{
+          position: "sticky",
+          top: 0,
+          zIndex: 50,
           width: "100%",
-          maxWidth: "720px",
-          padding: "24px 24px 0",
-          boxSizing: "border-box",
-          background: "#FFFFFF",
-          position: "relative",
-          zIndex: 1,
-          minHeight: "100vh",
+          maxWidth: isMobile ? "100%" : "720px",
+          backgroundColor: "#FFFFFF",
         }}
       >
-        {/* Top bar: back + actions + toolbar (mobile) */}
-        <div className="write-top-bar">
+        <div
+          style={{
+            maxWidth: "720px",
+            width: "100%",
+            margin: "0 auto",
+            padding: "0 24px",
+            boxSizing: "border-box",
+          }}
+        >
           <div
             style={{
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              padding: "8px 0",
+              padding: "16px 0 8px",
             }}
           >
             <BackButton onClick={handleBack} />
@@ -495,9 +508,23 @@ export default function WritePage({ piece }: WritePageProps) {
             </div>
           )}
         </div>
+      </div>
 
+      {/* Content area */}
+      <div
+        style={{
+          width: "100%",
+          maxWidth: "720px",
+          padding: "0 24px",
+          boxSizing: "border-box",
+          background: "#FFFFFF",
+          position: "relative",
+          zIndex: 1,
+          minHeight: "100vh",
+        }}
+      >
         {/* Spacer between sticky bar and content */}
-        {isMobile && <div style={{ height: "24px" }} />}
+        <div style={{ height: "24px" }} />
 
         {/* Writing area */}
         <div

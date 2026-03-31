@@ -45,11 +45,11 @@ Last updated: March 29, 2026 (Jarric adding modal design system TODOs)
 
 ### Riff Card & Riff Page
 - [x] Update riff card: simplified to "Joined by" + avatars
-- [ ] 🔨 @jarric — Design riff participant progress view on the riff page
+- [x] Design riff participant progress view on the riff page
 - [x] Redesign PieceCard as book cover (4:5 portrait, full-bleed image, overlay title, author avatar)
 
 ### Riff Page
-- [ ] 🔨 @jarric — Redesign riff page layout
+- [x] Redesign riff page layout
 - [x] Change back button styling (shared BackButton component, used across all back navigation)
 - [x] Share button: confirmation modal + PATCH submittedAt on PieceRiff + fix reveal submitted count
 

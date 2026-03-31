@@ -94,6 +94,14 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Strip piece content before reveal — cover image still returned for locked card teaser
+    if (riff.status !== "REVEALED") {
+      (riff as any).pieces = riff.pieces.map((pr) => ({
+        ...pr,
+        piece: { ...pr.piece, currentContent: null },
+      }));
+    }
+
     return NextResponse.json({ riff });
   } catch (error: any) {
     if (error.message === "Unauthorized") {

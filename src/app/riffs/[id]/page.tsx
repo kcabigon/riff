@@ -45,6 +45,7 @@ export default async function RiffPage({
               wordCount: true,
               coverImage: true,
               currentContent: true,
+              updatedAt: true,
               author: {
                 select: { id: true, name: true, avatarUrl: true },
               },
@@ -97,6 +98,8 @@ export default async function RiffPage({
   }
 
   // Serialize dates to strings for client component boundary (Prisma returns Date objects)
+  const isRevealed = riff.status === "REVEALED";
+
   const serializedRiff = {
     ...riff,
     createdAt: riff.createdAt.toISOString(),
@@ -106,6 +109,9 @@ export default async function RiffPage({
       submittedAt: pr.submittedAt ? pr.submittedAt.toISOString() : null,
       piece: {
         ...pr.piece,
+        // Strip content before reveal — cover image still returned for locked card teaser
+        currentContent: isRevealed ? pr.piece.currentContent : null,
+        updatedAt: pr.piece.updatedAt.toISOString(),
         commentCount: pr.piece._count?.comments ?? 0,
         _count: undefined,
       },

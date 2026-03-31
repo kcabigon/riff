@@ -10,7 +10,14 @@ export async function PATCH(
   try {
     const user = await requireAuth();
     const { id: pieceId } = await params;
-    const { currentContent, title, subtitle, coverImage } = await req.json();
+    const {
+      currentContent,
+      title,
+      subtitle,
+      coverImage,
+      wordCount,
+      readLengthMin,
+    } = await req.json();
 
     if (
       !currentContent &&
@@ -49,6 +56,8 @@ export async function PATCH(
       title?: string;
       subtitle?: string | null;
       coverImage?: string | null;
+      wordCount?: number;
+      readLengthMin?: number;
     } = {};
     if (currentContent) {
       data.currentContent = currentContent;
@@ -61,6 +70,11 @@ export async function PATCH(
     }
     if (coverImage !== undefined) {
       data.coverImage = coverImage || null;
+    }
+    if (typeof wordCount === "number") {
+      data.wordCount = wordCount;
+      data.readLengthMin =
+        readLengthMin ?? Math.max(1, Math.round(wordCount / 200));
     }
 
     const updatedPiece = await prisma.piece.update({
