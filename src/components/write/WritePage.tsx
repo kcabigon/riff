@@ -4,6 +4,7 @@ import { useEditor, EditorContent, ReactNodeViewRenderer } from "@tiptap/react";
 import Placeholder from "@tiptap/extension-placeholder";
 import CharacterCount from "@tiptap/extension-character-count";
 import Image from "@tiptap/extension-image";
+import Link from "@tiptap/extension-link";
 import ResizableImageView from "@/components/write/ResizableImageView";
 import { getSharedExtensions } from "@/components/editor/extensions/sharedExtensions";
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -19,6 +20,8 @@ import { useIsMobile } from "@/hooks/useMediaQuery";
 import StickyToolbar from "@/components/write/toolbar/StickyToolbar";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { useScrollDirection } from "@/hooks/useScrollDirection";
+import EmbedModal from "@/components/write/EmbedModal";
+import LinkPopover from "@/components/write/LinkPopover";
 
 interface RiffConnection {
   id: string;
@@ -50,6 +53,10 @@ export default function WritePage({ piece }: WritePageProps) {
   const [coverImage, setCoverImage] = useState<string | null>(piece.coverImage);
   const [showCoverModal, setShowCoverModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const linkSelectionRef = useRef<{ from: number; to: number } | null>(null);
+  const [showYoutubeModal, setShowYoutubeModal] = useState(false);
+  const [showSpotifyModal, setShowSpotifyModal] = useState(false);
   const isSubmitted = piece.riffs.some((r) => r.submittedAt !== null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const titleRef = useRef<HTMLTextAreaElement>(null);
@@ -64,9 +71,25 @@ export default function WritePage({ piece }: WritePageProps) {
 
   const editor = useEditor({
     immediatelyRender: false,
+    editorProps: {},
     extensions: [
-      // Shared extensions (same as read page for fidelity)
-      ...getSharedExtensions().filter((ext) => ext.name !== "image"),
+      // Shared extensions (same as read page for fidelity), minus Image and Link (overridden below)
+      ...getSharedExtensions().filter((ext) => ext.name !== "image" && ext.name !== "link"),
+      // Write-specific: Link renders as <span> so browser can't navigate
+      Link.extend({
+        renderHTML({ HTMLAttributes }) {
+          return [
+            "span",
+            {
+              ...HTMLAttributes,
+              "data-link": HTMLAttributes.href,
+              href: undefined,
+              style: "cursor: text;",
+            },
+            0,
+          ];
+        },
+      }).configure({ openOnClick: false }),
       // Write-specific: Image with resize handles
       Image.extend({
         addAttributes() {
@@ -609,16 +632,81 @@ export default function WritePage({ piece }: WritePageProps) {
           <div style={{ height: "32px" }} />
 
           {/* Editor content */}
-          <div className="write-editor" style={{ width: "100%" }}>
+          <div
+            className="write-editor"
+            style={{ width: "100%", position: "relative" }}
+          >
             <EditorContent editor={editor} />
+            <LinkPopover editor={editor} />
           </div>
         </div>
       </div>
 
       {/* Floating toolbar — desktop only */}
       {!isMobile && (
-        <StickyToolbar editor={editor} fileInputRef={fileInputRef} />
+        <StickyToolbar
+          editor={editor}
+          fileInputRef={fileInputRef}
+          onOpenLinkModal={() => {
+            linkSelectionRef.current = {
+              from: editor.state.selection.from,
+              to: editor.state.selection.to,
+            };
+            setShowLinkModal(true);
+          }}
+          onOpenYoutubeModal={() => setShowYoutubeModal(true)}
+          onOpenSpotifyModal={() => setShowSpotifyModal(true)}
+        />
       )}
+
+      <EmbedModal
+        isOpen={showLinkModal}
+        onClose={() => setShowLinkModal(false)}
+        title="Add link"
+        placeholder="https://..."
+        showDisplayText={
+          linkSelectionRef.current
+            ? linkSelectionRef.current.from === linkSelectionRef.current.to
+            : true
+        }
+        onConfirm={(url, displayText) => {
+          const sel = linkSelectionRef.current;
+          if (sel && sel.from !== sel.to) {
+            editor
+              .chain()
+              .focus()
+              .setTextSelection(sel)
+              .setLink({ href: url })
+              .run();
+          } else {
+            editor
+              .chain()
+              .focus()
+              .insertContent(`<a href="${url}">${displayText}</a>`)
+              .run();
+          }
+        }}
+      />
+
+      <EmbedModal
+        isOpen={showYoutubeModal}
+        onClose={() => setShowYoutubeModal(false)}
+        title="Add YouTube video"
+        placeholder="https://youtube.com/watch?v=..."
+        onConfirm={(url) => {
+          editor.chain().focus().setYoutubeVideo({ src: url }).run();
+        }}
+      />
+
+      <EmbedModal
+        isOpen={showSpotifyModal}
+        onClose={() => setShowSpotifyModal(false)}
+        title="Add Spotify track"
+        placeholder="https://open.spotify.com/track/..."
+        onConfirm={(url) => {
+          editor.commands.setSpotifyEmbed({ src: url });
+        }}
+      />
 
       <CoverImageModal
         isOpen={showCoverModal}
