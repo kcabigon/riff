@@ -24,6 +24,7 @@ import NoiseBackground from "@/components/NoiseBackground";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import StickyToolbar from "@/components/write/toolbar/StickyToolbar";
 import { useThemeColor } from "@/hooks/useThemeColor";
+import { useScrollDirection } from "@/hooks/useScrollDirection";
 
 interface RiffConnection {
   id: string;
@@ -65,6 +66,7 @@ export default function WritePage({ piece }: WritePageProps) {
   const router = useRouter();
   const isMobile = useIsMobile();
   useThemeColor("#FFFFFF");
+  const navVisible = useScrollDirection({ threshold: 15 });
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -362,16 +364,21 @@ export default function WritePage({ piece }: WritePageProps) {
         style={{ display: "none" }}
       />
 
-      {/* Sticky top bar — full viewport width on mobile, content-width on desktop */}
+      {/* Top bar — fixed on mobile (with hide-on-scroll), sticky on desktop */}
       <div
-        className="write-sticky-nav"
         style={{
-          position: "sticky",
+          position: isMobile ? "fixed" : "sticky",
           top: 0,
+          left: 0,
+          right: isMobile ? 0 : undefined,
           zIndex: 50,
-          width: "100%",
+          width: isMobile ? "100%" : "100%",
           maxWidth: isMobile ? "100%" : "720px",
           backgroundColor: "#FFFFFF",
+          transform:
+            isMobile && !navVisible ? "translateY(-100%)" : "translateY(0)",
+          transition: "transform 200ms ease",
+          willChange: isMobile ? "transform" : undefined,
         }}
       >
         <div
@@ -523,8 +530,8 @@ export default function WritePage({ piece }: WritePageProps) {
           minHeight: "100vh",
         }}
       >
-        {/* Spacer between sticky bar and content */}
-        <div style={{ height: "24px" }} />
+        {/* Spacer — accounts for fixed bar height on mobile */}
+        <div style={{ height: isMobile ? "140px" : "24px" }} />
 
         {/* Writing area */}
         <div
