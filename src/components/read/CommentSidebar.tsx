@@ -26,6 +26,7 @@ interface CommentSidebarProps {
   activeHighlightId: string | null;
   currentUserId: string;
   onDelete: (commentId: string) => void;
+  onCommentClick?: (commentId: string) => void;
 }
 
 function timeAgo(dateStr: string): string {
@@ -75,9 +76,7 @@ function CommentCard({
       onMouseLeave={() => setHovered(false)}
       style={{
         border: isActive ? "2px solid #00FF66" : "2px solid #000000",
-        backgroundColor: isActive
-          ? "rgba(0,255,102,0.05)"
-          : "#FFFFFF",
+        backgroundColor: isActive ? "rgba(0,255,102,0.05)" : "#FFFFFF",
         boxShadow: "4px 4px 0 rgba(0,0,0,0.08)",
         padding: "12px",
         marginBottom: "12px",
@@ -198,13 +197,17 @@ export default function CommentSidebar({
   activeHighlightId,
   currentUserId,
   onDelete,
+  onCommentClick,
 }: CommentSidebarProps) {
   const activeRef = useRef<HTMLDivElement>(null);
 
   // Scroll active comment into view
   useEffect(() => {
     if (activeHighlightId && activeRef.current) {
-      activeRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      activeRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
     }
   }, [activeHighlightId]);
 
@@ -251,7 +254,12 @@ export default function CommentSidebar({
       {comments.map((comment) => {
         const isActive = comment.id === activeHighlightId;
         return (
-          <div key={comment.id} ref={isActive ? activeRef : null}>
+          <div
+            key={comment.id}
+            ref={isActive ? activeRef : null}
+            onClick={() => onCommentClick?.(comment.id)}
+            style={{ cursor: "pointer" }}
+          >
             <CommentCard
               comment={comment}
               isActive={isActive}

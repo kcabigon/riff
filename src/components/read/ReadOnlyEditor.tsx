@@ -23,8 +23,10 @@ interface ReadOnlyEditorProps {
   content: string;
   comments: CommentData[];
   isRiffMode: boolean;
+  activeHighlightId: string | null;
   onSelection: (selection: PendingSelection) => void;
   onHighlightClick: (commentId: string) => void;
+  onImageComment?: (rect: DOMRect) => void;
 }
 
 function getCharOffset(root: HTMLElement, node: Node, offset: number): number {
@@ -37,12 +39,27 @@ function getCharOffset(root: HTMLElement, node: Node, offset: number): number {
   return total;
 }
 
+function buildTextNodeMap(root: Element) {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const nodes: { node: Text; start: number; end: number }[] = [];
+  let offset = 0;
+  while (walker.nextNode()) {
+    const node = walker.currentNode as Text;
+    const len = (node.textContent || "").length;
+    nodes.push({ node, start: offset, end: offset + len });
+    offset += len;
+  }
+  return nodes;
+}
+
 export default function ReadOnlyEditor({
   content,
   comments,
   isRiffMode,
+  activeHighlightId,
   onSelection,
   onHighlightClick,
+  onImageComment,
 }: ReadOnlyEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -53,15 +70,14 @@ export default function ReadOnlyEditor({
     editable: false,
   });
 
-  // Inject comment highlights as <mark> decorations via DOM manipulation
-  // after Tiptap renders the content
+  // Inject comment highlights via DOM manipulation
   useEffect(() => {
     if (!editor || !containerRef.current) return;
 
     const proseMirror = containerRef.current.querySelector(".ProseMirror");
     if (!proseMirror) return;
 
-    // Remove any existing marks first
+    // Remove existing marks
     proseMirror.querySelectorAll("mark[data-comment-id]").forEach((m) => {
       const parent = m.parentNode;
       if (parent) {
@@ -69,26 +85,22 @@ export default function ReadOnlyEditor({
         parent.removeChild(m);
       }
     });
+    // Normalize text nodes after unwrapping marks
+    proseMirror.normalize();
 
     if (!isRiffMode || comments.length === 0) return;
 
-    // Walk text nodes to build a char-offset map
-    const walker = document.createTreeWalker(proseMirror, NodeFilter.SHOW_TEXT);
-    const textNodes: { node: Text; start: number; end: number }[] = [];
-    let charCount = 0;
-    while (walker.nextNode()) {
-      const node = walker.currentNode as Text;
-      const len = (node.textContent || "").length;
-      textNodes.push({ node, start: charCount, end: charCount + len });
-      charCount += len;
-    }
+    // Sort comments by selectionStart descending so we inject from back to front
+    // This prevents offset drift when DOM is mutated
+    const sorted = [...comments]
+      .filter((c) => c.selectedText && c.selectionStart != null)
+      .sort((a, b) => b.selectionStart - a.selectionStart);
 
-    // For each comment, find and wrap the matching text in <mark>
-    for (const comment of comments) {
-      if (!comment.selectedText || comment.selectionStart == null) continue;
-
-      // Find the text by searching for it in the full text content
+    for (const comment of sorted) {
+      // Rebuild text node map fresh for each comment (DOM may have changed)
+      const textNodes = buildTextNodeMap(proseMirror);
       const fullText = textNodes.map((t) => t.node.textContent).join("");
+
       const idx = fullText.indexOf(
         comment.selectedText,
         Math.max(0, comment.selectionStart - 10)
@@ -97,8 +109,9 @@ export default function ReadOnlyEditor({
 
       const selStart = idx;
       const selEnd = idx + comment.selectedText.length;
+      const isActive = comment.id === activeHighlightId;
 
-      // Find text nodes that overlap with this selection
+      // Find text nodes that overlap and wrap them
       for (const tn of textNodes) {
         if (tn.end <= selStart || tn.start >= selEnd) continue;
 
@@ -107,32 +120,39 @@ export default function ReadOnlyEditor({
           (tn.node.textContent || "").length,
           selEnd - tn.start
         );
-
         if (nodeStart >= nodeEnd) continue;
 
-        const range = document.createRange();
-        range.setStart(tn.node, nodeStart);
-        range.setEnd(tn.node, nodeEnd);
+        try {
+          const range = document.createRange();
+          range.setStart(tn.node, nodeStart);
+          range.setEnd(tn.node, nodeEnd);
 
-        const mark = document.createElement("mark");
-        mark.setAttribute("data-comment-id", comment.id);
-        mark.style.background = "rgba(0,255,102,0.25)";
-        mark.style.cursor = "pointer";
-        mark.style.borderRadius = "2px";
-        mark.style.padding = "0";
+          const mark = document.createElement("mark");
+          mark.setAttribute("data-comment-id", comment.id);
+          mark.style.background = isActive
+            ? "rgba(0,255,102,0.45)"
+            : "rgba(0,255,102,0.2)";
+          mark.style.cursor = "pointer";
+          mark.style.padding = "0";
+          mark.style.transition = "background 0.15s ease";
 
-        range.surroundContents(mark);
+          range.surroundContents(mark);
+        } catch {
+          // surroundContents can throw if range crosses element boundaries
+          continue;
+        }
 
-        // Re-walk since DOM changed
         break;
       }
     }
-  }, [editor, comments, isRiffMode]);
+  }, [editor, comments, isRiffMode, activeHighlightId]);
 
-  // Handle clicks on highlights
+  // Handle clicks on highlights and images
   const handleClick = useCallback(
     (e: MouseEvent) => {
       const target = e.target as HTMLElement;
+
+      // Check for comment highlight click
       const mark = target.closest(
         "mark[data-comment-id]"
       ) as HTMLElement | null;
@@ -141,10 +161,18 @@ export default function ReadOnlyEditor({
         if (commentId) {
           e.stopPropagation();
           onHighlightClick(commentId);
+          return;
         }
       }
+
+      // Check for image click in riff mode
+      if (isRiffMode && target.tagName === "IMG" && onImageComment) {
+        e.stopPropagation();
+        const rect = target.getBoundingClientRect();
+        onImageComment(rect);
+      }
     },
-    [onHighlightClick]
+    [onHighlightClick, isRiffMode, onImageComment]
   );
 
   // Handle text selection

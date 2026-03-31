@@ -69,6 +69,7 @@ export default function ReadPageLayout({
 }: ReadPageLayoutProps) {
   const endRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const contentColumnRef = useRef<HTMLDivElement>(null);
   const [markedRead, setMarkedRead] = useState(isAlreadyRead);
   const [isRiffMode, setIsRiffMode] = useState(false);
   const [comments, setComments] = useState<CommentData[]>(initialComments);
@@ -124,6 +125,7 @@ export default function ReadPageLayout({
       return updated.sort((a, b) => a.selectionStart - b.selectionStart);
     });
     setActiveHighlightId(comment.id);
+    setPendingSelection(null);
   }, []);
 
   const handleDeleteComment = useCallback((commentId: string) => {
@@ -131,8 +133,29 @@ export default function ReadPageLayout({
     setActiveHighlightId((prev) => (prev === commentId ? null : prev));
   }, []);
 
+  // Click sidebar comment → scroll to highlight in content
   const handleHighlightClick = useCallback((commentId: string) => {
     setActiveHighlightId(commentId);
+
+    // Scroll the highlighted mark into view
+    setTimeout(() => {
+      const mark = document.querySelector(
+        `mark[data-comment-id="${commentId}"]`
+      );
+      if (mark) {
+        mark.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 50);
+  }, []);
+
+  // Handle image comment
+  const handleImageComment = useCallback((rect: DOMRect) => {
+    setPendingSelection({
+      text: "[Image]",
+      start: -1,
+      end: -1,
+      rect,
+    });
   }, []);
 
   const readMinutes = Math.max(1, piece.readLengthMin);
@@ -148,7 +171,7 @@ export default function ReadPageLayout({
     >
       <ReadingProgress />
 
-      {/* Top bar — full-width on mobile, content-width on desktop */}
+      {/* Top bar — full-width on mobile, 720px on desktop (stable width) */}
       <div
         style={{
           position: isMobile ? "fixed" : "sticky",
@@ -157,18 +180,18 @@ export default function ReadPageLayout({
           right: isMobile ? 0 : undefined,
           zIndex: 50,
           width: "100%",
-          maxWidth: isMobile ? "100%" : isRiffMode ? "1100px" : "720px",
+          maxWidth: isMobile ? "100%" : "720px",
           margin: isMobile ? undefined : "0 auto",
           backgroundColor: "#FFFFFF",
           transform:
             isMobile && !navVisible ? "translateY(-100%)" : "translateY(0)",
-          transition: "transform 200ms ease, max-width 0.3s ease",
+          transition: "transform 200ms ease",
           willChange: isMobile ? "transform" : undefined,
         }}
       >
         <div
           style={{
-            maxWidth: isRiffMode ? "1100px" : "720px",
+            maxWidth: "720px",
             width: "100%",
             margin: "0 auto",
             padding: "0 24px",
@@ -195,17 +218,19 @@ export default function ReadPageLayout({
       {/* Content area */}
       <div
         style={{
-          maxWidth: isRiffMode ? "1100px" : "720px",
+          maxWidth: isRiffMode && !isMobile ? "1100px" : "720px",
           margin: "0 auto",
           padding: "32px 24px 96px",
           transition: "max-width 0.3s ease",
           display: "flex",
           gap: "40px",
           alignItems: "flex-start",
+          position: "relative",
         }}
       >
         {/* Main content column */}
         <div
+          ref={contentColumnRef}
           style={{
             maxWidth: "720px",
             width: "100%",
@@ -245,6 +270,24 @@ export default function ReadPageLayout({
             </p>
           )}
 
+          {/* Reading metadata */}
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "14px",
+              color: "#999999",
+              margin: "12px 0 0",
+              textAlign: "center",
+            }}
+          >
+            <span style={{ fontWeight: "bold" }}>{readMinutes}</span> min read
+            {" \u2022 "}
+            <span style={{ fontWeight: "bold" }}>
+              {piece.wordCount.toLocaleString()}
+            </span>{" "}
+            words
+          </p>
+
           {/* Author */}
           <div
             style={{
@@ -252,7 +295,7 @@ export default function ReadPageLayout({
               alignItems: "center",
               justifyContent: "center",
               gap: "10px",
-              marginTop: "16px",
+              margin: "16px 0 24px",
             }}
           >
             <Avatar
@@ -277,24 +320,6 @@ export default function ReadPageLayout({
             </p>
           </div>
 
-          {/* Reading metadata */}
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              color: "#999999",
-              margin: "12px 0 24px",
-              textAlign: "center",
-            }}
-          >
-            <span style={{ fontWeight: "bold" }}>{readMinutes}</span> min read
-            {" \u2022 "}
-            <span style={{ fontWeight: "bold" }}>
-              {piece.wordCount.toLocaleString()}
-            </span>{" "}
-            words
-          </p>
-
           {/* Horizontal rule */}
           <hr
             style={{
@@ -304,13 +329,15 @@ export default function ReadPageLayout({
             }}
           />
 
-          {/* Content — Tiptap read-only mode for pixel-perfect fidelity with write page */}
+          {/* Content — Tiptap read-only */}
           <ReadOnlyEditor
             content={piece.currentContent}
             comments={isRiffMode ? comments : []}
             isRiffMode={isRiffMode}
+            activeHighlightId={activeHighlightId}
             onSelection={setPendingSelection}
             onHighlightClick={handleHighlightClick}
+            onImageComment={handleImageComment}
           />
 
           {/* End sentinel for read tracking */}
@@ -319,17 +346,39 @@ export default function ReadPageLayout({
 
         {/* Sidebar — desktop riff mode only */}
         {isRiffMode && !isMobile && (
-          <CommentSidebar
-            comments={comments}
-            activeHighlightId={activeHighlightId}
-            currentUserId={currentUser.id}
-            onDelete={handleDeleteComment}
-          />
+          <div
+            style={{
+              width: "300px",
+              flexShrink: 0,
+              position: "relative",
+            }}
+          >
+            {/* Comment compose — positioned at selection height */}
+            {pendingSelection && (
+              <CommentPopover
+                selection={pendingSelection}
+                currentUser={currentUser}
+                pieceId={piece.id}
+                riffId={riffId}
+                clubId={clubId}
+                onSubmit={handleNewComment}
+                onClose={() => setPendingSelection(null)}
+              />
+            )}
+
+            <CommentSidebar
+              comments={comments}
+              activeHighlightId={activeHighlightId}
+              currentUserId={currentUser.id}
+              onDelete={handleDeleteComment}
+              onCommentClick={handleHighlightClick}
+            />
+          </div>
         )}
       </div>
 
-      {/* Comment compose popover */}
-      {pendingSelection && (
+      {/* Mobile: comment popover as bottom sheet */}
+      {isMobile && pendingSelection && (
         <CommentPopover
           selection={pendingSelection}
           currentUser={currentUser}
