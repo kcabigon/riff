@@ -173,7 +173,7 @@ export default function CommentDrawer({
                   width: "32px",
                   height: "32px",
                   borderRadius: "50%",
-                  backgroundColor: "#00FF66",
+                  backgroundColor: "#01EFFC",
                   border: "1px solid #000",
                   flexShrink: 0,
                   display: "flex",
@@ -189,7 +189,11 @@ export default function CommentDrawer({
                   <img
                     src={comment.author.avatarUrl}
                     alt=""
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
                   />
                 ) : (
                   initials(comment.author)
@@ -205,9 +209,7 @@ export default function CommentDrawer({
                     color: "#000000",
                   }}
                 >
-                  {comment.author.name ||
-                    comment.author.username ||
-                    "Unknown"}
+                  {comment.author.name || comment.author.username || "Unknown"}
                 </span>
                 <span
                   style={{
@@ -231,7 +233,7 @@ export default function CommentDrawer({
                 color: "#808080",
                 margin: "0 0 10px 0",
                 fontStyle: "italic",
-                borderLeft: "2px solid #00FF66",
+                borderLeft: "2px solid #01EFFC",
                 paddingLeft: "8px",
               }}
             >

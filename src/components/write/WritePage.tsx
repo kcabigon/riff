@@ -1,17 +1,11 @@
 "use client";
 
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
+import { useEditor, EditorContent, ReactNodeViewRenderer } from "@tiptap/react";
 import Placeholder from "@tiptap/extension-placeholder";
 import CharacterCount from "@tiptap/extension-character-count";
-import Link from "@tiptap/extension-link";
-import TextAlign from "@tiptap/extension-text-align";
-import Underline from "@tiptap/extension-underline";
 import Image from "@tiptap/extension-image";
-import { ReactNodeViewRenderer } from "@tiptap/react";
 import ResizableImageView from "@/components/write/ResizableImageView";
-import Youtube from "@tiptap/extension-youtube";
-import { Spotify } from "@/components/editor/extensions/Spotify";
+import { getSharedExtensions } from "@/components/editor/extensions/sharedExtensions";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import "@/app/write/[pieceId]/editor.css";
@@ -23,6 +17,8 @@ import { convertHeicToJpeg } from "@/lib/convert-heic";
 import NoiseBackground from "@/components/NoiseBackground";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import StickyToolbar from "@/components/write/toolbar/StickyToolbar";
+import { useThemeColor } from "@/hooks/useThemeColor";
+import { useScrollDirection } from "@/hooks/useScrollDirection";
 
 interface RiffConnection {
   id: string;
@@ -63,20 +59,15 @@ export default function WritePage({ piece }: WritePageProps) {
   const subtitleSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
   const isMobile = useIsMobile();
+  useThemeColor("#FFFFFF");
+  const navVisible = useScrollDirection({ threshold: 15 });
 
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
-      StarterKit.configure({
-        heading: { levels: [1, 2, 3] },
-      }),
-      Placeholder.configure({
-        placeholder: "Start typing here...",
-      }),
-      CharacterCount,
-      Link.configure({ openOnClick: false }),
-      TextAlign.configure({ types: ["heading", "paragraph"] }),
-      Underline,
+      // Shared extensions (same as read page for fidelity)
+      ...getSharedExtensions().filter((ext) => ext.name !== "image"),
+      // Write-specific: Image with resize handles
       Image.extend({
         addAttributes() {
           return {
@@ -106,15 +97,11 @@ export default function WritePage({ piece }: WritePageProps) {
         inline: false,
         allowBase64: true,
       }),
-      Youtube.configure({
-        controls: true,
-        nocookie: true,
-        inline: false,
-        HTMLAttributes: { class: "youtube-video" },
+      // Write-specific: placeholder + character count
+      Placeholder.configure({
+        placeholder: "Start typing here...",
       }),
-      Spotify.configure({
-        HTMLAttributes: { style: "border-radius:12px" },
-      }),
+      CharacterCount,
     ],
     content: piece.currentContent || "",
     editable: true,
@@ -226,7 +213,6 @@ export default function WritePage({ piece }: WritePageProps) {
       const value = url || null;
       setCoverImage(value);
       autosaveCoverImage(value);
-      setShowCoverModal(false);
     },
     [autosaveCoverImage]
   );
@@ -360,27 +346,38 @@ export default function WritePage({ piece }: WritePageProps) {
         style={{ display: "none" }}
       />
 
-      {/* Content area */}
+      {/* Top bar — fixed on mobile (with hide-on-scroll), sticky on desktop */}
       <div
         style={{
-          width: "100%",
-          maxWidth: "720px",
-          padding: "24px 24px 0",
-          boxSizing: "border-box",
-          background: "#FFFFFF",
-          position: "relative",
-          zIndex: 1,
-          minHeight: "100vh",
+          position: isMobile ? "fixed" : "sticky",
+          top: 0,
+          left: 0,
+          right: isMobile ? 0 : undefined,
+          zIndex: 50,
+          width: isMobile ? "100%" : "100%",
+          maxWidth: isMobile ? "100%" : "720px",
+          backgroundColor: "#FFFFFF",
+          transform:
+            isMobile && !navVisible ? "translateY(-100%)" : "translateY(0)",
+          transition: "transform 200ms ease",
+          willChange: isMobile ? "transform" : undefined,
         }}
       >
-        {/* Top bar: back + actions + toolbar (mobile) */}
-        <div className="write-top-bar">
+        <div
+          style={{
+            maxWidth: "720px",
+            width: "100%",
+            margin: "0 auto",
+            padding: "0 24px",
+            boxSizing: "border-box",
+          }}
+        >
           <div
             style={{
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              padding: "8px 0",
+              padding: "16px 0 8px",
             }}
           >
             <BackButton onClick={handleBack} />
@@ -500,6 +497,23 @@ export default function WritePage({ piece }: WritePageProps) {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Content area */}
+      <div
+        style={{
+          width: "100%",
+          maxWidth: "720px",
+          padding: "0 24px",
+          boxSizing: "border-box",
+          background: "#FFFFFF",
+          position: "relative",
+          zIndex: 1,
+          minHeight: "100vh",
+        }}
+      >
+        {/* Spacer — accounts for fixed bar height on mobile */}
+        <div style={{ height: isMobile ? "140px" : "24px" }} />
 
         {/* Riff pills */}
         {piece.riffs.length > 0 && (
@@ -563,9 +577,6 @@ export default function WritePage({ piece }: WritePageProps) {
             ))}
           </div>
         )}
-
-        {/* Spacer between sticky bar and content */}
-        {isMobile && <div style={{ height: "24px" }} />}
 
         {/* Writing area */}
         <div

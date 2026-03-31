@@ -44,7 +44,7 @@ function injectHighlights(html: string, comments: CommentData[]): string {
     const after = result.slice(idx + comment.selectedText.length);
     result =
       before +
-      `<mark data-comment-id="${comment.id}" style="background:rgba(0,255,102,0.25);cursor:pointer;border-radius:2px;padding:0;">` +
+      `<mark data-comment-id="${comment.id}" style="background:rgba(1,239,252,0.25);cursor:pointer;border-radius:2px;padding:0;">` +
       comment.selectedText +
       `</mark>` +
       after;
@@ -86,7 +86,9 @@ export default function CommentAnchor({
   const handleClick = useCallback(
     (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      const mark = target.closest("mark[data-comment-id]") as HTMLElement | null;
+      const mark = target.closest(
+        "mark[data-comment-id]"
+      ) as HTMLElement | null;
       if (mark) {
         const commentId = mark.getAttribute("data-comment-id");
         if (commentId) {
@@ -103,7 +105,8 @@ export default function CommentAnchor({
     if (!isRiffMode || !containerRef.current) return;
 
     const selection = window.getSelection();
-    if (!selection || selection.isCollapsed || selection.rangeCount === 0) return;
+    if (!selection || selection.isCollapsed || selection.rangeCount === 0)
+      return;
 
     const range = selection.getRangeAt(0);
     const text = selection.toString().trim();
@@ -197,7 +200,11 @@ export default function CommentAnchor({
       sel.addRange(newRange);
 
       const rect = newRange.getBoundingClientRect();
-      const charStart = getCharOffset(containerRef.current!, textNode, startIdx);
+      const charStart = getCharOffset(
+        containerRef.current!,
+        textNode,
+        startIdx
+      );
       const charEnd = charStart + selected.length;
 
       onSelection({ text: selected, start: charStart, end: charEnd, rect });

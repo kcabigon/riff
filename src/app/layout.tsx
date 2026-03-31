@@ -40,6 +40,10 @@ export const metadata: Metadata = {
   description: "A private essay-sharing platform for creative minds",
 };
 
+export const viewport = {
+  themeColor: "#000000",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{

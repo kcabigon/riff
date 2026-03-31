@@ -22,8 +22,8 @@ A private essay-sharing platform for creative communities. Users create **clubs*
 - Full onboarding flow (name → club → banner → invite)
 - Club detail page with onboarding checklist, riff cards, completed riffs
 - Riff lifecycle: DRAFT → ACTIVE → REVEALED → COMPLETED (with confetti)
-- Read page with progress bar, piece navigation, comment toggle
-- Comment system with text selection anchoring
+- Read page with Tiptap read-only rendering, comment toggle, hide-on-scroll mobile nav
+- Comment system with text selection anchoring, bidirectional sidebar positioning, inline compose
 - Rich text editor (Tiptap: resizable images, YouTube, Spotify embeds)
 - Write page with white canvas, floating toolbar, subtitle, keyboard-aware mobile toolbar
 - Draft editor with autosave (content, title, subtitle, cover image) and HEIC support
@@ -83,14 +83,14 @@ src/components/
 │                  # DeleteRiffConfirmModal, RevealCelebration, RevealConfirmModal, PieceCard,
 │                  # CompletedRiffCard, ReadyToRevealCard, MosaicCollage, PromptLibrary,
 │                  # EmptyRiffState, CountdownTimer
-├── read/          # ReadPageLayout, ReadToggle, ReadingProgress, PieceNavigation,
+├── read/          # ReadPageLayout, ReadOnlyEditor, ReadToggle, ReadingProgress,
 │                  # CommentAnchor, CommentPopover, CommentSidebar, CommentDrawer
 ├── notifications/ # NotificationBell, NotificationPanel, NotificationItem
 ├── settings/      # SettingsPage, ProfileSection, DataSection
 ├── about/         # AboutPage
 ├── write/         # WritePage, CoverImageModal, ShareConfirmModal, ResizableImageView,
 │                  # toolbar/StickyToolbar, toolbar/ToolbarButton, toolbar/toolbarButtons
-└── editor/        # TiptapEditor, EditorToolbar, extensions/Spotify
+└── editor/        # TiptapEditor, EditorToolbar, extensions/Spotify, extensions/sharedExtensions
 ```
 
 ### Reusable Component Catalog
@@ -139,7 +139,9 @@ src/hooks/
 ├── useMediaQuery.ts           # SSR-safe media query + useIsMobile
 ├── useProfileNavigation.ts    # Navigate to /profile/[userId]
 ├── useDraftCreation.ts        # Create draft + navigate to write page
-└── useTextSelection.ts        # Text selection detection
+├── useTextSelection.ts        # Text selection detection
+├── useThemeColor.ts           # Dynamically update iOS Safari status bar color
+└── useScrollDirection.ts      # Hide-on-scroll detection for auto-hiding nav bars
 
 src/lib/
 ├── prisma.ts                  # Prisma singleton

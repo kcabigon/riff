@@ -38,7 +38,6 @@ export default function NavBar({
         position: "sticky",
         top: 0,
         zIndex: 50,
-        height: "72px",
         backgroundColor: "#000000",
         display: "flex",
         alignItems: "center",

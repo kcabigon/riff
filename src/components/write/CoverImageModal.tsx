@@ -31,6 +31,7 @@ export default function CoverImageModal({
       aspectRatio={4 / 5}
       existingImages={pieceImages}
       existingImagesLabel="From your piece"
+      inlinePreview
     />
   );
 }

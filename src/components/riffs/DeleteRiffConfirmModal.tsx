@@ -47,32 +47,50 @@ export default function DeleteRiffConfirmModal({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Delete riff?" size="sm">
-      <p
+      <div
         style={{
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "16px",
-          fontWeight: 300,
-          color: "#000000",
-          margin: "0 0 24px 0",
-          lineHeight: 1.5,
+          display: "inline-block",
+          backgroundColor: "#FFFFFF",
+          padding: "2px 8px",
+          marginBottom: "24px",
         }}
       >
-        Are you sure you want to delete &ldquo;{riffTitle || "Untitled"}&rdquo;?
-        This can&apos;t be undone.
-      </p>
-
-      {error && (
         <p
           style={{
             fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
+            fontSize: "16px",
             fontWeight: 300,
-            color: "#FF4444",
-            margin: "0 0 16px 0",
+            color: "#000000",
+            margin: 0,
+            lineHeight: 1.5,
           }}
         >
-          {error}
+          Are you sure you want to delete &ldquo;{riffTitle || "Untitled"}
+          &rdquo;? This can&apos;t be undone.
         </p>
+      </div>
+
+      {error && (
+        <div
+          style={{
+            display: "inline-block",
+            backgroundColor: "#FFFFFF",
+            padding: "2px 8px",
+            marginBottom: "16px",
+          }}
+        >
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "14px",
+              fontWeight: 300,
+              color: "#FF4444",
+              margin: 0,
+            }}
+          >
+            {error}
+          </p>
+        </div>
       )}
 
       <button

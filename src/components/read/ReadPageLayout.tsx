@@ -1,16 +1,16 @@
 "use client";
 
 import { useRef, useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import Avatar from "@/components/shared/Avatar";
 import ReadToggle from "./ReadToggle";
-import CommentAnchor from "./CommentAnchor";
+import ReadOnlyEditor from "./ReadOnlyEditor";
 import CommentPopover from "./CommentPopover";
 import CommentSidebar from "./CommentSidebar";
 import CommentDrawer from "./CommentDrawer";
 import ReadingProgress from "./ReadingProgress";
-import PieceNavigation from "./PieceNavigation";
 import { useIsMobile } from "@/hooks/useMediaQuery";
+import { useThemeColor } from "@/hooks/useThemeColor";
+import { useScrollDirection } from "@/hooks/useScrollDirection";
 import BackButton from "@/components/BackButton";
 
 interface CommentAuthor {
@@ -43,6 +43,7 @@ interface ReadPageLayoutProps {
   piece: {
     id: string;
     title: string;
+    subtitle: string | null;
     currentContent: string;
     coverImage: string | null;
     wordCount: number;
@@ -65,19 +66,38 @@ export default function ReadPageLayout({
   currentUser,
   initialComments,
   isAlreadyRead,
-  previousPiece = null,
-  nextPiece = null,
 }: ReadPageLayoutProps) {
-  const router = useRouter();
   const endRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const contentColumnRef = useRef<HTMLDivElement>(null);
   const [markedRead, setMarkedRead] = useState(isAlreadyRead);
   const [isRiffMode, setIsRiffMode] = useState(false);
   const [comments, setComments] = useState<CommentData[]>(initialComments);
-  const [activeHighlightId, setActiveHighlightId] = useState<string | null>(null);
-  const [pendingSelection, setPendingSelection] = useState<PendingSelection | null>(null);
+  const [activeHighlightId, setActiveHighlightId] = useState<string | null>(
+    null
+  );
+  const [pendingSelection, setPendingSelection] =
+    useState<PendingSelection | null>(null);
 
   const isMobile = useIsMobile();
+  useThemeColor("#FFFFFF");
+  const navVisible = useScrollDirection({ threshold: 15 });
+  const metadataRef = useRef<HTMLDivElement>(null);
+  const [showNavTitle, setShowNavTitle] = useState(false);
+
+  // Show title in nav bar when metadata scrolls out of view (desktop only)
+  useEffect(() => {
+    if (isMobile) return;
+    const el = metadataRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowNavTitle(!entry.isIntersecting),
+      { threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [isMobile]);
 
   const markAsRead = useCallback(async () => {
     if (markedRead) return;
@@ -100,13 +120,11 @@ export default function ReadPageLayout({
     const end = endRef.current;
     if (!content || !end) return;
 
-    // Short piece: fits in viewport → mark after 3s
     if (content.scrollHeight <= window.innerHeight) {
       const timer = setTimeout(markAsRead, 3000);
       return () => clearTimeout(timer);
     }
 
-    // Long piece: IntersectionObserver on end sentinel
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) markAsRead();
@@ -123,6 +141,7 @@ export default function ReadPageLayout({
       return updated.sort((a, b) => a.selectionStart - b.selectionStart);
     });
     setActiveHighlightId(comment.id);
+    setPendingSelection(null);
   }, []);
 
   const handleDeleteComment = useCallback((commentId: string) => {
@@ -130,167 +149,268 @@ export default function ReadPageLayout({
     setActiveHighlightId((prev) => (prev === commentId ? null : prev));
   }, []);
 
-  const handleHighlightClick = useCallback((commentId: string) => {
+  // Click sidebar comment → scroll to highlight in content
+  const handleSidebarCommentClick = useCallback((commentId: string) => {
     setActiveHighlightId(commentId);
+
+    setTimeout(() => {
+      const mark = document.querySelector(
+        `mark[data-comment-id="${commentId}"]`
+      );
+      if (mark) {
+        mark.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 50);
   }, []);
 
-  // Clear pending selection when clicking elsewhere
-  const handleLayoutClick = useCallback((e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (!target.closest("mark[data-comment-id]")) {
-      // Don't clear activeHighlightId here — user may have clicked the sidebar
-    }
+  // Click highlight in content → activate comment and ensure both are visible
+  const handleHighlightClick = useCallback((commentId: string) => {
+    setActiveHighlightId(commentId);
+
+    // After positions recalculate, scroll the highlight into center view
+    // The sidebar comment will be repositioned next to it
+    setTimeout(() => {
+      const mark = document.querySelector(
+        `mark[data-comment-id="${commentId}"]`
+      );
+      if (mark) {
+        mark.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 150);
+  }, []);
+
+  // Handle image comment
+  const handleImageComment = useCallback((rect: DOMRect) => {
+    setPendingSelection({
+      text: "[Image]",
+      start: -1,
+      end: -1,
+      rect,
+    });
   }, []);
 
   const readMinutes = Math.max(1, piece.readLengthMin);
 
   const activeComment = activeHighlightId
-    ? comments.find((c) => c.id === activeHighlightId) ?? null
+    ? (comments.find((c) => c.id === activeHighlightId) ?? null)
     : null;
 
   return (
     <div
       ref={contentRef}
       style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}
-      onClick={handleLayoutClick}
     >
       <ReadingProgress />
 
-      {/* Top nav */}
+      {/* Top bar — full-width on mobile, 720px on desktop (stable width) */}
       <div
         style={{
-          maxWidth: isRiffMode ? "1100px" : "720px",
-          margin: "0 auto",
-          padding: "24px 24px 0",
-          transition: "max-width 0.3s ease",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
+          position: isMobile ? "fixed" : "sticky",
+          top: 0,
+          left: 0,
+          right: isMobile ? 0 : undefined,
+          zIndex: 50,
+          width: "100%",
+          maxWidth: isMobile ? "100%" : isRiffMode ? "1100px" : "720px",
+          margin: isMobile ? undefined : "0 auto",
+          backgroundColor: "#FFFFFF",
+          transform:
+            isMobile && !navVisible ? "translateY(-100%)" : "translateY(0)",
+          transition: "transform 200ms ease, max-width 0.3s ease",
+          willChange: isMobile ? "transform" : undefined,
         }}
       >
-        <BackButton href={`/riffs/${riffId}`} />
+        <div
+          style={{
+            maxWidth: "720px",
+            width: "100%",
+            margin: "0 auto",
+            padding: "0 24px",
+            boxSizing: "border-box",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "16px 0 8px",
+            }}
+          >
+            <BackButton href={`/riffs/${riffId}`} />
 
-        <ReadToggle isRiffMode={isRiffMode} onToggle={setIsRiffMode} />
+            {/* Nav title + author avatar — appears when metadata scrolls out */}
+            {!isMobile && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  marginLeft: "32px",
+                  flex: 1,
+                  minWidth: 0,
+                  opacity: showNavTitle ? 1 : 0,
+                  transition: "opacity 200ms ease",
+                  pointerEvents: showNavTitle ? "auto" : "none",
+                }}
+              >
+                <p
+                  style={{
+                    fontFamily: "var(--font-playfair)",
+                    fontSize: "16px",
+                    fontWeight: 400,
+                    color: "#000000",
+                    margin: 0,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {piece.title}
+                </p>
+                <div style={{ flexShrink: 0 }}>
+                  <Avatar
+                    user={{
+                      id: piece.author.id,
+                      name: piece.author.name,
+                      username: piece.author.username,
+                      avatarUrl: piece.author.avatarUrl,
+                    }}
+                    size={24}
+                  />
+                </div>
+              </div>
+            )}
+
+            <ReadToggle isRiffMode={isRiffMode} onToggle={setIsRiffMode} />
+          </div>
+        </div>
       </div>
+
+      {/* Spacer for fixed nav on mobile */}
+      {isMobile && <div style={{ height: "60px" }} />}
 
       {/* Content area */}
       <div
         style={{
-          maxWidth: isRiffMode ? "1100px" : "720px",
+          maxWidth: isRiffMode && !isMobile ? "1100px" : "720px",
           margin: "0 auto",
           padding: "32px 24px 96px",
           transition: "max-width 0.3s ease",
           display: "flex",
           gap: "40px",
           alignItems: "flex-start",
+          position: "relative",
         }}
       >
         {/* Main content column */}
-        <div style={{ maxWidth: "720px", width: "100%", flexShrink: 0, minWidth: 0 }}>
-          {/* Cover image */}
-          {piece.coverImage && (
-            <div
+        <div
+          ref={contentColumnRef}
+          style={{
+            maxWidth: "720px",
+            width: "100%",
+            flexShrink: 0,
+            minWidth: 0,
+          }}
+        >
+          {/* Metadata section — tracked for nav title visibility */}
+          <div ref={metadataRef} style={{ width: "100%" }}>
+            {/* Title */}
+            <h1
               style={{
-                width: "100%",
-                maxHeight: "400px",
-                overflow: "hidden",
-                marginBottom: "32px",
+                fontFamily: "var(--font-playfair)",
+                fontSize: "32px",
+                fontWeight: "bold",
+                color: "#000000",
+                margin: 0,
+                textAlign: "center",
+                lineHeight: 1.2,
               }}
             >
-              <img
-                src={piece.coverImage}
-                alt=""
+              {piece.title}
+            </h1>
+
+            {/* Subtitle */}
+            {piece.subtitle && (
+              <p
                 style={{
-                  width: "100%",
-                  height: "auto",
-                  maxHeight: "400px",
-                  objectFit: "cover",
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 300,
+                  color: "#666666",
+                  margin: "8px 0 0",
+                  textAlign: "center",
+                  lineHeight: "1.4",
                 }}
-              />
-            </div>
-          )}
+              >
+                {piece.subtitle}
+              </p>
+            )}
 
-          {/* Title */}
-          <h1
-            style={{
-              fontFamily: "var(--font-playfair)",
-              fontSize: "36px",
-              fontWeight: 400,
-              color: "#000000",
-              margin: "0 0 16px 0",
-              textAlign: "center",
-              lineHeight: 1.3,
-            }}
-          >
-            {piece.title}
-          </h1>
-
-          {/* Author */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "10px",
-              marginBottom: "8px",
-            }}
-          >
-            <Avatar
-              user={{
-                id: piece.author.id,
-                name: piece.author.name,
-                username: piece.author.username,
-                avatarUrl: piece.author.avatarUrl,
-              }}
-              size={32}
-            />
+            {/* Reading metadata */}
             <p
               style={{
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 300,
-                color: "#000000",
-                margin: 0,
+                fontSize: "14px",
+                color: "#999999",
+                margin: "12px 0 0",
+                textAlign: "center",
               }}
             >
-              {piece.author.name || piece.author.username || "Unknown"}
+              <span style={{ fontWeight: "bold" }}>{readMinutes}</span> min read
+              {" \u2022 "}
+              <span style={{ fontWeight: "bold" }}>
+                {piece.wordCount.toLocaleString()}
+              </span>{" "}
+              words
             </p>
+
+            {/* Author */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "10px",
+                margin: "16px 0 24px",
+              }}
+            >
+              <Avatar
+                user={{
+                  id: piece.author.id,
+                  name: piece.author.name,
+                  username: piece.author.username,
+                  avatarUrl: piece.author.avatarUrl,
+                }}
+                size={32}
+              />
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 300,
+                  color: "#000000",
+                  margin: 0,
+                }}
+              >
+                {piece.author.name || piece.author.username || "Unknown"}
+              </p>
+            </div>
           </div>
 
-          {/* Reading metadata */}
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              fontWeight: 300,
-              color: "#808080",
-              margin: "0 0 24px 0",
-              textAlign: "center",
-            }}
-          >
-            {readMinutes} min read &middot;{" "}
-            {piece.wordCount.toLocaleString()} words
-          </p>
-
-          {/* Horizontal rule */}
-          <hr
-            style={{
-              border: "none",
-              borderTop: "1px solid #E6E6E6",
-              margin: "0 0 32px 0",
-            }}
-          />
-
-          {/* Content with comment anchoring */}
-          <CommentAnchor
+          {/* Content — Tiptap read-only */}
+          <ReadOnlyEditor
             content={piece.currentContent}
             comments={isRiffMode ? comments : []}
             isRiffMode={isRiffMode}
+            activeHighlightId={activeHighlightId}
+            pendingSelection={pendingSelection}
             onSelection={setPendingSelection}
             onHighlightClick={handleHighlightClick}
+            onImageComment={handleImageComment}
           />
 
-          {/* End sentinel for scroll detection */}
+          {/* End sentinel for read tracking */}
           <div ref={endRef} style={{ height: "1px" }} />
         </div>
 
@@ -301,12 +421,28 @@ export default function ReadPageLayout({
             activeHighlightId={activeHighlightId}
             currentUserId={currentUser.id}
             onDelete={handleDeleteComment}
+            onCommentClick={handleSidebarCommentClick}
+            contentColumnRef={contentColumnRef}
+            pendingSelection={pendingSelection}
+            pendingCommentProps={
+              pendingSelection
+                ? {
+                    selection: pendingSelection,
+                    currentUser,
+                    pieceId: piece.id,
+                    riffId,
+                    clubId,
+                    onSubmit: handleNewComment,
+                    onClose: () => setPendingSelection(null),
+                  }
+                : null
+            }
           />
         )}
       </div>
 
-      {/* Comment compose popover */}
-      {pendingSelection && (
+      {/* Mobile: comment popover as bottom sheet */}
+      {isMobile && pendingSelection && (
         <CommentPopover
           selection={pendingSelection}
           currentUser={currentUser}
@@ -327,13 +463,6 @@ export default function ReadPageLayout({
           onDelete={handleDeleteComment}
         />
       )}
-
-      {/* Piece-to-piece navigation */}
-      <PieceNavigation
-        previousPiece={previousPiece}
-        nextPiece={nextPiece}
-        riffId={riffId}
-      />
     </div>
   );
 }

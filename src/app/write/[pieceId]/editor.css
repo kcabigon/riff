@@ -1,6 +1,6 @@
-/* Write page editor styles — white canvas */
+/* Shared content styles — used by write page (editable) and read page (read-only) */
 
-/* ProseMirror editor styles */
+/* Base content container */
 .write-editor .ProseMirror {
   padding: 0;
   margin: 0;
@@ -17,11 +17,18 @@
   overflow-wrap: break-word;
 }
 
+/* Read-only: default cursor, no focus ring */
+.write-editor .ProseMirror[contenteditable="false"] {
+  cursor: default;
+  min-height: 0;
+}
+
 .write-editor .ProseMirror > * {
   margin: 0;
   padding: 0;
 }
 
+/* Paragraphs */
 .write-editor .ProseMirror p {
   margin: 0 0 1em 0;
   color: #000000;
@@ -37,7 +44,7 @@
   margin-bottom: 0;
 }
 
-/* Placeholder */
+/* Placeholder (write page only) */
 .write-editor .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   float: left;
@@ -110,16 +117,14 @@
   height: auto;
   display: block;
   margin: 1em auto;
-  cursor: pointer;
-  transition: outline 0.1s;
 }
 
-/* Selected image — green outline matching design system */
+/* Selected image — green outline (write page only) */
 .write-editor .ProseMirror img.ProseMirror-selectednode {
   outline: 2px solid #00FF66;
 }
 
-/* Ensure images respect text-align for positioning */
+/* Image alignment */
 .write-editor .ProseMirror [style*="text-align: center"] img {
   margin-left: auto;
   margin-right: auto;
@@ -160,16 +165,6 @@
   max-width: 100%;
   height: 152px !important;
   display: block;
-}
-
-/* ==================== Top Bar ==================== */
-
-.write-top-bar {
-  position: sticky;
-  top: 0;
-  z-index: 40;
-  background: #FFFFFF;
-  padding-top: env(safe-area-inset-top);
 }
 
 /* ==================== Floating Toolbar (desktop + mobile) ==================== */
