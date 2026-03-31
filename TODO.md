@@ -60,7 +60,8 @@ Last updated: March 29, 2026 (Jarric adding modal design system TODOs)
 - [ ] Review all modals (RevealConfirmModal, EditRiffModal, DeleteRiffConfirmModal, ClubSettingsModal, CreateRiffModal, InviteOptions) and bring into alignment with updated Modal component
 
 ### Read / Write Experience
-- [ ] YouTube embeds, images, Spotify links need to be mobile responsive
+- [x] Write page redesign: white canvas, floating toolbar, subtitle, resizable images, hide-on-scroll mobile nav
+- [x] YouTube embeds, images, Spotify links mobile responsive
 - [x] Cover image upload UI (CoverImageModal with upload, crop, piece image picker, HEIC support)
 - [ ] Cover image: update editor UI to show current cover image preview inline (e.g. thumbnail next to the "Cover image" button)
 - [ ] Cover image: test all three fallbacks end-to-end (explicit cover → first content image → placeholder color) with correct overlay + white title

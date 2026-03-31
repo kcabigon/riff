@@ -139,7 +139,9 @@ src/hooks/
 ├── useMediaQuery.ts           # SSR-safe media query + useIsMobile
 ├── useProfileNavigation.ts    # Navigate to /profile/[userId]
 ├── useDraftCreation.ts        # Create draft + navigate to write page
-└── useTextSelection.ts        # Text selection detection
+├── useTextSelection.ts        # Text selection detection
+├── useThemeColor.ts           # Dynamically update iOS Safari status bar color
+└── useScrollDirection.ts      # Hide-on-scroll detection for auto-hiding nav bars
 
 src/lib/
 ├── prisma.ts                  # Prisma singleton
