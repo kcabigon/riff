@@ -26,6 +26,7 @@ export default async function ReadPage({
     select: {
       id: true,
       title: true,
+      subtitle: true,
       currentContent: true,
       coverImage: true,
       wordCount: true,
@@ -174,6 +175,7 @@ export default async function ReadPage({
       piece={{
         id: piece.id,
         title: piece.title,
+        subtitle: piece.subtitle,
         currentContent: piece.currentContent,
         coverImage: piece.coverImage,
         wordCount: piece.wordCount,

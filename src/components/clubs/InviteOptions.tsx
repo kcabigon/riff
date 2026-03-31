@@ -104,7 +104,6 @@ export default function InviteOptions({
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `Join ${clubName} on Riff`,
           text: message,
         });
         return;
@@ -157,7 +156,7 @@ export default function InviteOptions({
         gap: "12px",
       }}
     >
-      {/* Three action boxes - responsive */}
+      {/* Two action boxes - responsive */}
       <div
         style={{
           width: "100%",

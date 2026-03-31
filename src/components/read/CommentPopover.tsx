@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import PrimaryButton from "@/components/PrimaryButton";
 
 interface PendingSelection {
   text: string;
@@ -41,8 +42,6 @@ interface CommentPopoverProps {
   onClose: () => void;
 }
 
-const QUICK_EMOJIS = ["❤️", "🔥", "👏", "✨", "😂", "😭", "🙌", "💯", "👀", "🎉", "💔", "😍", "🤔", "😮", "💪", "🥹"];
-
 function initials(user: CommentAuthor): string {
   if (user.name) return user.name[0].toUpperCase();
   if (user.username) return user.username[0].toUpperCase();
@@ -60,15 +59,15 @@ export default function CommentPopover({
 }: CommentPopoverProps) {
   const [text, setText] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [showEmoji, setShowEmoji] = useState(false);
-  const [focused, setFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
-  // Focus textarea on mount
   useEffect(() => {
-    textareaRef.current?.focus();
+    // Delay focus to let positioning settle, and prevent scroll jump
+    setTimeout(() => {
+      textareaRef.current?.focus({ preventScroll: true });
+    }, 100);
   }, []);
 
   // Click-outside to dismiss
@@ -145,80 +144,45 @@ export default function CommentPopover({
     }
   };
 
-  // Desktop: position above the selection rect
-  const desktopStyle: React.CSSProperties = isMobile
-    ? {}
-    : {
-        position: "fixed",
-        top: Math.max(8, selection.rect.top - 120 + window.scrollY),
-        left: Math.max(
-          8,
-          Math.min(
-            window.innerWidth - 360 - 8,
-            selection.rect.left + selection.rect.width / 2 - 180
-          )
-        ),
-        width: "360px",
-        zIndex: 1000,
-      };
-
-  const mobileStyle: React.CSSProperties = isMobile
+  // Desktop: no positioning (parent sidebar handles it)
+  // Mobile: bottom sheet
+  const style: React.CSSProperties = isMobile
     ? {
         position: "fixed",
         bottom: 0,
         left: 0,
         right: 0,
         zIndex: 1000,
-        borderRadius: "16px 16px 0 0",
+        backgroundColor: "#FFFFFF",
+        border: "2px solid #000000",
+        boxShadow: "4px 4px 0 #000",
+        padding: "12px",
       }
-    : {};
-
-  const combinedStyle: React.CSSProperties = {
-    ...desktopStyle,
-    ...mobileStyle,
-    backgroundColor: "#FFFFFF",
-    border: "2px solid #000000",
-    boxShadow: "4px 4px 0 #000",
-    padding: "12px",
-  };
+    : {
+        backgroundColor: "#FFFFFF",
+        border: "2px solid #000000",
+        boxShadow: "4px 4px 0 #000",
+        padding: "12px",
+      };
 
   return (
-    <div ref={popoverRef} style={combinedStyle}>
-      {/* Selected text quote */}
-      <p
-        style={{
-          fontFamily: "var(--font-playfair)",
-          fontSize: "13px",
-          color: "#808080",
-          margin: "0 0 10px 0",
-          fontStyle: "italic",
-          borderLeft: "2px solid #00FF66",
-          paddingLeft: "8px",
-          overflow: "hidden",
-          display: "-webkit-box",
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: "vertical",
-        }}
-      >
-        {selection.text}
-      </p>
-
+    <div ref={popoverRef} style={style}>
       {/* Input row */}
       <div style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
         {/* Avatar */}
         <div
           style={{
-            width: "32px",
-            height: "32px",
+            width: "28px",
+            height: "28px",
             borderRadius: "50%",
-            backgroundColor: "#00FF66",
+            backgroundColor: "#01EFFC",
             border: "1px solid #000",
             flexShrink: 0,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             fontFamily: "var(--font-dm-sans)",
-            fontSize: "13px",
+            fontSize: "12px",
             fontWeight: 700,
             overflow: "hidden",
           }}
@@ -239,22 +203,18 @@ export default function CommentPopover({
           ref={textareaRef}
           value={text}
           onChange={(e) => setText(e.target.value)}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
           onPaste={handlePaste}
           placeholder="Write a comment..."
-          rows={focused || text ? 3 : 1}
+          rows={3}
           style={{
             flex: 1,
             resize: "none",
             border: "1px solid #E6E6E6",
-            borderRadius: "4px",
             padding: "6px 8px",
             fontFamily: "var(--font-dm-sans)",
             fontSize: "14px",
             lineHeight: 1.5,
             outline: "none",
-            transition: "height 0.15s ease",
           }}
           onKeyDown={(e) => {
             if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
@@ -271,104 +231,62 @@ export default function CommentPopover({
       <div
         style={{
           display: "flex",
-          justifyContent: "space-between",
+          justifyContent: "flex-end",
           alignItems: "center",
+          gap: "8px",
           marginTop: "8px",
         }}
       >
-        {/* Emoji picker trigger */}
-        <div style={{ position: "relative" }}>
-          <button
-            onClick={() => setShowEmoji((s) => !s)}
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              fontSize: "18px",
-              padding: "4px",
-              lineHeight: 1,
-            }}
-            title="Add emoji"
-          >
-            😊
-          </button>
-
-          {showEmoji && (
-            <div
-              style={{
-                position: "absolute",
-                bottom: "100%",
-                left: 0,
-                backgroundColor: "#FFFFFF",
-                border: "2px solid #000",
-                boxShadow: "4px 4px 0 #000",
-                padding: "8px",
-                display: "grid",
-                gridTemplateColumns: "repeat(8, 1fr)",
-                gap: "4px",
-                zIndex: 1010,
-                width: "200px",
-              }}
-            >
-              {QUICK_EMOJIS.map((emoji) => (
-                <button
-                  key={emoji}
-                  onClick={() => {
-                    setText((prev) => prev + emoji);
-                    setShowEmoji(false);
-                    textareaRef.current?.focus();
-                  }}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    fontSize: "16px",
-                    padding: "2px",
-                    lineHeight: 1,
-                  }}
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Cancel + Submit */}
-        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-          <button
-            onClick={onClose}
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "13px",
-              color: "#808080",
-              padding: "4px 8px",
-            }}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={!text.trim() || submitting}
-            style={{
-              backgroundColor: text.trim() ? "#000000" : "#E6E6E6",
-              border: "none",
-              cursor: text.trim() ? "pointer" : "not-allowed",
-              padding: "6px 16px",
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "13px",
-              fontWeight: 500,
-              color: text.trim() ? "#FFFFFF" : "#AFAFAF",
-              borderRadius: "4px",
-              transition: "background-color 0.1s ease",
-            }}
-          >
-            {submitting ? "..." : "Post"}
-          </button>
-        </div>
+        <button
+          onClick={onClose}
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "13px",
+            color: "#808080",
+            padding: "4px 8px",
+          }}
+        >
+          Cancel
+        </button>
+        <PrimaryButton
+          onClick={handleSubmit}
+          disabled={!text.trim()}
+          loading={submitting}
+          style={{
+            width: "auto",
+            height: "32px",
+            padding: "4px 20px",
+            fontSize: "13px",
+            boxShadow: text.trim() ? "4px 4px 0px 0px #000000" : "none",
+          }}
+          onMouseEnter={(e) => {
+            if (text.trim()) {
+              e.currentTarget.style.boxShadow = "4px 4px 0px 0px #01EFFC";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (text.trim()) {
+              e.currentTarget.style.boxShadow = "4px 4px 0px 0px #000000";
+            }
+          }}
+          onMouseDown={(e) => {
+            if (text.trim()) {
+              e.currentTarget.style.boxShadow = "2px 2px 0px 0px #01EFFC";
+              e.currentTarget.style.transform = "translate(2px, 2px)";
+            }
+          }}
+          onMouseUp={(e) => {
+            if (text.trim()) {
+              e.currentTarget.style.boxShadow = "4px 4px 0px 0px #01EFFC";
+              e.currentTarget.style.transform = "translate(0, 0)";
+            }
+          }}
+        >
+          Post
+        </PrimaryButton>
       </div>
     </div>
   );
