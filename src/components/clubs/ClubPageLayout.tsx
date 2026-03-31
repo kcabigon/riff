@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import NavBar from "@/components/clubs/NavBar";
 import AvatarStack from "@/components/shared/AvatarStack";
@@ -14,6 +14,8 @@ import OnboardingChecklist from "@/components/clubs/OnboardingChecklist";
 import ClubSettingsModal from "@/components/clubs/ClubSettingsModal";
 import InviteOptions from "@/components/clubs/InviteOptions";
 import CloseButton from "@/components/CloseButton";
+import Dropdown from "@/components/shared/Dropdown";
+import type { DropdownItem } from "@/components/shared/Dropdown";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import { getRiffDisplayTitle } from "@/lib/riff-utils";
@@ -107,24 +109,8 @@ export default function ClubPageLayout({
   const [isCreateRiffModalOpen, setIsCreateRiffModalOpen] = useState(false);
   const [isRevealModalOpen, setIsRevealModalOpen] = useState(false);
   const [isRevealing, setIsRevealing] = useState(false);
-  const [isSettingsDropdownOpen, setIsSettingsDropdownOpen] = useState(false);
   const [isClubDetailsModalOpen, setIsClubDetailsModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-  const settingsDropdownRef = useRef<HTMLDivElement>(null);
-
-  // Close settings dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        settingsDropdownRef.current &&
-        !settingsDropdownRef.current.contains(e.target as Node)
-      ) {
-        setIsSettingsDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
   const [currentActiveRiff, setCurrentActiveRiff] = useState<Riff | null>(
     activeRiff
   );
@@ -250,125 +236,68 @@ export default function ClubPageLayout({
                     {clubName}
                   </h1>
                   {isAdmin && (
-                    <div
-                      ref={settingsDropdownRef}
-                      style={{ position: "relative" }}
-                    >
-                      <button
-                        onClick={() => setIsSettingsDropdownOpen((o) => !o)}
-                        aria-label="Club settings"
-                        style={{
-                          background: "transparent",
-                          border: "2px solid transparent",
-                          cursor: "pointer",
-                          padding: "4px 6px",
-                          color: "#FFFFFF",
-                          lineHeight: 1,
-                          display: "flex",
-                          alignItems: "center",
-                          opacity: 0.7,
-                          transition:
-                            "opacity 0.15s ease, background-color 0.15s ease, box-shadow 0.1s ease",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.opacity = "1";
-                          e.currentTarget.style.backgroundColor = "#01EFFC";
-                          e.currentTarget.style.borderColor = "#000000";
-                          e.currentTarget.style.color = "#000000";
-                          e.currentTarget.style.boxShadow =
-                            "3px 3px 0px 0px #000000";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.opacity = "0.7";
-                          e.currentTarget.style.backgroundColor = "transparent";
-                          e.currentTarget.style.borderColor = "transparent";
-                          e.currentTarget.style.color = "#FFFFFF";
-                          e.currentTarget.style.boxShadow = "none";
-                        }}
-                      >
-                        <svg
-                          width="12"
-                          height="3"
-                          viewBox="0 0 12 3"
-                          fill="currentColor"
-                        >
-                          <circle cx="1.5" cy="1.5" r="1.5" />
-                          <circle cx="6" cy="1.5" r="1.5" />
-                          <circle cx="10.5" cy="1.5" r="1.5" />
-                        </svg>
-                      </button>
-                      {isSettingsDropdownOpen && (
-                        <div
+                    <Dropdown
+                      trigger={
+                        <button
+                          aria-label="Club settings"
                           style={{
-                            position: "absolute",
-                            top: "calc(100% + 4px)",
-                            left: 0,
-                            backgroundColor: "#FFFFFF",
-                            border: "2px solid #000000",
-                            boxShadow: "4px 4px 0px 0px #000000",
-                            minWidth: "160px",
-                            zIndex: 10,
+                            background: "transparent",
+                            border: "2px solid transparent",
+                            cursor: "pointer",
+                            padding: "4px 6px",
+                            color: "#FFFFFF",
+                            lineHeight: 1,
+                            display: "flex",
+                            alignItems: "center",
+                            opacity: 0.7,
+                            transition:
+                              "opacity 0.15s ease, background-color 0.15s ease, box-shadow 0.1s ease",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.opacity = "1";
+                            e.currentTarget.style.backgroundColor = "#01EFFC";
+                            e.currentTarget.style.borderColor = "#000000";
+                            e.currentTarget.style.color = "#000000";
+                            e.currentTarget.style.boxShadow =
+                              "3px 3px 0px 0px #000000";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.opacity = "0.7";
+                            e.currentTarget.style.backgroundColor =
+                              "transparent";
+                            e.currentTarget.style.borderColor = "transparent";
+                            e.currentTarget.style.color = "#FFFFFF";
+                            e.currentTarget.style.boxShadow = "none";
                           }}
                         >
-                          <button
-                            onClick={() => {
-                              setIsSettingsDropdownOpen(false);
-                              setIsClubDetailsModalOpen(true);
-                            }}
-                            style={{
-                              display: "block",
-                              width: "100%",
-                              padding: "12px 16px",
-                              background: "none",
-                              border: "none",
-                              textAlign: "left",
-                              fontFamily: "var(--font-dm-sans)",
-                              fontSize: "14px",
-                              fontWeight: 300,
-                              color: "#000000",
-                              cursor: "pointer",
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = "#F5F5F5";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor =
-                                "transparent";
-                            }}
+                          <svg
+                            width="12"
+                            height="3"
+                            viewBox="0 0 12 3"
+                            fill="currentColor"
                           >
-                            Club details
-                          </button>
-                          <button
-                            style={{
-                              display: "block",
-                              width: "100%",
-                              padding: "12px 16px",
-                              background: "none",
-                              border: "none",
-                              textAlign: "left",
-                              fontFamily: "var(--font-dm-sans)",
-                              fontSize: "14px",
-                              fontWeight: 300,
-                              color: "#000000",
-                              cursor: "pointer",
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = "#F5F5F5";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor =
-                                "transparent";
-                            }}
-                            onClick={() => {
-                              setIsSettingsDropdownOpen(false);
-                              setIsInviteModalOpen(true);
-                            }}
-                          >
-                            Invite friends
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                            <circle cx="1.5" cy="1.5" r="1.5" />
+                            <circle cx="6" cy="1.5" r="1.5" />
+                            <circle cx="10.5" cy="1.5" r="1.5" />
+                          </svg>
+                        </button>
+                      }
+                      items={
+                        [
+                          {
+                            type: "action",
+                            label: "Club details",
+                            onClick: () => setIsClubDetailsModalOpen(true),
+                          },
+                          {
+                            type: "action",
+                            label: "Invite friends",
+                            onClick: () => setIsInviteModalOpen(true),
+                          },
+                        ] as DropdownItem[]
+                      }
+                      align="left"
+                    />
                   )}
                 </div>
 
@@ -476,117 +405,65 @@ export default function ClubPageLayout({
               {clubName}
             </h1>
             {isAdmin && (
-              <div ref={settingsDropdownRef} style={{ position: "relative" }}>
-                <button
-                  onClick={() => setIsSettingsDropdownOpen((o) => !o)}
-                  aria-label="Club settings"
-                  style={{
-                    background: "transparent",
-                    border: "2px solid transparent",
-                    cursor: "pointer",
-                    padding: "4px 6px",
-                    color: "#000000",
-                    lineHeight: 1,
-                    display: "flex",
-                    alignItems: "center",
-                    opacity: 0.4,
-                    transition:
-                      "opacity 0.15s ease, background-color 0.15s ease, box-shadow 0.1s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.opacity = "1";
-                    e.currentTarget.style.backgroundColor = "#01EFFC";
-                    e.currentTarget.style.borderColor = "#000000";
-                    e.currentTarget.style.boxShadow = "3px 3px 0px 0px #000000";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.opacity = "0.4";
-                    e.currentTarget.style.backgroundColor = "transparent";
-                    e.currentTarget.style.borderColor = "transparent";
-                    e.currentTarget.style.boxShadow = "none";
-                  }}
-                >
-                  <svg
-                    width="12"
-                    height="3"
-                    viewBox="0 0 12 3"
-                    fill="currentColor"
-                  >
-                    <circle cx="1.5" cy="1.5" r="1.5" />
-                    <circle cx="6" cy="1.5" r="1.5" />
-                    <circle cx="10.5" cy="1.5" r="1.5" />
-                  </svg>
-                </button>
-                {isSettingsDropdownOpen && (
-                  <div
+              <Dropdown
+                trigger={
+                  <button
+                    aria-label="Club settings"
                     style={{
-                      position: "absolute",
-                      top: "calc(100% + 4px)",
-                      left: 0,
-                      backgroundColor: "#FFFFFF",
-                      border: "2px solid #000000",
-                      boxShadow: "4px 4px 0px 0px #000000",
-                      minWidth: "160px",
-                      zIndex: 10,
+                      background: "transparent",
+                      border: "2px solid transparent",
+                      cursor: "pointer",
+                      padding: "4px 6px",
+                      color: "#000000",
+                      lineHeight: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      opacity: 0.4,
+                      transition:
+                        "opacity 0.15s ease, background-color 0.15s ease, box-shadow 0.1s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.opacity = "1";
+                      e.currentTarget.style.backgroundColor = "#01EFFC";
+                      e.currentTarget.style.borderColor = "#000000";
+                      e.currentTarget.style.boxShadow =
+                        "3px 3px 0px 0px #000000";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.opacity = "0.4";
+                      e.currentTarget.style.backgroundColor = "transparent";
+                      e.currentTarget.style.borderColor = "transparent";
+                      e.currentTarget.style.boxShadow = "none";
                     }}
                   >
-                    <button
-                      onClick={() => {
-                        setIsSettingsDropdownOpen(false);
-                        setIsClubDetailsModalOpen(true);
-                      }}
-                      style={{
-                        display: "block",
-                        width: "100%",
-                        padding: "12px 16px",
-                        background: "none",
-                        border: "none",
-                        textAlign: "left",
-                        fontFamily: "var(--font-dm-sans)",
-                        fontSize: "14px",
-                        fontWeight: 300,
-                        color: "#000000",
-                        cursor: "pointer",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "#F5F5F5";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "transparent";
-                      }}
+                    <svg
+                      width="12"
+                      height="3"
+                      viewBox="0 0 12 3"
+                      fill="currentColor"
                     >
-                      Club details
-                    </button>
-                    <button
-                      style={{
-                        display: "block",
-                        width: "100%",
-                        padding: "12px 16px",
-                        background: "none",
-                        border: "none",
-                        textAlign: "left",
-                        fontFamily: "var(--font-dm-sans)",
-                        fontSize: "14px",
-                        fontWeight: 300,
-                        color: "#000000",
-                        cursor: "pointer",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "#F5F5F5";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "transparent";
-                      }}
-                      onClick={() => {
-                        setIsSettingsDropdownOpen(false);
-                        setIsInviteModalOpen(true);
-                      }}
-                    >
-                      Invite friends
-                    </button>
-                  </div>
-                )}
-              </div>
+                      <circle cx="1.5" cy="1.5" r="1.5" />
+                      <circle cx="6" cy="1.5" r="1.5" />
+                      <circle cx="10.5" cy="1.5" r="1.5" />
+                    </svg>
+                  </button>
+                }
+                items={
+                  [
+                    {
+                      type: "action",
+                      label: "Club details",
+                      onClick: () => setIsClubDetailsModalOpen(true),
+                    },
+                    {
+                      type: "action",
+                      label: "Invite friends",
+                      onClick: () => setIsInviteModalOpen(true),
+                    },
+                  ] as DropdownItem[]
+                }
+                align="left"
+              />
             )}
           </div>
 
@@ -693,118 +570,65 @@ export default function ClubPageLayout({
                 {clubName}
               </h1>
               {isAdmin && (
-                <div ref={settingsDropdownRef} style={{ position: "relative" }}>
-                  <button
-                    onClick={() => setIsSettingsDropdownOpen((o) => !o)}
-                    aria-label="Club settings"
-                    style={{
-                      background: "transparent",
-                      border: "2px solid transparent",
-                      cursor: "pointer",
-                      padding: "4px 6px",
-                      color: "#000000",
-                      lineHeight: 1,
-                      display: "flex",
-                      alignItems: "center",
-                      opacity: 0.4,
-                      transition:
-                        "opacity 0.15s ease, background-color 0.15s ease, box-shadow 0.1s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.opacity = "1";
-                      e.currentTarget.style.backgroundColor = "#01EFFC";
-                      e.currentTarget.style.borderColor = "#000000";
-                      e.currentTarget.style.boxShadow =
-                        "3px 3px 0px 0px #000000";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.opacity = "0.4";
-                      e.currentTarget.style.backgroundColor = "transparent";
-                      e.currentTarget.style.borderColor = "transparent";
-                      e.currentTarget.style.boxShadow = "none";
-                    }}
-                  >
-                    <svg
-                      width="12"
-                      height="3"
-                      viewBox="0 0 12 3"
-                      fill="currentColor"
-                    >
-                      <circle cx="1.5" cy="1.5" r="1.5" />
-                      <circle cx="6" cy="1.5" r="1.5" />
-                      <circle cx="10.5" cy="1.5" r="1.5" />
-                    </svg>
-                  </button>
-                  {isSettingsDropdownOpen && (
-                    <div
+                <Dropdown
+                  trigger={
+                    <button
+                      aria-label="Club settings"
                       style={{
-                        position: "absolute",
-                        top: "calc(100% + 4px)",
-                        left: 0,
-                        backgroundColor: "#FFFFFF",
-                        border: "2px solid #000000",
-                        boxShadow: "4px 4px 0px 0px #000000",
-                        minWidth: "160px",
-                        zIndex: 10,
+                        background: "transparent",
+                        border: "2px solid transparent",
+                        cursor: "pointer",
+                        padding: "4px 6px",
+                        color: "#000000",
+                        lineHeight: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        opacity: 0.4,
+                        transition:
+                          "opacity 0.15s ease, background-color 0.15s ease, box-shadow 0.1s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.opacity = "1";
+                        e.currentTarget.style.backgroundColor = "#01EFFC";
+                        e.currentTarget.style.borderColor = "#000000";
+                        e.currentTarget.style.boxShadow =
+                          "3px 3px 0px 0px #000000";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.opacity = "0.4";
+                        e.currentTarget.style.backgroundColor = "transparent";
+                        e.currentTarget.style.borderColor = "transparent";
+                        e.currentTarget.style.boxShadow = "none";
                       }}
                     >
-                      <button
-                        onClick={() => {
-                          setIsSettingsDropdownOpen(false);
-                          setIsClubDetailsModalOpen(true);
-                        }}
-                        style={{
-                          display: "block",
-                          width: "100%",
-                          padding: "12px 16px",
-                          background: "none",
-                          border: "none",
-                          textAlign: "left",
-                          fontFamily: "var(--font-dm-sans)",
-                          fontSize: "14px",
-                          fontWeight: 300,
-                          color: "#000000",
-                          cursor: "pointer",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = "#F5F5F5";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = "transparent";
-                        }}
+                      <svg
+                        width="12"
+                        height="3"
+                        viewBox="0 0 12 3"
+                        fill="currentColor"
                       >
-                        Club details
-                      </button>
-                      <button
-                        style={{
-                          display: "block",
-                          width: "100%",
-                          padding: "12px 16px",
-                          background: "none",
-                          border: "none",
-                          textAlign: "left",
-                          fontFamily: "var(--font-dm-sans)",
-                          fontSize: "14px",
-                          fontWeight: 300,
-                          color: "#000000",
-                          cursor: "pointer",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = "#F5F5F5";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = "transparent";
-                        }}
-                        onClick={() => {
-                          setIsSettingsDropdownOpen(false);
-                          setIsInviteModalOpen(true);
-                        }}
-                      >
-                        Invite friends
-                      </button>
-                    </div>
-                  )}
-                </div>
+                        <circle cx="1.5" cy="1.5" r="1.5" />
+                        <circle cx="6" cy="1.5" r="1.5" />
+                        <circle cx="10.5" cy="1.5" r="1.5" />
+                      </svg>
+                    </button>
+                  }
+                  items={
+                    [
+                      {
+                        type: "action",
+                        label: "Club details",
+                        onClick: () => setIsClubDetailsModalOpen(true),
+                      },
+                      {
+                        type: "action",
+                        label: "Invite friends",
+                        onClick: () => setIsInviteModalOpen(true),
+                      },
+                    ] as DropdownItem[]
+                  }
+                  align="left"
+                />
               )}
             </div>
 

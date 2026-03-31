@@ -42,23 +42,9 @@ export default function ClubDropdown({
     {
       type: "action",
       label: "Start new club",
-      color: "#000000",
-      backgroundColor: "#00FF66",
       icon: (
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 16 16"
-          fill="none"
-          style={{ color: "#000000" }}
-        >
-          <path
-            d="M8 3V13M3 8H13"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-        </svg>
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src="/icons/add.svg" alt="" width={16} height={16} />
       ),
       onClick: () => router.push("/onboarding/create-club"),
     },

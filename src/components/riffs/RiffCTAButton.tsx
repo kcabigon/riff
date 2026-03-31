@@ -158,7 +158,17 @@ export default function RiffCTAButton({
             {
               type: "action",
               label: "Remove from riff",
-              color: "#FF6B35",
+              icon: (
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path
+                    d="M2 3.5h10M5.5 3.5V2.5a.5.5 0 01.5-.5h2a.5.5 0 01.5.5v1M3.5 3.5l.5 8h6l.5-8"
+                    stroke="currentColor"
+                    strokeWidth="1.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              ),
               onClick: async () => {
                 if (!existingPieceId) return;
                 if (stopPropagation) return; // riff card context — skip, too destructive
