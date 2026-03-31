@@ -85,7 +85,21 @@ export default function RiffFormFields({
             width={116}
             align="left"
           />
-          {!deadlineRequired && optionalSpan}
+          {deadlineRequired && (
+            <span
+              style={{
+                display: "inline-block",
+                backgroundColor: "#FFFFFF",
+                padding: "2px 8px",
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "14px",
+                fontWeight: 300,
+                color: "#959595",
+              }}
+            >
+              Can be changed later
+            </span>
+          )}
         </div>
         <input
           type="date"
