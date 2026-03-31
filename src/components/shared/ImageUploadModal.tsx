@@ -166,7 +166,7 @@ export default function ImageUploadModal({
         alignItems: "center",
       }}
     >
-      {currentImage ? (
+      {currentImage && !piecePreview ? (
         <button
           onClick={() => {
             onSelect("");
@@ -223,7 +223,13 @@ export default function ImageUploadModal({
     >
       {/* PieceCard preview — shown when piecePreview prop is provided */}
       {piecePreview && (
-        <div style={{ width: "180px", margin: "0 auto 24px" }}>
+        <div
+          style={{
+            width: "180px",
+            margin: "0 auto 24px",
+            position: "relative",
+          }}
+        >
           <PieceCard
             piece={{
               id: piecePreview.id,
@@ -234,6 +240,36 @@ export default function ImageUploadModal({
             isRead={true}
             onClick={() => {}}
           />
+          {currentImage && (
+            <button
+              onClick={() => {
+                onSelect("");
+                resetCropper();
+              }}
+              style={{
+                position: "absolute",
+                top: "-10px",
+                right: "-10px",
+                width: "24px",
+                height: "24px",
+                borderRadius: "50%",
+                backgroundColor: "#000000",
+                border: "2px solid #FFFFFF",
+                color: "#FFFFFF",
+                fontSize: "12px",
+                lineHeight: 1,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 0,
+                zIndex: 2,
+              }}
+              aria-label="Remove cover image"
+            >
+              ✕
+            </button>
+          )}
         </div>
       )}
 
