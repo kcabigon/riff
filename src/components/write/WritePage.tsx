@@ -1,17 +1,11 @@
 "use client";
 
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
+import { useEditor, EditorContent, ReactNodeViewRenderer } from "@tiptap/react";
 import Placeholder from "@tiptap/extension-placeholder";
 import CharacterCount from "@tiptap/extension-character-count";
-import Link from "@tiptap/extension-link";
-import TextAlign from "@tiptap/extension-text-align";
-import Underline from "@tiptap/extension-underline";
 import Image from "@tiptap/extension-image";
-import { ReactNodeViewRenderer } from "@tiptap/react";
 import ResizableImageView from "@/components/write/ResizableImageView";
-import Youtube from "@tiptap/extension-youtube";
-import { Spotify } from "@/components/editor/extensions/Spotify";
+import { getSharedExtensions } from "@/components/editor/extensions/sharedExtensions";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import "@/app/write/[pieceId]/editor.css";
@@ -71,16 +65,9 @@ export default function WritePage({ piece }: WritePageProps) {
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
-      StarterKit.configure({
-        heading: { levels: [1, 2, 3] },
-      }),
-      Placeholder.configure({
-        placeholder: "Start typing here...",
-      }),
-      CharacterCount,
-      Link.configure({ openOnClick: false }),
-      TextAlign.configure({ types: ["heading", "paragraph"] }),
-      Underline,
+      // Shared extensions (same as read page for fidelity)
+      ...getSharedExtensions().filter((ext) => ext.name !== "image"),
+      // Write-specific: Image with resize handles
       Image.extend({
         addAttributes() {
           return {
@@ -110,15 +97,11 @@ export default function WritePage({ piece }: WritePageProps) {
         inline: false,
         allowBase64: true,
       }),
-      Youtube.configure({
-        controls: true,
-        nocookie: true,
-        inline: false,
-        HTMLAttributes: { class: "youtube-video" },
+      // Write-specific: placeholder + character count
+      Placeholder.configure({
+        placeholder: "Start typing here...",
       }),
-      Spotify.configure({
-        HTMLAttributes: { style: "border-radius:12px" },
-      }),
+      CharacterCount,
     ],
     content: piece.currentContent || "",
     editable: true,

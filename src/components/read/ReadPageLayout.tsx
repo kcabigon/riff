@@ -1,16 +1,16 @@
 "use client";
 
 import { useRef, useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import Avatar from "@/components/shared/Avatar";
 import ReadToggle from "./ReadToggle";
-import CommentAnchor from "./CommentAnchor";
+import ReadOnlyEditor from "./ReadOnlyEditor";
 import CommentPopover from "./CommentPopover";
 import CommentSidebar from "./CommentSidebar";
 import CommentDrawer from "./CommentDrawer";
 import ReadingProgress from "./ReadingProgress";
-import PieceNavigation from "./PieceNavigation";
 import { useIsMobile } from "@/hooks/useMediaQuery";
+import { useThemeColor } from "@/hooks/useThemeColor";
+import { useScrollDirection } from "@/hooks/useScrollDirection";
 import BackButton from "@/components/BackButton";
 
 interface CommentAuthor {
@@ -43,6 +43,7 @@ interface ReadPageLayoutProps {
   piece: {
     id: string;
     title: string;
+    subtitle: string | null;
     currentContent: string;
     coverImage: string | null;
     wordCount: number;
@@ -65,19 +66,21 @@ export default function ReadPageLayout({
   currentUser,
   initialComments,
   isAlreadyRead,
-  previousPiece = null,
-  nextPiece = null,
 }: ReadPageLayoutProps) {
-  const router = useRouter();
   const endRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [markedRead, setMarkedRead] = useState(isAlreadyRead);
   const [isRiffMode, setIsRiffMode] = useState(false);
   const [comments, setComments] = useState<CommentData[]>(initialComments);
-  const [activeHighlightId, setActiveHighlightId] = useState<string | null>(null);
-  const [pendingSelection, setPendingSelection] = useState<PendingSelection | null>(null);
+  const [activeHighlightId, setActiveHighlightId] = useState<string | null>(
+    null
+  );
+  const [pendingSelection, setPendingSelection] =
+    useState<PendingSelection | null>(null);
 
   const isMobile = useIsMobile();
+  useThemeColor("#FFFFFF");
+  const navVisible = useScrollDirection({ threshold: 15 });
 
   const markAsRead = useCallback(async () => {
     if (markedRead) return;
@@ -100,13 +103,11 @@ export default function ReadPageLayout({
     const end = endRef.current;
     if (!content || !end) return;
 
-    // Short piece: fits in viewport → mark after 3s
     if (content.scrollHeight <= window.innerHeight) {
       const timer = setTimeout(markAsRead, 3000);
       return () => clearTimeout(timer);
     }
 
-    // Long piece: IntersectionObserver on end sentinel
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) markAsRead();
@@ -134,44 +135,62 @@ export default function ReadPageLayout({
     setActiveHighlightId(commentId);
   }, []);
 
-  // Clear pending selection when clicking elsewhere
-  const handleLayoutClick = useCallback((e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (!target.closest("mark[data-comment-id]")) {
-      // Don't clear activeHighlightId here — user may have clicked the sidebar
-    }
-  }, []);
-
   const readMinutes = Math.max(1, piece.readLengthMin);
 
   const activeComment = activeHighlightId
-    ? comments.find((c) => c.id === activeHighlightId) ?? null
+    ? (comments.find((c) => c.id === activeHighlightId) ?? null)
     : null;
 
   return (
     <div
       ref={contentRef}
       style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}
-      onClick={handleLayoutClick}
     >
       <ReadingProgress />
 
-      {/* Top nav */}
+      {/* Top bar — full-width on mobile, content-width on desktop */}
       <div
         style={{
-          maxWidth: isRiffMode ? "1100px" : "720px",
-          margin: "0 auto",
-          padding: "24px 24px 0",
-          transition: "max-width 0.3s ease",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
+          position: isMobile ? "fixed" : "sticky",
+          top: 0,
+          left: 0,
+          right: isMobile ? 0 : undefined,
+          zIndex: 50,
+          width: "100%",
+          maxWidth: isMobile ? "100%" : isRiffMode ? "1100px" : "720px",
+          margin: isMobile ? undefined : "0 auto",
+          backgroundColor: "#FFFFFF",
+          transform:
+            isMobile && !navVisible ? "translateY(-100%)" : "translateY(0)",
+          transition: "transform 200ms ease, max-width 0.3s ease",
+          willChange: isMobile ? "transform" : undefined,
         }}
       >
-        <BackButton href={`/riffs/${riffId}`} />
-
-        <ReadToggle isRiffMode={isRiffMode} onToggle={setIsRiffMode} />
+        <div
+          style={{
+            maxWidth: isRiffMode ? "1100px" : "720px",
+            width: "100%",
+            margin: "0 auto",
+            padding: "0 24px",
+            boxSizing: "border-box",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "16px 0 8px",
+            }}
+          >
+            <BackButton href={`/riffs/${riffId}`} />
+            <ReadToggle isRiffMode={isRiffMode} onToggle={setIsRiffMode} />
+          </div>
+        </div>
       </div>
+
+      {/* Spacer for fixed nav on mobile */}
+      {isMobile && <div style={{ height: "60px" }} />}
 
       {/* Content area */}
       <div
@@ -186,44 +205,45 @@ export default function ReadPageLayout({
         }}
       >
         {/* Main content column */}
-        <div style={{ maxWidth: "720px", width: "100%", flexShrink: 0, minWidth: 0 }}>
-          {/* Cover image */}
-          {piece.coverImage && (
-            <div
-              style={{
-                width: "100%",
-                maxHeight: "400px",
-                overflow: "hidden",
-                marginBottom: "32px",
-              }}
-            >
-              <img
-                src={piece.coverImage}
-                alt=""
-                style={{
-                  width: "100%",
-                  height: "auto",
-                  maxHeight: "400px",
-                  objectFit: "cover",
-                }}
-              />
-            </div>
-          )}
-
+        <div
+          style={{
+            maxWidth: "720px",
+            width: "100%",
+            flexShrink: 0,
+            minWidth: 0,
+          }}
+        >
           {/* Title */}
           <h1
             style={{
               fontFamily: "var(--font-playfair)",
-              fontSize: "36px",
-              fontWeight: 400,
+              fontSize: "32px",
+              fontWeight: "bold",
               color: "#000000",
-              margin: "0 0 16px 0",
+              margin: 0,
               textAlign: "center",
-              lineHeight: 1.3,
+              lineHeight: 1.2,
             }}
           >
             {piece.title}
           </h1>
+
+          {/* Subtitle */}
+          {piece.subtitle && (
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "16px",
+                fontWeight: 300,
+                color: "#666666",
+                margin: "8px 0 0",
+                textAlign: "center",
+                lineHeight: "1.4",
+              }}
+            >
+              {piece.subtitle}
+            </p>
+          )}
 
           {/* Author */}
           <div
@@ -232,7 +252,7 @@ export default function ReadPageLayout({
               alignItems: "center",
               justifyContent: "center",
               gap: "10px",
-              marginBottom: "8px",
+              marginTop: "16px",
             }}
           >
             <Avatar
@@ -262,14 +282,17 @@ export default function ReadPageLayout({
             style={{
               fontFamily: "var(--font-dm-sans)",
               fontSize: "14px",
-              fontWeight: 300,
-              color: "#808080",
-              margin: "0 0 24px 0",
+              color: "#999999",
+              margin: "12px 0 24px",
               textAlign: "center",
             }}
           >
-            {readMinutes} min read &middot;{" "}
-            {piece.wordCount.toLocaleString()} words
+            <span style={{ fontWeight: "bold" }}>{readMinutes}</span> min read
+            {" \u2022 "}
+            <span style={{ fontWeight: "bold" }}>
+              {piece.wordCount.toLocaleString()}
+            </span>{" "}
+            words
           </p>
 
           {/* Horizontal rule */}
@@ -281,8 +304,8 @@ export default function ReadPageLayout({
             }}
           />
 
-          {/* Content with comment anchoring */}
-          <CommentAnchor
+          {/* Content — Tiptap read-only mode for pixel-perfect fidelity with write page */}
+          <ReadOnlyEditor
             content={piece.currentContent}
             comments={isRiffMode ? comments : []}
             isRiffMode={isRiffMode}
@@ -290,7 +313,7 @@ export default function ReadPageLayout({
             onHighlightClick={handleHighlightClick}
           />
 
-          {/* End sentinel for scroll detection */}
+          {/* End sentinel for read tracking */}
           <div ref={endRef} style={{ height: "1px" }} />
         </div>
 
@@ -327,13 +350,6 @@ export default function ReadPageLayout({
           onDelete={handleDeleteComment}
         />
       )}
-
-      {/* Piece-to-piece navigation */}
-      <PieceNavigation
-        previousPiece={previousPiece}
-        nextPiece={nextPiece}
-        riffId={riffId}
-      />
     </div>
   );
 }
