@@ -54,10 +54,10 @@ Last updated: March 29, 2026 (Jarric adding modal design system TODOs)
 - [x] Share button: confirmation modal + PATCH submittedAt on PieceRiff + fix reveal submitted count
 
 ### Modal Design System
-- [ ] Audit and update Modal component — ensure noise background, tagline highlights, and CTA styling are consistent across all usages
-- [ ] Cover image modal: update to match Modal component (noise background, CTA style, border/shadow spec)
-- [ ] Share piece modal: update to match Modal component (noise background, CTA style, border/shadow spec)
-- [ ] Review all modals (RevealConfirmModal, EditRiffModal, DeleteRiffConfirmModal, ClubSettingsModal, CreateRiffModal, InviteOptions) and bring into alignment with updated Modal component
+- [ ] 🔨 @jarric — Audit and update Modal component — ensure noise background, tagline highlights, and CTA styling are consistent across all usages
+- [ ] 🔨 @jarric — Cover image modal: update to match Modal component (noise background, CTA style, border/shadow spec)
+- [ ] 🔨 @jarric — Share piece modal: update to match Modal component (noise background, CTA style, border/shadow spec)
+- [ ] 🔨 @jarric — Review all modals (RevealConfirmModal, EditRiffModal, DeleteRiffConfirmModal, ClubSettingsModal, CreateRiffModal, InviteOptions) and bring into alignment with updated Modal component
 
 ### Read / Write Experience
 - [x] Write page redesign: white canvas, floating toolbar, subtitle, resizable images, hide-on-scroll mobile nav
