@@ -4,6 +4,7 @@ import { useState } from "react";
 import Modal from "@/components/shared/Modal";
 import PromptLibrary from "./PromptLibrary";
 import Tagline from "@/components/Tagline";
+import PrimaryButton from "@/components/PrimaryButton";
 
 interface CreateRiffModalProps {
   clubId: string;
@@ -102,12 +103,7 @@ export default function CreateRiffModal({
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Start a new riff"
-      noiseBackground
-    >
+    <Modal isOpen={isOpen} onClose={onClose} title="Start a new riff">
       <form onSubmit={handleSubmit}>
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           {/* Deadline */}
@@ -116,8 +112,8 @@ export default function CreateRiffModal({
               text="Deadline"
               color="#01EFFC"
               textColor="#000000"
-              fontSize={14}
-              width={100}
+              fontSize={16}
+              width={116}
             />
             <input
               type="date"
@@ -149,7 +145,7 @@ export default function CreateRiffModal({
                 backgroundColor: "#FFFFFF",
                 padding: "2px 8px",
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: "13px",
+                fontSize: "14px",
                 fontWeight: 300,
                 color: "#959595",
                 alignSelf: "flex-start",
@@ -166,11 +162,14 @@ export default function CreateRiffModal({
                 text="Riff name"
                 color="#00FF66"
                 textColor="#000000"
-                fontSize={14}
-                width={108}
+                fontSize={16}
+                width={124}
               />
               <span
                 style={{
+                  display: "inline-block",
+                  backgroundColor: "#FFFFFF",
+                  padding: "2px 8px",
                   fontFamily: "var(--font-dm-sans)",
                   fontSize: "14px",
                   fontWeight: 300,
@@ -213,11 +212,14 @@ export default function CreateRiffModal({
                 text="Prompt"
                 color="#EECF01"
                 textColor="#000000"
-                fontSize={14}
-                width={80}
+                fontSize={16}
+                width={96}
               />
               <span
                 style={{
+                  display: "inline-block",
+                  backgroundColor: "#FFFFFF",
+                  padding: "2px 8px",
                   fontFamily: "var(--font-dm-sans)",
                   fontSize: "14px",
                   fontWeight: 300,
@@ -254,7 +256,7 @@ export default function CreateRiffModal({
             />
           </div>
 
-          {/* Prompt library — white background sized to content, centered */}
+          {/* Prompt library — white background, centered */}
           <div style={{ display: "flex", justifyContent: "center" }}>
             <div
               style={{
@@ -282,26 +284,10 @@ export default function CreateRiffModal({
             </p>
           )}
 
-          {/* Submit button */}
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            style={{
-              backgroundColor: isSubmitting ? "#E6E6E6" : "#FFFFFF",
-              border: "2px solid #000000",
-              boxShadow: isSubmitting ? "none" : "8px 8px 0px 0px #00FF66",
-              padding: "12px 48px",
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              color: "#000000",
-              cursor: isSubmitting ? "not-allowed" : "pointer",
-              transition: "none",
-              width: "100%",
-            }}
-          >
+          {/* Submit */}
+          <PrimaryButton type="submit" loading={isSubmitting}>
             {isSubmitting ? "Creating..." : "Start riff"}
-          </button>
+          </PrimaryButton>
         </div>
       </form>
     </Modal>

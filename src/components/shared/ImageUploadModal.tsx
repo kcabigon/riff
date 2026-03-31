@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from "react";
 import Cropper, { Area } from "react-easy-crop";
 import Modal from "@/components/shared/Modal";
+import PrimaryButton from "@/components/PrimaryButton";
 import { getCroppedImg } from "@/lib/crop-image";
 import { convertHeicToJpeg, isHeicFile } from "@/lib/convert-heic";
 
@@ -194,22 +195,9 @@ export default function ImageUploadModal({
           >
             Cancel
           </button>
-          <button
-            onClick={handleSaveCrop}
-            disabled={isUploading}
-            style={{
-              background: "#000",
-              color: "#fff",
-              border: "1px solid #000",
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              padding: "6px 16px",
-              cursor: isUploading ? "not-allowed" : "pointer",
-              opacity: isUploading ? 0.6 : 1,
-            }}
-          >
+          <PrimaryButton onClick={handleSaveCrop} loading={isUploading}>
             {isUploading ? "Saving..." : "Save"}
-          </button>
+          </PrimaryButton>
         </div>
       )}
     </div>
@@ -224,6 +212,7 @@ export default function ImageUploadModal({
       }}
       title={title}
       size="lg"
+      noiseBackground={false}
       footer={footer}
     >
       {/* Tabs (only shown if existingImages provided) */}

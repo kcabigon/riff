@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Modal from "@/components/shared/Modal";
+import Tagline from "@/components/Tagline";
+import PrimaryButton from "@/components/PrimaryButton";
 
 interface EditRiffModalProps {
   isOpen: boolean;
@@ -65,18 +67,30 @@ export default function EditRiffModal({
     <Modal isOpen={isOpen} onClose={onClose} title="Edit riff">
       <form onSubmit={handleSubmit}>
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-          {/* Title */}
+          {/* Riff name */}
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <label
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: 300,
-                color: "#000000",
-              }}
-            >
-              Riff name <span style={{ color: "#959595" }}>(optional)</span>
-            </label>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <Tagline
+                text="Riff name"
+                color="#01EFFC"
+                textColor="#000000"
+                fontSize={16}
+                width={124}
+              />
+              <span
+                style={{
+                  display: "inline-block",
+                  backgroundColor: "#FFFFFF",
+                  padding: "2px 8px",
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "14px",
+                  fontWeight: 300,
+                  color: "#959595",
+                }}
+              >
+                (optional)
+              </span>
+            </div>
             <input
               type="text"
               value={title}
@@ -104,16 +118,28 @@ export default function EditRiffModal({
 
           {/* Prompt */}
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <label
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: 300,
-                color: "#000000",
-              }}
-            >
-              Prompt <span style={{ color: "#959595" }}>(optional)</span>
-            </label>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <Tagline
+                text="Prompt"
+                color="#00FF66"
+                textColor="#000000"
+                fontSize={16}
+                width={96}
+              />
+              <span
+                style={{
+                  display: "inline-block",
+                  backgroundColor: "#FFFFFF",
+                  padding: "2px 8px",
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "14px",
+                  fontWeight: 300,
+                  color: "#959595",
+                }}
+              >
+                (optional)
+              </span>
+            </div>
             <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
@@ -142,16 +168,28 @@ export default function EditRiffModal({
 
           {/* Deadline */}
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <label
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: 300,
-                color: "#000000",
-              }}
-            >
-              Deadline <span style={{ color: "#959595" }}>(optional)</span>
-            </label>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <Tagline
+                text="Deadline"
+                color="#EECF01"
+                textColor="#000000"
+                fontSize={16}
+                width={116}
+              />
+              <span
+                style={{
+                  display: "inline-block",
+                  backgroundColor: "#FFFFFF",
+                  padding: "2px 8px",
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "14px",
+                  fontWeight: 300,
+                  color: "#959595",
+                }}
+              >
+                (optional)
+              </span>
+            </div>
             <input
               type="date"
               value={deadline}
@@ -191,25 +229,9 @@ export default function EditRiffModal({
             </p>
           )}
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            style={{
-              backgroundColor: isSubmitting ? "#E6E6E6" : "#FFFFFF",
-              border: "2px solid #000000",
-              boxShadow: isSubmitting ? "none" : "8px 8px 0px 0px #00FF66",
-              padding: "12px 48px",
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              color: "#000000",
-              cursor: isSubmitting ? "not-allowed" : "pointer",
-              transition: "none",
-              width: "100%",
-            }}
-          >
+          <PrimaryButton type="submit" loading={isSubmitting}>
             {isSubmitting ? "Saving..." : "Save changes"}
-          </button>
+          </PrimaryButton>
         </div>
       </form>
     </Modal>

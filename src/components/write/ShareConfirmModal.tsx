@@ -42,13 +42,7 @@ export default function ShareConfirmModal({
   };
 
   const footer = (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "12px",
-      }}
-    >
+    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
       <PrimaryButton onClick={handleConfirm} loading={isSubmitting}>
         Share
       </PrimaryButton>
@@ -64,6 +58,7 @@ export default function ShareConfirmModal({
           color: "#808080",
           cursor: "pointer",
           padding: "4px",
+          textDecoration: "underline",
         }}
       >
         Cancel
@@ -80,12 +75,7 @@ export default function ShareConfirmModal({
       footer={footer}
     >
       {/* PieceCard preview */}
-      <div
-        style={{
-          width: "180px",
-          margin: "0 auto 24px",
-        }}
-      >
+      <div style={{ width: "180px", margin: "0 auto 24px" }}>
         <PieceCard
           piece={{
             id: piece.id,
@@ -99,32 +89,59 @@ export default function ShareConfirmModal({
       </div>
 
       {/* Riff context */}
-      <p
+      <div
         style={{
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "14px",
-          fontWeight: 400,
-          color: "#000000",
-          margin: "0 0 8px",
-          textAlign: "center",
+          display: "flex",
+          justifyContent: "center",
+          marginBottom: "8px",
         }}
       >
-        {riff.title ? `"${riff.title}"` : "Active Riff"} · {riff.clubName}
-      </p>
+        <div
+          style={{
+            display: "inline-block",
+            backgroundColor: "#FFFFFF",
+            padding: "2px 8px",
+          }}
+        >
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "14px",
+              fontWeight: 400,
+              color: "#000000",
+              margin: 0,
+              textAlign: "center",
+            }}
+          >
+            {riff.title ? `"${riff.title}"` : "Active Riff"} · {riff.clubName}
+          </p>
+        </div>
+      </div>
 
       {/* Reveal note */}
-      <p
-        style={{
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "13px",
-          fontWeight: 300,
-          color: "#808080",
-          margin: 0,
-          textAlign: "center",
-        }}
-      >
-        Club members won&apos;t see your piece until the host reveals the riff.
-      </p>
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <div
+          style={{
+            display: "inline-block",
+            backgroundColor: "#FFFFFF",
+            padding: "2px 8px",
+          }}
+        >
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "14px",
+              fontWeight: 300,
+              color: "#808080",
+              margin: 0,
+              textAlign: "center",
+            }}
+          >
+            Club members won&apos;t see your piece until the host reveals the
+            riff.
+          </p>
+        </div>
+      </div>
     </Modal>
   );
 }
