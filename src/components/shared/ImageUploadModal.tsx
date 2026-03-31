@@ -153,57 +153,65 @@ export default function ImageUploadModal({
     }
   };
 
-  const footer = (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-      }}
-    >
-      {currentImage && !inlinePreview ? (
-        <button
-          onClick={() => {
-            onSelect("");
-            resetCropper();
-          }}
-          style={{
-            background: "none",
-            border: "none",
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
-            color: "#DC2626",
-            cursor: "pointer",
-            padding: 0,
-          }}
-        >
-          {removeLabel}
-        </button>
-      ) : (
-        <div />
-      )}
-      {cropSrc && (
-        <div style={{ display: "flex", gap: "8px" }}>
+  const footer =
+    cropSrc && inlinePreview ? (
+      /* Centered save — no cancel, user can close via modal X */
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <PrimaryButton onClick={handleSaveCrop} loading={isUploading}>
+          {isUploading ? "Saving..." : "Save"}
+        </PrimaryButton>
+      </div>
+    ) : (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        {currentImage && !inlinePreview ? (
           <button
-            onClick={resetCropper}
+            onClick={() => {
+              onSelect("");
+              resetCropper();
+            }}
             style={{
               background: "none",
-              border: "1px solid #000",
+              border: "none",
               fontFamily: "var(--font-dm-sans)",
               fontSize: "14px",
-              padding: "6px 16px",
+              color: "#DC2626",
               cursor: "pointer",
+              padding: 0,
             }}
           >
-            Cancel
+            {removeLabel}
           </button>
-          <PrimaryButton onClick={handleSaveCrop} loading={isUploading}>
-            {isUploading ? "Saving..." : "Save"}
-          </PrimaryButton>
-        </div>
-      )}
-    </div>
-  );
+        ) : (
+          <div />
+        )}
+        {cropSrc && (
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button
+              onClick={resetCropper}
+              style={{
+                background: "none",
+                border: "1px solid #000",
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "14px",
+                padding: "6px 16px",
+                cursor: "pointer",
+              }}
+            >
+              Cancel
+            </button>
+            <PrimaryButton onClick={handleSaveCrop} loading={isUploading}>
+              {isUploading ? "Saving..." : "Save"}
+            </PrimaryButton>
+          </div>
+        )}
+      </div>
+    );
 
   return (
     <Modal
