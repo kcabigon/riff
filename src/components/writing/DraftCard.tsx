@@ -21,7 +21,7 @@ interface DraftCardProps {
     }>;
     isPublished: boolean;
   };
-  onEdit: () => void;
+  onClick: () => void;
   onAttach: () => void;
   onPublishToggle: () => void;
   onDelete: () => void;
@@ -35,9 +35,46 @@ function formatDate(iso: string): string {
   });
 }
 
+function DotsMenu({ items }: { items: DropdownItem[] }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <div onClick={(e) => e.stopPropagation()}>
+      <Dropdown
+        trigger={
+          <button
+            aria-label="Draft options"
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            style={{
+              background: hovered ? "#01EFFC" : "transparent",
+              border: hovered ? "2px solid #000000" : "2px solid transparent",
+              boxShadow: hovered ? "4px 4px 0px 0px #000000" : "none",
+              cursor: "pointer",
+              padding: "4px 6px",
+              color: "#000000",
+              lineHeight: 1,
+              display: "flex",
+              alignItems: "center",
+              transition: "none",
+            }}
+          >
+            <svg width="12" height="3" viewBox="0 0 12 3" fill="currentColor">
+              <circle cx="1.5" cy="1.5" r="1.5" />
+              <circle cx="6" cy="1.5" r="1.5" />
+              <circle cx="10.5" cy="1.5" r="1.5" />
+            </svg>
+          </button>
+        }
+        items={items}
+        align="right"
+      />
+    </div>
+  );
+}
+
 export default function DraftCard({
   draft,
-  onEdit,
+  onClick,
   onAttach,
   onPublishToggle,
   onDelete,
@@ -45,7 +82,6 @@ export default function DraftCard({
   const [isHovered, setIsHovered] = useState(false);
 
   const menuItems: DropdownItem[] = [
-    { type: "action", label: "Edit", onClick: onEdit },
     { type: "action", label: "Attach to Riff", onClick: onAttach },
     {
       type: "action",
@@ -70,6 +106,7 @@ export default function DraftCard({
 
   return (
     <div
+      onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={{
@@ -81,9 +118,10 @@ export default function DraftCard({
         display: "flex",
         flexDirection: "column",
         gap: "8px",
+        cursor: "pointer",
       }}
     >
-      {/* Top row: title + kebab */}
+      {/* Top row: title + dots menu */}
       <div
         style={{
           display: "flex",
@@ -108,28 +146,7 @@ export default function DraftCard({
         >
           {draft.title || "Untitled"}
         </h3>
-        <div onClick={(e) => e.stopPropagation()}>
-          <Dropdown
-            trigger={
-              <div
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "20px",
-                  fontWeight: 300,
-                  color: "#808080",
-                  lineHeight: 1,
-                  padding: "0 4px",
-                  cursor: "pointer",
-                  userSelect: "none",
-                }}
-              >
-                ⋮
-              </div>
-            }
-            items={menuItems}
-            align="right"
-          />
-        </div>
+        <DotsMenu items={menuItems} />
       </div>
 
       {/* Subtitle: date · word count */}

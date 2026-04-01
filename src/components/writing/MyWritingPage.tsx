@@ -91,6 +91,48 @@ function SectionHeader({ title }: { title: string }) {
   );
 }
 
+// --- Piece card dots menu ---
+
+function PieceDotsMenu({ items }: { items: DropdownItem[] }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <div
+      style={{ position: "absolute", top: "8px", left: "8px", zIndex: 3 }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <Dropdown
+        trigger={
+          <button
+            aria-label="Piece options"
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            style={{
+              background: hovered ? "#01EFFC" : "rgba(0,0,0,0.55)",
+              border: hovered ? "2px solid #000000" : "2px solid transparent",
+              boxShadow: hovered ? "4px 4px 0px 0px #000000" : "none",
+              cursor: "pointer",
+              padding: "4px 6px",
+              color: "#FFFFFF",
+              lineHeight: 1,
+              display: "flex",
+              alignItems: "center",
+              transition: "none",
+            }}
+          >
+            <svg width="12" height="3" viewBox="0 0 12 3" fill="currentColor">
+              <circle cx="1.5" cy="1.5" r="1.5" />
+              <circle cx="6" cy="1.5" r="1.5" />
+              <circle cx="10.5" cy="1.5" r="1.5" />
+            </svg>
+          </button>
+        }
+        items={items}
+        align="left"
+      />
+    </div>
+  );
+}
+
 // --- Main component ---
 
 export default function MyWritingPage({
@@ -198,83 +240,54 @@ export default function MyWritingPage({
     ];
 
     return (
-      <div
-        key={piece.id}
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          border: "2px solid #000000",
-        }}
-      >
-        {/* Card with kebab overlay */}
-        <div style={{ position: "relative" }}>
-          {/* Kebab — top-left, above the card */}
-          <div
-            style={{
-              position: "absolute",
-              top: "8px",
-              left: "8px",
-              zIndex: 3,
-            }}
-          >
-            <Dropdown
-              trigger={
-                <div
-                  style={{
-                    width: "28px",
-                    height: "28px",
-                    backgroundColor: "rgba(0,0,0,0.5)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    cursor: "pointer",
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "16px",
-                    fontWeight: 700,
-                    color: "#FFFFFF",
-                    letterSpacing: "1px",
-                  }}
-                >
-                  ⋮
-                </div>
-              }
-              items={menuItems}
-              align="left"
-            />
-          </div>
+      <div key={piece.id} style={{ position: "relative" }}>
+        {/* Dots menu — top-left */}
+        <PieceDotsMenu items={menuItems} />
 
-          <PieceCard
-            piece={piece}
-            isRead={true}
-            isOwnPiece={true}
-            onClick={() => router.push(`/read/${piece.id}`)}
-          />
-        </div>
+        <PieceCard
+          piece={piece}
+          isRead={true}
+          isOwnPiece={true}
+          onClick={() => router.push(`/read/${piece.id}`)}
+        />
 
-        {/* Footer strip — riff/club context */}
+        {/* Riff badge — bottom center overlay */}
         {piece.riffs.length > 0 && (
           <div
             style={{
-              borderTop: "1px solid #333333",
-              padding: "8px 12px",
+              position: "absolute",
+              bottom: "12px",
+              left: 0,
+              right: 0,
               display: "flex",
               flexDirection: "column",
-              gap: "2px",
+              alignItems: "center",
+              gap: "4px",
+              zIndex: 2,
+              pointerEvents: "none",
             }}
           >
             {piece.riffs.map((r) => (
-              <p
+              <span
                 key={r.riffId}
                 style={{
                   fontFamily: "var(--font-dm-sans)",
-                  fontSize: "12px",
-                  fontWeight: 300,
-                  color: "#808080",
-                  margin: 0,
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  color: "#000000",
+                  backgroundColor: "#00FF66",
+                  border: "1px solid #000000",
+                  padding: "2px 8px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                  whiteSpace: "nowrap",
+                  maxWidth: "90%",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
                 }}
               >
                 {r.riff.title || `Vol. ${r.riff.volume}`} · {r.riff.club.name}
-              </p>
+              </span>
             ))}
           </div>
         )}
@@ -383,7 +396,7 @@ export default function MyWritingPage({
                   <DraftCard
                     key={draft.id}
                     draft={draft}
-                    onEdit={() => router.push(`/write/${draft.id}`)}
+                    onClick={() => router.push(`/write/${draft.id}`)}
                     onAttach={() => setAttachDraftId(draft.id)}
                     onPublishToggle={() => handlePublishToggle(draft)}
                     onDelete={() =>
