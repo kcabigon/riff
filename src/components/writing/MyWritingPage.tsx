@@ -276,10 +276,35 @@ export default function MyWritingPage({
     );
   };
 
+  const newDraftButton = (
+    <button
+      onClick={() => createDraft()}
+      disabled={isCreating}
+      style={{
+        fontFamily: "var(--font-dm-sans)",
+        fontSize: "14px",
+        fontWeight: 300,
+        color: isCreating ? "#808080" : "#000000",
+        backgroundColor: isCreating ? "transparent" : "#00FF66",
+        border: `2px solid ${isCreating ? "#808080" : "#00FF66"}`,
+        padding: "6px 16px",
+        cursor: isCreating ? "not-allowed" : "pointer",
+        whiteSpace: "nowrap",
+      }}
+    >
+      + New Draft
+    </button>
+  );
+
   return (
     <>
       {/* Nav */}
-      <NavBar user={navUser} clubs={userClubs} showClubDropdown={false} />
+      <NavBar
+        user={navUser}
+        clubs={userClubs}
+        showClubDropdown={false}
+        leftContent={newDraftButton}
+      />
 
       {/* Page content */}
       <div
@@ -290,44 +315,17 @@ export default function MyWritingPage({
         }}
       >
         {/* Page header */}
-        <div
+        <h1
           style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: "48px",
+            fontFamily: "var(--font-dm-serif-text)",
+            fontSize: "32px",
+            fontWeight: 400,
+            color: "#000000",
+            margin: "0 0 48px 0",
           }}
         >
-          <h1
-            style={{
-              fontFamily: "var(--font-dm-serif-text)",
-              fontSize: "32px",
-              fontWeight: 400,
-              color: "#000000",
-              margin: 0,
-            }}
-          >
-            My Writing
-          </h1>
-          <button
-            onClick={() => createDraft()}
-            disabled={isCreating}
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              color: isCreating ? "#9C9C9C" : "#000000",
-              backgroundColor: "#FFFFFF",
-              border: `2px solid ${isCreating ? "#9C9C9C" : "#000000"}`,
-              boxShadow: isCreating ? "none" : "8px 8px 0px 0px #00FF66",
-              padding: "10px 24px",
-              cursor: isCreating ? "not-allowed" : "pointer",
-              whiteSpace: "nowrap",
-            }}
-          >
-            + New Draft
-          </button>
-        </div>
+          My Writing
+        </h1>
 
         {/* DRAFTS section */}
         <div style={{ marginBottom: "56px" }}>

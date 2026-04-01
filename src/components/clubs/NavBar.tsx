@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import ClubDropdown from "./ClubDropdown";
@@ -23,6 +24,7 @@ interface NavBarProps {
     name: string;
   } | null;
   showClubDropdown?: boolean;
+  leftContent?: ReactNode;
 }
 
 export default function NavBar({
@@ -30,6 +32,7 @@ export default function NavBar({
   clubs,
   currentClub,
   showClubDropdown = true,
+  leftContent,
 }: NavBarProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -88,6 +91,9 @@ export default function NavBar({
               onClose={() => setIsDropdownOpen(false)}
             />
           )}
+
+          {/* Optional left content (e.g. page-specific CTA) */}
+          {leftContent}
         </div>
 
         {/* Right Section: Bell + Avatar Dropdown */}
