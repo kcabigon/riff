@@ -79,7 +79,7 @@ function SectionHeader({ title }: { title: string }) {
         fontFamily: "var(--font-dm-sans)",
         fontSize: "20px",
         fontWeight: 300,
-        color: "#000000",
+        color: "#FFFFFF",
         margin: "0 0 16px 0",
         textTransform: "uppercase",
         letterSpacing: "0.05em",
@@ -197,7 +197,14 @@ export default function MyWritingPage({
     ];
 
     return (
-      <div key={piece.id} style={{ display: "flex", flexDirection: "column" }}>
+      <div
+        key={piece.id}
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          border: "2px solid #FFFFFF",
+        }}
+      >
         {/* Card with kebab overlay */}
         <div style={{ position: "relative" }}>
           {/* Kebab — top-left, above the card */}
@@ -247,9 +254,7 @@ export default function MyWritingPage({
         {piece.riffs.length > 0 && (
           <div
             style={{
-              borderLeft: "1px solid #000000",
-              borderRight: "1px solid #000000",
-              borderBottom: "1px solid #000000",
+              borderTop: "1px solid #333333",
               padding: "8px 12px",
               display: "flex",
               flexDirection: "column",
@@ -276,20 +281,33 @@ export default function MyWritingPage({
     );
   };
 
+  const [isDraftHovered, setIsDraftHovered] = useState(false);
+
   const newDraftButton = (
     <button
+      onMouseEnter={() => setIsDraftHovered(true)}
+      onMouseLeave={() => setIsDraftHovered(false)}
       onClick={() => createDraft()}
       disabled={isCreating}
       style={{
+        backgroundColor: "#000000",
+        border: "2px solid #FFFFFF",
+        boxShadow: isCreating
+          ? "none"
+          : isDraftHovered
+            ? "4px 4px 0px 0px #01EFFC"
+            : "4px 4px 0px 0px #00FF66",
+        padding: "8px 12px",
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
+        cursor: isCreating ? "not-allowed" : "pointer",
         fontFamily: "var(--font-dm-sans)",
         fontSize: "14px",
         fontWeight: 300,
-        color: isCreating ? "#808080" : "#000000",
-        backgroundColor: isCreating ? "transparent" : "#00FF66",
-        border: `2px solid ${isCreating ? "#808080" : "#00FF66"}`,
-        padding: "6px 16px",
-        cursor: isCreating ? "not-allowed" : "pointer",
+        color: isCreating ? "#808080" : "#FFFFFF",
         whiteSpace: "nowrap",
+        transition: "none",
       }}
     >
       + New Draft
@@ -309,77 +327,87 @@ export default function MyWritingPage({
       {/* Page content */}
       <div
         style={{
-          maxWidth: "1000px",
-          margin: "0 auto",
-          padding: "40px 24px 80px",
+          backgroundColor: "#000000",
+          minHeight: "100vh",
         }}
       >
-        {/* Page header */}
-        <h1
+        <div
           style={{
-            fontFamily: "var(--font-dm-serif-text)",
-            fontSize: "32px",
-            fontWeight: 400,
-            color: "#000000",
-            margin: "0 0 48px 0",
+            maxWidth: "1000px",
+            margin: "0 auto",
+            padding: "40px 24px 80px",
           }}
         >
-          My Writing
-        </h1>
+          {/* Page header */}
+          <h1
+            style={{
+              fontFamily: "var(--font-dm-serif-text)",
+              fontSize: "32px",
+              fontWeight: 400,
+              color: "#FFFFFF",
+              margin: "0 0 48px 0",
+            }}
+          >
+            My Writing
+          </h1>
 
-        {/* DRAFTS section */}
-        <div style={{ marginBottom: "56px" }}>
-          <SectionHeader title={`Drafts (${drafts.length})`} />
-          {drafts.length === 0 ? (
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "15px",
-                fontWeight: 300,
-                color: "#808080",
-                margin: 0,
-              }}
-            >
-              No drafts yet. Start writing something.
-            </p>
-          ) : (
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "12px" }}
-            >
-              {drafts.map((draft) => (
-                <DraftCard
-                  key={draft.id}
-                  draft={draft}
-                  onEdit={() => router.push(`/write/${draft.id}`)}
-                  onAttach={() => setAttachDraftId(draft.id)}
-                  onPublishToggle={() => handlePublishToggle(draft)}
-                  onDelete={() =>
-                    setDeleteTarget({ id: draft.id, title: draft.title })
-                  }
-                />
-              ))}
-            </div>
-          )}
-        </div>
+          {/* DRAFTS section */}
+          <div style={{ marginBottom: "56px" }}>
+            <SectionHeader title={`Drafts (${drafts.length})`} />
+            {drafts.length === 0 ? (
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "15px",
+                  fontWeight: 300,
+                  color: "#808080",
+                  margin: 0,
+                }}
+              >
+                No drafts yet. Start writing something.
+              </p>
+            ) : (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "12px",
+                }}
+              >
+                {drafts.map((draft) => (
+                  <DraftCard
+                    key={draft.id}
+                    draft={draft}
+                    onEdit={() => router.push(`/write/${draft.id}`)}
+                    onAttach={() => setAttachDraftId(draft.id)}
+                    onPublishToggle={() => handlePublishToggle(draft)}
+                    onDelete={() =>
+                      setDeleteTarget({ id: draft.id, title: draft.title })
+                    }
+                  />
+                ))}
+              </div>
+            )}
+          </div>
 
-        {/* PIECES section */}
-        <div>
-          <SectionHeader title={`Pieces (${pieces.length})`} />
-          {pieces.length === 0 ? (
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "15px",
-                fontWeight: 300,
-                color: "#808080",
-                margin: 0,
-              }}
-            >
-              No submitted pieces yet.
-            </p>
-          ) : (
-            <>
-              <style>{`
+          {/* PIECES section */}
+          <div>
+            <SectionHeader title={`Pieces (${pieces.length})`} />
+            {pieces.length === 0 ? (
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "15px",
+                  fontWeight: 300,
+                  color: "#808080",
+                  margin: 0,
+                }}
+              >
+                No submitted pieces yet.
+              </p>
+            ) : (
+              <>
+                <style>{`
                 .my-writing-pieces-grid {
                   display: grid;
                   grid-template-columns: repeat(3, 1fr);
@@ -397,11 +425,12 @@ export default function MyWritingPage({
                   }
                 }
               `}</style>
-              <div className="my-writing-pieces-grid">
-                {pieces.map(renderPieceGridItem)}
-              </div>
-            </>
-          )}
+                <div className="my-writing-pieces-grid">
+                  {pieces.map(renderPieceGridItem)}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
