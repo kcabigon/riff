@@ -376,10 +376,10 @@ export async function DELETE(
       return NextResponse.json({ error: "Riff not found" }, { status: 404 });
     }
 
-    // Only DRAFT riffs can be deleted
-    if (riff.status !== "DRAFT") {
+    // Only DRAFT or ACTIVE riffs can be deleted
+    if (!["DRAFT", "ACTIVE"].includes(riff.status)) {
       return NextResponse.json(
-        { error: "Only draft riffs can be deleted" },
+        { error: "Only draft or active riffs can be deleted" },
         { status: 400 }
       );
     }

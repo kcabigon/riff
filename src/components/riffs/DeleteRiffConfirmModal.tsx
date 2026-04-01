@@ -49,9 +49,9 @@ export default function DeleteRiffConfirmModal({
     <Modal isOpen={isOpen} onClose={onClose} title="Delete riff?" size="sm">
       <div
         style={{
-          display: "inline-block",
-          backgroundColor: "#FFFFFF",
-          padding: "2px 8px",
+          backgroundColor: "#FFF5F5",
+          border: "2px solid #FF4444",
+          padding: "16px",
           marginBottom: "24px",
         }}
       >
@@ -59,14 +59,38 @@ export default function DeleteRiffConfirmModal({
           style={{
             fontFamily: "var(--font-dm-sans)",
             fontSize: "16px",
-            fontWeight: 300,
+            fontWeight: 400,
             color: "#000000",
-            margin: 0,
+            margin: "0 0 8px",
             lineHeight: 1.5,
           }}
         >
           Are you sure you want to delete &ldquo;{riffTitle || "Untitled"}
-          &rdquo;? This can&apos;t be undone.
+          &rdquo;?
+        </p>
+        <p
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "14px",
+            fontWeight: 300,
+            color: "#FF4444",
+            margin: "0 0 4px",
+            lineHeight: 1.5,
+          }}
+        >
+          This will permanently delete the riff and cannot be undone.
+        </p>
+        <p
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "14px",
+            fontWeight: 300,
+            color: "#808080",
+            margin: 0,
+            lineHeight: 1.5,
+          }}
+        >
+          Writers will keep their drafts, which will be detached from the riff.
         </p>
       </div>
 

@@ -21,7 +21,7 @@ View and manage the shared TODO list. This is how the team tracks what's availab
 
 ## Important
 - If the user is on a feature branch, commit TODO changes to that branch
-- If the user is on `develop`, create a `chore/update-todo` branch for the change, commit, push, and switch back to develop. Never commit directly to develop.
+- If the user is on `develop`, commit TODO changes directly — this is the one exception to the "no direct commits to develop" rule since TODO updates are metadata, not code
 - When claiming an item, the TODO update gets committed as part of the `/new-feature` flow (which creates a feature branch first)
 - Keep the TODO format consistent — don't restructure or reformat existing items
 - When claiming and starting `/new-feature`, the complexity assessment still applies — simple TODO items get fast-tracked, complex ones get plan mode

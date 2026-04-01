@@ -750,59 +750,8 @@ export default function ClubPageLayout({
           />
         )}
 
-        {/* Current Riff section */}
-        <div style={{ marginBottom: "48px" }}>
-          {/* Section header — only show if there's an active riff OR user is admin */}
-          {(activeRiff || isAdmin) && (
-            <h2
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "20px",
-                fontWeight: 300,
-                color: "#000000",
-                margin: "0 0 16px 0",
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-              }}
-            >
-              Current Riff
-            </h2>
-          )}
-
-          {activeRiff ? (
-            <RiffCard
-              riff={{
-                id: activeRiff.id,
-                title: activeRiff.title,
-                volumeNumber: activeRiff.volumeNumber,
-                status: activeRiff.status,
-                prompt: activeRiff.prompt,
-                deadline: activeRiff.deadline
-                  ? new Date(activeRiff.deadline)
-                  : null,
-                createdAt: new Date(activeRiff.createdAt),
-                participants: activeRiff.participants,
-                pieces: activeRiff.pieces,
-              }}
-              isJoined={isJoined}
-              hasDraft={hasDraft}
-              hasSubmitted={hasSubmitted}
-              currentUserId={currentUserId}
-              isAdmin={isAdmin}
-              onJoin={handleJoinRiff}
-              onReveal={() => setIsRevealModalOpen(true)}
-            />
-          ) : (
-            <EmptyRiffState
-              onStartNewRiff={() => setIsCreateRiffModalOpen(true)}
-              isAdmin={isAdmin}
-            />
-          )}
-        </div>
-
-        {/* Ready to Reveal section */}
+        {/* Current Read section — shown above Current Riff when there are unread revealed riffs */}
         {(() => {
-          // Revealed riffs where user hasn't read all pieces yet
           const unfinishedRevealed = revealedRiffs.filter(
             (r) => (readCounts[r.id] || 0) < r.pieces.length
           );
@@ -839,6 +788,70 @@ export default function ClubPageLayout({
                   />
                 ))}
               </div>
+            </div>
+          );
+        })()}
+
+        {/* Current Riff section — hidden for members when there's a current read and no active riff */}
+        {(() => {
+          const hasCurrentRead = revealedRiffs.some(
+            (r) => (readCounts[r.id] || 0) < r.pieces.length
+          );
+          const showSection = activeRiff || isAdmin || !hasCurrentRead;
+          if (!showSection) return null;
+
+          const hostName =
+            club.members.find((m) => m.user.id === club.adminId)?.user.name ??
+            null;
+
+          return (
+            <div style={{ marginBottom: "48px" }}>
+              {(activeRiff || isAdmin) && (
+                <h2
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "20px",
+                    fontWeight: 300,
+                    color: "#000000",
+                    margin: "0 0 16px 0",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                  }}
+                >
+                  Current Riff
+                </h2>
+              )}
+
+              {activeRiff ? (
+                <RiffCard
+                  riff={{
+                    id: activeRiff.id,
+                    title: activeRiff.title,
+                    volumeNumber: activeRiff.volumeNumber,
+                    status: activeRiff.status,
+                    prompt: activeRiff.prompt,
+                    deadline: activeRiff.deadline
+                      ? new Date(activeRiff.deadline)
+                      : null,
+                    createdAt: new Date(activeRiff.createdAt),
+                    participants: activeRiff.participants,
+                    pieces: activeRiff.pieces,
+                  }}
+                  isJoined={isJoined}
+                  hasDraft={hasDraft}
+                  hasSubmitted={hasSubmitted}
+                  currentUserId={currentUserId}
+                  isAdmin={isAdmin}
+                  onJoin={handleJoinRiff}
+                  onReveal={() => setIsRevealModalOpen(true)}
+                />
+              ) : (
+                <EmptyRiffState
+                  onStartNewRiff={() => setIsCreateRiffModalOpen(true)}
+                  isAdmin={isAdmin}
+                  hostName={hostName}
+                />
+              )}
             </div>
           );
         })()}

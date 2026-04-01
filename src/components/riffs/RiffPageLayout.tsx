@@ -7,11 +7,15 @@ import PieceCard from "./PieceCard";
 import RevealConfirmModal from "./RevealConfirmModal";
 import EditRiffModal from "./EditRiffModal";
 import DeleteRiffConfirmModal from "./DeleteRiffConfirmModal";
-import BackButton from "@/components/BackButton";
+import NavBar from "@/components/clubs/NavBar";
 import RevealCelebration from "./RevealCelebration";
 import { getRiffDisplayTitle } from "@/lib/riff-utils";
 import RiffCTAButton from "@/components/riffs/RiffCTAButton";
 import ProgressCard from "@/components/riffs/ProgressCard";
+import Dropdown from "@/components/shared/Dropdown";
+import type { DropdownItem } from "@/components/shared/Dropdown";
+import ContributionStrip from "@/components/riffs/ContributionStrip";
+import NoiseBackground from "@/components/NoiseBackground";
 
 interface RiffPageLayoutProps {
   riff: {
@@ -22,6 +26,7 @@ interface RiffPageLayoutProps {
     deadline: string | null;
     status: string;
     createdAt: string;
+    updatedAt?: string;
     clubId: string;
     club: { id: string; name: string };
     creator: {
@@ -62,7 +67,21 @@ interface RiffPageLayoutProps {
   isJoined: boolean;
   hasDraft: boolean;
   hasSubmitted: boolean;
+  navUser?: {
+    id: string;
+    name: string | null;
+    username: string | null;
+    avatarUrl: string | null;
+  } | null;
+  userClubs?: Array<{ id: string; name: string }>;
   readPieceIds?: string[];
+  hasNewCommentsMap?: Record<string, boolean>;
+  contributionData?: Array<{
+    user: { id: string; name: string | null; avatarUrl: string | null };
+    readCount: number;
+    commentCount: number;
+  }>;
+  totalPieces?: number;
   onReveal?: () => void;
 }
 
@@ -73,7 +92,12 @@ export default function RiffPageLayout({
   isJoined: initialIsJoined,
   hasDraft,
   hasSubmitted,
+  navUser,
+  userClubs = [],
   readPieceIds = [],
+  hasNewCommentsMap = {},
+  contributionData = [],
+  totalPieces = 0,
   onReveal,
 }: RiffPageLayoutProps) {
   const [isJoined, setIsJoined] = useState(initialIsJoined);
@@ -89,8 +113,9 @@ export default function RiffPageLayout({
     ? new Date(riff.deadline).getTime() < Date.now()
     : false;
 
-  const canRevealNoDeadline =
-    !riff.deadline && isAdmin && riff.pieces.length > 0;
+  const allPiecesSubmitted =
+    riff.participants.length > 0 &&
+    riff.pieces.filter((p) => p.submittedAt).length >= riff.participants.length;
 
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString("en-US", {
@@ -155,16 +180,14 @@ export default function RiffPageLayout({
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
-      {/* Back navigation */}
-      <div
-        style={{
-          maxWidth: "1000px",
-          margin: "0 auto",
-          padding: "24px 24px 0",
-        }}
-      >
-        <BackButton href={`/clubs/${riff.clubId}`} />
-      </div>
+      {/* Nav bar */}
+      {navUser && (
+        <NavBar
+          user={navUser}
+          clubs={userClubs}
+          currentClub={{ id: riff.clubId, name: riff.club.name }}
+        />
+      )}
 
       {/* Main content */}
       <div
@@ -219,90 +242,96 @@ export default function RiffPageLayout({
                     fontFamily: "var(--font-dm-sans)",
                     fontSize: "16px",
                     fontWeight: 300,
-                    color: isPastDeadline ? "#FF4444" : "#808080",
+                    color:
+                      isPastDeadline && riff.status !== "REVEALED"
+                        ? "#FF4444"
+                        : "#808080",
                     margin: 0,
                   }}
                 >
-                  {isPastDeadline
+                  {isPastDeadline && riff.status !== "REVEALED"
                     ? "Deadline passed"
                     : riff.deadline
                       ? `${formatDate(riff.createdAt)} - ${formatDate(riff.deadline)}`
                       : formatDate(riff.createdAt)}
                 </p>
                 {isAdmin &&
-                  (riff.status === "ACTIVE" || riff.status === "DRAFT") && (
-                    <button
-                      onClick={() => setIsEditModalOpen(true)}
-                      aria-label="Edit riff"
-                      style={{
-                        background: "transparent",
-                        border: "2px solid transparent",
-                        cursor: "pointer",
-                        padding: "4px 6px",
-                        color: "#808080",
-                        lineHeight: 1,
-                        display: "flex",
-                        alignItems: "center",
-                        transition:
-                          "background-color 0.15s ease, box-shadow 0.1s ease",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "#01EFFC";
-                        e.currentTarget.style.borderColor = "#000000";
-                        e.currentTarget.style.color = "#000000";
-                        e.currentTarget.style.boxShadow =
-                          "3px 3px 0px 0px #000000";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "transparent";
-                        e.currentTarget.style.borderColor = "transparent";
-                        e.currentTarget.style.color = "#808080";
-                        e.currentTarget.style.boxShadow = "none";
-                      }}
-                    >
-                      <svg
-                        width="12"
-                        height="3"
-                        viewBox="0 0 12 3"
-                        fill="currentColor"
-                      >
-                        <circle cx="1.5" cy="1.5" r="1.5" />
-                        <circle cx="6" cy="1.5" r="1.5" />
-                        <circle cx="10.5" cy="1.5" r="1.5" />
-                      </svg>
-                    </button>
-                  )}
+                  riff.status !== "REVEALED" &&
+                  (() => {
+                    const items: DropdownItem[] = [
+                      {
+                        type: "action",
+                        label: "Edit riff",
+                        onClick: () => setIsEditModalOpen(true),
+                      },
+                      ...(riff.status === "ACTIVE"
+                        ? [
+                            {
+                              type: "action" as const,
+                              label: "Reveal now",
+                              onClick: handleRevealClick,
+                            },
+                          ]
+                        : []),
+                      { type: "divider" },
+                      {
+                        type: "action",
+                        label: "Delete riff",
+                        color: "#DC2626",
+                        onClick: () => setIsDeleteModalOpen(true),
+                      },
+                    ];
+                    return (
+                      <Dropdown
+                        trigger={
+                          <button
+                            aria-label="Riff settings"
+                            style={{
+                              background: "transparent",
+                              border: "2px solid transparent",
+                              cursor: "pointer",
+                              padding: "4px 6px",
+                              color: "#808080",
+                              lineHeight: 1,
+                              display: "flex",
+                              alignItems: "center",
+                              transition:
+                                "background-color 0.15s ease, box-shadow 0.1s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#01EFFC";
+                              e.currentTarget.style.borderColor = "#000000";
+                              e.currentTarget.style.color = "#000000";
+                              e.currentTarget.style.boxShadow =
+                                "4px 4px 0px 0px #000000";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor =
+                                "transparent";
+                              e.currentTarget.style.borderColor = "transparent";
+                              e.currentTarget.style.color = "#808080";
+                              e.currentTarget.style.boxShadow = "none";
+                            }}
+                          >
+                            <svg
+                              width="12"
+                              height="3"
+                              viewBox="0 0 12 3"
+                              fill="currentColor"
+                            >
+                              <circle cx="1.5" cy="1.5" r="1.5" />
+                              <circle cx="6" cy="1.5" r="1.5" />
+                              <circle cx="10.5" cy="1.5" r="1.5" />
+                            </svg>
+                          </button>
+                        }
+                        items={items}
+                        align="left"
+                      />
+                    );
+                  })()}
               </div>
             </div>
-
-            {/* Delete — DRAFT only, admin only */}
-            {isAdmin && riff.status === "DRAFT" && (
-              <div>
-                <button
-                  onClick={() => setIsDeleteModalOpen(true)}
-                  style={{
-                    background: "none",
-                    border: "1px solid #E6E6E6",
-                    padding: "6px 16px",
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "13px",
-                    fontWeight: 300,
-                    color: "#808080",
-                    cursor: "pointer",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "#FF4444";
-                    e.currentTarget.style.color = "#FF4444";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = "#E6E6E6";
-                    e.currentTarget.style.color = "#808080";
-                  }}
-                >
-                  Delete
-                </button>
-              </div>
-            )}
 
             {/* Prompt */}
             {riff.prompt && (
@@ -338,7 +367,111 @@ export default function RiffPageLayout({
               minWidth: "200px",
             }}
           >
-            {(isPastDeadline || canRevealNoDeadline) &&
+            {riff.status === "REVEALED" && riff.updatedAt && (
+              <div
+                style={{
+                  position: "relative",
+                  overflow: "hidden",
+                  border: "2px solid #000000",
+                  padding: "12px 48px",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                <NoiseBackground fillMode="cover" />
+                <span
+                  style={{
+                    position: "relative",
+                    zIndex: 1,
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "16px",
+                    fontWeight: 300,
+                    color: "#000000",
+                  }}
+                >
+                  Revealed {formatDate(riff.updatedAt)}
+                </span>
+              </div>
+            )}
+
+            {riff.status === "REVEALED" &&
+              (() => {
+                const totalReads = contributionData.reduce(
+                  (sum, m) => sum + m.readCount,
+                  0
+                );
+                const totalComments = contributionData.reduce(
+                  (sum, m) => sum + m.commentCount,
+                  0
+                );
+                const totalWords = riff.pieces.reduce(
+                  (sum, p) => sum + (p.piece.wordCount || 0),
+                  0
+                );
+                const revealStats = [
+                  {
+                    value: riff.pieces.length,
+                    label: riff.pieces.length === 1 ? "Piece" : "Pieces",
+                  },
+                  { value: totalWords.toLocaleString(), label: "Words" },
+                  {
+                    value: totalReads,
+                    label: totalReads === 1 ? "Read" : "Reads",
+                  },
+                  {
+                    value: totalComments,
+                    label: totalComments === 1 ? "Comment" : "Comments",
+                  },
+                ];
+                return (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "12px",
+                      lineHeight: "normal",
+                    }}
+                  >
+                    {revealStats.map((stat, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <p
+                          style={{
+                            fontFamily: "var(--font-dm-sans)",
+                            fontSize: "16px",
+                            fontWeight: 700,
+                            lineHeight: "normal",
+                            color: "#000000",
+                            margin: 0,
+                          }}
+                        >
+                          {stat.value}
+                        </p>
+                        <p
+                          style={{
+                            fontFamily: "var(--font-dm-sans)",
+                            fontSize: "12px",
+                            fontWeight: 300,
+                            lineHeight: "normal",
+                            color: "#000000",
+                            margin: 0,
+                          }}
+                        >
+                          {stat.label}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+
+            {(isPastDeadline || allPiecesSubmitted) &&
             isAdmin &&
             riff.status === "ACTIVE" ? (
               <button
@@ -363,7 +496,7 @@ export default function RiffPageLayout({
                   whiteSpace: "nowrap",
                 }}
               >
-                Reveal pieces
+                Reveal riff
               </button>
             ) : isPastDeadline && !isAdmin && riff.status === "ACTIVE" ? (
               <button
@@ -396,10 +529,13 @@ export default function RiffPageLayout({
               />
             ) : null}
 
-            {isJoined && riff.deadline && !isPastDeadline && (
-              <CountdownTimer deadline={new Date(riff.deadline)} />
-            )}
-            {isPastDeadline && riff.deadline && (
+            {isJoined &&
+              riff.deadline &&
+              !isPastDeadline &&
+              riff.status !== "REVEALED" && (
+                <CountdownTimer deadline={new Date(riff.deadline)} />
+              )}
+            {isPastDeadline && riff.deadline && riff.status !== "REVEALED" && (
               <p
                 style={{
                   fontFamily: "var(--font-dm-sans)",
@@ -415,47 +551,19 @@ export default function RiffPageLayout({
           </div>
         </div>
 
+        {/* Contribution strip for REVEALED riffs */}
+        {riff.status === "REVEALED" && contributionData.length > 0 && (
+          <div style={{ marginTop: "48px" }}>
+            <ContributionStrip
+              members={contributionData}
+              totalPieces={totalPieces}
+            />
+          </div>
+        )}
+
         {/* Pieces gallery for REVEALED riffs */}
         {riff.status === "REVEALED" && riff.pieces.length > 0 && (
           <div style={{ marginTop: "48px" }}>
-            {/* Stats header */}
-            <div
-              style={{
-                display: "flex",
-                gap: "16px",
-                marginBottom: "24px",
-              }}
-            >
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#000000",
-                  margin: 0,
-                }}
-              >
-                <span style={{ fontWeight: 700 }}>{riff.pieces.length}</span>{" "}
-                {riff.pieces.length === 1 ? "piece" : "pieces"}
-              </p>
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#000000",
-                  margin: 0,
-                }}
-              >
-                <span style={{ fontWeight: 700 }}>
-                  {riff.pieces
-                    .reduce((sum, p) => sum + (p.piece.wordCount || 0), 0)
-                    .toLocaleString()}
-                </span>{" "}
-                words
-              </p>
-            </div>
-
             {/* Pieces grid */}
             <div
               style={{
@@ -481,6 +589,10 @@ export default function RiffPageLayout({
                     },
                   }}
                   isRead={readPieceIds.includes(pieceRiff.piece.id)}
+                  hasNewComments={
+                    hasNewCommentsMap[pieceRiff.piece.id] ?? false
+                  }
+                  isOwnPiece={pieceRiff.piece.authorId === currentUserId}
                   onClick={() =>
                     router.push(`/read/${pieceRiff.piece.id}?riff=${riff.id}`)
                   }

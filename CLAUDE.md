@@ -18,6 +18,7 @@ If the user asks you to "regain context" or "catch up", run `/letsriff`.
 | `/test` | Start the dev server and test your changes locally |
 | `/sync` | Pull latest develop into your feature branch — prevents merge conflicts |
 | `/pr-check` | Pre-PR validation — lint, type-check, build, commit format |
+| `/review` | Review a PR for design system, component reuse, code quality, and merge readiness |
 | `/finish-feature` | Push branch and create a PR targeting develop |
 | `/promote` | Kyle only — promote develop → staging or staging → main |
 | `/setup` | First-time setup — walks through environment, deps, database |
@@ -79,11 +80,13 @@ After each step completes, proactively suggest the next one: "Ready to test? Run
 
 ### Context persistence (compaction)
 
-When context is compacted (manually via `/compact` or automatically), critical state can be lost. To prevent this:
+When context is compacted, always preserve these in the summary:
+- What branch the user is on and what they're building
+- Where they are in the development track (building, testing, finishing)
+- The plan file path if one exists (in `.claude/plans/`)
+- Any design decisions or scope choices the user confirmed
 
-- **Always check `.claude/session-state.md`** at the start of any interaction after compaction. If it exists, read it to restore context about where the user is in the development track, what they're building, and what the plan is.
-- **Write to `.claude/session-state.md`** at key milestones: after creating a branch, after completing a build, after starting testing. Include: current branch, what's being built, which step in the track they're on, and the plan file path if one exists.
-- This file is gitignored and local-only — it's session state, not project state.
+If context is lost, reconstruct from git: check the branch name, `git log --oneline develop..HEAD`, and plan files in `.claude/plans/`.
 
 ### Auto-sync
 
