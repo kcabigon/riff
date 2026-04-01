@@ -303,7 +303,12 @@ export default function WritePage({ piece }: WritePageProps) {
     let file = event.target.files?.[0];
     if (!file || !editor) return;
 
-    file = await convertHeicToJpeg(file);
+    try {
+      file = await convertHeicToJpeg(file);
+    } catch {
+      alert("Could not process HEIC file. Please try converting it first.");
+      return;
+    }
 
     const formData = new FormData();
     formData.append("file", file);
