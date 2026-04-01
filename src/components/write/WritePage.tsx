@@ -471,8 +471,7 @@ export default function WritePage({ piece }: WritePageProps) {
                     fontSize: "12px",
                     fontWeight: 400,
                     color: "#000000",
-                    border: "1px solid #00FF66",
-                    borderRadius: "2px",
+                    border: "2px solid #00FF66",
                     padding: riff.submittedAt ? "4px 12px" : "4px 8px 4px 12px",
                   }}
                 >
@@ -531,8 +530,7 @@ export default function WritePage({ piece }: WritePageProps) {
                       width: "24px",
                       height: "24px",
                       background: "none",
-                      border: "1px solid #000000",
-                      borderRadius: "2px",
+                      border: "2px solid #000000",
                       cursor: "pointer",
                       fontFamily: "var(--font-dm-sans)",
                       fontSize: "16px",
