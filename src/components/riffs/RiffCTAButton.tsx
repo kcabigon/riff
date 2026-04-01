@@ -12,7 +12,6 @@ interface RiffCTAButtonProps {
   hasDraft: boolean;
   hasSubmitted: boolean;
   existingPieceId?: string | null;
-  existingPiece?: { id: string; title: string; wordCount: number } | null;
   onJoin?: () => void;
   stopPropagation?: boolean;
 }
@@ -23,13 +22,11 @@ export default function RiffCTAButton({
   hasDraft,
   hasSubmitted,
   existingPieceId,
-  existingPiece,
   onJoin,
   stopPropagation = false,
 }: RiffCTAButtonProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isDraftPickerOpen, setIsDraftPickerOpen] = useState(false);
-  const [isChangingDraft, setIsChangingDraft] = useState(false);
   const router = useRouter();
   const { createDraft } = useDraftCreation();
 
@@ -118,74 +115,6 @@ export default function RiffCTAButton({
           isOpen={isDraftPickerOpen}
           onClose={() => setIsDraftPickerOpen(false)}
           riffId={riffId}
-        />
-      </div>
-    );
-  }
-
-  // "Continue writing" — dropdown with change/remove options
-  if (isJoined && hasDraft && !hasSubmitted) {
-    return (
-      <div
-        onClick={stopPropagation ? (e) => e.stopPropagation() : undefined}
-        style={{ display: "contents" }}
-      >
-        <Dropdown
-          align="right"
-          minWidth={200}
-          trigger={
-            <button
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
-              style={buttonStyle}
-            >
-              Continue writing
-            </button>
-          }
-          items={[
-            {
-              type: "action",
-              label: "Continue writing",
-              onClick: () =>
-                existingPieceId && router.push(`/write/${existingPieceId}`),
-            },
-            {
-              type: "action",
-              label: "Change draft",
-              onClick: () => setIsChangingDraft(true),
-            },
-            { type: "divider" },
-            {
-              type: "action",
-              label: "Remove from riff",
-              icon: (
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <path
-                    d="M2 3.5h10M5.5 3.5V2.5a.5.5 0 01.5-.5h2a.5.5 0 01.5.5v1M3.5 3.5l.5 8h6l.5-8"
-                    stroke="currentColor"
-                    strokeWidth="1.2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              ),
-              onClick: async () => {
-                if (!existingPieceId) return;
-                if (stopPropagation) return; // riff card context — skip, too destructive
-                await fetch(`/api/riffs/${riffId}/pieces/${existingPieceId}`, {
-                  method: "DELETE",
-                });
-                router.refresh();
-              },
-            },
-          ]}
-        />
-        <ExistingDraftPickerModal
-          isOpen={isChangingDraft}
-          onClose={() => setIsChangingDraft(false)}
-          riffId={riffId}
-          existingPieceId={existingPieceId}
-          existingPiece={existingPiece}
         />
       </div>
     );
