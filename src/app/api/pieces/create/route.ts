@@ -28,7 +28,7 @@ export async function POST(req: Request) {
         title: title.trim(),
         currentContent: content,
         currentExcerpt: excerpt?.trim() || null,
-        authorId: (user as any).id,
+        authorId: user.id,
       },
       include: {
         author: {

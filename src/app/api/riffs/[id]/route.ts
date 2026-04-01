@@ -86,7 +86,7 @@ export async function GET(
     const member = await prisma.clubMember.findFirst({
       where: {
         clubId: riff.clubId,
-        userId: (user as any).id,
+        userId: user.id,
       },
     });
 
@@ -95,14 +95,18 @@ export async function GET(
     }
 
     // Strip piece content before reveal — cover image still returned for locked card teaser
-    if (riff.status !== "REVEALED") {
-      (riff as any).pieces = riff.pieces.map((pr) => ({
-        ...pr,
-        piece: { ...pr.piece, currentContent: null },
-      }));
-    }
+    const sanitizedRiff =
+      riff.status !== "REVEALED"
+        ? {
+            ...riff,
+            pieces: riff.pieces.map((pr) => ({
+              ...pr,
+              piece: { ...pr.piece, currentContent: null },
+            })),
+          }
+        : riff;
 
-    return NextResponse.json({ riff });
+    return NextResponse.json({ riff: sanitizedRiff });
   } catch (error: any) {
     if (error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -138,7 +142,7 @@ export async function PATCH(
     const member = await prisma.clubMember.findFirst({
       where: {
         clubId: riff.clubId,
-        userId: (user as any).id,
+        userId: user.id,
       },
     });
 
@@ -160,7 +164,7 @@ export async function PATCH(
     // Only creator can update title, prompt, deadline
     if (
       (title || prompt || deadline !== undefined) &&
-      riff.creatorId !== (user as any).id
+      riff.creatorId !== user.id
     ) {
       return NextResponse.json(
         { error: "Only the riff creator can update riff details" },
@@ -183,11 +187,11 @@ export async function PATCH(
         select: { adminId: true },
       });
 
-      const isClubAdmin = club?.adminId === (user as any).id;
+      const isClubAdmin = club?.adminId === user.id;
 
       if (status === "ACTIVE" && riff.status === "DRAFT") {
         // Only creator can activate from DRAFT
-        if (riff.creatorId !== (user as any).id) {
+        if (riff.creatorId !== user.id) {
           return NextResponse.json(
             { error: "Only the riff creator can activate the riff" },
             { status: 403 }
@@ -277,7 +281,7 @@ export async function PATCH(
 
     // Fire notifications for status changes (non-blocking)
     if (status && status !== riff.status) {
-      const actorId = (user as any).id;
+      const actorId = user.id;
       if (status === "ACTIVE") {
         notifyClubMembers(riff.clubId, NotificationType.RIFF_CREATED, actorId, {
           riffId,
@@ -393,8 +397,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Club not found" }, { status: 404 });
     }
 
-    const canDelete =
-      riff.creatorId === (user as any).id || club.adminId === (user as any).id;
+    const canDelete = riff.creatorId === user.id || club.adminId === user.id;
 
     if (!canDelete) {
       return NextResponse.json(

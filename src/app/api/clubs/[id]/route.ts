@@ -79,7 +79,7 @@ export async function GET(
     }
 
     // Check if user is a member
-    const isMember = club.members.some((m) => m.userId === (user as any).id);
+    const isMember = club.members.some((m) => m.userId === user.id);
     if (!isMember) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -117,7 +117,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Club not found" }, { status: 404 });
     }
 
-    if (club.adminId !== (user as any).id) {
+    if (club.adminId !== user.id) {
       return NextResponse.json(
         { error: "Only the club admin can update club details" },
         { status: 403 }
@@ -235,7 +235,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Club not found" }, { status: 404 });
     }
 
-    if (club.adminId !== (user as any).id) {
+    if (club.adminId !== user.id) {
       return NextResponse.json(
         { error: "Only the club admin can delete the club" },
         { status: 403 }

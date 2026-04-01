@@ -29,7 +29,7 @@ export async function PATCH(
     }
 
     // Only admin can change roles
-    if (club.adminId !== (user as any).id) {
+    if (club.adminId !== user.id) {
       return NextResponse.json(
         { error: "Only the club admin can change member roles" },
         { status: 403 }
@@ -139,14 +139,13 @@ export async function DELETE(
     }
 
     // Check permissions
-    const requesterMember = club.members.find(
-      (m) => m.userId === (user as any).id
-    );
+    const requesterMember = club.members.find((m) => m.userId === user.id);
 
     // User can remove themselves, or admin/moderator can remove others
     const canRemove =
-      targetUserId === (user as any).id ||
-      (requesterMember && ["ADMIN", "MODERATOR"].includes(requesterMember.role));
+      targetUserId === user.id ||
+      (requesterMember &&
+        ["ADMIN", "MODERATOR"].includes(requesterMember.role));
 
     if (!canRemove) {
       return NextResponse.json(

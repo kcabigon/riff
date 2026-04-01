@@ -15,7 +15,7 @@ export async function GET(
     const membership = await prisma.circleMember.findFirst({
       where: {
         circleId,
-        userId: (user as any).id,
+        userId: user.id,
       },
     });
 
@@ -62,10 +62,7 @@ export async function GET(
     });
 
     if (!circle) {
-      return NextResponse.json(
-        { error: "Circle not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Circle not found" }, { status: 404 });
     }
 
     return NextResponse.json({ circle });
@@ -96,7 +93,7 @@ export async function PATCH(
     const membership = await prisma.circleMember.findFirst({
       where: {
         circleId,
-        userId: (user as any).id,
+        userId: user.id,
         role: { in: ["OWNER", "ADMIN"] },
       },
     });
@@ -138,7 +135,9 @@ export async function PATCH(
       where: { id: circleId },
       data: {
         ...(name !== undefined && { name: name.trim() }),
-        ...(description !== undefined && { description: description?.trim() || null }),
+        ...(description !== undefined && {
+          description: description?.trim() || null,
+        }),
         ...(isArchived !== undefined && { isArchived }),
       },
       include: {

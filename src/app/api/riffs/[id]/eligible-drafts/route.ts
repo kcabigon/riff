@@ -9,7 +9,7 @@ export async function GET(
 ) {
   try {
     const user = await requireAuth();
-    const userId = (user as any).id;
+    const userId = user.id;
     const { id: riffId } = await params;
 
     const pieces = await prisma.piece.findMany({

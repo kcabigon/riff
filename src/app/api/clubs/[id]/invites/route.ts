@@ -16,7 +16,7 @@ export async function POST(
       where: { id: clubId },
       include: {
         members: {
-          where: { userId: (user as any).id },
+          where: { userId: user.id },
         },
       },
     });
@@ -41,7 +41,7 @@ export async function POST(
       data: {
         clubId,
         token: generateToken(),
-        createdBy: (user as any).id,
+        createdBy: user.id,
         expiresAt,
       },
     });

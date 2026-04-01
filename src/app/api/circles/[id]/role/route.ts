@@ -21,17 +21,14 @@ export async function PATCH(
 
     // Validate role
     if (!["OWNER", "ADMIN", "MEMBER"].includes(role)) {
-      return NextResponse.json(
-        { error: "Invalid role" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid role" }, { status: 400 });
     }
 
     // Check if requester is OWNER
     const requesterMembership = await prisma.circleMember.findFirst({
       where: {
         circleId,
-        userId: (user as any).id,
+        userId: user.id,
         role: "OWNER",
       },
     });

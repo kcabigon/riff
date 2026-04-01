@@ -10,7 +10,7 @@ export async function POST(
   try {
     const user = await requireAuth();
     const { token } = await params;
-    const userId = (user as any).id;
+    const userId = user.id;
 
     // Find the invite
     const invite = await prisma.clubInvite.findUnique({
@@ -29,10 +29,7 @@ export async function POST(
     });
 
     if (!invite) {
-      return NextResponse.json(
-        { error: "Invite not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Invite not found" }, { status: 404 });
     }
 
     // Check if invite has expired

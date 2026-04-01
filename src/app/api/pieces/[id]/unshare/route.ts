@@ -25,13 +25,10 @@ export async function POST(
     });
 
     if (!piece) {
-      return NextResponse.json(
-        { error: "Piece not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Piece not found" }, { status: 404 });
     }
 
-    if (piece.authorId !== (user as any).id) {
+    if (piece.authorId !== user.id) {
       return NextResponse.json(
         { error: "Only the author can unshare this piece" },
         { status: 403 }

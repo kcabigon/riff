@@ -45,7 +45,7 @@ export async function POST(
       return NextResponse.json({ error: "Piece not found" }, { status: 404 });
     }
 
-    if (piece.authorId !== (user as any).id) {
+    if (piece.authorId !== user.id) {
       return NextResponse.json(
         { error: "You can only submit your own pieces" },
         { status: 403 }
@@ -56,7 +56,7 @@ export async function POST(
     let participant = await prisma.riffParticipant.findFirst({
       where: {
         riffId,
-        userId: (user as any).id,
+        userId: user.id,
       },
     });
 
@@ -65,7 +65,7 @@ export async function POST(
       const member = await prisma.clubMember.findFirst({
         where: {
           clubId: riff.clubId,
-          userId: (user as any).id,
+          userId: user.id,
         },
       });
 
@@ -79,7 +79,7 @@ export async function POST(
       participant = await prisma.riffParticipant.create({
         data: {
           riffId,
-          userId: (user as any).id,
+          userId: user.id,
         },
       });
     }

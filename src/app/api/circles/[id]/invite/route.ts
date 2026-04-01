@@ -23,7 +23,7 @@ export async function POST(
     const requesterMembership = await prisma.circleMember.findFirst({
       where: {
         circleId,
-        userId: (user as any).id,
+        userId: user.id,
       },
     });
 
@@ -40,10 +40,7 @@ export async function POST(
     });
 
     if (!invitedUser) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     // Check if user is already a member
@@ -64,10 +61,7 @@ export async function POST(
     // Validate role if provided
     const assignedRole = role || "MEMBER";
     if (!["OWNER", "ADMIN", "MEMBER"].includes(assignedRole)) {
-      return NextResponse.json(
-        { error: "Invalid role" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid role" }, { status: 400 });
     }
 
     // Only OWNER can assign OWNER role

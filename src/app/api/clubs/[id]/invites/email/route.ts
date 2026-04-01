@@ -25,7 +25,7 @@ export async function POST(
       where: { id: clubId },
       include: {
         members: {
-          where: { userId: (user as any).id },
+          where: { userId: user.id },
         },
       },
     });
@@ -43,7 +43,7 @@ export async function POST(
 
     // Get inviter's name
     const inviter = await prisma.user.findUnique({
-      where: { id: (user as any).id },
+      where: { id: user.id },
       select: {
         firstName: true,
         lastName: true,
@@ -63,7 +63,7 @@ export async function POST(
       data: {
         clubId,
         token: generateToken(),
-        createdBy: (user as any).id,
+        createdBy: user.id,
         expiresAt,
       },
     });
@@ -92,7 +92,8 @@ export async function POST(
       .filter((result) => result.status === "rejected")
       .map((result, index) => ({
         email: emails[index],
-        error: (result as PromiseRejectedResult).reason?.message || "Unknown error",
+        error:
+          (result as PromiseRejectedResult).reason?.message || "Unknown error",
       }));
 
     if (successCount === 0) {

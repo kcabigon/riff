@@ -25,13 +25,10 @@ export async function PATCH(
     });
 
     if (!comment) {
-      return NextResponse.json(
-        { error: "Comment not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Comment not found" }, { status: 404 });
     }
 
-    if (comment.authorId !== (user as any).id) {
+    if (comment.authorId !== user.id) {
       return NextResponse.json(
         { error: "Only the comment author can update this comment" },
         { status: 403 }
@@ -88,13 +85,10 @@ export async function DELETE(
     });
 
     if (!comment) {
-      return NextResponse.json(
-        { error: "Comment not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Comment not found" }, { status: 404 });
     }
 
-    if (comment.authorId !== (user as any).id) {
+    if (comment.authorId !== user.id) {
       return NextResponse.json(
         { error: "Only the comment author can delete this comment" },
         { status: 403 }
