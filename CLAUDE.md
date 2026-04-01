@@ -37,6 +37,7 @@ If the user asks you to "regain context" or "catch up", run `/letsriff`.
 - Use `requireAuth()` on all protected API routes
 - Run `npm run lint` and `npm run format` before committing
 - Follow existing patterns in the area you're modifying
+- **Read `DESIGN-SYSTEM.md` before building any UI.** Follow existing design patterns exactly — colors, spacing, borders, shadows. Reuse shared components from the catalog before creating new ones.
 
 ### What NOT to commit
 - `.env` files (secrets — already in `.gitignore`)
@@ -63,4 +64,7 @@ npx prisma generate      # Regenerate Prisma client after schema changes
 
 ## Project Context
 
-For full architecture, file map, design system, and current state, read `ARCHITECTURE.md`. The `/letsriff` command does this automatically — you shouldn't need to read it manually.
+- **Architecture**: `ARCHITECTURE.md` — file map, schema, tech stack, current state
+- **Design system**: `DESIGN-SYSTEM.md` — colors, typography, spacing, borders, shadows, shared component catalog
+
+The `/letsriff` command reads these automatically — you shouldn't need to read them manually.

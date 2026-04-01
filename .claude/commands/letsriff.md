@@ -2,7 +2,7 @@ You are starting a new session on the Riff project. This is the entry point — 
 
 ## Step 1: Load project context
 
-Read the file `ARCHITECTURE.md` in the project root. This gives you the full project context: tech stack, file map, design system, current state, and what's working. Do NOT summarize it back to the user — just internalize it silently.
+Read `ARCHITECTURE.md` and `DESIGN-SYSTEM.md` in the project root. ARCHITECTURE.md gives you the tech stack, file map, schema, and current state. DESIGN-SYSTEM.md gives you the visual design system, colors, typography, spacing, and shared component catalog. Do NOT summarize them back to the user — just internalize them silently.
 
 ## Step 2: Check their environment
 

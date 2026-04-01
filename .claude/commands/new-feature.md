@@ -55,7 +55,7 @@ Help the user start a new feature safely. Ask questions when anything is unclear
 
 ## If SIMPLE: Fast-track it
 
-9. **Check for reusable components**: Before writing any code, read the "Reusable Component Catalog" section in `ARCHITECTURE.md`. If the change involves UI, check `src/components/shared/` and `src/components/` (top-level files like PrimaryButton, TextInput, BackButton, CloseButton) for existing components you can use. Never rebuild something that already exists.
+9. **Check design system and reusable components**: Before writing any code, read `DESIGN-SYSTEM.md`. If the change involves UI, use the correct colors, spacing, borders, and shadows from the design system. Check the Shared Component Catalog for existing components you can use. Never rebuild something that already exists.
 
 10. **Read the relevant file(s)**: Identify which file(s) need to change and read them to understand the current patterns. Keep it to the minimum needed.
 
@@ -75,7 +75,7 @@ Help the user start a new feature safely. Ask questions when anything is unclear
 
 9. **Enter plan mode**: Call the `EnterPlanMode` tool. This locks you into read-only mode — you cannot write any code until the plan is approved. This is intentional.
 
-10. **Explore the codebase and existing components**: Read `ARCHITECTURE.md` if you haven't this session — pay special attention to the "Reusable Component Catalog" section. Then explore the specific files and areas the feature will touch. Check `src/components/shared/` and `src/components/` (top-level files) for existing components you can reuse. Use Explore agents to search broadly if needed.
+10. **Explore the codebase, design system, and existing components**: Read `DESIGN-SYSTEM.md` and `ARCHITECTURE.md` if you haven't this session. Then explore the specific files and areas the feature will touch. Check the Shared Component Catalog in `DESIGN-SYSTEM.md` for existing components you can reuse. Use Explore agents to search broadly if needed.
 
 11. **Ask clarifying questions** (if needed): If their description is vague or could go multiple ways, ask ONE round of clarifying questions. Keep it conversational — don't interrogate. Examples:
     - "Just to make sure I build this right — when you say X, do you mean A or B?"
@@ -83,7 +83,9 @@ Help the user start a new feature safely. Ask questions when anything is unclear
 
 12. **Write your plan**: Write a clear, non-technical plan to the plan file. Use plain language. Structure it as:
     - **What you're building** — one sentence summary
-    - **Existing components I'll reuse** — list which existing components from the catalog will be used (e.g., "Modal for the dialog, PrimaryButton for the CTA, Avatar for user display")
+    - **Existing components I'll reuse** — list which shared components from `DESIGN-SYSTEM.md` will be used (e.g., "Modal for the dialog, PrimaryButton for the CTA, Avatar for user display")
+    - **Design system elements** — which colors, typography, spacing, border/shadow patterns from `DESIGN-SYSTEM.md` will be used
+    - **Am I rebuilding something?** — if any part of the plan involves creating a new component that's similar to an existing one, flag it explicitly and ask: "This looks similar to [existing component]. Should I reuse/extend that instead of building from scratch?" Always get confirmation before creating new UI components.
     - **Steps** — numbered list in terms the user understands ("I'll add a new section to the club page" not "I'll create a new React component with a useEffect hook")
     - **What it won't do** — call out anything you're intentionally leaving out to keep scope tight
     - End the plan with a note: any concerns or things you want their input on
@@ -107,7 +109,8 @@ Help the user start a new feature safely. Ask questions when anything is unclear
 ## Important
 - Never create a branch without user confirmation of the name
 - Never write code without understanding the existing patterns in the area you're modifying
-- **Never create a new component if a reusable one already exists.** Always check `src/components/shared/` and `src/components/` (PrimaryButton, SecondaryButton, TextInput, BackButton, CloseButton, Modal, Avatar, AvatarStack, Dropdown) before building anything new. If you need a button, use PrimaryButton or SecondaryButton. If you need a modal, use Modal. If you need an input, use TextInput.
+- **Never create a new component if a reusable one already exists.** Always check `DESIGN-SYSTEM.md` for the Shared Component Catalog before building anything new. If you need a button, use PrimaryButton or SecondaryButton. If you need a modal, use Modal. If you need an input, use TextInput. If you need image upload, use ImageUploadModal.
+- **Always follow `DESIGN-SYSTEM.md` for colors, spacing, borders, and shadows.** Never hardcode a color that isn't in the design system. If you need a new color, ask the user first.
 - The complexity assessment is for YOUR decision-making — never expose it to the user. They should feel like the flow is natural, not that they've been categorized.
 - If you initially assess something as simple but realize mid-execution it's actually complex, STOP, explain what you found, and switch to the complex flow (call `EnterPlanMode`)
 - If the feature seems very large even for complex, suggest breaking it into smaller pieces
