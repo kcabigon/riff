@@ -61,6 +61,7 @@ export default async function ProfilePageRoute({
       riffs: {
         select: {
           versionId: true,
+          submittedAt: true,
           riff: {
             select: { id: true, title: true },
           },
@@ -74,10 +75,10 @@ export default async function ProfilePageRoute({
     orderBy: { createdAt: "desc" },
   });
 
-  // Submitted pieces: have at least one PieceRiff with a non-null versionId
+  // Submitted pieces: have at least one PieceRiff with a non-null submittedAt
   const submittedPieceIds = new Set(
     allPieces
-      .filter((p) => p.riffs.some((r) => r.versionId !== null))
+      .filter((p) => p.riffs.some((r) => r.submittedAt !== null))
       .map((p) => p.id)
   );
 
