@@ -87,6 +87,12 @@
   color: #000000;
 }
 
+/* Nested lists — no extra gap */
+.write-editor .ProseMirror li ul,
+.write-editor .ProseMirror li ol {
+  margin: 0;
+}
+
 .write-editor .ProseMirror li {
   margin: 0;
   padding: 0;
@@ -94,6 +100,11 @@
   font-family: var(--font-playfair), serif;
   font-size: 18px;
   line-height: normal;
+}
+
+/* Paragraphs inside list items — no bottom margin */
+.write-editor .ProseMirror li p {
+  margin: 0;
 }
 
 /* Links */
