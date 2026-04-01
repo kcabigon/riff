@@ -78,7 +78,7 @@ export default function DeleteRiffConfirmModal({
             lineHeight: 1.5,
           }}
         >
-          This will permanently delete the riff and remove all participant data.
+          This will permanently delete the riff and cannot be undone.
         </p>
         <p
           style={{
@@ -90,8 +90,7 @@ export default function DeleteRiffConfirmModal({
             lineHeight: 1.5,
           }}
         >
-          Writers will keep their drafts, but their submissions will be
-          detached.
+          Writers will keep their drafts, which will be detached from the riff.
         </p>
       </div>
 
