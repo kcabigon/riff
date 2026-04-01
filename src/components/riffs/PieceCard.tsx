@@ -93,7 +93,7 @@ export default function PieceCard({
             position: "absolute",
             top: "8px",
             right: "8px",
-            backgroundColor: "#FF6B35",
+            backgroundColor: "#EECF01",
             border: "1px solid #000000",
             padding: "2px 8px",
             fontFamily: "var(--font-dm-sans)",
