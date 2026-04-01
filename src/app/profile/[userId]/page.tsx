@@ -63,7 +63,11 @@ export default async function ProfilePageRoute({
           versionId: true,
           submittedAt: true,
           riff: {
-            select: { id: true, title: true },
+            select: {
+              id: true,
+              title: true,
+              club: { select: { name: true } },
+            },
           },
         },
       },
@@ -104,6 +108,7 @@ export default async function ProfilePageRoute({
       riffs: p.riffs.map((r) => ({
         id: r.riff.id,
         title: r.riff.title,
+        clubName: r.riff.club.name,
       })),
     }));
 
@@ -124,7 +129,11 @@ export default async function ProfilePageRoute({
               riffs: {
                 select: {
                   riff: {
-                    select: { id: true, title: true },
+                    select: {
+                      id: true,
+                      title: true,
+                      club: { select: { name: true } },
+                    },
                   },
                 },
               },
@@ -153,6 +162,7 @@ export default async function ProfilePageRoute({
       riffs: cp.piece.riffs.map((r) => ({
         id: r.riff.id,
         title: r.riff.title,
+        clubName: r.riff.club.name,
       })),
     })),
   }));
