@@ -454,7 +454,7 @@ export default function WritePage({ piece }: WritePageProps) {
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "12px",
+                gap: "8px",
                 flexWrap: "wrap",
                 justifyContent: "flex-end",
               }}
@@ -633,51 +633,59 @@ export default function WritePage({ piece }: WritePageProps) {
                 </span>
               </div>
 
-              {/* Cover button */}
-              <IconButton
-                src="/icons/cover_photo.svg"
-                label={coverImage ? "Change cover image" : "Add cover image"}
-                onClick={() => setShowCoverModal(true)}
-                size={24}
-              />
-
-              {/* Share button */}
-              {piece.riffs.length > 0 &&
-                (isSubmitted ? (
-                  <span
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "4px",
-                      fontFamily: "var(--font-dm-sans)",
-                      fontSize: "12px",
-                      fontWeight: 300,
-                      color: "#000000",
-                      background: "#00FF66",
-                      border: "1px solid #000000",
-                      borderRadius: "2px",
-                      padding: "2px 8px",
-                    }}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path
-                        d="M2 6L5 9L10 3"
-                        stroke="#000000"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    Shared
-                  </span>
-                ) : (
-                  <IconButton
-                    src="/icons/share.svg"
-                    label="Share to riff"
-                    onClick={() => setShowShareModal(true)}
-                    size={24}
-                  />
-                ))}
+              {/* Cover + Share — grouped tightly */}
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "2px" }}
+              >
+                <IconButton
+                  src="/icons/icon_polaroid.png"
+                  label={coverImage ? "Change cover image" : "Add cover image"}
+                  onClick={() => setShowCoverModal(true)}
+                  width={33}
+                  height={36}
+                />
+                {piece.riffs.length > 0 &&
+                  (isSubmitted ? (
+                    <span
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "12px",
+                        fontWeight: 300,
+                        color: "#000000",
+                        background: "#00FF66",
+                        border: "2px solid #000000",
+                        padding: "2px 8px",
+                      }}
+                    >
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 12 12"
+                        fill="none"
+                      >
+                        <path
+                          d="M2 6L5 9L10 3"
+                          stroke="#000000"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      Shared
+                    </span>
+                  ) : (
+                    <IconButton
+                      src="/icons/icon_paper_plane.png"
+                      label="Share to riff"
+                      onClick={() => setShowShareModal(true)}
+                      width={63}
+                      height={36}
+                    />
+                  ))}
+              </div>
             </div>
           </div>
 
