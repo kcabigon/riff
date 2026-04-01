@@ -444,6 +444,10 @@ export default function RiffPageLayout({
             <ContributionStrip
               members={contributionData}
               totalPieces={totalPieces}
+              totalWords={riff.pieces.reduce(
+                (sum, p) => sum + (p.piece.wordCount || 0),
+                0
+              )}
             />
           </div>
         )}
@@ -451,44 +455,6 @@ export default function RiffPageLayout({
         {/* Pieces gallery for REVEALED riffs */}
         {riff.status === "REVEALED" && riff.pieces.length > 0 && (
           <div style={{ marginTop: "48px" }}>
-            {/* Stats header */}
-            <div
-              style={{
-                display: "flex",
-                gap: "16px",
-                marginBottom: "24px",
-              }}
-            >
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#000000",
-                  margin: 0,
-                }}
-              >
-                <span style={{ fontWeight: 700 }}>{riff.pieces.length}</span>{" "}
-                {riff.pieces.length === 1 ? "piece" : "pieces"}
-              </p>
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#000000",
-                  margin: 0,
-                }}
-              >
-                <span style={{ fontWeight: 700 }}>
-                  {riff.pieces
-                    .reduce((sum, p) => sum + (p.piece.wordCount || 0), 0)
-                    .toLocaleString()}
-                </span>{" "}
-                words
-              </p>
-            </div>
-
             {/* Pieces grid */}
             <div
               style={{

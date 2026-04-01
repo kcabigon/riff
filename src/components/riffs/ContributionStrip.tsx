@@ -7,12 +7,27 @@ interface ContributionStripProps {
     commentCount: number;
   }>;
   totalPieces: number;
+  totalWords: number;
 }
 
 export default function ContributionStrip({
   members,
   totalPieces,
+  totalWords,
 }: ContributionStripProps) {
+  const totalReads = members.reduce((sum, m) => sum + m.readCount, 0);
+  const totalComments = members.reduce((sum, m) => sum + m.commentCount, 0);
+
+  const stats = [
+    { value: totalPieces, label: totalPieces === 1 ? "piece" : "pieces" },
+    { value: totalWords.toLocaleString(), label: "words" },
+    { value: totalReads, label: totalReads === 1 ? "read" : "reads" },
+    {
+      value: totalComments,
+      label: totalComments === 1 ? "comment" : "comments",
+    },
+  ];
+
   return (
     <div>
       <p
@@ -21,13 +36,38 @@ export default function ContributionStrip({
           fontSize: "20px",
           fontWeight: 300,
           color: "#808080",
-          margin: "0 0 16px 0",
+          margin: "0 0 12px 0",
           textTransform: "uppercase",
           letterSpacing: "0.05em",
         }}
       >
         Making Noise
       </p>
+
+      {/* Aggregate stats row */}
+      <div
+        style={{
+          display: "flex",
+          gap: "16px",
+          marginBottom: "20px",
+          flexWrap: "wrap",
+        }}
+      >
+        {stats.map((stat, i) => (
+          <p
+            key={i}
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "16px",
+              fontWeight: 300,
+              color: "#000000",
+              margin: 0,
+            }}
+          >
+            <span style={{ fontWeight: 700 }}>{stat.value}</span> {stat.label}
+          </p>
+        ))}
+      </div>
 
       <div
         style={{
