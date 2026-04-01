@@ -171,6 +171,7 @@ export default async function RiffPage({
   const serializedRiff = {
     ...riff,
     createdAt: riff.createdAt.toISOString(),
+    updatedAt: riff.updatedAt.toISOString(),
     deadline: riff.deadline ? riff.deadline.toISOString() : null,
     pieces: riff.pieces.map((pr) => ({
       ...pr,

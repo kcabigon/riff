@@ -25,6 +25,7 @@ interface RiffPageLayoutProps {
     deadline: string | null;
     status: string;
     createdAt: string;
+    updatedAt?: string;
     clubId: string;
     club: { id: string; name: string };
     creator: {
@@ -358,6 +359,22 @@ export default function RiffPageLayout({
               minWidth: "200px",
             }}
           >
+            {riff.status === "REVEALED" && riff.updatedAt && (
+              <div
+                style={{
+                  border: "2px solid #000000",
+                  padding: "12px 48px",
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 300,
+                  color: "#000000",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Revealed {formatDate(riff.updatedAt)}
+              </div>
+            )}
+
             {riff.status === "REVEALED" &&
               (() => {
                 const totalReads = contributionData.reduce(
