@@ -97,7 +97,7 @@ function PieceDotsMenu({ items }: { items: DropdownItem[] }) {
   const [hovered, setHovered] = useState(false);
   return (
     <div
-      style={{ position: "absolute", top: "8px", left: "8px", zIndex: 3 }}
+      style={{ position: "absolute", top: "8px", right: "8px", zIndex: 3 }}
       onClick={(e) => e.stopPropagation()}
     >
       <Dropdown
@@ -127,7 +127,7 @@ function PieceDotsMenu({ items }: { items: DropdownItem[] }) {
           </button>
         }
         items={items}
-        align="left"
+        align="right"
       />
     </div>
   );
@@ -215,11 +215,6 @@ export default function MyWritingPage({
 
   const renderPieceGridItem = (piece: PieceItem) => {
     const menuItems: DropdownItem[] = [
-      {
-        type: "action",
-        label: "View",
-        onClick: () => router.push(`/read/${piece.id}`),
-      },
       {
         type: "action",
         label: "Edit",
