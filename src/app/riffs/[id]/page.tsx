@@ -17,6 +17,19 @@ export default async function RiffPage({
 
   const userId = session.user.id;
 
+  // Fetch user profile and all their clubs in parallel (for nav)
+  const [navUser, userClubs] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true, username: true, avatarUrl: true },
+    }),
+    prisma.club.findMany({
+      where: { members: { some: { userId } }, isArchived: false },
+      select: { id: true, name: true },
+      orderBy: { updatedAt: "desc" },
+    }),
+  ]);
+
   // Fetch riff with full data
   const riff = await prisma.riff.findUnique({
     where: { id },
@@ -199,6 +212,8 @@ export default async function RiffPage({
       hasNewCommentsMap={hasNewCommentsMap}
       contributionData={contributionData}
       totalPieces={riff.pieces.length}
+      navUser={navUser}
+      userClubs={userClubs}
     />
   );
 }

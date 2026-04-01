@@ -7,7 +7,7 @@ import PieceCard from "./PieceCard";
 import RevealConfirmModal from "./RevealConfirmModal";
 import EditRiffModal from "./EditRiffModal";
 import DeleteRiffConfirmModal from "./DeleteRiffConfirmModal";
-import BackButton from "@/components/BackButton";
+import NavBar from "@/components/clubs/NavBar";
 import RevealCelebration from "./RevealCelebration";
 import { getRiffDisplayTitle } from "@/lib/riff-utils";
 import RiffCTAButton from "@/components/riffs/RiffCTAButton";
@@ -67,6 +67,13 @@ interface RiffPageLayoutProps {
   isJoined: boolean;
   hasDraft: boolean;
   hasSubmitted: boolean;
+  navUser?: {
+    id: string;
+    name: string | null;
+    username: string | null;
+    avatarUrl: string | null;
+  } | null;
+  userClubs?: Array<{ id: string; name: string }>;
   readPieceIds?: string[];
   hasNewCommentsMap?: Record<string, boolean>;
   contributionData?: Array<{
@@ -85,6 +92,8 @@ export default function RiffPageLayout({
   isJoined: initialIsJoined,
   hasDraft,
   hasSubmitted,
+  navUser,
+  userClubs = [],
   readPieceIds = [],
   hasNewCommentsMap = {},
   contributionData = [],
@@ -171,16 +180,14 @@ export default function RiffPageLayout({
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
-      {/* Back navigation */}
-      <div
-        style={{
-          maxWidth: "1000px",
-          margin: "0 auto",
-          padding: "24px 24px 0",
-        }}
-      >
-        <BackButton href={`/clubs/${riff.clubId}`} />
-      </div>
+      {/* Nav bar */}
+      {navUser && (
+        <NavBar
+          user={navUser}
+          clubs={userClubs}
+          currentClub={{ id: riff.clubId, name: riff.club.name }}
+        />
+      )}
 
       {/* Main content */}
       <div
