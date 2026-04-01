@@ -57,6 +57,16 @@ export default function WritePage({ piece }: WritePageProps) {
   const linkSelectionRef = useRef<{ from: number; to: number } | null>(null);
   const [showYoutubeModal, setShowYoutubeModal] = useState(false);
   const [showSpotifyModal, setShowSpotifyModal] = useState(false);
+  const [availableRiffs, setAvailableRiffs] = useState<
+    {
+      id: string;
+      title: string | null;
+      clubId: string;
+      club: { name: string };
+    }[]
+  >([]);
+  const [showRiffPicker, setShowRiffPicker] = useState(false);
+  const riffPickerRef = useRef<HTMLDivElement>(null);
   const isSubmitted = piece.riffs.some((r) => r.submittedAt !== null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const titleRef = useRef<HTMLTextAreaElement>(null);
@@ -74,7 +84,9 @@ export default function WritePage({ piece }: WritePageProps) {
     editorProps: {},
     extensions: [
       // Shared extensions (same as read page for fidelity), minus Image and Link (overridden below)
-      ...getSharedExtensions().filter((ext) => ext.name !== "image" && ext.name !== "link"),
+      ...getSharedExtensions().filter(
+        (ext) => ext.name !== "image" && ext.name !== "link"
+      ),
       // Write-specific: Link renders as <span> so browser can't navigate
       Link.extend({
         renderHTML({ HTMLAttributes }) {
@@ -297,6 +309,38 @@ export default function WritePage({ piece }: WritePageProps) {
     };
   }, [subtitle, autosaveSubtitle]);
 
+  // Fetch riffs this piece can be added to
+  useEffect(() => {
+    fetch(`/api/pieces/${piece.id}/available-riffs`)
+      .then((r) => r.json())
+      .then((data) => setAvailableRiffs(data.riffs ?? []));
+  }, [piece.id]);
+
+  // Close riff picker on outside click
+  useEffect(() => {
+    if (!showRiffPicker) return;
+    const handler = (e: MouseEvent) => {
+      if (
+        riffPickerRef.current &&
+        !riffPickerRef.current.contains(e.target as Node)
+      ) {
+        setShowRiffPicker(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showRiffPicker]);
+
+  const handleAddToRiff = async (riffId: string) => {
+    setShowRiffPicker(false);
+    await fetch(`/api/riffs/${riffId}/pieces`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pieceId: piece.id }),
+    });
+    router.refresh();
+  };
+
   const handleImageUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -405,7 +449,7 @@ export default function WritePage({ piece }: WritePageProps) {
           >
             <BackButton onClick={handleBack} />
 
-            {/* Right side: save status + cover + share */}
+            {/* Right side: riff pills + save status + cover + share */}
             <div
               style={{
                 display: "flex",
@@ -415,6 +459,141 @@ export default function WritePage({ piece }: WritePageProps) {
                 justifyContent: "flex-end",
               }}
             >
+              {/* Riff pills */}
+              {piece.riffs.map((riff) => (
+                <span
+                  key={riff.id}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "12px",
+                    fontWeight: 400,
+                    color: "#000000",
+                    border: "1px solid #00FF66",
+                    borderRadius: "2px",
+                    padding: riff.submittedAt ? "4px 12px" : "4px 8px 4px 12px",
+                  }}
+                >
+                  {riff.clubName}
+                  {!riff.submittedAt && (
+                    <button
+                      onClick={async () => {
+                        await fetch(
+                          `/api/riffs/${riff.id}/pieces/${piece.id}`,
+                          {
+                            method: "DELETE",
+                          }
+                        );
+                        router.refresh();
+                      }}
+                      title="Remove from riff"
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        padding: "0",
+                        display: "flex",
+                        alignItems: "center",
+                        color: "#888888",
+                        lineHeight: 1,
+                      }}
+                    >
+                      <svg
+                        width="10"
+                        height="10"
+                        viewBox="0 0 10 10"
+                        fill="none"
+                      >
+                        <path
+                          d="M1 1L9 9M9 1L1 9"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                    </button>
+                  )}
+                </span>
+              ))}
+
+              {/* Add to riff picker */}
+              {availableRiffs.length > 0 && (
+                <div ref={riffPickerRef} style={{ position: "relative" }}>
+                  <button
+                    onClick={() => setShowRiffPicker((o) => !o)}
+                    title="Add to a riff"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: "24px",
+                      height: "24px",
+                      background: "none",
+                      border: "1px solid #000000",
+                      borderRadius: "2px",
+                      cursor: "pointer",
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "16px",
+                      lineHeight: 1,
+                      color: "#000000",
+                    }}
+                  >
+                    +
+                  </button>
+                  {showRiffPicker && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "calc(100% + 8px)",
+                        right: 0,
+                        backgroundColor: "#FFFFFF",
+                        border: "2px solid #000000",
+                        boxShadow: "4px 4px 0px 0px #000000",
+                        minWidth: "180px",
+                        zIndex: 60,
+                      }}
+                    >
+                      {availableRiffs.map((riff) => (
+                        <button
+                          key={riff.id}
+                          onClick={() => handleAddToRiff(riff.id)}
+                          style={{
+                            display: "block",
+                            width: "100%",
+                            textAlign: "left",
+                            background: "none",
+                            border: "none",
+                            padding: "10px 16px",
+                            fontFamily: "var(--font-dm-sans)",
+                            fontSize: "14px",
+                            fontWeight: 300,
+                            color: "#000000",
+                            cursor: "pointer",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = "#F5F5F5";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor =
+                              "transparent";
+                          }}
+                        >
+                          {riff.club.name}
+                          {riff.title && (
+                            <span
+                              style={{ color: "#999999", marginLeft: "6px" }}
+                            >
+                              · {riff.title}
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               {/* Save status */}
               <div
                 style={{
@@ -537,69 +716,6 @@ export default function WritePage({ piece }: WritePageProps) {
       >
         {/* Spacer — accounts for fixed bar height on mobile */}
         <div style={{ height: isMobile ? "140px" : "24px" }} />
-
-        {/* Riff pills */}
-        {piece.riffs.length > 0 && (
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              gap: "8px",
-              marginBottom: "16px",
-              flexWrap: "wrap",
-            }}
-          >
-            {piece.riffs.map((riff) => (
-              <span
-                key={riff.id}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "12px",
-                  fontWeight: 400,
-                  color: "#000000",
-                  border: "1px solid #00FF66",
-                  borderRadius: "2px",
-                  padding: riff.submittedAt ? "4px 12px" : "4px 8px 4px 12px",
-                }}
-              >
-                {riff.title || "Active Riff"}
-                {!riff.submittedAt && (
-                  <button
-                    onClick={async () => {
-                      await fetch(`/api/riffs/${riff.id}/pieces/${piece.id}`, {
-                        method: "DELETE",
-                      });
-                      router.refresh();
-                    }}
-                    title="Remove from riff"
-                    style={{
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      padding: "0",
-                      display: "flex",
-                      alignItems: "center",
-                      color: "#888888",
-                      lineHeight: 1,
-                    }}
-                  >
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                      <path
-                        d="M1 1L9 9M9 1L1 9"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  </button>
-                )}
-              </span>
-            ))}
-          </div>
-        )}
 
         {/* Writing area */}
         <div
