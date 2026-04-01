@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Avatar from "@/components/shared/Avatar";
-import { extractFirstImage } from "@/lib/extract-first-image";
 
 interface PieceCardProps {
   piece: {
@@ -10,15 +9,17 @@ interface PieceCardProps {
     title: string;
     coverImage?: string | null;
     currentContent: string;
-    wordCount: number;
+    wordCount?: number;
     commentCount?: number;
-    author: {
+    author?: {
       id: string;
       name: string | null;
       avatarUrl: string | null;
     };
   };
   isRead: boolean;
+  hasNewComments?: boolean;
+  isOwnPiece?: boolean;
   onClick: () => void;
 }
 
@@ -35,16 +36,15 @@ const PLACEHOLDER_COLORS = [
 export default function PieceCard({
   piece,
   isRead,
+  hasNewComments = false,
+  isOwnPiece = false,
   onClick,
 }: PieceCardProps) {
   const [isHovered, setIsHovered] = useState(false);
 
-  const imageUrl =
-    piece.coverImage || extractFirstImage(piece.currentContent);
+  const imageUrl = piece.coverImage;
   const placeholderColor =
-    PLACEHOLDER_COLORS[
-      piece.id.charCodeAt(0) % PLACEHOLDER_COLORS.length
-    ];
+    PLACEHOLDER_COLORS[piece.id.charCodeAt(0) % PLACEHOLDER_COLORS.length];
 
   return (
     <div
@@ -52,90 +52,151 @@ export default function PieceCard({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={{
+        position: "relative",
         border: "1px solid #000000",
-        borderLeft: !isRead ? "3px solid #00FF66" : "1px solid #000000",
         cursor: "pointer",
         overflow: "hidden",
-        boxShadow: isHovered ? "4px 4px 0px 0px #000000" : "none",
+        aspectRatio: "4 / 5",
+        boxShadow: isHovered ? "8px 8px 0px 0px #000000" : "none",
         transition: "box-shadow 0.1s ease",
-        backgroundColor: "#FFFFFF",
+        backgroundColor: imageUrl ? undefined : placeholderColor,
       }}
     >
-      {/* Cover image area */}
+      {/* Cover image */}
+      {imageUrl && (
+        <img
+          src={imageUrl}
+          alt=""
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+          }}
+        />
+      )}
+
+      {/* Dark overlay */}
       <div
         style={{
-          width: "100%",
-          height: "180px",
-          overflow: "hidden",
-          position: "relative",
+          position: "absolute",
+          inset: 0,
+          backgroundColor: "rgba(0, 0, 0, 0.5)",
+        }}
+      />
+
+      {/* Own piece — orange comment count top-right */}
+      {isOwnPiece && (piece.commentCount ?? 0) > 0 && (
+        <div
+          style={{
+            position: "absolute",
+            top: "8px",
+            right: "8px",
+            backgroundColor: "#EECF01",
+            border: "1px solid #000000",
+            padding: "2px 8px",
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "11px",
+            fontWeight: 700,
+            color: "#000000",
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+            zIndex: 2,
+          }}
+        >
+          {piece.commentCount} comments
+        </div>
+      )}
+
+      {/* Top-right badge — UNREAD (green) for unread others' pieces, NEW (cyan) for new comments */}
+      {!isOwnPiece && !isRead && (
+        <div
+          style={{
+            position: "absolute",
+            top: "8px",
+            right: "8px",
+            backgroundColor: "#00FF66",
+            border: "1px solid #000000",
+            padding: "2px 8px",
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "11px",
+            fontWeight: 700,
+            color: "#000000",
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+            zIndex: 2,
+          }}
+        >
+          UNREAD
+        </div>
+      )}
+      {!isOwnPiece && isRead && hasNewComments && (
+        <div
+          style={{
+            position: "absolute",
+            top: "8px",
+            right: "8px",
+            backgroundColor: "#01EFFC",
+            border: "1px solid #000000",
+            padding: "2px 8px",
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "11px",
+            fontWeight: 700,
+            color: "#000000",
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+            zIndex: 2,
+          }}
+        >
+          NEW
+        </div>
+      )}
+
+      {/* Title — vertically centered */}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          right: 0,
+          bottom: 0,
+          left: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          paddingTop: "24px",
+          paddingRight: "24px",
+          paddingBottom: "24px",
+          paddingLeft: "24px",
+          zIndex: 1,
         }}
       >
-        {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt=""
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-            }}
-          />
-        ) : (
-          <div
-            style={{
-              width: "100%",
-              height: "100%",
-              backgroundColor: placeholderColor,
-            }}
-          />
-        )}
-
-        {/* NEW badge for unread */}
-        {!isRead && (
-          <div
-            style={{
-              position: "absolute",
-              top: "8px",
-              right: "8px",
-              backgroundColor: "#00FF66",
-              border: "1px solid #000000",
-              padding: "2px 8px",
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "11px",
-              fontWeight: 700,
-              color: "#000000",
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
-            }}
-          >
-            NEW
-          </div>
-        )}
-      </div>
-
-      {/* Content */}
-      <div style={{ padding: "16px" }}>
-        {/* Title */}
         <h4
           style={{
             fontFamily: "var(--font-dm-serif-text)",
-            fontSize: "18px",
+            fontSize: "20px",
             fontWeight: 400,
-            color: "#000000",
-            margin: "0 0 8px 0",
+            color: "#FFFFFF",
+            margin: 0,
+            textAlign: "center",
             lineHeight: 1.3,
           }}
         >
           {piece.title}
         </h4>
+      </div>
 
-        {/* Author */}
+      {/* Author avatar — bottom center, only when author is provided */}
+      {piece.author && (
         <div
           style={{
+            position: "absolute",
+            bottom: "16px",
+            left: 0,
+            right: 0,
             display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            marginBottom: "4px",
+            justifyContent: "center",
+            zIndex: 2,
           }}
         >
           <Avatar
@@ -145,49 +206,11 @@ export default function PieceCard({
               username: null,
               avatarUrl: piece.author.avatarUrl,
             }}
-            size={24}
+            size={32}
+            borderColor="#FFFFFF"
           />
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              fontWeight: 300,
-              color: "#808080",
-              margin: 0,
-            }}
-          >
-            {piece.author.name || "Unknown"}
-          </p>
         </div>
-
-        {/* Word count + comment count */}
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              fontWeight: 300,
-              color: "#AFAFAF",
-              margin: 0,
-            }}
-          >
-            {piece.wordCount.toLocaleString()} words
-          </p>
-          {piece.commentCount !== undefined && piece.commentCount > 0 && (
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "12px",
-                fontWeight: 300,
-                color: "#808080",
-                margin: 0,
-              }}
-            >
-              💬 {piece.commentCount}
-            </p>
-          )}
-        </div>
-      </div>
+      )}
     </div>
   );
 }

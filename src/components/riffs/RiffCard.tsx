@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import CountdownTimer from "./CountdownTimer";
 import AvatarStack from "@/components/shared/AvatarStack";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
-import { useDraftCreation } from "@/hooks/useDraftCreation";
 import { getRiffDisplayTitle } from "@/lib/riff-utils";
+import RiffCTAButton from "@/components/riffs/RiffCTAButton";
 
 interface RiffCardProps {
   riff: {
@@ -26,13 +26,17 @@ interface RiffCardProps {
       };
     }>;
     pieces: Array<{
+      submittedAt?: Date | string | null;
       piece: {
         id: string;
         authorId: string;
+        title: string;
+        wordCount: number;
       };
     }>;
   };
   isJoined: boolean;
+  hasDraft: boolean;
   hasSubmitted: boolean;
   currentUserId: string;
   isAdmin: boolean;
@@ -43,6 +47,7 @@ interface RiffCardProps {
 export default function RiffCard({
   riff,
   isJoined,
+  hasDraft,
   hasSubmitted,
   currentUserId,
   isAdmin,
@@ -53,16 +58,15 @@ export default function RiffCard({
   const [isCardHovered, setIsCardHovered] = useState(false);
   const router = useRouter();
   const handleAvatarClick = useProfileNavigation();
-  const { createDraft, isCreating } = useDraftCreation();
 
   // Deadline detection
   const isPastDeadline = riff.deadline
     ? new Date(riff.deadline).getTime() < Date.now()
     : false;
 
-  // Host can reveal riffs with no deadline if at least 1 piece submitted
-  const canRevealNoDeadline =
-    !riff.deadline && isAdmin && riff.pieces.length > 0;
+  const allPiecesSubmitted =
+    riff.participants.length > 0 &&
+    riff.pieces.filter((p) => p.submittedAt).length >= riff.participants.length;
 
   // Format date
   const formatDate = (date: Date) => {
@@ -82,32 +86,17 @@ export default function RiffCard({
     router.push(`/riffs/${riff.id}`);
   };
 
-  const handleJoinRiff = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    try {
-      const res = await fetch(`/api/riffs/${riff.id}/participants`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (res.ok && onJoin) {
-        onJoin();
+  const existingPieceMatch = riff.pieces.find(
+    (p) => p.piece.authorId === currentUserId
+  );
+  const existingPieceId = existingPieceMatch?.piece.id ?? null;
+  const existingPiece = existingPieceMatch
+    ? {
+        id: existingPieceMatch.piece.id,
+        title: existingPieceMatch.piece.title,
+        wordCount: existingPieceMatch.piece.wordCount,
       }
-    } catch (err) {
-      console.error("Error joining riff:", err);
-    }
-  };
-
-  const handleContinueWriting = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const existingPiece = riff.pieces.find(
-      (p) => p.piece.authorId === currentUserId
-    );
-    if (existingPiece) {
-      router.push(`/write/${existingPiece.piece.id}`);
-    } else {
-      createDraft(riff.id);
-    }
-  };
+    : null;
 
   const handleRevealClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -130,8 +119,8 @@ export default function RiffCard({
         justifyContent: "space-between",
         cursor: "pointer",
         boxShadow: isCardHovered
-          ? "4px 4px 0px 0px #01EFFC"
-          : "4px 4px 0px 0px #000000",
+          ? "8px 8px 0px 0px #01EFFC"
+          : "8px 8px 0px 0px #000000",
         transition: "box-shadow 0.1s ease",
       }}
     >
@@ -212,7 +201,6 @@ export default function RiffCard({
             <AvatarStack
               users={riff.participants.slice(0, 5).map((p) => p.user)}
               size={32}
-              showBorder={false}
               onAvatarClick={handleAvatarClick}
             />
           </div>
@@ -232,7 +220,7 @@ export default function RiffCard({
         }}
       >
         {/* Button */}
-        {(isPastDeadline || canRevealNoDeadline) && isAdmin ? (
+        {(isPastDeadline || allPiecesSubmitted) && isAdmin ? (
           <button
             onClick={handleRevealClick}
             onMouseEnter={() => setIsHovered(true)}
@@ -254,7 +242,7 @@ export default function RiffCard({
               whiteSpace: "nowrap",
             }}
           >
-            Reveal pieces
+            Reveal riff
           </button>
         ) : isPastDeadline && !isAdmin ? (
           <button
@@ -277,35 +265,16 @@ export default function RiffCard({
             Waiting for the host to reveal
           </button>
         ) : (
-          <button
-            onClick={isJoined ? handleContinueWriting : handleJoinRiff}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-            style={{
-              backgroundColor: isHovered ? "#00FF66" : "#FFFFFF",
-              border: "2px solid #000000",
-              boxShadow: isHovered
-                ? "8px 8px 0px 0px #000000"
-                : isJoined
-                  ? "8px 8px 0px 0px #00FF66"
-                  : "8px 8px 0px 0px #01EFFC",
-              padding: "12px 48px",
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              lineHeight: "normal",
-              color: "#000000",
-              cursor: "pointer",
-              transition: "none",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {isJoined
-              ? hasSubmitted
-                ? "View submission"
-                : "Continue writing"
-              : "Join riff"}
-          </button>
+          <RiffCTAButton
+            riffId={riff.id}
+            isJoined={isJoined}
+            hasDraft={hasDraft}
+            hasSubmitted={hasSubmitted}
+            existingPieceId={existingPieceId}
+            existingPiece={existingPiece}
+            onJoin={onJoin}
+            stopPropagation
+          />
         )}
 
         {/* Countdown Timer or Time's up */}

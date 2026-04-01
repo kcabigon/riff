@@ -1,6 +1,6 @@
 # Riff — Architecture & Project Reference
 
-**Last Updated**: March 23, 2026
+**Last Updated**: March 29, 2026
 
 This file is the single source of truth for project context. The `/letsriff` slash command reads this automatically at the start of each session.
 
@@ -14,7 +14,7 @@ A private essay-sharing platform for creative communities. Users create **clubs*
 
 ---
 
-## Current State (March 23, 2026)
+## Current State (March 29, 2026)
 
 ### What's Working
 - Landing page + About page
@@ -22,10 +22,11 @@ A private essay-sharing platform for creative communities. Users create **clubs*
 - Full onboarding flow (name → club → banner → invite)
 - Club detail page with onboarding checklist, riff cards, completed riffs
 - Riff lifecycle: DRAFT → ACTIVE → REVEALED → COMPLETED (with confetti)
-- Read page with progress bar, piece navigation, comment toggle
-- Comment system with text selection anchoring
-- Rich text editor (Tiptap: images, YouTube, Spotify, resize)
-- Draft editor with autosave and cover image upload (crop, HEIC support)
+- Read page with Tiptap read-only rendering, comment toggle, hide-on-scroll mobile nav
+- Comment system with text selection anchoring, bidirectional sidebar positioning, inline compose
+- Rich text editor (Tiptap: resizable images, YouTube, Spotify embeds)
+- Write page with white canvas, floating toolbar, subtitle, keyboard-aware mobile toolbar
+- Draft editor with autosave (content, title, subtitle, cover image) and HEIC support
 - Profile page (pieces, drafts, collections)
 - Settings page (edit profile, export data, delete account)
 - Notification system (bell + panel, polls every 30s)
@@ -78,55 +79,21 @@ src/app/api/
 src/components/
 ├── shared/        # Modal, Avatar, AvatarStack, AdminBadge, EnvironmentBadge, Dropdown, ImageUploadModal
 ├── clubs/         # ClubPageLayout, NavBar, ClubDropdown, AvatarDropdown, OnboardingChecklist, InviteOptions, ClubSettingsModal, JoinClubClient
-├── riffs/         # RiffCard, RiffPageLayout, CreateRiffModal, EditRiffModal, DeleteRiffConfirmModal,
-│                  # RevealCelebration, RevealConfirmModal, PieceCard, CompletedRiffCard, ReadyToRevealCard,
-│                  # MosaicCollage, PromptLibrary, EmptyRiffState, CountdownTimer
-├── read/          # ReadPageLayout, ReadToggle, ReadingProgress, PieceNavigation,
+├── riffs/         # RiffCard, RiffCTAButton, RiffPageLayout, CreateRiffModal, EditRiffModal,
+│                  # DeleteRiffConfirmModal, RevealCelebration, RevealConfirmModal, PieceCard,
+│                  # CompletedRiffCard, ReadyToRevealCard, MosaicCollage, PromptLibrary,
+│                  # EmptyRiffState, CountdownTimer
+├── read/          # ReadPageLayout, ReadOnlyEditor, ReadToggle, ReadingProgress,
 │                  # CommentAnchor, CommentPopover, CommentSidebar, CommentDrawer
 ├── notifications/ # NotificationBell, NotificationPanel, NotificationItem
 ├── settings/      # SettingsPage, ProfileSection, DataSection
 ├── about/         # AboutPage
-└── editor/        # TiptapEditor, EditorToolbar, extensions/Spotify
+├── write/         # WritePage, CoverImageModal, ShareConfirmModal, ResizableImageView,
+│                  # toolbar/StickyToolbar, toolbar/ToolbarButton, toolbar/toolbarButtons
+└── editor/        # TiptapEditor, EditorToolbar, extensions/Spotify, extensions/sharedExtensions
 ```
 
-### Reusable Component Catalog
-
-**IMPORTANT: Always reuse these components before building anything new.**
-
-#### Core UI (`src/components/`)
-| Component | File | Use for |
-|-----------|------|---------|
-| **PrimaryButton** | `PrimaryButton.tsx` | Primary actions (green, neo-brutalist). Props: `loading`, `disabled` |
-| **SecondaryButton** | `SecondaryButton.tsx` | Secondary actions (cyan). Same props as PrimaryButton |
-| **TextInput** | `TextInput.tsx` | All form inputs. Props: `error`, `multiline`, `rows` |
-| **BackButton** | `BackButton.tsx` | Back navigation. Props: `href`, `onClick`, `size` |
-| **CloseButton** | `CloseButton.tsx` | Close/dismiss actions. Props: `onClick`, `size` |
-| **NoiseBackground** | `NoiseBackground.tsx` | Fractal noise SVG backdrop. Props: `fillMode` |
-| **Tagline** | `Tagline.tsx` | Colored vector highlight text. Props: `text`, `color` |
-| **WelcomeNote** | `WelcomeNote.tsx` | Handwriting-font message box |
-
-#### Shared (`src/components/shared/`)
-| Component | File | Use for |
-|-----------|------|---------|
-| **Modal** | `Modal.tsx` | All modals/dialogs. Props: `isOpen`, `onClose`, `title`, `size` ("sm"\|"md"\|"lg"), `footer` |
-| **Avatar** | `Avatar.tsx` | User avatars everywhere. Props: `user`, `size` (24\|32\|40\|48), `badge` ("admin"\|"moderator") |
-| **AvatarStack** | `AvatarStack.tsx` | Overlapping avatar groups. Props: `users`, `size`, `onAvatarClick` |
-| **Dropdown** | `Dropdown.tsx` | All dropdown menus. Props: `trigger`, `items`, `align` ("left"\|"right") |
-| **ImageUploadModal** | `ImageUploadModal.tsx` | **Go-to modal for all image uploads.** Crop, drag-drop, HEIC/GIF support. Props: `isOpen`, `onClose`, `onSelect`, `title`, `aspectRatio` (16/9 for covers, 1 for avatars), `cropShape` ("rect"\|"round"), `currentImage`, `existingImages` |
-| **AdminBadge** | `AdminBadge.tsx` | Host/moderator role indicator. Props: `type`, `size` |
-| **EnvironmentBadge** | `EnvironmentBadge.tsx` | Dev/staging/prod label |
-
-#### Onboarding (`src/components/onboarding/`)
-| Component | File | Use for |
-|-----------|------|---------|
-| **ImageUpload** | `ImageUpload.tsx` | Drag-and-drop image upload with preview. Props: `onUpload`, `currentImage` |
-| **OnboardingCard** | `OnboardingCard.tsx` | Full-screen onboarding layout. Props: `showLogo`, `headerContent` |
-| **OnboardingProgress** | `OnboardingProgress.tsx` | Step dots. Props: `currentStep`, `totalSteps` |
-
-#### Auth (`src/components/auth/`)
-| Component | File | Use for |
-|-----------|------|---------|
-| **AuthCard** | `AuthCard.tsx` | Full-screen auth layout with noise background and logo |
+For the design system, shared component catalog, and UI patterns, see `DESIGN-SYSTEM.md`.
 
 ### Hooks & Lib
 ```
@@ -134,7 +101,9 @@ src/hooks/
 ├── useMediaQuery.ts           # SSR-safe media query + useIsMobile
 ├── useProfileNavigation.ts    # Navigate to /profile/[userId]
 ├── useDraftCreation.ts        # Create draft + navigate to write page
-└── useTextSelection.ts        # Text selection detection
+├── useTextSelection.ts        # Text selection detection
+├── useThemeColor.ts           # Dynamically update iOS Safari status bar color
+└── useScrollDirection.ts      # Hide-on-scroll detection for auto-hiding nav bars
 
 src/lib/
 ├── prisma.ts                  # Prisma singleton
@@ -166,24 +135,6 @@ User         → email, username, firstName, lastName, bio, avatarUrl, onboardin
 **Schema file**: `prisma/schema.prisma`
 
 ---
-
-## Design System
-
-### Colors
-- Primary: `#00FF66` (green) · Secondary: `#01EFFC` (cyan)
-- Yellow: `#EECF01` · Orange: `#FF6B35` · Pink: `#C01582` · Purple: `#955CB5`
-
-### Typography
-- Body: DM Sans (`--font-dm-sans`)
-- Handwriting: Over the Rainbow (`--font-over-the-rainbow`)
-- Serif display: Playfair Display (`--font-playfair`) — navbar wordmark
-- Hero: DM Serif Text (`--font-dm-serif-text`) — landing page 96px
-
-### Component Patterns
-- **PrimaryButton**: Green bg, white hover with green shadow
-- **Modal**: 2px border, 8px shadow, white bg, focus trap, ESC close
-- **Dropdown**: 2px black border, 4px hard black shadow, white bg, ESC/click-outside close. Items: action (with optional icon, active state), divider. Supports controlled and uncontrolled modes.
-- **CTA layout**: Row on desktop (text left, button right), column on mobile (text top, button full-width)
 
 ---
 

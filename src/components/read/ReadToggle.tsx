@@ -11,7 +11,6 @@ export default function ReadToggle({ isRiffMode, onToggle }: ReadToggleProps) {
       style={{
         display: "inline-flex",
         border: "2px solid #000000",
-        borderRadius: "8px",
         overflow: "hidden",
         fontFamily: "var(--font-dm-sans)",
         fontSize: "14px",

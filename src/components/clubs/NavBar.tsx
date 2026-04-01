@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import ClubDropdown from "./ClubDropdown";
 import AvatarDropdown from "./AvatarDropdown";
 import NotificationBell from "@/components/notifications/NotificationBell";
@@ -38,7 +39,6 @@ export default function NavBar({
         position: "sticky",
         top: 0,
         zIndex: 50,
-        height: "72px",
         backgroundColor: "#000000",
         display: "flex",
         alignItems: "center",
@@ -65,11 +65,9 @@ export default function NavBar({
           }}
         >
           {/* Logo */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-            }}
+          <Link
+            href={currentClub ? `/clubs/${currentClub.id}` : "/"}
+            style={{ display: "flex", alignItems: "center" }}
           >
             <Image
               src="/images/landing/riff_logo.svg"
@@ -78,7 +76,7 @@ export default function NavBar({
               height={36}
               priority
             />
-          </div>
+          </Link>
 
           {/* Club Dropdown */}
           {showClubDropdown && currentClub && (

@@ -2,17 +2,20 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import AvatarStack from "@/components/shared/AvatarStack";
 import CountdownTimer from "./CountdownTimer";
 import PieceCard from "./PieceCard";
 import RevealConfirmModal from "./RevealConfirmModal";
 import EditRiffModal from "./EditRiffModal";
 import DeleteRiffConfirmModal from "./DeleteRiffConfirmModal";
-import BackButton from "@/components/BackButton";
+import NavBar from "@/components/clubs/NavBar";
 import RevealCelebration from "./RevealCelebration";
-import { useProfileNavigation } from "@/hooks/useProfileNavigation";
-import { useDraftCreation } from "@/hooks/useDraftCreation";
 import { getRiffDisplayTitle } from "@/lib/riff-utils";
+import RiffCTAButton from "@/components/riffs/RiffCTAButton";
+import ProgressCard from "@/components/riffs/ProgressCard";
+import Dropdown from "@/components/shared/Dropdown";
+import type { DropdownItem } from "@/components/shared/Dropdown";
+import ContributionStrip from "@/components/riffs/ContributionStrip";
+import NoiseBackground from "@/components/NoiseBackground";
 
 interface RiffPageLayoutProps {
   riff: {
@@ -23,6 +26,7 @@ interface RiffPageLayoutProps {
     deadline: string | null;
     status: string;
     createdAt: string;
+    updatedAt?: string;
     clubId: string;
     club: { id: string; name: string };
     creator: {
@@ -40,13 +44,15 @@ interface RiffPageLayoutProps {
       };
     }>;
     pieces: Array<{
+      submittedAt: string | null;
       piece: {
         id: string;
         title: string;
         authorId: string;
         wordCount: number;
         coverImage?: string | null;
-        currentContent?: string;
+        currentContent?: string | null;
+        updatedAt?: string;
         commentCount?: number;
         author?: {
           id: string;
@@ -59,8 +65,23 @@ interface RiffPageLayoutProps {
   currentUserId: string;
   isAdmin: boolean;
   isJoined: boolean;
+  hasDraft: boolean;
   hasSubmitted: boolean;
+  navUser?: {
+    id: string;
+    name: string | null;
+    username: string | null;
+    avatarUrl: string | null;
+  } | null;
+  userClubs?: Array<{ id: string; name: string }>;
   readPieceIds?: string[];
+  hasNewCommentsMap?: Record<string, boolean>;
+  contributionData?: Array<{
+    user: { id: string; name: string | null; avatarUrl: string | null };
+    readCount: number;
+    commentCount: number;
+  }>;
+  totalPieces?: number;
   onReveal?: () => void;
 }
 
@@ -69,61 +90,32 @@ export default function RiffPageLayout({
   currentUserId,
   isAdmin,
   isJoined: initialIsJoined,
+  hasDraft,
   hasSubmitted,
+  navUser,
+  userClubs = [],
   readPieceIds = [],
+  hasNewCommentsMap = {},
+  contributionData = [],
+  totalPieces = 0,
   onReveal,
 }: RiffPageLayoutProps) {
   const [isJoined, setIsJoined] = useState(initialIsJoined);
-  const [isButtonHovered, setIsButtonHovered] = useState(false);
+  const [isRevealButtonHovered, setIsRevealButtonHovered] = useState(false);
   const [isRevealModalOpen, setIsRevealModalOpen] = useState(false);
   const [isRevealing, setIsRevealing] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const router = useRouter();
-  const handleAvatarClick = useProfileNavigation();
-  const { createDraft } = useDraftCreation();
-
   // Deadline detection
   const isPastDeadline = riff.deadline
     ? new Date(riff.deadline).getTime() < Date.now()
     : false;
 
-  const canRevealNoDeadline =
-    !riff.deadline && isAdmin && riff.pieces.length > 0;
-
-  const handleJoinRiff = async () => {
-    try {
-      const res = await fetch(`/api/riffs/${riff.id}/participants`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (res.ok) {
-        setIsJoined(true);
-      }
-    } catch (err) {
-      console.error("Error joining riff:", err);
-    }
-  };
-
-  const handleContinueWriting = () => {
-    const existingPiece = riff.pieces.find(
-      (p) => p.piece.authorId === currentUserId
-    );
-    if (existingPiece) {
-      router.push(`/write/${existingPiece.piece.id}`);
-    } else {
-      createDraft(riff.id);
-    }
-  };
-
-  const handleButtonClick = () => {
-    if (!isJoined) {
-      handleJoinRiff();
-    } else {
-      handleContinueWriting();
-    }
-  };
+  const allPiecesSubmitted =
+    riff.participants.length > 0 &&
+    riff.pieces.filter((p) => p.submittedAt).length >= riff.participants.length;
 
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString("en-US", {
@@ -133,11 +125,18 @@ export default function RiffPageLayout({
   };
 
   const submittedUsers = riff.participants.filter((p) =>
-    riff.pieces.some((piece) => piece.piece.authorId === p.user.id)
+    riff.pieces.some(
+      (piece) =>
+        piece.submittedAt !== null && piece.piece.authorId === p.user.id
+    )
   );
 
   const waitingUsers = riff.participants.filter(
-    (p) => !riff.pieces.some((piece) => piece.piece.authorId === p.user.id)
+    (p) =>
+      !riff.pieces.some(
+        (piece) =>
+          piece.submittedAt !== null && piece.piece.authorId === p.user.id
+      )
   );
 
   const handleRevealClick = () => {
@@ -167,24 +166,28 @@ export default function RiffPageLayout({
     }
   };
 
-  const buttonLabel = isJoined
-    ? hasSubmitted
-      ? "View submission"
-      : "Continue writing"
-    : "Join riff";
+  const existingPieceMatch = riff.pieces.find(
+    (p) => p.piece.authorId === currentUserId
+  );
+  const existingPieceId = existingPieceMatch?.piece.id ?? null;
+  const existingPiece = existingPieceMatch
+    ? {
+        id: existingPieceMatch.piece.id,
+        title: existingPieceMatch.piece.title,
+        wordCount: existingPieceMatch.piece.wordCount,
+      }
+    : null;
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
-      {/* Back navigation */}
-      <div
-        style={{
-          maxWidth: "1000px",
-          margin: "0 auto",
-          padding: "24px 24px 0",
-        }}
-      >
-        <BackButton href={`/clubs/${riff.clubId}`} />
-      </div>
+      {/* Nav bar */}
+      {navUser && (
+        <NavBar
+          user={navUser}
+          clubs={userClubs}
+          currentClub={{ id: riff.clubId, name: riff.club.name }}
+        />
+      )}
 
       {/* Main content */}
       <div
@@ -231,77 +234,104 @@ export default function RiffPageLayout({
               >
                 {getRiffDisplayTitle(riff)}
               </h1>
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: isPastDeadline ? "#FF4444" : "#808080",
-                  margin: 0,
-                }}
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "8px" }}
               >
-                {isPastDeadline
-                  ? "Deadline passed"
-                  : riff.deadline
-                    ? `${formatDate(riff.createdAt)} - ${formatDate(riff.deadline)}`
-                    : formatDate(riff.createdAt)}
-              </p>
+                <p
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "16px",
+                    fontWeight: 300,
+                    color:
+                      isPastDeadline && riff.status !== "REVEALED"
+                        ? "#FF4444"
+                        : "#808080",
+                    margin: 0,
+                  }}
+                >
+                  {isPastDeadline && riff.status !== "REVEALED"
+                    ? "Deadline passed"
+                    : riff.deadline
+                      ? `${formatDate(riff.createdAt)} - ${formatDate(riff.deadline)}`
+                      : formatDate(riff.createdAt)}
+                </p>
+                {isAdmin &&
+                  riff.status !== "REVEALED" &&
+                  (() => {
+                    const items: DropdownItem[] = [
+                      {
+                        type: "action",
+                        label: "Edit riff",
+                        onClick: () => setIsEditModalOpen(true),
+                      },
+                      ...(riff.status === "ACTIVE"
+                        ? [
+                            {
+                              type: "action" as const,
+                              label: "Reveal now",
+                              onClick: handleRevealClick,
+                            },
+                          ]
+                        : []),
+                      { type: "divider" },
+                      {
+                        type: "action",
+                        label: "Delete riff",
+                        color: "#DC2626",
+                        onClick: () => setIsDeleteModalOpen(true),
+                      },
+                    ];
+                    return (
+                      <Dropdown
+                        trigger={
+                          <button
+                            aria-label="Riff settings"
+                            style={{
+                              background: "transparent",
+                              border: "2px solid transparent",
+                              cursor: "pointer",
+                              padding: "4px 6px",
+                              color: "#808080",
+                              lineHeight: 1,
+                              display: "flex",
+                              alignItems: "center",
+                              transition:
+                                "background-color 0.15s ease, box-shadow 0.1s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#01EFFC";
+                              e.currentTarget.style.borderColor = "#000000";
+                              e.currentTarget.style.color = "#000000";
+                              e.currentTarget.style.boxShadow =
+                                "4px 4px 0px 0px #000000";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor =
+                                "transparent";
+                              e.currentTarget.style.borderColor = "transparent";
+                              e.currentTarget.style.color = "#808080";
+                              e.currentTarget.style.boxShadow = "none";
+                            }}
+                          >
+                            <svg
+                              width="12"
+                              height="3"
+                              viewBox="0 0 12 3"
+                              fill="currentColor"
+                            >
+                              <circle cx="1.5" cy="1.5" r="1.5" />
+                              <circle cx="6" cy="1.5" r="1.5" />
+                              <circle cx="10.5" cy="1.5" r="1.5" />
+                            </svg>
+                          </button>
+                        }
+                        items={items}
+                        align="left"
+                      />
+                    );
+                  })()}
+              </div>
             </div>
-
-            {/* Admin actions */}
-            {isAdmin &&
-              (riff.status === "ACTIVE" || riff.status === "DRAFT") && (
-                <div style={{ display: "flex", gap: "12px" }}>
-                  <button
-                    onClick={() => setIsEditModalOpen(true)}
-                    style={{
-                      background: "none",
-                      border: "1px solid #E6E6E6",
-                      padding: "6px 16px",
-                      fontFamily: "var(--font-dm-sans)",
-                      fontSize: "13px",
-                      fontWeight: 300,
-                      color: "#808080",
-                      cursor: "pointer",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = "#000000";
-                      e.currentTarget.style.color = "#000000";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = "#E6E6E6";
-                      e.currentTarget.style.color = "#808080";
-                    }}
-                  >
-                    Edit
-                  </button>
-                  {riff.status === "DRAFT" && (
-                    <button
-                      onClick={() => setIsDeleteModalOpen(true)}
-                      style={{
-                        background: "none",
-                        border: "1px solid #E6E6E6",
-                        padding: "6px 16px",
-                        fontFamily: "var(--font-dm-sans)",
-                        fontSize: "13px",
-                        fontWeight: 300,
-                        color: "#808080",
-                        cursor: "pointer",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.borderColor = "#FF4444";
-                        e.currentTarget.style.color = "#FF4444";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.borderColor = "#E6E6E6";
-                        e.currentTarget.style.color = "#808080";
-                      }}
-                    >
-                      Delete
-                    </button>
-                  )}
-                </div>
-              )}
 
             {/* Prompt */}
             {riff.prompt && (
@@ -325,98 +355,6 @@ export default function RiffPageLayout({
                 </p>
               </div>
             )}
-
-            {/* Participants */}
-            {riff.participants.length > 0 && (
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: "8px" }}
-              >
-                {submittedUsers.length > 0 && (
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "12px",
-                      height: "32px",
-                    }}
-                  >
-                    <p
-                      style={{
-                        fontFamily: "var(--font-dm-sans)",
-                        fontSize: "16px",
-                        fontWeight: 300,
-                        color: "#000000",
-                        margin: 0,
-                      }}
-                    >
-                      Submitted
-                    </p>
-                    <AvatarStack
-                      users={submittedUsers.slice(0, 5).map((p) => p.user)}
-                      size={32}
-                      showBorder={false}
-                      onAvatarClick={handleAvatarClick}
-                    />
-                  </div>
-                )}
-                {waitingUsers.length > 0 && (
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "12px",
-                      height: "32px",
-                    }}
-                  >
-                    <p
-                      style={{
-                        fontFamily: "var(--font-dm-sans)",
-                        fontSize: "16px",
-                        fontWeight: 300,
-                        color: "#000000",
-                        margin: 0,
-                      }}
-                    >
-                      Waiting for
-                    </p>
-                    <AvatarStack
-                      users={waitingUsers.slice(0, 5).map((p) => p.user)}
-                      size={32}
-                      showBorder={false}
-                      onAvatarClick={handleAvatarClick}
-                    />
-                  </div>
-                )}
-                {!isJoined && (
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "12px",
-                      height: "32px",
-                    }}
-                  >
-                    <p
-                      style={{
-                        fontFamily: "var(--font-dm-sans)",
-                        fontSize: "16px",
-                        fontWeight: 300,
-                        color: "#000000",
-                        margin: 0,
-                      }}
-                    >
-                      Joined by
-                    </p>
-                    <AvatarStack
-                      users={riff.participants.slice(0, 5).map((p) => p.user)}
-                      size={32}
-                      showBorder={false}
-                      onAvatarClick={handleAvatarClick}
-                    />
-                  </div>
-                )}
-              </div>
-            )}
           </div>
 
           {/* Right — CTA button + countdown */}
@@ -429,17 +367,123 @@ export default function RiffPageLayout({
               minWidth: "200px",
             }}
           >
-            {(isPastDeadline || canRevealNoDeadline) &&
+            {riff.status === "REVEALED" && riff.updatedAt && (
+              <div
+                style={{
+                  position: "relative",
+                  overflow: "hidden",
+                  border: "2px solid #000000",
+                  padding: "12px 48px",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                <NoiseBackground fillMode="cover" />
+                <span
+                  style={{
+                    position: "relative",
+                    zIndex: 1,
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "16px",
+                    fontWeight: 300,
+                    color: "#000000",
+                  }}
+                >
+                  Revealed {formatDate(riff.updatedAt)}
+                </span>
+              </div>
+            )}
+
+            {riff.status === "REVEALED" &&
+              (() => {
+                const totalReads = contributionData.reduce(
+                  (sum, m) => sum + m.readCount,
+                  0
+                );
+                const totalComments = contributionData.reduce(
+                  (sum, m) => sum + m.commentCount,
+                  0
+                );
+                const totalWords = riff.pieces.reduce(
+                  (sum, p) => sum + (p.piece.wordCount || 0),
+                  0
+                );
+                const revealStats = [
+                  {
+                    value: riff.pieces.length,
+                    label: riff.pieces.length === 1 ? "Piece" : "Pieces",
+                  },
+                  { value: totalWords.toLocaleString(), label: "Words" },
+                  {
+                    value: totalReads,
+                    label: totalReads === 1 ? "Read" : "Reads",
+                  },
+                  {
+                    value: totalComments,
+                    label: totalComments === 1 ? "Comment" : "Comments",
+                  },
+                ];
+                return (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "12px",
+                      lineHeight: "normal",
+                    }}
+                  >
+                    {revealStats.map((stat, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <p
+                          style={{
+                            fontFamily: "var(--font-dm-sans)",
+                            fontSize: "16px",
+                            fontWeight: 700,
+                            lineHeight: "normal",
+                            color: "#000000",
+                            margin: 0,
+                          }}
+                        >
+                          {stat.value}
+                        </p>
+                        <p
+                          style={{
+                            fontFamily: "var(--font-dm-sans)",
+                            fontSize: "12px",
+                            fontWeight: 300,
+                            lineHeight: "normal",
+                            color: "#000000",
+                            margin: 0,
+                          }}
+                        >
+                          {stat.label}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+
+            {(isPastDeadline || allPiecesSubmitted) &&
             isAdmin &&
             riff.status === "ACTIVE" ? (
               <button
                 onClick={handleRevealClick}
-                onMouseEnter={() => setIsButtonHovered(true)}
-                onMouseLeave={() => setIsButtonHovered(false)}
+                onMouseEnter={() => setIsRevealButtonHovered(true)}
+                onMouseLeave={() => setIsRevealButtonHovered(false)}
                 style={{
-                  backgroundColor: isButtonHovered ? "#00FF66" : "#FFFFFF",
+                  backgroundColor: isRevealButtonHovered
+                    ? "#00FF66"
+                    : "#FFFFFF",
                   border: "2px solid #000000",
-                  boxShadow: isButtonHovered
+                  boxShadow: isRevealButtonHovered
                     ? "8px 8px 0px 0px #000000"
                     : "8px 8px 0px 0px #01EFFC",
                   padding: "12px 48px",
@@ -452,7 +496,7 @@ export default function RiffPageLayout({
                   whiteSpace: "nowrap",
                 }}
               >
-                Reveal pieces
+                Reveal riff
               </button>
             ) : isPastDeadline && !isAdmin && riff.status === "ACTIVE" ? (
               <button
@@ -474,36 +518,24 @@ export default function RiffPageLayout({
                 Waiting for the host to reveal
               </button>
             ) : riff.status !== "REVEALED" ? (
-              <button
-                onClick={handleButtonClick}
-                onMouseEnter={() => setIsButtonHovered(true)}
-                onMouseLeave={() => setIsButtonHovered(false)}
-                style={{
-                  backgroundColor: isButtonHovered ? "#00FF66" : "#FFFFFF",
-                  border: "2px solid #000000",
-                  boxShadow: isButtonHovered
-                    ? "8px 8px 0px 0px #000000"
-                    : isJoined
-                      ? "8px 8px 0px 0px #00FF66"
-                      : "8px 8px 0px 0px #01EFFC",
-                  padding: "12px 48px",
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#000000",
-                  cursor: "pointer",
-                  transition: "none",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {buttonLabel}
-              </button>
+              <RiffCTAButton
+                riffId={riff.id}
+                isJoined={isJoined}
+                hasDraft={hasDraft}
+                hasSubmitted={hasSubmitted}
+                existingPieceId={existingPieceId}
+                existingPiece={existingPiece}
+                onJoin={() => setIsJoined(true)}
+              />
             ) : null}
 
-            {isJoined && riff.deadline && !isPastDeadline && (
-              <CountdownTimer deadline={new Date(riff.deadline)} />
-            )}
-            {isPastDeadline && riff.deadline && (
+            {isJoined &&
+              riff.deadline &&
+              !isPastDeadline &&
+              riff.status !== "REVEALED" && (
+                <CountdownTimer deadline={new Date(riff.deadline)} />
+              )}
+            {isPastDeadline && riff.deadline && riff.status !== "REVEALED" && (
               <p
                 style={{
                   fontFamily: "var(--font-dm-sans)",
@@ -519,47 +551,19 @@ export default function RiffPageLayout({
           </div>
         </div>
 
+        {/* Contribution strip for REVEALED riffs */}
+        {riff.status === "REVEALED" && contributionData.length > 0 && (
+          <div style={{ marginTop: "48px" }}>
+            <ContributionStrip
+              members={contributionData}
+              totalPieces={totalPieces}
+            />
+          </div>
+        )}
+
         {/* Pieces gallery for REVEALED riffs */}
         {riff.status === "REVEALED" && riff.pieces.length > 0 && (
           <div style={{ marginTop: "48px" }}>
-            {/* Stats header */}
-            <div
-              style={{
-                display: "flex",
-                gap: "16px",
-                marginBottom: "24px",
-              }}
-            >
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#000000",
-                  margin: 0,
-                }}
-              >
-                <span style={{ fontWeight: 700 }}>{riff.pieces.length}</span>{" "}
-                {riff.pieces.length === 1 ? "piece" : "pieces"}
-              </p>
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#000000",
-                  margin: 0,
-                }}
-              >
-                <span style={{ fontWeight: 700 }}>
-                  {riff.pieces
-                    .reduce((sum, p) => sum + (p.piece.wordCount || 0), 0)
-                    .toLocaleString()}
-                </span>{" "}
-                words
-              </p>
-            </div>
-
             {/* Pieces grid */}
             <div
               style={{
@@ -585,6 +589,10 @@ export default function RiffPageLayout({
                     },
                   }}
                   isRead={readPieceIds.includes(pieceRiff.piece.id)}
+                  hasNewComments={
+                    hasNewCommentsMap[pieceRiff.piece.id] ?? false
+                  }
+                  isOwnPiece={pieceRiff.piece.authorId === currentUserId}
                   onClick={() =>
                     router.push(`/read/${pieceRiff.piece.id}?riff=${riff.id}`)
                   }
@@ -594,30 +602,68 @@ export default function RiffPageLayout({
           </div>
         )}
 
-        {/* Placeholder for non-revealed riffs */}
-        {riff.status !== "REVEALED" && (
-          <div
-            style={{
-              marginTop: "48px",
-              padding: "40px",
-              backgroundColor: "#F9F9F9",
-              border: "2px dashed #E6E6E6",
-              textAlign: "center",
-            }}
-          >
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 300,
-                color: "#959595",
-                margin: 0,
-              }}
-            >
-              More riff details coming soon.
-            </p>
-          </div>
-        )}
+        {/* Progress view for non-revealed riffs */}
+        {riff.status !== "REVEALED" &&
+          riff.participants.length > 0 &&
+          (() => {
+            // Build a map from authorId → piece data for quick lookup
+            const pieceByAuthor = Object.fromEntries(
+              riff.pieces.map((pr) => [
+                pr.piece.authorId,
+                {
+                  id: pr.piece.id,
+                  title: pr.piece.title,
+                  wordCount: pr.piece.wordCount,
+                  updatedAt: pr.piece.updatedAt ?? new Date().toISOString(),
+                  submittedAt: pr.submittedAt,
+                  coverImage: pr.piece.coverImage,
+                },
+              ])
+            );
+
+            // Sort: submitted (0) → in-progress (1) → not-started (2)
+            const sorted = [...riff.participants].sort((a, b) => {
+              const pa = pieceByAuthor[a.user.id];
+              const pb = pieceByAuthor[b.user.id];
+              const tierA = !pa ? 2 : pa.submittedAt ? 0 : 1;
+              const tierB = !pb ? 2 : pb.submittedAt ? 0 : 1;
+              if (tierA !== tierB) return tierA - tierB;
+              // Within submitted: most recent first
+              if (tierA === 0)
+                return (
+                  new Date(pb.submittedAt!).getTime() -
+                  new Date(pa.submittedAt!).getTime()
+                );
+              // Within in-progress: most recently active first
+              if (tierA === 1)
+                return (
+                  new Date(pb.updatedAt).getTime() -
+                  new Date(pa.updatedAt).getTime()
+                );
+              return 0; // not-started: keep join order
+            });
+
+            return (
+              <div style={{ marginTop: "48px" }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns:
+                      "repeat(auto-fill, minmax(280px, 1fr))",
+                    gap: "24px",
+                  }}
+                >
+                  {sorted.map((p) => (
+                    <ProgressCard
+                      key={p.user.id}
+                      user={p.user}
+                      piece={pieceByAuthor[p.user.id] ?? null}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
       </div>
 
       {/* Reveal Confirm Modal (for riff detail page) */}
@@ -630,7 +676,11 @@ export default function RiffPageLayout({
         waitingUsers={riff.participants
           .filter(
             (p) =>
-              !riff.pieces.some((piece) => piece.piece.authorId === p.user.id)
+              !riff.pieces.some(
+                (piece) =>
+                  piece.submittedAt !== null &&
+                  piece.piece.authorId === p.user.id
+              )
           )
           .map((p) => ({
             id: p.user.id,
@@ -639,7 +689,10 @@ export default function RiffPageLayout({
           }))}
         submittedCount={
           riff.participants.filter((p) =>
-            riff.pieces.some((piece) => piece.piece.authorId === p.user.id)
+            riff.pieces.some(
+              (piece) =>
+                piece.submittedAt !== null && piece.piece.authorId === p.user.id
+            )
           ).length
         }
         totalParticipants={riff.participants.length}

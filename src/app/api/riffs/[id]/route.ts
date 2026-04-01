@@ -94,6 +94,14 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Strip piece content before reveal — cover image still returned for locked card teaser
+    if (riff.status !== "REVEALED") {
+      (riff as any).pieces = riff.pieces.map((pr) => ({
+        ...pr,
+        piece: { ...pr.piece, currentContent: null },
+      }));
+    }
+
     return NextResponse.json({ riff });
   } catch (error: any) {
     if (error.message === "Unauthorized") {
@@ -368,10 +376,10 @@ export async function DELETE(
       return NextResponse.json({ error: "Riff not found" }, { status: 404 });
     }
 
-    // Only DRAFT riffs can be deleted
-    if (riff.status !== "DRAFT") {
+    // Only DRAFT or ACTIVE riffs can be deleted
+    if (!["DRAFT", "ACTIVE"].includes(riff.status)) {
       return NextResponse.json(
-        { error: "Only draft riffs can be deleted" },
+        { error: "Only draft or active riffs can be deleted" },
         { status: 400 }
       );
     }

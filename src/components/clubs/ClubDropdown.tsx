@@ -42,23 +42,9 @@ export default function ClubDropdown({
     {
       type: "action",
       label: "Start new club",
-      color: "#000000",
-      backgroundColor: "#00FF66",
       icon: (
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 16 16"
-          fill="none"
-          style={{ color: "#000000" }}
-        >
-          <path
-            d="M8 3V13M3 8H13"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-        </svg>
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src="/icons/add.svg" alt="" width={16} height={16} />
       ),
       onClick: () => router.push("/onboarding/create-club"),
     },
@@ -71,12 +57,12 @@ export default function ClubDropdown({
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
           style={{
-            backgroundColor: isHovered || isOpen ? "#00FF66" : "#FFFFFF",
-            border: "2px solid #000000",
+            backgroundColor: "#000000",
+            border: "2px solid #FFFFFF",
             boxShadow:
               isHovered || isOpen
-                ? "3px 3px 0px 0px #FFFFFF"
-                : "3px 3px 0px 0px #00FF66",
+                ? "4px 4px 0px 0px #01EFFC"
+                : "4px 4px 0px 0px #00FF66",
             padding: "8px 12px",
             display: "flex",
             alignItems: "center",
@@ -88,30 +74,23 @@ export default function ClubDropdown({
           <span
             style={{
               fontFamily: "var(--font-dm-sans)",
-              fontSize: "12px",
-              fontWeight: 600,
-              color: "#000000",
+              fontSize: "14px",
+              fontWeight: 300,
+              color: "#FFFFFF",
               transition: "none",
             }}
           >
             My Clubs
           </span>
 
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 20 20"
-            fill="none"
-            style={{ color: "#000000", transition: "none" }}
-          >
-            <path
-              d="M5 7.5L10 12.5L15 7.5"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/icons/arrow_down.svg"
+            alt=""
+            width={16}
+            height={16}
+            style={{ filter: "invert(1)" }}
+          />
         </button>
       }
       items={items}

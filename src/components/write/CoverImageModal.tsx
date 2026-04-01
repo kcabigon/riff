@@ -28,9 +28,10 @@ export default function CoverImageModal({
       title="Cover image"
       currentImage={currentCoverImage}
       removeLabel="Remove cover image"
-      aspectRatio={16 / 9}
+      aspectRatio={4 / 5}
       existingImages={pieceImages}
       existingImagesLabel="From your piece"
+      inlinePreview
     />
   );
 }

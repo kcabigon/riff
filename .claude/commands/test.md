@@ -17,7 +17,7 @@ Help the user test their changes locally. This is the easiest way to see what th
    - Tell them: "The server is running! Any changes you save will auto-refresh in the browser. When you're done testing, come back here and I can help you with next steps."
 
 4. **Offer next steps**:
-   - "Happy with your changes? Run `/finish-feature` to create a PR."
+   - "Happy with your changes? Run `/finish-feature` to create a PR — that's the last step!"
    - "Found a bug? Describe it and I'll help fix it."
    - "Want to keep building? Just tell me what's next."
 

@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Modal from "@/components/shared/Modal";
+import RiffFormFields from "./RiffFormFields";
+import PrimaryButton from "@/components/PrimaryButton";
 
 interface EditRiffModalProps {
   isOpen: boolean;
@@ -65,117 +67,14 @@ export default function EditRiffModal({
     <Modal isOpen={isOpen} onClose={onClose} title="Edit riff">
       <form onSubmit={handleSubmit}>
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-          {/* Title */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <label
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: 300,
-                color: "#000000",
-              }}
-            >
-              Riff name <span style={{ color: "#959595" }}>(optional)</span>
-            </label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 300,
-                color: "#000000",
-                backgroundColor: "#FFFFFF",
-                border: "2px solid #000000",
-                padding: "12px 16px",
-                outline: "none",
-                width: "100%",
-                boxSizing: "border-box",
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = "#00FF66";
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = "#000000";
-              }}
-            />
-          </div>
-
-          {/* Prompt */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <label
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: 300,
-                color: "#000000",
-              }}
-            >
-              Prompt <span style={{ color: "#959595" }}>(optional)</span>
-            </label>
-            <textarea
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              rows={3}
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 300,
-                color: "#000000",
-                backgroundColor: "#FFFFFF",
-                border: "2px solid #000000",
-                padding: "12px 16px",
-                outline: "none",
-                width: "100%",
-                resize: "vertical",
-                boxSizing: "border-box",
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = "#00FF66";
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = "#000000";
-              }}
-            />
-          </div>
-
-          {/* Deadline */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <label
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: 300,
-                color: "#000000",
-              }}
-            >
-              Deadline <span style={{ color: "#959595" }}>(optional)</span>
-            </label>
-            <input
-              type="date"
-              value={deadline}
-              onChange={(e) => setDeadline(e.target.value)}
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 300,
-                color: "#000000",
-                backgroundColor: "#FFFFFF",
-                border: "2px solid #000000",
-                padding: "12px 16px",
-                outline: "none",
-                width: "100%",
-                boxSizing: "border-box",
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = "#00FF66";
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = "#000000";
-              }}
-            />
-          </div>
+          <RiffFormFields
+            title={title}
+            setTitle={setTitle}
+            prompt={prompt}
+            setPrompt={setPrompt}
+            deadline={deadline}
+            setDeadline={setDeadline}
+          />
 
           {error && (
             <p
@@ -191,25 +90,9 @@ export default function EditRiffModal({
             </p>
           )}
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            style={{
-              backgroundColor: isSubmitting ? "#E6E6E6" : "#FFFFFF",
-              border: "2px solid #000000",
-              boxShadow: isSubmitting ? "none" : "8px 8px 0px 0px #00FF66",
-              padding: "12px 48px",
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              color: "#000000",
-              cursor: isSubmitting ? "not-allowed" : "pointer",
-              transition: "none",
-              width: "100%",
-            }}
-          >
+          <PrimaryButton type="submit" loading={isSubmitting}>
             {isSubmitting ? "Saving..." : "Save changes"}
-          </button>
+          </PrimaryButton>
         </div>
       </form>
     </Modal>

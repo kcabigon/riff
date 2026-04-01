@@ -256,6 +256,7 @@ enum PromptVisibilityRule {
 model Piece {
   id             String   @id @default(cuid())
   title          String
+  subtitle       String?
   authorId       String
   currentContent String   @db.Text
   currentExcerpt String?

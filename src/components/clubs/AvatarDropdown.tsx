@@ -46,7 +46,7 @@ export default function AvatarDropdown({ user }: AvatarDropdownProps) {
           size={40}
           showBorder={true}
           borderColor="#FFFFFF"
-          borderWidth={1}
+          borderWidth={2}
         />
       }
       items={items}
