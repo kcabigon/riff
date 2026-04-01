@@ -734,12 +734,10 @@ export default function WritePage({ piece }: WritePageProps) {
                         e.currentTarget.style.backgroundColor = "transparent";
                       }}
                     >
-                      {riff.club.name}
-                      {riff.title && (
-                        <span style={{ color: "#999999", marginLeft: "6px" }}>
-                          · {riff.title}
-                        </span>
-                      )}
+                      {riff.title || `Riff`}
+                      <span style={{ color: "#999999", marginLeft: "6px" }}>
+                        · {riff.club.name}
+                      </span>
                     </button>
                   ))}
                 </div>
