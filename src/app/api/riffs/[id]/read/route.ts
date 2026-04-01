@@ -55,10 +55,8 @@ export async function POST(
 
     // Validate piece belongs to this riff
     const pieceRiff = await prisma.pieceRiff.findFirst({
-      where: {
-        pieceId,
-        riffId,
-      },
+      where: { pieceId, riffId },
+      include: { piece: { select: { authorId: true } } },
     });
 
     if (!pieceRiff) {
@@ -68,7 +66,7 @@ export async function POST(
       );
     }
 
-    // Upsert PieceRead (idempotent)
+    // Upsert PieceRead — update readAt on re-visits so "new comments" resets correctly
     await prisma.pieceRead.upsert({
       where: {
         userId_pieceId_riffId: {
@@ -82,7 +80,7 @@ export async function POST(
         pieceId,
         riffId,
       },
-      update: {},
+      update: { readAt: new Date() },
     });
 
     // Get updated read count for this user/riff

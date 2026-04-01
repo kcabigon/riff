@@ -42,7 +42,7 @@ Last updated: March 30, 2026 (modal cleanup, reveal todos, notification todos)
 - [x] Due date mandatory on riff creation, defaults to 1 month out, admin can edit later
 - [ ] Redesign prompts/inspiration UI
 - [x] After creating a riff, host sees "Start writing" or "Invite friends" CTA
-- [ ] Don't show "Reveal pieces" until deadline passes OR all submissions are in
+- [x] Don't show "Reveal pieces" until deadline passes OR all submissions are in
 
 ### Mobile Comments
 - [ ] Redesign mobile comment experience — easy commenting and navigation between comments in "comment" mode
@@ -85,9 +85,9 @@ Last updated: March 30, 2026 (modal cleanup, reveal todos, notification todos)
 - [ ] Clear distinction between drafts (in progress), submitted pieces (shared to a riff), and personal pieces (not in a riff)
 
 ### Reveals
-- [ ] Improve reveal logic — review edge cases (partial submissions, timing, re-reveal prevention)
-- [ ] Add "Reveal early" option for hosts — allow manual reveal before deadline
-- [ ] Add "Delete riff" functionality — host can delete a riff before it's revealed
+- [x] Improve reveal logic — review edge cases (partial submissions, timing, re-reveal prevention)
+- [x] Add "Reveal early" option for hosts — allow manual reveal before deadline
+- [x] Add "Delete riff" functionality — host can delete a riff before it's revealed
 
 ### Notifications
 - [x] Notification bell uses SVG icon with unread count badge

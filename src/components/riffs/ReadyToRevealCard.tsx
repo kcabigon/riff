@@ -88,6 +88,29 @@ export default function ReadyToRevealCard({
           height={cardHeight}
         />
 
+        {/* Unread badge */}
+        {totalPieces - readCount > 0 && (
+          <div
+            style={{
+              position: "absolute",
+              top: "8px",
+              right: "8px",
+              backgroundColor: "#00FF66",
+              border: "1px solid #000000",
+              padding: "2px 8px",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "11px",
+              fontWeight: 700,
+              color: "#000000",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              zIndex: 2,
+            }}
+          >
+            {totalPieces - readCount} unread
+          </div>
+        )}
+
         {/* Label strip — vertically centered */}
         <div
           style={{
@@ -116,19 +139,6 @@ export default function ReadyToRevealCard({
           </p>
         </div>
       </div>
-
-      {/* Read progress */}
-      <p
-        style={{
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "14px",
-          fontWeight: 300,
-          color: "#808080",
-          margin: 0,
-        }}
-      >
-        {readCount} of {totalPieces} read
-      </p>
     </div>
   );
 }

@@ -26,6 +26,7 @@ interface RiffCardProps {
       };
     }>;
     pieces: Array<{
+      submittedAt?: Date | string | null;
       piece: {
         id: string;
         authorId: string;
@@ -63,9 +64,9 @@ export default function RiffCard({
     ? new Date(riff.deadline).getTime() < Date.now()
     : false;
 
-  // Host can reveal riffs with no deadline if at least 1 piece submitted
-  const canRevealNoDeadline =
-    !riff.deadline && isAdmin && riff.pieces.length > 0;
+  const allPiecesSubmitted =
+    riff.participants.length > 0 &&
+    riff.pieces.filter((p) => p.submittedAt).length >= riff.participants.length;
 
   // Format date
   const formatDate = (date: Date) => {
@@ -219,7 +220,7 @@ export default function RiffCard({
         }}
       >
         {/* Button */}
-        {(isPastDeadline || canRevealNoDeadline) && isAdmin ? (
+        {(isPastDeadline || allPiecesSubmitted) && isAdmin ? (
           <button
             onClick={handleRevealClick}
             onMouseEnter={() => setIsHovered(true)}
@@ -241,7 +242,7 @@ export default function RiffCard({
               whiteSpace: "nowrap",
             }}
           >
-            Reveal pieces
+            Reveal riff
           </button>
         ) : isPastDeadline && !isAdmin ? (
           <button
