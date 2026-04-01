@@ -86,13 +86,13 @@ export default function PieceCard({
         }}
       />
 
-      {/* Own piece — orange comment count top-left */}
+      {/* Own piece — orange comment count top-right */}
       {isOwnPiece && (piece.commentCount ?? 0) > 0 && (
         <div
           style={{
             position: "absolute",
             top: "8px",
-            left: "8px",
+            right: "8px",
             backgroundColor: "#FF6B35",
             border: "1px solid #000000",
             padding: "2px 8px",
@@ -105,7 +105,7 @@ export default function PieceCard({
             zIndex: 2,
           }}
         >
-          {piece.commentCount}
+          {piece.commentCount} comments
         </div>
       )}
 
