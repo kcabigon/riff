@@ -14,6 +14,7 @@ import RiffCTAButton from "@/components/riffs/RiffCTAButton";
 import ProgressCard from "@/components/riffs/ProgressCard";
 import Dropdown from "@/components/shared/Dropdown";
 import type { DropdownItem } from "@/components/shared/Dropdown";
+import ContributionStrip from "@/components/riffs/ContributionStrip";
 
 interface RiffPageLayoutProps {
   riff: {
@@ -66,6 +67,12 @@ interface RiffPageLayoutProps {
   hasSubmitted: boolean;
   readPieceIds?: string[];
   hasNewCommentsMap?: Record<string, boolean>;
+  contributionData?: Array<{
+    user: { id: string; name: string | null; avatarUrl: string | null };
+    readCount: number;
+    commentCount: number;
+  }>;
+  totalPieces?: number;
   onReveal?: () => void;
 }
 
@@ -78,6 +85,8 @@ export default function RiffPageLayout({
   hasSubmitted,
   readPieceIds = [],
   hasNewCommentsMap = {},
+  contributionData = [],
+  totalPieces = 0,
   onReveal,
 }: RiffPageLayoutProps) {
   const [isJoined, setIsJoined] = useState(initialIsJoined);
@@ -428,6 +437,16 @@ export default function RiffPageLayout({
             )}
           </div>
         </div>
+
+        {/* Contribution strip for REVEALED riffs */}
+        {riff.status === "REVEALED" && contributionData.length > 0 && (
+          <div style={{ marginTop: "48px" }}>
+            <ContributionStrip
+              members={contributionData}
+              totalPieces={totalPieces}
+            />
+          </div>
+        )}
 
         {/* Pieces gallery for REVEALED riffs */}
         {riff.status === "REVEALED" && riff.pieces.length > 0 && (

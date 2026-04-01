@@ -66,18 +66,6 @@ export async function POST(
       );
     }
 
-    // Skip recording reads for a user's own piece
-    if (pieceRiff.piece.authorId === (user as any).id) {
-      const readCount = await prisma.pieceRead.count({
-        where: { userId: (user as any).id, riffId },
-      });
-      return NextResponse.json({
-        success: true,
-        readCount,
-        totalPieces: riff._count.pieces,
-      });
-    }
-
     // Upsert PieceRead — update readAt on re-visits so "new comments" resets correctly
     await prisma.pieceRead.upsert({
       where: {

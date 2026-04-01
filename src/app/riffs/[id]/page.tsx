@@ -90,6 +90,11 @@ export default async function RiffPage({
   // Fetch read data and compute per-piece flags for REVEALED riffs
   let readPieceIds: string[] = [];
   const hasNewCommentsMap: Record<string, boolean> = {};
+  let contributionData: Array<{
+    user: { id: string; name: string | null; avatarUrl: string | null };
+    readCount: number;
+    commentCount: number;
+  }> = [];
   if (riff.status === "REVEALED") {
     // Fetch read records with readAt timestamps
     const reads = await prisma.pieceRead.findMany({
@@ -120,6 +125,44 @@ export default async function RiffPage({
         (c) => c.pieceId === pid && c.createdAt > readAt
       );
     }
+
+    // Contribution strip data
+    const clubMembers = await prisma.clubMember.findMany({
+      where: { clubId: riff.clubId },
+      select: { user: { select: { id: true, name: true, avatarUrl: true } } },
+    });
+
+    const readGroups = await prisma.pieceRead.groupBy({
+      by: ["userId"],
+      where: { riffId: id },
+      _count: { pieceId: true },
+    });
+
+    const commentGroups = await prisma.comment.groupBy({
+      by: ["authorId"],
+      where: { riffId: id },
+      _count: { id: true },
+    });
+
+    const readCountMap: Record<string, number> = Object.fromEntries(
+      readGroups.map((g) => [g.userId, g._count.pieceId])
+    );
+    const commentCountMap: Record<string, number> = Object.fromEntries(
+      commentGroups.map((g) => [g.authorId, g._count.id])
+    );
+
+    contributionData = clubMembers
+      .map((m) => ({
+        user: m.user,
+        readCount: readCountMap[m.user.id] ?? 0,
+        commentCount: commentCountMap[m.user.id] ?? 0,
+      }))
+      .filter((m) => m.readCount >= 1)
+      .sort((a, b) =>
+        b.readCount !== a.readCount
+          ? b.readCount - a.readCount
+          : b.commentCount - a.commentCount
+      );
   }
 
   // Serialize dates to strings for client component boundary (Prisma returns Date objects)
@@ -153,6 +196,8 @@ export default async function RiffPage({
       hasSubmitted={hasSubmitted}
       readPieceIds={readPieceIds}
       hasNewCommentsMap={hasNewCommentsMap}
+      contributionData={contributionData}
+      totalPieces={riff.pieces.length}
     />
   );
 }
