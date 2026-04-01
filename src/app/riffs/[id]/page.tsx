@@ -88,13 +88,19 @@ export default async function RiffPage({
   const isAdmin = riff.club.adminId === userId;
 
   // Fetch read piece IDs for REVEALED riffs
+  // Own pieces are always treated as read — no NEW badge for your own work
   let readPieceIds: string[] = [];
   if (riff.status === "REVEALED") {
     const reads = await prisma.pieceRead.findMany({
       where: { userId, riffId: id },
       select: { pieceId: true },
     });
-    readPieceIds = reads.map((r) => r.pieceId);
+    const ownPieceIds = riff.pieces
+      .filter((p) => p.piece.authorId === userId)
+      .map((p) => p.piece.id);
+    readPieceIds = [
+      ...new Set([...reads.map((r) => r.pieceId), ...ownPieceIds]),
+    ];
   }
 
   // Serialize dates to strings for client component boundary (Prisma returns Date objects)

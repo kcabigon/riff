@@ -55,10 +55,8 @@ export async function POST(
 
     // Validate piece belongs to this riff
     const pieceRiff = await prisma.pieceRiff.findFirst({
-      where: {
-        pieceId,
-        riffId,
-      },
+      where: { pieceId, riffId },
+      include: { piece: { select: { authorId: true } } },
     });
 
     if (!pieceRiff) {
@@ -66,6 +64,18 @@ export async function POST(
         { error: "Piece does not belong to this riff" },
         { status: 400 }
       );
+    }
+
+    // Skip recording reads for a user's own piece
+    if (pieceRiff.piece.authorId === (user as any).id) {
+      const readCount = await prisma.pieceRead.count({
+        where: { userId: (user as any).id, riffId },
+      });
+      return NextResponse.json({
+        success: true,
+        readCount,
+        totalPieces: riff._count.pieces,
+      });
     }
 
     // Upsert PieceRead (idempotent)

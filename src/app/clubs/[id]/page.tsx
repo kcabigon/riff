@@ -140,6 +140,7 @@ export default async function ClubPage({
     .map(serializeRiff);
 
   // Fetch read counts for revealed riffs (per-user)
+  // Own pieces are treated as auto-read and excluded from the "to read" total
   const revealedRiffIds = revealedRiffs.map((r) => r.id);
   let readCounts: Record<string, number> = {};
   if (revealedRiffIds.length > 0) {
@@ -154,6 +155,13 @@ export default async function ClubPage({
     readCounts = Object.fromEntries(
       readGroups.map((g) => [g.riffId, g._count.pieceId])
     );
+    // Add own piece to readCount so it doesn't count as unread
+    for (const riff of revealedRiffs) {
+      const hasOwnPiece = riff.pieces.some((p) => p.piece.authorId === userId);
+      if (hasOwnPiece) {
+        readCounts[riff.id] = (readCounts[riff.id] || 0) + 1;
+      }
+    }
   }
 
   const isAdmin = club.adminId === userId;
