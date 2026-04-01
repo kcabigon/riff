@@ -26,7 +26,7 @@ export default function ContributionStrip({
           letterSpacing: "0.05em",
         }}
       >
-        Contributors
+        Making Noise
       </p>
 
       <div
@@ -88,10 +88,7 @@ export default function ContributionStrip({
                   textAlign: "center",
                 }}
               >
-                <span style={{ fontWeight: 700, color: "#000000" }}>
-                  {readCount}
-                </span>
-                /{totalPieces}
+                {readCount}/{totalPieces}
               </p>
               {commentCount > 0 && (
                 <p
