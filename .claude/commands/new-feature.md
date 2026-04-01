@@ -77,9 +77,17 @@ Help the user start a new feature safely. Ask questions when anything is unclear
 
 10. **Explore the codebase, design system, and existing components**: Read `DESIGN-SYSTEM.md` and `ARCHITECTURE.md` if you haven't this session. Then explore the specific files and areas the feature will touch. Check the Shared Component Catalog in `DESIGN-SYSTEM.md` for existing components you can reuse. Use Explore agents to search broadly if needed.
 
-11. **Ask clarifying questions** (if needed): If their description is vague or could go multiple ways, ask ONE round of clarifying questions. Keep it conversational — don't interrogate. Examples:
-    - "Just to make sure I build this right — when you say X, do you mean A or B?"
-    - "Quick question before I dive in — should this also do Y, or just X for now?"
+11. **Q&A mode — fill in the gaps**: Before writing the plan, use the `AskUserQuestion` tool to ask 2-5 multiple choice questions about the build. This is how you fill in gaps in your understanding and make sure the plan is right before writing it. Guidelines:
+    - Use `AskUserQuestion` with 2-4 options per question — the tool automatically adds an "Other" option so the user can provide a custom answer
+    - When you feel strongly about an approach, mark your recommended option with "(Recommended)" at the end of the label
+    - Focus on questions that would change how you build it: scope decisions, UX choices, where things should live, which patterns to follow
+    - Don't ask obvious questions you can answer from the codebase or design system
+    - Keep questions non-technical — remember your user may not be an engineer
+    - You can ask all questions in a single `AskUserQuestion` call (multiple questions at once) or spread them across rounds if later questions depend on earlier answers
+    - Examples of good questions:
+      - "Where should this new section appear on the page?" (with layout options)
+      - "Should this work on mobile too, or desktop only for now?"
+      - "When the user clicks X, what should happen?" (with behavior options)
 
 12. **Write your plan**: Write a clear, non-technical plan to the plan file. Use plain language. Structure it as:
     - **What you're building** — one sentence summary
