@@ -16,15 +16,7 @@ Help the user test their changes locally. This is the easiest way to see what th
    - Run `npm run dev` in the background
    - Tell them: "The server is running! Any changes you save will auto-refresh in the browser. When you're done testing, come back here and I can help you with next steps."
 
-4. **Update session state**: Update `.claude/session-state.md`:
-   ```
-   ## Current Session
-   - **Branch**: [current branch]
-   - **Building**: [description from session state]
-   - **Track step**: testing (next: /finish-feature)
-   ```
-
-5. **Offer next steps**:
+4. **Offer next steps**:
    - "Happy with your changes? Run `/finish-feature` to create a PR — that's the last step!"
    - "Found a bug? Describe it and I'll help fix it."
    - "Want to keep building? Just tell me what's next."

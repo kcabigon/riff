@@ -1,16 +1,14 @@
 You are starting a new session on the Riff project. This is the entry point — do everything the user needs to get oriented and productive.
 
-## Step 1: Restore context
+## Step 1: Restore context (if resuming)
 
-Check if `.claude/session-state.md` exists. If it does, read it — the user may be resuming after a compaction or new session. If session state exists and they're mid-track (on a feature branch, in the middle of building/testing), tell them where they left off and suggest the next step:
-- "Looks like you were building [description] on `feature/xyz`. Want to keep going, or start fresh?"
-- If the build was complete: "Your build on `feature/xyz` is done. Ready to test with `/test` or submit with `/finish-feature`?"
-
-**If session state doesn't exist**, reconstruct from git:
+Reconstruct where the user is from git state:
 - Run `git branch --show-current` — if on a feature branch, the branch name tells you what they were building
 - Run `git log --oneline develop..HEAD` — shows their progress on the branch
 - Check if any plan files exist: look in `.claude/plans/` for `.md` files. If one exists, read it to understand the plan.
-- Use this info to tell them where they are: "You're on `feature/xyz` with N commits. Want to keep going?"
+- If they're mid-feature, tell them where they are and suggest the next step:
+  - "Looks like you were working on `feature/xyz` with N commits. Want to keep going?"
+  - If there's a plan file: read it and summarize what was planned vs what's done
 
 ## Step 2: Load project context
 

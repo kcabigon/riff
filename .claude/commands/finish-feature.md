@@ -47,9 +47,7 @@ Complete the current feature branch: validate, push, and create a PR targeting d
    - Delete the local feature branch: `git branch -d <branch-name>`
    - Do NOT delete the remote branch — it needs to stay alive for the PR. GitHub will auto-delete it when the PR is merged.
 
-9. **Clean up session state**: Delete `.claude/session-state.md` if it exists — the feature is done.
-
-10. **Report**:
+9. **Report**:
     - Show the PR URL
     - Tell the user: "Sick! Kyle's gonna review this PR and decide if it's dope enough. Want to start something new? Run `/letsriff`."
 
