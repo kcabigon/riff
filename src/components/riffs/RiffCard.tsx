@@ -86,17 +86,9 @@ export default function RiffCard({
     router.push(`/riffs/${riff.id}`);
   };
 
-  const existingPieceMatch = riff.pieces.find(
-    (p) => p.piece.authorId === currentUserId
-  );
-  const existingPieceId = existingPieceMatch?.piece.id ?? null;
-  const existingPiece = existingPieceMatch
-    ? {
-        id: existingPieceMatch.piece.id,
-        title: existingPieceMatch.piece.title,
-        wordCount: existingPieceMatch.piece.wordCount,
-      }
-    : null;
+  const existingPieceId =
+    riff.pieces.find((p) => p.piece.authorId === currentUserId)?.piece.id ??
+    null;
 
   const handleRevealClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -271,7 +263,6 @@ export default function RiffCard({
             hasDraft={hasDraft}
             hasSubmitted={hasSubmitted}
             existingPieceId={existingPieceId}
-            existingPiece={existingPiece}
             onJoin={onJoin}
             stopPropagation
           />

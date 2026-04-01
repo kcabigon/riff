@@ -6,7 +6,7 @@ interface DraftPiece {
   createdAt: string;
   updatedAt: string;
   isShared: boolean;
-  riffs: Array<{ id: string; title: string | null }>;
+  riffs: Array<{ id: string; title: string | null; clubName: string }>;
 }
 
 interface DraftsListProps {
@@ -160,7 +160,7 @@ export default function DraftsList({ drafts }: DraftsListProps) {
                       padding: "4px 12px",
                     }}
                   >
-                    {riff.title}
+                    {riff.title || `${riff.clubName}: Active Riff`}
                   </span>
                 ))}
               </div>

@@ -74,7 +74,9 @@ export default function WritePage({ piece }: WritePageProps) {
     editorProps: {},
     extensions: [
       // Shared extensions (same as read page for fidelity), minus Image and Link (overridden below)
-      ...getSharedExtensions().filter((ext) => ext.name !== "image" && ext.name !== "link"),
+      ...getSharedExtensions().filter(
+        (ext) => ext.name !== "image" && ext.name !== "link"
+      ),
       // Write-specific: Link renders as <span> so browser can't navigate
       Link.extend({
         renderHTML({ HTMLAttributes }) {
@@ -570,7 +572,7 @@ export default function WritePage({ piece }: WritePageProps) {
                   padding: riff.submittedAt ? "4px 12px" : "4px 8px 4px 12px",
                 }}
               >
-                {riff.title || "Active Riff"}
+                {riff.title || `${riff.clubName}: Active Riff`}
                 {!riff.submittedAt && (
                   <button
                     onClick={async () => {
