@@ -73,10 +73,10 @@ export default function DraftCard({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={{
-        border: "2px solid #FFFFFF",
+        border: "2px solid #000000",
         padding: "20px 24px",
         backgroundColor: "#FFFFFF",
-        boxShadow: isHovered ? "4px 4px 0px 0px #00FF66" : "none",
+        boxShadow: isHovered ? "4px 4px 0px 0px #000000" : "none",
         transition: "box-shadow 0.1s ease",
         display: "flex",
         flexDirection: "column",

@@ -8,6 +8,7 @@ import Dropdown from "@/components/shared/Dropdown";
 import Modal from "@/components/shared/Modal";
 import DraftCard from "@/components/writing/DraftCard";
 import AttachToRiffModal from "@/components/writing/AttachToRiffModal";
+import NoiseBackground from "@/components/NoiseBackground";
 import DeletePieceModal from "@/components/writing/DeletePieceModal";
 import { useDraftCreation } from "@/hooks/useDraftCreation";
 import type { DropdownItem } from "@/components/shared/Dropdown";
@@ -79,7 +80,7 @@ function SectionHeader({ title }: { title: string }) {
         fontFamily: "var(--font-dm-sans)",
         fontSize: "20px",
         fontWeight: 300,
-        color: "#FFFFFF",
+        color: "#000000",
         margin: "0 0 16px 0",
         textTransform: "uppercase",
         letterSpacing: "0.05em",
@@ -202,7 +203,7 @@ export default function MyWritingPage({
         style={{
           display: "flex",
           flexDirection: "column",
-          border: "2px solid #FFFFFF",
+          border: "2px solid #000000",
         }}
       >
         {/* Card with kebab overlay */}
@@ -327,12 +328,16 @@ export default function MyWritingPage({
       {/* Page content */}
       <div
         style={{
-          backgroundColor: "#000000",
+          position: "relative",
+          overflow: "hidden",
           minHeight: "100vh",
         }}
       >
+        <NoiseBackground fillMode="cover" />
         <div
           style={{
+            position: "relative",
+            zIndex: 1,
             maxWidth: "1000px",
             margin: "0 auto",
             padding: "40px 24px 80px",
@@ -344,7 +349,7 @@ export default function MyWritingPage({
               fontFamily: "var(--font-dm-serif-text)",
               fontSize: "32px",
               fontWeight: 400,
-              color: "#FFFFFF",
+              color: "#000000",
               margin: "0 0 48px 0",
             }}
           >
