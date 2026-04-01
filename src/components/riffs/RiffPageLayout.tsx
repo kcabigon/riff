@@ -8,6 +8,7 @@ import RevealConfirmModal from "./RevealConfirmModal";
 import EditRiffModal from "./EditRiffModal";
 import DeleteRiffConfirmModal from "./DeleteRiffConfirmModal";
 import NavBar from "@/components/clubs/NavBar";
+import BackButton from "@/components/BackButton";
 import RevealCelebration from "./RevealCelebration";
 import { getRiffDisplayTitle } from "@/lib/riff-utils";
 import RiffCTAButton from "@/components/riffs/RiffCTAButton";
@@ -197,6 +198,8 @@ export default function RiffPageLayout({
           padding: "32px 24px 64px",
         }}
       >
+        <BackButton href={`/clubs/${riff.clubId}`} />
+
         {/* Riff header */}
         <div
           className="riff-page-header"
