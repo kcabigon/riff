@@ -217,23 +217,24 @@ export default function RiffPageLayout({
               <div
                 style={{ display: "flex", alignItems: "center", gap: "8px" }}
               >
-                {riff.status !== "REVEALED" && (
-                  <p
-                    style={{
-                      fontFamily: "var(--font-dm-sans)",
-                      fontSize: "16px",
-                      fontWeight: 300,
-                      color: isPastDeadline ? "#FF4444" : "#808080",
-                      margin: 0,
-                    }}
-                  >
-                    {isPastDeadline
-                      ? "Deadline passed"
-                      : riff.deadline
-                        ? `${formatDate(riff.createdAt)} - ${formatDate(riff.deadline)}`
-                        : formatDate(riff.createdAt)}
-                  </p>
-                )}
+                <p
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "16px",
+                    fontWeight: 300,
+                    color:
+                      isPastDeadline && riff.status !== "REVEALED"
+                        ? "#FF4444"
+                        : "#808080",
+                    margin: 0,
+                  }}
+                >
+                  {isPastDeadline && riff.status !== "REVEALED"
+                    ? "Deadline passed"
+                    : riff.deadline
+                      ? `${formatDate(riff.createdAt)} - ${formatDate(riff.deadline)}`
+                      : formatDate(riff.createdAt)}
+                </p>
                 {isAdmin &&
                   riff.status !== "REVEALED" &&
                   (() => {
@@ -404,9 +405,12 @@ export default function RiffPageLayout({
               />
             ) : null}
 
-            {isJoined && riff.deadline && !isPastDeadline && (
-              <CountdownTimer deadline={new Date(riff.deadline)} />
-            )}
+            {isJoined &&
+              riff.deadline &&
+              !isPastDeadline &&
+              riff.status !== "REVEALED" && (
+                <CountdownTimer deadline={new Date(riff.deadline)} />
+              )}
             {isPastDeadline && riff.deadline && riff.status !== "REVEALED" && (
               <p
                 style={{
