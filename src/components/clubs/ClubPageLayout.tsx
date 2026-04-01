@@ -111,6 +111,7 @@ export default function ClubPageLayout({
   const [isRevealing, setIsRevealing] = useState(false);
   const [isClubDetailsModalOpen, setIsClubDetailsModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [currentActiveRiff, setCurrentActiveRiff] = useState<Riff | null>(
     activeRiff
   );
@@ -237,19 +238,29 @@ export default function ClubPageLayout({
                   </h1>
                   {isAdmin && (
                     <Dropdown
+                      isOpen={isSettingsOpen}
+                      onToggle={() => setIsSettingsOpen((o) => !o)}
+                      onClose={() => setIsSettingsOpen(false)}
                       trigger={
                         <button
                           aria-label="Club settings"
                           style={{
-                            background: "transparent",
-                            border: "2px solid transparent",
+                            background: isSettingsOpen
+                              ? "#01EFFC"
+                              : "transparent",
+                            border: isSettingsOpen
+                              ? "2px solid #000000"
+                              : "2px solid transparent",
                             cursor: "pointer",
                             padding: "4px 6px",
-                            color: "#FFFFFF",
+                            color: isSettingsOpen ? "#000000" : "#FFFFFF",
                             lineHeight: 1,
                             display: "flex",
                             alignItems: "center",
-                            opacity: 0.7,
+                            opacity: 1,
+                            boxShadow: isSettingsOpen
+                              ? "3px 3px 0px 0px #000000"
+                              : "none",
                             transition:
                               "opacity 0.15s ease, background-color 0.15s ease, box-shadow 0.1s ease",
                           }}
@@ -262,12 +273,14 @@ export default function ClubPageLayout({
                               "3px 3px 0px 0px #000000";
                           }}
                           onMouseLeave={(e) => {
-                            e.currentTarget.style.opacity = "0.7";
-                            e.currentTarget.style.backgroundColor =
-                              "transparent";
-                            e.currentTarget.style.borderColor = "transparent";
-                            e.currentTarget.style.color = "#FFFFFF";
-                            e.currentTarget.style.boxShadow = "none";
+                            if (!isSettingsOpen) {
+                              e.currentTarget.style.opacity = "0.7";
+                              e.currentTarget.style.backgroundColor =
+                                "transparent";
+                              e.currentTarget.style.borderColor = "transparent";
+                              e.currentTarget.style.color = "#FFFFFF";
+                              e.currentTarget.style.boxShadow = "none";
+                            }
                           }}
                         >
                           <svg
@@ -406,19 +419,27 @@ export default function ClubPageLayout({
             </h1>
             {isAdmin && (
               <Dropdown
+                isOpen={isSettingsOpen}
+                onToggle={() => setIsSettingsOpen((o) => !o)}
+                onClose={() => setIsSettingsOpen(false)}
                 trigger={
                   <button
                     aria-label="Club settings"
                     style={{
-                      background: "transparent",
-                      border: "2px solid transparent",
+                      background: isSettingsOpen ? "#01EFFC" : "transparent",
+                      border: isSettingsOpen
+                        ? "2px solid #000000"
+                        : "2px solid transparent",
                       cursor: "pointer",
                       padding: "4px 6px",
                       color: "#000000",
                       lineHeight: 1,
                       display: "flex",
                       alignItems: "center",
-                      opacity: 0.4,
+                      opacity: isSettingsOpen ? 1 : 0.4,
+                      boxShadow: isSettingsOpen
+                        ? "3px 3px 0px 0px #000000"
+                        : "none",
                       transition:
                         "opacity 0.15s ease, background-color 0.15s ease, box-shadow 0.1s ease",
                     }}
@@ -430,10 +451,12 @@ export default function ClubPageLayout({
                         "3px 3px 0px 0px #000000";
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.opacity = "0.4";
-                      e.currentTarget.style.backgroundColor = "transparent";
-                      e.currentTarget.style.borderColor = "transparent";
-                      e.currentTarget.style.boxShadow = "none";
+                      if (!isSettingsOpen) {
+                        e.currentTarget.style.opacity = "0.4";
+                        e.currentTarget.style.backgroundColor = "transparent";
+                        e.currentTarget.style.borderColor = "transparent";
+                        e.currentTarget.style.boxShadow = "none";
+                      }
                     }}
                   >
                     <svg
@@ -571,19 +594,27 @@ export default function ClubPageLayout({
               </h1>
               {isAdmin && (
                 <Dropdown
+                  isOpen={isSettingsOpen}
+                  onToggle={() => setIsSettingsOpen((o) => !o)}
+                  onClose={() => setIsSettingsOpen(false)}
                   trigger={
                     <button
                       aria-label="Club settings"
                       style={{
-                        background: "transparent",
-                        border: "2px solid transparent",
+                        background: isSettingsOpen ? "#01EFFC" : "transparent",
+                        border: isSettingsOpen
+                          ? "2px solid #000000"
+                          : "2px solid transparent",
                         cursor: "pointer",
                         padding: "4px 6px",
                         color: "#000000",
                         lineHeight: 1,
                         display: "flex",
                         alignItems: "center",
-                        opacity: 0.4,
+                        opacity: isSettingsOpen ? 1 : 0.4,
+                        boxShadow: isSettingsOpen
+                          ? "3px 3px 0px 0px #000000"
+                          : "none",
                         transition:
                           "opacity 0.15s ease, background-color 0.15s ease, box-shadow 0.1s ease",
                       }}
@@ -595,10 +626,12 @@ export default function ClubPageLayout({
                           "3px 3px 0px 0px #000000";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.opacity = "0.4";
-                        e.currentTarget.style.backgroundColor = "transparent";
-                        e.currentTarget.style.borderColor = "transparent";
-                        e.currentTarget.style.boxShadow = "none";
+                        if (!isSettingsOpen) {
+                          e.currentTarget.style.opacity = "0.4";
+                          e.currentTarget.style.backgroundColor = "transparent";
+                          e.currentTarget.style.borderColor = "transparent";
+                          e.currentTarget.style.boxShadow = "none";
+                        }
                       }}
                     >
                       <svg

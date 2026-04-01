@@ -137,6 +137,21 @@ export const allButtons: ToolbarButtonConfig[] = [
     action: (editor) => editor.chain().focus().toggleOrderedList().run(),
     icon: (active) => <TextLabel text="1." color={active ? "#fff" : "#000"} />,
   },
+  // Indent
+  {
+    key: "indent",
+    title: "Indent",
+    isActive: () => false,
+    action: (editor) => editor.chain().focus().indent().run(),
+    icon: (active) => (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M3 5h18v2H3V5z" fill={active ? "#fff" : "#000"} />
+        <path d="M3 11h10v2H3v-2z" fill={active ? "#fff" : "#000"} />
+        <path d="M3 17h18v2H3v-2z" fill={active ? "#fff" : "#000"} />
+        <path d="M15 9l4 3-4 3V9z" fill={active ? "#fff" : "#000"} />
+      </svg>
+    ),
+  },
   // Alignment
   {
     key: "alignLeft",
