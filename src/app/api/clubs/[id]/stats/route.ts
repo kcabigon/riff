@@ -15,7 +15,7 @@ export async function GET(
     const member = await prisma.clubMember.findFirst({
       where: {
         clubId,
-        userId: (user as any).id,
+        userId: user.id,
       },
     });
 

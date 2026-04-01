@@ -45,7 +45,7 @@ export async function POST(
     const member = await prisma.clubMember.findFirst({
       where: {
         clubId: riff.clubId,
-        userId: (user as any).id,
+        userId: user.id,
       },
     });
 
@@ -70,13 +70,13 @@ export async function POST(
     await prisma.pieceRead.upsert({
       where: {
         userId_pieceId_riffId: {
-          userId: (user as any).id,
+          userId: user.id,
           pieceId,
           riffId,
         },
       },
       create: {
-        userId: (user as any).id,
+        userId: user.id,
         pieceId,
         riffId,
       },
@@ -86,7 +86,7 @@ export async function POST(
     // Get updated read count for this user/riff
     const readCount = await prisma.pieceRead.count({
       where: {
-        userId: (user as any).id,
+        userId: user.id,
         riffId,
       },
     });

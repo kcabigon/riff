@@ -5,7 +5,7 @@ import { requireAuth } from "@/lib/auth-utils";
 export async function POST(req: Request) {
   try {
     const user = await requireAuth();
-    const userId = (user as any).id;
+    const userId = user.id;
     const {
       content,
       pieceId,
@@ -74,8 +74,7 @@ export async function POST(req: Request) {
         if (!isMember) {
           return NextResponse.json(
             {
-              error:
-                "You must be a riff participant or club member to comment",
+              error: "You must be a riff participant or club member to comment",
             },
             { status: 403 }
           );

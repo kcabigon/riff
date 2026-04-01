@@ -34,7 +34,7 @@ export async function POST(
     const member = await prisma.clubMember.findFirst({
       where: {
         clubId: riff.clubId,
-        userId: (user as any).id,
+        userId: user.id,
       },
     });
 
@@ -47,7 +47,7 @@ export async function POST(
 
     // Check if already a participant
     const existingParticipant = riff.participants.find(
-      (p) => p.userId === (user as any).id
+      (p) => p.userId === user.id
     );
 
     if (existingParticipant) {
@@ -61,7 +61,7 @@ export async function POST(
     const participant = await prisma.riffParticipant.create({
       data: {
         riffId,
-        userId: (user as any).id,
+        userId: user.id,
       },
       include: {
         user: {

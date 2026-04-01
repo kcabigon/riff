@@ -15,7 +15,7 @@ export async function POST(
     const membership = await prisma.circleMember.findFirst({
       where: {
         circleId,
-        userId: (user as any).id,
+        userId: user.id,
       },
     });
 

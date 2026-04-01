@@ -17,13 +17,10 @@ export async function GET(
     });
 
     if (!piece) {
-      return NextResponse.json(
-        { error: "Piece not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Piece not found" }, { status: 404 });
     }
 
-    const isAuthor = piece.authorId === (user as any).id;
+    const isAuthor = piece.authorId === user.id;
 
     // If not author, check if piece is shared to user's circles
     if (!isAuthor) {
@@ -33,7 +30,7 @@ export async function GET(
           circle: {
             members: {
               some: {
-                userId: (user as any).id,
+                userId: user.id,
               },
             },
           },

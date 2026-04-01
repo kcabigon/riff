@@ -15,7 +15,7 @@ export async function GET(
     const membership = await prisma.circleMember.findFirst({
       where: {
         circleId,
-        userId: (user as any).id,
+        userId: user.id,
       },
     });
 
@@ -84,7 +84,7 @@ export async function POST(
     const membership = await prisma.circleMember.findFirst({
       where: {
         circleId,
-        userId: (user as any).id,
+        userId: user.id,
         role: { in: ["OWNER", "ADMIN"] },
       },
     });
@@ -114,7 +114,7 @@ export async function POST(
         isFreeform: isFreeform || false,
         deadline: deadline ? new Date(deadline) : null,
         visibilityRule: visibilityRule || "ON_SUBMIT",
-        createdById: (user as any).id,
+        createdById: user.id,
       },
       include: {
         createdBy: {

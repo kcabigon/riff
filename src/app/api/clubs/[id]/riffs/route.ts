@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { RiffStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
 
@@ -17,7 +18,7 @@ export async function GET(
     const member = await prisma.clubMember.findFirst({
       where: {
         clubId,
-        userId: (user as any).id,
+        userId: user.id,
       },
     });
 
@@ -31,7 +32,7 @@ export async function GET(
     const riffs = await prisma.riff.findMany({
       where: {
         clubId,
-        ...(status && { status: status as any }),
+        ...(status && { status: status as RiffStatus }),
       },
       include: {
         creator: {
@@ -127,7 +128,7 @@ export async function POST(
       select: { adminId: true },
     });
 
-    if (!club || club.adminId !== (user as any).id) {
+    if (!club || club.adminId !== user.id) {
       return NextResponse.json(
         { error: "Only the club admin can create a riff" },
         { status: 403 }
@@ -138,7 +139,7 @@ export async function POST(
     const riff = await prisma.riff.create({
       data: {
         clubId,
-        creatorId: (user as any).id,
+        creatorId: user.id,
         title: title?.trim() || null,
         prompt: prompt?.trim() || null,
         deadline: deadline ? new Date(deadline) : null,
