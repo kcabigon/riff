@@ -51,6 +51,15 @@ Help the user start a new feature safely. Ask questions when anything is unclear
    - To get the user's name, run `git config user.name` and use their first name lowercase
    - Commit the TODO update: `chore: claim TODO item`
 
+9. **Save session state**: Write to `.claude/session-state.md` so context survives compaction:
+   ```
+   ## Current Session
+   - **Branch**: feature/the-branch-name
+   - **Building**: [one-line description]
+   - **Track step**: building (next: /test → /finish-feature)
+   - **Plan file**: [path if complex, or "none (simple fast-track)"]
+   ```
+
 ---
 
 ## If SIMPLE: Fast-track it
@@ -67,7 +76,11 @@ Help the user start a new feature safely. Ask questions when anything is unclear
 
 13. **Commit**: Create a conventional commit (e.g., `fix: update button color on club page`)
 
-14. **Done**: Tell the user what you changed in one or two sentences. Offer: "Want me to run `/finish-feature` to push this and create a PR?"
+14. **Sync with develop**: Run `git fetch origin && git merge origin/develop` to make sure nothing conflicts with what others have been building. If there are conflicts, help resolve them.
+
+15. **Done**: Tell the user what you changed in one or two sentences. Then suggest next steps:
+    - "Want to test it locally? Run `/test` to start the dev server."
+    - "Ready to submit? Run `/finish-feature` to create a PR."
 
 ---
 
@@ -110,7 +123,20 @@ Help the user start a new feature safely. Ask questions when anything is unclear
 
 17. **Commit**: Create one or more conventional commits (one per logical change if the feature is large)
 
-18. **Done**: Summarize what you built. Offer: "Want me to run `/finish-feature` to push this and create a PR?"
+18. **Sync with develop**: Run `git fetch origin && git merge origin/develop` to make sure nothing conflicts with what others have been building. If there are conflicts, help resolve them.
+
+19. **Update session state**: Update `.claude/session-state.md` to reflect the build is complete:
+    ```
+    ## Current Session
+    - **Branch**: feature/the-branch-name
+    - **Building**: [one-line description]
+    - **Track step**: build complete (next: /test → /finish-feature)
+    - **Plan file**: [path if used]
+    ```
+
+20. **Done**: Summarize what you built. Then suggest next steps:
+    - "Want to test it locally? Run `/test` to start the dev server."
+    - "Ready to submit? Run `/finish-feature` to create a PR."
 
 ---
 
@@ -120,6 +146,6 @@ Help the user start a new feature safely. Ask questions when anything is unclear
 - **Never create a new component if a reusable one already exists.** Always check `DESIGN-SYSTEM.md` for the Shared Component Catalog before building anything new. If you need a button, use PrimaryButton or SecondaryButton. If you need a modal, use Modal. If you need an input, use TextInput. If you need image upload, use ImageUploadModal.
 - **Always follow `DESIGN-SYSTEM.md` for colors, spacing, borders, and shadows.** Never hardcode a color that isn't in the design system. If you need a new color, ask the user first.
 - The complexity assessment is for YOUR decision-making — never expose it to the user. They should feel like the flow is natural, not that they've been categorized.
-- If you initially assess something as simple but realize mid-execution it's actually complex, STOP, explain what you found, and switch to the complex flow (call `EnterPlanMode`)
+- If you initially assess something as simple but realize mid-execution it's actually complex: (1) commit any work done so far as a WIP commit (`chore: WIP — switching to planned approach`), (2) explain what you found that makes it more complex, (3) switch to the complex flow (call `EnterPlanMode`). This preserves the work already done and gives the user a clean plan-first flow from here.
 - If the feature seems very large even for complex, suggest breaking it into smaller pieces
 - Remind the user they can run `/sync` to stay up to date with develop while working

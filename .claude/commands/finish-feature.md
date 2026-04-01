@@ -1,4 +1,4 @@
-Complete the current feature branch: validate, push, and create a PR targeting develop.
+Complete the current feature branch: validate, push, and create a PR targeting develop. You don't need to run `/pr-check` first — this command does everything including validation.
 
 ## Steps
 
@@ -10,18 +10,19 @@ Complete the current feature branch: validate, push, and create a PR targeting d
    - Run `git status`
    - If there are uncommitted changes, ask: "You have uncommitted changes. Would you like to commit them before finishing, or discard them?"
 
-3. **Run validation** (same as `/pr-check`):
+3. **Sync with develop** (mandatory — do this before validation):
+   - Run `git fetch origin && git log --oneline HEAD..origin/develop`
+   - If develop has new commits, merge them: `git merge origin/develop`
+   - If there are conflicts, help resolve them before proceeding
+   - If no new commits, continue
+
+4. **Run validation** (same as `/pr-check`):
    - Run `npm run lint` — report errors
    - Run `npx tsc --noEmit` — report type errors
    - Run `npm run build` — verify build succeeds
    - Check no `.env` files or `docs/` files are staged
    - Check commit messages follow conventional format
    - If ANY check fails, report it and ask: "Would you like to fix these issues before creating the PR, or proceed anyway?"
-
-4. **Sync with develop**:
-   - Run `git fetch origin && git log --oneline HEAD..origin/develop`
-   - If develop has new commits, ask: "Develop has new commits. Would you like to sync first (recommended) or proceed?"
-   - If they want to sync, run the sync flow from `/sync`
 
 5. **Update TODO.md**:
    - Read `TODO.md` and check if any in-progress items (marked with 🔨) relate to the work done on this branch
@@ -46,9 +47,11 @@ Complete the current feature branch: validate, push, and create a PR targeting d
    - Delete the local feature branch: `git branch -d <branch-name>`
    - Do NOT delete the remote branch — it needs to stay alive for the PR. GitHub will auto-delete it when the PR is merged.
 
-9. **Report**:
-   - Show the PR URL
-   - Tell the user: "Sick! Kyle's gonna review this PR and decide if it's dope enough. You can continue working on other features in the meantime."
+9. **Clean up session state**: Delete `.claude/session-state.md` if it exists — the feature is done.
+
+10. **Report**:
+    - Show the PR URL
+    - Tell the user: "Sick! Kyle's gonna review this PR and decide if it's dope enough. Want to start something new? Run `/letsriff`."
 
 ## Important
 - Never force-push unless the user explicitly asks
