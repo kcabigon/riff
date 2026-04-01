@@ -358,6 +358,84 @@ export default function RiffPageLayout({
               minWidth: "200px",
             }}
           >
+            {riff.status === "REVEALED" &&
+              (() => {
+                const totalReads = contributionData.reduce(
+                  (sum, m) => sum + m.readCount,
+                  0
+                );
+                const totalComments = contributionData.reduce(
+                  (sum, m) => sum + m.commentCount,
+                  0
+                );
+                const totalWords = riff.pieces.reduce(
+                  (sum, p) => sum + (p.piece.wordCount || 0),
+                  0
+                );
+                const revealStats = [
+                  {
+                    value: riff.pieces.length,
+                    label: riff.pieces.length === 1 ? "Piece" : "Pieces",
+                  },
+                  { value: totalWords.toLocaleString(), label: "Words" },
+                  {
+                    value: totalReads,
+                    label: totalReads === 1 ? "Read" : "Reads",
+                  },
+                  {
+                    value: totalComments,
+                    label: totalComments === 1 ? "Comment" : "Comments",
+                  },
+                ];
+                return (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "12px",
+                      lineHeight: "normal",
+                    }}
+                  >
+                    {revealStats.map((stat, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <p
+                          style={{
+                            fontFamily: "var(--font-dm-sans)",
+                            fontSize: "16px",
+                            fontWeight: 700,
+                            lineHeight: "normal",
+                            color: "#000000",
+                            margin: 0,
+                          }}
+                        >
+                          {stat.value}
+                        </p>
+                        <p
+                          style={{
+                            fontFamily: "var(--font-dm-sans)",
+                            fontSize: "12px",
+                            fontWeight: 300,
+                            lineHeight: "normal",
+                            color: "#000000",
+                            margin: 0,
+                          }}
+                        >
+                          {stat.label}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+
             {(isPastDeadline || allPiecesSubmitted) &&
             isAdmin &&
             riff.status === "ACTIVE" ? (
@@ -444,10 +522,6 @@ export default function RiffPageLayout({
             <ContributionStrip
               members={contributionData}
               totalPieces={totalPieces}
-              totalWords={riff.pieces.reduce(
-                (sum, p) => sum + (p.piece.wordCount || 0),
-                0
-              )}
             />
           </div>
         )}

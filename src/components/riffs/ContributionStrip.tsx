@@ -7,36 +7,21 @@ interface ContributionStripProps {
     commentCount: number;
   }>;
   totalPieces: number;
-  totalWords: number;
 }
 
 export default function ContributionStrip({
   members,
   totalPieces,
-  totalWords,
 }: ContributionStripProps) {
-  const totalReads = members.reduce((sum, m) => sum + m.readCount, 0);
-  const totalComments = members.reduce((sum, m) => sum + m.commentCount, 0);
-
-  const stats = [
-    { value: totalPieces, label: totalPieces === 1 ? "piece" : "pieces" },
-    { value: totalWords.toLocaleString(), label: "words" },
-    { value: totalReads, label: totalReads === 1 ? "read" : "reads" },
-    {
-      value: totalComments,
-      label: totalComments === 1 ? "comment" : "comments",
-    },
-  ];
-
   return (
-    <div style={{ textAlign: "center" }}>
+    <div>
       <h2
         style={{
           fontFamily: "var(--font-dm-sans)",
           fontSize: "20px",
           fontWeight: 300,
           color: "#000000",
-          margin: "0 0 12px 0",
+          margin: "0 0 16px 0",
           textTransform: "uppercase",
           letterSpacing: "0.05em",
         }}
@@ -44,37 +29,10 @@ export default function ContributionStrip({
         Making Noise
       </h2>
 
-      {/* Aggregate stats row */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          gap: "16px",
-          marginBottom: "20px",
-          flexWrap: "wrap",
-        }}
-      >
-        {stats.map((stat, i) => (
-          <p
-            key={i}
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              color: "#000000",
-              margin: 0,
-            }}
-          >
-            <span style={{ fontWeight: 700 }}>{stat.value}</span> {stat.label}
-          </p>
-        ))}
-      </div>
-
       <div
         style={{
           display: "flex",
           flexDirection: "row",
-          justifyContent: "center",
           gap: "24px",
           overflowX: "auto",
           paddingBottom: "8px",
