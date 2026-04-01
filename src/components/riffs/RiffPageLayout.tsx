@@ -277,7 +277,7 @@ export default function RiffPageLayout({
                       {
                         type: "action",
                         label: "Delete riff",
-                        color: "#FF4444",
+                        color: "#DC2626",
                         onClick: () => setIsDeleteModalOpen(true),
                       },
                     ];
@@ -303,7 +303,7 @@ export default function RiffPageLayout({
                               e.currentTarget.style.borderColor = "#000000";
                               e.currentTarget.style.color = "#000000";
                               e.currentTarget.style.boxShadow =
-                                "3px 3px 0px 0px #000000";
+                                "4px 4px 0px 0px #000000";
                             }}
                             onMouseLeave={(e) => {
                               e.currentTarget.style.backgroundColor =
