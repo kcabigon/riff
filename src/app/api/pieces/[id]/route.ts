@@ -93,7 +93,7 @@ export async function PATCH(
   try {
     const user = await requireAuth();
     const { id: pieceId } = await params;
-    const { title, content, excerpt } = await req.json();
+    const { title, content, excerpt, visibility } = await req.json();
 
     // Check if user is the author
     const piece = await prisma.piece.findUnique({
@@ -124,6 +124,15 @@ export async function PATCH(
         { error: "Piece content cannot be empty" },
         { status: 400 }
       );
+    }
+
+    // Update visibility settings if provided
+    if (visibility !== undefined) {
+      await prisma.pieceVisibilitySettings.upsert({
+        where: { pieceId },
+        create: { pieceId, visibility },
+        update: { visibility },
+      });
     }
 
     // Update piece
