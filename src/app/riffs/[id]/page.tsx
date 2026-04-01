@@ -87,20 +87,39 @@ export default async function RiffPage({
   );
   const isAdmin = riff.club.adminId === userId;
 
-  // Fetch read piece IDs for REVEALED riffs
-  // Own pieces are always treated as read — no NEW badge for your own work
+  // Fetch read data and compute per-piece flags for REVEALED riffs
   let readPieceIds: string[] = [];
+  const hasNewCommentsMap: Record<string, boolean> = {};
   if (riff.status === "REVEALED") {
+    // Fetch read records with readAt timestamps
     const reads = await prisma.pieceRead.findMany({
       where: { userId, riffId: id },
-      select: { pieceId: true },
+      select: { pieceId: true, readAt: true },
     });
+    const readAtMap: Record<string, Date> = Object.fromEntries(
+      reads.map((r) => [r.pieceId, r.readAt])
+    );
+
+    // Own pieces always treated as read — no Unread badge on your own work
     const ownPieceIds = riff.pieces
       .filter((p) => p.piece.authorId === userId)
       .map((p) => p.piece.id);
     readPieceIds = [
       ...new Set([...reads.map((r) => r.pieceId), ...ownPieceIds]),
     ];
+
+    // Fetch all comment timestamps for this riff in one query
+    const comments = await prisma.comment.findMany({
+      where: { riffId: id },
+      select: { pieceId: true, createdAt: true },
+    });
+
+    // For each piece the user has read, check if any comment is newer than readAt
+    for (const { pieceId: pid, readAt } of reads) {
+      hasNewCommentsMap[pid] = comments.some(
+        (c) => c.pieceId === pid && c.createdAt > readAt
+      );
+    }
   }
 
   // Serialize dates to strings for client component boundary (Prisma returns Date objects)
@@ -133,6 +152,7 @@ export default async function RiffPage({
       hasDraft={hasDraft}
       hasSubmitted={hasSubmitted}
       readPieceIds={readPieceIds}
+      hasNewCommentsMap={hasNewCommentsMap}
     />
   );
 }

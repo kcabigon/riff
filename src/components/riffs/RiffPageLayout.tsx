@@ -65,6 +65,7 @@ interface RiffPageLayoutProps {
   hasDraft: boolean;
   hasSubmitted: boolean;
   readPieceIds?: string[];
+  hasNewCommentsMap?: Record<string, boolean>;
   onReveal?: () => void;
 }
 
@@ -76,6 +77,7 @@ export default function RiffPageLayout({
   hasDraft,
   hasSubmitted,
   readPieceIds = [],
+  hasNewCommentsMap = {},
   onReveal,
 }: RiffPageLayoutProps) {
   const [isJoined, setIsJoined] = useState(initialIsJoined);
@@ -493,6 +495,10 @@ export default function RiffPageLayout({
                     },
                   }}
                   isRead={readPieceIds.includes(pieceRiff.piece.id)}
+                  hasNewComments={
+                    hasNewCommentsMap[pieceRiff.piece.id] ?? false
+                  }
+                  isOwnPiece={pieceRiff.piece.authorId === currentUserId}
                   onClick={() =>
                     router.push(`/read/${pieceRiff.piece.id}?riff=${riff.id}`)
                   }
