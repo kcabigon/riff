@@ -29,25 +29,26 @@ export default function ContributionStrip({
   ];
 
   return (
-    <div>
-      <p
+    <div style={{ textAlign: "center" }}>
+      <h2
         style={{
           fontFamily: "var(--font-dm-sans)",
           fontSize: "20px",
           fontWeight: 300,
-          color: "#808080",
+          color: "#000000",
           margin: "0 0 12px 0",
           textTransform: "uppercase",
           letterSpacing: "0.05em",
         }}
       >
         Making Noise
-      </p>
+      </h2>
 
       {/* Aggregate stats row */}
       <div
         style={{
           display: "flex",
+          justifyContent: "center",
           gap: "16px",
           marginBottom: "20px",
           flexWrap: "wrap",
@@ -73,6 +74,7 @@ export default function ContributionStrip({
         style={{
           display: "flex",
           flexDirection: "row",
+          justifyContent: "center",
           gap: "24px",
           overflowX: "auto",
           paddingBottom: "8px",
@@ -128,7 +130,7 @@ export default function ContributionStrip({
                   textAlign: "center",
                 }}
               >
-                {readCount}/{totalPieces}
+                {readCount}/{totalPieces} read
               </p>
               {commentCount > 0 && (
                 <p
