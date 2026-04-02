@@ -72,106 +72,127 @@ export default function AttachToRiffModal({
 
   return (
     <Modal isOpen onClose={onClose} title="Attach to Riff" size="sm">
-      {currentAttachments.length > 0 && (
-        <div style={{ marginBottom: "16px" }}>
-          {currentAttachments.map((a) => {
-            const isSubmitted =
-              a.submittedAt !== null || a.riff.status === "REVEALED";
-            const riffLabel = a.riff.title || `Vol. ${a.riff.volume}`;
-            return (
-              <div
-                key={a.riffId}
+      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+        {/* Available riffs */}
+        {eligibleRiffs.length === 0 ? (
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "14px",
+              fontWeight: 300,
+              color: "#808080",
+              margin: 0,
+              textAlign: "center",
+              padding: "16px 0",
+            }}
+          >
+            No active riffs available to attach to.
+          </p>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {eligibleRiffs.map((riff) => (
+              <button
+                key={riff.id}
+                onClick={() => handleAttach(riff)}
+                disabled={isAttaching}
                 style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "13px",
-                  fontWeight: 300,
-                  color: "#808080",
-                  padding: "4px 0",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "2px",
+                  border: "2px solid #000000",
+                  backgroundColor: "#FFFFFF",
+                  padding: "12px 16px",
+                  cursor: isAttaching ? "not-allowed" : "pointer",
+                  textAlign: "left",
+                  width: "100%",
+                  opacity: isAttaching ? 0.6 : 1,
                 }}
               >
-                {isSubmitted
-                  ? `Currently submitted to ${riffLabel} · ${a.riff.club.name}`
-                  : `Currently attached to ${riffLabel} · ${a.riff.club.name}`}
-              </div>
-            );
-          })}
-          <div
-            style={{ borderTop: "1px solid #E6E6E6", margin: "12px 0 0 0" }}
-          />
-        </div>
-      )}
-      {eligibleRiffs.length === 0 ? (
-        <p
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
-            fontWeight: 300,
-            color: "#808080",
-            margin: 0,
-            textAlign: "center",
-            padding: "16px 0",
-          }}
-        >
-          No active riffs available to attach to.
-        </p>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          {eligibleRiffs.map((riff) => (
-            <button
-              key={riff.id}
-              onClick={() => handleAttach(riff)}
-              disabled={isAttaching}
+                <span
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "15px",
+                    fontWeight: 300,
+                    color: "#000000",
+                  }}
+                >
+                  {riff.title || `Riff Vol. ${riff.volume}`}
+                </span>
+                <span
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "12px",
+                    fontWeight: 300,
+                    color: "#808080",
+                  }}
+                >
+                  {riff.club.name}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Currently attached */}
+        {currentAttachments.length > 0 && (
+          <div>
+            <p
               style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "2px",
-                border: "2px solid #000000",
-                backgroundColor: "#FFFFFF",
-                padding: "12px 16px",
-                cursor: isAttaching ? "not-allowed" : "pointer",
-                textAlign: "left",
-                width: "100%",
-                opacity: isAttaching ? 0.6 : 1,
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "11px",
+                fontWeight: 700,
+                color: "#808080",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                margin: "0 0 8px 0",
               }}
             >
-              <span
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "15px",
-                  fontWeight: 300,
-                  color: "#000000",
-                }}
-              >
-                {riff.title || `Riff Vol. ${riff.volume}`}
-              </span>
-              <span
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "12px",
-                  fontWeight: 300,
-                  color: "#808080",
-                }}
-              >
-                {riff.club.name}
-              </span>
-            </button>
-          ))}
-        </div>
-      )}
+              Currently Attached
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+              {currentAttachments.map((a) => {
+                const isSubmitted =
+                  a.submittedAt !== null || a.riff.status === "REVEALED";
+                const riffLabel = a.riff.title || `Vol. ${a.riff.volume}`;
+                return (
+                  <span
+                    key={a.riffId}
+                    title={isSubmitted ? "Submitted" : "Attached"}
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      color: "#000000",
+                      backgroundColor: "#00FF66",
+                      border: "1px solid #000000",
+                      padding: "2px 8px",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {riffLabel} · {a.riff.club.name}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
-      {error && (
-        <p
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "13px",
-            fontWeight: 300,
-            color: "#DC2626",
-            margin: "12px 0 0 0",
-          }}
-        >
-          {error}
-        </p>
-      )}
+        {error && (
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "13px",
+              fontWeight: 300,
+              color: "#DC2626",
+              margin: 0,
+            }}
+          >
+            {error}
+          </p>
+        )}
+      </div>
     </Modal>
   );
 }
