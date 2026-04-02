@@ -197,13 +197,14 @@ export default function ShareModal({
                         <span
                           style={{
                             fontFamily: "var(--font-dm-sans)",
-                            fontSize: "10px",
+                            fontSize: "11px",
                             fontWeight: 700,
                             color: "#000000",
                             backgroundColor: "#00FF66",
+                            border: "1px solid #000000",
                             padding: "2px 6px",
                             textTransform: "uppercase",
-                            letterSpacing: "0.06em",
+                            letterSpacing: "0.05em",
                             flexShrink: 0,
                           }}
                         >
@@ -317,7 +318,7 @@ export default function ShareModal({
                       fontSize: "12px",
                       fontWeight: 300,
                       color: "#000000",
-                      border: "1px solid #000000",
+                      border: "2px solid #000000",
                       background: "none",
                       padding: "4px 10px",
                       cursor: "pointer",
