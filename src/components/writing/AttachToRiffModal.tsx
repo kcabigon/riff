@@ -10,10 +10,22 @@ interface ActiveRiff {
   club: { id: string; name: string };
 }
 
+interface CurrentAttachment {
+  riffId: string;
+  submittedAt: string | null;
+  riff: {
+    title: string | null;
+    volume: number;
+    status: string;
+    club: { name: string };
+  };
+}
+
 interface AttachToRiffModalProps {
   pieceId: string;
   activeRiffs: ActiveRiff[];
   alreadyAttachedRiffIds: string[];
+  currentAttachments?: CurrentAttachment[];
   onClose: () => void;
   onAttached: (riff: ActiveRiff) => void;
 }
@@ -22,6 +34,7 @@ export default function AttachToRiffModal({
   pieceId,
   activeRiffs,
   alreadyAttachedRiffIds,
+  currentAttachments = [],
   onClose,
   onAttached,
 }: AttachToRiffModalProps) {
@@ -59,6 +72,34 @@ export default function AttachToRiffModal({
 
   return (
     <Modal isOpen onClose={onClose} title="Attach to Riff" size="sm">
+      {currentAttachments.length > 0 && (
+        <div style={{ marginBottom: "16px" }}>
+          {currentAttachments.map((a) => {
+            const isSubmitted =
+              a.submittedAt !== null || a.riff.status === "REVEALED";
+            const riffLabel = a.riff.title || `Vol. ${a.riff.volume}`;
+            return (
+              <div
+                key={a.riffId}
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "13px",
+                  fontWeight: 300,
+                  color: "#808080",
+                  padding: "4px 0",
+                }}
+              >
+                {isSubmitted
+                  ? `Currently submitted to ${riffLabel} · ${a.riff.club.name}`
+                  : `Currently attached to ${riffLabel} · ${a.riff.club.name}`}
+              </div>
+            );
+          })}
+          <div
+            style={{ borderTop: "1px solid #E6E6E6", margin: "12px 0 0 0" }}
+          />
+        </div>
+      )}
       {eligibleRiffs.length === 0 ? (
         <p
           style={{

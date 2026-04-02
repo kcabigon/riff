@@ -478,14 +478,6 @@ export default function MyWritingPage({
   const renderPieceGridItem = (piece: PieceItem) => {
     const isPublic = piece.shares.some((s) => s.shareType === "PUBLIC");
 
-    const riffStatusItems: DropdownItem[] = piece.riffs.map((r) => ({
-      type: "label" as const,
-      label:
-        r.submittedAt !== null || r.riff.status === "REVEALED"
-          ? `Submitted · ${r.riff.title || `Vol. ${r.riff.volume}`} · ${r.riff.club.name}`
-          : `Attached · ${r.riff.title || `Vol. ${r.riff.volume}`} · ${r.riff.club.name}`,
-    }));
-
     const menuItems: DropdownItem[] = [
       {
         type: "action",
@@ -497,7 +489,6 @@ export default function MyWritingPage({
         label: "Attach to Riff",
         onClick: () => setAttachPieceId(piece.id),
       },
-      ...(riffStatusItems.length > 0 ? riffStatusItems : []),
       {
         type: "action",
         label: "Share",
@@ -789,6 +780,9 @@ export default function MyWritingPage({
             ...drafts.flatMap((d) => d.riffs.map((r) => r.riffId)),
             ...pieces.flatMap((p) => p.riffs.map((r) => r.riffId)),
           ]}
+          currentAttachments={
+            drafts.find((d) => d.id === attachDraftId)?.riffs ?? []
+          }
           onClose={() => setAttachDraftId(null)}
           onAttached={(riff) => {
             handleRiffAttached(attachDraftId, riff);
@@ -806,6 +800,9 @@ export default function MyWritingPage({
             ...drafts.flatMap((d) => d.riffs.map((r) => r.riffId)),
             ...pieces.flatMap((p) => p.riffs.map((r) => r.riffId)),
           ]}
+          currentAttachments={
+            pieces.find((p) => p.id === attachPieceId)?.riffs ?? []
+          }
           onClose={() => setAttachPieceId(null)}
           onAttached={(riff) => {
             handleRiffAttached(attachPieceId, riff);
