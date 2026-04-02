@@ -22,7 +22,45 @@ interface ShareModalProps {
   onShareRevoked: (shareId: string) => void;
 }
 
-// --- Shared row layout ---
+// --- Sub-components ---
+
+function SectionHeader({
+  label,
+  description,
+}: {
+  label: string;
+  description: string;
+}) {
+  return (
+    <div style={{ marginBottom: "16px" }}>
+      <p
+        style={{
+          fontFamily: "var(--font-dm-sans)",
+          fontSize: "11px",
+          fontWeight: 700,
+          color: "#000000",
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+          margin: "0 0 4px 0",
+        }}
+      >
+        {label}
+      </p>
+      <p
+        style={{
+          fontFamily: "var(--font-dm-sans)",
+          fontSize: "13px",
+          fontWeight: 300,
+          color: "#808080",
+          margin: 0,
+          lineHeight: 1.5,
+        }}
+      >
+        {description}
+      </p>
+    </div>
+  );
+}
 
 function Row({
   left,
@@ -38,7 +76,7 @@ function Row({
         alignItems: "center",
         justifyContent: "space-between",
         gap: "16px",
-        padding: "14px 0",
+        padding: "13px 0",
         borderBottom: "1px solid #E6E6E6",
       }}
     >
@@ -55,24 +93,6 @@ function Row({
       </div>
       <div style={{ flexShrink: 0 }}>{right}</div>
     </div>
-  );
-}
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <p
-      style={{
-        fontFamily: "var(--font-dm-sans)",
-        fontSize: "11px",
-        fontWeight: 700,
-        color: "#808080",
-        textTransform: "uppercase",
-        letterSpacing: "0.08em",
-        margin: "0 0 12px 0",
-      }}
-    >
-      {children}
-    </p>
   );
 }
 
@@ -108,7 +128,7 @@ function ShareButton({
   );
 }
 
-function RevokeButton({
+function RevokeLink({
   label,
   onClick,
   disabled,
@@ -137,26 +157,6 @@ function RevokeButton({
     >
       {label}
     </button>
-  );
-}
-
-function SharedBadge() {
-  return (
-    <span
-      style={{
-        fontFamily: "var(--font-dm-sans)",
-        fontSize: "11px",
-        fontWeight: 700,
-        color: "#000000",
-        backgroundColor: "#00FF66",
-        padding: "1px 6px",
-        textTransform: "uppercase",
-        letterSpacing: "0.05em",
-        flexShrink: 0,
-      }}
-    >
-      Shared
-    </span>
   );
 }
 
@@ -255,12 +255,21 @@ export default function ShareModal({
   const publicUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/p/${pieceId}`;
 
   return (
-    <Modal isOpen onClose={onClose} title="Share" size="md">
-      <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
+    <Modal
+      isOpen
+      onClose={onClose}
+      title="Share"
+      size="md"
+      noiseBackground={false}
+    >
+      <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
         {/* Club section */}
         {userClubs.length > 0 && (
           <div>
-            <SectionLabel>Club</SectionLabel>
+            <SectionHeader
+              label="Club"
+              description="Members of the selected club can read and leave comments."
+            />
             <div style={{ borderTop: "1px solid #E6E6E6" }}>
               {userClubs.map((club) => {
                 const share = clubShares.find((s) => s.clubId === club.id);
@@ -274,7 +283,7 @@ export default function ShareModal({
                           style={{
                             fontFamily: "var(--font-dm-sans)",
                             fontSize: "14px",
-                            fontWeight: 300,
+                            fontWeight: isShared ? 400 : 300,
                             color: "#000000",
                             overflow: "hidden",
                             textOverflow: "ellipsis",
@@ -283,12 +292,28 @@ export default function ShareModal({
                         >
                           {club.name}
                         </span>
-                        {isShared && <SharedBadge />}
+                        {isShared && (
+                          <span
+                            style={{
+                              fontFamily: "var(--font-dm-sans)",
+                              fontSize: "10px",
+                              fontWeight: 700,
+                              color: "#000000",
+                              backgroundColor: "#00FF66",
+                              padding: "2px 6px",
+                              textTransform: "uppercase",
+                              letterSpacing: "0.06em",
+                              flexShrink: 0,
+                            }}
+                          >
+                            Shared
+                          </span>
+                        )}
                       </>
                     }
                     right={
                       isShared && share ? (
-                        <RevokeButton
+                        <RevokeLink
                           label={revoking === share.id ? "Revoking…" : "Revoke"}
                           onClick={() => handleRevoke(share.id)}
                           disabled={revoking !== null}
@@ -312,17 +337,19 @@ export default function ShareModal({
 
         {/* Public section */}
         <div>
-          <SectionLabel>Public link</SectionLabel>
+          <SectionHeader
+            label="Public link"
+            description="Anyone with the link can read. No account required."
+          />
           <div style={{ borderTop: "1px solid #E6E6E6" }}>
             {publicShare ? (
               <>
-                {/* URL + copy */}
                 <Row
                   left={
                     <span
                       style={{
-                        fontFamily: "var(--font-dm-mono, monospace)",
-                        fontSize: "13px",
+                        fontFamily: "ui-monospace, monospace",
+                        fontSize: "12px",
                         color: "#808080",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
@@ -334,12 +361,11 @@ export default function ShareModal({
                   }
                   right={
                     <ShareButton
-                      label={copied ? "Copied!" : "Copy"}
+                      label={copied ? "Copied!" : "Copy link"}
                       onClick={handleCopy}
                     />
                   }
                 />
-                {/* Revoke */}
                 <div
                   style={{
                     display: "flex",
@@ -347,7 +373,7 @@ export default function ShareModal({
                     paddingTop: "12px",
                   }}
                 >
-                  <RevokeButton
+                  <RevokeLink
                     label={
                       revoking === publicShare.id
                         ? "Revoking…"
@@ -360,18 +386,7 @@ export default function ShareModal({
               </>
             ) : (
               <Row
-                left={
-                  <span
-                    style={{
-                      fontFamily: "var(--font-dm-sans)",
-                      fontSize: "14px",
-                      fontWeight: 300,
-                      color: "#808080",
-                    }}
-                  >
-                    Anyone with a link can read this piece.
-                  </span>
-                }
+                left={<span style={{ flex: 1 }} />}
                 right={
                   <ShareButton
                     label={loadingPublic ? "Making public…" : "Make public"}
