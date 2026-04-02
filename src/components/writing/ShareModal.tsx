@@ -26,18 +26,22 @@ interface ShareModalProps {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p
-      style={{
-        fontFamily: "var(--font-dm-sans)",
-        fontSize: "11px",
-        fontWeight: 700,
-        color: "#808080",
-        textTransform: "uppercase",
-        letterSpacing: "0.08em",
-        margin: "0 0 8px 0",
-      }}
-    >
-      {children}
+    <p style={{ margin: "0 0 8px 0" }}>
+      <span
+        style={{
+          fontFamily: "var(--font-dm-sans)",
+          fontSize: "11px",
+          fontWeight: 700,
+          color: "#808080",
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+          backgroundColor: "#FFFFFF",
+          padding: "2px 6px",
+          display: "inline-block",
+        }}
+      >
+        {children}
+      </span>
     </p>
   );
 }
@@ -139,13 +143,7 @@ export default function ShareModal({
     loadingClubId !== null || loadingPublic || revoking !== null;
 
   return (
-    <Modal
-      isOpen
-      onClose={onClose}
-      title="Share"
-      size="sm"
-      noiseBackground={false}
-    >
+    <Modal isOpen onClose={onClose} title="Share" size="sm">
       <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
         {/* Club section */}
         {userClubs.length > 0 && (
