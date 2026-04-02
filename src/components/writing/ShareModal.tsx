@@ -22,7 +22,41 @@ interface ShareModalProps {
   onShareRevoked: (shareId: string) => void;
 }
 
-// --- Section label ---
+// --- Shared row layout ---
+
+function Row({
+  left,
+  right,
+}: {
+  left: React.ReactNode;
+  right: React.ReactNode;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: "16px",
+        padding: "14px 0",
+        borderBottom: "1px solid #E6E6E6",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          minWidth: 0,
+          flex: 1,
+        }}
+      >
+        {left}
+      </div>
+      <div style={{ flexShrink: 0 }}>{right}</div>
+    </div>
+  );
+}
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -30,11 +64,11 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
       style={{
         fontFamily: "var(--font-dm-sans)",
         fontSize: "11px",
-        fontWeight: 300,
+        fontWeight: 700,
         color: "#808080",
         textTransform: "uppercase",
         letterSpacing: "0.08em",
-        margin: "0 0 8px 0",
+        margin: "0 0 12px 0",
       }}
     >
       {children}
@@ -42,105 +76,14 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-// --- Row item ---
-
-function Row({
-  primary,
-  secondary,
-  badge,
-  action,
-}: {
-  primary: string;
-  secondary?: string;
-  badge?: React.ReactNode;
-  action: React.ReactNode;
-}) {
-  return (
-    <div
-      style={{
-        border: "2px solid #000000",
-        backgroundColor: "#FFFFFF",
-        padding: "10px 14px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: "12px",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "2px",
-          flex: 1,
-          minWidth: 0,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              fontWeight: 300,
-              color: "#000000",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {primary}
-          </span>
-          {badge}
-        </div>
-        {secondary && (
-          <span
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "12px",
-              fontWeight: 300,
-              color: "#808080",
-            }}
-          >
-            {secondary}
-          </span>
-        )}
-      </div>
-      <div style={{ flexShrink: 0 }}>{action}</div>
-    </div>
-  );
-}
-
-function SharedBadge() {
-  return (
-    <span
-      style={{
-        fontFamily: "var(--font-dm-sans)",
-        fontSize: "10px",
-        fontWeight: 700,
-        color: "#000000",
-        backgroundColor: "#00FF66",
-        border: "1px solid #000000",
-        padding: "1px 6px",
-        textTransform: "uppercase",
-        letterSpacing: "0.05em",
-        whiteSpace: "nowrap",
-      }}
-    >
-      Shared
-    </span>
-  );
-}
-
-function ActionButton({
+function ShareButton({
   label,
   onClick,
   disabled,
-  destructive,
 }: {
   label: string;
   onClick: () => void;
   disabled?: boolean;
-  destructive?: boolean;
 }) {
   return (
     <button
@@ -150,18 +93,70 @@ function ActionButton({
         fontFamily: "var(--font-dm-sans)",
         fontSize: "12px",
         fontWeight: 300,
-        color: destructive ? "#DC2626" : "#000000",
-        border: `1px solid ${destructive ? "#DC2626" : "#000000"}`,
+        color: "#000000",
+        border: "1px solid #000000",
         background: "none",
-        padding: "4px 10px",
+        padding: "4px 12px",
         cursor: disabled ? "not-allowed" : "pointer",
-        opacity: disabled ? 0.6 : 1,
-        whiteSpace: "nowrap",
+        opacity: disabled ? 0.5 : 1,
         transition: "none",
+        whiteSpace: "nowrap",
       }}
     >
       {label}
     </button>
+  );
+}
+
+function RevokeButton({
+  label,
+  onClick,
+  disabled,
+}: {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        fontFamily: "var(--font-dm-sans)",
+        fontSize: "12px",
+        fontWeight: 300,
+        color: disabled ? "#808080" : "#DC2626",
+        border: "none",
+        background: "none",
+        padding: 0,
+        cursor: disabled ? "not-allowed" : "pointer",
+        textDecoration: "underline",
+        transition: "none",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {label}
+    </button>
+  );
+}
+
+function SharedBadge() {
+  return (
+    <span
+      style={{
+        fontFamily: "var(--font-dm-sans)",
+        fontSize: "11px",
+        fontWeight: 700,
+        color: "#000000",
+        backgroundColor: "#00FF66",
+        padding: "1px 6px",
+        textTransform: "uppercase",
+        letterSpacing: "0.05em",
+        flexShrink: 0,
+      }}
+    >
+      Shared
+    </span>
   );
 }
 
@@ -186,8 +181,6 @@ export default function ShareModal({
     existingShares.find((s) => s.shareType === "PUBLIC") ?? null;
   const sharedClubIds = new Set(clubShares.map((s) => s.clubId));
 
-  // --- Club share ---
-
   const handleShareToClub = async (clubId: string) => {
     setLoadingClubId(clubId);
     setError(null);
@@ -209,8 +202,6 @@ export default function ShareModal({
       setLoadingClubId(null);
     }
   };
-
-  // --- Public share ---
 
   const handleMakePublic = async () => {
     setLoadingPublic(true);
@@ -234,8 +225,6 @@ export default function ShareModal({
     }
   };
 
-  // --- Revoke ---
-
   const handleRevoke = async (shareId: string) => {
     setRevoking(shareId);
     setError(null);
@@ -256,8 +245,6 @@ export default function ShareModal({
     }
   };
 
-  // --- Copy public link ---
-
   const handleCopy = async () => {
     const url = `${window.location.origin}/p/${pieceId}`;
     await navigator.clipboard.writeText(url);
@@ -269,32 +256,45 @@ export default function ShareModal({
 
   return (
     <Modal isOpen onClose={onClose} title="Share" size="md">
-      <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-        {/* CLUB section */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
+        {/* Club section */}
         {userClubs.length > 0 && (
           <div>
             <SectionLabel>Club</SectionLabel>
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "6px" }}
-            >
+            <div style={{ borderTop: "1px solid #E6E6E6" }}>
               {userClubs.map((club) => {
                 const share = clubShares.find((s) => s.clubId === club.id);
                 const isShared = sharedClubIds.has(club.id);
                 return (
                   <Row
                     key={club.id}
-                    primary={club.name}
-                    badge={isShared ? <SharedBadge /> : undefined}
-                    action={
+                    left={
+                      <>
+                        <span
+                          style={{
+                            fontFamily: "var(--font-dm-sans)",
+                            fontSize: "14px",
+                            fontWeight: 300,
+                            color: "#000000",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {club.name}
+                        </span>
+                        {isShared && <SharedBadge />}
+                      </>
+                    }
+                    right={
                       isShared && share ? (
-                        <ActionButton
+                        <RevokeButton
                           label={revoking === share.id ? "Revoking…" : "Revoke"}
                           onClick={() => handleRevoke(share.id)}
                           disabled={revoking !== null}
-                          destructive
                         />
                       ) : (
-                        <ActionButton
+                        <ShareButton
                           label={
                             loadingClubId === club.id ? "Sharing…" : "Share"
                           }
@@ -310,63 +310,78 @@ export default function ShareModal({
           </div>
         )}
 
-        {/* PUBLIC section */}
+        {/* Public section */}
         <div>
-          <SectionLabel>Public</SectionLabel>
-          {publicShare ? (
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "8px" }}
-            >
-              <div
-                style={{
-                  border: "2px solid #000000",
-                  backgroundColor: "#F5F5F5",
-                  padding: "10px 14px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: "12px",
-                }}
-              >
-                <span
+          <SectionLabel>Public link</SectionLabel>
+          <div style={{ borderTop: "1px solid #E6E6E6" }}>
+            {publicShare ? (
+              <>
+                {/* URL + copy */}
+                <Row
+                  left={
+                    <span
+                      style={{
+                        fontFamily: "var(--font-dm-mono, monospace)",
+                        fontSize: "13px",
+                        color: "#808080",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {publicUrl}
+                    </span>
+                  }
+                  right={
+                    <ShareButton
+                      label={copied ? "Copied!" : "Copy"}
+                      onClick={handleCopy}
+                    />
+                  }
+                />
+                {/* Revoke */}
+                <div
                   style={{
-                    fontFamily: "var(--font-dm-mono, monospace)",
-                    fontSize: "12px",
-                    fontWeight: 400,
-                    color: "#000000",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                    flex: 1,
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    paddingTop: "12px",
                   }}
                 >
-                  {publicUrl}
-                </span>
-                <ActionButton
-                  label={copied ? "Copied!" : "Copy"}
-                  onClick={handleCopy}
-                />
-              </div>
-              <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                <ActionButton
-                  label={
-                    revoking === publicShare.id
-                      ? "Revoking…"
-                      : "Revoke public link"
-                  }
-                  onClick={() => handleRevoke(publicShare.id)}
-                  disabled={revoking !== null}
-                  destructive
-                />
-              </div>
-            </div>
-          ) : (
-            <ActionButton
-              label={loadingPublic ? "Making public…" : "Make public"}
-              onClick={handleMakePublic}
-              disabled={loadingPublic}
-            />
-          )}
+                  <RevokeButton
+                    label={
+                      revoking === publicShare.id
+                        ? "Revoking…"
+                        : "Revoke public link"
+                    }
+                    onClick={() => handleRevoke(publicShare.id)}
+                    disabled={revoking !== null}
+                  />
+                </div>
+              </>
+            ) : (
+              <Row
+                left={
+                  <span
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "14px",
+                      fontWeight: 300,
+                      color: "#808080",
+                    }}
+                  >
+                    Anyone with a link can read this piece.
+                  </span>
+                }
+                right={
+                  <ShareButton
+                    label={loadingPublic ? "Making public…" : "Make public"}
+                    onClick={handleMakePublic}
+                    disabled={loadingPublic}
+                  />
+                }
+              />
+            )}
+          </div>
         </div>
 
         {/* Error */}
