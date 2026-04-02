@@ -25,6 +25,7 @@ interface NavBarProps {
   } | null;
   showClubDropdown?: boolean;
   leftContent?: ReactNode;
+  homeHref?: string;
 }
 
 export default function NavBar({
@@ -33,6 +34,7 @@ export default function NavBar({
   currentClub,
   showClubDropdown = true,
   leftContent,
+  homeHref,
 }: NavBarProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -69,7 +71,7 @@ export default function NavBar({
         >
           {/* Logo */}
           <Link
-            href={currentClub ? `/clubs/${currentClub.id}` : "/"}
+            href={currentClub ? `/clubs/${currentClub.id}` : (homeHref ?? "/")}
             style={{ display: "flex", alignItems: "center" }}
           >
             <Image

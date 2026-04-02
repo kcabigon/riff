@@ -542,6 +542,7 @@ export default function MyWritingPage({
         clubs={userClubs}
         showClubDropdown={false}
         leftContent={newDraftButton}
+        homeHref={userClubs[0] ? `/clubs/${userClubs[0].id}` : "/"}
       />
 
       {/* Page content */}
