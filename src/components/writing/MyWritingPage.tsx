@@ -142,12 +142,14 @@ function DraftCard({
   onAttach,
   onShare,
   onDelete,
+  onUnattach,
 }: {
   draft: DraftItem;
   onClick: () => void;
   onAttach: () => void;
   onShare: () => void;
   onDelete: () => void;
+  onUnattach: (riffId: string) => void;
 }) {
   const [isHovered, setIsHovered] = useState(false);
   const [dotsHovered, setDotsHovered] = useState(false);
@@ -278,13 +280,36 @@ function DraftCard({
                 color: "#000000",
                 backgroundColor: "#00FF66",
                 border: "1px solid #000000",
-                padding: "2px 8px",
+                padding: "2px 6px 2px 8px",
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
                 whiteSpace: "nowrap",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
               }}
             >
               {r.riff.title || `Vol. ${r.riff.volume}`} · {r.riff.club.name}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onUnattach(r.riffId);
+                }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                  cursor: "pointer",
+                  color: "#000000",
+                  fontSize: "12px",
+                  lineHeight: 1,
+                  display: "flex",
+                  alignItems: "center",
+                }}
+                aria-label="Remove from riff"
+              >
+                ×
+              </button>
             </span>
           ))}
         </div>
@@ -320,6 +345,24 @@ export default function MyWritingPage({
 
   const findItem = (id: string): DraftItem | PieceItem | undefined =>
     [...drafts, ...pieces].find((x) => x.id === id);
+
+  // --- Riff unattach callback ---
+
+  const handleRiffUnattached = async (pieceId: string, riffId: string) => {
+    const res = await fetch(`/api/riffs/${riffId}/pieces/${pieceId}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) return;
+
+    const removeRiff = <T extends DraftItem | PieceItem>(arr: T[]): T[] =>
+      arr.map((x) =>
+        x.id === pieceId
+          ? { ...x, riffs: x.riffs.filter((r) => r.riffId !== riffId) }
+          : x
+      );
+    setDrafts((prev) => removeRiff(prev));
+    setPieces((prev) => removeRiff(prev));
+  };
 
   // --- Riff attach callback ---
 
@@ -608,6 +651,9 @@ export default function MyWritingPage({
                     onShare={() => setSharingPieceId(draft.id)}
                     onDelete={() =>
                       setDeleteTarget({ id: draft.id, title: draft.title })
+                    }
+                    onUnattach={(riffId) =>
+                      handleRiffUnattached(draft.id, riffId)
                     }
                   />
                 ))}
