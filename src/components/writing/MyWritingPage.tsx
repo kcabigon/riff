@@ -7,12 +7,20 @@ import PieceCard from "@/components/riffs/PieceCard";
 import Dropdown from "@/components/shared/Dropdown";
 import DeletePieceModal from "@/components/writing/DeletePieceModal";
 import ShareModal from "@/components/writing/ShareModal";
+import AttachToRiffModal from "@/components/writing/AttachToRiffModal";
 import NoiseBackground from "@/components/NoiseBackground";
 import { useDraftCreation } from "@/hooks/useDraftCreation";
 import type { DropdownItem } from "@/components/shared/Dropdown";
-import type { ActiveRiff, ShareItem } from "@/components/writing/ShareModal";
+import type { ShareItem } from "@/components/writing/ShareModal";
 
 // --- Types ---
+
+type ActiveRiff = {
+  id: string;
+  title: string | null;
+  volume: number;
+  club: { id: string; name: string };
+};
 
 export type DraftItem = {
   id: string;
@@ -131,11 +139,13 @@ function PieceDotsMenu({ items }: { items: DropdownItem[] }) {
 function DraftCard({
   draft,
   onClick,
+  onAttach,
   onShare,
   onDelete,
 }: {
   draft: DraftItem;
   onClick: () => void;
+  onAttach: () => void;
   onShare: () => void;
   onDelete: () => void;
 }) {
@@ -143,6 +153,7 @@ function DraftCard({
   const [dotsHovered, setDotsHovered] = useState(false);
 
   const menuItems: DropdownItem[] = [
+    { type: "action", label: "Attach to Riff", onClick: onAttach },
     { type: "action", label: "Share", onClick: onShare },
     { type: "divider" },
     { type: "action", label: "Delete", color: "#DC2626", onClick: onDelete },
@@ -169,7 +180,7 @@ function DraftCard({
         padding: "20px 24px",
         backgroundColor: "#FFFFFF",
         boxShadow: isHovered ? "4px 4px 0px 0px #000000" : "none",
-        transition: "box-shadow 0.1s ease",
+        transition: "none",
         display: "flex",
         flexDirection: "column",
         gap: "8px",
@@ -298,6 +309,7 @@ export default function MyWritingPage({
   const [pieces, setPieces] = useState<PieceItem[]>(initialPieces);
 
   // Modal state
+  const [attachDraftId, setAttachDraftId] = useState<string | null>(null);
   const [sharingPieceId, setSharingPieceId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{
     id: string;
@@ -591,6 +603,7 @@ export default function MyWritingPage({
                     key={draft.id}
                     draft={draft}
                     onClick={() => router.push(`/write/${draft.id}`)}
+                    onAttach={() => setAttachDraftId(draft.id)}
                     onShare={() => setSharingPieceId(draft.id)}
                     onDelete={() =>
                       setDeleteTarget({ id: draft.id, title: draft.title })
@@ -645,16 +658,31 @@ export default function MyWritingPage({
         </div>
       </div>
 
+      {/* Attach to Riff modal */}
+      {attachDraftId && (
+        <AttachToRiffModal
+          draftId={attachDraftId}
+          activeRiffs={activeRiffs}
+          alreadyAttachedRiffIds={
+            drafts
+              .find((d) => d.id === attachDraftId)
+              ?.riffs.map((r) => r.riffId) ?? []
+          }
+          onClose={() => setAttachDraftId(null)}
+          onAttached={(riff) => {
+            handleRiffAttached(attachDraftId, riff);
+            setAttachDraftId(null);
+          }}
+        />
+      )}
+
       {/* Share modal */}
       {sharingPieceId && sharingItem && (
         <ShareModal
           pieceId={sharingPieceId}
-          activeRiffs={activeRiffs}
           userClubs={userClubs}
-          existingRiffIds={sharingItem.riffs.map((r) => r.riffId)}
           existingShares={sharingItem.shares}
           onClose={() => setSharingPieceId(null)}
-          onRiffAttached={(riff) => handleRiffAttached(sharingPieceId, riff)}
           onShareCreated={(share) => handleShareCreated(sharingPieceId, share)}
           onShareRevoked={(shareId) =>
             handleShareRevoked(sharingPieceId, shareId)
