@@ -337,10 +337,10 @@ export default function WritePage({ piece }: WritePageProps) {
   };
 
   const handleBack = () => {
-    if (piece.riffs.length > 0) {
-      router.push(`/clubs/${piece.riffs[0].clubId}`);
-    } else {
+    if (window.history.length > 1) {
       router.back();
+    } else {
+      router.push("/my/writing");
     }
   };
 
