@@ -11,7 +11,7 @@ interface ActiveRiff {
 }
 
 interface AttachToRiffModalProps {
-  draftId: string;
+  pieceId: string;
   activeRiffs: ActiveRiff[];
   alreadyAttachedRiffIds: string[];
   onClose: () => void;
@@ -19,7 +19,7 @@ interface AttachToRiffModalProps {
 }
 
 export default function AttachToRiffModal({
-  draftId,
+  pieceId,
   activeRiffs,
   alreadyAttachedRiffIds,
   onClose,
@@ -39,7 +39,7 @@ export default function AttachToRiffModal({
       const res = await fetch(`/api/riffs/${riff.id}/pieces`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pieceId: draftId }),
+        body: JSON.stringify({ pieceId }),
       });
 
       if (!res.ok) {

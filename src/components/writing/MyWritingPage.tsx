@@ -22,20 +22,24 @@ type ActiveRiff = {
   club: { id: string; name: string };
 };
 
+type RiffAttachment = {
+  riffId: string;
+  submittedAt: string | null;
+  riff: {
+    id: string;
+    title: string | null;
+    volume: number;
+    status: string;
+    club: { id: string; name: string };
+  };
+};
+
 export type DraftItem = {
   id: string;
   title: string;
   updatedAt: string;
   wordCount: number;
-  riffs: Array<{
-    riffId: string;
-    riff: {
-      id: string;
-      title: string | null;
-      volume: number;
-      club: { id: string; name: string };
-    };
-  }>;
+  riffs: RiffAttachment[];
   shares: ShareItem[];
 };
 
@@ -45,15 +49,7 @@ export type PieceItem = {
   coverImage: string | null;
   currentContent: string;
   wordCount: number;
-  riffs: Array<{
-    riffId: string;
-    riff: {
-      id: string;
-      title: string | null;
-      volume: number;
-      club: { id: string; name: string };
-    };
-  }>;
+  riffs: RiffAttachment[];
   shares: ShareItem[];
 };
 
@@ -335,6 +331,7 @@ export default function MyWritingPage({
 
   // Modal state
   const [attachDraftId, setAttachDraftId] = useState<string | null>(null);
+  const [attachPieceId, setAttachPieceId] = useState<string | null>(null);
   const [sharingPieceId, setSharingPieceId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{
     id: string;
@@ -376,10 +373,12 @@ export default function MyWritingPage({
                 ...x.riffs,
                 {
                   riffId: riff.id,
+                  submittedAt: null,
                   riff: {
                     id: riff.id,
                     title: riff.title,
                     volume: riff.volume,
+                    status: "ACTIVE",
                     club: riff.club,
                   },
                 },
@@ -478,12 +477,27 @@ export default function MyWritingPage({
 
   const renderPieceGridItem = (piece: PieceItem) => {
     const isPublic = piece.shares.some((s) => s.shareType === "PUBLIC");
+
+    const riffStatusItems: DropdownItem[] = piece.riffs.map((r) => ({
+      type: "label" as const,
+      label:
+        r.submittedAt !== null || r.riff.status === "REVEALED"
+          ? `Submitted · ${r.riff.title || `Vol. ${r.riff.volume}`} · ${r.riff.club.name}`
+          : `Attached · ${r.riff.title || `Vol. ${r.riff.volume}`} · ${r.riff.club.name}`,
+    }));
+
     const menuItems: DropdownItem[] = [
       {
         type: "action",
         label: "Edit",
         onClick: () => router.push(`/write/${piece.id}`),
       },
+      {
+        type: "action",
+        label: "Attach to Riff",
+        onClick: () => setAttachPieceId(piece.id),
+      },
+      ...(riffStatusItems.length > 0 ? riffStatusItems : []),
       {
         type: "action",
         label: "Share",
@@ -525,28 +539,58 @@ export default function MyWritingPage({
               pointerEvents: "none",
             }}
           >
-            {piece.riffs.map((r) => (
-              <span
-                key={r.riffId}
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  color: "#000000",
-                  backgroundColor: "#00FF66",
-                  border: "1px solid #000000",
-                  padding: "2px 8px",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
-                  whiteSpace: "nowrap",
-                  maxWidth: "90%",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                {r.riff.title || `Vol. ${r.riff.volume}`} · {r.riff.club.name}
-              </span>
-            ))}
+            {piece.riffs.map((r) => {
+              const canUnattach =
+                r.submittedAt === null && r.riff.status === "ACTIVE";
+              return (
+                <span
+                  key={r.riffId}
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    color: "#000000",
+                    backgroundColor: "#00FF66",
+                    border: "1px solid #000000",
+                    padding: canUnattach ? "2px 6px 2px 8px" : "2px 8px",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                    whiteSpace: "nowrap",
+                    maxWidth: "90%",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    pointerEvents: canUnattach ? "auto" : "none",
+                  }}
+                >
+                  {r.riff.title || `Vol. ${r.riff.volume}`} · {r.riff.club.name}
+                  {canUnattach && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRiffUnattached(piece.id, r.riffId);
+                      }}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        padding: 0,
+                        cursor: "pointer",
+                        color: "#000000",
+                        fontSize: "12px",
+                        lineHeight: 1,
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                      aria-label="Remove from riff"
+                    >
+                      ×
+                    </button>
+                  )}
+                </span>
+              );
+            })}
             {isPublic && (
               <span
                 style={{
@@ -736,10 +780,10 @@ export default function MyWritingPage({
         </div>
       </div>
 
-      {/* Attach to Riff modal */}
+      {/* Attach to Riff modal — drafts */}
       {attachDraftId && (
         <AttachToRiffModal
-          draftId={attachDraftId}
+          pieceId={attachDraftId}
           activeRiffs={activeRiffs}
           alreadyAttachedRiffIds={[
             ...drafts.flatMap((d) => d.riffs.map((r) => r.riffId)),
@@ -749,6 +793,23 @@ export default function MyWritingPage({
           onAttached={(riff) => {
             handleRiffAttached(attachDraftId, riff);
             setAttachDraftId(null);
+          }}
+        />
+      )}
+
+      {/* Attach to Riff modal — pieces */}
+      {attachPieceId && (
+        <AttachToRiffModal
+          pieceId={attachPieceId}
+          activeRiffs={activeRiffs}
+          alreadyAttachedRiffIds={[
+            ...drafts.flatMap((d) => d.riffs.map((r) => r.riffId)),
+            ...pieces.flatMap((p) => p.riffs.map((r) => r.riffId)),
+          ]}
+          onClose={() => setAttachPieceId(null)}
+          onAttached={(riff) => {
+            handleRiffAttached(attachPieceId, riff);
+            setAttachPieceId(null);
           }}
         />
       )}

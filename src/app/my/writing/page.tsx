@@ -91,10 +91,12 @@ export default async function MyWritingPageRoute() {
   const serializeRiffs = (p: (typeof pieces)[number]) =>
     p.riffs.map((r) => ({
       riffId: r.riffId,
+      submittedAt: r.submittedAt ? r.submittedAt.toISOString() : null,
       riff: {
         id: r.riff.id,
         title: r.riff.title,
         volume: r.riff.volumeNumber ?? 1,
+        status: r.riff.status,
         club: r.riff.club,
       },
     }));

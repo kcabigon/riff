@@ -18,7 +18,15 @@ interface DropdownDividerItem {
   type: "divider";
 }
 
-export type DropdownItem = DropdownActionItem | DropdownDividerItem;
+interface DropdownLabelItem {
+  type: "label";
+  label: string;
+}
+
+export type DropdownItem =
+  | DropdownActionItem
+  | DropdownDividerItem
+  | DropdownLabelItem;
 
 // --- Props ---
 
@@ -120,6 +128,24 @@ export default function Dropdown({
                     margin: "4px 0",
                   }}
                 />
+              );
+            }
+
+            if (item.type === "label") {
+              return (
+                <div
+                  key={`label-${i}`}
+                  style={{
+                    padding: "8px 16px 4px",
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "12px",
+                    fontWeight: 300,
+                    color: "#808080",
+                    userSelect: "none",
+                  }}
+                >
+                  {item.label}
+                </div>
               );
             }
 
