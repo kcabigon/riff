@@ -122,17 +122,25 @@ export default function ShareModal({
     <Modal isOpen onClose={onClose} title="Share" size="sm">
       <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
         {/* Context note */}
-        <p
+        <div
           style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "13px",
-            fontWeight: 300,
-            color: "#808080",
-            margin: 0,
+            backgroundColor: "#FFFFFF",
+            border: "1px solid #000000",
+            padding: "10px 14px",
           }}
         >
-          This is for sharing on your own terms — no riff, no group reveal.
-        </p>
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "13px",
+              fontWeight: 300,
+              color: "#000000",
+              margin: 0,
+            }}
+          >
+            This is for sharing on your own terms — no riff, no group reveal.
+          </p>
+        </div>
 
         {/* Club section — coming soon, non-interactive */}
         {userClubs.length > 0 && (
