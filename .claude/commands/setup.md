@@ -2,11 +2,17 @@ Help a new collaborator set up the Riff project for local development. Walk thro
 
 ## Steps
 
-1. **Check Node.js version**:
+1. **Check git identity**:
+   - Run `git config user.name` and `git config user.email`
+   - If either is empty, generic (e.g., "macbook-user"), or doesn't look like a real name/email, ask: "What's your full name and email? I need to set these so your commits are attributed to you."
+   - Set them: `git config user.name "Their Name"` and `git config user.email "their@email.com"`
+   - If they look correct, confirm and move on
+
+2. **Check Node.js version**:
    - Run `node --version`
    - Verify it's v20 or higher. If not, tell the user to install Node.js 20+ (recommend using nvm: `nvm install 20`)
 
-2. **Check for .env.development**:
+3. **Check for .env.development**:
    - Check if `.env.development` exists in the project root
    - If it does NOT exist:
      - Tell the user: "You need a `.env.development` file with the project's environment variables. Hit up Kyle. He's awesome and knows everything."
@@ -15,30 +21,30 @@ Help a new collaborator set up the Riff project for local development. Walk thro
      - Wait for them to confirm before proceeding
    - If it exists, confirm and move on
 
-3. **Install dependencies**:
+4. **Install dependencies**:
    - Check if `node_modules/` exists
    - If not, run `npm install`
    - If it exists, ask if they want to reinstall (`npm ci` for clean install)
 
-4. **Generate Prisma client**:
+5. **Generate Prisma client**:
    - Run `npx prisma generate`
    - Explain: "This generates the TypeScript client for database access based on the schema"
 
-5. **Run database migrations**:
+6. **Run database migrations**:
    - Run `npm run db:migrate:dev`
    - If this fails, it's likely a DATABASE_URL issue — help debug
    - Explain: "This ensures your database schema matches the project's migration files"
 
-6. **Verify build**:
+7. **Verify build**:
    - Run `npm run build`
    - If it fails, help diagnose. Common issues: missing env vars, Node version, TypeScript errors
    - If it passes, congratulations!
 
-7. **Start dev server**:
+8. **Start dev server**:
    - Suggest: "Run `npm run dev` to start the development server at http://localhost:3000"
    - Don't actually run it (it's long-running), just tell them the command
 
-8. **Explain the workflow**:
+9. **Explain the workflow**:
    - Tell them about the available slash commands:
      - `/letsriff` — run this at the start of every session to get oriented
      - `/new-feature` — start a new feature (creates branch, explores codebase)

@@ -49,19 +49,16 @@ export async function GET(
     });
 
     if (!piece) {
-      return NextResponse.json(
-        { error: "Piece not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Piece not found" }, { status: 404 });
     }
 
     // Check if user can view this piece
-    const isAuthor = piece.authorId === (user as any).id;
+    const isAuthor = piece.authorId === user.id;
     const isSharedToUserCircle = piece.shares.some(async (share) => {
       const membership = await prisma.circleMember.findFirst({
         where: {
           circleId: share.circleId,
-          userId: (user as any).id,
+          userId: user.id,
         },
       });
       return membership !== null;
@@ -104,13 +101,10 @@ export async function PATCH(
     });
 
     if (!piece) {
-      return NextResponse.json(
-        { error: "Piece not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Piece not found" }, { status: 404 });
     }
 
-    if (piece.authorId !== (user as any).id) {
+    if (piece.authorId !== user.id) {
       return NextResponse.json(
         { error: "Only the author can update this piece" },
         { status: 403 }
@@ -138,7 +132,9 @@ export async function PATCH(
       data: {
         ...(title !== undefined && { title: title.trim() }),
         ...(content !== undefined && { currentContent: content }),
-        ...(excerpt !== undefined && { currentExcerpt: excerpt?.trim() || null }),
+        ...(excerpt !== undefined && {
+          currentExcerpt: excerpt?.trim() || null,
+        }),
       },
       include: {
         author: {
@@ -184,13 +180,10 @@ export async function DELETE(
     });
 
     if (!piece) {
-      return NextResponse.json(
-        { error: "Piece not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Piece not found" }, { status: 404 });
     }
 
-    if (piece.authorId !== (user as any).id) {
+    if (piece.authorId !== user.id) {
       return NextResponse.json(
         { error: "Only the author can delete this piece" },
         { status: 403 }

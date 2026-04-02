@@ -6,7 +6,7 @@ import { requireAuth } from "@/lib/auth-utils";
 export async function GET(req: Request) {
   try {
     const user = await requireAuth();
-    const userId = (user as any).id;
+    const userId = user.id;
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "20", 10);
@@ -43,7 +43,7 @@ export async function GET(req: Request) {
 export async function PATCH() {
   try {
     const user = await requireAuth();
-    const userId = (user as any).id;
+    const userId = user.id;
 
     await prisma.notification.updateMany({
       where: { recipientId: userId, isRead: false },

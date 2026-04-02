@@ -23,7 +23,7 @@ export default function Modal({
   size = "md",
   children,
   footer,
-  noiseBackground = false,
+  noiseBackground = true,
 }: ModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);

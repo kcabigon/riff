@@ -28,10 +28,10 @@ export async function POST(req: Request) {
       data: {
         name: name.trim(),
         description: description?.trim() || null,
-        createdById: (user as any).id,
+        createdById: user.id,
         members: {
           create: {
-            userId: (user as any).id,
+            userId: user.id,
             role: "OWNER",
           },
         },

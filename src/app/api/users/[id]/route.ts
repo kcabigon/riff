@@ -12,7 +12,7 @@ export async function PATCH(
     const { id } = await params;
 
     // Users can only update their own profile
-    if ((user as any).id !== id) {
+    if (user.id !== id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -31,8 +31,10 @@ export async function PATCH(
         where: { id },
         select: { firstName: true, lastName: true },
       });
-      const newFirst = firstName !== undefined ? firstName : currentUser?.firstName || "";
-      const newLast = lastName !== undefined ? lastName : currentUser?.lastName || "";
+      const newFirst =
+        firstName !== undefined ? firstName : currentUser?.firstName || "";
+      const newLast =
+        lastName !== undefined ? lastName : currentUser?.lastName || "";
       data.name = [newFirst, newLast].filter(Boolean).join(" ") || null;
     }
 

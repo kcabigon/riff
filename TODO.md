@@ -1,6 +1,6 @@
 # Riff — Master TODO
 
-Last updated: March 29, 2026 (Jarric adding modal design system TODOs)
+Last updated: March 30, 2026 (modal cleanup, reveal todos, notification todos)
 
 ---
 
@@ -10,6 +10,7 @@ Last updated: March 29, 2026 (Jarric adding modal design system TODOs)
 - [x] Nav bar: consolidate to single "About" link (remove "What is this?" / "Who built this?")
 - [x] Nav bar: make mobile responsive (hamburger with mobile_menu.svg)
 - [x] Hero assets need realignment (riff_lp.svg +28px, write_club_lp.svg +190px, 16px gaps, CTA 40px below "Start a")
+- [ ] Hero section: mobile responsiveness
 
 ### About Page
 - [x] Remove noise background — put text on white background so it's readable
@@ -34,14 +35,14 @@ Last updated: March 29, 2026 (Jarric adding modal design system TODOs)
 - [x] New user join onboarding flow (/onboarding/join) — name setup then joins club
 - [x] Invite/join flow testing and improvements
 - [x] Join page conversion modal ("what's a write club?" education flow)
-- [ ] When riff is revealed, remove from "Current Riff" section
+- [x] When riff is revealed, remove from "Current Riff" section
 
 ### Riff Creation / Management
 - [x] Volume number auto-assigned; riff name optional (not required to create)
 - [x] Due date mandatory on riff creation, defaults to 1 month out, admin can edit later
 - [ ] Redesign prompts/inspiration UI
-- [ ] After creating a riff, host sees "Start writing" or "Invite friends" CTA
-- [ ] Don't show "Reveal pieces" until deadline passes OR all submissions are in
+- [x] After creating a riff, host sees "Start writing" or "Invite friends" CTA
+- [x] Don't show "Reveal pieces" until deadline passes OR all submissions are in
 
 ### Mobile Comments
 - [ ] Redesign mobile comment experience — easy commenting and navigation between comments in "comment" mode
@@ -57,18 +58,18 @@ Last updated: March 29, 2026 (Jarric adding modal design system TODOs)
 - [x] Share button: confirmation modal + PATCH submittedAt on PieceRiff + fix reveal submitted count
 
 ### Modal Design System
-- [ ] Audit and update Modal component — ensure noise background, tagline highlights, and CTA styling are consistent across all usages
-- [ ] Cover image modal: update to match Modal component (noise background, CTA style, border/shadow spec)
-- [ ] Share piece modal: update to match Modal component (noise background, CTA style, border/shadow spec)
-- [ ] Review all modals (RevealConfirmModal, EditRiffModal, DeleteRiffConfirmModal, ClubSettingsModal, CreateRiffModal, InviteOptions) and bring into alignment with updated Modal component
+- [x] Audit and update Modal component — ensure noise background, tagline highlights, and CTA styling are consistent across all usages
+- [x] Cover image modal: update to match Modal component (noise background, CTA style, border/shadow spec)
+- [x] Share piece modal: update to match Modal component (noise background, CTA style, border/shadow spec)
+- [x] Review all modals (RevealConfirmModal, EditRiffModal, DeleteRiffConfirmModal, ClubSettingsModal, CreateRiffModal, InviteOptions) and bring into alignment with updated Modal component
 
 ### Read / Write Experience
 - [x] Write page redesign: white canvas, floating toolbar, subtitle, resizable images, hide-on-scroll mobile nav
 - [x] Read page redesign: Tiptap read-only, shared extensions, bidirectional comment positioning
 - [x] YouTube embeds, images, Spotify links mobile responsive
 - [x] Cover image upload UI (CoverImageModal with upload, crop, piece image picker, HEIC support)
-- [ ] Cover image: update editor UI to show current cover image preview inline (e.g. thumbnail next to the "Cover image" button)
-- [ ] Cover image: test all three fallbacks end-to-end (explicit cover → first content image → placeholder color) with correct overlay + white title
+- [x] Cover image: update editor UI to show current cover image preview inline (e.g. thumbnail next to the "Cover image" button)
+- [x] Cover image: test all three fallbacks end-to-end (explicit cover → first content image → placeholder color) with correct overlay + white title
 
 ### Profile Page
 - [x] Change tab order to: Drafts, Pieces, Collections
@@ -83,9 +84,16 @@ Last updated: March 29, 2026 (Jarric adding modal design system TODOs)
 - [ ] Let users manage piece state: draft vs. published, shared in riff vs. not ready to share
 - [ ] Clear distinction between drafts (in progress), submitted pieces (shared to a riff), and personal pieces (not in a riff)
 
+### Reveals
+- [x] Improve reveal logic — review edge cases (partial submissions, timing, re-reveal prevention)
+- [x] Add "Reveal early" option for hosts — allow manual reveal before deadline
+- [x] Add "Delete riff" functionality — host can delete a riff before it's revealed
+
 ### Notifications
 - [x] Notification bell uses SVG icon with unread count badge
 - [x] Clicking a notification should navigate to the relevant page
+- [ ] In-app notifications: full audit of triggers and copy (which events fire, what the message says)
+- [ ] Email notifications: audit triggers, design emails, and write copy for all notification types
 
 ### Settings
 - [x] Avatar upload and management

@@ -3,6 +3,8 @@
 import { useState, useRef, useCallback } from "react";
 import Cropper, { Area } from "react-easy-crop";
 import Modal from "@/components/shared/Modal";
+import PrimaryButton from "@/components/PrimaryButton";
+import CloseButton from "@/components/CloseButton";
 import { getCroppedImg } from "@/lib/crop-image";
 import { convertHeicToJpeg, isHeicFile } from "@/lib/convert-heic";
 
@@ -17,6 +19,7 @@ interface ImageUploadModalProps {
   cropShape?: "rect" | "round";
   existingImages?: string[];
   existingImagesLabel?: string;
+  inlinePreview?: boolean;
 }
 
 function isGif(url: string): boolean {
@@ -34,6 +37,7 @@ export default function ImageUploadModal({
   cropShape = "rect",
   existingImages,
   existingImagesLabel = "Choose existing",
+  inlinePreview = false,
 }: ImageUploadModalProps) {
   const showTabs = existingImages && existingImages.length > 0;
   type Tab = "upload" | "existing";
@@ -150,70 +154,77 @@ export default function ImageUploadModal({
     }
   };
 
-  const footer = (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-      }}
-    >
-      {currentImage ? (
-        <button
+  const footer =
+    cropSrc && inlinePreview ? (
+      /* Centered save during crop — no cancel, user can close via modal X */
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <PrimaryButton onClick={handleSaveCrop} loading={isUploading}>
+          {isUploading ? "Saving..." : "Save"}
+        </PrimaryButton>
+      </div>
+    ) : !cropSrc && inlinePreview && currentImage ? (
+      /* Centered "Use Image" — image already saved, closes modal */
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <PrimaryButton
           onClick={() => {
-            onSelect("");
             resetCropper();
-          }}
-          style={{
-            background: "none",
-            border: "none",
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
-            color: "#DC2626",
-            cursor: "pointer",
-            padding: 0,
+            onClose();
           }}
         >
-          {removeLabel}
-        </button>
-      ) : (
-        <div />
-      )}
-      {cropSrc && (
-        <div style={{ display: "flex", gap: "8px" }}>
+          Use Image
+        </PrimaryButton>
+      </div>
+    ) : (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        {currentImage && !inlinePreview ? (
           <button
-            onClick={resetCropper}
+            onClick={() => {
+              onSelect("");
+              resetCropper();
+            }}
             style={{
               background: "none",
-              border: "1px solid #000",
+              border: "none",
               fontFamily: "var(--font-dm-sans)",
               fontSize: "14px",
-              padding: "6px 16px",
+              color: "#DC2626",
               cursor: "pointer",
+              padding: 0,
             }}
           >
-            Cancel
+            {removeLabel}
           </button>
-          <button
-            onClick={handleSaveCrop}
-            disabled={isUploading}
-            style={{
-              background: "#000",
-              color: "#fff",
-              border: "1px solid #000",
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              padding: "6px 16px",
-              cursor: isUploading ? "not-allowed" : "pointer",
-              opacity: isUploading ? 0.6 : 1,
-            }}
-          >
-            {isUploading ? "Saving..." : "Save"}
-          </button>
-        </div>
-      )}
-    </div>
-  );
+        ) : (
+          <div />
+        )}
+        {cropSrc && (
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button
+              onClick={resetCropper}
+              style={{
+                background: "none",
+                border: "1px solid #000",
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "14px",
+                padding: "6px 16px",
+                cursor: "pointer",
+              }}
+            >
+              Cancel
+            </button>
+            <PrimaryButton onClick={handleSaveCrop} loading={isUploading}>
+              {isUploading ? "Saving..." : "Save"}
+            </PrimaryButton>
+          </div>
+        )}
+      </div>
+    );
 
   return (
     <Modal
@@ -223,231 +234,287 @@ export default function ImageUploadModal({
         onClose();
       }}
       title={title}
-      size="lg"
+      size="md"
       footer={footer}
     >
-      {/* Tabs (only shown if existingImages provided) */}
-      {showTabs && (
-        <div
-          style={{
-            display: "flex",
-            gap: "0",
-            borderBottom: "1px solid #E5E5E5",
-            marginBottom: "24px",
-          }}
-        >
-          {(["upload", "existing"] as Tab[]).map((t) => (
-            <button
-              key={t}
-              onClick={() => {
-                setTab(t);
-                resetCropper();
-              }}
+      {/* White upload area — floats on noise background as a contained component */}
+      <div
+        style={{
+          backgroundColor: "#FFFFFF",
+          padding: "20px",
+          marginTop: "16px",
+          ...(inlinePreview && currentImage && !cropSrc
+            ? { width: "fit-content", marginLeft: "auto", marginRight: "auto" }
+            : {}),
+        }}
+      >
+        {/* Tabs — hidden when an inline preview image is set */}
+        {showTabs && !(inlinePreview && currentImage) && (
+          <div
+            style={{
+              display: "flex",
+              gap: "0",
+              borderBottom: "1px solid #E5E5E5",
+              marginBottom: "24px",
+            }}
+          >
+            {(["upload", "existing"] as Tab[]).map((t) => (
+              <button
+                key={t}
+                onClick={() => {
+                  setTab(t);
+                  resetCropper();
+                }}
+                style={{
+                  flex: 1,
+                  padding: "8px 0",
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "14px",
+                  fontWeight: tab === t ? 500 : 300,
+                  color: tab === t ? "#000" : "#808080",
+                  background: "none",
+                  border: "none",
+                  borderBottom:
+                    tab === t ? "2px solid #000" : "2px solid transparent",
+                  cursor: "pointer",
+                  transition: "color 0.15s",
+                }}
+              >
+                {t === "upload" ? "Upload" : existingImagesLabel}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Cropper view */}
+        {cropSrc ? (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "16px",
+            }}
+          >
+            <div
               style={{
-                flex: 1,
-                padding: "8px 0",
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: tab === t ? 500 : 300,
-                color: tab === t ? "#000" : "#808080",
-                background: "none",
-                border: "none",
-                borderBottom:
-                  tab === t ? "2px solid #000" : "2px solid transparent",
-                cursor: "pointer",
-                transition: "color 0.15s",
+                position: "relative",
+                width: "100%",
+                height: "420px",
+                background: "#000",
               }}
             >
-              {t === "upload" ? "Upload" : existingImagesLabel}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Cropper view */}
-      {cropSrc ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <Cropper
+                image={cropSrc}
+                crop={crop}
+                zoom={zoom}
+                aspect={aspectRatio}
+                cropShape={cropShape}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={onCropComplete}
+              />
+            </div>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                padding: "0 4px",
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "12px",
+                  color: "#808080",
+                }}
+              >
+                Zoom
+              </span>
+              <input
+                type="range"
+                min={1}
+                max={3}
+                step={0.1}
+                value={zoom}
+                onChange={(e) => setZoom(Number(e.target.value))}
+                style={{ flex: 1 }}
+              />
+            </div>
+          </div>
+        ) : inlinePreview && currentImage ? (
+          /* Inline image preview — portrait 4:5, X to remove */
           <div
             style={{
               position: "relative",
-              width: "100%",
-              height: "420px",
-              background: "#000",
+              width: "240px",
+              aspectRatio: "4 / 5",
+              margin: "0 auto",
+              overflow: "hidden",
             }}
           >
-            <Cropper
-              image={cropSrc}
-              crop={crop}
-              zoom={zoom}
-              aspect={aspectRatio}
-              cropShape={cropShape}
-              onCropChange={setCrop}
-              onZoomChange={setZoom}
-              onCropComplete={onCropComplete}
-            />
-          </div>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-              padding: "0 4px",
-            }}
-          >
-            <span
+            <img
+              src={currentImage}
+              alt="Cover preview"
               style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "12px",
-                color: "#808080",
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                display: "block",
+              }}
+            />
+            <div
+              style={{
+                position: "absolute",
+                top: "4px",
+                right: "4px",
+                zIndex: 2,
               }}
             >
-              Zoom
-            </span>
-            <input
-              type="range"
-              min={1}
-              max={3}
-              step={0.1}
-              value={zoom}
-              onChange={(e) => setZoom(Number(e.target.value))}
-              style={{ flex: 1 }}
-            />
-          </div>
-        </div>
-      ) : tab === "upload" ? (
-        /* Upload drop zone */
-        <>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,.heic,.heif"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) handleFileSelected(file);
-              if (fileInputRef.current) fileInputRef.current.value = "";
-            }}
-            style={{ display: "none" }}
-          />
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            onDragOver={(e) => {
-              e.preventDefault();
-              setDragOver(true);
-            }}
-            onDragLeave={() => setDragOver(false)}
-            onDrop={handleDrop}
-            style={{
-              border: `2px dashed ${dragOver ? "#000" : "#CCCCCC"}`,
-              padding: "48px 24px",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "12px",
-              cursor: "pointer",
-              background: dragOver ? "#F5F5F5" : "transparent",
-              transition: "background 0.15s, border-color 0.15s",
-            }}
-          >
-            {isUploading ? (
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "14px",
-                  color: "#808080",
-                  margin: 0,
+              <CloseButton
+                onClick={() => {
+                  onSelect("");
+                  resetCropper();
                 }}
-              >
-                Uploading...
-              </p>
-            ) : (
-              <>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
-                    fill="#CCCCCC"
-                  />
-                </svg>
+                size={28}
+              />
+            </div>
+          </div>
+        ) : tab === "upload" ? (
+          /* Upload drop zone */
+          <>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,.heic,.heif"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleFileSelected(file);
+                if (fileInputRef.current) fileInputRef.current.value = "";
+              }}
+              style={{ display: "none" }}
+            />
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragOver(true);
+              }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={handleDrop}
+              style={{
+                border: `2px dashed ${dragOver ? "#000" : "#CCCCCC"}`,
+                padding: "48px 24px",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "12px",
+                cursor: "pointer",
+                background: dragOver ? "#F5F5F5" : "#FFFFFF",
+                transition: "background 0.15s, border-color 0.15s",
+              }}
+            >
+              {isUploading ? (
                 <p
                   style={{
                     fontFamily: "var(--font-dm-sans)",
                     fontSize: "14px",
                     color: "#808080",
                     margin: 0,
-                    textAlign: "center",
                   }}
                 >
-                  Drop an image here or click to upload
+                  Uploading...
                 </p>
-                <p
-                  style={{
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "12px",
-                    color: "#AAAAAA",
-                    margin: 0,
-                  }}
-                >
-                  JPEG, PNG, WebP, GIF, or HEIC (max 5MB)
-                </p>
-              </>
-            )}
-          </div>
-        </>
-      ) : (
-        /* Existing images tab */
-        <>
-          {existingImages && existingImages.length === 0 ? (
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                color: "#808080",
-                textAlign: "center",
-                padding: "48px 0",
-                margin: 0,
-              }}
-            >
-              No images available
-            </p>
-          ) : (
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3, 1fr)",
-                gap: "8px",
-              }}
-            >
-              {existingImages?.map((url, i) => (
-                <button
-                  key={i}
-                  onClick={() => handleExistingImageClick(url)}
-                  style={{
-                    aspectRatio: "1",
-                    border:
-                      currentImage === url
-                        ? "2px solid #00FF66"
-                        : "1px solid #E5E5E5",
-                    padding: 0,
-                    background: "none",
-                    cursor: "pointer",
-                    overflow: "hidden",
-                  }}
-                >
-                  <img
-                    src={url}
-                    alt=""
+              ) : (
+                <>
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
+                      fill="#CCCCCC"
+                    />
+                  </svg>
+                  <p
                     style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                      display: "block",
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "14px",
+                      color: "#808080",
+                      margin: 0,
+                      textAlign: "center",
                     }}
-                  />
-                </button>
-              ))}
+                  >
+                    Drop an image here or click to upload
+                  </p>
+                  <p
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "12px",
+                      color: "#AAAAAA",
+                      margin: 0,
+                    }}
+                  >
+                    JPEG, PNG, WebP, GIF, or HEIC (max 5MB)
+                  </p>
+                </>
+              )}
             </div>
-          )}
-        </>
-      )}
+          </>
+        ) : (
+          /* Existing images tab */
+          <>
+            {existingImages && existingImages.length === 0 ? (
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "14px",
+                  color: "#808080",
+                  textAlign: "center",
+                  padding: "48px 0",
+                  margin: 0,
+                }}
+              >
+                No images available
+              </p>
+            ) : (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(3, 1fr)",
+                  gap: "8px",
+                }}
+              >
+                {existingImages?.map((url, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleExistingImageClick(url)}
+                    style={{
+                      aspectRatio: "1",
+                      border:
+                        currentImage === url
+                          ? "2px solid #00FF66"
+                          : "1px solid #E5E5E5",
+                      padding: 0,
+                      background: "none",
+                      cursor: "pointer",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <img
+                      src={url}
+                      alt=""
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        display: "block",
+                      }}
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </Modal>
   );
 }

@@ -1,0 +1,93 @@
+name: PR Notification
+
+on:
+  pull_request:
+    types: [opened]
+    branches: [develop]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Map GitHub username to first name
+        id: author
+        run: |
+          case "${{ github.event.pull_request.user.login }}" in
+            kcabigon) echo "name=Kyle" >> $GITHUB_OUTPUT ;;
+            jarric22) echo "name=Jarric" >> $GITHUB_OUTPUT ;;
+            riffwithfriends) echo "name=Chris" >> $GITHUB_OUTPUT ;;
+            djorgensen316) echo "name=Derek" >> $GITHUB_OUTPUT ;;
+            *) echo "name=${{ github.event.pull_request.user.login }}" >> $GITHUB_OUTPUT ;;
+          esac
+
+      - name: Clean PR title and pick random footer
+        id: meta
+        run: |
+          TITLE="${{ github.event.pull_request.title }}"
+          CLEAN_TITLE=$(echo "$TITLE" | sed 's/^[a-z]*: //')
+          echo "title=$CLEAN_TITLE" >> $GITHUB_OUTPUT
+
+          AUTHOR="${{ steps.author.outputs.name }}"
+          FOOTERS=(
+            "This shit better be good."
+            "Did $AUTHOR even test this? Who knows."
+            "If this breaks staging, we're blaming $AUTHOR."
+            "Kyle's gonna review this with a magnifying glass."
+            "$AUTHOR said it works on their machine."
+            "Another day, another PR. Let's see what $AUTHOR cooked up."
+            "$AUTHOR promises this one is bug-free. Sure."
+            "Review it before $AUTHOR starts the next one."
+            "$AUTHOR thinks he's an engineer now."
+            "I bet $AUTHOR built this with just one prompt."
+          )
+          RANDOM_INDEX=$((RANDOM % ${#FOOTERS[@]}))
+          echo "footer=${FOOTERS[$RANDOM_INDEX]}" >> $GITHUB_OUTPUT
+
+      - name: Send email notification
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          AUTHOR: ${{ steps.author.outputs.name }}
+          CLEAN_TITLE: ${{ steps.meta.outputs.title }}
+          FOOTER: ${{ steps.meta.outputs.footer }}
+          RESEND_KEY: ${{ secrets.RESEND_API_KEY }}
+        run: |
+          # Use jq to safely build JSON with special characters
+          SUBJECT="🚨 PR #${PR_NUMBER} by ${AUTHOR}: ${CLEAN_TITLE}"
+
+          HTML="<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><link href=\"https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&amp;family=DM+Serif+Text&amp;display=swap\" rel=\"stylesheet\"></head><body style=\"margin:0;padding:0;background-color:#f5f5f5;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;\"><table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color:#f5f5f5;padding:48px 24px;\"><tr><td align=\"center\"><table width=\"520\" cellpadding=\"0\" cellspacing=\"0\" style=\"max-width:520px;width:100%;background-color:#ffffff;border:2px solid #000000;\"><tr><td style=\"padding:40px 40px 16px;\"><h1 style=\"margin:0 0 24px 0;font-size:24px;font-weight:400;color:#000000;line-height:1.3;font-family:'DM Serif Text',Georgia,serif;\">PLACEHOLDER_TITLE</h1><table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr><td style=\"height:1px;background-color:#E6E6E6;font-size:0;line-height:0;\">&nbsp;</td></tr></table><div style=\"margin:16px 0 0 0;font-size:14px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;\">PLACEHOLDER_BODY</div></td></tr><tr><td style=\"padding:32px 40px;\" align=\"center\"><table cellpadding=\"0\" cellspacing=\"0\"><tr><td style=\"background-color:#ffffff;border:2px solid #000000;text-align:center;\"><a href=\"PLACEHOLDER_URL\" style=\"display:block;padding:12px 48px;font-size:16px;font-weight:300;color:#000000;text-decoration:none;font-family:'DM Sans',-apple-system,sans-serif;white-space:nowrap;\">Review PR →</a></td></tr></table></td></tr><tr><td style=\"padding:0 40px 32px;\"><p style=\"margin:0;font-size:12px;font-weight:300;color:#808080;font-family:'DM Sans',-apple-system,sans-serif;text-align:center;font-style:italic;\">PLACEHOLDER_FOOTER</p></td></tr></table></td></tr></table></body></html>"
+
+          # Convert markdown to HTML and clean up
+          SAFE_BODY=$(echo "$PR_BODY" | sed 's/\r//g' \
+            | sed '/^🤖 Generated with/d' \
+            | sed 's/^## \(.*\)/<h3 style="margin:16px 0 8px 0;font-size:14px;font-weight:700;color:#000000;">\1<\/h3>/' \
+            | sed 's/^- \[x\] \(.*\)/<div style="margin:2px 0;color:#808080;">✓ \1<\/div>/' \
+            | sed 's/^- \[ \] \(.*\)/<div style="margin:2px 0;">☐ \1<\/div>/' \
+            | sed 's/^- \*\*\(.*\)\*\* — \(.*\)/<div style="margin:4px 0;">• <strong>\1<\/strong> — \2<\/div>/' \
+            | sed 's/^- \(.*\)/<div style="margin:4px 0;">• \1<\/div>/' \
+            | sed 's/\*\*\([^*]*\)\*\*/<strong>\1<\/strong>/g' \
+            | sed '/^<!--.*-->$/d' \
+            | sed '/^$/d' \
+            | head -c 3000)
+
+          jq -n \
+            --arg from "Riff Engineering <noreply@letsriff.app>" \
+            --arg subject "$SUBJECT" \
+            --arg pr_title "$PR_TITLE" \
+            --arg pr_body "$SAFE_BODY" \
+            --arg pr_url "$PR_URL" \
+            --arg footer "$FOOTER" \
+            --arg html "$HTML" \
+            '{
+              from: $from,
+              to: ["kyle.cabigon@gmail.com", "jarricramos@gmail.com", "cdpeders@gmail.com", "djorgensen316@gmail.com"],
+              subject: $subject,
+              html: ($html | gsub("PLACEHOLDER_TITLE"; $pr_title) | gsub("PLACEHOLDER_BODY"; $pr_body) | gsub("PLACEHOLDER_URL"; $pr_url) | gsub("PLACEHOLDER_FOOTER"; $footer))
+            }' > /tmp/email.json
+
+          curl -s -X POST https://api.resend.com/emails \
+            -H "Authorization: Bearer ${RESEND_KEY}" \
+            -H "Content-Type: application/json" \
+            -d @/tmp/email.json

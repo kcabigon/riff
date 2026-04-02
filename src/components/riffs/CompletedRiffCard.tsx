@@ -70,7 +70,7 @@ export default function CompletedRiffCard({
   const cardStyle = {
     width: "240px",
     height: "320px",
-    border: "1px solid #000000",
+    border: "2px solid #000000",
     boxShadow: isHovered
       ? "8px 8px 0px 0px #01EFFC"
       : "8px 8px 0px 0px #000000",

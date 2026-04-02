@@ -43,7 +43,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Piece not found" }, { status: 404 });
     }
 
-    if (piece.authorId !== (user as any).id) {
+    if (piece.authorId !== user.id) {
       return NextResponse.json(
         { error: "Only the author can edit this piece" },
         { status: 403 }

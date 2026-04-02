@@ -23,7 +23,7 @@ export async function PATCH(
       );
     }
 
-    if (submission.piece.authorId !== (user as any).id) {
+    if (submission.piece.authorId !== user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -72,8 +72,8 @@ export async function DELETE(
 
     // Only the piece author or riff creator can remove the submission
     const canDelete =
-      submission.piece.authorId === (user as any).id ||
-      submission.riff.creatorId === (user as any).id;
+      submission.piece.authorId === user.id ||
+      submission.riff.creatorId === user.id;
 
     if (!canDelete) {
       return NextResponse.json(

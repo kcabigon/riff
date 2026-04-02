@@ -4,6 +4,7 @@ import { useEditor, EditorContent, ReactNodeViewRenderer } from "@tiptap/react";
 import Placeholder from "@tiptap/extension-placeholder";
 import CharacterCount from "@tiptap/extension-character-count";
 import Image from "@tiptap/extension-image";
+import Link from "@tiptap/extension-link";
 import ResizableImageView from "@/components/write/ResizableImageView";
 import { getSharedExtensions } from "@/components/editor/extensions/sharedExtensions";
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -19,6 +20,8 @@ import { useIsMobile } from "@/hooks/useMediaQuery";
 import StickyToolbar from "@/components/write/toolbar/StickyToolbar";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { useScrollDirection } from "@/hooks/useScrollDirection";
+import EmbedModal from "@/components/write/EmbedModal";
+import LinkPopover from "@/components/write/LinkPopover";
 
 interface RiffConnection {
   id: string;
@@ -50,6 +53,10 @@ export default function WritePage({ piece }: WritePageProps) {
   const [coverImage, setCoverImage] = useState<string | null>(piece.coverImage);
   const [showCoverModal, setShowCoverModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const linkSelectionRef = useRef<{ from: number; to: number } | null>(null);
+  const [showYoutubeModal, setShowYoutubeModal] = useState(false);
+  const [showSpotifyModal, setShowSpotifyModal] = useState(false);
   const isSubmitted = piece.riffs.some((r) => r.submittedAt !== null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const titleRef = useRef<HTMLTextAreaElement>(null);
@@ -64,9 +71,27 @@ export default function WritePage({ piece }: WritePageProps) {
 
   const editor = useEditor({
     immediatelyRender: false,
+    editorProps: {},
     extensions: [
-      // Shared extensions (same as read page for fidelity)
-      ...getSharedExtensions().filter((ext) => ext.name !== "image"),
+      // Shared extensions (same as read page for fidelity), minus Image and Link (overridden below)
+      ...getSharedExtensions().filter(
+        (ext) => ext.name !== "image" && ext.name !== "link"
+      ),
+      // Write-specific: Link renders as <span> so browser can't navigate
+      Link.extend({
+        renderHTML({ HTMLAttributes }) {
+          return [
+            "span",
+            {
+              ...HTMLAttributes,
+              "data-link": HTMLAttributes.href,
+              href: undefined,
+              style: "cursor: text;",
+            },
+            0,
+          ];
+        },
+      }).configure({ openOnClick: false }),
       // Write-specific: Image with resize handles
       Image.extend({
         addAttributes() {
@@ -213,7 +238,6 @@ export default function WritePage({ piece }: WritePageProps) {
       const value = url || null;
       setCoverImage(value);
       autosaveCoverImage(value);
-      setShowCoverModal(false);
     },
     [autosaveCoverImage]
   );
@@ -281,7 +305,12 @@ export default function WritePage({ piece }: WritePageProps) {
     let file = event.target.files?.[0];
     if (!file || !editor) return;
 
-    file = await convertHeicToJpeg(file);
+    try {
+      file = await convertHeicToJpeg(file);
+    } catch {
+      alert("Could not process HEIC file. Please try converting it first.");
+      return;
+    }
 
     const formData = new FormData();
     formData.append("file", file);
@@ -516,6 +545,69 @@ export default function WritePage({ piece }: WritePageProps) {
         {/* Spacer — accounts for fixed bar height on mobile */}
         <div style={{ height: isMobile ? "140px" : "24px" }} />
 
+        {/* Riff pills */}
+        {piece.riffs.length > 0 && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: "8px",
+              marginBottom: "16px",
+              flexWrap: "wrap",
+            }}
+          >
+            {piece.riffs.map((riff) => (
+              <span
+                key={riff.id}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "12px",
+                  fontWeight: 400,
+                  color: "#000000",
+                  border: "1px solid #00FF66",
+                  borderRadius: "2px",
+                  padding: riff.submittedAt ? "4px 12px" : "4px 8px 4px 12px",
+                }}
+              >
+                {riff.title || `${riff.clubName}: Active Riff`}
+                {!riff.submittedAt && (
+                  <button
+                    onClick={async () => {
+                      await fetch(`/api/riffs/${riff.id}/pieces/${piece.id}`, {
+                        method: "DELETE",
+                      });
+                      router.refresh();
+                    }}
+                    title="Remove from riff"
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: "0",
+                      display: "flex",
+                      alignItems: "center",
+                      color: "#888888",
+                      lineHeight: 1,
+                    }}
+                  >
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                      <path
+                        d="M1 1L9 9M9 1L1 9"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </button>
+                )}
+              </span>
+            ))}
+          </div>
+        )}
+
         {/* Writing area */}
         <div
           style={{
@@ -610,16 +702,81 @@ export default function WritePage({ piece }: WritePageProps) {
           <div style={{ height: "32px" }} />
 
           {/* Editor content */}
-          <div className="write-editor" style={{ width: "100%" }}>
+          <div
+            className="write-editor"
+            style={{ width: "100%", position: "relative" }}
+          >
             <EditorContent editor={editor} />
+            <LinkPopover editor={editor} />
           </div>
         </div>
       </div>
 
       {/* Floating toolbar — desktop only */}
       {!isMobile && (
-        <StickyToolbar editor={editor} fileInputRef={fileInputRef} />
+        <StickyToolbar
+          editor={editor}
+          fileInputRef={fileInputRef}
+          onOpenLinkModal={() => {
+            linkSelectionRef.current = {
+              from: editor.state.selection.from,
+              to: editor.state.selection.to,
+            };
+            setShowLinkModal(true);
+          }}
+          onOpenYoutubeModal={() => setShowYoutubeModal(true)}
+          onOpenSpotifyModal={() => setShowSpotifyModal(true)}
+        />
       )}
+
+      <EmbedModal
+        isOpen={showLinkModal}
+        onClose={() => setShowLinkModal(false)}
+        title="Add link"
+        placeholder="https://..."
+        showDisplayText={
+          linkSelectionRef.current
+            ? linkSelectionRef.current.from === linkSelectionRef.current.to
+            : true
+        }
+        onConfirm={(url, displayText) => {
+          const sel = linkSelectionRef.current;
+          if (sel && sel.from !== sel.to) {
+            editor
+              .chain()
+              .focus()
+              .setTextSelection(sel)
+              .setLink({ href: url })
+              .run();
+          } else {
+            editor
+              .chain()
+              .focus()
+              .insertContent(`<a href="${url}">${displayText}</a>`)
+              .run();
+          }
+        }}
+      />
+
+      <EmbedModal
+        isOpen={showYoutubeModal}
+        onClose={() => setShowYoutubeModal(false)}
+        title="Add YouTube video"
+        placeholder="https://youtube.com/watch?v=..."
+        onConfirm={(url) => {
+          editor.chain().focus().setYoutubeVideo({ src: url }).run();
+        }}
+      />
+
+      <EmbedModal
+        isOpen={showSpotifyModal}
+        onClose={() => setShowSpotifyModal(false)}
+        title="Add Spotify track"
+        placeholder="https://open.spotify.com/track/..."
+        onConfirm={(url) => {
+          editor.commands.setSpotifyEmbed({ src: url });
+        }}
+      />
 
       <CoverImageModal
         isOpen={showCoverModal}

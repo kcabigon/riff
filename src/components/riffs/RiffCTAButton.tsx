@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDraftCreation } from "@/hooks/useDraftCreation";
 import Dropdown from "@/components/shared/Dropdown";
+import ExistingDraftPickerModal from "@/components/riffs/ExistingDraftPickerModal";
 
 interface RiffCTAButtonProps {
   riffId: string;
@@ -25,6 +26,7 @@ export default function RiffCTAButton({
   stopPropagation = false,
 }: RiffCTAButtonProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [isDraftPickerOpen, setIsDraftPickerOpen] = useState(false);
   const router = useRouter();
   const { createDraft } = useDraftCreation();
 
@@ -77,7 +79,7 @@ export default function RiffCTAButton({
     }
   };
 
-  // "Start writing" — dropdown with New draft / Existing draft placeholder
+  // "Start writing" — dropdown with New draft / Existing draft
   if (isJoined && !hasDraft && !hasSubmitted) {
     return (
       <div
@@ -105,10 +107,14 @@ export default function RiffCTAButton({
             {
               type: "action",
               label: "Existing draft",
-              color: "#AAAAAA",
-              onClick: () => {},
+              onClick: () => setIsDraftPickerOpen(true),
             },
           ]}
+        />
+        <ExistingDraftPickerModal
+          isOpen={isDraftPickerOpen}
+          onClose={() => setIsDraftPickerOpen(false)}
+          riffId={riffId}
         />
       </div>
     );

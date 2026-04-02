@@ -18,7 +18,7 @@ export async function GET(req: Request) {
       const membership = await prisma.circleMember.findFirst({
         where: {
           circleId,
-          userId: (user as any).id,
+          userId: user.id,
         },
       });
 
@@ -69,7 +69,7 @@ export async function GET(req: Request) {
       // List pieces by specific author
       // Only show if requesting own pieces or pieces shared to user's circles
       const canView =
-        authorId === (user as any).id ||
+        authorId === user.id ||
         (await prisma.piece.findFirst({
           where: {
             authorId,
@@ -78,7 +78,7 @@ export async function GET(req: Request) {
                 circle: {
                   members: {
                     some: {
-                      userId: (user as any).id,
+                      userId: user.id,
                     },
                   },
                 },
@@ -87,7 +87,7 @@ export async function GET(req: Request) {
           },
         })) !== null;
 
-      if (!canView && authorId !== (user as any).id) {
+      if (!canView && authorId !== user.id) {
         return NextResponse.json(
           { error: "You do not have permission to view these pieces" },
           { status: 403 }
@@ -121,7 +121,7 @@ export async function GET(req: Request) {
       // List user's own pieces by default
       pieces = await prisma.piece.findMany({
         where: {
-          authorId: (user as any).id,
+          authorId: user.id,
         },
         include: {
           author: {

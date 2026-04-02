@@ -6,7 +6,7 @@ import { requireAuth } from "@/lib/auth-utils";
 export async function GET(req: Request) {
   try {
     const user = await requireAuth();
-    const userId = (user as any).id;
+    const userId = user.id;
     const { searchParams } = new URL(req.url);
     const pieceId = searchParams.get("pieceId");
     const riffId = searchParams.get("riffId");

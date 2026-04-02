@@ -61,8 +61,13 @@ export default async function ProfilePageRoute({
       riffs: {
         select: {
           versionId: true,
+          submittedAt: true,
           riff: {
-            select: { id: true, title: true },
+            select: {
+              id: true,
+              title: true,
+              club: { select: { name: true } },
+            },
           },
         },
       },
@@ -74,10 +79,10 @@ export default async function ProfilePageRoute({
     orderBy: { createdAt: "desc" },
   });
 
-  // Submitted pieces: have at least one PieceRiff with a non-null versionId
+  // Submitted pieces: have at least one PieceRiff with a non-null submittedAt
   const submittedPieceIds = new Set(
     allPieces
-      .filter((p) => p.riffs.some((r) => r.versionId !== null))
+      .filter((p) => p.riffs.some((r) => r.submittedAt !== null))
       .map((p) => p.id)
   );
 
@@ -103,6 +108,7 @@ export default async function ProfilePageRoute({
       riffs: p.riffs.map((r) => ({
         id: r.riff.id,
         title: r.riff.title,
+        clubName: r.riff.club.name,
       })),
     }));
 
@@ -123,7 +129,11 @@ export default async function ProfilePageRoute({
               riffs: {
                 select: {
                   riff: {
-                    select: { id: true, title: true },
+                    select: {
+                      id: true,
+                      title: true,
+                      club: { select: { name: true } },
+                    },
                   },
                 },
               },
@@ -152,6 +162,7 @@ export default async function ProfilePageRoute({
       riffs: cp.piece.riffs.map((r) => ({
         id: r.riff.id,
         title: r.riff.title,
+        clubName: r.riff.club.name,
       })),
     })),
   }));

@@ -6,7 +6,7 @@ import { requireAuth } from "@/lib/auth-utils";
 export async function POST(req: Request) {
   try {
     const user = await requireAuth();
-    const userId = (user as any).id;
+    const userId = user.id;
     const body = await req.json().catch(() => ({}));
     const { riffId } = body;
 
@@ -18,10 +18,7 @@ export async function POST(req: Request) {
       });
 
       if (!riff) {
-        return NextResponse.json(
-          { error: "Riff not found" },
-          { status: 404 }
-        );
+        return NextResponse.json({ error: "Riff not found" }, { status: 404 });
       }
 
       if (riff.status !== "ACTIVE") {
@@ -94,10 +91,7 @@ export async function POST(req: Request) {
         });
       }
 
-      return NextResponse.json(
-        { success: true, piece },
-        { status: 201 }
-      );
+      return NextResponse.json({ success: true, piece }, { status: 201 });
     }
 
     // No riffId — create standalone draft
@@ -110,10 +104,7 @@ export async function POST(req: Request) {
       select: { id: true, title: true, currentContent: true },
     });
 
-    return NextResponse.json(
-      { success: true, piece },
-      { status: 201 }
-    );
+    return NextResponse.json({ success: true, piece }, { status: 201 });
   } catch (error: any) {
     if (error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

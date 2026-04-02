@@ -6,7 +6,7 @@ import { requireAuth } from "@/lib/auth-utils";
 export async function GET() {
   try {
     const user = await requireAuth();
-    const userId = (user as any).id;
+    const userId = user.id;
 
     const pieces = await prisma.piece.findMany({
       where: { authorId: userId },

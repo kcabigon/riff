@@ -8,7 +8,7 @@ export async function GET() {
     const user = await requireAuth();
 
     const currentUser = await prisma.user.findUnique({
-      where: { id: (user as any).id },
+      where: { id: user.id },
       select: {
         id: true,
         lastActiveClubId: true,
@@ -52,7 +52,7 @@ export async function PATCH(req: Request) {
     const member = await prisma.clubMember.findFirst({
       where: {
         clubId: lastActiveClubId,
-        userId: (user as any).id,
+        userId: user.id,
       },
     });
 
@@ -64,7 +64,7 @@ export async function PATCH(req: Request) {
     }
 
     await prisma.user.update({
-      where: { id: (user as any).id },
+      where: { id: user.id },
       data: { lastActiveClubId },
     });
 
@@ -86,7 +86,7 @@ export async function PATCH(req: Request) {
 export async function DELETE() {
   try {
     const user = await requireAuth();
-    const userId = (user as any).id;
+    const userId = user.id;
 
     // Delete in order of dependencies
     await prisma.$transaction([

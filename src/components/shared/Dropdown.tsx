@@ -123,9 +123,6 @@ export default function Dropdown({
               );
             }
 
-            const isLast =
-              items.slice(i + 1).findIndex((it) => it.type === "action") === -1;
-
             return (
               <button
                 key={`item-${i}`}
@@ -141,17 +138,17 @@ export default function Dropdown({
                   textAlign: "left",
                   background: item.backgroundColor || "none",
                   border: "none",
-                  borderBottom: isLast ? "none" : "1px solid #E6E6E6",
                   padding: "12px 16px",
                   fontFamily: "var(--font-dm-sans)",
                   fontSize: "14px",
-                  fontWeight: item.active ? 500 : 300,
-                  color: item.color || (item.active ? "#00FF66" : "#000000"),
+                  fontWeight: item.active ? 700 : 300,
+                  color: item.color || "#000000",
                   cursor: item.active ? "default" : "pointer",
                 }}
                 onMouseEnter={(e) => {
                   if (!item.active) {
-                    e.currentTarget.style.backgroundColor = "#01EFFC";
+                    e.currentTarget.style.backgroundColor =
+                      item.backgroundColor || "#F5F5F5";
                   }
                 }}
                 onMouseLeave={(e) => {

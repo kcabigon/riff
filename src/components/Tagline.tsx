@@ -10,6 +10,7 @@ interface TaglineProps {
   fontSize?: number;
   fontFamily?: string;
   fontWeight?: number;
+  align?: "left" | "center";
 }
 
 /**
@@ -31,6 +32,7 @@ export default function Tagline({
   fontSize = 20,
   fontFamily = "var(--font-dm-sans)",
   fontWeight = 300,
+  align = "center",
 }: TaglineProps) {
   const foregroundColor = textColor || (color ? "#FFFFFF" : "#000000");
 
@@ -64,7 +66,8 @@ export default function Tagline({
         position: "relative",
         display: "flex",
         alignItems: "center",
-        justifyContent: "center",
+        justifyContent: align === "left" ? "flex-start" : "center",
+        paddingLeft: align === "left" ? "8px" : 0,
       }}
     >
       <Image
