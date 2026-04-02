@@ -56,38 +56,13 @@ export default function ShareModal({
   onShareCreated,
   onShareRevoked,
 }: ShareModalProps) {
-  const [loadingClubId, setLoadingClubId] = useState<string | null>(null);
   const [loadingPublic, setLoadingPublic] = useState(false);
   const [revoking, setRevoking] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const clubShares = existingShares.filter((s) => s.shareType === "CLUB");
   const publicShare =
     existingShares.find((s) => s.shareType === "PUBLIC") ?? null;
-  const sharedClubIds = new Set(clubShares.map((s) => s.clubId));
-
-  const handleShareToClub = async (clubId: string) => {
-    setLoadingClubId(clubId);
-    setError(null);
-    try {
-      const res = await fetch(`/api/pieces/${pieceId}/shares`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ shareType: "CLUB", clubId }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Failed to share.");
-        return;
-      }
-      onShareCreated(data.share);
-    } catch {
-      setError("Something went wrong. Please try again.");
-    } finally {
-      setLoadingClubId(null);
-    }
-  };
 
   const handleMakePublic = async () => {
     setLoadingPublic(true);
@@ -139,140 +114,79 @@ export default function ShareModal({
   };
 
   const publicUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/p/${pieceId}`;
-  const isActioning =
-    loadingClubId !== null || loadingPublic || revoking !== null;
+  const isActioning = loadingPublic || revoking !== null;
 
   return (
     <Modal isOpen onClose={onClose} title="Share" size="sm">
       <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-        {/* Club section */}
+        {/* Club section — coming soon, non-interactive */}
         {userClubs.length > 0 && (
           <div>
-            <SectionLabel>Club</SectionLabel>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                marginBottom: "8px",
+              }}
+            >
+              <SectionLabel>Club</SectionLabel>
+              <span
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "10px",
+                  fontWeight: 700,
+                  color: "#808080",
+                  backgroundColor: "#FFFFFF",
+                  border: "1px solid #9C9C9C",
+                  padding: "2px 6px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                  display: "inline-block",
+                }}
+              >
+                Coming soon
+              </span>
+            </div>
             <div
               style={{ display: "flex", flexDirection: "column", gap: "8px" }}
             >
-              {userClubs.map((club) => {
-                const share = clubShares.find((s) => s.clubId === club.id);
-                const isShared = sharedClubIds.has(club.id);
-
-                if (isShared && share) {
-                  // Shared state — static card with revoke
-                  return (
-                    <div
-                      key={club.id}
-                      style={{
-                        border: "2px solid #000000",
-                        backgroundColor: "#FFFFFF",
-                        padding: "12px 16px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: "12px",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                          minWidth: 0,
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontFamily: "var(--font-dm-sans)",
-                            fontSize: "15px",
-                            fontWeight: 300,
-                            color: "#000000",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {club.name}
-                        </span>
-                        <span
-                          style={{
-                            fontFamily: "var(--font-dm-sans)",
-                            fontSize: "11px",
-                            fontWeight: 700,
-                            color: "#000000",
-                            backgroundColor: "#00FF66",
-                            border: "1px solid #000000",
-                            padding: "2px 6px",
-                            textTransform: "uppercase",
-                            letterSpacing: "0.05em",
-                            flexShrink: 0,
-                          }}
-                        >
-                          Shared
-                        </span>
-                      </div>
-                      <button
-                        onClick={() => handleRevoke(share.id)}
-                        disabled={isActioning}
-                        style={{
-                          fontFamily: "var(--font-dm-sans)",
-                          fontSize: "12px",
-                          fontWeight: 300,
-                          color: revoking === share.id ? "#808080" : "#DC2626",
-                          border: "none",
-                          background: "none",
-                          padding: 0,
-                          cursor: isActioning ? "not-allowed" : "pointer",
-                          textDecoration: "underline",
-                          flexShrink: 0,
-                        }}
-                      >
-                        {revoking === share.id ? "Revoking…" : "Revoke"}
-                      </button>
-                    </div>
-                  );
-                }
-
-                // Unshared state — clickable card (matches AttachToRiffModal)
-                return (
-                  <button
-                    key={club.id}
-                    onClick={() => handleShareToClub(club.id)}
-                    disabled={isActioning}
+              {userClubs.map((club) => (
+                <div
+                  key={club.id}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "2px",
+                    border: "2px solid #9C9C9C",
+                    backgroundColor: "#FFFFFF",
+                    padding: "12px 16px",
+                    opacity: 0.5,
+                    cursor: "default",
+                  }}
+                >
+                  <span
                     style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "2px",
-                      border: "2px solid #000000",
-                      backgroundColor: "#FFFFFF",
-                      padding: "12px 16px",
-                      cursor: isActioning ? "not-allowed" : "pointer",
-                      textAlign: "left",
-                      width: "100%",
-                      opacity: isActioning ? 0.6 : 1,
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "15px",
+                      fontWeight: 300,
+                      color: "#000000",
                     }}
                   >
-                    <span
-                      style={{
-                        fontFamily: "var(--font-dm-sans)",
-                        fontSize: "15px",
-                        fontWeight: 300,
-                        color: "#000000",
-                      }}
-                    >
-                      {loadingClubId === club.id ? "Sharing…" : club.name}
-                    </span>
-                    <span
-                      style={{
-                        fontFamily: "var(--font-dm-sans)",
-                        fontSize: "12px",
-                        fontWeight: 300,
-                        color: "#808080",
-                      }}
-                    >
-                      Members can read and leave comments
-                    </span>
-                  </button>
-                );
-              })}
+                    {club.name}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "12px",
+                      fontWeight: 300,
+                      color: "#808080",
+                    }}
+                  >
+                    Members can read and leave comments
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         )}
