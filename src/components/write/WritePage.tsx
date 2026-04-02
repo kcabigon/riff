@@ -465,10 +465,11 @@ export default function WritePage({ piece }: WritePageProps) {
 
               {/* Cover button */}
               <IconButton
-                src="/icons/cover_photo.svg"
+                src="/icons/icon_polaroid.png"
                 label={coverImage ? "Change cover image" : "Add cover image"}
                 onClick={() => setShowCoverModal(true)}
-                size={24}
+                width={28}
+                height={24}
               />
 
               {/* Share button */}
@@ -502,10 +503,11 @@ export default function WritePage({ piece }: WritePageProps) {
                   </span>
                 ) : (
                   <IconButton
-                    src="/icons/share.svg"
+                    src="/icons/icon_paper_plane.png"
                     label="Share to riff"
                     onClick={() => setShowShareModal(true)}
-                    size={24}
+                    width={28}
+                    height={24}
                   />
                 ))}
             </div>
