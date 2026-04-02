@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Modal from "@/components/shared/Modal";
 import PrimaryButton from "@/components/PrimaryButton";
-import SecondaryButton from "@/components/SecondaryButton";
 
 interface Draft {
   id: string;
@@ -164,19 +163,14 @@ export default function ExistingDraftPickerModal({
       title="Choose a draft"
       size="sm"
       footer={
-        <div style={{ display: "flex", gap: "12px" }}>
-          <SecondaryButton onClick={onClose} style={{ padding: "12px 24px" }}>
-            Cancel
-          </SecondaryButton>
-          <PrimaryButton
-            onClick={handleAttach}
-            disabled={!selectedId}
-            loading={attaching}
-            style={{ padding: "12px 24px" }}
-          >
-            Use this draft
-          </PrimaryButton>
-        </div>
+        <PrimaryButton
+          onClick={handleAttach}
+          disabled={!selectedId}
+          loading={attaching}
+          style={{ padding: "12px 24px" }}
+        >
+          Use this draft
+        </PrimaryButton>
       }
     >
       {loading ? (
