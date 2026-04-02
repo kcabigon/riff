@@ -838,7 +838,8 @@ export default function ClubPageLayout({
             const otherPieces = r.pieces.filter(
               (p) => p.piece.authorId !== currentUserId
             ).length;
-            return otherPieces > 0 && (readCounts[r.id] || 0) >= otherPieces;
+            // 0 submitted pieces by others = nothing to read → treat as complete
+            return otherPieces === 0 || (readCounts[r.id] || 0) >= otherPieces;
           });
           const allCompleted = [...completedRiffs, ...fullyReadRevealed];
           return allCompleted.length > 0;
@@ -874,7 +875,7 @@ export default function ClubPageLayout({
                     (p) => p.piece.authorId !== currentUserId
                   ).length;
                   return (
-                    otherPieces > 0 && (readCounts[r.id] || 0) >= otherPieces
+                    otherPieces === 0 || (readCounts[r.id] || 0) >= otherPieces
                   );
                 }),
               ].map((riff) => (
