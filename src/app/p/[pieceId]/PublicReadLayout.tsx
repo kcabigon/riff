@@ -4,6 +4,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import { getSharedExtensions } from "@/components/editor/extensions/sharedExtensions";
 import "@/app/write/[pieceId]/editor.css";
 import Image from "next/image";
+import Link from "next/link";
 
 interface PublicReadLayoutProps {
   piece: {
@@ -60,17 +61,18 @@ export default function PublicReadLayout({ piece }: PublicReadLayoutProps) {
           justifyContent: "center",
         }}
       >
-        <Image
-          src="/images/landing/riff_logo_dark.svg"
-          alt="Riff"
-          width={44}
-          height={28}
-          onError={(e) => {
-            // Fallback if dark logo doesn't exist
-            (e.target as HTMLImageElement).src =
-              "/images/landing/riff_logo.svg";
-          }}
-        />
+        <Link href="/" style={{ display: "flex" }}>
+          <Image
+            src="/images/landing/riff_logo_dark.svg"
+            alt="Riff"
+            width={44}
+            height={28}
+            onError={(e) => {
+              (e.target as HTMLImageElement).src =
+                "/images/landing/riff_logo.svg";
+            }}
+          />
+        </Link>
       </div>
 
       {/* Content */}
