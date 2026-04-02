@@ -179,7 +179,7 @@ function DraftCard({
         border: "2px solid #000000",
         padding: "20px 24px",
         backgroundColor: "#FFFFFF",
-        boxShadow: isHovered ? "4px 4px 0px 0px #000000" : "none",
+        boxShadow: isHovered ? "8px 8px 0px 0px #000000" : "none",
         transition: "none",
         display: "flex",
         flexDirection: "column",
