@@ -15,9 +15,22 @@ export async function GET(
     const pieces = await prisma.piece.findMany({
       where: {
         authorId: userId,
-        riffs: {
-          none: { riffId },
-        },
+        // Not already attached to this riff
+        riffs: { none: { riffId } },
+        // Drafts only — exclude anything graduated (submitted, revealed, or shared)
+        AND: [
+          {
+            riffs: {
+              none: {
+                OR: [
+                  { submittedAt: { not: null } },
+                  { riff: { status: "REVEALED" } },
+                ],
+              },
+            },
+          },
+          { newShares: { none: {} } },
+        ],
       },
       select: {
         id: true,

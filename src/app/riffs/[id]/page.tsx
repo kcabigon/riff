@@ -49,6 +49,7 @@ export default async function RiffPage({
         orderBy: { joinedAt: "asc" },
       },
       pieces: {
+        where: { submittedAt: { not: null } },
         include: {
           piece: {
             select: {

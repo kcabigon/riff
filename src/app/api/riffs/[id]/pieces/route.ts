@@ -98,17 +98,26 @@ export async function POST(
       }
     }
 
-    // Check if piece already submitted to this riff
+    // Check if this exact piece is already attached to this riff
     const existing = await prisma.pieceRiff.findFirst({
-      where: {
-        pieceId,
-        riffId,
-      },
+      where: { pieceId, riffId },
     });
 
     if (existing) {
       return NextResponse.json(
         { error: "This piece has already been submitted to this riff" },
+        { status: 400 }
+      );
+    }
+
+    // Check if this user already has a different piece attached to this riff
+    const userAlreadyAttached = await prisma.pieceRiff.findFirst({
+      where: { riffId, piece: { authorId: user.id } },
+    });
+
+    if (userAlreadyAttached) {
+      return NextResponse.json(
+        { error: "You already have a piece attached to this riff" },
         { status: 400 }
       );
     }
