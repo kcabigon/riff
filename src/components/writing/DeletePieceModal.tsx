@@ -38,56 +38,65 @@ export default function DeletePieceModal({
     }
   };
 
+  const footer = (
+    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+      <button
+        onClick={handleDelete}
+        disabled={isDeleting}
+        style={{
+          width: "100%",
+          height: "45px",
+          backgroundColor: isDeleting ? "#FFFFFF" : "#DC2626",
+          border: isDeleting ? "2px solid #9C9C9C" : "2px solid #000000",
+          boxShadow: isDeleting ? "none" : "8px 8px 0px 0px #000000",
+          padding: "12px 48px",
+          fontFamily: "var(--font-dm-sans)",
+          fontSize: "16px",
+          fontWeight: 300,
+          color: isDeleting ? "#9C9C9C" : "#000000",
+          cursor: isDeleting ? "not-allowed" : "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          boxSizing: "border-box",
+          transition: "none",
+        }}
+      >
+        {isDeleting ? "Deleting…" : "Delete"}
+      </button>
+      <button
+        onClick={onClose}
+        disabled={isDeleting}
+        style={{
+          background: "none",
+          border: "none",
+          fontFamily: "var(--font-dm-sans)",
+          fontSize: "14px",
+          fontWeight: 300,
+          color: "#808080",
+          cursor: isDeleting ? "not-allowed" : "pointer",
+          padding: "4px",
+          textDecoration: "underline",
+          textAlign: "center",
+        }}
+      >
+        Cancel
+      </button>
+    </div>
+  );
+
   return (
     <Modal
       isOpen
       onClose={onClose}
       title="Delete piece?"
       size="sm"
-      footer={
-        <div
-          style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}
-        >
-          <button
-            onClick={onClose}
-            disabled={isDeleting}
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              fontWeight: 300,
-              color: "#000000",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: "8px 16px",
-            }}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleDelete}
-            disabled={isDeleting}
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              fontWeight: 300,
-              color: "#DC2626",
-              background: "none",
-              border: "2px solid #DC2626",
-              cursor: isDeleting ? "not-allowed" : "pointer",
-              padding: "8px 16px",
-              opacity: isDeleting ? 0.6 : 1,
-            }}
-          >
-            {isDeleting ? "Deleting…" : "Delete"}
-          </button>
-        </div>
-      }
+      footer={footer}
     >
       <p
         style={{
           fontFamily: "var(--font-dm-sans)",
-          fontSize: "15px",
+          fontSize: "16px",
           fontWeight: 300,
           color: "#000000",
           margin: 0,
