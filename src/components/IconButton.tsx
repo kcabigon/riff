@@ -5,6 +5,8 @@ interface IconButtonProps {
   label: string;
   onClick: () => void;
   size?: number;
+  width?: number;
+  height?: number;
 }
 
 const MIN_TAP_TARGET = 44;
@@ -14,16 +16,22 @@ export default function IconButton({
   label,
   onClick,
   size = 32,
+  width,
+  height,
 }: IconButtonProps) {
-  const tapSize = Math.max(size, MIN_TAP_TARGET);
+  const w = width ?? size;
+  const h = height ?? size;
+  const tapW = Math.max(w, MIN_TAP_TARGET);
+  const tapH = Math.max(h, MIN_TAP_TARGET);
 
   return (
     <button
       onClick={onClick}
       aria-label={label}
+      title={label}
       style={{
-        width: `${tapSize}px`,
-        height: `${tapSize}px`,
+        width: `${tapW}px`,
+        height: `${tapH}px`,
         backgroundColor: "transparent",
         border: "none",
         cursor: "pointer",
@@ -36,9 +44,9 @@ export default function IconButton({
       <Image
         src={src}
         alt={label}
-        width={size}
-        height={size}
-        style={{ display: "block" }}
+        width={w}
+        height={h}
+        style={{ display: "block", objectFit: "contain" }}
       />
     </button>
   );
