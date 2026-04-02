@@ -462,9 +462,22 @@ export default function MyWritingPage({
     setSharingPieceId(null);
   };
 
+  // --- Piece navigation ---
+
+  const getPieceHref = (piece: PieceItem): string => {
+    if (piece.riffs.length > 0) {
+      return `/read/${piece.id}?riff=${piece.riffs[0].riffId}`;
+    }
+    if (piece.shares.some((s) => s.shareType === "PUBLIC")) {
+      return `/p/${piece.id}`;
+    }
+    return `/read/${piece.id}`; // club share access path
+  };
+
   // --- Pieces grid item ---
 
   const renderPieceGridItem = (piece: PieceItem) => {
+    const isPublic = piece.shares.some((s) => s.shareType === "PUBLIC");
     const menuItems: DropdownItem[] = [
       {
         type: "action",
@@ -493,11 +506,11 @@ export default function MyWritingPage({
           piece={piece}
           isRead={true}
           isOwnPiece={true}
-          onClick={() => router.push(`/read/${piece.id}`)}
+          onClick={() => router.push(getPieceHref(piece))}
         />
 
-        {/* Riff badge — bottom center overlay */}
-        {piece.riffs.length > 0 && (
+        {/* Badges — bottom center overlay */}
+        {(piece.riffs.length > 0 || isPublic) && (
           <div
             style={{
               position: "absolute",
@@ -534,6 +547,24 @@ export default function MyWritingPage({
                 {r.riff.title || `Vol. ${r.riff.volume}`} · {r.riff.club.name}
               </span>
             ))}
+            {isPublic && (
+              <span
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  color: "#000000",
+                  backgroundColor: "#FFFFFF",
+                  border: "1px solid #000000",
+                  padding: "2px 8px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Public
+              </span>
+            )}
           </div>
         )}
       </div>
