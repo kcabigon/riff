@@ -22,141 +22,23 @@ interface ShareModalProps {
   onShareRevoked: (shareId: string) => void;
 }
 
-// --- Sub-components ---
+// --- Section label (thin separator between club + public) ---
 
-function SectionHeader({
-  label,
-  description,
-}: {
-  label: string;
-  description: string;
-}) {
+function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ marginBottom: "16px" }}>
-      <p
-        style={{
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "11px",
-          fontWeight: 700,
-          color: "#000000",
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-          margin: "0 0 4px 0",
-        }}
-      >
-        {label}
-      </p>
-      <p
-        style={{
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "13px",
-          fontWeight: 300,
-          color: "#808080",
-          margin: 0,
-          lineHeight: 1.5,
-        }}
-      >
-        {description}
-      </p>
-    </div>
-  );
-}
-
-function Row({
-  left,
-  right,
-}: {
-  left: React.ReactNode;
-  right: React.ReactNode;
-}) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: "16px",
-        padding: "13px 0",
-        borderBottom: "1px solid #E6E6E6",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "10px",
-          minWidth: 0,
-          flex: 1,
-        }}
-      >
-        {left}
-      </div>
-      <div style={{ flexShrink: 0 }}>{right}</div>
-    </div>
-  );
-}
-
-function ShareButton({
-  label,
-  onClick,
-  disabled,
-}: {
-  label: string;
-  onClick: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
+    <p
       style={{
         fontFamily: "var(--font-dm-sans)",
-        fontSize: "12px",
-        fontWeight: 300,
-        color: "#000000",
-        border: "1px solid #000000",
-        background: "none",
-        padding: "4px 12px",
-        cursor: disabled ? "not-allowed" : "pointer",
-        opacity: disabled ? 0.5 : 1,
-        transition: "none",
-        whiteSpace: "nowrap",
+        fontSize: "11px",
+        fontWeight: 700,
+        color: "#808080",
+        textTransform: "uppercase",
+        letterSpacing: "0.08em",
+        margin: "0 0 8px 0",
       }}
     >
-      {label}
-    </button>
-  );
-}
-
-function RevokeLink({
-  label,
-  onClick,
-  disabled,
-}: {
-  label: string;
-  onClick: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      style={{
-        fontFamily: "var(--font-dm-sans)",
-        fontSize: "12px",
-        fontWeight: 300,
-        color: disabled ? "#808080" : "#DC2626",
-        border: "none",
-        background: "none",
-        padding: 0,
-        cursor: disabled ? "not-allowed" : "pointer",
-        textDecoration: "underline",
-        transition: "none",
-        whiteSpace: "nowrap",
-      }}
-    >
-      {label}
-    </button>
+      {children}
+    </p>
   );
 }
 
@@ -253,37 +135,57 @@ export default function ShareModal({
   };
 
   const publicUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/p/${pieceId}`;
+  const isActioning =
+    loadingClubId !== null || loadingPublic || revoking !== null;
 
   return (
     <Modal
       isOpen
       onClose={onClose}
       title="Share"
-      size="md"
+      size="sm"
       noiseBackground={false}
     >
-      <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
         {/* Club section */}
         {userClubs.length > 0 && (
           <div>
-            <SectionHeader
-              label="Club"
-              description="Members of the selected club can read and leave comments."
-            />
-            <div style={{ borderTop: "1px solid #E6E6E6" }}>
+            <SectionLabel>Club</SectionLabel>
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "8px" }}
+            >
               {userClubs.map((club) => {
                 const share = clubShares.find((s) => s.clubId === club.id);
                 const isShared = sharedClubIds.has(club.id);
-                return (
-                  <Row
-                    key={club.id}
-                    left={
-                      <>
+
+                if (isShared && share) {
+                  // Shared state — static card with revoke
+                  return (
+                    <div
+                      key={club.id}
+                      style={{
+                        border: "2px solid #000000",
+                        backgroundColor: "#FFFFFF",
+                        padding: "12px 16px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: "12px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          minWidth: 0,
+                        }}
+                      >
                         <span
                           style={{
                             fontFamily: "var(--font-dm-sans)",
-                            fontSize: "14px",
-                            fontWeight: isShared ? 400 : 300,
+                            fontSize: "15px",
+                            fontWeight: 300,
                             color: "#000000",
                             overflow: "hidden",
                             textOverflow: "ellipsis",
@@ -292,43 +194,84 @@ export default function ShareModal({
                         >
                           {club.name}
                         </span>
-                        {isShared && (
-                          <span
-                            style={{
-                              fontFamily: "var(--font-dm-sans)",
-                              fontSize: "10px",
-                              fontWeight: 700,
-                              color: "#000000",
-                              backgroundColor: "#00FF66",
-                              padding: "2px 6px",
-                              textTransform: "uppercase",
-                              letterSpacing: "0.06em",
-                              flexShrink: 0,
-                            }}
-                          >
-                            Shared
-                          </span>
-                        )}
-                      </>
-                    }
-                    right={
-                      isShared && share ? (
-                        <RevokeLink
-                          label={revoking === share.id ? "Revoking…" : "Revoke"}
-                          onClick={() => handleRevoke(share.id)}
-                          disabled={revoking !== null}
-                        />
-                      ) : (
-                        <ShareButton
-                          label={
-                            loadingClubId === club.id ? "Sharing…" : "Share"
-                          }
-                          onClick={() => handleShareToClub(club.id)}
-                          disabled={loadingClubId !== null}
-                        />
-                      )
-                    }
-                  />
+                        <span
+                          style={{
+                            fontFamily: "var(--font-dm-sans)",
+                            fontSize: "10px",
+                            fontWeight: 700,
+                            color: "#000000",
+                            backgroundColor: "#00FF66",
+                            padding: "2px 6px",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.06em",
+                            flexShrink: 0,
+                          }}
+                        >
+                          Shared
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => handleRevoke(share.id)}
+                        disabled={isActioning}
+                        style={{
+                          fontFamily: "var(--font-dm-sans)",
+                          fontSize: "12px",
+                          fontWeight: 300,
+                          color: revoking === share.id ? "#808080" : "#DC2626",
+                          border: "none",
+                          background: "none",
+                          padding: 0,
+                          cursor: isActioning ? "not-allowed" : "pointer",
+                          textDecoration: "underline",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {revoking === share.id ? "Revoking…" : "Revoke"}
+                      </button>
+                    </div>
+                  );
+                }
+
+                // Unshared state — clickable card (matches AttachToRiffModal)
+                return (
+                  <button
+                    key={club.id}
+                    onClick={() => handleShareToClub(club.id)}
+                    disabled={isActioning}
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "2px",
+                      border: "2px solid #000000",
+                      backgroundColor: "#FFFFFF",
+                      padding: "12px 16px",
+                      cursor: isActioning ? "not-allowed" : "pointer",
+                      textAlign: "left",
+                      width: "100%",
+                      opacity: isActioning ? 0.6 : 1,
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "15px",
+                        fontWeight: 300,
+                        color: "#000000",
+                      }}
+                    >
+                      {loadingClubId === club.id ? "Sharing…" : club.name}
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "12px",
+                        fontWeight: 300,
+                        color: "#808080",
+                      }}
+                    >
+                      Members can read and leave comments
+                    </span>
+                  </button>
                 );
               })}
             </div>
@@ -337,64 +280,122 @@ export default function ShareModal({
 
         {/* Public section */}
         <div>
-          <SectionHeader
-            label="Public link"
-            description="Anyone with the link can read. No account required."
-          />
-          <div style={{ borderTop: "1px solid #E6E6E6" }}>
+          <SectionLabel>Public link</SectionLabel>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             {publicShare ? (
-              <>
-                <Row
-                  left={
-                    <span
-                      style={{
-                        fontFamily: "ui-monospace, monospace",
-                        fontSize: "12px",
-                        color: "#808080",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {publicUrl}
-                    </span>
-                  }
-                  right={
-                    <ShareButton
-                      label={copied ? "Copied!" : "Copy link"}
-                      onClick={handleCopy}
-                    />
-                  }
-                />
+              // Active public share — URL card + revoke
+              <div>
+                <div
+                  style={{
+                    border: "2px solid #000000",
+                    backgroundColor: "#FFFFFF",
+                    padding: "12px 16px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "12px",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: "ui-monospace, monospace",
+                      fontSize: "12px",
+                      fontWeight: 400,
+                      color: "#808080",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      flex: 1,
+                    }}
+                  >
+                    {publicUrl}
+                  </span>
+                  <button
+                    onClick={handleCopy}
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "12px",
+                      fontWeight: 300,
+                      color: "#000000",
+                      border: "1px solid #000000",
+                      background: "none",
+                      padding: "4px 10px",
+                      cursor: "pointer",
+                      flexShrink: 0,
+                      transition: "none",
+                    }}
+                  >
+                    {copied ? "Copied!" : "Copy link"}
+                  </button>
+                </div>
                 <div
                   style={{
                     display: "flex",
                     justifyContent: "flex-end",
-                    paddingTop: "12px",
+                    paddingTop: "8px",
                   }}
                 >
-                  <RevokeLink
-                    label={
-                      revoking === publicShare.id
-                        ? "Revoking…"
-                        : "Revoke public link"
-                    }
+                  <button
                     onClick={() => handleRevoke(publicShare.id)}
-                    disabled={revoking !== null}
-                  />
+                    disabled={isActioning}
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "12px",
+                      fontWeight: 300,
+                      color:
+                        revoking === publicShare.id ? "#808080" : "#DC2626",
+                      border: "none",
+                      background: "none",
+                      padding: 0,
+                      cursor: isActioning ? "not-allowed" : "pointer",
+                      textDecoration: "underline",
+                    }}
+                  >
+                    {revoking === publicShare.id
+                      ? "Revoking…"
+                      : "Revoke public link"}
+                  </button>
                 </div>
-              </>
+              </div>
             ) : (
-              <Row
-                left={<span style={{ flex: 1 }} />}
-                right={
-                  <ShareButton
-                    label={loadingPublic ? "Making public…" : "Make public"}
-                    onClick={handleMakePublic}
-                    disabled={loadingPublic}
-                  />
-                }
-              />
+              // Not public — clickable card (matches club card pattern)
+              <button
+                onClick={handleMakePublic}
+                disabled={isActioning}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "2px",
+                  border: "2px solid #000000",
+                  backgroundColor: "#FFFFFF",
+                  padding: "12px 16px",
+                  cursor: isActioning ? "not-allowed" : "pointer",
+                  textAlign: "left",
+                  width: "100%",
+                  opacity: isActioning ? 0.6 : 1,
+                }}
+              >
+                <span
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "15px",
+                    fontWeight: 300,
+                    color: "#000000",
+                  }}
+                >
+                  {loadingPublic ? "Making public…" : "Make public"}
+                </span>
+                <span
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "12px",
+                    fontWeight: 300,
+                    color: "#808080",
+                  }}
+                >
+                  Anyone with the link can read. No account required.
+                </span>
+              </button>
             )}
           </div>
         </div>
