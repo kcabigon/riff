@@ -720,7 +720,9 @@ export default function ClubPageLayout({
         {/* Current Read section — shown above Current Riff when there are unread revealed riffs */}
         {(() => {
           const unfinishedRevealed = revealedRiffs.filter(
-            (r) => (readCounts[r.id] || 0) < r.pieces.length
+            (r) =>
+              (readCounts[r.id] || 0) <
+              r.pieces.filter((p) => p.piece.authorId !== currentUserId).length
           );
           if (unfinishedRevealed.length === 0) return null;
           return (
@@ -751,7 +753,11 @@ export default function ClubPageLayout({
                     key={riff.id}
                     riff={riff}
                     readCount={readCounts[riff.id] || 0}
-                    totalPieces={riff.pieces.length}
+                    totalPieces={
+                      riff.pieces.filter(
+                        (p) => p.piece.authorId !== currentUserId
+                      ).length
+                    }
                   />
                 ))}
               </div>
@@ -762,7 +768,9 @@ export default function ClubPageLayout({
         {/* Current Riff section — hidden for members when there's a current read and no active riff */}
         {(() => {
           const hasCurrentRead = revealedRiffs.some(
-            (r) => (readCounts[r.id] || 0) < r.pieces.length
+            (r) =>
+              (readCounts[r.id] || 0) <
+              r.pieces.filter((p) => p.piece.authorId !== currentUserId).length
           );
           const showSection = activeRiff || isAdmin || !hasCurrentRead;
           if (!showSection) return null;
@@ -826,10 +834,12 @@ export default function ClubPageLayout({
         {/* Completed Riffs section — includes COMPLETED + fully-read REVEALED riffs */}
         {(() => {
           // Revealed riffs where user has read all pieces
-          const fullyReadRevealed = revealedRiffs.filter(
-            (r) =>
-              r.pieces.length > 0 && (readCounts[r.id] || 0) >= r.pieces.length
-          );
+          const fullyReadRevealed = revealedRiffs.filter((r) => {
+            const otherPieces = r.pieces.filter(
+              (p) => p.piece.authorId !== currentUserId
+            ).length;
+            return otherPieces > 0 && (readCounts[r.id] || 0) >= otherPieces;
+          });
           const allCompleted = [...completedRiffs, ...fullyReadRevealed];
           return allCompleted.length > 0;
         })() && (
@@ -859,11 +869,14 @@ export default function ClubPageLayout({
             >
               {[
                 ...completedRiffs,
-                ...revealedRiffs.filter(
-                  (r) =>
-                    r.pieces.length > 0 &&
-                    (readCounts[r.id] || 0) >= r.pieces.length
-                ),
+                ...revealedRiffs.filter((r) => {
+                  const otherPieces = r.pieces.filter(
+                    (p) => p.piece.authorId !== currentUserId
+                  ).length;
+                  return (
+                    otherPieces > 0 && (readCounts[r.id] || 0) >= otherPieces
+                  );
+                }),
               ].map((riff) => (
                 <CompletedRiffCard
                   key={riff.id}

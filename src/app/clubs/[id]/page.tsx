@@ -144,24 +144,23 @@ export default async function ClubPage({
   const revealedRiffIds = revealedRiffs.map((r) => r.id);
   let readCounts: Record<string, number> = {};
   if (revealedRiffIds.length > 0) {
+    // Exclude own pieces from read counts — they're auto-excluded from the
+    // denominator in ClubPageLayout too, so both sides stay consistent
+    const ownPieceIds = revealedRiffs.flatMap((r) =>
+      r.pieces.filter((p) => p.piece.authorId === userId).map((p) => p.piece.id)
+    );
     const readGroups = await prisma.pieceRead.groupBy({
       by: ["riffId"],
       where: {
         userId,
         riffId: { in: revealedRiffIds },
+        ...(ownPieceIds.length > 0 ? { pieceId: { notIn: ownPieceIds } } : {}),
       },
       _count: { pieceId: true },
     });
     readCounts = Object.fromEntries(
       readGroups.map((g) => [g.riffId, g._count.pieceId])
     );
-    // Add own piece to readCount so it doesn't count as unread
-    for (const riff of revealedRiffs) {
-      const hasOwnPiece = riff.pieces.some((p) => p.piece.authorId === userId);
-      if (hasOwnPiece) {
-        readCounts[riff.id] = (readCounts[riff.id] || 0) + 1;
-      }
-    }
   }
 
   const isAdmin = club.adminId === userId;
