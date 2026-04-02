@@ -664,11 +664,10 @@ export default function MyWritingPage({
         <AttachToRiffModal
           draftId={attachDraftId}
           activeRiffs={activeRiffs}
-          alreadyAttachedRiffIds={
-            drafts
-              .find((d) => d.id === attachDraftId)
-              ?.riffs.map((r) => r.riffId) ?? []
-          }
+          alreadyAttachedRiffIds={[
+            ...drafts.flatMap((d) => d.riffs.map((r) => r.riffId)),
+            ...pieces.flatMap((p) => p.riffs.map((r) => r.riffId)),
+          ]}
           onClose={() => setAttachDraftId(null)}
           onAttached={(riff) => {
             handleRiffAttached(attachDraftId, riff);
