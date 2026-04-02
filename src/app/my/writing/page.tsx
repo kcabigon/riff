@@ -40,7 +40,16 @@ export default async function MyWritingPageRoute() {
           },
         },
       },
-      visibility: { select: { visibility: true } },
+      newShares: {
+        where: { isVisible: true },
+        select: {
+          id: true,
+          shareType: true,
+          clubId: true,
+          isPublic: true,
+          club: { select: { id: true, name: true } },
+        },
+      },
     },
     orderBy: { updatedAt: "desc" },
   });
@@ -59,20 +68,27 @@ export default async function MyWritingPageRoute() {
     orderBy: { createdAt: "desc" },
   });
 
-  // Split into drafts (no submitted PieceRiff) and submitted pieces
+  // Split into drafts and pieces.
+  // Piece = submitted to a riff OR has any Share record (club/public share graduates a draft).
   const draftPieces = pieces.filter(
-    (p) => !p.riffs.some((r) => r.submittedAt !== null)
+    (p) =>
+      !p.riffs.some((r) => r.submittedAt !== null) && p.newShares.length === 0
   );
-  const submittedPieces = pieces.filter((p) =>
-    p.riffs.some((r) => r.submittedAt !== null)
+  const submittedPieces = pieces.filter(
+    (p) => p.riffs.some((r) => r.submittedAt !== null) || p.newShares.length > 0
   );
 
-  const drafts = draftPieces.map((p) => ({
-    id: p.id,
-    title: p.title,
-    updatedAt: p.updatedAt.toISOString(),
-    wordCount: p.wordCount,
-    riffs: p.riffs.map((r) => ({
+  const serializeShares = (p: (typeof pieces)[number]) =>
+    p.newShares.map((s) => ({
+      id: s.id,
+      shareType: s.shareType as "CLUB" | "PUBLIC",
+      clubId: s.clubId,
+      isPublic: s.isPublic,
+      club: s.club ?? null,
+    }));
+
+  const serializeRiffs = (p: (typeof pieces)[number]) =>
+    p.riffs.map((r) => ({
       riffId: r.riffId,
       riff: {
         id: r.riff.id,
@@ -80,8 +96,15 @@ export default async function MyWritingPageRoute() {
         volume: r.riff.volumeNumber ?? 1,
         club: r.riff.club,
       },
-    })),
-    isPublished: p.visibility?.visibility === "PUBLIC",
+    }));
+
+  const drafts = draftPieces.map((p) => ({
+    id: p.id,
+    title: p.title,
+    updatedAt: p.updatedAt.toISOString(),
+    wordCount: p.wordCount,
+    riffs: serializeRiffs(p),
+    shares: serializeShares(p),
   }));
 
   const pieceItems = submittedPieces.map((p) => ({
@@ -90,15 +113,8 @@ export default async function MyWritingPageRoute() {
     coverImage: p.coverImage,
     currentContent: p.currentContent,
     wordCount: p.wordCount,
-    riffs: p.riffs.map((r) => ({
-      riffId: r.riffId,
-      riff: {
-        id: r.riff.id,
-        title: r.riff.title,
-        volume: r.riff.volumeNumber ?? 1,
-        club: r.riff.club,
-      },
-    })),
+    riffs: serializeRiffs(p),
+    shares: serializeShares(p),
   }));
 
   const riffItems = activeRiffs.map((r) => ({

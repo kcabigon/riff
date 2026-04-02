@@ -34,7 +34,7 @@ interface PendingCommentProps {
   selection: PendingSelection;
   currentUser: CommentAuthor;
   pieceId: string;
-  riffId: string;
+  riffId: string | null;
   clubId: string;
   onSubmit: (comment: CommentData) => void;
   onClose: () => void;

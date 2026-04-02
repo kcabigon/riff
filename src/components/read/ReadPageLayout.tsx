@@ -50,7 +50,7 @@ interface ReadPageLayoutProps {
     readLengthMin: number;
     author: CommentAuthor;
   };
-  riffId: string;
+  riffId: string | null;
   clubId: string;
   currentUser: CommentAuthor;
   initialComments: CommentData[];
@@ -100,7 +100,7 @@ export default function ReadPageLayout({
   }, [isMobile]);
 
   const markAsRead = useCallback(async () => {
-    if (markedRead) return;
+    if (markedRead || !riffId) return;
     setMarkedRead(true);
     try {
       await fetch(`/api/riffs/${riffId}/read`, {
@@ -240,7 +240,7 @@ export default function ReadPageLayout({
               padding: "16px 0 8px",
             }}
           >
-            <BackButton href={`/riffs/${riffId}`} />
+            <BackButton href={riffId ? `/riffs/${riffId}` : `/my/writing`} />
 
             {/* Nav title + author avatar — appears when metadata scrolls out */}
             {!isMobile && (

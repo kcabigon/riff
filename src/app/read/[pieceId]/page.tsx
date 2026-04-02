@@ -91,28 +91,42 @@ export default async function ReadPage({
       },
     });
 
-    if (!pieceRiff) {
-      redirect("/");
-    }
+    if (pieceRiff) {
+      validRiffId = pieceRiff.riffId;
+      clubId = pieceRiff.riff.clubId;
+    } else {
+      // Second access path: check for a CLUB Share where viewer is a club member
+      const clubShare = await prisma.share.findFirst({
+        where: {
+          pieceId,
+          shareType: "CLUB",
+          isVisible: true,
+          club: { members: { some: { userId } } },
+        },
+        select: { clubId: true },
+      });
 
-    validRiffId = pieceRiff.riffId;
-    clubId = pieceRiff.riff.clubId;
+      if (!clubShare) {
+        redirect("/");
+      }
+
+      // validRiffId stays null — club-share access has no riff context
+      clubId = clubShare.clubId;
+    }
   }
 
-  // Check if already read
-  const existingRead = await prisma.pieceRead.findUnique({
-    where: {
-      userId_pieceId_riffId: {
-        userId,
-        pieceId,
-        riffId: validRiffId,
-      },
-    },
-  });
+  // Check if already read (only tracked in riff context)
+  const existingRead = validRiffId
+    ? await prisma.pieceRead.findUnique({
+        where: {
+          userId_pieceId_riffId: { userId, pieceId, riffId: validRiffId },
+        },
+      })
+    : null;
 
-  // Fetch comments server-side
+  // Fetch comments server-side (scoped to riff if in riff context, otherwise club-share thread)
   const rawComments = await prisma.comment.findMany({
-    where: { pieceId, riffId: validRiffId },
+    where: { pieceId, riffId: validRiffId ?? null },
     include: {
       author: {
         select: {
@@ -139,16 +153,14 @@ export default async function ReadPage({
     author: c.author,
   }));
 
-  // Fetch sibling pieces in same riff for navigation
-  const siblingPieces = await prisma.pieceRiff.findMany({
-    where: { riffId: validRiffId },
-    select: {
-      piece: {
-        select: { id: true, title: true },
-      },
-    },
-    orderBy: { submittedAt: "asc" },
-  });
+  // Fetch sibling pieces for navigation (only in riff context)
+  const siblingPieces = validRiffId
+    ? await prisma.pieceRiff.findMany({
+        where: { riffId: validRiffId },
+        select: { piece: { select: { id: true, title: true } } },
+        orderBy: { submittedAt: "asc" },
+      })
+    : [];
 
   const orderedPieces = siblingPieces.map((pr) => pr.piece);
   const currentIndex = orderedPieces.findIndex((p) => p.id === pieceId);

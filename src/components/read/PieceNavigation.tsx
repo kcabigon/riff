@@ -10,7 +10,7 @@ interface PieceInfo {
 interface PieceNavigationProps {
   previousPiece: PieceInfo | null;
   nextPiece: PieceInfo | null;
-  riffId: string;
+  riffId: string | null;
 }
 
 export default function PieceNavigation({
@@ -40,7 +40,9 @@ export default function PieceNavigation({
     >
       {previousPiece ? (
         <button
-          onClick={() => router.push(`/read/${previousPiece.id}?riff=${riffId}`)}
+          onClick={() =>
+            router.push(`/read/${previousPiece.id}?riff=${riffId}`)
+          }
           style={{
             background: "none",
             border: "none",

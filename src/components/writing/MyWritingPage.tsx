@@ -5,13 +5,12 @@ import { useRouter } from "next/navigation";
 import NavBar from "@/components/clubs/NavBar";
 import PieceCard from "@/components/riffs/PieceCard";
 import Dropdown from "@/components/shared/Dropdown";
-import Modal from "@/components/shared/Modal";
-import DraftCard from "@/components/writing/DraftCard";
-import AttachToRiffModal from "@/components/writing/AttachToRiffModal";
-import NoiseBackground from "@/components/NoiseBackground";
 import DeletePieceModal from "@/components/writing/DeletePieceModal";
+import ShareModal from "@/components/writing/ShareModal";
+import NoiseBackground from "@/components/NoiseBackground";
 import { useDraftCreation } from "@/hooks/useDraftCreation";
 import type { DropdownItem } from "@/components/shared/Dropdown";
+import type { ActiveRiff, ShareItem } from "@/components/writing/ShareModal";
 
 // --- Types ---
 
@@ -29,7 +28,7 @@ export type DraftItem = {
       club: { id: string; name: string };
     };
   }>;
-  isPublished: boolean;
+  shares: ShareItem[];
 };
 
 export type PieceItem = {
@@ -47,13 +46,7 @@ export type PieceItem = {
       club: { id: string; name: string };
     };
   }>;
-};
-
-type ActiveRiff = {
-  id: string;
-  title: string | null;
-  volume: number;
-  club: { id: string; name: string };
+  shares: ShareItem[];
 };
 
 // --- Props ---
@@ -133,6 +126,162 @@ function PieceDotsMenu({ items }: { items: DropdownItem[] }) {
   );
 }
 
+// --- Draft card (inline — list style) ---
+
+function DraftCard({
+  draft,
+  onClick,
+  onShare,
+  onDelete,
+}: {
+  draft: DraftItem;
+  onClick: () => void;
+  onShare: () => void;
+  onDelete: () => void;
+}) {
+  const [isHovered, setIsHovered] = useState(false);
+  const [dotsHovered, setDotsHovered] = useState(false);
+
+  const menuItems: DropdownItem[] = [
+    { type: "action", label: "Share", onClick: onShare },
+    { type: "divider" },
+    { type: "action", label: "Delete", color: "#DC2626", onClick: onDelete },
+  ];
+
+  const subtitle = [
+    new Date(draft.updatedAt).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }),
+    draft.wordCount > 0 ? `${draft.wordCount.toLocaleString()} words` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  return (
+    <div
+      onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{
+        border: "2px solid #000000",
+        padding: "20px 24px",
+        backgroundColor: "#FFFFFF",
+        boxShadow: isHovered ? "4px 4px 0px 0px #000000" : "none",
+        transition: "box-shadow 0.1s ease",
+        display: "flex",
+        flexDirection: "column",
+        gap: "8px",
+        cursor: "pointer",
+      }}
+    >
+      {/* Top row: title + dots menu */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: "12px",
+        }}
+      >
+        <h3
+          style={{
+            fontFamily: "var(--font-dm-serif-text)",
+            fontSize: "20px",
+            fontWeight: 400,
+            color: "#000000",
+            margin: 0,
+            lineHeight: 1.3,
+            flex: 1,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {draft.title || "Untitled"}
+        </h3>
+        <div onClick={(e) => e.stopPropagation()}>
+          <Dropdown
+            trigger={
+              <button
+                aria-label="Draft options"
+                onMouseEnter={() => setDotsHovered(true)}
+                onMouseLeave={() => setDotsHovered(false)}
+                style={{
+                  background: dotsHovered ? "#01EFFC" : "transparent",
+                  border: dotsHovered
+                    ? "2px solid #000000"
+                    : "2px solid transparent",
+                  boxShadow: dotsHovered ? "4px 4px 0px 0px #000000" : "none",
+                  cursor: "pointer",
+                  padding: "4px 6px",
+                  color: "#000000",
+                  lineHeight: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  transition: "none",
+                }}
+              >
+                <svg
+                  width="12"
+                  height="3"
+                  viewBox="0 0 12 3"
+                  fill="currentColor"
+                >
+                  <circle cx="1.5" cy="1.5" r="1.5" />
+                  <circle cx="6" cy="1.5" r="1.5" />
+                  <circle cx="10.5" cy="1.5" r="1.5" />
+                </svg>
+              </button>
+            }
+            items={menuItems}
+            align="right"
+          />
+        </div>
+      </div>
+
+      {/* Subtitle */}
+      <p
+        style={{
+          fontFamily: "var(--font-dm-sans)",
+          fontSize: "13px",
+          fontWeight: 300,
+          color: "#808080",
+          margin: 0,
+        }}
+      >
+        {subtitle}
+      </p>
+
+      {/* Riff pills */}
+      {draft.riffs.length > 0 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+          {draft.riffs.map((r) => (
+            <span
+              key={r.riffId}
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "11px",
+                fontWeight: 700,
+                color: "#000000",
+                backgroundColor: "#00FF66",
+                border: "1px solid #000000",
+                padding: "2px 8px",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {r.riff.title || `Vol. ${r.riff.volume}`} · {r.riff.club.name}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- Main component ---
 
 export default function MyWritingPage({
@@ -149,45 +298,27 @@ export default function MyWritingPage({
   const [pieces, setPieces] = useState<PieceItem[]>(initialPieces);
 
   // Modal state
-  const [attachDraftId, setAttachDraftId] = useState<string | null>(null);
+  const [sharingPieceId, setSharingPieceId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{
     id: string;
     title: string;
   } | null>(null);
-  const [sharingPiece, setSharingPiece] = useState<PieceItem | null>(null);
 
-  // --- Draft actions ---
+  // --- Helpers to find current item ---
 
-  const handlePublishToggle = async (draft: DraftItem) => {
-    const newVisibility = draft.isPublished ? "PRIVATE" : "PUBLIC";
-    try {
-      const res = await fetch(`/api/pieces/${draft.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ visibility: newVisibility }),
-      });
-      if (res.ok) {
-        setDrafts((prev) =>
-          prev.map((d) =>
-            d.id === draft.id
-              ? { ...d, isPublished: newVisibility === "PUBLIC" }
-              : d
-          )
-        );
-      }
-    } catch {
-      // silent — no toast system yet
-    }
-  };
+  const findItem = (id: string): DraftItem | PieceItem | undefined =>
+    [...drafts, ...pieces].find((x) => x.id === id);
 
-  const handleDraftAttached = (draftId: string, riff: ActiveRiff) => {
-    setDrafts((prev) =>
-      prev.map((d) =>
-        d.id === draftId
+  // --- Riff attach callback ---
+
+  const handleRiffAttached = (pieceId: string, riff: ActiveRiff) => {
+    const update = <T extends DraftItem | PieceItem>(arr: T[]): T[] =>
+      arr.map((x) =>
+        x.id === pieceId
           ? {
-              ...d,
+              ...x,
               riffs: [
-                ...d.riffs,
+                ...x.riffs,
                 {
                   riffId: riff.id,
                   riff: {
@@ -199,9 +330,73 @@ export default function MyWritingPage({
                 },
               ],
             }
-          : d
-      )
-    );
+          : x
+      );
+    setDrafts((prev) => update(prev));
+    setPieces((prev) => update(prev));
+  };
+
+  // --- Share created callback ---
+
+  const handleShareCreated = (pieceId: string, share: ShareItem) => {
+    // Add share to local state
+    const addShare = <T extends DraftItem | PieceItem>(arr: T[]): T[] =>
+      arr.map((x) =>
+        x.id === pieceId ? { ...x, shares: [...x.shares, share] } : x
+      );
+
+    // Check if this draft should graduate to piece
+    const draft = drafts.find((d) => d.id === pieceId);
+    if (draft) {
+      const updatedDraft = { ...draft, shares: [...draft.shares, share] };
+      // Move from drafts → pieces
+      setDrafts((prev) => prev.filter((d) => d.id !== pieceId));
+      setPieces((prev) => [
+        { ...updatedDraft, coverImage: null, currentContent: "" },
+        ...prev,
+      ]);
+    } else {
+      setPieces((prev) => addShare(prev));
+    }
+  };
+
+  // --- Share revoked callback ---
+
+  const handleShareRevoked = (pieceId: string, shareId: string) => {
+    const removeShare = <T extends DraftItem | PieceItem>(arr: T[]): T[] =>
+      arr.map((x) =>
+        x.id === pieceId
+          ? { ...x, shares: x.shares.filter((s) => s.id !== shareId) }
+          : x
+      );
+
+    // Check if piece should demote back to draft
+    const piece = pieces.find((p) => p.id === pieceId);
+    if (piece) {
+      const updatedShares = piece.shares.filter((s) => s.id !== shareId);
+      const hasSubmittedRiff = piece.riffs.some(() => true); // riffs on pieces are always submitted
+      if (updatedShares.length === 0 && !hasSubmittedRiff) {
+        // Demote to draft
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { coverImage: _ci, currentContent: _cc, ...draftFields } = piece;
+        setPieces((prev) => prev.filter((p) => p.id !== pieceId));
+        setDrafts((prev) => [
+          {
+            ...draftFields,
+            shares: [],
+            updatedAt:
+              piece.riffs.length > 0
+                ? (draftFields.riffs[0]?.riff.id ?? new Date().toISOString())
+                : new Date().toISOString(),
+          } as DraftItem,
+          ...prev,
+        ]);
+        return;
+      }
+      setPieces((prev) => removeShare(prev));
+    } else {
+      setDrafts((prev) => removeShare(prev));
+    }
   };
 
   // --- Delete action ---
@@ -209,6 +404,7 @@ export default function MyWritingPage({
   const handleDeleted = (pieceId: string) => {
     setDrafts((prev) => prev.filter((d) => d.id !== pieceId));
     setPieces((prev) => prev.filter((p) => p.id !== pieceId));
+    setSharingPieceId(null);
   };
 
   // --- Pieces grid item ---
@@ -222,8 +418,8 @@ export default function MyWritingPage({
       },
       {
         type: "action",
-        label: "Sharing",
-        onClick: () => setSharingPiece(piece),
+        label: "Share",
+        onClick: () => setSharingPieceId(piece.id),
       },
       { type: "divider" },
       {
@@ -236,7 +432,6 @@ export default function MyWritingPage({
 
     return (
       <div key={piece.id} style={{ position: "relative" }}>
-        {/* Dots menu — top-left */}
         <PieceDotsMenu items={menuItems} />
 
         <PieceCard
@@ -323,6 +518,10 @@ export default function MyWritingPage({
     </button>
   );
 
+  // --- Sharing modal data ---
+
+  const sharingItem = sharingPieceId ? findItem(sharingPieceId) : null;
+
   return (
     <>
       {/* Nav */}
@@ -392,8 +591,7 @@ export default function MyWritingPage({
                     key={draft.id}
                     draft={draft}
                     onClick={() => router.push(`/write/${draft.id}`)}
-                    onAttach={() => setAttachDraftId(draft.id)}
-                    onPublishToggle={() => handlePublishToggle(draft)}
+                    onShare={() => setSharingPieceId(draft.id)}
                     onDelete={() =>
                       setDeleteTarget({ id: draft.id, title: draft.title })
                     }
@@ -447,23 +645,24 @@ export default function MyWritingPage({
         </div>
       </div>
 
-      {/* Modals */}
-      {attachDraftId && (
-        <AttachToRiffModal
-          draftId={attachDraftId}
+      {/* Share modal */}
+      {sharingPieceId && sharingItem && (
+        <ShareModal
+          pieceId={sharingPieceId}
           activeRiffs={activeRiffs}
-          alreadyAttachedRiffIds={
-            drafts
-              .find((d) => d.id === attachDraftId)
-              ?.riffs.map((r) => r.riffId) ?? []
+          userClubs={userClubs}
+          existingRiffIds={sharingItem.riffs.map((r) => r.riffId)}
+          existingShares={sharingItem.shares}
+          onClose={() => setSharingPieceId(null)}
+          onRiffAttached={(riff) => handleRiffAttached(sharingPieceId, riff)}
+          onShareCreated={(share) => handleShareCreated(sharingPieceId, share)}
+          onShareRevoked={(shareId) =>
+            handleShareRevoked(sharingPieceId, shareId)
           }
-          onClose={() => setAttachDraftId(null)}
-          onAttached={(riff) => {
-            handleDraftAttached(attachDraftId, riff);
-          }}
         />
       )}
 
+      {/* Delete modal */}
       {deleteTarget && (
         <DeletePieceModal
           pieceId={deleteTarget.id}
@@ -471,78 +670,6 @@ export default function MyWritingPage({
           onClose={() => setDeleteTarget(null)}
           onDeleted={() => handleDeleted(deleteTarget.id)}
         />
-      )}
-
-      {sharingPiece && (
-        <Modal
-          isOpen
-          onClose={() => setSharingPiece(null)}
-          title="Sharing"
-          size="sm"
-        >
-          {sharingPiece.riffs.length === 0 ? (
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: 300,
-                color: "#808080",
-                margin: 0,
-              }}
-            >
-              This piece hasn&apos;t been submitted to any riff.
-            </p>
-          ) : (
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "12px" }}
-            >
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "14px",
-                  fontWeight: 300,
-                  color: "#808080",
-                  margin: 0,
-                }}
-              >
-                Submitted to:
-              </p>
-              {sharingPiece.riffs.map((r) => (
-                <div
-                  key={r.riffId}
-                  style={{
-                    border: "2px solid #000000",
-                    padding: "12px 16px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "2px",
-                  }}
-                >
-                  <span
-                    style={{
-                      fontFamily: "var(--font-dm-sans)",
-                      fontSize: "15px",
-                      fontWeight: 300,
-                      color: "#000000",
-                    }}
-                  >
-                    {r.riff.title || `Riff Vol. ${r.riff.volume}`}
-                  </span>
-                  <span
-                    style={{
-                      fontFamily: "var(--font-dm-sans)",
-                      fontSize: "12px",
-                      fontWeight: 300,
-                      color: "#808080",
-                    }}
-                  >
-                    {r.riff.club.name}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </Modal>
       )}
     </>
   );
