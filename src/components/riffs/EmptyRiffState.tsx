@@ -25,9 +25,8 @@ export default function EmptyRiffState({
         <div
           className="empty-riff-member"
           style={{
-            backgroundColor: "#FFFFFF",
-            border: "2px solid #000000",
-            boxShadow: "8px 8px 0px 0px #000000",
+            backgroundColor: "#F9F9F9",
+            border: "2px dashed #E6E6E6",
             padding: "32px",
             display: "flex",
             alignItems: "center",
@@ -40,7 +39,7 @@ export default function EmptyRiffState({
               fontFamily: "var(--font-dm-sans)",
               fontSize: "16px",
               fontWeight: 300,
-              color: "#000000",
+              color: "#959595",
               margin: 0,
               flex: 1,
             }}
