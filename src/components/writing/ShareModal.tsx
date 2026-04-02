@@ -60,6 +60,8 @@ export default function ShareModal({
   const [revoking, setRevoking] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hoveredPublicCard, setHoveredPublicCard] = useState(false);
+  const [hoveredCopy, setHoveredCopy] = useState(false);
 
   const publicShare =
     existingShares.find((s) => s.shareType === "PUBLIC") ?? null;
@@ -119,6 +121,19 @@ export default function ShareModal({
   return (
     <Modal isOpen onClose={onClose} title="Share" size="sm">
       <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+        {/* Context note */}
+        <p
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "13px",
+            fontWeight: 300,
+            color: "#808080",
+            margin: 0,
+          }}
+        >
+          This is for sharing on your own terms — no riff, no group reveal.
+        </p>
+
         {/* Club section — coming soon, non-interactive */}
         {userClubs.length > 0 && (
           <div>
@@ -225,6 +240,8 @@ export default function ShareModal({
                   </span>
                   <button
                     onClick={handleCopy}
+                    onMouseEnter={() => setHoveredCopy(true)}
+                    onMouseLeave={() => setHoveredCopy(false)}
                     style={{
                       fontFamily: "var(--font-dm-sans)",
                       fontSize: "12px",
@@ -236,6 +253,9 @@ export default function ShareModal({
                       cursor: "pointer",
                       flexShrink: 0,
                       transition: "none",
+                      boxShadow: hoveredCopy
+                        ? "4px 4px 0px 0px #000000"
+                        : "none",
                     }}
                   >
                     {copied ? "Copied!" : "Copy link"}
@@ -275,6 +295,8 @@ export default function ShareModal({
               <button
                 onClick={handleMakePublic}
                 disabled={isActioning}
+                onMouseEnter={() => setHoveredPublicCard(true)}
+                onMouseLeave={() => setHoveredPublicCard(false)}
                 style={{
                   display: "flex",
                   flexDirection: "column",
@@ -286,6 +308,11 @@ export default function ShareModal({
                   textAlign: "left",
                   width: "100%",
                   opacity: isActioning ? 0.6 : 1,
+                  boxShadow:
+                    hoveredPublicCard && !isActioning
+                      ? "8px 8px 0px 0px #00FF66"
+                      : "none",
+                  transition: "none",
                 }}
               >
                 <span

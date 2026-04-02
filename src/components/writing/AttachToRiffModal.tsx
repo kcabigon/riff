@@ -40,6 +40,7 @@ export default function AttachToRiffModal({
 }: AttachToRiffModalProps) {
   const [isAttaching, setIsAttaching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hoveredRiffId, setHoveredRiffId] = useState<string | null>(null);
 
   const eligibleRiffs = activeRiffs.filter(
     (r) => !alreadyAttachedRiffIds.includes(r.id)
@@ -95,6 +96,8 @@ export default function AttachToRiffModal({
                 key={riff.id}
                 onClick={() => handleAttach(riff)}
                 disabled={isAttaching}
+                onMouseEnter={() => setHoveredRiffId(riff.id)}
+                onMouseLeave={() => setHoveredRiffId(null)}
                 style={{
                   display: "flex",
                   flexDirection: "column",
@@ -106,6 +109,11 @@ export default function AttachToRiffModal({
                   textAlign: "left",
                   width: "100%",
                   opacity: isAttaching ? 0.6 : 1,
+                  boxShadow:
+                    hoveredRiffId === riff.id && !isAttaching
+                      ? "8px 8px 0px 0px #00FF66"
+                      : "none",
+                  transition: "none",
                 }}
               >
                 <span
