@@ -81,25 +81,6 @@ export default function PublicReadLayout({ piece }: PublicReadLayoutProps) {
           padding: "48px 24px 96px",
         }}
       >
-        {/* Cover image */}
-        {piece.coverImage && (
-          <div
-            style={{
-              width: "100%",
-              marginBottom: "40px",
-              border: "2px solid #000000",
-              overflow: "hidden",
-            }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={piece.coverImage}
-              alt="Cover"
-              style={{ width: "100%", display: "block" }}
-            />
-          </div>
-        )}
-
         {/* Title */}
         <h1
           style={{
