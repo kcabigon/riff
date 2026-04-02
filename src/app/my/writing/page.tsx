@@ -35,6 +35,7 @@ export default async function MyWritingPageRoute() {
               id: true,
               title: true,
               volumeNumber: true,
+              status: true,
               club: { select: { id: true, name: true } },
             },
           },
@@ -69,14 +70,14 @@ export default async function MyWritingPageRoute() {
   });
 
   // Split into drafts and pieces.
-  // Piece = submitted to a riff OR has any Share record (club/public share graduates a draft).
-  const draftPieces = pieces.filter(
-    (p) =>
-      !p.riffs.some((r) => r.submittedAt !== null) && p.newShares.length === 0
-  );
-  const submittedPieces = pieces.filter(
-    (p) => p.riffs.some((r) => r.submittedAt !== null) || p.newShares.length > 0
-  );
+  // Piece = in a revealed riff, explicitly submitted to a riff, or has any Share record.
+  const isGraduated = (p: (typeof pieces)[number]) =>
+    p.riffs.some(
+      (r) => r.submittedAt !== null || r.riff.status === "REVEALED"
+    ) || p.newShares.length > 0;
+
+  const draftPieces = pieces.filter((p) => !isGraduated(p));
+  const submittedPieces = pieces.filter((p) => isGraduated(p));
 
   const serializeShares = (p: (typeof pieces)[number]) =>
     p.newShares.map((s) => ({
