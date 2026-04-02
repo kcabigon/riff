@@ -726,7 +726,9 @@ export default function MyWritingPage({
       {sharingPieceId && sharingItem && (
         <ShareModal
           pieceId={sharingPieceId}
-          userClubs={userClubs}
+          userClubs={userClubs.filter(
+            (c) => !sharingItem.riffs.some((r) => r.riff.club.id === c.id)
+          )}
           existingShares={sharingItem.shares}
           onClose={() => setSharingPieceId(null)}
           onShareCreated={(share) => handleShareCreated(sharingPieceId, share)}
