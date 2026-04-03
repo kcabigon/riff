@@ -362,6 +362,36 @@ export default function RiffPageLayout({
               minWidth: "200px",
             }}
           >
+            {riff.status === "REVEALED" &&
+              hasDraft &&
+              !hasSubmitted &&
+              draftPieceId && (
+                <button
+                  onClick={() => router.push(`/write/${draftPieceId}`)}
+                  onMouseEnter={() => setIsLateSubmitHovered(true)}
+                  onMouseLeave={() => setIsLateSubmitHovered(false)}
+                  style={{
+                    backgroundColor: isLateSubmitHovered
+                      ? "#00FF66"
+                      : "#FFFFFF",
+                    border: "2px solid #000000",
+                    boxShadow: isLateSubmitHovered
+                      ? "8px 8px 0px 0px #000000"
+                      : "8px 8px 0px 0px #00FF66",
+                    padding: "12px 48px",
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "16px",
+                    fontWeight: 300,
+                    color: "#000000",
+                    cursor: "pointer",
+                    transition: "none",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Submit late
+                </button>
+              )}
+
             {riff.status === "REVEALED" && riff.updatedAt && (
               <div
                 style={{
@@ -521,32 +551,6 @@ export default function RiffPageLayout({
                 existingPieceId={existingPieceId}
                 onJoin={() => setIsJoined(true)}
               />
-            ) : riff.status === "REVEALED" &&
-              hasDraft &&
-              !hasSubmitted &&
-              draftPieceId ? (
-              <button
-                onClick={() => router.push(`/write/${draftPieceId}`)}
-                onMouseEnter={() => setIsLateSubmitHovered(true)}
-                onMouseLeave={() => setIsLateSubmitHovered(false)}
-                style={{
-                  backgroundColor: isLateSubmitHovered ? "#00FF66" : "#FFFFFF",
-                  border: "2px solid #000000",
-                  boxShadow: isLateSubmitHovered
-                    ? "8px 8px 0px 0px #000000"
-                    : "8px 8px 0px 0px #00FF66",
-                  padding: "12px 48px",
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#000000",
-                  cursor: "pointer",
-                  transition: "none",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                Submit late
-              </button>
             ) : null}
 
             {isJoined &&
