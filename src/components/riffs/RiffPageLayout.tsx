@@ -67,6 +67,7 @@ interface RiffPageLayoutProps {
   isJoined: boolean;
   hasDraft: boolean;
   hasSubmitted: boolean;
+  draftPieceId?: string | null;
   navUser?: {
     id: string;
     name: string | null;
@@ -92,6 +93,7 @@ export default function RiffPageLayout({
   isJoined: initialIsJoined,
   hasDraft,
   hasSubmitted,
+  draftPieceId,
   navUser,
   userClubs = [],
   readPieceIds = [],
@@ -522,9 +524,9 @@ export default function RiffPageLayout({
             ) : riff.status === "REVEALED" &&
               hasDraft &&
               !hasSubmitted &&
-              existingPieceId ? (
+              draftPieceId ? (
               <button
-                onClick={() => router.push(`/write/${existingPieceId}`)}
+                onClick={() => router.push(`/write/${draftPieceId}`)}
                 onMouseEnter={() => setIsLateSubmitHovered(true)}
                 onMouseLeave={() => setIsLateSubmitHovered(false)}
                 style={{

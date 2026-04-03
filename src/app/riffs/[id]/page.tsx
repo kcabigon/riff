@@ -99,6 +99,11 @@ export default async function RiffPage({
     (p) => p.piece.authorId === userId && p.submittedAt !== null
   );
   const isAdmin = riff.club.adminId === userId;
+  // ID of the user's unsubmitted piece — needed for late submission on revealed riffs
+  const draftPieceId =
+    riff.pieces.find(
+      (p) => p.piece.authorId === userId && p.submittedAt === null
+    )?.piece.id ?? null;
 
   // Fetch read data and compute per-piece flags for REVEALED riffs
   let readPieceIds: string[] = [];
@@ -210,6 +215,7 @@ export default async function RiffPage({
       isJoined={isJoined}
       hasDraft={hasDraft}
       hasSubmitted={hasSubmitted}
+      draftPieceId={draftPieceId}
       readPieceIds={readPieceIds}
       hasNewCommentsMap={hasNewCommentsMap}
       contributionData={contributionData}
