@@ -94,6 +94,7 @@ export default async function ClubPage({
         },
       },
       pieces: {
+        where: { submittedAt: { not: null } },
         include: {
           piece: {
             select: {
