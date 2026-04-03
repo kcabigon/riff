@@ -106,6 +106,8 @@ export default async function MyWritingPageRoute() {
     title: p.title,
     updatedAt: p.updatedAt.toISOString(),
     wordCount: p.wordCount,
+    coverImage: p.coverImage,
+    currentContent: p.currentContent,
     riffs: serializeRiffs(p),
     shares: serializeShares(p),
   }));

@@ -27,6 +27,11 @@ export async function PATCH(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Already submitted — return current state, no double-write
+    if (submission.submittedAt !== null) {
+      return NextResponse.json({ success: true, submission });
+    }
+
     const updated = await prisma.pieceRiff.update({
       where: { id: submission.id },
       data: { submittedAt: new Date() },
@@ -70,15 +75,21 @@ export async function DELETE(
       );
     }
 
-    // Only the piece author or riff creator can remove the submission
-    const canDelete =
-      submission.piece.authorId === user.id ||
-      submission.riff.creatorId === user.id;
+    const isAuthor = submission.piece.authorId === user.id;
+    const isRiffCreator = submission.riff.creatorId === user.id;
 
-    if (!canDelete) {
+    if (!isAuthor && !isRiffCreator) {
       return NextResponse.json(
         { error: "You don't have permission to remove this piece" },
         { status: 403 }
+      );
+    }
+
+    // Authors cannot remove their own piece once submitted — only the riff creator can
+    if (isAuthor && !isRiffCreator && submission.submittedAt !== null) {
+      return NextResponse.json(
+        { error: "Cannot remove a piece that has already been submitted" },
+        { status: 400 }
       );
     }
 

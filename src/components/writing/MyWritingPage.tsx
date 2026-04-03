@@ -39,6 +39,8 @@ export type DraftItem = {
   title: string;
   updatedAt: string;
   wordCount: number;
+  coverImage: string | null;
+  currentContent: string;
   riffs: RiffAttachment[];
   shares: ShareItem[];
 };
@@ -403,12 +405,9 @@ export default function MyWritingPage({
     const draft = drafts.find((d) => d.id === pieceId);
     if (draft) {
       const updatedDraft = { ...draft, shares: [...draft.shares, share] };
-      // Move from drafts → pieces
+      // Move from drafts → pieces — coverImage and currentContent come from DraftItem now
       setDrafts((prev) => prev.filter((d) => d.id !== pieceId));
-      setPieces((prev) => [
-        { ...updatedDraft, coverImage: null, currentContent: "" },
-        ...prev,
-      ]);
+      setPieces((prev) => [updatedDraft, ...prev]);
     } else {
       setPieces((prev) => addShare(prev));
     }
@@ -428,20 +427,18 @@ export default function MyWritingPage({
     const piece = pieces.find((p) => p.id === pieceId);
     if (piece) {
       const updatedShares = piece.shares.filter((s) => s.id !== shareId);
-      const hasSubmittedRiff = piece.riffs.some(() => true); // riffs on pieces are always submitted
+      // Mirror the graduation logic: submitted or in a revealed riff = can't demote
+      const hasSubmittedRiff = piece.riffs.some(
+        (r) => r.submittedAt !== null || r.riff.status === "REVEALED"
+      );
       if (updatedShares.length === 0 && !hasSubmittedRiff) {
         // Demote to draft
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { coverImage: _ci, currentContent: _cc, ...draftFields } = piece;
         setPieces((prev) => prev.filter((p) => p.id !== pieceId));
         setDrafts((prev) => [
           {
-            ...draftFields,
+            ...piece,
             shares: [],
-            updatedAt:
-              piece.riffs.length > 0
-                ? (draftFields.riffs[0]?.riff.id ?? new Date().toISOString())
-                : new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
           } as DraftItem,
           ...prev,
         ]);
@@ -464,8 +461,14 @@ export default function MyWritingPage({
   // --- Piece navigation ---
 
   const getPieceHref = (piece: PieceItem): string => {
+    // Prefer a revealed riff — read page requires REVEALED status
+    const revealedRiff = piece.riffs.find((r) => r.riff.status === "REVEALED");
+    if (revealedRiff) {
+      return `/read/${piece.id}?riff=${revealedRiff.riffId}`;
+    }
+    // Submitted to an active riff (not yet revealed) — send to write page to keep editing
     if (piece.riffs.length > 0) {
-      return `/read/${piece.id}?riff=${piece.riffs[0].riffId}`;
+      return `/write/${piece.id}`;
     }
     if (piece.shares.some((s) => s.shareType === "PUBLIC")) {
       return `/p/${piece.id}`;
