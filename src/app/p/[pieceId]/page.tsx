@@ -47,11 +47,13 @@ export async function generateMetadata({
       title,
       description,
       type: "article",
+      ...(piece.coverImage ? { images: [{ url: piece.coverImage }] } : {}),
     },
     twitter: {
-      card: "summary_large_image",
+      card: piece.coverImage ? "summary_large_image" : "summary",
       title,
       description,
+      ...(piece.coverImage ? { images: [piece.coverImage] } : {}),
     },
   };
 }
