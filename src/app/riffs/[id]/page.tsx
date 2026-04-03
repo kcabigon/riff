@@ -187,7 +187,7 @@ export default async function RiffPage({
     updatedAt: riff.updatedAt.toISOString(),
     deadline: riff.deadline ? riff.deadline.toISOString() : null,
     pieces: riff.pieces
-      .filter((pr) => pr.submittedAt !== null)
+      .filter((pr) => (isRevealed ? pr.submittedAt !== null : true))
       .map((pr) => ({
         ...pr,
         submittedAt: pr.submittedAt ? pr.submittedAt.toISOString() : null,
