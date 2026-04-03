@@ -49,7 +49,6 @@ export default async function RiffPage({
         orderBy: { joinedAt: "asc" },
       },
       pieces: {
-        where: { submittedAt: { not: null } },
         include: {
           piece: {
             select: {
@@ -187,18 +186,20 @@ export default async function RiffPage({
     createdAt: riff.createdAt.toISOString(),
     updatedAt: riff.updatedAt.toISOString(),
     deadline: riff.deadline ? riff.deadline.toISOString() : null,
-    pieces: riff.pieces.map((pr) => ({
-      ...pr,
-      submittedAt: pr.submittedAt ? pr.submittedAt.toISOString() : null,
-      piece: {
-        ...pr.piece,
-        // Strip content before reveal — cover image still returned for locked card teaser
-        currentContent: isRevealed ? pr.piece.currentContent : null,
-        updatedAt: pr.piece.updatedAt.toISOString(),
-        commentCount: pr.piece._count?.comments ?? 0,
-        _count: undefined,
-      },
-    })),
+    pieces: riff.pieces
+      .filter((pr) => pr.submittedAt !== null)
+      .map((pr) => ({
+        ...pr,
+        submittedAt: pr.submittedAt ? pr.submittedAt.toISOString() : null,
+        piece: {
+          ...pr.piece,
+          // Strip content before reveal — cover image still returned for locked card teaser
+          currentContent: isRevealed ? pr.piece.currentContent : null,
+          updatedAt: pr.piece.updatedAt.toISOString(),
+          commentCount: pr.piece._count?.comments ?? 0,
+          _count: undefined,
+        },
+      })),
   };
 
   return (
@@ -212,7 +213,7 @@ export default async function RiffPage({
       readPieceIds={readPieceIds}
       hasNewCommentsMap={hasNewCommentsMap}
       contributionData={contributionData}
-      totalPieces={riff.pieces.length}
+      totalPieces={riff.pieces.filter((p) => p.submittedAt !== null).length}
       navUser={navUser}
       userClubs={userClubs}
     />
