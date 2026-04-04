@@ -107,6 +107,7 @@ export default async function RiffPage({
 
   // Fetch read data and compute per-piece flags for REVEALED riffs
   let readPieceIds: string[] = [];
+  let isFirstReveal = false;
   const hasNewCommentsMap: Record<string, boolean> = {};
   let contributionData: Array<{
     user: { id: string; name: string | null; avatarUrl: string | null };
@@ -130,6 +131,9 @@ export default async function RiffPage({
     readPieceIds = [
       ...new Set([...reads.map((r) => r.pieceId), ...ownPieceIds]),
     ];
+
+    // First reveal: no actual DB reads yet (own piece auto-inclusion doesn't count)
+    isFirstReveal = !isAdmin && reads.length === 0;
 
     // Fetch all comment timestamps for this riff in one query
     const comments = await prisma.comment.findMany({
@@ -220,6 +224,7 @@ export default async function RiffPage({
       navUser={navUser}
       userClubs={userClubs}
       hostFirstName={riff.club.admin?.firstName ?? null}
+      isFirstReveal={isFirstReveal}
     />
   );
 }

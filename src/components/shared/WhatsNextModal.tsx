@@ -87,7 +87,7 @@ function getContent(
     },
     member_joined_club: {
       heading: "Welcome to write club…",
-      body: "The first rule of write club is, everyone writes. Once you see the Join Riff button, it's on like Donkey Kong.",
+      body: "The first rule of write club is, everyone writes. The second rule of write club is, sometimes you wait. Practice patience until you see the Join Riff button, then it's on like Donkey Kong.",
       cta: "Got it →",
       steps: MEMBER_STEPS,
     },
@@ -127,7 +127,7 @@ function JourneyTracker({
         const isCurrent = i === completedStep;
         const isLast = i === steps.length - 1;
         const dotColor = isCompleted ? "#00FF66" : "transparent";
-        const dotBorder = isCompleted ? "#00FF66" : "#808080";
+        const dotBorder = isCompleted ? "#000000" : "#808080";
         const dotSize = isCurrent ? 14 : 10;
         const lineColor = i < completedStep ? "#00FF66" : "#D0D0D0";
 
@@ -225,18 +225,27 @@ export default function WhatsNextModal({
       </h2>
 
       {/* Body */}
-      <p
+      <div
         style={{
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "16px",
-          fontWeight: 300,
-          color: "#000000",
-          margin: "0 0 24px 0",
-          lineHeight: 1.6,
+          backgroundColor: "#FFFFFF",
+          border: "2px solid #000000",
+          padding: "16px",
+          marginBottom: "24px",
         }}
       >
-        {content.body}
-      </p>
+        <p
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "16px",
+            fontWeight: 300,
+            color: "#000000",
+            margin: 0,
+            lineHeight: 1.6,
+          }}
+        >
+          {content.body}
+        </p>
+      </div>
 
       {/* Divider */}
       <div

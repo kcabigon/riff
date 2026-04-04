@@ -87,6 +87,7 @@ interface RiffPageLayoutProps {
   totalPieces?: number;
   onReveal?: () => void;
   hostFirstName?: string | null;
+  isFirstReveal?: boolean;
 }
 
 export default function RiffPageLayout({
@@ -104,6 +105,7 @@ export default function RiffPageLayout({
   totalPieces = 0,
   onReveal,
   hostFirstName,
+  isFirstReveal = false,
 }: RiffPageLayoutProps) {
   const [isJoined, setIsJoined] = useState(initialIsJoined);
   const [isRevealButtonHovered, setIsRevealButtonHovered] = useState(false);
@@ -118,15 +120,13 @@ export default function RiffPageLayout({
 
   // Detect member's first visit to a revealed riff and show the "what's next" modal once
   useEffect(() => {
-    if (riff.status !== "REVEALED" || isAdmin) return;
+    if (!isFirstReveal) return;
     const key = `riff-first-reveal-${riff.id}`;
     if (typeof window === "undefined") return;
     if (localStorage.getItem(key)) return;
-    if (readPieceIds.length === 0) {
-      localStorage.setItem(key, "1");
-      setWhatsNextTrigger("member_first_reveal");
-    }
-  }, [riff.id, riff.status, isAdmin, readPieceIds.length]);
+    localStorage.setItem(key, "1");
+    setWhatsNextTrigger("member_first_reveal");
+  }, [riff.id, isFirstReveal]);
   // Deadline detection
   const isPastDeadline = riff.deadline
     ? new Date(riff.deadline).getTime() < Date.now()
