@@ -19,6 +19,9 @@ import type { DropdownItem } from "@/components/shared/Dropdown";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import { getRiffDisplayTitle } from "@/lib/riff-utils";
+import WhatsNextModal, {
+  type WhatsNextTrigger,
+} from "@/components/shared/WhatsNextModal";
 
 interface ClubMember {
   user: {
@@ -89,6 +92,7 @@ interface ClubPageLayoutProps {
     pieceCount: number;
     wordCount: number;
   };
+  initialWelcome?: "host" | "member";
 }
 
 export default function ClubPageLayout({
@@ -101,6 +105,7 @@ export default function ClubPageLayout({
   readCounts,
   completedRiffs,
   stats,
+  initialWelcome,
 }: ClubPageLayoutProps) {
   const router = useRouter();
   const [clubName, setClubName] = useState(club.name);
@@ -114,6 +119,12 @@ export default function ClubPageLayout({
   const [currentActiveRiff, setCurrentActiveRiff] = useState<Riff | null>(
     activeRiff
   );
+  const [whatsNextTrigger, setWhatsNextTrigger] =
+    useState<WhatsNextTrigger | null>(() => {
+      if (initialWelcome === "host") return "host_created_club";
+      if (initialWelcome === "member") return "member_joined_club";
+      return null;
+    });
   const handleAvatarClick = useProfileNavigation();
   const isMobile = useIsMobile();
 
@@ -122,10 +133,10 @@ export default function ClubPageLayout({
     router.refresh();
   }, []);
 
-  // After creating a riff, refresh the page
+  // After creating a riff, show the "what's next" modal then refresh
   const handleRiffCreated = useCallback(() => {
     setIsCreateRiffModalOpen(false);
-    router.refresh();
+    setWhatsNextTrigger("host_started_riff");
   }, []);
 
   // Handle reveal confirmation
@@ -1008,6 +1019,22 @@ export default function ClubPageLayout({
             ).length
           }
           totalParticipants={activeRiff.participants.length}
+        />
+      )}
+
+      {/* What's Next Modal */}
+      {whatsNextTrigger && (
+        <WhatsNextModal
+          isOpen={true}
+          onClose={() => {
+            setWhatsNextTrigger(null);
+            router.refresh();
+          }}
+          trigger={whatsNextTrigger}
+          onCTAClick={() => {
+            setWhatsNextTrigger(null);
+            router.refresh();
+          }}
         />
       )}
     </div>

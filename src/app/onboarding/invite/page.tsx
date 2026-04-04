@@ -27,14 +27,14 @@ function InvitePageContent() {
 
       // Redirect to the newly created club
       if (clubId) {
-        router.push(`/clubs/${clubId}`);
+        router.push(`/clubs/${clubId}?welcome=host`);
       } else {
         router.push("/clubs");
       }
     } catch (error) {
       console.error("Error completing onboarding:", error);
       // Still redirect even if there's an error
-      router.push(clubId ? `/clubs/${clubId}` : "/clubs");
+      router.push(clubId ? `/clubs/${clubId}?welcome=host` : "/clubs");
     }
   };
 

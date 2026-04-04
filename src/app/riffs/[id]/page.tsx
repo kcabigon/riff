@@ -35,7 +35,12 @@ export default async function RiffPage({
     where: { id },
     include: {
       club: {
-        select: { id: true, name: true, adminId: true },
+        select: {
+          id: true,
+          name: true,
+          adminId: true,
+          admin: { select: { firstName: true } },
+        },
       },
       creator: {
         select: { id: true, name: true, username: true, avatarUrl: true },
@@ -214,6 +219,7 @@ export default async function RiffPage({
       totalPieces={riff.pieces.length}
       navUser={navUser}
       userClubs={userClubs}
+      hostFirstName={riff.club.admin?.firstName ?? null}
     />
   );
 }
