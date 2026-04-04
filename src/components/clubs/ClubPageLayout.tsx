@@ -13,6 +13,7 @@ import ReadyToRevealCard from "@/components/riffs/ReadyToRevealCard";
 import ClubSettingsModal from "@/components/clubs/ClubSettingsModal";
 import InviteOptions from "@/components/clubs/InviteOptions";
 import CloseButton from "@/components/CloseButton";
+import PrimaryButton from "@/components/PrimaryButton";
 import Dropdown from "@/components/shared/Dropdown";
 import type { DropdownItem } from "@/components/shared/Dropdown";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
@@ -714,6 +715,24 @@ export default function ClubPageLayout({
                 {clubDescription}
               </p>
             )}
+          </div>
+        )}
+
+        {/* Invite CTA — shown to host until at least one other member joins */}
+        {isAdmin && club.members.length <= 1 && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              marginBottom: "48px",
+            }}
+          >
+            <PrimaryButton
+              onClick={() => setIsInviteModalOpen(true)}
+              style={{ width: "auto" }}
+            >
+              Invite your crew
+            </PrimaryButton>
           </div>
         )}
 
