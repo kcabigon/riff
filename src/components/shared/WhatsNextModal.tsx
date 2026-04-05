@@ -129,7 +129,7 @@ function JourneyTracker({
         const dotColor = isCompleted ? "#00FF66" : "transparent";
         const dotBorder = isCompleted ? "#000000" : "#808080";
         const dotSize = isCurrent ? 14 : 10;
-        const lineColor = i < completedStep ? "#00FF66" : "#D0D0D0";
+        const lineColor = i < completedStep ? "#00FF66" : "#CCCCCC";
 
         return (
           <div key={step} style={{ display: "flex", gap: "14px" }}>
@@ -169,7 +169,7 @@ function JourneyTracker({
             <p
               style={{
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
+                fontSize: "12px",
                 fontWeight: isCurrent ? 700 : 300,
                 color: isCompleted ? "#000000" : "#808080",
                 margin: 0,
@@ -214,7 +214,7 @@ export default function WhatsNextModal({
       <h2
         style={{
           fontFamily: "var(--font-dm-serif-text)",
-          fontSize: "28px",
+          fontSize: "24px",
           fontWeight: 400,
           color: "#000000",
           margin: "0 0 16px 0",
@@ -252,7 +252,7 @@ export default function WhatsNextModal({
         style={{
           width: "100%",
           height: "1px",
-          backgroundColor: "#D0D0D0",
+          backgroundColor: "#E6E6E6",
           marginBottom: "24px",
         }}
       />
@@ -265,7 +265,7 @@ export default function WhatsNextModal({
         style={{
           width: "100%",
           height: "1px",
-          backgroundColor: "#D0D0D0",
+          backgroundColor: "#E6E6E6",
           margin: "24px 0",
         }}
       />
