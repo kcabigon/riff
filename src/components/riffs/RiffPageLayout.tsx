@@ -16,6 +16,7 @@ import Dropdown from "@/components/shared/Dropdown";
 import type { DropdownItem } from "@/components/shared/Dropdown";
 import ContributionStrip from "@/components/riffs/ContributionStrip";
 import NoiseBackground from "@/components/NoiseBackground";
+import PrimaryButton from "@/components/PrimaryButton";
 
 interface RiffPageLayoutProps {
   riff: {
@@ -104,7 +105,6 @@ export default function RiffPageLayout({
 }: RiffPageLayoutProps) {
   const [isJoined, setIsJoined] = useState(initialIsJoined);
   const [isRevealButtonHovered, setIsRevealButtonHovered] = useState(false);
-  const [isLateSubmitHovered, setIsLateSubmitHovered] = useState(false);
   const [isRevealModalOpen, setIsRevealModalOpen] = useState(false);
   const [isRevealing, setIsRevealing] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -366,30 +366,11 @@ export default function RiffPageLayout({
               hasDraft &&
               !hasSubmitted &&
               draftPieceId && (
-                <button
+                <PrimaryButton
                   onClick={() => router.push(`/write/${draftPieceId}`)}
-                  onMouseEnter={() => setIsLateSubmitHovered(true)}
-                  onMouseLeave={() => setIsLateSubmitHovered(false)}
-                  style={{
-                    backgroundColor: isLateSubmitHovered
-                      ? "#00FF66"
-                      : "#FFFFFF",
-                    border: "2px solid #000000",
-                    boxShadow: isLateSubmitHovered
-                      ? "8px 8px 0px 0px #000000"
-                      : "8px 8px 0px 0px #00FF66",
-                    padding: "12px 48px",
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "16px",
-                    fontWeight: 300,
-                    color: "#000000",
-                    cursor: "pointer",
-                    transition: "none",
-                    whiteSpace: "nowrap",
-                  }}
                 >
                   Submit late
-                </button>
+                </PrimaryButton>
               )}
 
             {riff.status === "REVEALED" && riff.updatedAt && (
