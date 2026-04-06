@@ -412,19 +412,15 @@ export default function WritePage({ piece }: WritePageProps) {
               padding: "16px 0 8px",
             }}
           >
-            <BackButton onClick={handleBack} />
-
-            {/* Right side: save status + cover + share */}
+            {/* Left side: back button + save status */}
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
                 gap: "12px",
-                flexWrap: "wrap",
-                justifyContent: "flex-end",
               }}
             >
-              {/* Save status */}
+              <BackButton onClick={handleBack} />
               <div
                 style={{
                   display: "flex",
@@ -452,8 +448,8 @@ export default function WritePage({ piece }: WritePageProps) {
                 <span
                   style={{
                     fontFamily: "var(--font-dm-sans)",
-                    fontSize: "14px",
-                    fontWeight: 400,
+                    fontSize: "12px",
+                    fontWeight: 300,
                     color: "#999999",
                   }}
                 >
@@ -464,7 +460,16 @@ export default function WritePage({ piece }: WritePageProps) {
                       : "Unsaved"}
                 </span>
               </div>
+            </div>
 
+            {/* Right side: CTA */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+              }}
+            >
               {/* Submit / Edit Cover CTA */}
               {piece.riffs.length > 0 &&
                 (isSubmitted ? (
