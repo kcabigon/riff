@@ -11,9 +11,10 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import "@/app/write/[pieceId]/editor.css";
 import BackButton from "@/components/BackButton";
-import IconButton from "@/components/IconButton";
 import CoverImageModal from "@/components/write/CoverImageModal";
-import ShareConfirmModal from "@/components/write/ShareConfirmModal";
+import SubmitConfirmModal from "@/components/write/SubmitConfirmModal";
+import SecondaryButton from "@/components/SecondaryButton";
+import PrimaryButton from "@/components/PrimaryButton";
 import { convertHeicToJpeg } from "@/lib/convert-heic";
 import NoiseBackground from "@/components/NoiseBackground";
 import { useIsMobile } from "@/hooks/useMediaQuery";
@@ -52,7 +53,8 @@ export default function WritePage({ piece }: WritePageProps) {
   const [subtitle, setSubtitle] = useState(piece.subtitle || "");
   const [coverImage, setCoverImage] = useState<string | null>(piece.coverImage);
   const [showCoverModal, setShowCoverModal] = useState(false);
-  const [showShareModal, setShowShareModal] = useState(false);
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [postSubmitCoverOnly, setPostSubmitCoverOnly] = useState(false);
   const [showLinkModal, setShowLinkModal] = useState(false);
   const linkSelectionRef = useRef<{ from: number; to: number } | null>(null);
   const [showYoutubeModal, setShowYoutubeModal] = useState(false);
@@ -463,50 +465,59 @@ export default function WritePage({ piece }: WritePageProps) {
                 </span>
               </div>
 
-              {/* Cover button */}
-              <IconButton
-                src="/icons/cover_photo.svg"
-                label={coverImage ? "Change cover image" : "Add cover image"}
-                onClick={() => setShowCoverModal(true)}
-                size={24}
-              />
-
-              {/* Share button */}
+              {/* Submit / Edit Cover CTA */}
               {piece.riffs.length > 0 &&
                 (isSubmitted ? (
-                  <span
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "4px",
-                      fontFamily: "var(--font-dm-sans)",
-                      fontSize: "12px",
-                      fontWeight: 300,
-                      color: "#000000",
-                      background: "#00FF66",
-                      border: "1px solid #000000",
-                      borderRadius: "2px",
-                      padding: "2px 8px",
+                  <>
+                    <span
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "12px",
+                        fontWeight: 300,
+                        color: "#000000",
+                        background: "#00FF66",
+                        border: "1px solid #000000",
+                        borderRadius: "2px",
+                        padding: "2px 8px",
+                      }}
+                    >
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 12 12"
+                        fill="none"
+                      >
+                        <path
+                          d="M2 6L5 9L10 3"
+                          stroke="#000000"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      Submitted
+                    </span>
+                    <SecondaryButton
+                      onClick={() => {
+                        setPostSubmitCoverOnly(true);
+                        setShowCoverModal(true);
+                      }}
+                    >
+                      Edit Cover
+                    </SecondaryButton>
+                  </>
+                ) : (
+                  <PrimaryButton
+                    onClick={() => {
+                      setPostSubmitCoverOnly(false);
+                      setShowCoverModal(true);
                     }}
                   >
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path
-                        d="M2 6L5 9L10 3"
-                        stroke="#000000"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    Shared
-                  </span>
-                ) : (
-                  <IconButton
-                    src="/icons/share.svg"
-                    label="Share to riff"
-                    onClick={() => setShowShareModal(true)}
-                    size={24}
-                  />
+                    Submit piece
+                  </PrimaryButton>
                 ))}
             </div>
           </div>
@@ -718,14 +729,28 @@ export default function WritePage({ piece }: WritePageProps) {
       <CoverImageModal
         isOpen={showCoverModal}
         onClose={() => setShowCoverModal(false)}
-        onSelect={handleCoverImageSelect}
+        onSelect={(url) => {
+          handleCoverImageSelect(url);
+          if (!postSubmitCoverOnly) {
+            setShowCoverModal(false);
+            setShowSubmitModal(true);
+          }
+        }}
+        onSkip={
+          postSubmitCoverOnly
+            ? undefined
+            : () => {
+                setShowCoverModal(false);
+                setShowSubmitModal(true);
+              }
+        }
         pieceContent={editor.getHTML()}
         currentCoverImage={coverImage}
       />
       {piece.riffs.length > 0 && (
-        <ShareConfirmModal
-          isOpen={showShareModal}
-          onClose={() => setShowShareModal(false)}
+        <SubmitConfirmModal
+          isOpen={showSubmitModal}
+          onClose={() => setShowSubmitModal(false)}
           onConfirm={async () => {
             const riff = piece.riffs[0];
             await fetch(`/api/riffs/${riff.id}/pieces/${piece.id}`, {

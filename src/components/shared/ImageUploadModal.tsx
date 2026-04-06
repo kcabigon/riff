@@ -20,6 +20,8 @@ interface ImageUploadModalProps {
   existingImages?: string[];
   existingImagesLabel?: string;
   inlinePreview?: boolean;
+  skipLabel?: string;
+  onSkip?: () => void;
 }
 
 function isGif(url: string): boolean {
@@ -38,6 +40,8 @@ export default function ImageUploadModal({
   existingImages,
   existingImagesLabel = "Choose existing",
   inlinePreview = false,
+  skipLabel,
+  onSkip,
 }: ImageUploadModalProps) {
   const showTabs = existingImages && existingImages.length > 0;
   type Tab = "upload" | "existing";
@@ -154,6 +158,26 @@ export default function ImageUploadModal({
     }
   };
 
+  const skipLink = onSkip && !cropSrc && (
+    <button
+      onClick={onSkip}
+      style={{
+        background: "none",
+        border: "none",
+        fontFamily: "var(--font-dm-sans)",
+        fontSize: "12px",
+        fontWeight: 300,
+        color: "#808080",
+        cursor: "pointer",
+        padding: "4px",
+        textDecoration: "underline",
+        alignSelf: "center",
+      }}
+    >
+      {skipLabel}
+    </button>
+  );
+
   const footer =
     cropSrc && inlinePreview ? (
       /* Centered save during crop — no cancel, user can close via modal X */
@@ -164,65 +188,71 @@ export default function ImageUploadModal({
       </div>
     ) : !cropSrc && inlinePreview && currentImage ? (
       /* Centered "Use Image" — image already saved, closes modal */
-      <div style={{ display: "flex", justifyContent: "center" }}>
-        <PrimaryButton
-          onClick={() => {
-            resetCropper();
-            onClose();
-          }}
-        >
-          Use Image
-        </PrimaryButton>
-      </div>
-    ) : (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        {currentImage && !inlinePreview ? (
-          <button
+      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+        <div style={{ display: "flex", justifyContent: "center" }}>
+          <PrimaryButton
             onClick={() => {
-              onSelect("");
               resetCropper();
-            }}
-            style={{
-              background: "none",
-              border: "none",
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              color: "#DC2626",
-              cursor: "pointer",
-              padding: 0,
+              onClose();
             }}
           >
-            {removeLabel}
-          </button>
-        ) : (
-          <div />
-        )}
-        {cropSrc && (
-          <div style={{ display: "flex", gap: "8px" }}>
+            Use Image
+          </PrimaryButton>
+        </div>
+        {skipLink}
+      </div>
+    ) : (
+      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          {currentImage && !inlinePreview ? (
             <button
-              onClick={resetCropper}
+              onClick={() => {
+                onSelect("");
+                resetCropper();
+              }}
               style={{
                 background: "none",
-                border: "1px solid #000",
+                border: "none",
                 fontFamily: "var(--font-dm-sans)",
                 fontSize: "14px",
-                padding: "6px 16px",
+                color: "#DC2626",
                 cursor: "pointer",
+                padding: 0,
               }}
             >
-              Cancel
+              {removeLabel}
             </button>
-            <PrimaryButton onClick={handleSaveCrop} loading={isUploading}>
-              {isUploading ? "Saving..." : "Save"}
-            </PrimaryButton>
-          </div>
-        )}
+          ) : (
+            <div />
+          )}
+          {cropSrc && (
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button
+                onClick={resetCropper}
+                style={{
+                  background: "none",
+                  border: "1px solid #000",
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "14px",
+                  padding: "6px 16px",
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <PrimaryButton onClick={handleSaveCrop} loading={isUploading}>
+                {isUploading ? "Saving..." : "Save"}
+              </PrimaryButton>
+            </div>
+          )}
+        </div>
+        {skipLink}
       </div>
     );
 
