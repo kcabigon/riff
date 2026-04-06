@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import CountdownTimer from "./CountdownTimer";
 import PieceCard from "./PieceCard";
@@ -16,6 +16,9 @@ import Dropdown from "@/components/shared/Dropdown";
 import type { DropdownItem } from "@/components/shared/Dropdown";
 import ContributionStrip from "@/components/riffs/ContributionStrip";
 import NoiseBackground from "@/components/NoiseBackground";
+import WhatsNextModal, {
+  type WhatsNextTrigger,
+} from "@/components/shared/WhatsNextModal";
 import PrimaryButton from "@/components/PrimaryButton";
 
 interface RiffPageLayoutProps {
@@ -85,6 +88,8 @@ interface RiffPageLayoutProps {
   }>;
   totalPieces?: number;
   onReveal?: () => void;
+  hostFirstName?: string | null;
+  isFirstReveal?: boolean;
 }
 
 export default function RiffPageLayout({
@@ -102,6 +107,8 @@ export default function RiffPageLayout({
   contributionData = [],
   totalPieces = 0,
   onReveal,
+  hostFirstName,
+  isFirstReveal = false,
 }: RiffPageLayoutProps) {
   const [isJoined, setIsJoined] = useState(initialIsJoined);
   const [isRevealButtonHovered, setIsRevealButtonHovered] = useState(false);
@@ -110,7 +117,19 @@ export default function RiffPageLayout({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [whatsNextTrigger, setWhatsNextTrigger] =
+    useState<WhatsNextTrigger | null>(null);
   const router = useRouter();
+
+  // Detect member's first visit to a revealed riff and show the "what's next" modal once
+  useEffect(() => {
+    if (!isFirstReveal) return;
+    const key = `riff-first-reveal-${riff.id}`;
+    if (typeof window === "undefined") return;
+    if (localStorage.getItem(key)) return;
+    localStorage.setItem(key, "1");
+    setWhatsNextTrigger("member_first_reveal");
+  }, [riff.id, isFirstReveal]);
   // Deadline detection
   const isPastDeadline = riff.deadline
     ? new Date(riff.deadline).getTime() < Date.now()
@@ -530,7 +549,10 @@ export default function RiffPageLayout({
                 hasDraft={hasDraft}
                 hasSubmitted={hasSubmitted}
                 existingPieceId={existingPieceId}
-                onJoin={() => setIsJoined(true)}
+                onJoin={() => {
+                  setIsJoined(true);
+                  setWhatsNextTrigger("member_joined_riff");
+                }}
               />
             ) : null}
 
@@ -709,7 +731,7 @@ export default function RiffPageLayout({
           pieceCount={riff.pieces.length}
           onDismiss={() => {
             setShowCelebration(false);
-            router.refresh();
+            setWhatsNextTrigger("host_revealed");
           }}
         />
       )}
@@ -743,6 +765,23 @@ export default function RiffPageLayout({
           }}
           riffId={riff.id}
           riffTitle={getRiffDisplayTitle(riff)}
+        />
+      )}
+
+      {/* What's Next Modal */}
+      {whatsNextTrigger && (
+        <WhatsNextModal
+          isOpen={true}
+          onClose={() => {
+            setWhatsNextTrigger(null);
+            router.refresh();
+          }}
+          trigger={whatsNextTrigger}
+          hostFirstName={hostFirstName}
+          onCTAClick={() => {
+            setWhatsNextTrigger(null);
+            router.refresh();
+          }}
         />
       )}
 

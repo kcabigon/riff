@@ -22,6 +22,9 @@ import { useThemeColor } from "@/hooks/useThemeColor";
 import { useScrollDirection } from "@/hooks/useScrollDirection";
 import EmbedModal from "@/components/write/EmbedModal";
 import LinkPopover from "@/components/write/LinkPopover";
+import WhatsNextModal, {
+  type WhatsNextTrigger,
+} from "@/components/shared/WhatsNextModal";
 
 interface RiffConnection {
   id: string;
@@ -42,9 +45,15 @@ interface WritePageProps {
     coverImage: string | null;
     riffs: RiffConnection[];
   };
+  isAdmin?: boolean;
+  hostFirstName?: string | null;
 }
 
-export default function WritePage({ piece }: WritePageProps) {
+export default function WritePage({
+  piece,
+  isAdmin = false,
+  hostFirstName,
+}: WritePageProps) {
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "unsaved">(
     "saved"
   );
@@ -57,6 +66,8 @@ export default function WritePage({ piece }: WritePageProps) {
   const linkSelectionRef = useRef<{ from: number; to: number } | null>(null);
   const [showYoutubeModal, setShowYoutubeModal] = useState(false);
   const [showSpotifyModal, setShowSpotifyModal] = useState(false);
+  const [whatsNextTrigger, setWhatsNextTrigger] =
+    useState<WhatsNextTrigger | null>(null);
   const isSubmitted = piece.riffs.some((r) => r.submittedAt !== null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const titleRef = useRef<HTMLTextAreaElement>(null);
@@ -731,6 +742,9 @@ export default function WritePage({ piece }: WritePageProps) {
             await fetch(`/api/riffs/${riff.id}/pieces/${piece.id}`, {
               method: "PATCH",
             });
+            setWhatsNextTrigger(
+              isAdmin ? "host_submitted" : "member_submitted"
+            );
           }}
           piece={{
             id: piece.id,
@@ -739,6 +753,23 @@ export default function WritePage({ piece }: WritePageProps) {
             currentContent: editor?.getHTML() ?? piece.currentContent,
           }}
           riff={piece.riffs[0]}
+        />
+      )}
+
+      {/* What's Next Modal */}
+      {whatsNextTrigger && (
+        <WhatsNextModal
+          isOpen={true}
+          onClose={() => {
+            setWhatsNextTrigger(null);
+            router.refresh();
+          }}
+          trigger={whatsNextTrigger}
+          hostFirstName={hostFirstName}
+          onCTAClick={() => {
+            setWhatsNextTrigger(null);
+            router.push(`/riffs/${piece.riffs[0]?.id ?? ""}`);
+          }}
         />
       )}
     </div>

@@ -10,15 +10,18 @@ import CompletedRiffCard from "@/components/riffs/CompletedRiffCard";
 import CreateRiffModal from "@/components/riffs/CreateRiffModal";
 import RevealConfirmModal from "@/components/riffs/RevealConfirmModal";
 import ReadyToRevealCard from "@/components/riffs/ReadyToRevealCard";
-import OnboardingChecklist from "@/components/clubs/OnboardingChecklist";
 import ClubSettingsModal from "@/components/clubs/ClubSettingsModal";
 import InviteOptions from "@/components/clubs/InviteOptions";
 import CloseButton from "@/components/CloseButton";
+import PrimaryButton from "@/components/PrimaryButton";
 import Dropdown from "@/components/shared/Dropdown";
 import type { DropdownItem } from "@/components/shared/Dropdown";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import { getRiffDisplayTitle } from "@/lib/riff-utils";
+import WhatsNextModal, {
+  type WhatsNextTrigger,
+} from "@/components/shared/WhatsNextModal";
 
 interface ClubMember {
   user: {
@@ -89,6 +92,7 @@ interface ClubPageLayoutProps {
     pieceCount: number;
     wordCount: number;
   };
+  initialWelcome?: "host" | "member";
 }
 
 export default function ClubPageLayout({
@@ -101,6 +105,7 @@ export default function ClubPageLayout({
   readCounts,
   completedRiffs,
   stats,
+  initialWelcome,
 }: ClubPageLayoutProps) {
   const router = useRouter();
   const [clubName, setClubName] = useState(club.name);
@@ -114,6 +119,13 @@ export default function ClubPageLayout({
   const [currentActiveRiff, setCurrentActiveRiff] = useState<Riff | null>(
     activeRiff
   );
+  const [whatsNextTrigger, setWhatsNextTrigger] =
+    useState<WhatsNextTrigger | null>(() => {
+      if (initialWelcome === "host") return "host_created_club";
+      if (initialWelcome === "member") return "member_joined_club";
+      return null;
+    });
+  const [newRiffId, setNewRiffId] = useState<string | null>(null);
   const handleAvatarClick = useProfileNavigation();
   const isMobile = useIsMobile();
 
@@ -122,10 +134,11 @@ export default function ClubPageLayout({
     router.refresh();
   }, []);
 
-  // After creating a riff, refresh the page
-  const handleRiffCreated = useCallback(() => {
+  // After creating a riff, show the "what's next" modal then refresh
+  const handleRiffCreated = useCallback((riffId: string) => {
     setIsCreateRiffModalOpen(false);
-    router.refresh();
+    setNewRiffId(riffId);
+    setWhatsNextTrigger("host_started_riff");
   }, []);
 
   // Handle reveal confirmation
@@ -705,16 +718,22 @@ export default function ClubPageLayout({
           </div>
         )}
 
-        {/* Onboarding checklist for admin of new clubs */}
-        {isAdmin && (
-          <OnboardingChecklist
-            clubId={club.id}
-            hasMembers={club.members.length > 1}
-            hasActiveRiff={!!activeRiff}
-            hasCompletedRiff={completedRiffs.length > 0}
-            onStartRiff={() => setIsCreateRiffModalOpen(true)}
-            onInvite={() => setIsInviteModalOpen(true)}
-          />
+        {/* Invite CTA — shown to host until at least one other member joins */}
+        {isAdmin && club.members.length <= 1 && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              marginBottom: "48px",
+            }}
+          >
+            <PrimaryButton
+              onClick={() => setIsInviteModalOpen(true)}
+              style={{ width: "auto" }}
+            >
+              Invite your crew
+            </PrimaryButton>
+          </div>
         )}
 
         {/* Current Read section — shown above Current Riff when there are unread revealed riffs */}
@@ -1025,6 +1044,34 @@ export default function ClubPageLayout({
             ).length
           }
           totalParticipants={activeRiff.participants.length}
+        />
+      )}
+
+      {/* What's Next Modal */}
+      {whatsNextTrigger && (
+        <WhatsNextModal
+          isOpen={true}
+          onClose={() => {
+            setWhatsNextTrigger(null);
+            router.refresh();
+          }}
+          trigger={whatsNextTrigger}
+          onCTAClick={
+            whatsNextTrigger === "host_created_club"
+              ? () => {
+                  setWhatsNextTrigger(null);
+                  setIsInviteModalOpen(true);
+                }
+              : whatsNextTrigger === "host_started_riff" && newRiffId
+                ? () => {
+                    setWhatsNextTrigger(null);
+                    router.push(`/riffs/${newRiffId}`);
+                  }
+                : () => {
+                    setWhatsNextTrigger(null);
+                    router.refresh();
+                  }
+          }
         />
       )}
     </div>
