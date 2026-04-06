@@ -109,7 +109,7 @@ export default function SubmitConfirmModal({
             style={{
               fontFamily: "var(--font-dm-sans)",
               fontSize: "12px",
-              fontWeight: 400,
+              fontWeight: 700,
               color: "#000000",
               margin: 0,
               textAlign: "center",
