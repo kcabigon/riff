@@ -99,6 +99,11 @@ export default async function RiffPage({
     (p) => p.piece.authorId === userId && p.submittedAt !== null
   );
   const isAdmin = riff.club.adminId === userId;
+  // ID of the user's unsubmitted piece — needed for late submission on revealed riffs
+  const draftPieceId =
+    riff.pieces.find(
+      (p) => p.piece.authorId === userId && p.submittedAt === null
+    )?.piece.id ?? null;
 
   // Fetch read data and compute per-piece flags for REVEALED riffs
   let readPieceIds: string[] = [];
@@ -186,18 +191,20 @@ export default async function RiffPage({
     createdAt: riff.createdAt.toISOString(),
     updatedAt: riff.updatedAt.toISOString(),
     deadline: riff.deadline ? riff.deadline.toISOString() : null,
-    pieces: riff.pieces.map((pr) => ({
-      ...pr,
-      submittedAt: pr.submittedAt ? pr.submittedAt.toISOString() : null,
-      piece: {
-        ...pr.piece,
-        // Strip content before reveal — cover image still returned for locked card teaser
-        currentContent: isRevealed ? pr.piece.currentContent : null,
-        updatedAt: pr.piece.updatedAt.toISOString(),
-        commentCount: pr.piece._count?.comments ?? 0,
-        _count: undefined,
-      },
-    })),
+    pieces: riff.pieces
+      .filter((pr) => (isRevealed ? pr.submittedAt !== null : true))
+      .map((pr) => ({
+        ...pr,
+        submittedAt: pr.submittedAt ? pr.submittedAt.toISOString() : null,
+        piece: {
+          ...pr.piece,
+          // Strip content before reveal — cover image still returned for locked card teaser
+          currentContent: isRevealed ? pr.piece.currentContent : null,
+          updatedAt: pr.piece.updatedAt.toISOString(),
+          commentCount: pr.piece._count?.comments ?? 0,
+          _count: undefined,
+        },
+      })),
   };
 
   return (
@@ -208,10 +215,11 @@ export default async function RiffPage({
       isJoined={isJoined}
       hasDraft={hasDraft}
       hasSubmitted={hasSubmitted}
+      draftPieceId={draftPieceId}
       readPieceIds={readPieceIds}
       hasNewCommentsMap={hasNewCommentsMap}
       contributionData={contributionData}
-      totalPieces={riff.pieces.length}
+      totalPieces={riff.pieces.filter((p) => p.submittedAt !== null).length}
       navUser={navUser}
       userClubs={userClubs}
     />
