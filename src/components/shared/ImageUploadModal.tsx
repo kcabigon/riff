@@ -20,7 +20,6 @@ interface ImageUploadModalProps {
   existingImages?: string[];
   existingImagesLabel?: string;
   inlinePreview?: boolean;
-  skipLabel?: string;
   onSkip?: () => void;
 }
 
@@ -40,7 +39,6 @@ export default function ImageUploadModal({
   existingImages,
   existingImagesLabel = "Choose existing",
   inlinePreview = false,
-  skipLabel,
   onSkip,
 }: ImageUploadModalProps) {
   const showTabs = existingImages && existingImages.length > 0;
@@ -159,23 +157,41 @@ export default function ImageUploadModal({
   };
 
   const skipLink = onSkip && !cropSrc && (
-    <button
-      onClick={onSkip}
+    <div
       style={{
-        background: "none",
-        border: "none",
-        fontFamily: "var(--font-dm-sans)",
-        fontSize: "12px",
-        fontWeight: 300,
-        color: "#808080",
-        cursor: "pointer",
-        padding: "4px",
-        textDecoration: "underline",
-        alignSelf: "center",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: "2px",
       }}
     >
-      {skipLabel}
-    </button>
+      <span
+        style={{
+          fontFamily: "var(--font-dm-sans)",
+          fontSize: "12px",
+          fontWeight: 300,
+          color: "#808080",
+        }}
+      >
+        Cover image recommended
+      </span>
+      <button
+        onClick={onSkip}
+        style={{
+          background: "none",
+          border: "none",
+          fontFamily: "var(--font-dm-sans)",
+          fontSize: "12px",
+          fontWeight: 300,
+          color: "#808080",
+          cursor: "pointer",
+          padding: 0,
+          textDecoration: "underline",
+        }}
+      >
+        Skip anyways
+      </button>
+    </div>
   );
 
   const footer =
