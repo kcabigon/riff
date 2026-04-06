@@ -520,7 +520,11 @@ export default function WritePage({ piece }: WritePageProps) {
                     size={isMobile ? "sm" : undefined}
                     onClick={() => {
                       setPostSubmitCoverOnly(false);
-                      setShowCoverModal(true);
+                      if (coverImage) {
+                        setShowSubmitModal(true);
+                      } else {
+                        setShowCoverModal(true);
+                      }
                     }}
                   >
                     Submit piece
@@ -764,6 +768,14 @@ export default function WritePage({ piece }: WritePageProps) {
             await fetch(`/api/riffs/${riff.id}/pieces/${piece.id}`, {
               method: "PATCH",
             });
+          }}
+          onCoverAction={() => {
+            if (coverImage) {
+              setCoverImage(null);
+              autosaveCoverImage(null);
+            }
+            setShowSubmitModal(false);
+            setShowCoverModal(true);
           }}
           piece={{
             id: piece.id,

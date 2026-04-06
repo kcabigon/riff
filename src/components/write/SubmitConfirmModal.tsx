@@ -9,6 +9,7 @@ interface SubmitConfirmModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => Promise<void>;
+  onCoverAction: () => void;
   piece: {
     id: string;
     title: string;
@@ -26,6 +27,7 @@ export default function SubmitConfirmModal({
   isOpen,
   onClose,
   onConfirm,
+  onCoverAction,
   piece,
   riff,
 }: SubmitConfirmModalProps) {
@@ -47,7 +49,7 @@ export default function SubmitConfirmModal({
         Submit
       </PrimaryButton>
       <button
-        onClick={onClose}
+        onClick={onCoverAction}
         disabled={isSubmitting}
         style={{
           background: "none",
@@ -61,7 +63,7 @@ export default function SubmitConfirmModal({
           textDecoration: "underline",
         }}
       >
-        Cancel
+        {piece.coverImage ? "Remove cover image" : "Add cover image"}
       </button>
     </div>
   );
