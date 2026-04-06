@@ -52,7 +52,7 @@ export default function SubmitConfirmModal({
         loading={isSubmitting}
         disabled={submitDisabled}
       >
-        Submit
+        {submitDisabled ? "Submitted" : "Submit"}
       </PrimaryButton>
       <button
         onClick={onCoverAction}
