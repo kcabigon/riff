@@ -59,7 +59,9 @@ export default function WritePage({ piece }: WritePageProps) {
   const linkSelectionRef = useRef<{ from: number; to: number } | null>(null);
   const [showYoutubeModal, setShowYoutubeModal] = useState(false);
   const [showSpotifyModal, setShowSpotifyModal] = useState(false);
-  const isSubmitted = piece.riffs.some((r) => r.submittedAt !== null);
+  const [isSubmitted, setIsSubmitted] = useState(
+    piece.riffs.some((r) => r.submittedAt !== null)
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
   const titleRef = useRef<HTMLTextAreaElement>(null);
   const subtitleRef = useRef<HTMLTextAreaElement>(null);
@@ -768,6 +770,7 @@ export default function WritePage({ piece }: WritePageProps) {
             await fetch(`/api/riffs/${riff.id}/pieces/${piece.id}`, {
               method: "PATCH",
             });
+            setIsSubmitted(true);
           }}
           onCoverAction={() => {
             if (coverImage) {
