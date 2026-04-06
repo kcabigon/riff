@@ -10,6 +10,7 @@ interface SubmitConfirmModalProps {
   onClose: () => void;
   onConfirm: () => Promise<void>;
   onCoverAction: () => void;
+  submitDisabled?: boolean;
   piece: {
     id: string;
     title: string;
@@ -28,6 +29,7 @@ export default function SubmitConfirmModal({
   onClose,
   onConfirm,
   onCoverAction,
+  submitDisabled = false,
   piece,
   riff,
 }: SubmitConfirmModalProps) {
@@ -45,7 +47,11 @@ export default function SubmitConfirmModal({
 
   const footer = (
     <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-      <PrimaryButton onClick={handleConfirm} loading={isSubmitting}>
+      <PrimaryButton
+        onClick={handleConfirm}
+        loading={isSubmitting}
+        disabled={submitDisabled}
+      >
         Submit
       </PrimaryButton>
       <button

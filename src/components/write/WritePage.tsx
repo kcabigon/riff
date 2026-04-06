@@ -54,7 +54,6 @@ export default function WritePage({ piece }: WritePageProps) {
   const [coverImage, setCoverImage] = useState<string | null>(piece.coverImage);
   const [showCoverModal, setShowCoverModal] = useState(false);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
-  const [postSubmitCoverOnly, setPostSubmitCoverOnly] = useState(false);
   const [showLinkModal, setShowLinkModal] = useState(false);
   const linkSelectionRef = useRef<{ from: number; to: number } | null>(null);
   const [showYoutubeModal, setShowYoutubeModal] = useState(false);
@@ -481,8 +480,11 @@ export default function WritePage({ piece }: WritePageProps) {
                       coverImage ? "Change cover image" : "Add cover image"
                     }
                     onClick={() => {
-                      setPostSubmitCoverOnly(true);
-                      setShowCoverModal(true);
+                      if (coverImage) {
+                        setShowSubmitModal(true);
+                      } else {
+                        setShowCoverModal(true);
+                      }
                     }}
                     size={24}
                   />
@@ -490,7 +492,6 @@ export default function WritePage({ piece }: WritePageProps) {
                   <PrimaryButton
                     size={isMobile ? "sm" : undefined}
                     onClick={() => {
-                      setPostSubmitCoverOnly(false);
                       if (coverImage) {
                         setShowSubmitModal(true);
                       } else {
@@ -714,19 +715,13 @@ export default function WritePage({ piece }: WritePageProps) {
         onClose={() => setShowCoverModal(false)}
         onSelect={(url) => {
           handleCoverImageSelect(url);
-          if (!postSubmitCoverOnly) {
-            setShowCoverModal(false);
-            setShowSubmitModal(true);
-          }
+          setShowCoverModal(false);
+          setShowSubmitModal(true);
         }}
-        onSkip={
-          postSubmitCoverOnly
-            ? undefined
-            : () => {
-                setShowCoverModal(false);
-                setShowSubmitModal(true);
-              }
-        }
+        onSkip={() => {
+          setShowCoverModal(false);
+          setShowSubmitModal(true);
+        }}
         pieceContent={editor.getHTML()}
         currentCoverImage={coverImage}
       />
@@ -741,6 +736,7 @@ export default function WritePage({ piece }: WritePageProps) {
             });
             setIsSubmitted(true);
           }}
+          submitDisabled={isSubmitted}
           onCoverAction={() => {
             if (coverImage) {
               setCoverImage(null);
