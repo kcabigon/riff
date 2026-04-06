@@ -9,7 +9,7 @@ interface CreateRiffModalProps {
   clubId: string;
   isOpen: boolean;
   onClose: () => void;
-  onCreated: () => void;
+  onCreated: (riffId: string) => void;
 }
 
 export default function CreateRiffModal({
@@ -86,7 +86,7 @@ export default function CreateRiffModal({
       setPrompt("");
       setDeadline(getDefaultDeadline());
       setIsSubmitting(false);
-      onCreated();
+      onCreated(riff.id);
     } catch (err) {
       console.error("Error creating riff:", err);
       setError("Something went wrong. Please try again.");
