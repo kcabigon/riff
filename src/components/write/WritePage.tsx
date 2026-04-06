@@ -13,8 +13,8 @@ import "@/app/write/[pieceId]/editor.css";
 import BackButton from "@/components/BackButton";
 import CoverImageModal from "@/components/write/CoverImageModal";
 import SubmitConfirmModal from "@/components/write/SubmitConfirmModal";
-import SecondaryButton from "@/components/SecondaryButton";
 import PrimaryButton from "@/components/PrimaryButton";
+import IconButton from "@/components/IconButton";
 import { convertHeicToJpeg } from "@/lib/convert-heic";
 import NoiseBackground from "@/components/NoiseBackground";
 import { useIsMobile } from "@/hooks/useMediaQuery";
@@ -472,51 +472,20 @@ export default function WritePage({ piece }: WritePageProps) {
                 gap: "12px",
               }}
             >
-              {/* Submit / Edit Cover CTA */}
+              {/* Submit CTA / cover icon */}
               {piece.riffs.length > 0 &&
                 (isSubmitted ? (
-                  <>
-                    <span
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "4px",
-                        fontFamily: "var(--font-dm-sans)",
-                        fontSize: "12px",
-                        fontWeight: 300,
-                        color: "#000000",
-                        background: "#00FF66",
-                        border: "1px solid #000000",
-                        borderRadius: "2px",
-                        padding: "2px 8px",
-                      }}
-                    >
-                      <svg
-                        width="12"
-                        height="12"
-                        viewBox="0 0 12 12"
-                        fill="none"
-                      >
-                        <path
-                          d="M2 6L5 9L10 3"
-                          stroke="#000000"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                      Submitted
-                    </span>
-                    <SecondaryButton
-                      size={isMobile ? "sm" : undefined}
-                      onClick={() => {
-                        setPostSubmitCoverOnly(true);
-                        setShowCoverModal(true);
-                      }}
-                    >
-                      Edit Cover
-                    </SecondaryButton>
-                  </>
+                  <IconButton
+                    src="/icons/cover_photo.svg"
+                    label={
+                      coverImage ? "Change cover image" : "Add cover image"
+                    }
+                    onClick={() => {
+                      setPostSubmitCoverOnly(true);
+                      setShowCoverModal(true);
+                    }}
+                    size={24}
+                  />
                 ) : (
                   <PrimaryButton
                     size={isMobile ? "sm" : undefined}
