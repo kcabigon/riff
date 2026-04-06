@@ -217,57 +217,34 @@ export default function ImageUploadModal({
         </div>
         {skipLink}
       </div>
+    ) : cropSrc ? (
+      /* Cropper active — full-width Save, modal X handles cancel */
+      <PrimaryButton onClick={handleSaveCrop} loading={isUploading}>
+        {isUploading ? "Saving..." : "Save"}
+      </PrimaryButton>
     ) : (
+      /* Default — remove link on left, skip below */
       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          {currentImage && !inlinePreview ? (
-            <button
-              onClick={() => {
-                onSelect("");
-                resetCropper();
-              }}
-              style={{
-                background: "none",
-                border: "none",
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                color: "#DC2626",
-                cursor: "pointer",
-                padding: 0,
-              }}
-            >
-              {removeLabel}
-            </button>
-          ) : (
-            <div />
-          )}
-          {cropSrc && (
-            <div style={{ display: "flex", gap: "8px" }}>
-              <button
-                onClick={resetCropper}
-                style={{
-                  background: "none",
-                  border: "1px solid #000",
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "14px",
-                  padding: "6px 16px",
-                  cursor: "pointer",
-                }}
-              >
-                Cancel
-              </button>
-              <PrimaryButton onClick={handleSaveCrop} loading={isUploading}>
-                {isUploading ? "Saving..." : "Save"}
-              </PrimaryButton>
-            </div>
-          )}
-        </div>
+        {currentImage && !inlinePreview && (
+          <button
+            onClick={() => {
+              onSelect("");
+              resetCropper();
+            }}
+            style={{
+              background: "none",
+              border: "none",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "12px",
+              color: "#DC2626",
+              cursor: "pointer",
+              padding: 0,
+              textAlign: "left",
+            }}
+          >
+            {removeLabel}
+          </button>
+        )}
         {skipLink}
       </div>
     );
