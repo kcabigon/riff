@@ -506,6 +506,7 @@ export default function WritePage({ piece }: WritePageProps) {
                       Submitted
                     </span>
                     <SecondaryButton
+                      size={isMobile ? "sm" : undefined}
                       onClick={() => {
                         setPostSubmitCoverOnly(true);
                         setShowCoverModal(true);
@@ -516,6 +517,7 @@ export default function WritePage({ piece }: WritePageProps) {
                   </>
                 ) : (
                   <PrimaryButton
+                    size={isMobile ? "sm" : undefined}
                     onClick={() => {
                       setPostSubmitCoverOnly(false);
                       setShowCoverModal(true);
@@ -532,6 +534,7 @@ export default function WritePage({ piece }: WritePageProps) {
             <div
               style={{
                 borderBottom: "2px solid #000000",
+                paddingTop: "8px",
                 paddingBottom: "8px",
               }}
             >
