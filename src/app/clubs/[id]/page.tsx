@@ -117,10 +117,16 @@ export default async function ClubPage({
 
   // Compute stats
   const riffCount = riffs.length;
-  const pieceCount = riffs.reduce((sum, r) => sum + r.pieces.length, 0);
+  const pieceCount = riffs.reduce(
+    (sum, r) => sum + r.pieces.filter((p) => p.submittedAt !== null).length,
+    0
+  );
   const wordCount = riffs.reduce(
     (sum, r) =>
-      sum + r.pieces.reduce((s, p) => s + (p.piece?.wordCount || 0), 0),
+      sum +
+      r.pieces
+        .filter((p) => p.submittedAt !== null)
+        .reduce((s, p) => s + (p.piece?.wordCount || 0), 0),
     0
   );
 
@@ -160,7 +166,9 @@ export default async function ClubPage({
     );
     // Add own piece to readCount so it doesn't count as unread
     for (const riff of revealedRiffs) {
-      const hasOwnPiece = riff.pieces.some((p) => p.piece.authorId === userId);
+      const hasOwnPiece = riff.pieces.some(
+        (p) => p.piece.authorId === userId && p.submittedAt !== null
+      );
       if (hasOwnPiece) {
         readCounts[riff.id] = (readCounts[riff.id] || 0) + 1;
       }

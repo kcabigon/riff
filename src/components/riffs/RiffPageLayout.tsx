@@ -19,6 +19,7 @@ import NoiseBackground from "@/components/NoiseBackground";
 import WhatsNextModal, {
   type WhatsNextTrigger,
 } from "@/components/shared/WhatsNextModal";
+import PrimaryButton from "@/components/PrimaryButton";
 
 interface RiffPageLayoutProps {
   riff: {
@@ -70,6 +71,7 @@ interface RiffPageLayoutProps {
   isJoined: boolean;
   hasDraft: boolean;
   hasSubmitted: boolean;
+  draftPieceId?: string | null;
   navUser?: {
     id: string;
     name: string | null;
@@ -97,6 +99,7 @@ export default function RiffPageLayout({
   isJoined: initialIsJoined,
   hasDraft,
   hasSubmitted,
+  draftPieceId,
   navUser,
   userClubs = [],
   readPieceIds = [],
@@ -378,6 +381,17 @@ export default function RiffPageLayout({
               minWidth: "200px",
             }}
           >
+            {riff.status === "REVEALED" &&
+              hasDraft &&
+              !hasSubmitted &&
+              draftPieceId && (
+                <PrimaryButton
+                  onClick={() => router.push(`/write/${draftPieceId}`)}
+                >
+                  Submit late
+                </PrimaryButton>
+              )}
+
             {riff.status === "REVEALED" && riff.updatedAt && (
               <div
                 style={{

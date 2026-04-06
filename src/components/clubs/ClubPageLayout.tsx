@@ -738,9 +738,10 @@ export default function ClubPageLayout({
 
         {/* Current Read section — shown above Current Riff when there are unread revealed riffs */}
         {(() => {
-          const unfinishedRevealed = revealedRiffs.filter(
-            (r) => (readCounts[r.id] || 0) < r.pieces.length
-          );
+          const unfinishedRevealed = revealedRiffs.filter((r) => {
+            const submitted = r.pieces.filter((p) => p.submittedAt !== null);
+            return (readCounts[r.id] || 0) < submitted.length;
+          });
           if (unfinishedRevealed.length === 0) return null;
           return (
             <div style={{ marginBottom: "48px" }}>
@@ -770,7 +771,9 @@ export default function ClubPageLayout({
                     key={riff.id}
                     riff={riff}
                     readCount={readCounts[riff.id] || 0}
-                    totalPieces={riff.pieces.length}
+                    totalPieces={
+                      riff.pieces.filter((p) => p.submittedAt !== null).length
+                    }
                   />
                 ))}
               </div>
@@ -780,9 +783,10 @@ export default function ClubPageLayout({
 
         {/* Current Riff section — hidden for members when there's a current read and no active riff */}
         {(() => {
-          const hasCurrentRead = revealedRiffs.some(
-            (r) => (readCounts[r.id] || 0) < r.pieces.length
-          );
+          const hasCurrentRead = revealedRiffs.some((r) => {
+            const submitted = r.pieces.filter((p) => p.submittedAt !== null);
+            return (readCounts[r.id] || 0) < submitted.length;
+          });
           const showSection = activeRiff || isAdmin || !hasCurrentRead;
           if (!showSection) return null;
 
@@ -845,10 +849,13 @@ export default function ClubPageLayout({
         {/* Completed Riffs section — includes COMPLETED + fully-read REVEALED riffs */}
         {(() => {
           // Revealed riffs where user has read all pieces
-          const fullyReadRevealed = revealedRiffs.filter(
-            (r) =>
-              r.pieces.length > 0 && (readCounts[r.id] || 0) >= r.pieces.length
-          );
+          const fullyReadRevealed = revealedRiffs.filter((r) => {
+            const submitted = r.pieces.filter((p) => p.submittedAt !== null);
+            return (
+              submitted.length > 0 &&
+              (readCounts[r.id] || 0) >= submitted.length
+            );
+          });
           const allCompleted = [...completedRiffs, ...fullyReadRevealed];
           return allCompleted.length > 0;
         })() && (
@@ -878,11 +885,15 @@ export default function ClubPageLayout({
             >
               {[
                 ...completedRiffs,
-                ...revealedRiffs.filter(
-                  (r) =>
-                    r.pieces.length > 0 &&
-                    (readCounts[r.id] || 0) >= r.pieces.length
-                ),
+                ...revealedRiffs.filter((r) => {
+                  const submitted = r.pieces.filter(
+                    (p) => p.submittedAt !== null
+                  );
+                  return (
+                    submitted.length > 0 &&
+                    (readCounts[r.id] || 0) >= submitted.length
+                  );
+                }),
               ].map((riff) => (
                 <CompletedRiffCard
                   key={riff.id}
@@ -895,13 +906,15 @@ export default function ClubPageLayout({
                     deadline: riff.deadline ? new Date(riff.deadline) : null,
                   }}
                   clubName={clubName}
-                  pieces={riff.pieces.map((p) => ({
-                    id: p.piece.id,
-                    title: p.piece.title,
-                    currentContent: p.piece.currentContent,
-                    coverImage: p.piece.coverImage,
-                    wordCount: p.piece.wordCount,
-                  }))}
+                  pieces={riff.pieces
+                    .filter((p) => p.submittedAt !== null)
+                    .map((p) => ({
+                      id: p.piece.id,
+                      title: p.piece.title,
+                      currentContent: p.piece.currentContent,
+                      coverImage: p.piece.coverImage,
+                      wordCount: p.piece.wordCount,
+                    }))}
                 />
               ))}
             </div>
@@ -1011,7 +1024,9 @@ export default function ClubPageLayout({
             .filter(
               (p) =>
                 !activeRiff.pieces.some(
-                  (piece) => piece.piece.authorId === p.user.id
+                  (piece) =>
+                    piece.piece.authorId === p.user.id &&
+                    piece.submittedAt !== null
                 )
             )
             .map((p) => ({
@@ -1022,7 +1037,9 @@ export default function ClubPageLayout({
           submittedCount={
             activeRiff.participants.filter((p) =>
               activeRiff.pieces.some(
-                (piece) => piece.piece.authorId === p.user.id
+                (piece) =>
+                  piece.piece.authorId === p.user.id &&
+                  piece.submittedAt !== null
               )
             ).length
           }
