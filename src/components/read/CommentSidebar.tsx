@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import Image from "next/image";
 import CommentPopover from "./CommentPopover";
 import { AUTHOR_COLORS, buildAuthorColorMap } from "./ReadOnlyEditor";
 
@@ -182,19 +183,15 @@ function CommentCard({
               border: "none",
               cursor: deleting ? "not-allowed" : "pointer",
               padding: "2px",
-              color: "#808080",
               flexShrink: 0,
             }}
           >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path
-                d="M2 3.5h10M5.5 3.5V2.5a.5.5 0 01.5-.5h2a.5.5 0 01.5.5v1M3.5 3.5l.5 8h6l.5-8"
-                stroke="currentColor"
-                strokeWidth="1.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <Image
+              src="/icons/trash.png"
+              alt="Delete comment"
+              width={16}
+              height={17}
+            />
           </button>
         )}
       </div>
