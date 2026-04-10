@@ -9,6 +9,7 @@ import NavBar from "@/components/clubs/NavBar";
 import ConversionModal from "@/components/clubs/ConversionModal";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import TextInput from "@/components/TextInput";
+import SecondaryButton from "@/components/SecondaryButton";
 
 type JoinStep = "email" | "check-email" | "name" | "join";
 
@@ -486,7 +487,9 @@ export default function JoinClubClient({
                   autoFocus
                   autoComplete="email"
                 />
-                <JoinButton loading={loading} label={`Join ${club.name}`} />
+                <SecondaryButton type="submit" loading={loading}>
+                  Join {club.name}
+                </SecondaryButton>
               </form>
               <button
                 onClick={() => setIsModalOpen(true)}
@@ -558,7 +561,9 @@ export default function JoinClubClient({
                   required
                 />
                 {error && <p style={errorStyle}>{error}</p>}
-                <JoinButton loading={loading} label={`Join ${club.name}`} />
+                <SecondaryButton type="submit" loading={loading}>
+                  Join {club.name}
+                </SecondaryButton>
               </form>
             </>
           )}
@@ -579,11 +584,9 @@ export default function JoinClubClient({
                 You&apos;ve been invited to join this write club.
               </p>
               {error && <p style={errorStyle}>{error}</p>}
-              <JoinButton
-                loading={loading}
-                label={`Join ${club.name}`}
-                onClick={handleJoin}
-              />
+              <SecondaryButton loading={loading} onClick={handleJoin}>
+                Join {club.name}
+              </SecondaryButton>
               <button
                 onClick={() => setIsModalOpen(true)}
                 style={whatIsItStyle}
@@ -615,64 +618,6 @@ export default function JoinClubClient({
 }
 
 // Shared button used across multiple steps
-function JoinButton({
-  loading,
-  label,
-  onClick,
-}: {
-  loading: boolean;
-  label: string;
-  onClick?: () => void;
-}) {
-  return (
-    <button
-      type={onClick ? "button" : "submit"}
-      onClick={onClick}
-      disabled={loading}
-      style={{
-        backgroundColor: "#01EFFC",
-        border: "2px solid #000000",
-        boxShadow: "8px 8px 0px 0px #000000",
-        padding: "12px 48px",
-        fontFamily: "var(--font-dm-sans)",
-        fontSize: "16px",
-        fontWeight: 300,
-        color: "#000000",
-        cursor: loading ? "not-allowed" : "pointer",
-        opacity: loading ? 0.7 : 1,
-        transition: "background-color 0.2s ease, box-shadow 0.2s ease",
-        whiteSpace: "nowrap",
-        width: "100%",
-      }}
-      onMouseEnter={(e) => {
-        if (!loading) {
-          e.currentTarget.style.backgroundColor = "#FFFFFF";
-          e.currentTarget.style.boxShadow = "8px 8px 0px 0px #01EFFC";
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!loading) {
-          e.currentTarget.style.backgroundColor = "#01EFFC";
-          e.currentTarget.style.boxShadow = "8px 8px 0px 0px #000000";
-        }
-      }}
-      onMouseDown={(e) => {
-        if (!loading) {
-          e.currentTarget.style.transform = "translate(4px, 4px)";
-          e.currentTarget.style.boxShadow = "4px 4px 0px 0px #000000";
-        }
-      }}
-      onMouseUp={(e) => {
-        if (!loading) {
-          e.currentTarget.style.transform = "translate(0, 0)";
-          e.currentTarget.style.boxShadow = "8px 8px 0px 0px #01EFFC";
-        }
-      }}
-    >
-      {loading ? "Joining..." : label}
-    </button>
-  );
-}
 
 const statStyle = (
   color: string,

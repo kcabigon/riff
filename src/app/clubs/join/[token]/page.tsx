@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import OnboardingButton from "@/components/onboarding/OnboardingButton";
+import PrimaryButton from "@/components/PrimaryButton";
 
 interface ClubInfo {
   id: string;
@@ -156,12 +156,14 @@ export default function JoinClubPage({
           >
             Invitation Error
           </h1>
-          <p style={{ fontSize: "18px", color: "#000000", textAlign: "center" }}>
+          <p
+            style={{ fontSize: "18px", color: "#000000", textAlign: "center" }}
+          >
             {error}
           </p>
-          <OnboardingButton onClick={() => router.push("/")}>
+          <PrimaryButton onClick={() => router.push("/")}>
             Go to Home
-          </OnboardingButton>
+          </PrimaryButton>
         </div>
       </div>
     );
@@ -256,9 +258,9 @@ export default function JoinClubPage({
         )}
 
         {/* Action Button */}
-        <OnboardingButton onClick={handleJoinClub} loading={joining}>
+        <PrimaryButton onClick={handleJoinClub} loading={joining}>
           {session ? "Join Club" : "Sign in to Join"}
-        </OnboardingButton>
+        </PrimaryButton>
 
         {/* TODO Note */}
         <div
