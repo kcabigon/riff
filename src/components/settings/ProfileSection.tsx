@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Avatar from "@/components/shared/Avatar";
+import PrimaryButton from "@/components/PrimaryButton";
 
 interface ProfileSectionProps {
   user: {
@@ -152,7 +153,11 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
                 flexShrink: 0,
               }}
             >
-              <Avatar user={avatarUser} size={48} style={{ width: "72px", height: "72px" }} />
+              <Avatar
+                user={avatarUser}
+                size={48}
+                style={{ width: "72px", height: "72px" }}
+              />
               <div
                 style={{
                   position: "absolute",
@@ -247,7 +252,14 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
 
         {/* Name fields */}
         <div style={{ display: "flex", gap: "16px" }}>
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "8px" }}>
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              gap: "8px",
+            }}
+          >
             <label
               style={{
                 fontFamily: "var(--font-dm-sans)",
@@ -263,11 +275,22 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               style={inputStyle}
-              onFocus={(e) => { e.target.style.borderColor = "#00FF66"; }}
-              onBlur={(e) => { e.target.style.borderColor = "#000000"; }}
+              onFocus={(e) => {
+                e.target.style.borderColor = "#00FF66";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = "#000000";
+              }}
             />
           </div>
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "8px" }}>
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              gap: "8px",
+            }}
+          >
             <label
               style={{
                 fontFamily: "var(--font-dm-sans)",
@@ -283,8 +306,12 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               style={inputStyle}
-              onFocus={(e) => { e.target.style.borderColor = "#00FF66"; }}
-              onBlur={(e) => { e.target.style.borderColor = "#000000"; }}
+              onFocus={(e) => {
+                e.target.style.borderColor = "#00FF66";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = "#000000";
+              }}
             />
           </div>
         </div>
@@ -309,31 +336,19 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
               ...inputStyle,
               resize: "vertical",
             }}
-            onFocus={(e) => { e.target.style.borderColor = "#00FF66"; }}
-            onBlur={(e) => { e.target.style.borderColor = "#000000"; }}
+            onFocus={(e) => {
+              e.target.style.borderColor = "#00FF66";
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = "#000000";
+            }}
           />
         </div>
 
         {/* Save button */}
-        <button
-          onClick={handleSave}
-          disabled={isSaving}
-          style={{
-            backgroundColor: saved ? "#00FF66" : "#FFFFFF",
-            border: "2px solid #000000",
-            boxShadow: isSaving ? "none" : "8px 8px 0px 0px #00FF66",
-            padding: "12px 48px",
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
-            fontWeight: 300,
-            color: "#000000",
-            cursor: isSaving ? "not-allowed" : "pointer",
-            transition: "none",
-            width: "100%",
-          }}
-        >
+        <PrimaryButton onClick={handleSave} disabled={isSaving}>
           {isSaving ? "Saving..." : saved ? "Saved" : "Save changes"}
-        </button>
+        </PrimaryButton>
       </div>
     </section>
   );
