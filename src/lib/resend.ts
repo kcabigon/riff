@@ -830,3 +830,169 @@ function getRiffCreatedEmailTemplate({
 </html>
   `.trim();
 }
+
+/**
+ * Send a batched comment digest email
+ */
+export async function sendCommentDigestEmail({
+  email,
+  recipientName,
+  pieceTitle,
+  commentCount,
+  actorNames,
+  pieceUrl,
+}: {
+  email: string;
+  recipientName: string;
+  pieceTitle: string;
+  commentCount: number;
+  actorNames: string;
+  pieceUrl: string;
+}): Promise<void> {
+  const subject = `${commentCount} new comment${commentCount > 1 ? "s" : ""} on "${pieceTitle}"`;
+
+  try {
+    const { data, error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to: email,
+      subject,
+      html: getCommentDigestEmailTemplate({
+        recipientName,
+        pieceTitle,
+        commentCount,
+        actorNames,
+        pieceUrl,
+      }),
+    });
+
+    if (error) {
+      console.error("Resend API error:", error);
+      throw new Error(`Failed to send email: ${error.message}`);
+    }
+
+    console.log("Comment digest email sent successfully:", data);
+  } catch (error) {
+    console.error("Error sending comment digest email:", error);
+    throw error;
+  }
+}
+
+function getCommentDigestEmailTemplate({
+  recipientName,
+  pieceTitle,
+  commentCount,
+  actorNames,
+  pieceUrl,
+}: {
+  recipientName: string;
+  pieceTitle: string;
+  commentCount: number;
+  actorNames: string;
+  pieceUrl: string;
+}): string {
+  const commentLabel =
+    commentCount === 1 ? "1 new comment" : `${commentCount} new comments`;
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${commentLabel} on "${pieceTitle}"</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+      background-color: #ffffff;
+    }
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 40px 24px;
+      background-color: #ffffff;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .title {
+      font-size: 24px;
+      font-weight: 400;
+      color: #000000;
+      margin: 0 0 8px 0;
+    }
+    .content {
+      margin: 32px 0;
+    }
+    .comment-box {
+      border: 2px solid #000000;
+      padding: 24px;
+      margin: 24px 0;
+      background-color: #FAFAFA;
+    }
+    .button {
+      display: inline-block;
+      padding: 12px 48px;
+      background-color: #00FF66;
+      color: #000000;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: 300;
+      border: 2px solid #000000;
+      box-shadow: 8px 8px 0px 0px #000000;
+      margin: 24px 0 0 0;
+    }
+    .footer {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid #E6E6E6;
+      text-align: center;
+      font-size: 14px;
+      color: #959595;
+    }
+    .link {
+      color: #000000;
+      text-decoration: underline;
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 class="title">The riff goes on.</h1>
+    </div>
+
+    <div class="content">
+      <p style="font-size: 16px; color: #000000; margin: 0 0 24px 0; font-weight: 300;">
+        Hey ${recipientName}, ${actorNames} left comments on your piece.
+      </p>
+
+      <div class="comment-box">
+        <p style="font-size: 20px; font-weight: 500; color: #000000; margin: 0 0 12px 0;">${pieceTitle}</p>
+        <p style="font-size: 16px; font-weight: 300; color: #808080; margin: 0;">${commentLabel}</p>
+      </div>
+
+      <a href="${pieceUrl}" class="button">
+        Read comments
+      </a>
+    </div>
+
+    <div class="footer">
+      <p>
+        If the button doesn't work, copy and paste this link into your browser:
+      </p>
+      <p>
+        <a href="${pieceUrl}" class="link">${pieceUrl}</a>
+      </p>
+      <p style="margin-top: 16px;">
+        You're receiving this because someone commented on your writing on Riff.
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+}
