@@ -40,9 +40,7 @@ export default function RiffCTAButton({
     border: "2px solid #000000",
     boxShadow: isHovered
       ? "8px 8px 0px 0px #000000"
-      : isJoined
-        ? "8px 8px 0px 0px #00FF66"
-        : "8px 8px 0px 0px #01EFFC",
+      : "8px 8px 0px 0px #00FF66",
     padding: "12px 48px",
     fontFamily: "var(--font-dm-sans)",
     fontSize: "16px",
