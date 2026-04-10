@@ -498,7 +498,7 @@ export default function RiffPageLayout({
                   border: "2px solid #000000",
                   boxShadow: isRevealButtonHovered
                     ? "8px 8px 0px 0px #000000"
-                    : "8px 8px 0px 0px #01EFFC",
+                    : "8px 8px 0px 0px #00FF66",
                   padding: "12px 48px",
                   fontFamily: "var(--font-dm-sans)",
                   fontSize: "16px",
