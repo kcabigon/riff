@@ -25,6 +25,7 @@ import LinkPopover from "@/components/write/LinkPopover";
 import WhatsNextModal, {
   type WhatsNextTrigger,
 } from "@/components/shared/WhatsNextModal";
+import CTAButton from "@/components/CTAButton";
 
 interface RiffConnection {
   id: string;
@@ -68,7 +69,6 @@ export default function WritePage({
   const [showSpotifyModal, setShowSpotifyModal] = useState(false);
   const [whatsNextTrigger, setWhatsNextTrigger] =
     useState<WhatsNextTrigger | null>(null);
-  const [isSubmitHovered, setIsSubmitHovered] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(
     piece.riffs.some((r) => r.submittedAt !== null)
   );
@@ -500,9 +500,7 @@ export default function WritePage({
                     size={24}
                   />
                 ) : (
-                  <button
-                    onMouseEnter={() => setIsSubmitHovered(true)}
-                    onMouseLeave={() => setIsSubmitHovered(false)}
+                  <CTAButton
                     onClick={() => {
                       if (coverImage) {
                         setShowSubmitModal(true);
@@ -511,22 +509,12 @@ export default function WritePage({
                       }
                     }}
                     style={{
-                      backgroundColor: isSubmitHovered ? "#00FF66" : "#FFFFFF",
-                      border: "2px solid #000000",
-                      boxShadow: isSubmitHovered
-                        ? "8px 8px 0px 0px #000000"
-                        : "8px 8px 0px 0px #00FF66",
                       padding: isMobile ? "8px 24px" : "12px 48px",
-                      fontFamily: "var(--font-dm-sans)",
                       fontSize: isMobile ? "12px" : "16px",
-                      fontWeight: 300,
-                      color: "#000000",
-                      cursor: "pointer",
-                      whiteSpace: "nowrap" as const,
                     }}
                   >
                     Submit piece
-                  </button>
+                  </CTAButton>
                 ))}
             </div>
           </div>
