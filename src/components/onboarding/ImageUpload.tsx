@@ -200,7 +200,7 @@ export default function ImageUpload({
               }}
             >
               <Image
-                src="/icons/trash.svg"
+                src="/icons/trash.png"
                 alt="Delete image"
                 width={28}
                 height={30}

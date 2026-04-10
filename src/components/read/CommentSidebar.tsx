@@ -189,8 +189,8 @@ function CommentCard({
             <Image
               src="/icons/trash.png"
               alt="Delete comment"
-              width={16}
-              height={17}
+              width={24}
+              height={26}
             />
           </button>
         )}
