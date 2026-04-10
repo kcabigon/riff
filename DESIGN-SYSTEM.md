@@ -189,7 +189,8 @@ All interactive elements: border/outline changes to green `#00FF66`.
 |-----------|------|---------|
 | **PrimaryButton** | `PrimaryButton.tsx` | Primary actions in modals/forms. Green bg at rest. Props: `loading`, `disabled` |
 | **SecondaryButton** | `SecondaryButton.tsx` | Secondary CTAs, join flows. Cyan bg at rest. Same props as PrimaryButton |
-| **RiffCTAButton** | `riffs/RiffCTAButton.tsx` | In-context riff actions (Join, Start/Continue Writing, View Submission). White bg + green shadow at rest. Props: `riffId`, `isJoined`, `hasDraft`, `hasSubmitted`, `existingPieceId`, `onJoin`, `stopPropagation` |
+| **CTAButton** | `CTAButton.tsx` | RiffCTA visual pattern — white bg + green shadow at rest, green bg on hover. Use for any in-context page/card action. Props: standard button props |
+| **RiffCTAButton** | `riffs/RiffCTAButton.tsx` | Smart wrapper around CTAButton for riff actions (Join, Start/Continue Writing, View Submission). Handles join API, draft creation, and navigation. Props: `riffId`, `isJoined`, `hasDraft`, `hasSubmitted`, `existingPieceId`, `onJoin`, `stopPropagation` |
 | **TextInput** | `TextInput.tsx` | All form inputs. Props: `error`, `multiline`, `rows` |
 
 ### Navigation & Actions (`src/components/`)

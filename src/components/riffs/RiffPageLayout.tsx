@@ -20,6 +20,7 @@ import WhatsNextModal, {
   type WhatsNextTrigger,
 } from "@/components/shared/WhatsNextModal";
 import PrimaryButton from "@/components/PrimaryButton";
+import CTAButton from "@/components/CTAButton";
 
 interface RiffPageLayoutProps {
   riff: {
@@ -111,7 +112,6 @@ export default function RiffPageLayout({
   isFirstReveal = false,
 }: RiffPageLayoutProps) {
   const [isJoined, setIsJoined] = useState(initialIsJoined);
-  const [isRevealButtonHovered, setIsRevealButtonHovered] = useState(false);
   const [isRevealModalOpen, setIsRevealModalOpen] = useState(false);
   const [isRevealing, setIsRevealing] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -499,30 +499,7 @@ export default function RiffPageLayout({
             {(isPastDeadline || allPiecesSubmitted) &&
             isAdmin &&
             riff.status === "ACTIVE" ? (
-              <button
-                onClick={handleRevealClick}
-                onMouseEnter={() => setIsRevealButtonHovered(true)}
-                onMouseLeave={() => setIsRevealButtonHovered(false)}
-                style={{
-                  backgroundColor: isRevealButtonHovered
-                    ? "#00FF66"
-                    : "#FFFFFF",
-                  border: "2px solid #000000",
-                  boxShadow: isRevealButtonHovered
-                    ? "8px 8px 0px 0px #000000"
-                    : "8px 8px 0px 0px #00FF66",
-                  padding: "12px 48px",
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#000000",
-                  cursor: "pointer",
-                  transition: "none",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                Reveal riff
-              </button>
+              <CTAButton onClick={handleRevealClick}>Reveal riff</CTAButton>
             ) : isPastDeadline && !isAdmin && riff.status === "ACTIVE" ? (
               <button
                 disabled
