@@ -13,7 +13,6 @@ import "@/app/write/[pieceId]/editor.css";
 import BackButton from "@/components/BackButton";
 import CoverImageModal from "@/components/write/CoverImageModal";
 import SubmitConfirmModal from "@/components/write/SubmitConfirmModal";
-import PrimaryButton from "@/components/PrimaryButton";
 import IconButton from "@/components/IconButton";
 import { convertHeicToJpeg } from "@/lib/convert-heic";
 import NoiseBackground from "@/components/NoiseBackground";
@@ -69,6 +68,7 @@ export default function WritePage({
   const [showSpotifyModal, setShowSpotifyModal] = useState(false);
   const [whatsNextTrigger, setWhatsNextTrigger] =
     useState<WhatsNextTrigger | null>(null);
+  const [isSubmitHovered, setIsSubmitHovered] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(
     piece.riffs.some((r) => r.submittedAt !== null)
   );
@@ -447,10 +447,10 @@ export default function WritePage({
                     borderRadius: "50%",
                     background:
                       saveStatus === "saved"
-                        ? "#22c55e"
+                        ? "#00FF66"
                         : saveStatus === "saving"
-                          ? "#eab308"
-                          : "#9ca3af",
+                          ? "#EECF01"
+                          : "#808080",
                     animation:
                       saveStatus === "saving"
                         ? "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite"
@@ -462,7 +462,7 @@ export default function WritePage({
                     fontFamily: "var(--font-dm-sans)",
                     fontSize: "12px",
                     fontWeight: 300,
-                    color: "#999999",
+                    color: "#808080",
                   }}
                 >
                   {saveStatus === "saved"
@@ -500,8 +500,9 @@ export default function WritePage({
                     size={24}
                   />
                 ) : (
-                  <PrimaryButton
-                    size={isMobile ? "sm" : undefined}
+                  <button
+                    onMouseEnter={() => setIsSubmitHovered(true)}
+                    onMouseLeave={() => setIsSubmitHovered(false)}
                     onClick={() => {
                       if (coverImage) {
                         setShowSubmitModal(true);
@@ -509,9 +510,23 @@ export default function WritePage({
                         setShowCoverModal(true);
                       }
                     }}
+                    style={{
+                      backgroundColor: isSubmitHovered ? "#00FF66" : "#FFFFFF",
+                      border: "2px solid #000000",
+                      boxShadow: isSubmitHovered
+                        ? "8px 8px 0px 0px #000000"
+                        : "8px 8px 0px 0px #01EFFC",
+                      padding: isMobile ? "8px 24px" : "12px 48px",
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: isMobile ? "12px" : "16px",
+                      fontWeight: 300,
+                      color: "#000000",
+                      cursor: "pointer",
+                      whiteSpace: "nowrap" as const,
+                    }}
                   >
                     Submit piece
-                  </PrimaryButton>
+                  </button>
                 ))}
             </div>
           </div>
