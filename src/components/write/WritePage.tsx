@@ -515,7 +515,7 @@ export default function WritePage({
                       border: "2px solid #000000",
                       boxShadow: isSubmitHovered
                         ? "8px 8px 0px 0px #000000"
-                        : "8px 8px 0px 0px #01EFFC",
+                        : "8px 8px 0px 0px #00FF66",
                       padding: isMobile ? "8px 24px" : "12px 48px",
                       fontFamily: "var(--font-dm-sans)",
                       fontSize: isMobile ? "12px" : "16px",
