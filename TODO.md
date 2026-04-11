@@ -40,7 +40,7 @@ Last updated: March 30, 2026 (modal cleanup, reveal todos, notification todos)
 ### Riff Creation / Management
 - [x] Volume number auto-assigned; riff name optional (not required to create)
 - [x] Due date mandatory on riff creation, defaults to 1 month out, admin can edit later
-- [ ] Redesign prompts/inspiration UI
+- [x] Redesign prompts/inspiration UI
 - [x] After creating a riff, host sees "Start writing" or "Invite friends" CTA
 - [x] Don't show "Reveal pieces" until deadline passes OR all submissions are in
 
@@ -81,8 +81,8 @@ Last updated: March 30, 2026 (modal cleanup, reveal todos, notification todos)
 - [ ] After PieceRiff schema migration (DRAFT/SUBMITTED status field): fix profile Pieces tab to only show pieces that are SUBMITTED + riff is REVEALED — prevents sneak peeks on other users' profiles
 
 ### Piece Management
-- [ ] Let users manage piece state: draft vs. published, shared in riff vs. not ready to share
-- [ ] Clear distinction between drafts (in progress), submitted pieces (shared to a riff), and personal pieces (not in a riff)
+- [x] Let users manage piece state: draft vs. published, shared in riff vs. not ready to share
+- [x] Clear distinction between drafts (in progress), submitted pieces (shared to a riff), and personal pieces (not in a riff)
 
 ### Reveals
 - [x] Improve reveal logic — review edge cases (partial submissions, timing, re-reveal prevention)

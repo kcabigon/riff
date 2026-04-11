@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import RiffPageLayout from "@/components/riffs/RiffPageLayout";
+import { getSubmittedPieces } from "@/lib/riff-utils";
 
 export default async function RiffPage({
   params,
@@ -35,7 +36,12 @@ export default async function RiffPage({
     where: { id },
     include: {
       club: {
-        select: { id: true, name: true, adminId: true },
+        select: {
+          id: true,
+          name: true,
+          adminId: true,
+          admin: { select: { firstName: true } },
+        },
       },
       creator: {
         select: { id: true, name: true, username: true, avatarUrl: true },
@@ -99,9 +105,15 @@ export default async function RiffPage({
     (p) => p.piece.authorId === userId && p.submittedAt !== null
   );
   const isAdmin = riff.club.adminId === userId;
+  // ID of the user's unsubmitted piece — needed for late submission on revealed riffs
+  const draftPieceId =
+    riff.pieces.find(
+      (p) => p.piece.authorId === userId && p.submittedAt === null
+    )?.piece.id ?? null;
 
   // Fetch read data and compute per-piece flags for REVEALED riffs
   let readPieceIds: string[] = [];
+  let isFirstReveal = false;
   const hasNewCommentsMap: Record<string, boolean> = {};
   let contributionData: Array<{
     user: { id: string; name: string | null; avatarUrl: string | null };
@@ -125,6 +137,9 @@ export default async function RiffPage({
     readPieceIds = [
       ...new Set([...reads.map((r) => r.pieceId), ...ownPieceIds]),
     ];
+
+    // First reveal: no actual DB reads yet (own piece auto-inclusion doesn't count)
+    isFirstReveal = !isAdmin && reads.length === 0;
 
     // Fetch all comment timestamps for this riff in one query
     const comments = await prisma.comment.findMany({
@@ -186,18 +201,20 @@ export default async function RiffPage({
     createdAt: riff.createdAt.toISOString(),
     updatedAt: riff.updatedAt.toISOString(),
     deadline: riff.deadline ? riff.deadline.toISOString() : null,
-    pieces: riff.pieces.map((pr) => ({
-      ...pr,
-      submittedAt: pr.submittedAt ? pr.submittedAt.toISOString() : null,
-      piece: {
-        ...pr.piece,
-        // Strip content before reveal — cover image still returned for locked card teaser
-        currentContent: isRevealed ? pr.piece.currentContent : null,
-        updatedAt: pr.piece.updatedAt.toISOString(),
-        commentCount: pr.piece._count?.comments ?? 0,
-        _count: undefined,
-      },
-    })),
+    pieces: riff.pieces
+      .filter((pr) => (isRevealed ? pr.submittedAt !== null : true))
+      .map((pr) => ({
+        ...pr,
+        submittedAt: pr.submittedAt ? pr.submittedAt.toISOString() : null,
+        piece: {
+          ...pr.piece,
+          // Strip content before reveal — cover image still returned for locked card teaser
+          currentContent: isRevealed ? pr.piece.currentContent : null,
+          updatedAt: pr.piece.updatedAt.toISOString(),
+          commentCount: pr.piece._count?.comments ?? 0,
+          _count: undefined,
+        },
+      })),
   };
 
   return (
@@ -208,12 +225,15 @@ export default async function RiffPage({
       isJoined={isJoined}
       hasDraft={hasDraft}
       hasSubmitted={hasSubmitted}
+      draftPieceId={draftPieceId}
       readPieceIds={readPieceIds}
       hasNewCommentsMap={hasNewCommentsMap}
       contributionData={contributionData}
-      totalPieces={riff.pieces.length}
+      totalPieces={getSubmittedPieces(riff.pieces).length}
       navUser={navUser}
       userClubs={userClubs}
+      hostFirstName={riff.club.admin?.firstName ?? null}
+      isFirstReveal={isFirstReveal}
     />
   );
 }

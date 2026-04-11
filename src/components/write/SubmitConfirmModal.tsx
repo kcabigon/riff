@@ -5,10 +5,12 @@ import Modal from "@/components/shared/Modal";
 import PieceCard from "@/components/riffs/PieceCard";
 import PrimaryButton from "@/components/PrimaryButton";
 
-interface ShareConfirmModalProps {
+interface SubmitConfirmModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => Promise<void>;
+  onCoverAction: () => void;
+  submitDisabled?: boolean;
   piece: {
     id: string;
     title: string;
@@ -22,13 +24,15 @@ interface ShareConfirmModalProps {
   };
 }
 
-export default function ShareConfirmModal({
+export default function SubmitConfirmModal({
   isOpen,
   onClose,
   onConfirm,
+  onCoverAction,
+  submitDisabled = false,
   piece,
   riff,
-}: ShareConfirmModalProps) {
+}: SubmitConfirmModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleConfirm = async () => {
@@ -43,17 +47,21 @@ export default function ShareConfirmModal({
 
   const footer = (
     <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-      <PrimaryButton onClick={handleConfirm} loading={isSubmitting}>
-        Share
+      <PrimaryButton
+        onClick={handleConfirm}
+        loading={isSubmitting}
+        disabled={submitDisabled}
+      >
+        {submitDisabled ? "Submitted" : "Submit"}
       </PrimaryButton>
       <button
-        onClick={onClose}
+        onClick={onCoverAction}
         disabled={isSubmitting}
         style={{
           background: "none",
           border: "none",
           fontFamily: "var(--font-dm-sans)",
-          fontSize: "14px",
+          fontSize: "12px",
           fontWeight: 300,
           color: "#808080",
           cursor: "pointer",
@@ -61,7 +69,7 @@ export default function ShareConfirmModal({
           textDecoration: "underline",
         }}
       >
-        Cancel
+        {piece.coverImage ? "Remove cover image" : "Add cover image"}
       </button>
     </div>
   );
@@ -70,7 +78,7 @@ export default function ShareConfirmModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Share your piece"
+      title="Submit your piece"
       size="sm"
       footer={footer}
     >
@@ -106,8 +114,8 @@ export default function ShareConfirmModal({
           <p
             style={{
               fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              fontWeight: 400,
+              fontSize: "12px",
+              fontWeight: 700,
               color: "#000000",
               margin: 0,
               textAlign: "center",
@@ -130,7 +138,7 @@ export default function ShareConfirmModal({
           <p
             style={{
               fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
+              fontSize: "12px",
               fontWeight: 300,
               color: "#808080",
               margin: 0,

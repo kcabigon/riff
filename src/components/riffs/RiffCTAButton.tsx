@@ -3,8 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDraftCreation } from "@/hooks/useDraftCreation";
-import Dropdown from "@/components/shared/Dropdown";
-import ExistingDraftPickerModal from "@/components/riffs/ExistingDraftPickerModal";
 
 interface RiffCTAButtonProps {
   riffId: string;
@@ -26,7 +24,6 @@ export default function RiffCTAButton({
   stopPropagation = false,
 }: RiffCTAButtonProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const [isDraftPickerOpen, setIsDraftPickerOpen] = useState(false);
   const router = useRouter();
   const { createDraft } = useDraftCreation();
 
@@ -43,9 +40,7 @@ export default function RiffCTAButton({
     border: "2px solid #000000",
     boxShadow: isHovered
       ? "8px 8px 0px 0px #000000"
-      : isJoined
-        ? "8px 8px 0px 0px #00FF66"
-        : "8px 8px 0px 0px #01EFFC",
+      : "8px 8px 0px 0px #00FF66",
     padding: "12px 48px",
     fontFamily: "var(--font-dm-sans)",
     fontSize: "16px",
@@ -70,8 +65,12 @@ export default function RiffCTAButton({
     }
   };
 
-  const handleContinueOrView = (e: React.MouseEvent) => {
+  const handleClick = (e: React.MouseEvent) => {
     if (stopPropagation) e.stopPropagation();
+    if (!isJoined) {
+      handleJoin(e);
+      return;
+    }
     if (existingPieceId) {
       router.push(`/write/${existingPieceId}`);
     } else {
@@ -79,50 +78,9 @@ export default function RiffCTAButton({
     }
   };
 
-  // "Start writing" — dropdown with New draft / Existing draft
-  if (isJoined && !hasDraft && !hasSubmitted) {
-    return (
-      <div
-        onClick={stopPropagation ? (e) => e.stopPropagation() : undefined}
-        style={{ display: "contents" }}
-      >
-        <Dropdown
-          align="right"
-          minWidth={200}
-          trigger={
-            <button
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
-              style={buttonStyle}
-            >
-              Start writing
-            </button>
-          }
-          items={[
-            {
-              type: "action",
-              label: "New draft",
-              onClick: () => createDraft(riffId),
-            },
-            {
-              type: "action",
-              label: "Existing draft",
-              onClick: () => setIsDraftPickerOpen(true),
-            },
-          ]}
-        />
-        <ExistingDraftPickerModal
-          isOpen={isDraftPickerOpen}
-          onClose={() => setIsDraftPickerOpen(false)}
-          riffId={riffId}
-        />
-      </div>
-    );
-  }
-
   return (
     <button
-      onClick={isJoined ? handleContinueOrView : handleJoin}
+      onClick={handleClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={buttonStyle}

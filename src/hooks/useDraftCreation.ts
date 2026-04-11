@@ -7,7 +7,7 @@ export function useDraftCreation() {
   const [isCreating, setIsCreating] = useState(false);
   const router = useRouter();
 
-  const createDraft = async (riffId?: string) => {
+  const createDraft = async (riffId: string) => {
     if (isCreating) return;
     setIsCreating(true);
 
@@ -15,7 +15,7 @@ export function useDraftCreation() {
       const res = await fetch("/api/drafts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(riffId ? { riffId } : {}),
+        body: JSON.stringify({ riffId }),
       });
 
       const data = await res.json();

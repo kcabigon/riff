@@ -71,12 +71,12 @@ export default function OnboardingCreateClubBannerPage() {
       const data = await response.json();
       const clubId = data.club.id;
 
-      // Update onboarding step to INVITE
+      // Mark onboarding complete
       await fetch("/api/onboarding/complete", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          step: "INVITE",
+          step: "COMPLETED",
           clubId: clubId,
         }),
       });
@@ -84,8 +84,8 @@ export default function OnboardingCreateClubBannerPage() {
       // Clear pending club data
       sessionStorage.removeItem("pendingClub");
 
-      // Success - redirect to invite step
-      router.push(`/onboarding/invite?clubId=${clubId}`);
+      // Redirect to club page — What's Next modal fires via ?welcome=host
+      router.push(`/clubs/${clubId}?welcome=host`);
     } catch (err: any) {
       console.error("Error creating club:", err);
       setError(err.message || "Something went wrong. Please try again.");
@@ -109,7 +109,9 @@ export default function OnboardingCreateClubBannerPage() {
         }}
       >
         {/* Back Button */}
-        <div style={{ width: "100%", display: "flex", alignItems: "flex-start" }}>
+        <div
+          style={{ width: "100%", display: "flex", alignItems: "flex-start" }}
+        >
           <BackButton href="/onboarding/create-club" />
         </div>
 
@@ -133,7 +135,12 @@ export default function OnboardingCreateClubBannerPage() {
               alignItems: "flex-start",
             }}
           >
-            <Tagline text="Let's make it your own" color="#01EFFC" textColor="#000000" width={218} />
+            <Tagline
+              text="Let's make it your own"
+              color="#01EFFC"
+              textColor="#000000"
+              width={218}
+            />
             <ImageUpload
               onUpload={setBannerImage}
               currentImage={bannerImage}

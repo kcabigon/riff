@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import CountdownTimer from "./CountdownTimer";
 import PieceCard from "./PieceCard";
@@ -9,13 +9,25 @@ import EditRiffModal from "./EditRiffModal";
 import DeleteRiffConfirmModal from "./DeleteRiffConfirmModal";
 import NavBar from "@/components/clubs/NavBar";
 import RevealCelebration from "./RevealCelebration";
-import { getRiffDisplayTitle } from "@/lib/riff-utils";
+import {
+  getRiffDisplayTitle,
+  getSubmittedPieces,
+  allPiecesSubmitted,
+  isPastDeadline,
+  formatDateShort,
+  getSubmittedParticipants,
+  getWaitingParticipants,
+} from "@/lib/riff-utils";
 import RiffCTAButton from "@/components/riffs/RiffCTAButton";
 import ProgressCard from "@/components/riffs/ProgressCard";
 import Dropdown from "@/components/shared/Dropdown";
 import type { DropdownItem } from "@/components/shared/Dropdown";
 import ContributionStrip from "@/components/riffs/ContributionStrip";
 import NoiseBackground from "@/components/NoiseBackground";
+import WhatsNextModal, {
+  type WhatsNextTrigger,
+} from "@/components/shared/WhatsNextModal";
+import PrimaryButton from "@/components/PrimaryButton";
 
 interface RiffPageLayoutProps {
   riff: {
@@ -67,6 +79,7 @@ interface RiffPageLayoutProps {
   isJoined: boolean;
   hasDraft: boolean;
   hasSubmitted: boolean;
+  draftPieceId?: string | null;
   navUser?: {
     id: string;
     name: string | null;
@@ -83,6 +96,8 @@ interface RiffPageLayoutProps {
   }>;
   totalPieces?: number;
   onReveal?: () => void;
+  hostFirstName?: string | null;
+  isFirstReveal?: boolean;
 }
 
 export default function RiffPageLayout({
@@ -92,6 +107,7 @@ export default function RiffPageLayout({
   isJoined: initialIsJoined,
   hasDraft,
   hasSubmitted,
+  draftPieceId,
   navUser,
   userClubs = [],
   readPieceIds = [],
@@ -99,6 +115,8 @@ export default function RiffPageLayout({
   contributionData = [],
   totalPieces = 0,
   onReveal,
+  hostFirstName,
+  isFirstReveal = false,
 }: RiffPageLayoutProps) {
   const [isJoined, setIsJoined] = useState(initialIsJoined);
   const [isRevealButtonHovered, setIsRevealButtonHovered] = useState(false);
@@ -107,37 +125,29 @@ export default function RiffPageLayout({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [whatsNextTrigger, setWhatsNextTrigger] =
+    useState<WhatsNextTrigger | null>(null);
   const router = useRouter();
-  // Deadline detection
-  const isPastDeadline = riff.deadline
-    ? new Date(riff.deadline).getTime() < Date.now()
-    : false;
 
-  const allPiecesSubmitted =
-    riff.participants.length > 0 &&
-    riff.pieces.filter((p) => p.submittedAt).length >= riff.participants.length;
-
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    });
-  };
-
-  const submittedUsers = riff.participants.filter((p) =>
-    riff.pieces.some(
-      (piece) =>
-        piece.submittedAt !== null && piece.piece.authorId === p.user.id
-    )
+  // Detect member's first visit to a revealed riff and show the "what's next" modal once
+  useEffect(() => {
+    if (!isFirstReveal) return;
+    const key = `riff-first-reveal-${riff.id}`;
+    if (typeof window === "undefined") return;
+    if (localStorage.getItem(key)) return;
+    localStorage.setItem(key, "1");
+    setWhatsNextTrigger("member_first_reveal");
+  }, [riff.id, isFirstReveal]);
+  const deadlinePassed = isPastDeadline(riff.deadline);
+  const piecesAllSubmitted = allPiecesSubmitted(
+    riff.pieces,
+    riff.participants.length
   );
-
-  const waitingUsers = riff.participants.filter(
-    (p) =>
-      !riff.pieces.some(
-        (piece) =>
-          piece.submittedAt !== null && piece.piece.authorId === p.user.id
-      )
+  const submittedUsers = getSubmittedParticipants(
+    riff.participants,
+    riff.pieces
   );
+  const waitingUsers = getWaitingParticipants(riff.participants, riff.pieces);
 
   const handleRevealClick = () => {
     if (onReveal) {
@@ -235,17 +245,17 @@ export default function RiffPageLayout({
                     fontSize: "16px",
                     fontWeight: 300,
                     color:
-                      isPastDeadline && riff.status !== "REVEALED"
+                      deadlinePassed && riff.status !== "REVEALED"
                         ? "#FF4444"
                         : "#808080",
                     margin: 0,
                   }}
                 >
-                  {isPastDeadline && riff.status !== "REVEALED"
+                  {deadlinePassed && riff.status !== "REVEALED"
                     ? "Deadline passed"
                     : riff.deadline
-                      ? `${formatDate(riff.createdAt)} - ${formatDate(riff.deadline)}`
-                      : formatDate(riff.createdAt)}
+                      ? `${formatDateShort(riff.createdAt)} - ${formatDateShort(riff.deadline)}`
+                      : formatDateShort(riff.createdAt)}
                 </p>
                 {isAdmin &&
                   riff.status !== "REVEALED" &&
@@ -359,6 +369,17 @@ export default function RiffPageLayout({
               minWidth: "200px",
             }}
           >
+            {riff.status === "REVEALED" &&
+              hasDraft &&
+              !hasSubmitted &&
+              draftPieceId && (
+                <PrimaryButton
+                  onClick={() => router.push(`/write/${draftPieceId}`)}
+                >
+                  Submit late
+                </PrimaryButton>
+              )}
+
             {riff.status === "REVEALED" && riff.updatedAt && (
               <div
                 style={{
@@ -380,7 +401,7 @@ export default function RiffPageLayout({
                     color: "#000000",
                   }}
                 >
-                  Revealed {formatDate(riff.updatedAt)}
+                  Revealed {formatDateShort(riff.updatedAt)}
                 </span>
               </div>
             )}
@@ -463,7 +484,7 @@ export default function RiffPageLayout({
                 );
               })()}
 
-            {(isPastDeadline || allPiecesSubmitted) &&
+            {(deadlinePassed || piecesAllSubmitted) &&
             isAdmin &&
             riff.status === "ACTIVE" ? (
               <button
@@ -477,7 +498,7 @@ export default function RiffPageLayout({
                   border: "2px solid #000000",
                   boxShadow: isRevealButtonHovered
                     ? "8px 8px 0px 0px #000000"
-                    : "8px 8px 0px 0px #01EFFC",
+                    : "8px 8px 0px 0px #00FF66",
                   padding: "12px 48px",
                   fontFamily: "var(--font-dm-sans)",
                   fontSize: "16px",
@@ -490,7 +511,7 @@ export default function RiffPageLayout({
               >
                 Reveal riff
               </button>
-            ) : isPastDeadline && !isAdmin && riff.status === "ACTIVE" ? (
+            ) : deadlinePassed && !isAdmin && riff.status === "ACTIVE" ? (
               <button
                 disabled
                 style={{
@@ -516,17 +537,20 @@ export default function RiffPageLayout({
                 hasDraft={hasDraft}
                 hasSubmitted={hasSubmitted}
                 existingPieceId={existingPieceId}
-                onJoin={() => setIsJoined(true)}
+                onJoin={() => {
+                  setIsJoined(true);
+                  setWhatsNextTrigger("member_joined_riff");
+                }}
               />
             ) : null}
 
             {isJoined &&
               riff.deadline &&
-              !isPastDeadline &&
+              !deadlinePassed &&
               riff.status !== "REVEALED" && (
                 <CountdownTimer deadline={new Date(riff.deadline)} />
               )}
-            {isPastDeadline && riff.deadline && riff.status !== "REVEALED" && (
+            {deadlinePassed && riff.deadline && riff.status !== "REVEALED" && (
               <p
                 style={{
                   fontFamily: "var(--font-dm-sans)",
@@ -695,7 +719,7 @@ export default function RiffPageLayout({
           pieceCount={riff.pieces.length}
           onDismiss={() => {
             setShowCelebration(false);
-            router.refresh();
+            setWhatsNextTrigger("host_revealed");
           }}
         />
       )}
@@ -729,6 +753,23 @@ export default function RiffPageLayout({
           }}
           riffId={riff.id}
           riffTitle={getRiffDisplayTitle(riff)}
+        />
+      )}
+
+      {/* What's Next Modal */}
+      {whatsNextTrigger && (
+        <WhatsNextModal
+          isOpen={true}
+          onClose={() => {
+            setWhatsNextTrigger(null);
+            router.refresh();
+          }}
+          trigger={whatsNextTrigger}
+          hostFirstName={hostFirstName}
+          onCTAClick={() => {
+            setWhatsNextTrigger(null);
+            router.refresh();
+          }}
         />
       )}
 

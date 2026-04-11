@@ -3,13 +3,10 @@
 import { useState } from "react";
 import ProfileHeader from "./ProfileHeader";
 import PiecesGrid from "./tabs/PiecesGrid";
-import DraftsList from "./tabs/DraftsList";
 import CollectionsList from "./tabs/CollectionsList";
-import PrimaryButton from "@/components/PrimaryButton";
 import BackButton from "@/components/BackButton";
-import { useDraftCreation } from "@/hooks/useDraftCreation";
 
-type TabId = "pieces" | "drafts" | "collections";
+type TabId = "pieces" | "collections";
 
 interface ProfilePageProps {
   user: {
@@ -31,14 +28,6 @@ interface ProfilePageProps {
     coverImage: string | null;
     currentContent: string | null;
   }>;
-  drafts: Array<{
-    id: string;
-    title: string | null;
-    createdAt: string;
-    updatedAt: string;
-    isShared: boolean;
-    riffs: Array<{ id: string; title: string | null; clubName: string }>;
-  }>;
   collections: Array<{
     id: string;
     name: string;
@@ -56,7 +45,6 @@ interface ProfilePageProps {
 }
 
 const TABS: { id: TabId; label: string }[] = [
-  { id: "drafts", label: "DRAFTS" },
   { id: "pieces", label: "PIECES" },
   { id: "collections", label: "COLLECTIONS" },
 ];
@@ -65,13 +53,11 @@ export default function ProfilePage({
   user,
   stats,
   pieces,
-  drafts,
   collections,
   isOwnProfile,
   lastActiveClubId,
 }: ProfilePageProps) {
-  const [activeTab, setActiveTab] = useState<TabId>("drafts");
-  const { createDraft, isCreating } = useDraftCreation();
+  const [activeTab, setActiveTab] = useState<TabId>("pieces");
 
   return (
     <div
@@ -160,27 +146,6 @@ export default function ProfilePage({
         {isOwnProfile ? (
           <>
             {activeTab === "pieces" && <PiecesGrid pieces={pieces} />}
-            {activeTab === "drafts" && (
-              <>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "flex-end",
-                    padding: "16px 24px 0",
-                  }}
-                >
-                  <PrimaryButton
-                    onClick={() => createDraft()}
-                    loading={isCreating}
-                    disabled={isCreating}
-                    style={{ width: "auto" }}
-                  >
-                    New Draft
-                  </PrimaryButton>
-                </div>
-                <DraftsList drafts={drafts} />
-              </>
-            )}
             {activeTab === "collections" && (
               <CollectionsList collections={collections} />
             )}

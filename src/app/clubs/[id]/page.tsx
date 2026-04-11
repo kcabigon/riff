@@ -2,13 +2,17 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import ClubPageLayout from "@/components/clubs/ClubPageLayout";
+import { getSubmittedPieces, getTotalWordCount } from "@/lib/riff-utils";
 
 export default async function ClubPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ welcome?: string }>;
 }) {
   const { id } = await params;
+  const { welcome } = await searchParams;
   const session = await getSession();
 
   if (!session?.user) {
@@ -114,10 +118,12 @@ export default async function ClubPage({
 
   // Compute stats
   const riffCount = riffs.length;
-  const pieceCount = riffs.reduce((sum, r) => sum + r.pieces.length, 0);
+  const pieceCount = riffs.reduce(
+    (sum, r) => sum + getSubmittedPieces(r.pieces).length,
+    0
+  );
   const wordCount = riffs.reduce(
-    (sum, r) =>
-      sum + r.pieces.reduce((s, p) => s + (p.piece?.wordCount || 0), 0),
+    (sum, r) => sum + getTotalWordCount(getSubmittedPieces(r.pieces)),
     0
   );
 
@@ -157,7 +163,9 @@ export default async function ClubPage({
     );
     // Add own piece to readCount so it doesn't count as unread
     for (const riff of revealedRiffs) {
-      const hasOwnPiece = riff.pieces.some((p) => p.piece.authorId === userId);
+      const hasOwnPiece = riff.pieces.some(
+        (p) => p.piece.authorId === userId && p.submittedAt !== null
+      );
       if (hasOwnPiece) {
         readCounts[riff.id] = (readCounts[riff.id] || 0) + 1;
       }
@@ -185,6 +193,9 @@ export default async function ClubPage({
       readCounts={readCounts}
       completedRiffs={completedRiffs}
       stats={{ riffCount, pieceCount, wordCount }}
+      initialWelcome={
+        welcome === "host" || welcome === "member" ? welcome : undefined
+      }
     />
   );
 }

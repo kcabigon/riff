@@ -36,7 +36,11 @@ export default async function WritePageRoute({
               deadline: true,
               clubId: true,
               club: {
-                select: { name: true },
+                select: {
+                  name: true,
+                  adminId: true,
+                  admin: { select: { firstName: true } },
+                },
               },
             },
           },
@@ -52,6 +56,11 @@ export default async function WritePageRoute({
   if (piece.authorId !== userId) {
     redirect("/");
   }
+
+  // Determine if user is admin of the club this piece is in (for post-submit modal)
+  const firstRiff = piece.riffs[0]?.riff;
+  const isAdmin = firstRiff ? firstRiff.club.adminId === userId : false;
+  const hostFirstName = firstRiff?.club.admin?.firstName ?? null;
 
   const serializedPiece = {
     id: piece.id,
@@ -70,5 +79,11 @@ export default async function WritePageRoute({
     })),
   };
 
-  return <WritePage piece={serializedPiece} />;
+  return (
+    <WritePage
+      piece={serializedPiece}
+      isAdmin={isAdmin}
+      hostFirstName={hostFirstName}
+    />
+  );
 }
