@@ -81,8 +81,8 @@ Last updated: March 30, 2026 (modal cleanup, reveal todos, notification todos)
 - [ ] After PieceRiff schema migration (DRAFT/SUBMITTED status field): fix profile Pieces tab to only show pieces that are SUBMITTED + riff is REVEALED — prevents sneak peeks on other users' profiles
 
 ### Piece Management
-- [ ] Let users manage piece state: draft vs. published, shared in riff vs. not ready to share
-- [ ] Clear distinction between drafts (in progress), submitted pieces (shared to a riff), and personal pieces (not in a riff)
+- [x] Let users manage piece state: draft vs. published, shared in riff vs. not ready to share
+- [x] Clear distinction between drafts (in progress), submitted pieces (shared to a riff), and personal pieces (not in a riff)
 
 ### Reveals
 - [x] Improve reveal logic — review edge cases (partial submissions, timing, re-reveal prevention)
