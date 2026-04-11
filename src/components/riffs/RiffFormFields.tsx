@@ -150,7 +150,7 @@ export default function RiffFormFields({
         <textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          placeholder="What should club members write about?"
+          placeholder="Let's write about..."
           rows={3}
           style={{ ...inputStyle, resize: "vertical" }}
           onFocus={onFocusGreen}
