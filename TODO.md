@@ -40,7 +40,7 @@ Last updated: March 30, 2026 (modal cleanup, reveal todos, notification todos)
 ### Riff Creation / Management
 - [x] Volume number auto-assigned; riff name optional (not required to create)
 - [x] Due date mandatory on riff creation, defaults to 1 month out, admin can edit later
-- [ ] Redesign prompts/inspiration UI
+- [x] Redesign prompts/inspiration UI
 - [x] After creating a riff, host sees "Start writing" or "Invite friends" CTA
 - [x] Don't show "Reveal pieces" until deadline passes OR all submissions are in
 
