@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import ClubPageLayout from "@/components/clubs/ClubPageLayout";
+import { getSubmittedPieces, getTotalWordCount } from "@/lib/riff-utils";
 
 export default async function ClubPage({
   params,
@@ -118,15 +119,11 @@ export default async function ClubPage({
   // Compute stats
   const riffCount = riffs.length;
   const pieceCount = riffs.reduce(
-    (sum, r) => sum + r.pieces.filter((p) => p.submittedAt !== null).length,
+    (sum, r) => sum + getSubmittedPieces(r.pieces).length,
     0
   );
   const wordCount = riffs.reduce(
-    (sum, r) =>
-      sum +
-      r.pieces
-        .filter((p) => p.submittedAt !== null)
-        .reduce((s, p) => s + (p.piece?.wordCount || 0), 0),
+    (sum, r) => sum + getTotalWordCount(getSubmittedPieces(r.pieces)),
     0
   );
 

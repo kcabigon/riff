@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import RiffPageLayout from "@/components/riffs/RiffPageLayout";
+import { getSubmittedPieces } from "@/lib/riff-utils";
 
 export default async function RiffPage({
   params,
@@ -228,7 +229,7 @@ export default async function RiffPage({
       readPieceIds={readPieceIds}
       hasNewCommentsMap={hasNewCommentsMap}
       contributionData={contributionData}
-      totalPieces={riff.pieces.filter((p) => p.submittedAt !== null).length}
+      totalPieces={getSubmittedPieces(riff.pieces).length}
       navUser={navUser}
       userClubs={userClubs}
       hostFirstName={riff.club.admin?.firstName ?? null}
