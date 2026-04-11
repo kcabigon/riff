@@ -81,7 +81,7 @@ src/components/
 ├── clubs/         # ClubPageLayout, NavBar, ClubDropdown, AvatarDropdown, OnboardingChecklist, InviteOptions, ClubSettingsModal, JoinClubClient
 ├── riffs/         # RiffCard, RiffCTAButton, RiffPageLayout, CreateRiffModal, EditRiffModal,
 │                  # DeleteRiffConfirmModal, RevealCelebration, RevealConfirmModal, PieceCard,
-│                  # CompletedRiffCard, ReadyToRevealCard, MosaicCollage, PromptLibrary,
+│                  # CompletedRiffCard, ReadyToRevealCard, MosaicCollage,
 │                  # EmptyRiffState, CountdownTimer
 ├── read/          # ReadPageLayout, ReadOnlyEditor, ReadToggle, ReadingProgress,
 │                  # CommentAnchor, CommentPopover, CommentSidebar, CommentDrawer
@@ -111,7 +111,7 @@ src/lib/
 ├── auth-utils.ts              # requireAuth(), getSession(), getCurrentUser()
 ├── resend.ts                  # Email: signIn, onboarding, club invite
 ├── notifications.ts           # createNotification, notifyClubMembers, notifyRiffParticipants
-└── prompt-suggestions.ts      # 27 curated writing prompts
+└── riff-utils.ts              # Shared riff logic helpers (getSubmittedPieces, isPastDeadline, formatDateShort, etc.)
 ```
 
 ---
