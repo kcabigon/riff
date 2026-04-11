@@ -757,13 +757,11 @@ export default function ClubPageLayout({
             <div style={{ marginBottom: "48px" }}>
               <h2
                 style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "20px",
-                  fontWeight: 300,
+                  fontFamily: "var(--font-dm-serif-text)",
+                  fontSize: "24px",
+                  fontWeight: 400,
                   color: "#000000",
                   margin: "0 0 16px 0",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
                 }}
               >
                 Current Read
@@ -810,13 +808,11 @@ export default function ClubPageLayout({
               {(activeRiff || isAdmin) && (
                 <h2
                   style={{
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "20px",
-                    fontWeight: 300,
+                    fontFamily: "var(--font-dm-serif-text)",
+                    fontSize: "24px",
+                    fontWeight: 400,
                     color: "#000000",
                     margin: "0 0 16px 0",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.05em",
                   }}
                 >
                   Current Riff
@@ -873,13 +869,11 @@ export default function ClubPageLayout({
           <div>
             <h2
               style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "20px",
-                fontWeight: 300,
+                fontFamily: "var(--font-dm-serif-text)",
+                fontSize: "24px",
+                fontWeight: 400,
                 color: "#000000",
                 margin: "0 0 16px 0",
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
               }}
             >
               Completed Riffs
