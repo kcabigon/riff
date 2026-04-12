@@ -5,6 +5,7 @@ import Underline from "@tiptap/extension-underline";
 import Image from "@tiptap/extension-image";
 import Youtube from "@tiptap/extension-youtube";
 import { Spotify } from "@/components/editor/extensions/Spotify";
+import { Indent } from "@/components/editor/extensions/Indent";
 
 /**
  * Shared Tiptap extensions used by both the write page (editable)
@@ -56,5 +57,6 @@ export function getSharedExtensions() {
     Spotify.configure({
       HTMLAttributes: { style: "border-radius:12px" },
     }),
+    Indent,
   ];
 }
