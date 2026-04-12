@@ -42,9 +42,9 @@ export default function ProfileHeader({
       {/* Right: name */}
       <span
         style={{
-          fontFamily: "var(--font-dm-sans)",
+          fontFamily: "var(--font-dm-serif-text)",
           fontSize: "16px",
-          fontWeight: 300,
+          fontWeight: 400,
           color: "#000000",
         }}
       >

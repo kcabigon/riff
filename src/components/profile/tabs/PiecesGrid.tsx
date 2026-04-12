@@ -189,7 +189,7 @@ function FeaturedPiece({
           cursor: !piece.isRevealed && !isOwnProfile ? "default" : "pointer",
           overflow: "hidden",
           boxShadow: isHovered ? "8px 8px 0px 0px #000000" : "none",
-          transition: "box-shadow 0.1s ease",
+          transition: "none",
           backgroundColor: piece.coverImage ? undefined : placeholderColor,
         }}
       >
@@ -313,6 +313,17 @@ export default function PiecesGrid({
       <div style={{ padding: "64px 24px", textAlign: "center" }}>
         <p
           style={{
+            fontFamily: "var(--font-dm-serif-text)",
+            fontSize: "24px",
+            fontWeight: 400,
+            color: "#000000",
+            margin: "0 0 8px 0",
+          }}
+        >
+          Every great writer starts with a blank page.
+        </p>
+        <p
+          style={{
             fontFamily: "var(--font-dm-sans)",
             fontSize: "16px",
             fontWeight: 300,
@@ -320,7 +331,7 @@ export default function PiecesGrid({
             margin: 0,
           }}
         >
-          No pieces yet.
+          Pieces coming soon.
         </p>
       </div>
     );
@@ -386,7 +397,7 @@ export default function PiecesGrid({
               .pieces-grid { grid-template-columns: repeat(2, 1fr); }
             }
             @media (max-width: 639px) {
-              .pieces-grid { grid-template-columns: 1fr; padding: 0 16px; }
+              .pieces-grid { grid-template-columns: 1fr; padding: 0 24px; }
             }
           `}</style>
           <div className="pieces-grid">

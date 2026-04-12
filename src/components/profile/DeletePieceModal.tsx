@@ -72,24 +72,6 @@ export default function DeletePieceModal({
       >
         {isDeleting ? "Deleting…" : "Delete"}
       </button>
-      <button
-        onClick={onClose}
-        disabled={isDeleting}
-        style={{
-          background: "none",
-          border: "none",
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "14px",
-          fontWeight: 300,
-          color: "#808080",
-          cursor: isDeleting ? "not-allowed" : "pointer",
-          padding: "4px",
-          textDecoration: "underline",
-          textAlign: "center",
-        }}
-      >
-        Cancel
-      </button>
     </div>
   );
 
@@ -121,7 +103,7 @@ export default function DeletePieceModal({
         <p
           style={{
             fontFamily: "var(--font-dm-sans)",
-            fontSize: "13px",
+            fontSize: "12px",
             fontWeight: 300,
             color: "#DC2626",
             margin: "12px 0 0 0",
