@@ -138,8 +138,9 @@ export default async function RiffPage({
       ...new Set([...reads.map((r) => r.pieceId), ...ownPieceIds]),
     ];
 
-    // First reveal: no actual DB reads yet (own piece auto-inclusion doesn't count)
-    isFirstReveal = !isAdmin && reads.length === 0;
+    // First reveal: no reads yet AND user participated — non-participants (including
+    // new members browsing past riffs) should not see the "moment you've been waiting for" modal
+    isFirstReveal = !isAdmin && reads.length === 0 && isJoined;
 
     // Fetch all comment timestamps for this riff in one query
     const comments = await prisma.comment.findMany({
