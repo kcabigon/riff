@@ -25,6 +25,7 @@ import LinkPopover from "@/components/write/LinkPopover";
 import WhatsNextModal, {
   type WhatsNextTrigger,
 } from "@/components/shared/WhatsNextModal";
+import { canShowWhatsNext, markWhatsNextSeen } from "@/lib/whatsNextGuard";
 import CTAButton from "@/components/CTAButton";
 
 interface RiffConnection {
@@ -749,9 +750,13 @@ export default function WritePage({
               method: "PATCH",
             });
             setIsSubmitted(true);
-            setWhatsNextTrigger(
-              isAdmin ? "host_submitted" : "member_submitted"
-            );
+            const submitTrigger = isAdmin
+              ? "host_submitted"
+              : "member_submitted";
+            if (canShowWhatsNext(submitTrigger)) {
+              markWhatsNextSeen(submitTrigger);
+              setWhatsNextTrigger(submitTrigger);
+            }
           }}
           submitDisabled={isSubmitted}
           onCoverAction={() => {

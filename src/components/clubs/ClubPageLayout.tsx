@@ -29,6 +29,7 @@ import {
 import WhatsNextModal, {
   type WhatsNextTrigger,
 } from "@/components/shared/WhatsNextModal";
+import { canShowWhatsNext, markWhatsNextSeen } from "@/lib/whatsNextGuard";
 
 interface ClubMember {
   user: {
@@ -138,6 +139,10 @@ export default function ClubPageLayout({
 
   // After joining a riff, refresh the page to get updated state
   const handleJoinRiff = useCallback(() => {
+    if (canShowWhatsNext("member_joined_riff")) {
+      markWhatsNextSeen("member_joined_riff");
+      setWhatsNextTrigger("member_joined_riff");
+    }
     router.refresh();
   }, []);
 
@@ -145,7 +150,10 @@ export default function ClubPageLayout({
   const handleRiffCreated = useCallback((riffId: string) => {
     setIsCreateRiffModalOpen(false);
     setNewRiffId(riffId);
-    setWhatsNextTrigger("host_started_riff");
+    if (canShowWhatsNext("host_started_riff")) {
+      markWhatsNextSeen("host_started_riff");
+      setWhatsNextTrigger("host_started_riff");
+    }
   }, []);
 
   // Handle reveal confirmation

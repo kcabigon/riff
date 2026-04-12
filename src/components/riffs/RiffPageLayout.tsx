@@ -27,6 +27,7 @@ import NoiseBackground from "@/components/NoiseBackground";
 import WhatsNextModal, {
   type WhatsNextTrigger,
 } from "@/components/shared/WhatsNextModal";
+import { canShowWhatsNext, markWhatsNextSeen } from "@/lib/whatsNextGuard";
 import PrimaryButton from "@/components/PrimaryButton";
 import CTAButton from "@/components/CTAButton";
 
@@ -135,7 +136,9 @@ export default function RiffPageLayout({
     const key = `riff-first-reveal-${riff.id}`;
     if (typeof window === "undefined") return;
     if (localStorage.getItem(key)) return;
+    if (!canShowWhatsNext("member_first_reveal")) return;
     localStorage.setItem(key, "1");
+    markWhatsNextSeen("member_first_reveal");
     setWhatsNextTrigger("member_first_reveal");
   }, [riff.id, isFirstReveal]);
   const deadlinePassed = isPastDeadline(riff.deadline);
@@ -516,7 +519,10 @@ export default function RiffPageLayout({
                 existingPieceId={existingPieceId}
                 onJoin={() => {
                   setIsJoined(true);
-                  setWhatsNextTrigger("member_joined_riff");
+                  if (canShowWhatsNext("member_joined_riff")) {
+                    markWhatsNextSeen("member_joined_riff");
+                    setWhatsNextTrigger("member_joined_riff");
+                  }
                 }}
               />
             ) : null}
@@ -696,7 +702,10 @@ export default function RiffPageLayout({
           pieceCount={riff.pieces.length}
           onDismiss={() => {
             setShowCelebration(false);
-            setWhatsNextTrigger("host_revealed");
+            if (canShowWhatsNext("host_revealed")) {
+              markWhatsNextSeen("host_revealed");
+              setWhatsNextTrigger("host_revealed");
+            }
           }}
         />
       )}
