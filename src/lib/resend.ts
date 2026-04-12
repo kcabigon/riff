@@ -225,7 +225,7 @@ function getSignInEmailTemplate(magicLink: string): string {
           <!-- Logo section -->
           <tr>
             <td align="center" style="padding:48px 40px 32px;">
-              <img src="https://raw.githubusercontent.com/kcabigon/riff/feature/signin-email-redesign/public/images/riff_logo_email.png" alt="Riff" width="160" height="149" style="display:block;margin:0 auto;" />
+              <img src="https://wmqlbbtgexpsxzwwurpi.supabase.co/storage/v1/object/public/images/riff-wordmark-email.png" alt="Riff" width="200" height="132" style="display:block;margin:0 auto;" />
             </td>
           </tr>
 
@@ -244,19 +244,25 @@ function getSignInEmailTemplate(magicLink: string): string {
             </td>
           </tr>
 
-          <!-- Button with email-safe offset shadow -->
+          <!-- Button with email-safe offset shadow (8px right, 8px down per brand spec) -->
           <tr>
-            <td style="padding:32px 40px;" align="center">
-              <table cellpadding="0" cellspacing="0" style="background-color:#000000;">
+            <td style="padding:32px 40px 40px 40px;">
+              <table cellpadding="0" cellspacing="0" width="100%" style="border-collapse:separate;border-spacing:0;">
+                <!-- Button row + right shadow column -->
                 <tr>
-                  <td style="padding:0 4px 4px 0;">
-                    <table cellpadding="0" cellspacing="0">
+                  <td style="background-color:#00FF66;border:2px solid #000000;padding:14px 0;text-align:center;">
+                    <a href="${magicLink}" style="font-size:17px;font-weight:300;color:#000000;text-decoration:none;font-family:'DM Sans',-apple-system,sans-serif;">Sign in to Riff</a>
+                  </td>
+                  <!-- Right shadow: white top 8px (no shadow yet), black below (shadow starts 8px down) -->
+                  <td width="8" style="width:8px;min-width:8px;padding:0;font-size:0;line-height:0;background-color:#000000;background-image:linear-gradient(to bottom, #ffffff 8px, #000000 8px);">&nbsp;</td>
+                </tr>
+                <!-- Bottom shadow: 8px white spacer (no shadow yet), then black (shadow starts 8px right) -->
+                <tr>
+                  <td colspan="2" style="padding:0;font-size:0;line-height:0;">
+                    <table cellpadding="0" cellspacing="0" width="100%" style="border-collapse:separate;border-spacing:0;">
                       <tr>
-                        <td style="background-color:#00FF66;border:2px solid #000000;text-align:center;">
-                          <a href="${magicLink}" style="display:block;padding:16px 48px;font-size:17px;font-weight:700;color:#000000;text-decoration:none;font-family:'DM Sans',-apple-system,sans-serif;white-space:nowrap;">
-                            Sign in to Riff →
-                          </a>
-                        </td>
+                        <td width="8" height="8" style="width:8px;height:8px;background-color:#ffffff;padding:0;font-size:0;line-height:0;">&nbsp;</td>
+                        <td style="background-color:#000000;height:8px;padding:0;font-size:0;line-height:0;">&nbsp;</td>
                       </tr>
                     </table>
                   </td>
