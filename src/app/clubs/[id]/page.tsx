@@ -135,17 +135,24 @@ export default async function ClubPage({
   });
 
   // Separate riffs by status
+  // Revealed riffs are split by membership join date:
+  // - post-join revealed riffs → "Current Read" (member was present for these)
+  // - pre-join revealed riffs → "Past Riffs" (member joined after these revealed)
+  const memberJoinedAt = membership.joinedAt;
   const activeRiff = riffs.find((r) => r.status === "ACTIVE")
     ? serializeRiff(riffs.find((r) => r.status === "ACTIVE")!)
     : null;
   const revealedRiffs = riffs
-    .filter((r) => r.status === "REVEALED")
+    .filter((r) => r.status === "REVEALED" && r.updatedAt > memberJoinedAt)
+    .map(serializeRiff);
+  const pastRevealedRiffs = riffs
+    .filter((r) => r.status === "REVEALED" && r.updatedAt <= memberJoinedAt)
     .map(serializeRiff);
   const completedRiffs = riffs
     .filter((r) => r.status === "COMPLETED")
     .map(serializeRiff);
 
-  // Fetch read counts for revealed riffs (per-user)
+  // Fetch read counts for post-join revealed riffs only (per-user)
   // Own pieces are treated as auto-read and excluded from the "to read" total
   const revealedRiffIds = revealedRiffs.map((r) => r.id);
   let readCounts: Record<string, number> = {};
@@ -190,6 +197,7 @@ export default async function ClubPage({
       isAdmin={isAdmin}
       activeRiff={activeRiff}
       revealedRiffs={revealedRiffs}
+      pastRevealedRiffs={pastRevealedRiffs}
       readCounts={readCounts}
       completedRiffs={completedRiffs}
       stats={{ riffCount, pieceCount, wordCount }}
