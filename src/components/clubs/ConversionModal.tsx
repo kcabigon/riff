@@ -5,6 +5,7 @@ import Modal from "@/components/shared/Modal";
 import CloseButton from "@/components/CloseButton";
 import NoiseBackground from "@/components/NoiseBackground";
 import Tagline from "@/components/Tagline";
+import SecondaryButton from "@/components/SecondaryButton";
 
 interface ConversionModalProps {
   isOpen: boolean;
@@ -123,11 +124,13 @@ export default function ConversionModal({
                 </p>
               </div>
 
-              <CtaButton
-                label={resolvedCtaLabel}
-                onJoin={onJoin}
-                isJoining={isJoining}
-              />
+              <SecondaryButton
+                onClick={onJoin}
+                disabled={isJoining}
+                loading={isJoining}
+              >
+                {resolvedCtaLabel}
+              </SecondaryButton>
 
               <div style={{ backgroundColor: "#FFFFFF", padding: "4px 16px" }}>
                 <button
@@ -207,72 +210,17 @@ export default function ConversionModal({
                 </p>
               </div>
 
-              <CtaButton
-                label={resolvedCtaLabel}
-                onJoin={onJoin}
-                isJoining={isJoining}
-              />
+              <SecondaryButton
+                onClick={onJoin}
+                disabled={isJoining}
+                loading={isJoining}
+              >
+                {resolvedCtaLabel}
+              </SecondaryButton>
             </>
           )}
         </div>
       </div>
     </Modal>
-  );
-}
-
-function CtaButton({
-  label,
-  onJoin,
-  isJoining,
-}: {
-  label: string;
-  onJoin: () => void;
-  isJoining: boolean;
-}) {
-  return (
-    <button
-      onClick={onJoin}
-      disabled={isJoining}
-      style={{
-        backgroundColor: "#01EFFC",
-        border: "2px solid #000000",
-        boxShadow: "8px 8px 0px 0px #000000",
-        padding: "12px 48px",
-        fontFamily: "var(--font-dm-sans)",
-        fontSize: "16px",
-        fontWeight: 300,
-        color: "#000000",
-        cursor: isJoining ? "not-allowed" : "pointer",
-        opacity: isJoining ? 0.7 : 1,
-        transition: "background-color 0.2s ease, box-shadow 0.2s ease",
-        whiteSpace: "nowrap",
-      }}
-      onMouseEnter={(e) => {
-        if (!isJoining) {
-          e.currentTarget.style.backgroundColor = "#FFFFFF";
-          e.currentTarget.style.boxShadow = "8px 8px 0px 0px #01EFFC";
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!isJoining) {
-          e.currentTarget.style.backgroundColor = "#01EFFC";
-          e.currentTarget.style.boxShadow = "8px 8px 0px 0px #000000";
-        }
-      }}
-      onMouseDown={(e) => {
-        if (!isJoining) {
-          e.currentTarget.style.transform = "translate(4px, 4px)";
-          e.currentTarget.style.boxShadow = "4px 4px 0px 0px #000000";
-        }
-      }}
-      onMouseUp={(e) => {
-        if (!isJoining) {
-          e.currentTarget.style.transform = "translate(0, 0)";
-          e.currentTarget.style.boxShadow = "8px 8px 0px 0px #01EFFC";
-        }
-      }}
-    >
-      {isJoining ? "Loading..." : label}
-    </button>
   );
 }

@@ -12,6 +12,7 @@ import {
   formatDateShort,
 } from "@/lib/riff-utils";
 import RiffCTAButton from "@/components/riffs/RiffCTAButton";
+import CTAButton from "@/components/CTAButton";
 
 interface RiffCardProps {
   riff: {
@@ -59,7 +60,6 @@ export default function RiffCard({
   onJoin,
   onReveal,
 }: RiffCardProps) {
-  const [isHovered, setIsHovered] = useState(false);
   const [isCardHovered, setIsCardHovered] = useState(false);
   const router = useRouter();
   const handleAvatarClick = useProfileNavigation();
@@ -207,29 +207,7 @@ export default function RiffCard({
       >
         {/* Button */}
         {(deadlinePassed || piecesAllSubmitted) && isAdmin ? (
-          <button
-            onClick={handleRevealClick}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-            style={{
-              backgroundColor: isHovered ? "#00FF66" : "#FFFFFF",
-              border: "2px solid #000000",
-              boxShadow: isHovered
-                ? "8px 8px 0px 0px #000000"
-                : "8px 8px 0px 0px #01EFFC",
-              padding: "12px 48px",
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              lineHeight: "normal",
-              color: "#000000",
-              cursor: "pointer",
-              transition: "none",
-              whiteSpace: "nowrap",
-            }}
-          >
-            Reveal riff
-          </button>
+          <CTAButton onClick={handleRevealClick}>Reveal riff</CTAButton>
         ) : deadlinePassed && !isAdmin ? (
           <button
             disabled
