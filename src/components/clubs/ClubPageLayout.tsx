@@ -18,7 +18,14 @@ import Dropdown from "@/components/shared/Dropdown";
 import type { DropdownItem } from "@/components/shared/Dropdown";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
 import { useIsMobile } from "@/hooks/useMediaQuery";
-import { getRiffDisplayTitle } from "@/lib/riff-utils";
+import {
+  getRiffDisplayTitle,
+  getSubmittedPieces,
+  hasUnreadPieces,
+  isRiffFullyRead,
+  getWaitingParticipants,
+  getSubmittedParticipants,
+} from "@/lib/riff-utils";
 import WhatsNextModal, {
   type WhatsNextTrigger,
 } from "@/components/shared/WhatsNextModal";
@@ -738,22 +745,23 @@ export default function ClubPageLayout({
 
         {/* Current Read section — shown above Current Riff when there are unread revealed riffs */}
         {(() => {
-          const unfinishedRevealed = revealedRiffs.filter((r) => {
-            const submitted = r.pieces.filter((p) => p.submittedAt !== null);
-            return (readCounts[r.id] || 0) < submitted.length;
-          });
+          const unfinishedRevealed = revealedRiffs.filter((r) =>
+            hasUnreadPieces(
+              r.id,
+              readCounts,
+              getSubmittedPieces(r.pieces).length
+            )
+          );
           if (unfinishedRevealed.length === 0) return null;
           return (
             <div style={{ marginBottom: "48px" }}>
               <h2
                 style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "20px",
-                  fontWeight: 300,
+                  fontFamily: "var(--font-dm-serif-text)",
+                  fontSize: "24px",
+                  fontWeight: 400,
                   color: "#000000",
                   margin: "0 0 16px 0",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
                 }}
               >
                 Current Read
@@ -771,9 +779,7 @@ export default function ClubPageLayout({
                     key={riff.id}
                     riff={riff}
                     readCount={readCounts[riff.id] || 0}
-                    totalPieces={
-                      riff.pieces.filter((p) => p.submittedAt !== null).length
-                    }
+                    totalPieces={getSubmittedPieces(riff.pieces).length}
                   />
                 ))}
               </div>
@@ -783,10 +789,13 @@ export default function ClubPageLayout({
 
         {/* Current Riff section — hidden for members when there's a current read and no active riff */}
         {(() => {
-          const hasCurrentRead = revealedRiffs.some((r) => {
-            const submitted = r.pieces.filter((p) => p.submittedAt !== null);
-            return (readCounts[r.id] || 0) < submitted.length;
-          });
+          const hasCurrentRead = revealedRiffs.some((r) =>
+            hasUnreadPieces(
+              r.id,
+              readCounts,
+              getSubmittedPieces(r.pieces).length
+            )
+          );
           const showSection = activeRiff || isAdmin || !hasCurrentRead;
           if (!showSection) return null;
 
@@ -799,13 +808,11 @@ export default function ClubPageLayout({
               {(activeRiff || isAdmin) && (
                 <h2
                   style={{
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "20px",
-                    fontWeight: 300,
+                    fontFamily: "var(--font-dm-serif-text)",
+                    fontSize: "24px",
+                    fontWeight: 400,
                     color: "#000000",
                     margin: "0 0 16px 0",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.05em",
                   }}
                 >
                   Current Riff
@@ -849,26 +856,24 @@ export default function ClubPageLayout({
         {/* Completed Riffs section — includes COMPLETED + fully-read REVEALED riffs */}
         {(() => {
           // Revealed riffs where user has read all pieces
-          const fullyReadRevealed = revealedRiffs.filter((r) => {
-            const submitted = r.pieces.filter((p) => p.submittedAt !== null);
-            return (
-              submitted.length > 0 &&
-              (readCounts[r.id] || 0) >= submitted.length
-            );
-          });
+          const fullyReadRevealed = revealedRiffs.filter((r) =>
+            isRiffFullyRead(
+              r.id,
+              readCounts,
+              getSubmittedPieces(r.pieces).length
+            )
+          );
           const allCompleted = [...completedRiffs, ...fullyReadRevealed];
           return allCompleted.length > 0;
         })() && (
           <div>
             <h2
               style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "20px",
-                fontWeight: 300,
+                fontFamily: "var(--font-dm-serif-text)",
+                fontSize: "24px",
+                fontWeight: 400,
                 color: "#000000",
                 margin: "0 0 16px 0",
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
               }}
             >
               Completed Riffs
@@ -885,15 +890,13 @@ export default function ClubPageLayout({
             >
               {[
                 ...completedRiffs,
-                ...revealedRiffs.filter((r) => {
-                  const submitted = r.pieces.filter(
-                    (p) => p.submittedAt !== null
-                  );
-                  return (
-                    submitted.length > 0 &&
-                    (readCounts[r.id] || 0) >= submitted.length
-                  );
-                }),
+                ...revealedRiffs.filter((r) =>
+                  isRiffFullyRead(
+                    r.id,
+                    readCounts,
+                    getSubmittedPieces(r.pieces).length
+                  )
+                ),
               ].map((riff) => (
                 <CompletedRiffCard
                   key={riff.id}
@@ -906,15 +909,13 @@ export default function ClubPageLayout({
                     deadline: riff.deadline ? new Date(riff.deadline) : null,
                   }}
                   clubName={clubName}
-                  pieces={riff.pieces
-                    .filter((p) => p.submittedAt !== null)
-                    .map((p) => ({
-                      id: p.piece.id,
-                      title: p.piece.title,
-                      currentContent: p.piece.currentContent,
-                      coverImage: p.piece.coverImage,
-                      wordCount: p.piece.wordCount,
-                    }))}
+                  pieces={getSubmittedPieces(riff.pieces).map((p) => ({
+                    id: p.piece.id,
+                    title: p.piece.title,
+                    currentContent: p.piece.currentContent,
+                    coverImage: p.piece.coverImage,
+                    wordCount: p.piece.wordCount,
+                  }))}
                 />
               ))}
             </div>
@@ -1020,28 +1021,17 @@ export default function ClubPageLayout({
           onConfirm={handleRevealConfirm}
           isRevealing={isRevealing}
           riffTitle={getRiffDisplayTitle(activeRiff)}
-          waitingUsers={activeRiff.participants
-            .filter(
-              (p) =>
-                !activeRiff.pieces.some(
-                  (piece) =>
-                    piece.piece.authorId === p.user.id &&
-                    piece.submittedAt !== null
-                )
-            )
-            .map((p) => ({
-              id: p.user.id,
-              name: p.user.name,
-              avatarUrl: p.user.avatarUrl,
-            }))}
+          waitingUsers={getWaitingParticipants(
+            activeRiff.participants,
+            activeRiff.pieces
+          ).map((p) => ({
+            id: p.user.id,
+            name: p.user.name,
+            avatarUrl: p.user.avatarUrl,
+          }))}
           submittedCount={
-            activeRiff.participants.filter((p) =>
-              activeRiff.pieces.some(
-                (piece) =>
-                  piece.piece.authorId === p.user.id &&
-                  piece.submittedAt !== null
-              )
-            ).length
+            getSubmittedParticipants(activeRiff.participants, activeRiff.pieces)
+              .length
           }
           totalParticipants={activeRiff.participants.length}
         />

@@ -106,7 +106,6 @@ export default function CreateRiffModal({
             deadline={deadline}
             setDeadline={setDeadline}
             deadlineRequired
-            showPromptLibrary
           />
 
           {error && (

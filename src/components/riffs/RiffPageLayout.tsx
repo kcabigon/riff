@@ -9,7 +9,15 @@ import EditRiffModal from "./EditRiffModal";
 import DeleteRiffConfirmModal from "./DeleteRiffConfirmModal";
 import NavBar from "@/components/clubs/NavBar";
 import RevealCelebration from "./RevealCelebration";
-import { getRiffDisplayTitle } from "@/lib/riff-utils";
+import {
+  getRiffDisplayTitle,
+  getSubmittedPieces,
+  allPiecesSubmitted,
+  isPastDeadline,
+  formatDateShort,
+  getSubmittedParticipants,
+  getWaitingParticipants,
+} from "@/lib/riff-utils";
 import RiffCTAButton from "@/components/riffs/RiffCTAButton";
 import ProgressCard from "@/components/riffs/ProgressCard";
 import Dropdown from "@/components/shared/Dropdown";
@@ -130,36 +138,16 @@ export default function RiffPageLayout({
     localStorage.setItem(key, "1");
     setWhatsNextTrigger("member_first_reveal");
   }, [riff.id, isFirstReveal]);
-  // Deadline detection
-  const isPastDeadline = riff.deadline
-    ? new Date(riff.deadline).getTime() < Date.now()
-    : false;
-
-  const allPiecesSubmitted =
-    riff.participants.length > 0 &&
-    riff.pieces.filter((p) => p.submittedAt).length >= riff.participants.length;
-
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    });
-  };
-
-  const submittedUsers = riff.participants.filter((p) =>
-    riff.pieces.some(
-      (piece) =>
-        piece.submittedAt !== null && piece.piece.authorId === p.user.id
-    )
+  const deadlinePassed = isPastDeadline(riff.deadline);
+  const piecesAllSubmitted = allPiecesSubmitted(
+    riff.pieces,
+    riff.participants.length
   );
-
-  const waitingUsers = riff.participants.filter(
-    (p) =>
-      !riff.pieces.some(
-        (piece) =>
-          piece.submittedAt !== null && piece.piece.authorId === p.user.id
-      )
+  const submittedUsers = getSubmittedParticipants(
+    riff.participants,
+    riff.pieces
   );
+  const waitingUsers = getWaitingParticipants(riff.participants, riff.pieces);
 
   const handleRevealClick = () => {
     if (onReveal) {
@@ -257,17 +245,17 @@ export default function RiffPageLayout({
                     fontSize: "16px",
                     fontWeight: 300,
                     color:
-                      isPastDeadline && riff.status !== "REVEALED"
+                      deadlinePassed && riff.status !== "REVEALED"
                         ? "#FF4444"
                         : "#808080",
                     margin: 0,
                   }}
                 >
-                  {isPastDeadline && riff.status !== "REVEALED"
+                  {deadlinePassed && riff.status !== "REVEALED"
                     ? "Deadline passed"
                     : riff.deadline
-                      ? `${formatDate(riff.createdAt)} - ${formatDate(riff.deadline)}`
-                      : formatDate(riff.createdAt)}
+                      ? `${formatDateShort(riff.createdAt)} - ${formatDateShort(riff.deadline)}`
+                      : formatDateShort(riff.createdAt)}
                 </p>
                 {isAdmin &&
                   riff.status !== "REVEALED" &&
@@ -413,7 +401,7 @@ export default function RiffPageLayout({
                     color: "#000000",
                   }}
                 >
-                  Revealed {formatDate(riff.updatedAt)}
+                  Revealed {formatDateShort(riff.updatedAt)}
                 </span>
               </div>
             )}
@@ -496,11 +484,11 @@ export default function RiffPageLayout({
                 );
               })()}
 
-            {(isPastDeadline || allPiecesSubmitted) &&
+            {(deadlinePassed || piecesAllSubmitted) &&
             isAdmin &&
             riff.status === "ACTIVE" ? (
               <CTAButton onClick={handleRevealClick}>Reveal riff</CTAButton>
-            ) : isPastDeadline && !isAdmin && riff.status === "ACTIVE" ? (
+            ) : deadlinePassed && !isAdmin && riff.status === "ACTIVE" ? (
               <button
                 disabled
                 style={{
@@ -535,11 +523,11 @@ export default function RiffPageLayout({
 
             {isJoined &&
               riff.deadline &&
-              !isPastDeadline &&
+              !deadlinePassed &&
               riff.status !== "REVEALED" && (
                 <CountdownTimer deadline={new Date(riff.deadline)} />
               )}
-            {isPastDeadline && riff.deadline && riff.status !== "REVEALED" && (
+            {deadlinePassed && riff.deadline && riff.status !== "REVEALED" && (
               <p
                 style={{
                   fontFamily: "var(--font-dm-sans)",

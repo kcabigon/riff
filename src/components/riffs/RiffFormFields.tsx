@@ -1,7 +1,6 @@
 "use client";
 
 import Tagline from "@/components/Tagline";
-import PromptLibrary from "./PromptLibrary";
 
 interface RiffFormFieldsProps {
   title: string;
@@ -11,7 +10,6 @@ interface RiffFormFieldsProps {
   deadline: string;
   setDeadline: (v: string) => void;
   deadlineRequired?: boolean;
-  showPromptLibrary?: boolean;
 }
 
 const inputStyle: React.CSSProperties = {
@@ -63,7 +61,6 @@ export default function RiffFormFields({
   deadline,
   setDeadline,
   deadlineRequired = false,
-  showPromptLibrary = false,
 }: RiffFormFieldsProps) {
   const daysUntilDeadline = deadline
     ? Math.round(
@@ -153,28 +150,13 @@ export default function RiffFormFields({
         <textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          placeholder="What should club members write about?"
+          placeholder="Let's write about..."
           rows={3}
           style={{ ...inputStyle, resize: "vertical" }}
           onFocus={onFocusGreen}
           onBlur={onBlurBlack}
         />
       </div>
-
-      {/* Prompt library */}
-      {showPromptLibrary && (
-        <div style={{ display: "flex", justifyContent: "center" }}>
-          <div
-            style={{
-              display: "inline-block",
-              backgroundColor: "#FFFFFF",
-              padding: "2px 8px",
-            }}
-          >
-            <PromptLibrary onSelect={(text) => setPrompt(text)} />
-          </div>
-        </div>
-      )}
     </>
   );
 }
