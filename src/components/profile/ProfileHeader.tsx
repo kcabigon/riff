@@ -1,155 +1,55 @@
-import Avatar from "@/components/shared/Avatar";
+"use client";
+
+import Image from "next/image";
+import BackButton from "@/components/BackButton";
 
 interface ProfileHeaderProps {
-  user: {
-    id: string;
-    name: string | null;
-    firstName: string | null;
-    lastName: string | null;
-    bio: string | null;
-    avatarUrl: string | null;
-    username: string | null;
-  };
-  stats: {
-    pieceCount: number;
-    totalWordCount: number;
-  };
+  firstName: string;
+  lastName: string;
+  lastActiveClubId?: string | null;
 }
 
-export default function ProfileHeader({ user, stats }: ProfileHeaderProps) {
-  const displayName =
-    [user.firstName, user.lastName].filter(Boolean).join(" ") ||
-    user.name ||
-    user.username ||
-    "Anonymous";
-
-  const formattedWordCount = stats.totalWordCount.toLocaleString();
+export default function ProfileHeader({
+  firstName,
+  lastName,
+  lastActiveClubId,
+}: ProfileHeaderProps) {
+  const displayName = [firstName, lastName].filter(Boolean).join(" ");
 
   return (
     <div
       style={{
         display: "flex",
-        flexDirection: "column",
         alignItems: "center",
-        gap: "16px",
-        padding: "48px 24px 32px",
-        width: "100%",
-        boxSizing: "border-box",
+        justifyContent: "space-between",
+        padding: "12px 24px",
+        minHeight: "48px",
       }}
     >
-      {/* Avatar with black border */}
-      <div
-        style={{
-          border: "2px solid #000000",
-          borderRadius: "50%",
-          overflow: "hidden",
-          width: "52px",
-          height: "52px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Avatar user={user} size={48} showBorder={false} />
+      {/* Left: back button + riff logo */}
+      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        {lastActiveClubId && (
+          <BackButton href={`/clubs/${lastActiveClubId}`} size={24} />
+        )}
+        <Image
+          src="/images/landing/riff_logo.svg"
+          alt="Riff"
+          width={40}
+          height={26}
+        />
       </div>
 
-      {/* Name */}
-      <h1
+      {/* Right: name */}
+      <span
         style={{
-          fontFamily: "var(--font-dm-serif-text)",
-          fontSize: "32px",
-          fontWeight: 400,
+          fontFamily: "var(--font-dm-sans)",
+          fontSize: "16px",
+          fontWeight: 300,
           color: "#000000",
-          margin: 0,
-          textAlign: "center",
         }}
       >
         {displayName}
-      </h1>
-
-      {/* Stats row */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "12px",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "baseline", gap: "4px" }}>
-          <span
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 700,
-              color: "#000000",
-            }}
-          >
-            {stats.pieceCount}
-          </span>
-          <span
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              color: "#808080",
-            }}
-          >
-            pieces
-          </span>
-        </div>
-
-        <span
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
-            fontWeight: 300,
-            color: "#808080",
-          }}
-        >
-          ·
-        </span>
-
-        <div style={{ display: "flex", alignItems: "baseline", gap: "4px" }}>
-          <span
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 700,
-              color: "#000000",
-            }}
-          >
-            {formattedWordCount}
-          </span>
-          <span
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              color: "#808080",
-            }}
-          >
-            words
-          </span>
-        </div>
-      </div>
-
-      {/* Bio */}
-      {user.bio && (
-        <p
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
-            fontWeight: 300,
-            color: "#000000",
-            margin: 0,
-            textAlign: "center",
-            maxWidth: "480px",
-            lineHeight: 1.5,
-          }}
-        >
-          {user.bio}
-        </p>
-      )}
+      </span>
     </div>
   );
 }

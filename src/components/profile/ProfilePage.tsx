@@ -1,12 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import ProfileHeader from "./ProfileHeader";
 import PiecesGrid from "./tabs/PiecesGrid";
-import CollectionsList from "./tabs/CollectionsList";
-import BackButton from "@/components/BackButton";
+import Avatar from "@/components/shared/Avatar";
 
-type TabId = "pieces" | "collections";
+const AVATAR_SIZE = 80;
 
 interface ProfilePageProps {
   user: {
@@ -27,132 +25,97 @@ interface ProfilePageProps {
     title: string | null;
     coverImage: string | null;
     currentContent: string | null;
-  }>;
-  collections: Array<{
-    id: string;
-    name: string;
-    pieces: Array<{
-      id: string;
-      title: string | null;
-      createdAt: string;
-      updatedAt: string;
-      isShared: boolean;
-      riffs: Array<{ id: string; title: string | null; clubName: string }>;
-    }>;
+    isRevealed: boolean;
   }>;
   isOwnProfile: boolean;
   lastActiveClubId: string | null;
 }
 
-const TABS: { id: TabId; label: string }[] = [
-  { id: "pieces", label: "PIECES" },
-  { id: "collections", label: "COLLECTIONS" },
-];
-
 export default function ProfilePage({
   user,
   stats,
-  pieces,
-  collections,
-  isOwnProfile,
   lastActiveClubId,
+  pieces,
+  isOwnProfile,
 }: ProfilePageProps) {
-  const [activeTab, setActiveTab] = useState<TabId>("pieces");
+  const firstName =
+    user.firstName || user.name?.split(" ")[0] || user.username || "";
+  const lastName =
+    user.lastName || user.name?.split(" ").slice(1).join(" ") || "";
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "#FFFFFF",
-      }}
-    >
-      {/* Back to club */}
-      {lastActiveClubId && (
-        <div style={{ padding: "16px 24px 0" }}>
-          <BackButton href={`/clubs/${lastActiveClubId}`} />
-        </div>
-      )}
+    <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
+      {/* Header + avatar bridge */}
+      <div style={{ position: "relative" }}>
+        <ProfileHeader
+          firstName={firstName}
+          lastName={lastName}
+          lastActiveClubId={lastActiveClubId}
+        />
 
-      {/* Header */}
-      <ProfileHeader user={user} stats={stats} />
-
-      {/* Divider */}
-      <div
-        style={{
-          width: "100%",
-          height: "1px",
-          backgroundColor: "#959595",
-        }}
-      />
-
-      {/* Tab bar — own profile only */}
-      {isOwnProfile && (
+        {/* Avatar centered on the header's bottom edge, cutting into the featured piece */}
         <div
           style={{
-            display: "flex",
-            justifyContent: "center",
-            gap: "16px",
-            paddingTop: "0",
-            paddingBottom: "0",
-            backgroundColor: "#FFFFFF",
+            position: "absolute",
+            bottom: -(AVATAR_SIZE / 2),
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 10,
           }}
         >
-          {TABS.map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  borderBottom: isActive
-                    ? "2px solid #000000"
-                    : "2px solid transparent",
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "20px",
-                  fontWeight: isActive ? 700 : 300,
-                  color: "#000000",
-                  cursor: "pointer",
-                  padding: "12px 24px",
-                  letterSpacing: "0.02em",
-                }}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
+          <Avatar
+            user={user}
+            size={48}
+            borderColor="#FFFFFF"
+            borderWidth={4}
+            style={{ width: `${AVATAR_SIZE}px`, height: `${AVATAR_SIZE}px` }}
+          />
         </div>
-      )}
+      </div>
 
-      {/* Divider under tabs */}
+      <PiecesGrid pieces={pieces} isOwnProfile={isOwnProfile} />
+
+      {/* Footer: stats */}
       <div
         style={{
-          width: "100%",
-          height: "1px",
-          backgroundColor: "#959595",
-        }}
-      />
-
-      {/* Tab content */}
-      <div
-        style={{
-          maxWidth: "1200px",
-          margin: "0 auto",
-          width: "100%",
-          boxSizing: "border-box",
+          borderTop: "1px solid #E6E6E6",
+          padding: "16px 24px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "8px",
         }}
       >
-        {isOwnProfile ? (
-          <>
-            {activeTab === "pieces" && <PiecesGrid pieces={pieces} />}
-            {activeTab === "collections" && (
-              <CollectionsList collections={collections} />
-            )}
-          </>
-        ) : (
-          <PiecesGrid pieces={pieces} />
-        )}
+        <span
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "16px",
+            fontWeight: 300,
+            color: "#808080",
+          }}
+        >
+          {stats.pieceCount} pieces
+        </span>
+        <span
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "16px",
+            fontWeight: 300,
+            color: "#808080",
+          }}
+        >
+          &middot;
+        </span>
+        <span
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "16px",
+            fontWeight: 300,
+            color: "#808080",
+          }}
+        >
+          {stats.totalWordCount.toLocaleString()} words
+        </span>
       </div>
     </div>
   );

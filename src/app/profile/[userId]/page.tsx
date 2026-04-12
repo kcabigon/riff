@@ -41,15 +41,8 @@ export default async function ProfilePageRoute({
     redirect("/");
   }
 
-  // Compute stats
-  const stats = await prisma.piece.aggregate({
-    where: { authorId: userId },
-    _count: { id: true },
-    _sum: { wordCount: true },
-  });
-
-  // Fetch submitted pieces by this user
-  const pieces = await prisma.piece.findMany({
+  // Fetch submitted pieces by this user, with riff status to determine visibility
+  const rawPieces = await prisma.piece.findMany({
     where: {
       authorId: userId,
       riffs: { some: { submittedAt: { not: null } } },
@@ -59,77 +52,36 @@ export default async function ProfilePageRoute({
       title: true,
       coverImage: true,
       currentContent: true,
+      wordCount: true,
+      riffs: {
+        where: { submittedAt: { not: null } },
+        select: { riff: { select: { status: true } } },
+      },
     },
     orderBy: { createdAt: "desc" },
   });
 
-  // Collections: user's own collections with their pieces
-  const collectionsRaw = await prisma.collection.findMany({
-    where: { ownerId: userId },
-    select: {
-      id: true,
-      name: true,
-      pieces: {
-        select: {
-          piece: {
-            select: {
-              id: true,
-              title: true,
-              createdAt: true,
-              updatedAt: true,
-              riffs: {
-                select: {
-                  riff: {
-                    select: {
-                      id: true,
-                      title: true,
-                      club: { select: { name: true } },
-                    },
-                  },
-                },
-              },
-              newShares: {
-                select: { id: true },
-                take: 1,
-              },
-            },
-          },
-        },
-        orderBy: { addedAt: "asc" },
-      },
-    },
-    orderBy: { createdAt: "asc" },
-  });
-
-  const collections = collectionsRaw.map((col) => ({
-    id: col.id,
-    name: col.name,
-    pieces: col.pieces.map((cp) => ({
-      id: cp.piece.id,
-      title: cp.piece.title,
-      createdAt: cp.piece.createdAt.toISOString(),
-      updatedAt: cp.piece.updatedAt.toISOString(),
-      isShared: cp.piece.newShares.length > 0,
-      riffs: cp.piece.riffs.map((r) => ({
-        id: r.riff.id,
-        title: r.riff.title,
-        clubName: r.riff.club.name,
-      })),
-    })),
+  const pieces = rawPieces.map((p) => ({
+    id: p.id,
+    title: p.title,
+    coverImage: p.coverImage,
+    currentContent: p.currentContent,
+    wordCount: p.wordCount,
+    isRevealed: p.riffs.some((r) => r.riff.status === "REVEALED"),
   }));
 
-  const isOwnProfile = currentUserId === userId;
+  const pieceCount = pieces.length;
+  const totalWordCount = pieces.reduce((sum, p) => sum + (p.wordCount ?? 0), 0);
 
   return (
     <ProfilePage
       user={user}
       stats={{
-        pieceCount: stats._count.id,
-        totalWordCount: stats._sum.wordCount ?? 0,
+        pieceCount,
+        totalWordCount,
       }}
       pieces={pieces}
-      collections={collections}
-      isOwnProfile={isOwnProfile}
+      isOwnProfile={currentUserId === userId}
       lastActiveClubId={currentUser?.lastActiveClubId ?? null}
     />
   );
