@@ -1065,10 +1065,15 @@ export default function ClubPageLayout({
                     setWhatsNextTrigger(null);
                     router.push(`/riffs/${newRiffId}`);
                   }
-                : () => {
-                    setWhatsNextTrigger(null);
-                    router.refresh();
-                  }
+                : whatsNextTrigger === "member_joined_riff" && activeRiff
+                  ? () => {
+                      setWhatsNextTrigger(null);
+                      router.push(`/riffs/${activeRiff.id}`);
+                    }
+                  : () => {
+                      setWhatsNextTrigger(null);
+                      router.refresh();
+                    }
           }
         />
       )}
