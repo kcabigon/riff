@@ -140,6 +140,7 @@ export default function ClubPageLayout({
 
   // After joining a riff, refresh the page to get updated state
   const handleJoinRiff = useCallback(() => {
+    setWhatsNextTrigger("member_joined_riff");
     router.refresh();
   }, []);
 
