@@ -11,9 +11,9 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import "@/app/write/[pieceId]/editor.css";
 import BackButton from "@/components/BackButton";
-import IconButton from "@/components/IconButton";
 import CoverImageModal from "@/components/write/CoverImageModal";
-import ShareConfirmModal from "@/components/write/ShareConfirmModal";
+import SubmitConfirmModal from "@/components/write/SubmitConfirmModal";
+import IconButton from "@/components/IconButton";
 import { convertHeicToJpeg } from "@/lib/convert-heic";
 import NoiseBackground from "@/components/NoiseBackground";
 import { useIsMobile } from "@/hooks/useMediaQuery";
@@ -22,6 +22,10 @@ import { useThemeColor } from "@/hooks/useThemeColor";
 import { useScrollDirection } from "@/hooks/useScrollDirection";
 import EmbedModal from "@/components/write/EmbedModal";
 import LinkPopover from "@/components/write/LinkPopover";
+import WhatsNextModal, {
+  type WhatsNextTrigger,
+} from "@/components/shared/WhatsNextModal";
+import CTAButton from "@/components/CTAButton";
 
 interface RiffConnection {
   id: string;
@@ -42,9 +46,15 @@ interface WritePageProps {
     coverImage: string | null;
     riffs: RiffConnection[];
   };
+  isAdmin?: boolean;
+  hostFirstName?: string | null;
 }
 
-export default function WritePage({ piece }: WritePageProps) {
+export default function WritePage({
+  piece,
+  isAdmin = false,
+  hostFirstName,
+}: WritePageProps) {
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "unsaved">(
     "saved"
   );
@@ -52,12 +62,16 @@ export default function WritePage({ piece }: WritePageProps) {
   const [subtitle, setSubtitle] = useState(piece.subtitle || "");
   const [coverImage, setCoverImage] = useState<string | null>(piece.coverImage);
   const [showCoverModal, setShowCoverModal] = useState(false);
-  const [showShareModal, setShowShareModal] = useState(false);
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [showLinkModal, setShowLinkModal] = useState(false);
   const linkSelectionRef = useRef<{ from: number; to: number } | null>(null);
   const [showYoutubeModal, setShowYoutubeModal] = useState(false);
   const [showSpotifyModal, setShowSpotifyModal] = useState(false);
-  const isSubmitted = piece.riffs.some((r) => r.submittedAt !== null);
+  const [whatsNextTrigger, setWhatsNextTrigger] =
+    useState<WhatsNextTrigger | null>(null);
+  const [isSubmitted, setIsSubmitted] = useState(
+    piece.riffs.some((r) => r.submittedAt !== null)
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
   const titleRef = useRef<HTMLTextAreaElement>(null);
   const subtitleRef = useRef<HTMLTextAreaElement>(null);
@@ -410,19 +424,15 @@ export default function WritePage({ piece }: WritePageProps) {
               padding: "16px 0 8px",
             }}
           >
-            <BackButton onClick={handleBack} />
-
-            {/* Right side: save status + cover + share */}
+            {/* Left side: back button + save status */}
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
                 gap: "12px",
-                flexWrap: "wrap",
-                justifyContent: "flex-end",
               }}
             >
-              {/* Save status */}
+              <BackButton onClick={handleBack} />
               <div
                 style={{
                   display: "flex",
@@ -437,10 +447,10 @@ export default function WritePage({ piece }: WritePageProps) {
                     borderRadius: "50%",
                     background:
                       saveStatus === "saved"
-                        ? "#22c55e"
+                        ? "#00FF66"
                         : saveStatus === "saving"
-                          ? "#eab308"
-                          : "#9ca3af",
+                          ? "#EECF01"
+                          : "#808080",
                     animation:
                       saveStatus === "saving"
                         ? "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite"
@@ -450,9 +460,9 @@ export default function WritePage({ piece }: WritePageProps) {
                 <span
                   style={{
                     fontFamily: "var(--font-dm-sans)",
-                    fontSize: "14px",
-                    fontWeight: 400,
-                    color: "#999999",
+                    fontSize: "12px",
+                    fontWeight: 300,
+                    color: "#808080",
                   }}
                 >
                   {saveStatus === "saved"
@@ -462,51 +472,49 @@ export default function WritePage({ piece }: WritePageProps) {
                       : "Unsaved"}
                 </span>
               </div>
+            </div>
 
-              {/* Cover button */}
-              <IconButton
-                src="/icons/cover_photo.svg"
-                label={coverImage ? "Change cover image" : "Add cover image"}
-                onClick={() => setShowCoverModal(true)}
-                size={24}
-              />
-
-              {/* Share button */}
+            {/* Right side: CTA */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+              }}
+            >
+              {/* Submit CTA / cover icon */}
               {piece.riffs.length > 0 &&
                 (isSubmitted ? (
-                  <span
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "4px",
-                      fontFamily: "var(--font-dm-sans)",
-                      fontSize: "12px",
-                      fontWeight: 300,
-                      color: "#000000",
-                      background: "#00FF66",
-                      border: "1px solid #000000",
-                      borderRadius: "2px",
-                      padding: "2px 8px",
-                    }}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path
-                        d="M2 6L5 9L10 3"
-                        stroke="#000000"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    Shared
-                  </span>
-                ) : (
                   <IconButton
-                    src="/icons/share.svg"
-                    label="Share to riff"
-                    onClick={() => setShowShareModal(true)}
+                    src="/icons/cover_photo.svg"
+                    label={
+                      coverImage ? "Change cover image" : "Add cover image"
+                    }
+                    onClick={() => {
+                      if (coverImage) {
+                        setShowSubmitModal(true);
+                      } else {
+                        setShowCoverModal(true);
+                      }
+                    }}
                     size={24}
                   />
+                ) : (
+                  <CTAButton
+                    onClick={() => {
+                      if (coverImage) {
+                        setShowSubmitModal(true);
+                      } else {
+                        setShowCoverModal(true);
+                      }
+                    }}
+                    style={{
+                      padding: isMobile ? "8px 24px" : "12px 48px",
+                      fontSize: isMobile ? "12px" : "16px",
+                    }}
+                  >
+                    Submit piece
+                  </CTAButton>
                 ))}
             </div>
           </div>
@@ -516,6 +524,7 @@ export default function WritePage({ piece }: WritePageProps) {
             <div
               style={{
                 borderBottom: "2px solid #000000",
+                paddingTop: "8px",
                 paddingBottom: "8px",
               }}
             >
@@ -544,69 +553,6 @@ export default function WritePage({ piece }: WritePageProps) {
       >
         {/* Spacer — accounts for fixed bar height on mobile */}
         <div style={{ height: isMobile ? "140px" : "24px" }} />
-
-        {/* Riff pills */}
-        {piece.riffs.length > 0 && (
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              gap: "8px",
-              marginBottom: "16px",
-              flexWrap: "wrap",
-            }}
-          >
-            {piece.riffs.map((riff) => (
-              <span
-                key={riff.id}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "12px",
-                  fontWeight: 400,
-                  color: "#000000",
-                  border: "1px solid #00FF66",
-                  borderRadius: "2px",
-                  padding: riff.submittedAt ? "4px 12px" : "4px 8px 4px 12px",
-                }}
-              >
-                {riff.title || `${riff.clubName}: Active Riff`}
-                {!riff.submittedAt && (
-                  <button
-                    onClick={async () => {
-                      await fetch(`/api/riffs/${riff.id}/pieces/${piece.id}`, {
-                        method: "DELETE",
-                      });
-                      router.refresh();
-                    }}
-                    title="Remove from riff"
-                    style={{
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      padding: "0",
-                      display: "flex",
-                      alignItems: "center",
-                      color: "#888888",
-                      lineHeight: 1,
-                    }}
-                  >
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                      <path
-                        d="M1 1L9 9M9 1L1 9"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  </button>
-                )}
-              </span>
-            ))}
-          </div>
-        )}
 
         {/* Writing area */}
         <div
@@ -781,19 +727,40 @@ export default function WritePage({ piece }: WritePageProps) {
       <CoverImageModal
         isOpen={showCoverModal}
         onClose={() => setShowCoverModal(false)}
-        onSelect={handleCoverImageSelect}
+        onSelect={(url) => {
+          handleCoverImageSelect(url);
+          setShowCoverModal(false);
+          setShowSubmitModal(true);
+        }}
+        onSkip={() => {
+          setShowCoverModal(false);
+          setShowSubmitModal(true);
+        }}
         pieceContent={editor.getHTML()}
         currentCoverImage={coverImage}
       />
       {piece.riffs.length > 0 && (
-        <ShareConfirmModal
-          isOpen={showShareModal}
-          onClose={() => setShowShareModal(false)}
+        <SubmitConfirmModal
+          isOpen={showSubmitModal}
+          onClose={() => setShowSubmitModal(false)}
           onConfirm={async () => {
             const riff = piece.riffs[0];
             await fetch(`/api/riffs/${riff.id}/pieces/${piece.id}`, {
               method: "PATCH",
             });
+            setIsSubmitted(true);
+            setWhatsNextTrigger(
+              isAdmin ? "host_submitted" : "member_submitted"
+            );
+          }}
+          submitDisabled={isSubmitted}
+          onCoverAction={() => {
+            if (coverImage) {
+              setCoverImage(null);
+              autosaveCoverImage(null);
+            }
+            setShowSubmitModal(false);
+            setShowCoverModal(true);
           }}
           piece={{
             id: piece.id,
@@ -802,6 +769,23 @@ export default function WritePage({ piece }: WritePageProps) {
             currentContent: editor?.getHTML() ?? piece.currentContent,
           }}
           riff={piece.riffs[0]}
+        />
+      )}
+
+      {/* What's Next Modal */}
+      {whatsNextTrigger && (
+        <WhatsNextModal
+          isOpen={true}
+          onClose={() => {
+            setWhatsNextTrigger(null);
+            router.refresh();
+          }}
+          trigger={whatsNextTrigger}
+          hostFirstName={hostFirstName}
+          onCTAClick={() => {
+            setWhatsNextTrigger(null);
+            router.push(`/riffs/${piece.riffs[0]?.id ?? ""}`);
+          }}
         />
       )}
     </div>

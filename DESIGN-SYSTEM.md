@@ -142,15 +142,29 @@ This is the single source of truth for Riff's visual design. Read this before bu
 ## Interaction States
 
 ### Primary Button (PrimaryButton)
+For modals, forms, and login flows — anywhere on a noisy or modal background.
 | State | Background | Border | Shadow | Text |
 |-------|-----------|--------|--------|------|
-| Default | White | 2px solid black | 8px green | Black, DM Sans 300 16px |
-| Hover | White | 2px solid black | 8px green | Black |
-| Active/Pressed | Green `#00FF66` | 2px solid black | 4px black + translate(4px,4px) | Black |
+| Default | Green `#00FF66` | 2px solid black | `8px 8px 0 0 #000000` | Black, DM Sans 300 16px |
+| Hover | White | 2px solid black | `8px 8px 0 0 #00FF66` | Black |
+| Active/Pressed | Green `#00FF66` | 2px solid black | `4px 4px 0 0 #00FF66` + translate(4px,4px) | Black |
 | Disabled | White | 2px solid `#9C9C9C` | None | `#9C9C9C` |
 
 ### Secondary Button (SecondaryButton)
-Same as Primary but with cyan `#01EFFC` shadow instead of green.
+For join flows and secondary CTAs (e.g. landing page, about page, onboarding). Same as PrimaryButton but cyan.
+| State | Background | Border | Shadow | Text |
+|-------|-----------|--------|--------|------|
+| Default | Cyan `#01EFFC` | 2px solid black | `8px 8px 0 0 #000000` | Black, DM Sans 300 16px |
+| Hover | White | 2px solid black | `8px 8px 0 0 #01EFFC` | Black |
+| Active/Pressed | Cyan `#01EFFC` | 2px solid black | `4px 4px 0 0 #01EFFC` + translate(4px,4px) | Black |
+| Disabled | White | 2px solid `#9C9C9C` | None | `#9C9C9C` |
+
+### RiffCTA Button (RiffCTAButton)
+For in-context card and page actions — club page, riff page, editor (anything on a clean white surface).
+| State | Background | Border | Shadow | Text |
+|-------|-----------|--------|--------|------|
+| Default | White | 2px solid black | `8px 8px 0 0 #00FF66` | Black, DM Sans 300 16px |
+| Hover | Green `#00FF66` | 2px solid black | `8px 8px 0 0 #000000` | Black |
 
 ### Form Inputs (TextInput)
 | State | Background | Border | Text |
@@ -173,8 +187,10 @@ All interactive elements: border/outline changes to green `#00FF66`.
 ### Buttons & Inputs (`src/components/`)
 | Component | File | Use for |
 |-----------|------|---------|
-| **PrimaryButton** | `PrimaryButton.tsx` | Primary actions (green shadow). Props: `loading`, `disabled` |
-| **SecondaryButton** | `SecondaryButton.tsx` | Secondary actions (cyan shadow). Same props as PrimaryButton |
+| **PrimaryButton** | `PrimaryButton.tsx` | Primary actions in modals/forms. Green bg at rest. Props: `loading`, `disabled` |
+| **SecondaryButton** | `SecondaryButton.tsx` | Secondary CTAs, join flows. Cyan bg at rest. Same props as PrimaryButton |
+| **CTAButton** | `CTAButton.tsx` | RiffCTA visual pattern — white bg + green shadow at rest, green bg on hover. Use for any in-context page/card action. Props: standard button props |
+| **RiffCTAButton** | `riffs/RiffCTAButton.tsx` | Smart wrapper around CTAButton for riff actions (Join, Start/Continue Writing, View Submission). Handles join API, draft creation, and navigation. Props: `riffId`, `isJoined`, `hasDraft`, `hasSubmitted`, `existingPieceId`, `onJoin`, `stopPropagation` |
 | **TextInput** | `TextInput.tsx` | All form inputs. Props: `error`, `multiline`, `rows` |
 
 ### Navigation & Actions (`src/components/`)

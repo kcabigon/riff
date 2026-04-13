@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import NotificationItem from "./NotificationItem";
+import { formatDateShort } from "@/lib/riff-utils";
 
 interface NotificationData {
   id: string;
@@ -51,10 +52,7 @@ export default function NotificationPanel({
   // Group by date
   const grouped: Record<string, NotificationData[]> = {};
   notifications.forEach((n) => {
-    const date = new Date(n.createdAt).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    });
+    const date = formatDateShort(n.createdAt);
     if (!grouped[date]) grouped[date] = [];
     grouped[date].push(n);
   });

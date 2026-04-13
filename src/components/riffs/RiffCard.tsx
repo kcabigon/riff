@@ -5,8 +5,14 @@ import { useRouter } from "next/navigation";
 import CountdownTimer from "./CountdownTimer";
 import AvatarStack from "@/components/shared/AvatarStack";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
-import { getRiffDisplayTitle } from "@/lib/riff-utils";
+import {
+  getRiffDisplayTitle,
+  allPiecesSubmitted,
+  isPastDeadline,
+  formatDateShort,
+} from "@/lib/riff-utils";
 import RiffCTAButton from "@/components/riffs/RiffCTAButton";
+import CTAButton from "@/components/CTAButton";
 
 interface RiffCardProps {
   riff: {
@@ -26,7 +32,7 @@ interface RiffCardProps {
       };
     }>;
     pieces: Array<{
-      submittedAt?: Date | string | null;
+      submittedAt: Date | string | null;
       piece: {
         id: string;
         authorId: string;
@@ -54,32 +60,20 @@ export default function RiffCard({
   onJoin,
   onReveal,
 }: RiffCardProps) {
-  const [isHovered, setIsHovered] = useState(false);
   const [isCardHovered, setIsCardHovered] = useState(false);
   const router = useRouter();
   const handleAvatarClick = useProfileNavigation();
 
-  // Deadline detection
-  const isPastDeadline = riff.deadline
-    ? new Date(riff.deadline).getTime() < Date.now()
-    : false;
-
-  const allPiecesSubmitted =
-    riff.participants.length > 0 &&
-    riff.pieces.filter((p) => p.submittedAt).length >= riff.participants.length;
-
-  // Format date
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    });
-  };
+  const deadlinePassed = isPastDeadline(riff.deadline ?? null);
+  const piecesAllSubmitted = allPiecesSubmitted(
+    riff.pieces,
+    riff.participants.length
+  );
 
   // Get date range for joined riff
   const getDateRange = () => {
     if (!riff.deadline) return null;
-    return `${formatDate(riff.createdAt)} - ${formatDate(riff.deadline)}`;
+    return `${formatDateShort(riff.createdAt)} - ${formatDateShort(riff.deadline)}`;
   };
 
   const handleCardClick = () => {
@@ -154,16 +148,16 @@ export default function RiffCard({
               fontSize: "16px",
               fontWeight: 300,
               lineHeight: "normal",
-              color: isPastDeadline ? "#FF4444" : "#808080",
+              color: deadlinePassed ? "#FF4444" : "#808080",
               margin: 0,
             }}
           >
-            {isPastDeadline
+            {deadlinePassed
               ? "Deadline passed"
               : isJoined && riff.deadline
                 ? getDateRange()
                 : riff.deadline
-                  ? `Deadline: ${formatDate(riff.deadline)}`
+                  ? `Deadline: ${formatDateShort(riff.deadline)}`
                   : "No deadline"}
           </p>
         </div>
@@ -212,31 +206,9 @@ export default function RiffCard({
         }}
       >
         {/* Button */}
-        {(isPastDeadline || allPiecesSubmitted) && isAdmin ? (
-          <button
-            onClick={handleRevealClick}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-            style={{
-              backgroundColor: isHovered ? "#00FF66" : "#FFFFFF",
-              border: "2px solid #000000",
-              boxShadow: isHovered
-                ? "8px 8px 0px 0px #000000"
-                : "8px 8px 0px 0px #01EFFC",
-              padding: "12px 48px",
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              lineHeight: "normal",
-              color: "#000000",
-              cursor: "pointer",
-              transition: "none",
-              whiteSpace: "nowrap",
-            }}
-          >
-            Reveal riff
-          </button>
-        ) : isPastDeadline && !isAdmin ? (
+        {(deadlinePassed || piecesAllSubmitted) && isAdmin ? (
+          <CTAButton onClick={handleRevealClick}>Reveal riff</CTAButton>
+        ) : deadlinePassed && !isAdmin ? (
           <button
             disabled
             style={{
@@ -269,10 +241,10 @@ export default function RiffCard({
         )}
 
         {/* Countdown Timer or Time's up */}
-        {isJoined && riff.deadline && !isPastDeadline && (
+        {isJoined && riff.deadline && !deadlinePassed && (
           <CountdownTimer deadline={new Date(riff.deadline)} />
         )}
-        {isPastDeadline && riff.deadline && (
+        {deadlinePassed && riff.deadline && (
           <p
             style={{
               fontFamily: "var(--font-dm-sans)",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import CTAButton from "@/components/CTAButton";
 
 interface EmptyRiffStateProps {
   onStartNewRiff: () => void;
@@ -13,8 +13,6 @@ export default function EmptyRiffState({
   isAdmin = true,
   hostName,
 }: EmptyRiffStateProps) {
-  const [isHovered, setIsHovered] = useState(false);
-
   if (!isAdmin) {
     const hostFirstName = hostName?.split(" ")[0] ?? "The host";
     return (
@@ -49,28 +47,7 @@ export default function EmptyRiffState({
         width: "100%",
       }}
     >
-      <button
-        onClick={onStartNewRiff}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        style={{
-          backgroundColor: isHovered ? "#00FF66" : "#FFFFFF",
-          border: "2px solid #000000",
-          boxShadow: isHovered
-            ? "8px 8px 0px 0px #000000"
-            : "8px 8px 0px 0px #01EFFC",
-          padding: "12px 48px",
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "16px",
-          fontWeight: 300,
-          color: "#000000",
-          cursor: "pointer",
-          transition: "none",
-          whiteSpace: "nowrap",
-        }}
-      >
-        Start new riff
-      </button>
+      <CTAButton onClick={onStartNewRiff}>Start new riff</CTAButton>
     </div>
   );
 }

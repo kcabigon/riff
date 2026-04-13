@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import AuthCard from "@/components/auth/AuthCard";
-import AuthButton from "@/components/auth/AuthButton";
+import PrimaryButton from "@/components/PrimaryButton";
 
 function ErrorContent() {
   const searchParams = useSearchParams();
@@ -112,7 +112,7 @@ function ErrorContent() {
         {/* Action Button */}
         <div style={{ width: "100%", marginTop: "24px" }}>
           <Link href="/login" style={{ textDecoration: "none", width: "100%" }}>
-            <AuthButton>Try again</AuthButton>
+            <PrimaryButton>Try again</PrimaryButton>
           </Link>
         </div>
 

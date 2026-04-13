@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import NoiseBackground from "@/components/NoiseBackground";
 import LandingNavBar from "@/components/LandingNavBar";
 import { useIsMobile } from "@/hooks/useMediaQuery";
+import SecondaryButton from "@/components/SecondaryButton";
 
 const FILTERS = {
   yellow: "none",
@@ -142,40 +143,12 @@ export default function AboutPage() {
             marginBottom: "48px",
           }}
         >
-          <button
+          <SecondaryButton
             onClick={() => router.push("/login")}
-            style={{
-              backgroundColor: "#01EFFC",
-              border: "2px solid #000000",
-              boxShadow: "8px 8px 0px 0px #000000",
-              padding: "12px 48px",
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              color: "#000000",
-              cursor: "pointer",
-              transition: "background-color 0.2s ease, box-shadow 0.2s ease",
-              whiteSpace: "nowrap",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#FFFFFF";
-              e.currentTarget.style.boxShadow = "8px 8px 0px 0px #01EFFC";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "#01EFFC";
-              e.currentTarget.style.boxShadow = "8px 8px 0px 0px #000000";
-            }}
-            onMouseDown={(e) => {
-              e.currentTarget.style.transform = "translate(4px, 4px)";
-              e.currentTarget.style.boxShadow = "4px 4px 0px 0px #000000";
-            }}
-            onMouseUp={(e) => {
-              e.currentTarget.style.transform = "translate(0, 0)";
-              e.currentTarget.style.boxShadow = "8px 8px 0px 0px #01EFFC";
-            }}
+            style={{ width: "auto" }}
           >
             Start the party
-          </button>
+          </SecondaryButton>
         </div>
 
         {/* GIF */}
@@ -333,41 +306,12 @@ export default function AboutPage() {
             alignItems: "center",
           }}
         >
-          <button
+          <SecondaryButton
             onClick={() => router.push("/login")}
-            style={{
-              marginTop: "32px",
-              backgroundColor: "#01EFFC",
-              border: "2px solid #000000",
-              boxShadow: "8px 8px 0px 0px #000000",
-              padding: "12px 48px",
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              color: "#000000",
-              cursor: "pointer",
-              transition: "background-color 0.2s ease, box-shadow 0.2s ease",
-              whiteSpace: "nowrap",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#FFFFFF";
-              e.currentTarget.style.boxShadow = "8px 8px 0px 0px #01EFFC";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "#01EFFC";
-              e.currentTarget.style.boxShadow = "8px 8px 0px 0px #000000";
-            }}
-            onMouseDown={(e) => {
-              e.currentTarget.style.transform = "translate(4px, 4px)";
-              e.currentTarget.style.boxShadow = "4px 4px 0px 0px #000000";
-            }}
-            onMouseUp={(e) => {
-              e.currentTarget.style.transform = "translate(0, 0)";
-              e.currentTarget.style.boxShadow = "8px 8px 0px 0px #01EFFC";
-            }}
+            style={{ width: "auto", marginTop: "32px" }}
           >
             Be the hostess with the mostest
-          </button>
+          </SecondaryButton>
         </div>
       </div>
 
