@@ -32,7 +32,7 @@ export default function ProfileHeader({
           <BackButton href={`/clubs/${lastActiveClubId}`} size={24} />
         )}
         <Image
-          src="/images/landing/riff_logo.svg"
+          src="/images/riff_logo_black_shadow.svg"
           alt="Riff"
           width={40}
           height={26}
