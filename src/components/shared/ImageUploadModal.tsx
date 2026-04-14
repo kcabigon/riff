@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from "react";
 import Cropper, { Area } from "react-easy-crop";
 import Modal from "@/components/shared/Modal";
 import PrimaryButton from "@/components/PrimaryButton";
-import CloseButton from "@/components/CloseButton";
+import Image from "next/image";
 import { getCroppedImg } from "@/lib/crop-image";
 import { convertHeicToJpeg, isHeicFile } from "@/lib/convert-heic";
 
@@ -366,42 +366,58 @@ export default function ImageUploadModal({
             </div>
           </div>
         ) : inlinePreview && currentImage ? (
-          /* Inline image preview — portrait 4:5, X to remove */
+          /* Inline image preview — portrait 4:5, trash outside image */
           <div
             style={{
-              position: "relative",
-              width: "240px",
-              aspectRatio: "4 / 5",
-              margin: "0 auto",
-              overflow: "hidden",
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "center",
+              gap: "8px",
             }}
           >
-            <img
-              src={currentImage}
-              alt="Cover preview"
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                display: "block",
-              }}
-            />
             <div
               style={{
-                position: "absolute",
-                top: "4px",
-                right: "4px",
-                zIndex: 2,
+                width: "240px",
+                aspectRatio: "4 / 5",
+                overflow: "hidden",
+                flexShrink: 0,
               }}
             >
-              <CloseButton
-                onClick={() => {
-                  onSelect("");
-                  resetCropper();
+              <img
+                src={currentImage}
+                alt="Cover preview"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  display: "block",
                 }}
-                size={28}
               />
             </div>
+            <button
+              onClick={() => {
+                onSelect("");
+                resetCropper();
+              }}
+              style={{
+                width: "36px",
+                height: "36px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: "transparent",
+                border: "none",
+                cursor: "pointer",
+                flexShrink: 0,
+              }}
+            >
+              <Image
+                src="/icons/trash.png"
+                alt="Remove cover image"
+                width={28}
+                height={30}
+              />
+            </button>
           </div>
         ) : tab === "upload" ? (
           /* Upload drop zone */

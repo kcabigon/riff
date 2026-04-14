@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
+import { enqueueCommentEmail } from "@/lib/email-queue";
 
 export async function POST(req: Request) {
   try {
@@ -108,6 +109,7 @@ export async function POST(req: Request) {
 
     // Notify piece author if they're not the commenter
     if (piece.authorId !== userId) {
+      // In-app notification (immediate)
       await prisma.notification.create({
         data: {
           type: "NEW_COMMENT",
@@ -118,6 +120,16 @@ export async function POST(req: Request) {
           clubId,
           riffId,
         },
+      });
+
+      // Email notification (batched every 15 min)
+      await enqueueCommentEmail({
+        recipientId: piece.authorId,
+        actorId: userId,
+        pieceId,
+        commentId: comment.id,
+        clubId,
+        riffId,
       });
     }
 

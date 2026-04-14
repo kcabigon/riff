@@ -46,6 +46,8 @@ model User {
   receivedNotifications    Notification[]           @relation("NotificationRecipient")
   createdInvites           ClubInvite[]             // New: Club invites created by user
   pieceReads               PieceRead[]              // New: Track which pieces user has read
+  emailQueueAsRecipient    EmailQueue[]             @relation("EmailQueueRecipient")
+  emailQueueAsActor        EmailQueue[]             @relation("EmailQueueActor")
 
   // DEPRECATED: Circle relations (kept for backward compatibility)
   circleMemberships        CircleMember[]
@@ -277,6 +279,7 @@ model Piece {
   visibility PieceVisibilitySettings?
   comments   Comment[]
   notifications Notification[]
+  emailQueue EmailQueue[]
 
   @@map("pieces")
 }
@@ -420,6 +423,7 @@ model Comment {
   parent            Comment?      @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies           Comment[]     @relation("CommentReplies")
   notifications     Notification[]
+  emailQueue        EmailQueue[]
 
   @@map("comments")
 }
@@ -514,6 +518,31 @@ model Notification {
   collection         Collection? @relation(fields: [collectionId], references: [id], onDelete: Cascade)
 
   @@map("notifications")
+}
+
+// ==================== EMAIL QUEUE ====================
+
+model EmailQueue {
+  id          String           @id @default(cuid())
+  type        NotificationType
+  recipientId String
+  actorId     String
+  pieceId     String
+  commentId   String
+  clubId      String?
+  riffId      String?
+  createdAt   DateTime         @default(now())
+  processedAt DateTime?
+
+  // Relations
+  recipient User    @relation("EmailQueueRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  actor     User    @relation("EmailQueueActor", fields: [actorId], references: [id], onDelete: Cascade)
+  piece     Piece   @relation(fields: [pieceId], references: [id], onDelete: Cascade)
+  comment   Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@index([processedAt, createdAt])
+  @@index([recipientId, pieceId, processedAt])
+  @@map("email_queue")
 }
 
 enum NotificationType {
