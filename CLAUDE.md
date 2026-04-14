@@ -49,6 +49,7 @@ If the user asks you to "regain context" or "catch up", run `/letsriff`.
 - If you need to change `prisma/schema.prisma`, coordinate with Kyle first
 - Only one person should create migrations at a time
 - Others apply migrations with `npm run db:migrate:dev`
+- **NEVER accept a Prisma prompt to reset the database.** If `prisma migrate dev` says it needs to reset, STOP IMMEDIATELY and tell the user to contact Kyle. The dev database is shared by everyone — a reset destroys ALL test data for the entire team. This has happened before and it was catastrophic.
 
 ## Quick Reference
 

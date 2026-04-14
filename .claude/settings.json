@@ -9,7 +9,11 @@
       "Bash(git checkout main && git commit*)",
       "Bash(git checkout develop && git commit*)",
       "Bash(git checkout staging && git commit*)",
-      "Bash(prisma migrate reset*)"
+      "Bash(prisma migrate reset*)",
+      "Bash(prisma db push --force-reset*)",
+      "Bash(prisma db push --accept-data-loss*)",
+      "Bash(*--force-reset*)",
+      "Bash(*--accept-data-loss*)"
     ]
   }
 }
