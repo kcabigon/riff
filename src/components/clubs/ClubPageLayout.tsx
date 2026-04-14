@@ -92,6 +92,7 @@ interface ClubPageLayoutProps {
   isAdmin: boolean;
   activeRiff: Riff | null;
   revealedRiffs: Riff[];
+  pastRevealedRiffs: Riff[];
   readCounts: Record<string, number>;
   completedRiffs: Riff[];
   stats: {
@@ -109,6 +110,7 @@ export default function ClubPageLayout({
   isAdmin,
   activeRiff,
   revealedRiffs,
+  pastRevealedRiffs,
   readCounts,
   completedRiffs,
   stats,
@@ -138,6 +140,7 @@ export default function ClubPageLayout({
 
   // After joining a riff, refresh the page to get updated state
   const handleJoinRiff = useCallback(() => {
+    setWhatsNextTrigger("member_joined_riff");
     router.refresh();
   }, []);
 
@@ -853,9 +856,8 @@ export default function ClubPageLayout({
           );
         })()}
 
-        {/* Completed Riffs section — includes COMPLETED + fully-read REVEALED riffs */}
+        {/* Past Riffs section — includes COMPLETED + pre-join REVEALED + fully-read REVEALED riffs */}
         {(() => {
-          // Revealed riffs where user has read all pieces
           const fullyReadRevealed = revealedRiffs.filter((r) =>
             isRiffFullyRead(
               r.id,
@@ -863,8 +865,12 @@ export default function ClubPageLayout({
               getSubmittedPieces(r.pieces).length
             )
           );
-          const allCompleted = [...completedRiffs, ...fullyReadRevealed];
-          return allCompleted.length > 0;
+          const allPast = [
+            ...completedRiffs,
+            ...pastRevealedRiffs,
+            ...fullyReadRevealed,
+          ];
+          return allPast.length > 0;
         })() && (
           <div>
             <h2
@@ -876,7 +882,7 @@ export default function ClubPageLayout({
                 margin: "0 0 16px 0",
               }}
             >
-              Completed Riffs
+              Past Riffs
             </h2>
 
             <div
@@ -890,6 +896,7 @@ export default function ClubPageLayout({
             >
               {[
                 ...completedRiffs,
+                ...pastRevealedRiffs,
                 ...revealedRiffs.filter((r) =>
                   isRiffFullyRead(
                     r.id,
