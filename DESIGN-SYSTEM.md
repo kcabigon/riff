@@ -217,6 +217,11 @@ All interactive elements: border/outline changes to green `#00FF66`.
 | **Tagline** | `Tagline.tsx` | Colored vector highlight text. Props: `text`, `color` |
 | **WelcomeNote** | `WelcomeNote.tsx` | Handwriting-font message box |
 
+### Logo Assets (`public/images/`)
+| Asset | File | Use for |
+|-------|------|---------|
+| **Riff logo (black shadow)** | `riff_logo_black_shadow.svg` | Logo on white backgrounds |
+
 ### Auth & Onboarding
 | Component | File | Use for |
 |-----------|------|---------|
