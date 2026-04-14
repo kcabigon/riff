@@ -840,6 +840,299 @@ function getRiffCreatedEmailTemplate({
 /**
  * Send a batched comment digest email
  */
+export async function sendMemberJoinedEmail({
+  email,
+  newMemberFullName,
+  newMemberFirstName,
+  clubName,
+  clubUrl,
+}: {
+  email: string;
+  newMemberFullName: string;
+  newMemberFirstName: string;
+  clubName: string;
+  clubUrl: string;
+}): Promise<void> {
+  try {
+    const { error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to: email,
+      subject: `${newMemberFullName} joined ${clubName}!`,
+      html: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${newMemberFullName} joined ${clubName}!</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&family=DM+Serif+Text&display=swap" rel="stylesheet">
+</head>
+<body style="margin:0;padding:0;background-color:#f5f5f5;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f5f5;padding:48px 24px;">
+    <tr>
+      <td align="center">
+        <table width="520" cellpadding="0" cellspacing="0" style="max-width:520px;width:100%;background-color:#ffffff;border:2px solid #000000;">
+          <tr>
+            <td style="padding:40px 40px 16px;">
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${newMemberFullName} joined ${clubName}!</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">The club expands! Adding ${newMemberFirstName} means Riffing will be better than ever.</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px 40px;" align="center">
+              <table cellpadding="0" cellspacing="0" style="background-color:#000000;">
+                <tr>
+                  <td style="padding:0 4px 4px 0;">
+                    <table cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="background-color:#00FF66;border:2px solid #000000;text-align:center;">
+                          <a href="${clubUrl}" style="display:block;padding:16px 48px;font-size:17px;font-weight:700;color:#000000;text-decoration:none;font-family:'DM Sans',-apple-system,sans-serif;white-space:nowrap;">Go to club →</a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 40px 32px;">
+              <p style="margin:0;font-size:12px;font-weight:300;color:#bbbbbb;font-family:'DM Sans',-apple-system,sans-serif;">You're receiving this because you're a member of ${clubName} on Riff.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`.trim(),
+    });
+    if (error) console.error("Resend error (memberJoined):", error);
+  } catch (error) {
+    console.error("Error sending member joined email:", error);
+  }
+}
+
+export async function sendPieceSubmittedEmail({
+  email,
+  actorName,
+  riffTitle,
+  pieceTitle,
+  riffUrl,
+}: {
+  email: string;
+  actorName: string;
+  riffTitle: string;
+  pieceTitle: string;
+  riffUrl: string;
+}): Promise<void> {
+  try {
+    const { error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to: email,
+      subject: `${actorName} submitted a piece to ${riffTitle}`,
+      html: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${actorName} submitted a piece</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&family=DM+Serif+Text&display=swap" rel="stylesheet">
+</head>
+<body style="margin:0;padding:0;background-color:#f5f5f5;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f5f5;padding:48px 24px;">
+    <tr>
+      <td align="center">
+        <table width="520" cellpadding="0" cellspacing="0" style="max-width:520px;width:100%;background-color:#ffffff;border:2px solid #000000;">
+          <tr>
+            <td style="padding:40px 40px 16px;">
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${actorName} submitted a piece to ${riffTitle}</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">Before you know it we'll all be commenting on <em>${pieceTitle}</em>, the reveal can't come soon enough!</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px 40px;" align="center">
+              <table cellpadding="0" cellspacing="0" style="background-color:#000000;">
+                <tr>
+                  <td style="padding:0 4px 4px 0;">
+                    <table cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="background-color:#00FF66;border:2px solid #000000;text-align:center;">
+                          <a href="${riffUrl}" style="display:block;padding:16px 48px;font-size:17px;font-weight:700;color:#000000;text-decoration:none;font-family:'DM Sans',-apple-system,sans-serif;white-space:nowrap;">See the riff →</a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 40px 32px;">
+              <p style="margin:0;font-size:12px;font-weight:300;color:#bbbbbb;font-family:'DM Sans',-apple-system,sans-serif;">You're receiving this because you're a member of this riff on Riff.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`.trim(),
+    });
+    if (error) console.error("Resend error (pieceSubmitted):", error);
+  } catch (error) {
+    console.error("Error sending piece submitted email:", error);
+  }
+}
+
+export async function sendDeadlineChangedEmail({
+  email,
+  hostName,
+  newDeadline,
+  clubUrl,
+}: {
+  email: string;
+  hostName: string;
+  newDeadline: Date;
+  clubUrl: string;
+}): Promise<void> {
+  const deadlineStr = newDeadline.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+  try {
+    const { error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to: email,
+      subject: `${hostName} changed the deadline to ${deadlineStr}`,
+      html: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deadline changed</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&family=DM+Serif+Text&display=swap" rel="stylesheet">
+</head>
+<body style="margin:0;padding:0;background-color:#f5f5f5;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f5f5;padding:48px 24px;">
+    <tr>
+      <td align="center">
+        <table width="520" cellpadding="0" cellspacing="0" style="max-width:520px;width:100%;background-color:#ffffff;border:2px solid #000000;">
+          <tr>
+            <td style="padding:40px 40px 16px;">
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${hostName} changed the deadline to ${deadlineStr}</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">Well lets choose to look at this less as a failure and more as an opportunity to be more successful than we ever would have been without the added time. You're welcome for the reframing. Now go write a banger.</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px 40px;" align="center">
+              <table cellpadding="0" cellspacing="0" style="background-color:#000000;">
+                <tr>
+                  <td style="padding:0 4px 4px 0;">
+                    <table cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="background-color:#00FF66;border:2px solid #000000;text-align:center;">
+                          <a href="${clubUrl}" style="display:block;padding:16px 48px;font-size:17px;font-weight:700;color:#000000;text-decoration:none;font-family:'DM Sans',-apple-system,sans-serif;white-space:nowrap;">Go to club →</a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 40px 32px;">
+              <p style="margin:0;font-size:12px;font-weight:300;color:#bbbbbb;font-family:'DM Sans',-apple-system,sans-serif;">You're receiving this because you're a member of this riff on Riff.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`.trim(),
+    });
+    if (error) console.error("Resend error (deadlineChanged):", error);
+  } catch (error) {
+    console.error("Error sending deadline changed email:", error);
+  }
+}
+
+export async function sendAllPiecesSubmittedEmail({
+  email,
+  riffTitle,
+  clubName,
+  riffUrl,
+}: {
+  email: string;
+  riffTitle: string;
+  clubName: string;
+  riffUrl: string;
+}): Promise<void> {
+  try {
+    const { error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to: email,
+      subject: `All pieces submitted for ${riffTitle}`,
+      html: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>All pieces submitted</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&family=DM+Serif+Text&display=swap" rel="stylesheet">
+</head>
+<body style="margin:0;padding:0;background-color:#f5f5f5;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f5f5;padding:48px 24px;">
+    <tr>
+      <td align="center">
+        <table width="520" cellpadding="0" cellspacing="0" style="max-width:520px;width:100%;background-color:#ffffff;border:2px solid #000000;">
+          <tr>
+            <td style="padding:40px 40px 16px;">
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">All pieces submitted for ${riffTitle}</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">The club doesn't know everything it took to get to reveal. Way to lead the charge. ${riffTitle} is ready to become a volume of ${clubName}'s writing. Reveal and enjoy.</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px 40px;" align="center">
+              <table cellpadding="0" cellspacing="0" style="background-color:#000000;">
+                <tr>
+                  <td style="padding:0 4px 4px 0;">
+                    <table cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="background-color:#00FF66;border:2px solid #000000;text-align:center;">
+                          <a href="${riffUrl}" style="display:block;padding:16px 48px;font-size:17px;font-weight:700;color:#000000;text-decoration:none;font-family:'DM Sans',-apple-system,sans-serif;white-space:nowrap;">Reveal riff →</a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 40px 32px;">
+              <p style="margin:0;font-size:12px;font-weight:300;color:#bbbbbb;font-family:'DM Sans',-apple-system,sans-serif;">You're receiving this because you're the host of this riff on Riff.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`.trim(),
+    });
+    if (error) console.error("Resend error (allPiecesSubmitted):", error);
+  } catch (error) {
+    console.error("Error sending all pieces submitted email:", error);
+  }
+}
+
 export async function sendCommentDigestEmail({
   email,
   recipientName,

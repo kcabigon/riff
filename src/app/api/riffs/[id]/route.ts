@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
 import { notifyClubMembers } from "@/lib/notifications";
-import { sendRiffCreatedEmail, sendRiffRevealedEmail } from "@/lib/resend";
+import {
+  sendRiffCreatedEmail,
+  sendRiffRevealedEmail,
+  sendDeadlineChangedEmail,
+} from "@/lib/resend";
 import { NotificationType } from "@prisma/client";
 
 // GET /api/riffs/[id] - Get riff details
@@ -344,6 +348,43 @@ export async function PATCH(
           )
           .catch(() => {});
       }
+    }
+
+    // Fire deadline change notification if deadline actually changed (non-blocking)
+    const deadlineChanged =
+      deadline !== undefined &&
+      deadline !== null &&
+      !status &&
+      new Date(deadline).getTime() !== (riff.deadline?.getTime() ?? null);
+    if (deadlineChanged) {
+      const newDeadline = new Date(deadline);
+      notifyClubMembers(
+        riff.clubId,
+        NotificationType.RIFF_DEADLINE_CHANGED,
+        user.id,
+        { riffId }
+      ).catch(() => {});
+      prisma.clubMember
+        .findMany({
+          where: { clubId: riff.clubId, userId: { not: user.id } },
+          include: { user: { select: { email: true } } },
+        })
+        .then((members) => {
+          const appUrl =
+            process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+          const clubUrl = `${appUrl}/clubs/${riff.clubId}`;
+          return Promise.allSettled(
+            members.map((m) =>
+              sendDeadlineChangedEmail({
+                email: m.user.email,
+                hostName: updatedRiff.creator.name || "Your host",
+                newDeadline,
+                clubUrl,
+              })
+            )
+          );
+        })
+        .catch(() => {});
     }
 
     return NextResponse.json({

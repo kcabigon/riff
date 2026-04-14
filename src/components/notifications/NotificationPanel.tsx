@@ -27,6 +27,10 @@ export default function NotificationPanel({
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const handleNotificationDismiss = (id: string) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  };
+
   useEffect(() => {
     (async () => {
       try {
@@ -45,7 +49,7 @@ export default function NotificationPanel({
 
   const handleMarkAllRead = async () => {
     await fetch("/api/notifications", { method: "PATCH" });
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    setNotifications([]);
     onMarkAllRead();
   };
 
@@ -168,6 +172,7 @@ export default function NotificationPanel({
                 key={notification.id}
                 notification={notification}
                 onClose={onClose}
+                onDismiss={handleNotificationDismiss}
               />
             ))}
           </div>

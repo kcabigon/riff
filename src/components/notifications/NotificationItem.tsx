@@ -15,26 +15,33 @@ interface NotificationItemProps {
     piece: { id: string; title: string } | null;
   };
   onClose: () => void;
+  onDismiss: (id: string) => void;
 }
 
 function getMessage(n: NotificationItemProps["notification"]): string {
   const actor = n.actor?.name || "Someone";
 
   switch (n.type) {
+    case "CLUB_MEMBER_JOINED":
+      return `${actor} joined ${n.club ? n.club.name : "the club"}`;
     case "RIFF_CREATED":
-      return `${actor} started a new riff${n.riff ? `: "${n.riff.title}"` : ""}`;
+      return `${actor} started a new riff in ${n.club ? n.club.name : "your club"}`;
     case "RIFF_STARTED":
-      return `A new riff just dropped${n.riff ? `: "${n.riff.title}"` : ""}`;
+      return `A new riff just dropped in ${n.club ? n.club.name : "your club"}`;
     case "PIECE_SUBMITTED_TO_RIFF":
-      return `${actor} submitted a piece${n.riff ? ` to "${n.riff.title}"` : ""}`;
+      return `${actor} submitted a piece`;
     case "RIFF_COMPLETED":
-      return `Pieces have been revealed${n.riff ? ` in "${n.riff.title}"` : ""}`;
+      return `Pieces revealed in ${n.club ? n.club.name : "your club"}`;
+    case "RIFF_DEADLINE_CHANGED":
+      return `${actor} moved the deadline`;
     case "NEW_COMMENT":
-      return `${actor} commented on ${n.piece ? `"${n.piece.title}"` : "your piece"}`;
+      return `New comments on ${n.piece ? `"${n.piece.title}"` : "your piece"}`;
     case "COMMENT_REPLY":
       return `${actor} replied to your comment`;
     case "CLUB_INVITATION":
       return `${actor} invited you to ${n.club ? n.club.name : "a club"}`;
+    case "ALL_PIECES_SUBMITTED":
+      return `All pieces submitted${n.riff ? ` for "${n.riff.title}"` : ""}`;
     default:
       return "New notification";
   }
@@ -48,10 +55,16 @@ function getLink(n: NotificationItemProps["notification"]): string {
       if (n.riff) return `/riffs/${n.riff.id}`;
       break;
     case "CLUB_INVITATION":
-      if (n.club) return `/clubs/${n.club.id}`;
-      break;
+    case "CLUB_MEMBER_JOINED":
     case "RIFF_CREATED":
+    case "RIFF_DEADLINE_CHANGED":
+      if (n.club) return `/clubs/${n.club.id}`;
       if (n.riff) return `/clubs/${n.riff.clubId}`;
+      break;
+    case "ALL_PIECES_SUBMITTED":
+    case "PIECE_SUBMITTED_TO_RIFF":
+      if (n.riff) return `/riffs/${n.riff.id}`;
+      if (n.club) return `/clubs/${n.club.id}`;
       break;
     default:
       if (n.riff) return `/riffs/${n.riff.id}`;
@@ -63,13 +76,13 @@ function getLink(n: NotificationItemProps["notification"]): string {
 export default function NotificationItem({
   notification,
   onClose,
+  onDismiss,
 }: NotificationItemProps) {
   const router = useRouter();
 
   const handleClick = async () => {
-    if (!notification.isRead) {
-      fetch(`/api/notifications/${notification.id}`, { method: "PATCH" });
-    }
+    fetch(`/api/notifications/${notification.id}`, { method: "PATCH" });
+    onDismiss(notification.id);
     onClose();
     router.push(getLink(notification));
   };
