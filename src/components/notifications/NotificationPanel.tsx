@@ -33,7 +33,7 @@ export default function NotificationPanel({
         const res = await fetch("/api/notifications?limit=20");
         if (res.ok) {
           const { notifications: data } = await res.json();
-          setNotifications(data);
+          setNotifications(data.filter((n: NotificationData) => !n.isRead));
         }
       } catch {
         // silent
@@ -45,8 +45,12 @@ export default function NotificationPanel({
 
   const handleMarkAllRead = async () => {
     await fetch("/api/notifications", { method: "PATCH" });
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    setNotifications([]);
     onMarkAllRead();
+  };
+
+  const handleDismiss = (id: string) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
 
   // Group by date
@@ -168,6 +172,7 @@ export default function NotificationPanel({
                 key={notification.id}
                 notification={notification}
                 onClose={onClose}
+                onDismiss={handleDismiss}
               />
             ))}
           </div>

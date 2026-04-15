@@ -15,6 +15,7 @@ interface NotificationItemProps {
     piece: { id: string; title: string } | null;
   };
   onClose: () => void;
+  onDismiss: (id: string) => void;
 }
 
 function getMessage(n: NotificationItemProps["notification"]): string {
@@ -63,13 +64,13 @@ function getLink(n: NotificationItemProps["notification"]): string {
 export default function NotificationItem({
   notification,
   onClose,
+  onDismiss,
 }: NotificationItemProps) {
   const router = useRouter();
 
   const handleClick = async () => {
-    if (!notification.isRead) {
-      fetch(`/api/notifications/${notification.id}`, { method: "PATCH" });
-    }
+    fetch(`/api/notifications/${notification.id}`, { method: "PATCH" });
+    onDismiss(notification.id);
     onClose();
     router.push(getLink(notification));
   };

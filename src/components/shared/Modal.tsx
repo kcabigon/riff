@@ -57,20 +57,15 @@ export default function Modal({
     [onClose]
   );
 
+  // Lock scroll + focus first element — only when modal opens/closes
   useEffect(() => {
     if (!isOpen) return;
 
-    // Save current focus
     previousFocusRef.current = document.activeElement as HTMLElement;
 
-    // Lock body scroll
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
-    // Add key listener
-    document.addEventListener("keydown", handleKeyDown);
-
-    // Focus first focusable element
     requestAnimationFrame(() => {
       if (dialogRef.current) {
         const first = dialogRef.current.querySelector<HTMLElement>(
@@ -82,9 +77,15 @@ export default function Modal({
 
     return () => {
       document.body.style.overflow = originalOverflow;
-      document.removeEventListener("keydown", handleKeyDown);
       previousFocusRef.current?.focus();
     };
+  }, [isOpen]);
+
+  // Key listener — separate so handler updates don't retrigger focus
+  useEffect(() => {
+    if (!isOpen) return;
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, handleKeyDown]);
 
   if (!isOpen) return null;
