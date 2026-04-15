@@ -258,7 +258,15 @@ export default function WhatsNextModal({
       />
 
       {/* Journey tracker */}
-      <JourneyTracker steps={content.steps} completedStep={completedStep} />
+      <div
+        style={{
+          backgroundColor: "#FFFFFF",
+          border: "2px solid #000000",
+          padding: "16px",
+        }}
+      >
+        <JourneyTracker steps={content.steps} completedStep={completedStep} />
+      </div>
 
       {/* Divider */}
       <div
