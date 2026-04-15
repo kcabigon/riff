@@ -20,7 +20,7 @@ import {
 } from "@/lib/riff-utils";
 import RiffCTAButton from "@/components/riffs/RiffCTAButton";
 import ProgressCard from "@/components/riffs/ProgressCard";
-import Dropdown from "@/components/shared/Dropdown";
+import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import type { DropdownItem } from "@/components/shared/Dropdown";
 import ContributionStrip from "@/components/riffs/ContributionStrip";
 import NoiseBackground from "@/components/NoiseBackground";
@@ -284,49 +284,8 @@ export default function RiffPageLayout({
                       },
                     ];
                     return (
-                      <Dropdown
-                        trigger={
-                          <button
-                            aria-label="Riff settings"
-                            style={{
-                              background: "transparent",
-                              border: "2px solid transparent",
-                              cursor: "pointer",
-                              padding: "4px 6px",
-                              color: "#808080",
-                              lineHeight: 1,
-                              display: "flex",
-                              alignItems: "center",
-                              transition:
-                                "background-color 0.15s ease, box-shadow 0.1s ease",
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = "#01EFFC";
-                              e.currentTarget.style.borderColor = "#000000";
-                              e.currentTarget.style.color = "#000000";
-                              e.currentTarget.style.boxShadow =
-                                "4px 4px 0px 0px #000000";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor =
-                                "transparent";
-                              e.currentTarget.style.borderColor = "transparent";
-                              e.currentTarget.style.color = "#808080";
-                              e.currentTarget.style.boxShadow = "none";
-                            }}
-                          >
-                            <svg
-                              width="12"
-                              height="3"
-                              viewBox="0 0 12 3"
-                              fill="currentColor"
-                            >
-                              <circle cx="1.5" cy="1.5" r="1.5" />
-                              <circle cx="6" cy="1.5" r="1.5" />
-                              <circle cx="10.5" cy="1.5" r="1.5" />
-                            </svg>
-                          </button>
-                        }
+                      <ThreeDotButton
+                        variant="light"
                         items={items}
                         align="left"
                       />
