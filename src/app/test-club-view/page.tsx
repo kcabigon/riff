@@ -14,6 +14,8 @@
 
 import ClubPageLayout from "@/components/clubs/ClubPageLayout";
 
+export const dynamic = "force-dynamic";
+
 // ---------------------------------------------------------------------------
 // Fake users
 // ---------------------------------------------------------------------------
