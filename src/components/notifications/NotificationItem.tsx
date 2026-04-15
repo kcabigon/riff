@@ -36,6 +36,8 @@ function getMessage(n: NotificationItemProps["notification"]): string {
       return `${actor} replied to your comment`;
     case "CLUB_INVITATION":
       return `${actor} invited you to ${n.club ? n.club.name : "a club"}`;
+    case "HOST_MESSAGE":
+      return `Message from ${actor}${n.club ? ` in ${n.club.name}` : ""}`;
     default:
       return "New notification";
   }
@@ -48,6 +50,7 @@ function getLink(n: NotificationItemProps["notification"]): string {
       if (n.piece) return `/read/${n.piece.id}`;
       if (n.riff) return `/riffs/${n.riff.id}`;
       break;
+    case "HOST_MESSAGE":
     case "CLUB_INVITATION":
       if (n.club) return `/clubs/${n.club.id}`;
       break;

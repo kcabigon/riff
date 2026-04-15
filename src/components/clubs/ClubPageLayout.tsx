@@ -11,6 +11,7 @@ import CreateRiffModal from "@/components/riffs/CreateRiffModal";
 import RevealConfirmModal from "@/components/riffs/RevealConfirmModal";
 import ReadyToRevealCard from "@/components/riffs/ReadyToRevealCard";
 import ClubSettingsModal from "@/components/clubs/ClubSettingsModal";
+import HostMessageModal from "@/components/clubs/HostMessageModal";
 import InviteOptions from "@/components/clubs/InviteOptions";
 import CloseButton from "@/components/CloseButton";
 import PrimaryButton from "@/components/PrimaryButton";
@@ -125,6 +126,7 @@ export default function ClubPageLayout({
   const [isRevealing, setIsRevealing] = useState(false);
   const [isClubDetailsModalOpen, setIsClubDetailsModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [isHostMessageModalOpen, setIsHostMessageModalOpen] = useState(false);
   const [currentActiveRiff, setCurrentActiveRiff] = useState<Riff | null>(
     activeRiff
   );
@@ -317,6 +319,12 @@ export default function ClubPageLayout({
                             label: "Invite friends",
                             onClick: () => setIsInviteModalOpen(true),
                           },
+                          { type: "divider" },
+                          {
+                            type: "action",
+                            label: "Message members",
+                            onClick: () => setIsHostMessageModalOpen(true),
+                          },
                         ] as DropdownItem[]
                       }
                       align="left"
@@ -483,6 +491,12 @@ export default function ClubPageLayout({
                       label: "Invite friends",
                       onClick: () => setIsInviteModalOpen(true),
                     },
+                    { type: "divider" },
+                    {
+                      type: "action",
+                      label: "Message members",
+                      onClick: () => setIsHostMessageModalOpen(true),
+                    },
                   ] as DropdownItem[]
                 }
                 align="left"
@@ -647,6 +661,12 @@ export default function ClubPageLayout({
                         type: "action",
                         label: "Invite friends",
                         onClick: () => setIsInviteModalOpen(true),
+                      },
+                      { type: "divider" },
+                      {
+                        type: "action",
+                        label: "Message members",
+                        onClick: () => setIsHostMessageModalOpen(true),
                       },
                     ] as DropdownItem[]
                   }
@@ -1043,6 +1063,16 @@ export default function ClubPageLayout({
           totalParticipants={activeRiff.participants.length}
         />
       )}
+
+      {/* Host Message Modal */}
+      <HostMessageModal
+        isOpen={isHostMessageModalOpen}
+        onClose={() => setIsHostMessageModalOpen(false)}
+        clubId={club.id}
+        clubName={clubName}
+        members={club.members.map((m) => m.user)}
+        currentUserId={currentUserId}
+      />
 
       {/* What's Next Modal */}
       {whatsNextTrigger && (

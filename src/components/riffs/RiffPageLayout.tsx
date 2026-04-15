@@ -29,6 +29,7 @@ import WhatsNextModal, {
 } from "@/components/shared/WhatsNextModal";
 import PrimaryButton from "@/components/PrimaryButton";
 import CTAButton from "@/components/CTAButton";
+import HostMessageModal from "@/components/clubs/HostMessageModal";
 
 interface RiffPageLayoutProps {
   riff: {
@@ -124,6 +125,7 @@ export default function RiffPageLayout({
   const [isRevealing, setIsRevealing] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isHostMessageModalOpen, setIsHostMessageModalOpen] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [whatsNextTrigger, setWhatsNextTrigger] =
     useState<WhatsNextTrigger | null>(null);
@@ -258,30 +260,39 @@ export default function RiffPageLayout({
                       : formatDateShort(riff.createdAt)}
                 </p>
                 {isAdmin &&
-                  riff.status !== "REVEALED" &&
                   (() => {
                     const items: DropdownItem[] = [
                       {
                         type: "action",
-                        label: "Edit riff",
-                        onClick: () => setIsEditModalOpen(true),
+                        label: "Message members",
+                        onClick: () => setIsHostMessageModalOpen(true),
                       },
-                      ...(riff.status === "ACTIVE"
-                        ? [
+                      ...(riff.status !== "REVEALED"
+                        ? ([
+                            { type: "divider" },
                             {
-                              type: "action" as const,
-                              label: "Reveal now",
-                              onClick: handleRevealClick,
+                              type: "action",
+                              label: "Edit riff",
+                              onClick: () => setIsEditModalOpen(true),
                             },
-                          ]
+                            ...(riff.status === "ACTIVE"
+                              ? [
+                                  {
+                                    type: "action" as const,
+                                    label: "Reveal now",
+                                    onClick: handleRevealClick,
+                                  },
+                                ]
+                              : []),
+                            { type: "divider" },
+                            {
+                              type: "action",
+                              label: "Delete riff",
+                              color: "#DC2626",
+                              onClick: () => setIsDeleteModalOpen(true),
+                            },
+                          ] as DropdownItem[])
                         : []),
-                      { type: "divider" },
-                      {
-                        type: "action",
-                        label: "Delete riff",
-                        color: "#DC2626",
-                        onClick: () => setIsDeleteModalOpen(true),
-                      },
                     ];
                     return (
                       <Dropdown
@@ -732,6 +743,17 @@ export default function RiffPageLayout({
           riffTitle={getRiffDisplayTitle(riff)}
         />
       )}
+
+      {/* Host Message Modal */}
+      <HostMessageModal
+        isOpen={isHostMessageModalOpen}
+        onClose={() => setIsHostMessageModalOpen(false)}
+        clubId={riff.clubId}
+        clubName={riff.club.name}
+        members={riff.participants.map((p) => p.user)}
+        currentUserId={currentUserId}
+        scope="riff"
+      />
 
       {/* What's Next Modal */}
       {whatsNextTrigger && (

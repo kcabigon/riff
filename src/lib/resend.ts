@@ -192,6 +192,148 @@ export async function sendRiffRevealedEmail({
 }
 
 /**
+ * Send a host message email to a club member
+ */
+export async function sendHostMessageEmail({
+  email,
+  hostName,
+  clubName,
+  subject,
+  body,
+  clubUrl,
+}: {
+  email: string;
+  hostName: string;
+  clubName: string;
+  subject: string;
+  body: string;
+  clubUrl: string;
+}): Promise<void> {
+  try {
+    const { data, error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to: email,
+      subject: `${subject} — ${clubName}`,
+      html: getHostMessageEmailTemplate({
+        hostName,
+        clubName,
+        subject,
+        body,
+        clubUrl,
+      }),
+    });
+
+    if (error) {
+      console.error("Resend API error:", error);
+    } else {
+      console.log("Host message email sent successfully:", data);
+    }
+  } catch (error) {
+    console.error("Error sending host message email:", error);
+  }
+}
+
+function getHostMessageEmailTemplate({
+  hostName,
+  clubName,
+  subject,
+  body,
+  clubUrl,
+}: {
+  hostName: string;
+  clubName: string;
+  subject: string;
+  body: string;
+  clubUrl: string;
+}): string {
+  const bodyHtml = body.replace(/\n/g, "<br>");
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+      background-color: #ffffff;
+    }
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 40px 24px;
+      background-color: #ffffff;
+    }
+    .message-box {
+      border: 2px solid #000000;
+      padding: 24px;
+      margin: 24px 0;
+      background-color: #FAFAFA;
+    }
+    .button {
+      display: inline-block;
+      padding: 12px 48px;
+      background-color: #00FF66;
+      color: #000000;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: 300;
+      border: 2px solid #000000;
+      box-shadow: 8px 8px 0px 0px #000000;
+      margin: 24px 0 0 0;
+    }
+    .footer {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid #E6E6E6;
+      text-align: center;
+      font-size: 14px;
+      color: #959595;
+    }
+    .link {
+      color: #000000;
+      text-decoration: underline;
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div style="margin-bottom: 32px;">
+      <h1 style="font-size: 24px; font-weight: 400; color: #000000; margin: 0 0 8px 0;">${subject}</h1>
+      <p style="font-size: 14px; font-weight: 300; color: #808080; margin: 0;">From ${hostName} &middot; ${clubName}</p>
+    </div>
+
+    <div class="message-box">
+      <p style="font-size: 16px; font-weight: 300; color: #000000; margin: 0; line-height: 1.6;">${bodyHtml}</p>
+    </div>
+
+    <a href="${clubUrl}" class="button">
+      View club
+    </a>
+
+    <div class="footer">
+      <p>
+        If the button doesn't work, copy and paste this link into your browser:
+      </p>
+      <p>
+        <a href="${clubUrl}" class="link">${clubUrl}</a>
+      </p>
+      <p style="margin-top: 16px;">
+        You're receiving this because you're a member of ${clubName} on Riff.
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+}
+
+/**
  * Legacy function name for backward compatibility
  * @deprecated Use sendSignInEmail or sendOnboardingEmail instead
  */
