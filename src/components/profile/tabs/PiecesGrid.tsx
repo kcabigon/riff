@@ -357,7 +357,6 @@ export default function PiecesGrid({
                   currentContent: piece.currentContent || "",
                 }}
                 isRead={true}
-                hoverShadow="8px 8px 0px 0px #01EFFC"
                 onClick={handleClick ?? (() => {})}
               />
             </div>
