@@ -60,6 +60,17 @@ Present these options naturally (not as a numbered list — keep it conversation
 
 Once you know what they want to do, execute. Don't over-explain or ask too many questions upfront. Get moving and check in as you go.
 
+## GitHub Username → Real Name Mapping
+
+Always use real names, never raw GitHub handles.
+
+| GitHub handle | Real name |
+|---------------|-----------|
+| `kcabigon` | Kyle |
+| `jarric22` | Jarric |
+| `djorgensen316` | Derek |
+| `riffwithfriends` | Chris |
+
 ## Important
 - Your user may not be very technical. Be clear, friendly, and avoid jargon unless they use it first.
 - Never guess at what they want — ask if you're unsure.
