@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import ProfileHeader from "./ProfileHeader";
-import PiecesGrid from "./tabs/PiecesGrid";
-import CollectionsList from "./tabs/CollectionsList";
-import BackButton from "@/components/BackButton";
+import PiecesGrid, { FeaturedPiece } from "./tabs/PiecesGrid";
+import type { Piece } from "./tabs/PiecesGrid";
+import Avatar from "@/components/shared/Avatar";
+import DeletePieceModal from "@/components/profile/DeletePieceModal";
 
-type TabId = "pieces" | "collections";
+const AVATAR_SIZE = 80;
 
 interface ProfilePageProps {
   user: {
@@ -22,137 +24,175 @@ interface ProfilePageProps {
     pieceCount: number;
     totalWordCount: number;
   };
-  pieces: Array<{
-    id: string;
-    title: string | null;
-    coverImage: string | null;
-    currentContent: string | null;
-  }>;
-  collections: Array<{
-    id: string;
-    name: string;
-    pieces: Array<{
-      id: string;
-      title: string | null;
-      createdAt: string;
-      updatedAt: string;
-      isShared: boolean;
-      riffs: Array<{ id: string; title: string | null; clubName: string }>;
-    }>;
-  }>;
+  pieces: Piece[];
   isOwnProfile: boolean;
   lastActiveClubId: string | null;
 }
 
-const TABS: { id: TabId; label: string }[] = [
-  { id: "pieces", label: "PIECES" },
-  { id: "collections", label: "COLLECTIONS" },
-];
-
 export default function ProfilePage({
   user,
   stats,
-  pieces,
-  collections,
-  isOwnProfile,
   lastActiveClubId,
+  pieces: initialPieces,
+  isOwnProfile,
 }: ProfilePageProps) {
-  const [activeTab, setActiveTab] = useState<TabId>("pieces");
+  const router = useRouter();
+  const [pieces, setPieces] = useState(initialPieces);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: string;
+    title: string | null;
+  } | null>(null);
+
+  const firstName =
+    user.firstName || user.name?.split(" ")[0] || user.username || "";
+  const lastName =
+    user.lastName || user.name?.split(" ").slice(1).join(" ") || "";
+
+  const handleDeleted = (pieceId: string) => {
+    setPieces((prev) => prev.filter((p) => p.id !== pieceId));
+  };
+
+  const [featured, ...rest] = pieces;
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "#FFFFFF",
-      }}
-    >
-      {/* Back to club */}
-      {lastActiveClubId && (
-        <div style={{ padding: "16px 24px 0" }}>
-          <BackButton href={`/clubs/${lastActiveClubId}`} />
-        </div>
+    <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
+      {deleteTarget && (
+        <DeletePieceModal
+          pieceId={deleteTarget.id}
+          pieceTitle={deleteTarget.title}
+          onClose={() => setDeleteTarget(null)}
+          onDeleted={() => handleDeleted(deleteTarget.id)}
+        />
       )}
 
-      {/* Header */}
-      <ProfileHeader user={user} stats={stats} />
+      {/* Header + avatar bridge */}
+      <div style={{ position: "relative" }}>
+        <ProfileHeader
+          firstName={firstName}
+          lastName={lastName}
+          lastActiveClubId={lastActiveClubId}
+        />
 
-      {/* Divider */}
-      <div
-        style={{
-          width: "100%",
-          height: "1px",
-          backgroundColor: "#959595",
-        }}
-      />
-
-      {/* Tab bar — own profile only */}
-      {isOwnProfile && (
+        {/* Avatar centered on the header's bottom edge, cutting into the featured piece */}
         <div
           style={{
-            display: "flex",
-            justifyContent: "center",
-            gap: "16px",
-            paddingTop: "0",
-            paddingBottom: "0",
-            backgroundColor: "#FFFFFF",
+            position: "absolute",
+            bottom: -(AVATAR_SIZE / 2),
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 10,
           }}
         >
-          {TABS.map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  borderBottom: isActive
-                    ? "2px solid #000000"
-                    : "2px solid transparent",
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "20px",
-                  fontWeight: isActive ? 700 : 300,
-                  color: "#000000",
-                  cursor: "pointer",
-                  padding: "12px 24px",
-                  letterSpacing: "0.02em",
-                }}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
+          <Avatar
+            user={user}
+            size={48}
+            borderColor="#FFFFFF"
+            borderWidth={4}
+            style={{ width: `${AVATAR_SIZE}px`, height: `${AVATAR_SIZE}px` }}
+          />
+        </div>
+      </div>
+
+      {/* Empty state */}
+      {pieces.length === 0 && (
+        <div style={{ padding: "64px 24px", textAlign: "center" }}>
+          <p
+            style={{
+              fontFamily: "var(--font-dm-serif-text)",
+              fontSize: "24px",
+              fontWeight: 400,
+              color: "#000000",
+              margin: "0 0 8px 0",
+            }}
+          >
+            Every great writer starts with a blank page.
+          </p>
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "16px",
+              fontWeight: 300,
+              color: "#808080",
+              margin: 0,
+            }}
+          >
+            Pieces coming soon.
+          </p>
         </div>
       )}
 
-      {/* Divider under tabs */}
-      <div
-        style={{
-          width: "100%",
-          height: "1px",
-          backgroundColor: "#959595",
-        }}
-      />
+      {/* Featured piece */}
+      {featured && (
+        <FeaturedPiece
+          piece={featured}
+          onClick={
+            !featured.isRevealed && !isOwnProfile
+              ? () => {}
+              : !featured.isRevealed && isOwnProfile
+                ? () => router.push(`/write/${featured.id}`)
+                : () => router.push(`/read/${featured.id}`)
+          }
+          isOwnProfile={isOwnProfile}
+          onDelete={() =>
+            setDeleteTarget({ id: featured.id, title: featured.title })
+          }
+        />
+      )}
 
-      {/* Tab content */}
+      {/* Jams — coming soon */}
+
+      {/* Piece grid */}
+      {rest.length > 0 && (
+        <PiecesGrid
+          pieces={rest}
+          isOwnProfile={isOwnProfile}
+          onDelete={(id: string, title: string | null) =>
+            setDeleteTarget({ id, title })
+          }
+        />
+      )}
+
+      {/* Footer: stats */}
       <div
         style={{
-          maxWidth: "1200px",
-          margin: "0 auto",
-          width: "100%",
-          boxSizing: "border-box",
+          borderTop: "1px solid #E6E6E6",
+          padding: "16px 24px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "8px",
         }}
       >
-        {isOwnProfile ? (
-          <>
-            {activeTab === "pieces" && <PiecesGrid pieces={pieces} />}
-            {activeTab === "collections" && (
-              <CollectionsList collections={collections} />
-            )}
-          </>
-        ) : (
-          <PiecesGrid pieces={pieces} />
-        )}
+        <span
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "16px",
+            fontWeight: 300,
+            color: "#808080",
+          }}
+        >
+          {stats.pieceCount} pieces
+        </span>
+        <span
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "16px",
+            fontWeight: 300,
+            color: "#808080",
+          }}
+        >
+          &middot;
+        </span>
+        <span
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "16px",
+            fontWeight: 300,
+            color: "#808080",
+          }}
+        >
+          {stats.totalWordCount.toLocaleString()} words
+        </span>
       </div>
     </div>
   );
