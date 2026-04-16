@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import AuthCard from "@/components/auth/AuthCard";
+import CTAButton from "@/components/CTAButton";
 
 function CheckEmailContent() {
   const searchParams = useSearchParams();
@@ -29,10 +30,11 @@ function CheckEmailContent() {
     <AuthCard>
       <div
         style={{
+          width: "100%",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          gap: "24px",
+          gap: "32px",
           textAlign: "center",
         }}
       >
@@ -40,7 +42,7 @@ function CheckEmailContent() {
         <h1
           style={{
             fontFamily: "var(--font-dm-serif-text)",
-            fontSize: "32px",
+            fontSize: "64px",
             fontWeight: 400,
             lineHeight: 1.2,
             color: "#000000",
@@ -51,13 +53,7 @@ function CheckEmailContent() {
         </h1>
 
         {/* Message */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "16px",
-          }}
-        >
+        {email && (
           <p
             style={{
               fontFamily: "var(--font-dm-sans)",
@@ -68,97 +64,15 @@ function CheckEmailContent() {
               margin: 0,
             }}
           >
-            We sent a magic link to:
+            We sent a magic link to{" "}
+            <span style={{ fontWeight: 700 }}>{email}</span>
           </p>
-          {email && (
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 700,
-                lineHeight: 1.6,
-                color: "#000000",
-                margin: 0,
-              }}
-            >
-              {email}
-            </p>
-          )}
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              lineHeight: 1.6,
-              color: "#000000",
-              margin: 0,
-            }}
-          >
-            Click the link in the email to sign in.
-          </p>
-        </div>
+        )}
 
-        {/* Additional info */}
-        <div
-          style={{
-            marginTop: "16px",
-            padding: "16px",
-            backgroundColor: "#F5F5F5",
-            border: "1px solid #E6E6E6",
-            width: "100%",
-          }}
-        >
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              fontWeight: 300,
-              lineHeight: 1.6,
-              color: "#959595",
-              margin: 0,
-            }}
-          >
-            The link will expire in 24 hours and can only be used once.
-          </p>
-        </div>
-
-        {/* Resend option */}
-        <div
-          style={{
-            marginTop: "24px",
-          }}
-        >
-          {canResend ? (
-            <button
-              onClick={handleResend}
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: 300,
-                color: "#000000",
-                textDecoration: "underline",
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                padding: 0,
-              }}
-            >
-              Didn&apos;t receive the email? Resend
-            </button>
-          ) : (
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: 300,
-                color: "#959595",
-                margin: 0,
-              }}
-            >
-              Resend available in {countdown}s
-            </p>
-          )}
-        </div>
+        {/* Resend */}
+        <CTAButton onClick={handleResend} disabled={!canResend}>
+          {canResend ? "Resend email" : `Resend in ${countdown}s`}
+        </CTAButton>
       </div>
     </AuthCard>
   );
@@ -175,7 +89,7 @@ export default function CheckEmailPage() {
                 fontFamily: "var(--font-dm-sans)",
                 fontSize: "16px",
                 fontWeight: 300,
-                color: "#959595",
+                color: "#808080",
               }}
             >
               Loading...
