@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import PieceCard from "@/components/riffs/PieceCard";
 import Dropdown from "@/components/shared/Dropdown";
 import type { DropdownItem } from "@/components/shared/Dropdown";
@@ -57,6 +58,21 @@ function extractExcerpt(content: string | null, maxChars = 240): string {
   }
 }
 
+function LockIcon({ style }: { style?: React.CSSProperties }) {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="white"
+      xmlns="http://www.w3.org/2000/svg"
+      style={style}
+    >
+      <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
+    </svg>
+  );
+}
+
 // Lock overlay — renders on top of a PieceCard for submitted-but-not-revealed pieces
 function LockOverlay() {
   return (
@@ -72,21 +88,14 @@ function LockOverlay() {
         pointerEvents: "none",
       }}
     >
-      <svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="white"
-        xmlns="http://www.w3.org/2000/svg"
+      <LockIcon
         style={{
           position: "absolute",
           top: "12px",
           left: "50%",
           transform: "translateX(-50%)",
         }}
-      >
-        <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
-      </svg>
+      />
     </div>
   );
 }
@@ -194,16 +203,11 @@ function FeaturedPiece({
         }}
       >
         {piece.coverImage && (
-          <img
+          <Image
             src={piece.coverImage}
             alt=""
-            style={{
-              position: "absolute",
-              inset: 0,
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-            }}
+            fill
+            style={{ objectFit: "cover" }}
           />
         )}
 
@@ -227,9 +231,7 @@ function FeaturedPiece({
               zIndex: 3,
             }}
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
-              <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
-            </svg>
+            <LockIcon />
           </div>
         )}
 
