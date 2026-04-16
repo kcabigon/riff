@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef, FormEvent } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import OnboardingCard from "@/components/onboarding/OnboardingCard";
-import ImageUploadFlow from "@/components/shared/ImageUploadFlow";
-import type { ImageUploadFlowHandle } from "@/components/shared/ImageUploadFlow";
+import ImageUpload from "@/components/onboarding/ImageUpload";
 import PrimaryButton from "@/components/PrimaryButton";
 import BackButton from "@/components/BackButton";
 import Tagline from "@/components/Tagline";
@@ -22,7 +22,6 @@ export default function OnboardingCreateClubBannerPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [clubData, setClubData] = useState<PendingClubData | null>(null);
-  const uploadFlowRef = useRef<ImageUploadFlowHandle>(null);
 
   // Load club data from sessionStorage
   useEffect(() => {
@@ -53,18 +52,6 @@ export default function OnboardingCreateClubBannerPage() {
     setLoading(true);
     setError("");
 
-    // If the user has an unsaved crop, save it first
-    let finalBannerImage = bannerImage;
-    if (uploadFlowRef.current?.hasPendingCrop()) {
-      const url = await uploadFlowRef.current.saveCrop();
-      if (!url) {
-        // Crop/upload failed — don't submit the form
-        setLoading(false);
-        return;
-      }
-      finalBannerImage = url;
-    }
-
     try {
       const response = await fetch("/api/clubs", {
         method: "POST",
@@ -72,7 +59,7 @@ export default function OnboardingCreateClubBannerPage() {
         body: JSON.stringify({
           name: clubData.name,
           description: clubData.description,
-          bannerImage: finalBannerImage || null,
+          bannerImage: bannerImage || null,
         }),
       });
 
@@ -145,6 +132,7 @@ export default function OnboardingCreateClubBannerPage() {
               display: "flex",
               flexDirection: "column",
               gap: "16px",
+              alignItems: "flex-start",
             }}
           >
             <Tagline
@@ -153,13 +141,20 @@ export default function OnboardingCreateClubBannerPage() {
               textColor="#000000"
               width={218}
             />
-            <ImageUploadFlow
-              ref={uploadFlowRef}
-              onSelect={(url) => setBannerImage(url)}
-              currentImage={bannerImage || null}
-              aspectRatio={3 / 1}
-              removeLabel="Remove photo"
-              hideSaveButton
+            <ImageUpload
+              onUpload={setBannerImage}
+              currentImage={bannerImage}
+              disabled={loading}
+              uploadIcon={
+                <Image
+                  src="/icons/camera_icon.svg"
+                  alt=""
+                  width={56}
+                  height={42}
+                />
+              }
+              uploadText="Upload your club's cover photo"
+              hideRecommendedText={true}
             />
           </div>
 

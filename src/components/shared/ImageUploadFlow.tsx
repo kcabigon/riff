@@ -8,7 +8,13 @@ import {
   useRef,
   forwardRef,
 } from "react";
-import Cropper, { Area } from "react-easy-crop";
+import dynamic from "next/dynamic";
+import type { Area } from "react-easy-crop";
+
+const Cropper = dynamic(() => import("react-easy-crop"), {
+  ssr: false,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+}) as any;
 import PrimaryButton from "@/components/PrimaryButton";
 import Image from "next/image";
 import { getCroppedImg } from "@/lib/crop-image";
