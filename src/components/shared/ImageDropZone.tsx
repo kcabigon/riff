@@ -142,7 +142,7 @@ export default function ImageDropZone({
           <p
             style={{
               fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
+              fontSize: "12px",
               color: "#808080",
               margin: 0,
             }}
