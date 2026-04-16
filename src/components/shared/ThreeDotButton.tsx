@@ -22,7 +22,7 @@ export default function ThreeDotButton({
   const buttonStyle: React.CSSProperties = {
     background: isActive ? "#01EFFC" : "transparent",
     border: isActive ? "2px solid #000000" : "2px solid transparent",
-    boxShadow: isActive ? "3px 3px 0px 0px #000000" : "none",
+    boxShadow: isActive ? "4px 4px 0px 0px #000000" : "none",
     color: isActive ? "#000000" : variant === "dark" ? "#FFFFFF" : "#000000",
     opacity: isActive ? 1 : variant === "dark" ? 0.7 : 0.4,
     cursor: "pointer",
