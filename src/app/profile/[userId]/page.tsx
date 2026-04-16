@@ -67,7 +67,9 @@ export default async function ProfilePageRoute({
     coverImage: p.coverImage,
     currentContent: p.currentContent,
     wordCount: p.wordCount,
-    isRevealed: p.riffs.some((r) => r.riff.status === "REVEALED"),
+    isRevealed: p.riffs.some(
+      (r) => r.riff.status === "REVEALED" || r.riff.status === "COMPLETED"
+    ),
   }));
 
   const pieceCount = pieces.length;
