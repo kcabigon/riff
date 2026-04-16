@@ -3,8 +3,8 @@
 import { useState } from "react";
 import Modal from "@/components/shared/Modal";
 import Avatar from "@/components/shared/Avatar";
+import TextInput from "@/components/TextInput";
 import PrimaryButton from "@/components/PrimaryButton";
-import SecondaryButton from "@/components/SecondaryButton";
 
 const SUBJECT_LIMIT = 80;
 const BODY_LIMIT = 500;
@@ -28,6 +28,18 @@ interface HostMessageModalProps {
 
 type Step = "compose" | "confirm";
 type AudienceType = "all" | "specific";
+
+const cancelButtonStyle: React.CSSProperties = {
+  background: "none",
+  border: "none",
+  cursor: "pointer",
+  fontFamily: "var(--font-dm-sans)",
+  fontSize: "14px",
+  fontWeight: 300,
+  color: "#808080",
+  padding: "4px",
+  textDecoration: "underline",
+};
 
 export default function HostMessageModal({
   isOpen,
@@ -193,7 +205,7 @@ export default function HostMessageModal({
               backgroundColor: "#FAFAFA",
             }}
           >
-            <div style={{ display: "flex", gap: "-8px" }}>
+            <div style={{ display: "flex" }}>
               {recipients.slice(0, 5).map((m, i) => (
                 <div
                   key={m.id}
@@ -281,7 +293,7 @@ export default function HostMessageModal({
                 fontFamily: "var(--font-dm-sans)",
                 fontSize: "13px",
                 fontWeight: 300,
-                color: "#FF3333",
+                color: "#DC2626",
                 margin: 0,
               }}
             >
@@ -290,21 +302,28 @@ export default function HostMessageModal({
           )}
 
           {/* Footer */}
-          <div style={{ display: "flex", gap: "12px" }}>
-            <SecondaryButton
-              onClick={() => setStep("compose")}
-              disabled={sending}
-              style={{ flex: 1 }}
-            >
-              Back
-            </SecondaryButton>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px",
+              alignItems: "center",
+            }}
+          >
             <PrimaryButton
               onClick={handleSend}
               loading={sending}
-              style={{ flex: 1 }}
+              style={{ width: "100%" }}
             >
               Send
             </PrimaryButton>
+            <button
+              onClick={() => setStep("compose")}
+              disabled={sending}
+              style={cancelButtonStyle}
+            >
+              Back
+            </button>
           </div>
         </div>
       </Modal>
@@ -326,6 +345,7 @@ export default function HostMessageModal({
             style={{
               display: "flex",
               justifyContent: "space-between",
+              alignItems: "baseline",
               marginBottom: "6px",
             }}
           >
@@ -344,29 +364,23 @@ export default function HostMessageModal({
                 fontFamily: "var(--font-dm-sans)",
                 fontSize: "12px",
                 fontWeight: 300,
-                color: subject.length >= SUBJECT_LIMIT ? "#FF3333" : "#808080",
+                color: subject.length >= SUBJECT_LIMIT ? "#DC2626" : "#808080",
               }}
             >
               {subject.length}/{SUBJECT_LIMIT}
             </span>
           </div>
-          <input
-            type="text"
+          <TextInput
             value={subject}
-            onChange={(e) => setSubject(e.target.value.slice(0, SUBJECT_LIMIT))}
+            onChange={(e) =>
+              setSubject(
+                (e as React.ChangeEvent<HTMLInputElement>).target.value.slice(
+                  0,
+                  SUBJECT_LIMIT
+                )
+              )
+            }
             placeholder="What's this about?"
-            style={{
-              width: "100%",
-              border: "2px solid #000000",
-              padding: "10px 12px",
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              fontWeight: 300,
-              color: "#000000",
-              outline: "none",
-              boxSizing: "border-box",
-              backgroundColor: "#FFFFFF",
-            }}
           />
         </div>
 
@@ -376,6 +390,7 @@ export default function HostMessageModal({
             style={{
               display: "flex",
               justifyContent: "space-between",
+              alignItems: "baseline",
               marginBottom: "6px",
             }}
           >
@@ -394,31 +409,24 @@ export default function HostMessageModal({
                 fontFamily: "var(--font-dm-sans)",
                 fontSize: "12px",
                 fontWeight: 300,
-                color: body.length >= BODY_LIMIT ? "#FF3333" : "#808080",
+                color: body.length >= BODY_LIMIT ? "#DC2626" : "#808080",
               }}
             >
               {body.length}/{BODY_LIMIT}
             </span>
           </div>
-          <textarea
-            value={body}
-            onChange={(e) => setBody(e.target.value.slice(0, BODY_LIMIT))}
-            placeholder="Write your message..."
+          <TextInput
+            multiline
             rows={5}
-            style={{
-              width: "100%",
-              border: "2px solid #000000",
-              padding: "10px 12px",
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              fontWeight: 300,
-              color: "#000000",
-              outline: "none",
-              resize: "vertical",
-              boxSizing: "border-box",
-              backgroundColor: "#FFFFFF",
-              lineHeight: 1.6,
-            }}
+            value={body}
+            onChange={(e) =>
+              setBody(
+                (
+                  e as React.ChangeEvent<HTMLTextAreaElement>
+                ).target.value.slice(0, BODY_LIMIT)
+              )
+            }
+            placeholder="Write your message..."
           />
         </div>
 
@@ -437,29 +445,30 @@ export default function HostMessageModal({
               Send to
             </p>
             <div style={{ display: "flex", gap: "8px" }}>
-              {(["all", "specific"] as AudienceType[]).map((type) => (
-                <button
-                  key={type}
-                  onClick={() => setAudienceType(type)}
-                  style={{
-                    padding: "8px 16px",
-                    border: "2px solid #000000",
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "13px",
-                    fontWeight: audienceType === type ? 500 : 300,
-                    color: "#000000",
-                    backgroundColor:
-                      audienceType === type ? "#00FF66" : "#FFFFFF",
-                    cursor: "pointer",
-                    boxShadow:
-                      audienceType === type
-                        ? "3px 3px 0px 0px #000000"
-                        : "none",
-                  }}
-                >
-                  {type === "all" ? "Entire club" : "Specific members"}
-                </button>
-              ))}
+              {(["all", "specific"] as AudienceType[]).map((type) => {
+                const isActive = audienceType === type;
+                return (
+                  <button
+                    key={type}
+                    onClick={() => setAudienceType(type)}
+                    style={{
+                      padding: "8px 16px",
+                      border: isActive
+                        ? "2px solid #000000"
+                        : "2px solid #E6E6E6",
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "13px",
+                      fontWeight: isActive ? 500 : 300,
+                      color: "#000000",
+                      backgroundColor: isActive ? "#00FF66" : "#FFFFFF",
+                      cursor: "pointer",
+                      boxShadow: isActive ? "4px 4px 0px 0px #000000" : "none",
+                    }}
+                  >
+                    {type === "all" ? "Entire club" : "Specific members"}
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
@@ -502,8 +511,8 @@ export default function HostMessageModal({
                       width: "100%",
                       padding: "10px 14px",
                       border: "none",
-                      borderBottom: "1px solid #F0F0F0",
-                      backgroundColor: isSelected ? "#F9FFF9" : "#FFFFFF",
+                      borderBottom: "1px solid #E6E6E6",
+                      backgroundColor: isSelected ? "#F5F5F5" : "#FFFFFF",
                       cursor: "pointer",
                       textAlign: "left",
                     }}
@@ -513,7 +522,7 @@ export default function HostMessageModal({
                       style={{
                         fontFamily: "var(--font-dm-sans)",
                         fontSize: "14px",
-                        fontWeight: isSelected ? 400 : 300,
+                        fontWeight: isSelected ? 500 : 300,
                         color: "#000000",
                         flex: 1,
                       }}
@@ -540,17 +549,24 @@ export default function HostMessageModal({
         )}
 
         {/* Footer */}
-        <div style={{ display: "flex", gap: "12px" }}>
-          <SecondaryButton onClick={handleClose} style={{ flex: 1 }}>
-            Cancel
-          </SecondaryButton>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+            alignItems: "center",
+          }}
+        >
           <PrimaryButton
             onClick={() => setStep("confirm")}
             disabled={!canReview}
-            style={{ flex: 1 }}
+            style={{ width: "100%" }}
           >
-            Review
+            Review &amp; Send
           </PrimaryButton>
+          <button onClick={handleClose} style={cancelButtonStyle}>
+            Cancel
+          </button>
         </div>
       </div>
     </Modal>
