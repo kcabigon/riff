@@ -193,35 +193,6 @@ export async function sendOnboardingEmail(
 }
 
 /**
- * Send a club invitation email
- */
-export async function sendClubInviteEmail(
-  email: string,
-  clubName: string,
-  inviteUrl: string,
-  inviterName: string
-): Promise<void> {
-  try {
-    const { data, error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to: email,
-      subject: `${inviterName} invited you to join ${clubName} on Riff`,
-      html: getClubInviteEmailTemplate(clubName, inviteUrl, inviterName),
-    });
-
-    if (error) {
-      console.error("Resend API error:", error);
-      throw new Error(`Failed to send email: ${error.message}`);
-    }
-
-    console.log("Club invite email sent successfully:", data);
-  } catch (error) {
-    console.error("Error sending club invite email:", error);
-    throw error;
-  }
-}
-
-/**
  * Send a riff created email to a club member
  */
 export async function sendRiffCreatedEmail({
@@ -423,57 +394,12 @@ function getOnboardingEmailTemplate(magicLink: string): string {
 }
 
 /**
- * Club invitation email (auth layout — invitee may not be a user yet)
- */
-function getClubInviteEmailTemplate(
-  clubName: string,
-  inviteUrl: string,
-  inviterName: string
-): string {
-  return emailShell({
-    title: `Join ${clubName} on Riff`,
-    footerText: `Button not working? Copy this link into your browser:<br><a href="${inviteUrl}" style="color:#888888;font-size:11px;word-break:break-all;">${inviteUrl}</a><br><br>If you don't know ${inviterName} or didn't expect this invitation, you can safely ignore this email.`,
-    content: `
-          <tr>
-            <td style="padding:40px 40px 16px;">
-              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">You're invited.</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;"><strong style="font-weight:500;">${inviterName}</strong> has invited you to join their club on Riff:</p>
-            </td>
-          </tr>
-
-          <!-- Club name box -->
-          <tr>
-            <td style="padding:8px 40px 0;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #000000;background-color:#FAFAFA;">
-                <tr>
-                  <td style="padding:24px;text-align:center;">
-                    <p style="font-size:20px;font-weight:500;color:#000000;margin:0;font-family:'DM Sans',-apple-system,sans-serif;">${clubName}</p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:16px 40px 0;">
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">Riff is a private space for friends to share their writing, give feedback, and connect through long-form creativity.</p>
-            </td>
-          </tr>
-
-          ${emailButton("Join Club", inviteUrl)}`,
-  });
-}
-
-/**
  * Riff created email (notification layout — club name at top)
  */
 function getRiffCreatedEmailTemplate({
   actorName,
   clubName,
   clubUrl,
-  riffTitle,
-  prompt,
-  deadline,
 }: {
   actorName: string;
   clubName: string;
@@ -482,31 +408,6 @@ function getRiffCreatedEmailTemplate({
   prompt?: string | null;
   deadline?: Date | null;
 }): string {
-  const deadlineStr = deadline
-    ? deadline.toLocaleDateString("en-US", { month: "long", day: "numeric" })
-    : null;
-  const daysFromNow = deadline
-    ? Math.round(
-        (deadline.getTime() - new Date().setHours(0, 0, 0, 0)) /
-          (1000 * 60 * 60 * 24)
-      )
-    : null;
-
-  const titleBlock = riffTitle
-    ? `<p style="font-size:20px;font-weight:500;color:#000000;margin:0 0 16px 0;font-family:'DM Sans',-apple-system,sans-serif;">${riffTitle}</p>`
-    : "";
-
-  const promptBlock = prompt
-    ? `<table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;">
-                <tr><td width="3" style="width:3px;background-color:#000000;"></td><td style="padding:0 0 0 16px;"><p style="font-size:16px;font-weight:300;color:#000000;margin:0;line-height:1.6;font-style:italic;font-family:'DM Sans',-apple-system,sans-serif;">${prompt}</p></td></tr>
-              </table>`
-    : "";
-
-  const deadlineBlock =
-    deadlineStr && daysFromNow !== null
-      ? `<p style="font-size:14px;font-weight:300;color:#808080;margin:16px 0 0 0;font-family:'DM Sans',-apple-system,sans-serif;">Deadline: ${deadlineStr} &middot; ${daysFromNow} day${daysFromNow === 1 ? "" : "s"} from now</p>`
-      : "";
-
   return emailShell({
     title: `New riff in ${clubName}`,
     clubName,
@@ -515,20 +416,7 @@ function getRiffCreatedEmailTemplate({
           <tr>
             <td style="padding:40px 40px 16px;">
               <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">New riff dropped.</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;"><strong style="font-weight:500;">${actorName}</strong> just started a new riff in <strong style="font-weight:500;">${clubName}</strong>.</p>
-            </td>
-          </tr>
-
-          <!-- Riff details box -->
-          <tr>
-            <td style="padding:8px 40px 0;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #000000;background-color:#FAFAFA;">
-                <tr><td style="padding:24px;">
-                  ${titleBlock}
-                  ${promptBlock}
-                  ${deadlineBlock}
-                </td></tr>
-              </table>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;"><strong style="font-weight:500;">${actorName}</strong> started a new riff.</p>
             </td>
           </tr>
 
@@ -558,11 +446,9 @@ function getRiffRevealedEmailTemplate({
       : `Volume ${volumeNumber}`
     : riffTitle || null;
 
-  const titleBlock = displayTitle
-    ? `<p style="font-size:20px;font-weight:500;color:#000000;margin:0 0 12px 0;font-family:'DM Sans',-apple-system,sans-serif;">${displayTitle}</p>`
-    : "";
-
-  const pieceLabel = pieceCount === 1 ? "1 piece" : `${pieceCount} pieces`;
+  const titleLine = displayTitle
+    ? `<strong style="font-weight:500;">${displayTitle}</strong> has been revealed.`
+    : "A riff has been revealed.";
 
   return emailShell({
     title: `Riff revealed in ${clubName}`,
@@ -572,19 +458,7 @@ function getRiffRevealedEmailTemplate({
           <tr>
             <td style="padding:40px 40px 16px;">
               <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">The pieces are in.</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">A riff in <strong style="font-weight:500;">${clubName}</strong> has been revealed.</p>
-            </td>
-          </tr>
-
-          <!-- Riff details box -->
-          <tr>
-            <td style="padding:8px 40px 0;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #000000;background-color:#FAFAFA;">
-                <tr><td style="padding:24px;">
-                  ${titleBlock}
-                  <p style="font-size:16px;font-weight:300;color:#808080;margin:0;font-family:'DM Sans',-apple-system,sans-serif;">${pieceLabel} submitted</p>
-                </td></tr>
-              </table>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${titleLine}</p>
             </td>
           </tr>
 
@@ -613,25 +487,14 @@ function getCommentDigestEmailTemplate({
 
   return emailShell({
     title: `${commentLabel} on "${pieceTitle}"`,
+    clubName: pieceTitle,
     footerText:
       "You're receiving this because someone commented on your writing on Riff.",
     content: `
           <tr>
             <td style="padding:40px 40px 16px;">
               <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">The riff goes on.</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">Hey ${recipientName}, ${actorNames} left comments on your piece.</p>
-            </td>
-          </tr>
-
-          <!-- Comment details box -->
-          <tr>
-            <td style="padding:8px 40px 0;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #000000;background-color:#FAFAFA;">
-                <tr><td style="padding:24px;">
-                  <p style="font-size:20px;font-weight:500;color:#000000;margin:0 0 12px 0;font-family:'DM Sans',-apple-system,sans-serif;">${pieceTitle}</p>
-                  <p style="font-size:16px;font-weight:300;color:#808080;margin:0;font-family:'DM Sans',-apple-system,sans-serif;">${commentLabel}</p>
-                </td></tr>
-              </table>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">Hey ${recipientName}, ${actorNames} left ${commentLabel} on your piece.</p>
             </td>
           </tr>
 
