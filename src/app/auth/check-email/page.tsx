@@ -42,7 +42,7 @@ function CheckEmailContent() {
         <h1
           style={{
             fontFamily: "var(--font-dm-serif-text)",
-            fontSize: "64px",
+            fontSize: "32px",
             fontWeight: 400,
             lineHeight: 1.2,
             color: "#000000",
