@@ -296,7 +296,7 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
               style={{
                 display: "flex",
                 gap: "0",
-                borderBottom: "1px solid #E5E5E5",
+                borderBottom: "1px solid #E6E6E6",
                 marginBottom: "24px",
               }}
             >
@@ -311,7 +311,7 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
                     flex: 1,
                     padding: "8px 0",
                     fontFamily: "var(--font-dm-sans)",
-                    fontSize: "14px",
+                    fontSize: "12px",
                     fontWeight: tab === t ? 500 : 300,
                     color: tab === t ? "#000" : "#808080",
                     background: "none",
@@ -401,20 +401,20 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
             >
               <div
                 style={{
+                  position: "relative",
                   width: "240px",
                   aspectRatio: "4 / 5",
                   overflow: "hidden",
                   flexShrink: 0,
                 }}
               >
-                <img
+                <Image
                   src={currentImage}
                   alt="Cover preview"
+                  fill
+                  sizes="240px"
                   style={{
-                    width: "100%",
-                    height: "100%",
                     objectFit: "cover",
-                    display: "block",
                   }}
                 />
               </div>
@@ -455,7 +455,7 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
                 <p
                   style={{
                     fontFamily: "var(--font-dm-sans)",
-                    fontSize: "14px",
+                    fontSize: "12px",
                     color: "#808080",
                     textAlign: "center",
                     padding: "48px 0",
@@ -477,25 +477,25 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
                       key={i}
                       onClick={() => handleExistingImageClick(url)}
                       style={{
+                        position: "relative",
                         aspectRatio: "1",
                         border:
                           currentImage === url
                             ? "2px solid #00FF66"
-                            : "1px solid #E5E5E5",
+                            : "1px solid #E6E6E6",
                         padding: 0,
                         background: "none",
                         cursor: "pointer",
                         overflow: "hidden",
                       }}
                     >
-                      <img
+                      <Image
                         src={url}
                         alt=""
+                        fill
+                        sizes="(max-width: 640px) 33vw, 200px"
                         style={{
-                          width: "100%",
-                          height: "100%",
                           objectFit: "cover",
-                          display: "block",
                         }}
                       />
                     </button>
