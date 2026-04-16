@@ -17,8 +17,11 @@ export default function AuthCard({ children }: AuthCardProps) {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "center",
-        padding: "24px",
+        justifyContent: "flex-start",
+        paddingTop: "18vh",
+        paddingLeft: "24px",
+        paddingRight: "24px",
+        paddingBottom: "24px",
         position: "relative",
         backgroundColor: "#FFFFFF",
       }}
@@ -32,7 +35,7 @@ export default function AuthCard({ children }: AuthCardProps) {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          gap: "56px",
+          gap: "40px",
           position: "relative",
           zIndex: 1,
         }}

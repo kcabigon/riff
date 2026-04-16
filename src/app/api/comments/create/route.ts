@@ -109,28 +109,30 @@ export async function POST(req: Request) {
 
     // Notify piece author if they're not the commenter
     if (piece.authorId !== userId) {
-      // In-app notification (immediate)
-      await prisma.notification.create({
-        data: {
-          type: "NEW_COMMENT",
+      try {
+        await prisma.notification.create({
+          data: {
+            type: "NEW_COMMENT",
+            recipientId: piece.authorId,
+            actorId: userId,
+            pieceId,
+            commentId: comment.id,
+            clubId,
+            riffId,
+          },
+        });
+
+        await enqueueCommentEmail({
           recipientId: piece.authorId,
           actorId: userId,
           pieceId,
           commentId: comment.id,
           clubId,
           riffId,
-        },
-      });
-
-      // Email notification (batched every 15 min)
-      await enqueueCommentEmail({
-        recipientId: piece.authorId,
-        actorId: userId,
-        pieceId,
-        commentId: comment.id,
-        clubId,
-        riffId,
-      });
+        });
+      } catch (notifyErr) {
+        console.error("Failed to send comment notification:", notifyErr);
+      }
     }
 
     return NextResponse.json({ success: true, comment }, { status: 201 });

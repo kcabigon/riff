@@ -7,9 +7,12 @@ Help the user test their changes locally. This is the easiest way to see what th
    - If it's already running: "The dev server is already running! Open http://localhost:3000 in your browser."
    - If not, continue
 
-2. **Quick validation before starting**:
-   - Run `npx tsc --noEmit` silently — if there are type errors, show them and offer to fix before starting
-   - If clean, proceed
+2. **Run code quality checks**:
+   - Run `npm run lint` and `npx tsc --noEmit` in parallel
+   - **If clean**: proceed silently — no need to mention it
+   - **If issues found**: show them clearly, then ask: "Want me to fix these before starting the server, or start it anyway?"
+     - If fix: address the issues, re-run to confirm clean, then proceed
+     - If start anyway: proceed and make a note to revisit before `/finish-feature`
 
 3. **Start the dev server**:
    - Tell the user: "Starting the dev server — this will open in a new process. **Open http://localhost:3000 in your browser to see your changes.**"
