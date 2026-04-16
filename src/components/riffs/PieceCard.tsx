@@ -20,6 +20,7 @@ interface PieceCardProps {
   isRead: boolean;
   hasNewComments?: boolean;
   isOwnPiece?: boolean;
+  hoverShadow?: string;
   onClick: () => void;
 }
 
@@ -38,6 +39,7 @@ export default function PieceCard({
   isRead,
   hasNewComments = false,
   isOwnPiece = false,
+  hoverShadow = "8px 8px 0px 0px #000000",
   onClick,
 }: PieceCardProps) {
   const [isHovered, setIsHovered] = useState(false);
@@ -57,7 +59,7 @@ export default function PieceCard({
         cursor: "pointer",
         overflow: "hidden",
         aspectRatio: "4 / 5",
-        boxShadow: isHovered ? "8px 8px 0px 0px #000000" : "none",
+        boxShadow: isHovered ? hoverShadow : "none",
         transition: "box-shadow 0.1s ease",
         backgroundColor: imageUrl ? undefined : placeholderColor,
       }}
