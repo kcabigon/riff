@@ -39,6 +39,15 @@ If they're on `develop`:
 
 ## Step 5: Ask what they want to do
 
+**First, silently check for open PRs**: Run `gh pr list --base develop --json number --jq 'length'` to get the count.
+
+**If there are open PRs**, open with this before anything else:
+> "There are [N] PRs waiting for review — want to check those out, or are you here to build something new?"
+- If review → run `/review`
+- If build → continue to the options below
+
+**If no open PRs**, skip straight to the options below.
+
 Present these options naturally (not as a numbered list — keep it conversational):
 
 - **Build something new** — "Alright what do you want to build? You can give me a brief description or a super detailed plan. Whatever it is, make sure it's dope." Then follow the `/new-feature` flow.
