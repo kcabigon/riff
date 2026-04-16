@@ -13,14 +13,18 @@ Review open PRs, run code quality checks, test locally, and approve. This is the
 
 Run:
 ```
-gh pr list --base develop --json number,title,body,author,createdAt,headRefName
+gh pr list --base develop --json number,title,author,createdAt,headRefName,reviews
 ```
 
-Display a clean list for each open PR:
+For each PR, count reviews where `state == "APPROVED"`. Display a clean list:
 ```
-#44 • feat: add comment notifications • jarric22 • 3 days ago
-#41 • fix: club banner upload • cdpeders • 1 week ago
+#44 • feat: add comment notifications • jarric22 • 3 days ago • 1/2 approvals
+#41 • fix: club banner upload • cdpeders • 1 week ago • ✓ 2/2 approvals — ready to merge!
 ```
+
+- 0 approvals: no approval indicator
+- 1 approval: `1/2 approvals`
+- 2+ approvals: `✓ 2/2 approvals — ready to merge!`
 
 If no open PRs: "No open PRs right now — everyone's either building or done. Run `/letsriff` to start something new."
 
@@ -146,6 +150,23 @@ Ask: "Ready to approve, leave a comment, or request changes?"
 
 **Skip for now:**
 - "No problem — the PR stays open. Come back when you're ready."
+
+### Step 7 — Merge if ready
+
+After any approve/comment/skip action, check the current approval count:
+```
+gh pr view <number> --json reviews --jq '[.reviews[] | select(.state == "APPROVED")] | length'
+```
+
+**If 2+ approvals:**
+> "This PR has [N] approvals — it's ready to merge into develop. Want me to merge it?"
+- If yes: run `gh pr merge <number> --merge` (regular merge commit)
+- Confirm: "Merged! PR #[number] is now in develop."
+- Remind them: "You'll want to run `git pull origin develop` to get these changes locally."
+
+**If fewer than 2 approvals:**
+- "This PR has [N]/2 approvals — it needs one more before it can merge. Let someone else know to take a look."
+- Do not offer to merge.
 
 ---
 
