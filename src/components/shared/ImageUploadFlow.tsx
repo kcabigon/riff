@@ -7,14 +7,32 @@ import {
   useImperativeHandle,
   useRef,
   forwardRef,
+  type ComponentType,
 } from "react";
 import dynamic from "next/dynamic";
-import type { Area } from "react-easy-crop";
+import type { Area, CropperProps } from "react-easy-crop";
+
+// react-easy-crop declares these as required but provides runtime defaults via
+// static defaultProps. React 19 no longer merges class defaultProps into prop
+// types, so we mark the defaulted props optional here.
+type DefaultedCropperProp =
+  | "rotation"
+  | "minZoom"
+  | "maxZoom"
+  | "zoomSpeed"
+  | "style"
+  | "classes"
+  | "restrictPosition"
+  | "mediaProps"
+  | "cropperProps"
+  | "keyboardStep";
+
+type CropperComponentProps = Omit<CropperProps, DefaultedCropperProp> &
+  Partial<Pick<CropperProps, DefaultedCropperProp>>;
 
 const Cropper = dynamic(() => import("react-easy-crop"), {
   ssr: false,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-}) as any;
+}) as ComponentType<CropperComponentProps>;
 import PrimaryButton from "@/components/PrimaryButton";
 import Image from "next/image";
 import { getCroppedImg } from "@/lib/crop-image";
