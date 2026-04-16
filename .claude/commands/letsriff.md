@@ -42,8 +42,8 @@ If they're on `develop`:
 **First, silently check for open PRs**: Run `gh pr list --base develop --json number --jq 'length'` to get the count.
 
 **If there are open PRs**, open with this before anything else:
-> "There are [N] PRs waiting for review — want to check those out, or are you here to build something new?"
-- If review → run `/review`
+> "Hey, there are [N] PRs open and waiting for review. Want to take a look at those, or are you here to build something new?"
+- If review → run `/review` (it will show the full list with details)
 - If build → continue to the options below
 
 **If no open PRs**, skip straight to the options below.
