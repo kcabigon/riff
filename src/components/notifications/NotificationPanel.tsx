@@ -27,17 +27,13 @@ export default function NotificationPanel({
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const handleNotificationDismiss = (id: string) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
-  };
-
   useEffect(() => {
     (async () => {
       try {
         const res = await fetch("/api/notifications?limit=20");
         if (res.ok) {
           const { notifications: data } = await res.json();
-          setNotifications(data);
+          setNotifications(data.filter((n: NotificationData) => !n.isRead));
         }
       } catch {
         // silent
@@ -51,6 +47,10 @@ export default function NotificationPanel({
     await fetch("/api/notifications", { method: "PATCH" });
     setNotifications([]);
     onMarkAllRead();
+  };
+
+  const handleDismiss = (id: string) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
 
   // Group by date
@@ -172,7 +172,7 @@ export default function NotificationPanel({
                 key={notification.id}
                 notification={notification}
                 onClose={onClose}
-                onDismiss={handleNotificationDismiss}
+                onDismiss={handleDismiss}
               />
             ))}
           </div>
