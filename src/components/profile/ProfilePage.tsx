@@ -1,8 +1,12 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import ProfileHeader from "./ProfileHeader";
-import PiecesGrid from "./tabs/PiecesGrid";
+import PiecesGrid, { FeaturedPiece } from "./tabs/PiecesGrid";
+import type { Piece } from "./tabs/PiecesGrid";
 import Avatar from "@/components/shared/Avatar";
+import DeletePieceModal from "@/components/profile/DeletePieceModal";
 
 const AVATAR_SIZE = 80;
 
@@ -20,13 +24,7 @@ interface ProfilePageProps {
     pieceCount: number;
     totalWordCount: number;
   };
-  pieces: Array<{
-    id: string;
-    title: string | null;
-    coverImage: string | null;
-    currentContent: string | null;
-    isRevealed: boolean;
-  }>;
+  pieces: Piece[];
   isOwnProfile: boolean;
   lastActiveClubId: string | null;
 }
@@ -35,16 +33,38 @@ export default function ProfilePage({
   user,
   stats,
   lastActiveClubId,
-  pieces,
+  pieces: initialPieces,
   isOwnProfile,
 }: ProfilePageProps) {
+  const router = useRouter();
+  const [pieces, setPieces] = useState(initialPieces);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: string;
+    title: string | null;
+  } | null>(null);
+
   const firstName =
     user.firstName || user.name?.split(" ")[0] || user.username || "";
   const lastName =
     user.lastName || user.name?.split(" ").slice(1).join(" ") || "";
 
+  const handleDeleted = (pieceId: string) => {
+    setPieces((prev) => prev.filter((p) => p.id !== pieceId));
+  };
+
+  const [featured, ...rest] = pieces;
+
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
+      {deleteTarget && (
+        <DeletePieceModal
+          pieceId={deleteTarget.id}
+          pieceTitle={deleteTarget.title}
+          onClose={() => setDeleteTarget(null)}
+          onDeleted={() => handleDeleted(deleteTarget.id)}
+        />
+      )}
+
       {/* Header + avatar bridge */}
       <div style={{ position: "relative" }}>
         <ProfileHeader
@@ -73,7 +93,64 @@ export default function ProfilePage({
         </div>
       </div>
 
-      <PiecesGrid pieces={pieces} isOwnProfile={isOwnProfile} />
+      {/* Empty state */}
+      {pieces.length === 0 && (
+        <div style={{ padding: "64px 24px", textAlign: "center" }}>
+          <p
+            style={{
+              fontFamily: "var(--font-dm-serif-text)",
+              fontSize: "24px",
+              fontWeight: 400,
+              color: "#000000",
+              margin: "0 0 8px 0",
+            }}
+          >
+            Every great writer starts with a blank page.
+          </p>
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "16px",
+              fontWeight: 300,
+              color: "#808080",
+              margin: 0,
+            }}
+          >
+            Pieces coming soon.
+          </p>
+        </div>
+      )}
+
+      {/* Featured piece */}
+      {featured && (
+        <FeaturedPiece
+          piece={featured}
+          onClick={
+            !featured.isRevealed && !isOwnProfile
+              ? () => {}
+              : !featured.isRevealed && isOwnProfile
+                ? () => router.push(`/write/${featured.id}`)
+                : () => router.push(`/read/${featured.id}`)
+          }
+          isOwnProfile={isOwnProfile}
+          onDelete={() =>
+            setDeleteTarget({ id: featured.id, title: featured.title })
+          }
+        />
+      )}
+
+      {/* Jams — coming soon */}
+
+      {/* Piece grid */}
+      {rest.length > 0 && (
+        <PiecesGrid
+          pieces={rest}
+          isOwnProfile={isOwnProfile}
+          onDelete={(id: string, title: string | null) =>
+            setDeleteTarget({ id, title })
+          }
+        />
+      )}
 
       {/* Footer: stats */}
       <div

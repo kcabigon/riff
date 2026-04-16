@@ -1,15 +1,14 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { useState } from "react";
 import PieceCard from "@/components/riffs/PieceCard";
 import Dropdown from "@/components/shared/Dropdown";
 import type { DropdownItem } from "@/components/shared/Dropdown";
 import { useIsMobile } from "@/hooks/useMediaQuery";
-import DeletePieceModal from "@/components/profile/DeletePieceModal";
 
-interface Piece {
+export interface Piece {
   id: string;
   title: string | null;
   coverImage: string | null;
@@ -73,7 +72,6 @@ function LockIcon({ style }: { style?: React.CSSProperties }) {
   );
 }
 
-// Lock overlay — renders on top of a PieceCard for submitted-but-not-revealed pieces
 function LockOverlay() {
   return (
     <div
@@ -151,7 +149,7 @@ function PieceDotsMenu({
   );
 }
 
-function FeaturedPiece({
+export function FeaturedPiece({
   piece,
   onClick,
   isOwnProfile,
@@ -220,7 +218,6 @@ function FeaturedPiece({
           }}
         />
 
-        {/* Lock icon for submitted-but-not-revealed pieces */}
         {!piece.isRevealed && (
           <div
             style={{
@@ -289,7 +286,6 @@ function FeaturedPiece({
           )}
         </div>
 
-        {/* Dots menu — only for own profile, white dots on dark overlay */}
         {isOwnProfile && <PieceDotsMenu items={menuItems} onDark={true} />}
       </div>
     </div>
@@ -297,53 +293,15 @@ function FeaturedPiece({
 }
 
 export default function PiecesGrid({
-  pieces: initialPieces,
+  pieces,
   isOwnProfile,
+  onDelete,
 }: {
   pieces: Piece[];
   isOwnProfile: boolean;
+  onDelete: (id: string, title: string | null) => void;
 }) {
   const router = useRouter();
-  const [pieces, setPieces] = useState(initialPieces);
-  const [deleteTarget, setDeleteTarget] = useState<{
-    id: string;
-    title: string | null;
-  } | null>(null);
-
-  if (pieces.length === 0) {
-    return (
-      <div style={{ padding: "64px 24px", textAlign: "center" }}>
-        <p
-          style={{
-            fontFamily: "var(--font-dm-serif-text)",
-            fontSize: "24px",
-            fontWeight: 400,
-            color: "#000000",
-            margin: "0 0 8px 0",
-          }}
-        >
-          Every great writer starts with a blank page.
-        </p>
-        <p
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
-            fontWeight: 300,
-            color: "#808080",
-            margin: 0,
-          }}
-        >
-          Pieces coming soon.
-        </p>
-      </div>
-    );
-  }
-
-  const [featured, ...rest] = pieces;
-
-  const handleDeleted = (pieceId: string) => {
-    setPieces((prev) => prev.filter((p) => p.id !== pieceId));
-  };
 
   const menuItems = (piece: Piece): DropdownItem[] => [
     {
@@ -356,83 +314,55 @@ export default function PiecesGrid({
       type: "action",
       label: "Delete",
       color: "#DC2626",
-      onClick: () => setDeleteTarget({ id: piece.id, title: piece.title }),
+      onClick: () => onDelete(piece.id, piece.title),
     },
   ];
 
   return (
-    <div style={{ width: "100%" }}>
-      {deleteTarget && (
-        <DeletePieceModal
-          pieceId={deleteTarget.id}
-          pieceTitle={deleteTarget.title}
-          onClose={() => setDeleteTarget(null)}
-          onDeleted={() => handleDeleted(deleteTarget.id)}
-        />
-      )}
-
-      <FeaturedPiece
-        piece={featured}
-        onClick={
-          !featured.isRevealed && !isOwnProfile
-            ? () => {}
-            : !featured.isRevealed && isOwnProfile
-              ? () => router.push(`/write/${featured.id}`)
-              : () => router.push(`/read/${featured.id}`)
+    <div style={{ padding: "24px 0" }}>
+      <style>{`
+        .pieces-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 24px;
+          padding: 0 24px;
         }
-        isOwnProfile={isOwnProfile}
-        onDelete={() =>
-          setDeleteTarget({ id: featured.id, title: featured.title })
+        @media (max-width: 1023px) {
+          .pieces-grid { grid-template-columns: repeat(2, 1fr); }
         }
-      />
+        @media (max-width: 639px) {
+          .pieces-grid { grid-template-columns: 1fr; padding: 0 24px; }
+        }
+      `}</style>
+      <div className="pieces-grid">
+        {pieces.map((piece) => {
+          const isLocked = !piece.isRevealed;
+          const handleClick = isLocked
+            ? isOwnProfile
+              ? () => router.push(`/write/${piece.id}`)
+              : undefined
+            : () => router.push(`/read/${piece.id}`);
 
-      {rest.length > 0 && (
-        <div style={{ padding: "24px 0" }}>
-          <style>{`
-            .pieces-grid {
-              display: grid;
-              grid-template-columns: repeat(3, 1fr);
-              gap: 24px;
-              padding: 0 24px;
-            }
-            @media (max-width: 1023px) {
-              .pieces-grid { grid-template-columns: repeat(2, 1fr); }
-            }
-            @media (max-width: 639px) {
-              .pieces-grid { grid-template-columns: 1fr; padding: 0 24px; }
-            }
-          `}</style>
-          <div className="pieces-grid">
-            {rest.map((piece) => {
-              const isLocked = !piece.isRevealed;
-              const handleClick = isLocked
-                ? isOwnProfile
-                  ? () => router.push(`/write/${piece.id}`)
-                  : undefined
-                : () => router.push(`/read/${piece.id}`);
-
-              return (
-                <div key={piece.id} style={{ position: "relative" }}>
-                  {isOwnProfile && (
-                    <PieceDotsMenu items={menuItems(piece)} onDark={false} />
-                  )}
-                  {isLocked && !isOwnProfile && <LockOverlay />}
-                  <PieceCard
-                    piece={{
-                      id: piece.id,
-                      title: piece.title || "Untitled",
-                      coverImage: piece.coverImage,
-                      currentContent: piece.currentContent || "",
-                    }}
-                    isRead={true}
-                    onClick={handleClick ?? (() => {})}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+          return (
+            <div key={piece.id} style={{ position: "relative" }}>
+              {isOwnProfile && (
+                <PieceDotsMenu items={menuItems(piece)} onDark={false} />
+              )}
+              {isLocked && !isOwnProfile && <LockOverlay />}
+              <PieceCard
+                piece={{
+                  id: piece.id,
+                  title: piece.title || "Untitled",
+                  coverImage: piece.coverImage,
+                  currentContent: piece.currentContent || "",
+                }}
+                isRead={true}
+                onClick={handleClick ?? (() => {})}
+              />
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
