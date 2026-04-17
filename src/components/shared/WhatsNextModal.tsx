@@ -71,14 +71,14 @@ function getContent(
     },
     host_started_riff: {
       heading: "You got the party started…",
-      body: "Your writers are off to the races. Check in to see who's started, and drop a reminder if the deadline is creeping up.",
-      cta: "See the riff",
+      body: "Now your friends can join the riff. As the host of the writing party, you can see who's joined, who's started writing, and everyone's word count progress. The goal is for everyone to submit their piece before the deadline, so if anyone is lagging you might wanna give 'em a nudge.",
+      cta: "Game on!",
       steps: HOST_STEPS,
     },
     host_submitted: {
-      heading: "Locked and loaded…",
-      body: "Now you wait till the rest of the crew crosses the finish line. When you're ready, clicking that Reveal button is all you.",
-      cta: "Sit tight",
+      heading: "Your writing is in...",
+      body: "How's the rest of the club doing? Once everyone submits or the deadline passes, you'll see the Reveal button. When the club is ready, clicking Reveal is all you.",
+      cta: "Check the riff",
       steps: HOST_STEPS,
     },
     host_revealed: {
