@@ -168,11 +168,15 @@ export default function ProfilePage({
         <FeaturedPiece
           piece={featured}
           onClick={
-            !featured.isRevealed && !isOwnProfile
-              ? () => {}
-              : !featured.isRevealed && isOwnProfile
-                ? () => router.push(`/write/${featured.id}`)
-                : () => router.push(`/read/${featured.id}`)
+            !featured.isRevealed && isOwnProfile
+              ? () => router.push(`/write/${featured.id}`)
+              : !featured.isRevealed
+                ? () => {}
+                : isOwnProfile || featured.viewerHasClubAccess
+                  ? () => router.push(`/read/${featured.id}`)
+                  : featured.isPublic
+                    ? () => router.push(`/p/${featured.id}`)
+                    : () => {}
           }
           isOwnProfile={isOwnProfile}
           onDelete={() =>

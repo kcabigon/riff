@@ -41,7 +41,14 @@ export default async function ProfilePageRoute({
     redirect("/");
   }
 
-  // Fetch submitted pieces by this user, with riff status to determine visibility
+  // Fetch the viewer's club memberships so we can compute per-piece access
+  const viewerMemberships = await prisma.clubMember.findMany({
+    where: { userId: currentUserId },
+    select: { clubId: true },
+  });
+  const viewerClubIds = new Set(viewerMemberships.map((m) => m.clubId));
+
+  // Fetch submitted pieces by this user, with riff status and clubId to determine visibility
   const rawPieces = await prisma.piece.findMany({
     where: {
       authorId: userId,
@@ -55,7 +62,7 @@ export default async function ProfilePageRoute({
       wordCount: true,
       riffs: {
         where: { submittedAt: { not: null } },
-        select: { riff: { select: { status: true } } },
+        select: { riff: { select: { status: true, clubId: true } } },
       },
       newShares: {
         where: { shareType: "PUBLIC" },
@@ -75,6 +82,8 @@ export default async function ProfilePageRoute({
     isRevealed: p.riffs.some(
       (r) => r.riff.status === "REVEALED" || r.riff.status === "COMPLETED"
     ),
+    // Viewer has club access if they're a member of any club this piece's riff belongs to
+    viewerHasClubAccess: p.riffs.some((r) => viewerClubIds.has(r.riff.clubId)),
     isPublic: p.newShares.length > 0,
     publicShareId: p.newShares[0]?.id ?? null,
   }));

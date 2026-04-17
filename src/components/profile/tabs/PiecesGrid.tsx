@@ -14,6 +14,7 @@ export interface Piece {
   coverImage: string | null;
   currentContent: string | null;
   isRevealed: boolean;
+  viewerHasClubAccess: boolean;
   isPublic: boolean;
   publicShareId: string | null;
 }
@@ -344,11 +345,15 @@ export default function PiecesGrid({
       <div className="pieces-grid">
         {pieces.map((piece) => {
           const isLocked = !piece.isRevealed;
-          const handleClick = isLocked
+          const handleClick = !piece.isRevealed
             ? isOwnProfile
               ? () => router.push(`/write/${piece.id}`)
               : undefined
-            : () => router.push(`/read/${piece.id}`);
+            : isOwnProfile || piece.viewerHasClubAccess
+              ? () => router.push(`/read/${piece.id}`)
+              : piece.isPublic
+                ? () => router.push(`/p/${piece.id}`)
+                : undefined;
 
           return (
             <div key={piece.id} style={{ position: "relative" }}>
@@ -390,7 +395,9 @@ export default function PiecesGrid({
                   Public
                 </div>
               )}
-              {isLocked && !isOwnProfile && <LockOverlay />}
+              {isLocked && !isOwnProfile && !piece.viewerHasClubAccess && (
+                <LockOverlay />
+              )}
               <PieceCard
                 piece={{
                   id: piece.id,
