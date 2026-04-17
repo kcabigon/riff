@@ -144,7 +144,10 @@ export function FeaturedPiece({
           border: "2px solid #000000",
           cursor: !piece.isRevealed && !isOwnProfile ? "default" : "pointer",
           overflow: "hidden",
-          boxShadow: isHovered ? "8px 8px 0px 0px #000000" : "none",
+          boxShadow:
+            isHovered && (piece.isRevealed || isOwnProfile)
+              ? "8px 8px 0px 0px #000000"
+              : "none",
           transition: "none",
           backgroundColor: piece.coverImage ? undefined : placeholderColor,
         }}
