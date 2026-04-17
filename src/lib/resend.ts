@@ -284,52 +284,6 @@ export async function sendRiffRevealedEmail({
 }
 
 /**
- * Send a batched comment digest email
- */
-export async function sendCommentDigestEmail({
-  email,
-  recipientName,
-  pieceTitle,
-  commentCount,
-  actorNames,
-  pieceUrl,
-}: {
-  email: string;
-  recipientName: string;
-  pieceTitle: string;
-  commentCount: number;
-  actorNames: string;
-  pieceUrl: string;
-}): Promise<void> {
-  const subject = `${commentCount} new comment${commentCount > 1 ? "s" : ""} on "${pieceTitle}"`;
-
-  try {
-    const { data, error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to: email,
-      subject,
-      html: getCommentDigestEmailTemplate({
-        recipientName,
-        pieceTitle,
-        commentCount,
-        actorNames,
-        pieceUrl,
-      }),
-    });
-
-    if (error) {
-      console.error("Resend API error:", error);
-      throw new Error(`Failed to send email: ${error.message}`);
-    }
-
-    console.log("Comment digest email sent successfully:", data);
-  } catch (error) {
-    console.error("Error sending comment digest email:", error);
-    throw error;
-  }
-}
-
-/**
  * Legacy function name for backward compatibility
  * @deprecated Use sendSignInEmail or sendOnboardingEmail instead
  */
@@ -463,41 +417,5 @@ function getRiffRevealedEmailTemplate({
           </tr>
 
           ${emailButton("Read pieces", riffUrl)}`,
-  });
-}
-
-/**
- * Comment digest email (notification layout — club name at top)
- */
-function getCommentDigestEmailTemplate({
-  recipientName,
-  pieceTitle,
-  commentCount,
-  actorNames,
-  pieceUrl,
-}: {
-  recipientName: string;
-  pieceTitle: string;
-  commentCount: number;
-  actorNames: string;
-  pieceUrl: string;
-}): string {
-  const commentLabel =
-    commentCount === 1 ? "1 new comment" : `${commentCount} new comments`;
-
-  return emailShell({
-    title: `${commentLabel} on "${pieceTitle}"`,
-    clubName: pieceTitle,
-    footerText:
-      "You're receiving this because someone commented on your writing on Riff.",
-    content: `
-          <tr>
-            <td style="padding:40px 40px 16px;">
-              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">The riff goes on.</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">Hey ${recipientName}, ${actorNames} left ${commentLabel} on your piece.</p>
-            </td>
-          </tr>
-
-          ${emailButton("Read comments", pieceUrl)}`,
   });
 }

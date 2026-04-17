@@ -7,11 +7,5 @@
       "main": true,
       "preview": true
     }
-  },
-  "crons": [
-    {
-      "path": "/api/cron/flush-email-queue",
-      "schedule": "*/15 * * * *"
-    }
-  ]
+  }
 }
