@@ -12,7 +12,6 @@ interface PublicReadLayoutProps {
     title: string;
     subtitle: string | null;
     currentContent: string;
-    coverImage: string | null;
     wordCount: number;
     readLengthMin: number;
     author: {
@@ -65,25 +64,6 @@ export default function PublicReadLayout({ piece }: PublicReadLayoutProps) {
           />
         </Link>
       </div>
-
-      {/* Cover image */}
-      {piece.coverImage && (
-        <div
-          style={{
-            width: "100%",
-            height: "320px",
-            position: "relative",
-            overflow: "hidden",
-          }}
-        >
-          <Image
-            src={piece.coverImage}
-            alt=""
-            fill
-            style={{ objectFit: "cover" }}
-          />
-        </div>
-      )}
 
       {/* Content */}
       <div
