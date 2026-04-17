@@ -2,9 +2,6 @@
 
 import { useState } from "react";
 import Modal from "@/components/shared/Modal";
-import PrimaryButton from "@/components/PrimaryButton";
-import SecondaryButton from "@/components/SecondaryButton";
-import Tagline from "@/components/Tagline";
 
 export interface PublicShare {
   id: string;
@@ -19,6 +16,22 @@ interface ShareModalProps {
   onClose: () => void;
   onShareCreated: (share: PublicShare) => void;
   onShareRevoked: () => void;
+}
+
+function SelectionDot({ selected }: { selected: boolean }) {
+  return (
+    <div
+      style={{
+        width: "14px",
+        height: "14px",
+        borderRadius: "50%",
+        border: "2px solid #000000",
+        backgroundColor: selected ? "#00FF66" : "#FFFFFF",
+        flexShrink: 0,
+        marginTop: "2px",
+      }}
+    />
+  );
 }
 
 export default function ShareModal({
@@ -42,6 +55,7 @@ export default function ShareModal({
       : `/p/${pieceId}`;
 
   const handleMakePublic = async () => {
+    if (loading || isPublic) return;
     setLoading(true);
     setError(null);
     try {
@@ -65,7 +79,7 @@ export default function ShareModal({
   };
 
   const handleMakePrivate = async () => {
-    if (!share) return;
+    if (loading || !share) return;
     setLoading(true);
     setError(null);
     try {
@@ -92,90 +106,108 @@ export default function ShareModal({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const footer = !isRevealed ? null : isPublic ? (
-    <SecondaryButton onClick={handleMakePrivate} loading={loading}>
-      Make private
-    </SecondaryButton>
-  ) : (
-    <PrimaryButton onClick={handleMakePublic} loading={loading}>
-      Make public
-    </PrimaryButton>
-  );
+  const publicDisabled = !isRevealed;
 
   return (
-    <Modal
-      isOpen
-      onClose={onClose}
-      title="Piece access"
-      size="sm"
-      footer={footer}
-    >
-      <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-        {/* Current access section */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-          <Tagline
-            text="Current access"
-            color="#01EFFC"
-            textColor="#000000"
-            fontSize={16}
-            width={170}
-            align="left"
-          />
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              gap: "12px",
-              border: "2px solid #000000",
-              backgroundColor: "#FFFFFF",
-              padding: "16px",
-            }}
-          >
-            <div
+    <Modal isOpen onClose={onClose} title="Piece access" size="sm">
+      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+        {/* Private option */}
+        <button
+          onClick={handleMakePrivate}
+          disabled={loading || !isPublic}
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: "12px",
+            width: "100%",
+            border: !isPublic ? "2px solid #000000" : "2px solid #CCCCCC",
+            backgroundColor: "#FFFFFF",
+            padding: "16px",
+            cursor: isPublic && !loading ? "pointer" : "default",
+            textAlign: "left",
+            boxShadow: !isPublic ? "4px 4px 0px 0px #000000" : "none",
+            transition: "none",
+          }}
+        >
+          <SelectionDot selected={!isPublic} />
+          <div>
+            <p
               style={{
-                width: "10px",
-                height: "10px",
-                borderRadius: "50%",
-                backgroundColor: isPublic ? "#00FF66" : "#9C9C9C",
-                border: "2px solid #000000",
-                flexShrink: 0,
-                marginTop: "5px",
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "16px",
+                fontWeight: 700,
+                color: "#000000",
+                margin: "0 0 4px 0",
               }}
-            />
-            <div>
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 700,
-                  color: "#000000",
-                  margin: "0 0 4px 0",
-                }}
-              >
-                {isPublic ? "Public" : "Private"}
-              </p>
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "14px",
-                  fontWeight: 300,
-                  color: "#000000",
-                  margin: 0,
-                  lineHeight: 1.5,
-                }}
-              >
-                {isPublic
-                  ? "Anyone with the link can read this piece — no login required."
-                  : isRevealed
-                    ? "Only members of your club can view this piece."
-                    : "This piece hasn't been revealed yet and can't be shared publicly."}
-              </p>
-            </div>
+            >
+              Private
+            </p>
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "14px",
+                fontWeight: 300,
+                color: "#000000",
+                margin: 0,
+                lineHeight: 1.5,
+              }}
+            >
+              Only members of your club can view this piece.
+            </p>
           </div>
-        </div>
+        </button>
 
-        {/* Public URL — shown when public */}
+        {/* Public option */}
+        <button
+          onClick={handleMakePublic}
+          disabled={loading || isPublic || publicDisabled}
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: "12px",
+            width: "100%",
+            border: isPublic ? "2px solid #000000" : "2px solid #CCCCCC",
+            backgroundColor: "#FFFFFF",
+            padding: "16px",
+            cursor:
+              !isPublic && !loading && !publicDisabled ? "pointer" : "default",
+            textAlign: "left",
+            boxShadow: isPublic ? "4px 4px 0px 0px #000000" : "none",
+            opacity: publicDisabled ? 0.45 : 1,
+            transition: "none",
+          }}
+        >
+          <SelectionDot selected={isPublic} />
+          <div>
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "16px",
+                fontWeight: 700,
+                color: "#000000",
+                margin: "0 0 4px 0",
+              }}
+            >
+              Public
+            </p>
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "14px",
+                fontWeight: 300,
+                color: "#000000",
+                margin: 0,
+                lineHeight: 1.5,
+              }}
+            >
+              {publicDisabled
+                ? "Only revealed pieces can be shared publicly."
+                : "Generate a public link so anyone with the link can view — no login required."}
+            </p>
+          </div>
+        </button>
+
+        {/* URL box — visible when public */}
         {isPublic && (
           <div
             style={{
