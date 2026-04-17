@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Modal from "@/components/shared/Modal";
 import PrimaryButton from "@/components/PrimaryButton";
+import SecondaryButton from "@/components/SecondaryButton";
+import Tagline from "@/components/Tagline";
 
 export interface PublicShare {
   id: string;
@@ -31,7 +33,6 @@ export default function ShareModal({
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [makePrivateHovered, setMakePrivateHovered] = useState(false);
 
   const isPublic = share !== null;
 
@@ -92,37 +93,9 @@ export default function ShareModal({
   };
 
   const footer = !isRevealed ? null : isPublic ? (
-    <button
-      onClick={handleMakePrivate}
-      disabled={loading}
-      onMouseEnter={() => {
-        if (!loading) setMakePrivateHovered(true);
-      }}
-      onMouseLeave={() => setMakePrivateHovered(false)}
-      style={{
-        width: "100%",
-        backgroundColor: loading
-          ? "#FFFFFF"
-          : makePrivateHovered
-            ? "#000000"
-            : "#FFFFFF",
-        border: loading ? "2px solid #9C9C9C" : "2px solid #000000",
-        boxShadow: loading
-          ? "none"
-          : makePrivateHovered
-            ? "8px 8px 0px 0px #000000"
-            : "8px 8px 0px 0px #000000",
-        padding: "12px 48px",
-        fontFamily: "var(--font-dm-sans)",
-        fontSize: "16px",
-        fontWeight: 300,
-        color: loading ? "#9C9C9C" : makePrivateHovered ? "#FFFFFF" : "#000000",
-        cursor: loading ? "not-allowed" : "pointer",
-        transition: "none",
-      }}
-    >
-      {loading ? "Saving…" : "Make private"}
-    </button>
+    <SecondaryButton onClick={handleMakePrivate} loading={loading}>
+      Make private
+    </SecondaryButton>
   ) : (
     <PrimaryButton onClick={handleMakePublic} loading={loading}>
       Make public
@@ -138,21 +111,16 @@ export default function ShareModal({
       footer={footer}
     >
       <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-        {/* Current access state */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "11px",
-              fontWeight: 700,
-              color: "#000000",
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
-              margin: 0,
-            }}
-          >
-            Current access
-          </p>
+        {/* Current access section */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          <Tagline
+            text="Current access"
+            color="#01EFFC"
+            textColor="#000000"
+            fontSize={16}
+            width={170}
+            align="left"
+          />
 
           <div
             style={{
@@ -160,6 +128,7 @@ export default function ShareModal({
               alignItems: "flex-start",
               gap: "12px",
               border: "2px solid #000000",
+              backgroundColor: "#FFFFFF",
               padding: "16px",
             }}
           >
@@ -171,7 +140,7 @@ export default function ShareModal({
                 backgroundColor: isPublic ? "#00FF66" : "#9C9C9C",
                 border: "2px solid #000000",
                 flexShrink: 0,
-                marginTop: "4px",
+                marginTop: "5px",
               }}
             />
             <div>
@@ -211,6 +180,7 @@ export default function ShareModal({
           <div
             style={{
               border: "2px solid #000000",
+              backgroundColor: "#FFFFFF",
               padding: "12px 16px",
               display: "flex",
               alignItems: "center",
