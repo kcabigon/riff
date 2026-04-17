@@ -46,6 +46,8 @@ export default function ShareModal({
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [privateHovered, setPrivateHovered] = useState(false);
+  const [publicHovered, setPublicHovered] = useState(false);
 
   const isPublic = share !== null;
 
@@ -115,6 +117,10 @@ export default function ShareModal({
         <button
           onClick={handleMakePrivate}
           disabled={loading || !isPublic}
+          onMouseEnter={() => {
+            if (isPublic && !loading) setPrivateHovered(true);
+          }}
+          onMouseLeave={() => setPrivateHovered(false)}
           style={{
             display: "flex",
             alignItems: "flex-start",
@@ -125,7 +131,11 @@ export default function ShareModal({
             padding: "16px",
             cursor: isPublic && !loading ? "pointer" : "default",
             textAlign: "left",
-            boxShadow: !isPublic ? "4px 4px 0px 0px #000000" : "none",
+            boxShadow: !isPublic
+              ? "4px 4px 0px 0px #000000"
+              : privateHovered
+                ? "4px 4px 0px 0px #01EFFC"
+                : "none",
             transition: "none",
           }}
         >
@@ -161,6 +171,11 @@ export default function ShareModal({
         <button
           onClick={handleMakePublic}
           disabled={loading || isPublic || publicDisabled}
+          onMouseEnter={() => {
+            if (!isPublic && !loading && !publicDisabled)
+              setPublicHovered(true);
+          }}
+          onMouseLeave={() => setPublicHovered(false)}
           style={{
             display: "flex",
             alignItems: "flex-start",
@@ -172,7 +187,11 @@ export default function ShareModal({
             cursor:
               !isPublic && !loading && !publicDisabled ? "pointer" : "default",
             textAlign: "left",
-            boxShadow: isPublic ? "4px 4px 0px 0px #000000" : "none",
+            boxShadow: isPublic
+              ? "4px 4px 0px 0px #000000"
+              : publicHovered
+                ? "4px 4px 0px 0px #01EFFC"
+                : "none",
             opacity: publicDisabled ? 0.45 : 1,
             transition: "none",
           }}
