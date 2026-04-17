@@ -1,4 +1,5 @@
-import heic2any from "heic2any";
+// Dynamically import heic2any to avoid "window is not defined" during SSR
+const getHeic2any = () => import("heic2any").then((m) => m.default);
 
 /**
  * Checks if a File is HEIC/HEIF based on extension or MIME type.
@@ -20,6 +21,7 @@ export function isHeicFile(file: File): boolean {
 export async function convertHeicToJpeg(file: File): Promise<File> {
   if (!isHeicFile(file)) return file;
 
+  const heic2any = await getHeic2any();
   const blob = await heic2any({
     blob: file,
     toType: "image/jpeg",
@@ -27,6 +29,8 @@ export async function convertHeicToJpeg(file: File): Promise<File> {
   });
 
   const jpegBlob = Array.isArray(blob) ? blob[0] : blob;
-  const newName = file.name.replace(/\.heic$/i, ".jpg").replace(/\.heif$/i, ".jpg");
+  const newName = file.name
+    .replace(/\.heic$/i, ".jpg")
+    .replace(/\.heif$/i, ".jpg");
   return new File([jpegBlob], newName, { type: "image/jpeg" });
 }
