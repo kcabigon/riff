@@ -57,6 +57,7 @@ interface ReadPageLayoutProps {
   isAlreadyRead: boolean;
   previousPiece?: { id: string; title: string } | null;
   nextPiece?: { id: string; title: string } | null;
+  backHref?: string;
 }
 
 export default function ReadPageLayout({
@@ -66,6 +67,7 @@ export default function ReadPageLayout({
   currentUser,
   initialComments,
   isAlreadyRead,
+  backHref,
 }: ReadPageLayoutProps) {
   const endRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -240,7 +242,7 @@ export default function ReadPageLayout({
               padding: "16px 0 8px",
             }}
           >
-            <BackButton href={`/riffs/${riffId}`} />
+            <BackButton href={backHref ?? `/riffs/${riffId}`} />
 
             {/* Nav title + author avatar — appears when metadata scrolls out */}
             {!isMobile && (

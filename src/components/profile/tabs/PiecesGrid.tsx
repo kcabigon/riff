@@ -350,7 +350,7 @@ export default function PiecesGrid({
               ? () => router.push(`/write/${piece.id}`)
               : undefined
             : isOwnProfile || piece.viewerHasClubAccess
-              ? () => router.push(`/read/${piece.id}`)
+              ? () => router.push(`/read/${piece.id}?from=profile`)
               : piece.isPublic
                 ? () => router.push(`/p/${piece.id}`)
                 : undefined;
