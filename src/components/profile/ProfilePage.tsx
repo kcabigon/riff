@@ -173,7 +173,7 @@ export default function ProfilePage({
               : !featured.isRevealed
                 ? () => {}
                 : isOwnProfile || featured.viewerHasClubAccess
-                  ? () => router.push(`/read/${featured.id}?from=profile`)
+                  ? () => router.push(`/read/${featured.id}`)
                   : featured.isPublic
                     ? () => router.push(`/p/${featured.id}`)
                     : () => {}

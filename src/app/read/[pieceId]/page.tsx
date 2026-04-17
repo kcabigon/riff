@@ -8,10 +8,10 @@ export default async function ReadPage({
   searchParams,
 }: {
   params: Promise<{ pieceId: string }>;
-  searchParams: Promise<{ riff?: string; from?: string }>;
+  searchParams: Promise<{ riff?: string }>;
 }) {
   const { pieceId } = await params;
-  const { riff: riffId, from } = await searchParams;
+  const { riff: riffId } = await searchParams;
   const session = await getSession();
 
   if (!session?.user) {
@@ -196,7 +196,6 @@ export default async function ReadPage({
       isAlreadyRead={!!existingRead}
       previousPiece={previousPiece}
       nextPiece={nextPiece}
-      backHref={from === "profile" ? `/profile/${piece.author.id}` : undefined}
     />
   );
 }
