@@ -27,7 +27,7 @@ import NoiseBackground from "@/components/NoiseBackground";
 import WhatsNextModal, {
   type WhatsNextTrigger,
 } from "@/components/shared/WhatsNextModal";
-import { canShowWhatsNext, markWhatsNextSeen } from "@/lib/whatsNextGuard";
+import { canShowWhatsNext } from "@/lib/whatsNextGuard";
 import PrimaryButton from "@/components/PrimaryButton";
 import CTAButton from "@/components/CTAButton";
 
@@ -136,9 +136,10 @@ export default function RiffPageLayout({
     const key = `riff-first-reveal-${riff.id}`;
     if (typeof window === "undefined") return;
     if (localStorage.getItem(key)) return;
+    // Double guard: per-riff key (above) prevents re-show on the same riff;
+    // global guard prevents re-show across all riffs after the first reveal.
     if (!canShowWhatsNext("member_first_reveal")) return;
     localStorage.setItem(key, "1");
-    markWhatsNextSeen("member_first_reveal");
     setWhatsNextTrigger("member_first_reveal");
   }, [riff.id, isFirstReveal]);
   const deadlinePassed = isPastDeadline(riff.deadline);
@@ -171,6 +172,7 @@ export default function RiffPageLayout({
       if (res.ok) {
         setIsRevealModalOpen(false);
         setShowCelebration(true);
+        router.refresh();
       }
     } catch (err) {
       console.error("Error revealing riff:", err);
@@ -520,7 +522,6 @@ export default function RiffPageLayout({
                 onJoin={() => {
                   setIsJoined(true);
                   if (canShowWhatsNext("member_joined_riff")) {
-                    markWhatsNextSeen("member_joined_riff");
                     setWhatsNextTrigger("member_joined_riff");
                   }
                 }}
@@ -703,8 +704,9 @@ export default function RiffPageLayout({
           onDismiss={() => {
             setShowCelebration(false);
             if (canShowWhatsNext("host_revealed")) {
-              markWhatsNextSeen("host_revealed");
               setWhatsNextTrigger("host_revealed");
+            } else {
+              router.refresh();
             }
           }}
         />
