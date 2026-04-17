@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useState } from "react";
 import PieceCard from "@/components/riffs/PieceCard";
-import Dropdown from "@/components/shared/Dropdown";
+import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import type { DropdownItem } from "@/components/shared/Dropdown";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 
@@ -93,57 +93,6 @@ function LockOverlay() {
           left: "50%",
           transform: "translateX(-50%)",
         }}
-      />
-    </div>
-  );
-}
-
-// Three-dot menu — onDark for the featured hero (white dots on image overlay)
-function PieceDotsMenu({
-  items,
-  onDark = false,
-}: {
-  items: DropdownItem[];
-  onDark?: boolean;
-}) {
-  const [hovered, setHovered] = useState(false);
-  return (
-    <div
-      style={{ position: "absolute", top: "8px", right: "8px", zIndex: 3 }}
-      onClick={(e) => e.stopPropagation()}
-    >
-      <Dropdown
-        trigger={
-          <button
-            aria-label="Piece options"
-            onMouseEnter={() => setHovered(true)}
-            onMouseLeave={() => setHovered(false)}
-            style={{
-              background: hovered
-                ? "#01EFFC"
-                : onDark
-                  ? "rgba(0,0,0,0.55)"
-                  : "transparent",
-              border: hovered ? "2px solid #000000" : "2px solid transparent",
-              boxShadow: hovered ? "4px 4px 0px 0px #000000" : "none",
-              cursor: "pointer",
-              padding: "4px 6px",
-              color: hovered ? "#000000" : onDark ? "#FFFFFF" : "#000000",
-              lineHeight: 1,
-              display: "flex",
-              alignItems: "center",
-              transition: "none",
-            }}
-          >
-            <svg width="12" height="3" viewBox="0 0 12 3" fill="currentColor">
-              <circle cx="1.5" cy="1.5" r="1.5" />
-              <circle cx="6" cy="1.5" r="1.5" />
-              <circle cx="10.5" cy="1.5" r="1.5" />
-            </svg>
-          </button>
-        }
-        items={items}
-        align="right"
       />
     </div>
   );
@@ -286,7 +235,19 @@ export function FeaturedPiece({
           )}
         </div>
 
-        {isOwnProfile && <PieceDotsMenu items={menuItems} onDark={true} />}
+        {isOwnProfile && (
+          <div
+            style={{
+              position: "absolute",
+              top: "8px",
+              right: "8px",
+              zIndex: 3,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ThreeDotButton variant="dark" items={menuItems} align="right" />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -346,7 +307,21 @@ export default function PiecesGrid({
           return (
             <div key={piece.id} style={{ position: "relative" }}>
               {isOwnProfile && (
-                <PieceDotsMenu items={menuItems(piece)} onDark={false} />
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "8px",
+                    right: "8px",
+                    zIndex: 3,
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <ThreeDotButton
+                    variant="dark"
+                    items={menuItems(piece)}
+                    align="right"
+                  />
+                </div>
               )}
               {isLocked && !isOwnProfile && <LockOverlay />}
               <PieceCard
