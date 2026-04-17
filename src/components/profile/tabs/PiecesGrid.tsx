@@ -130,7 +130,7 @@ export function FeaturedPiece({
       ? [
           {
             type: "action" as const,
-            label: piece.isPublic ? "Manage public link" : "Share publicly",
+            label: "Access",
             onClick: () => onShare(piece.id),
           },
         ]
@@ -311,7 +311,7 @@ export default function PiecesGrid({
       ? [
           {
             type: "action" as const,
-            label: piece.isPublic ? "Manage public link" : "Share publicly",
+            label: "Access",
             onClick: () => onShare(piece.id),
           },
         ]

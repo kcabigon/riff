@@ -29,9 +29,11 @@ export default function ShareModal({
 }: ShareModalProps) {
   const [share, setShare] = useState<PublicShare | null>(existingShare);
   const [loading, setLoading] = useState(false);
-  const [revoking, setRevoking] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [makePrivateHovered, setMakePrivateHovered] = useState(false);
+
+  const isPublic = share !== null;
 
   const publicUrl =
     typeof window !== "undefined"
@@ -61,9 +63,9 @@ export default function ShareModal({
     }
   };
 
-  const handleRevoke = async () => {
+  const handleMakePrivate = async () => {
     if (!share) return;
-    setRevoking(true);
+    setLoading(true);
     setError(null);
     try {
       const res = await fetch(`/api/pieces/${pieceId}/shares/${share.id}`, {
@@ -71,7 +73,7 @@ export default function ShareModal({
       });
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error ?? "Failed to revoke.");
+        setError(data.error ?? "Failed to make private.");
         return;
       }
       setShare(null);
@@ -79,7 +81,7 @@ export default function ShareModal({
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
-      setRevoking(false);
+      setLoading(false);
     }
   };
 
@@ -89,145 +91,168 @@ export default function ShareModal({
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const footer = !isRevealed ? null : isPublic ? (
+    <button
+      onClick={handleMakePrivate}
+      disabled={loading}
+      onMouseEnter={() => {
+        if (!loading) setMakePrivateHovered(true);
+      }}
+      onMouseLeave={() => setMakePrivateHovered(false)}
+      style={{
+        width: "100%",
+        backgroundColor: loading
+          ? "#FFFFFF"
+          : makePrivateHovered
+            ? "#000000"
+            : "#FFFFFF",
+        border: loading ? "2px solid #9C9C9C" : "2px solid #000000",
+        boxShadow: loading
+          ? "none"
+          : makePrivateHovered
+            ? "8px 8px 0px 0px #000000"
+            : "8px 8px 0px 0px #000000",
+        padding: "12px 48px",
+        fontFamily: "var(--font-dm-sans)",
+        fontSize: "16px",
+        fontWeight: 300,
+        color: loading ? "#9C9C9C" : makePrivateHovered ? "#FFFFFF" : "#000000",
+        cursor: loading ? "not-allowed" : "pointer",
+        transition: "none",
+      }}
+    >
+      {loading ? "Saving…" : "Make private"}
+    </button>
+  ) : (
+    <PrimaryButton onClick={handleMakePublic} loading={loading}>
+      Make public
+    </PrimaryButton>
+  );
+
   return (
-    <Modal isOpen onClose={onClose} title="Share publicly" size="sm">
+    <Modal
+      isOpen
+      onClose={onClose}
+      title="Piece access"
+      size="sm"
+      footer={footer}
+    >
       <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-        {!isRevealed && (
+        {/* Current access state */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           <p
             style={{
               fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              color: "#808080",
+              fontSize: "11px",
+              fontWeight: 700,
+              color: "#000000",
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
               margin: 0,
-              lineHeight: 1.5,
             }}
           >
-            Only revealed pieces can be shared publicly. Submit this piece to a
-            riff and wait for the reveal.
+            Current access
           </p>
-        )}
 
-        {isRevealed && !share && (
-          <>
-            <p
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: "12px",
+              border: "2px solid #000000",
+              padding: "16px",
+            }}
+          >
+            <div
               style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 300,
-                color: "#808080",
-                margin: 0,
-                lineHeight: 1.5,
+                width: "10px",
+                height: "10px",
+                borderRadius: "50%",
+                backgroundColor: isPublic ? "#00FF66" : "#9C9C9C",
+                border: "2px solid #000000",
+                flexShrink: 0,
+                marginTop: "4px",
               }}
-            >
-              Generate a public link anyone can use to read this piece — no
-              login required.
-            </p>
-            <PrimaryButton onClick={handleMakePublic} loading={loading}>
-              Make public
-            </PrimaryButton>
-          </>
-        )}
-
-        {isRevealed && share && (
-          <>
+            />
             <div>
               <p
                 style={{
                   fontFamily: "var(--font-dm-sans)",
-                  fontSize: "11px",
+                  fontSize: "16px",
                   fontWeight: 700,
-                  color: "#808080",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                  margin: "0 0 8px 0",
+                  color: "#000000",
+                  margin: "0 0 4px 0",
                 }}
               >
-                Public link
+                {isPublic ? "Public" : "Private"}
               </p>
-              <div
-                style={{
-                  border: "2px solid #000000",
-                  padding: "12px 16px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "12px",
-                }}
-              >
-                <span
-                  style={{
-                    fontFamily: "ui-monospace, monospace",
-                    fontSize: "12px",
-                    fontWeight: 400,
-                    color: "#808080",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                    flex: 1,
-                  }}
-                >
-                  {publicUrl}
-                </span>
-                <button
-                  onClick={handleCopy}
-                  style={{
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "12px",
-                    fontWeight: 700,
-                    color: copied ? "#808080" : "#000000",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: 0,
-                    whiteSpace: "nowrap",
-                    flexShrink: 0,
-                  }}
-                >
-                  {copied ? "Copied!" : "Copy link"}
-                </button>
-              </div>
-            </div>
-
-            <div
-              style={{
-                borderTop: "1px solid #E6E6E6",
-                paddingTop: "16px",
-              }}
-            >
               <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "12px",
-                  fontWeight: 300,
-                  color: "#808080",
-                  margin: "0 0 12px 0",
-                  lineHeight: 1.5,
-                }}
-              >
-                Revoking the link will make this piece private again. Anyone
-                with the URL will see a 404.
-              </p>
-              <button
-                onClick={handleRevoke}
-                disabled={revoking}
                 style={{
                   fontFamily: "var(--font-dm-sans)",
                   fontSize: "14px",
                   fontWeight: 300,
-                  color: revoking ? "#9C9C9C" : "#DC2626",
-                  background: "none",
-                  border: "none",
-                  cursor: revoking ? "not-allowed" : "pointer",
-                  padding: 0,
-                  textDecoration: "underline",
+                  color: "#000000",
+                  margin: 0,
+                  lineHeight: 1.5,
                 }}
               >
-                {revoking ? "Revoking…" : "Revoke link"}
-              </button>
+                {isPublic
+                  ? "Anyone with the link can read this piece — no login required."
+                  : isRevealed
+                    ? "Only members of your club can view this piece."
+                    : "This piece hasn't been revealed yet and can't be shared publicly."}
+              </p>
             </div>
-          </>
+          </div>
+        </div>
+
+        {/* Public URL — shown when public */}
+        {isPublic && (
+          <div
+            style={{
+              border: "2px solid #000000",
+              padding: "12px 16px",
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "ui-monospace, monospace",
+                fontSize: "12px",
+                fontWeight: 400,
+                color: "#000000",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                flex: 1,
+              }}
+            >
+              {publicUrl}
+            </span>
+            <button
+              onClick={handleCopy}
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "12px",
+                fontWeight: 700,
+                color: "#000000",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: 0,
+                whiteSpace: "nowrap",
+                flexShrink: 0,
+                opacity: copied ? 0.5 : 1,
+              }}
+            >
+              {copied ? "Copied!" : "Copy link"}
+            </button>
+          </div>
         )}
 
+        {/* Error */}
         {error && (
           <p
             style={{
