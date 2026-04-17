@@ -14,6 +14,8 @@ export interface Piece {
   coverImage: string | null;
   currentContent: string | null;
   isRevealed: boolean;
+  isPublic: boolean;
+  publicShareId: string | null;
 }
 
 const PLACEHOLDER_COLORS = [
@@ -103,11 +105,13 @@ export function FeaturedPiece({
   onClick,
   isOwnProfile,
   onDelete,
+  onShare,
 }: {
   piece: Piece;
   onClick: () => void;
   isOwnProfile: boolean;
   onDelete: () => void;
+  onShare: (pieceId: string) => void;
 }) {
   const [isHovered, setIsHovered] = useState(false);
   const router = useRouter();
@@ -122,6 +126,15 @@ export function FeaturedPiece({
       label: "Edit",
       onClick: () => router.push(`/write/${piece.id}`),
     },
+    ...(piece.isRevealed
+      ? [
+          {
+            type: "action" as const,
+            label: piece.isPublic ? "Manage public link" : "Share publicly",
+            onClick: () => onShare(piece.id),
+          },
+        ]
+      : []),
     { type: "divider" },
     {
       type: "action",
@@ -178,6 +191,28 @@ export function FeaturedPiece({
             }}
           >
             <LockIcon />
+          </div>
+        )}
+
+        {piece.isPublic && (
+          <div
+            style={{
+              position: "absolute",
+              top: "12px",
+              left: "12px",
+              zIndex: 3,
+              backgroundColor: "#00FF66",
+              border: "2px solid #000000",
+              padding: "2px 8px",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "11px",
+              fontWeight: 700,
+              color: "#000000",
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+            }}
+          >
+            Public
           </div>
         )}
 
@@ -257,10 +292,12 @@ export default function PiecesGrid({
   pieces,
   isOwnProfile,
   onDelete,
+  onShare,
 }: {
   pieces: Piece[];
   isOwnProfile: boolean;
   onDelete: (id: string, title: string | null) => void;
+  onShare: (pieceId: string) => void;
 }) {
   const router = useRouter();
 
@@ -270,6 +307,15 @@ export default function PiecesGrid({
       label: "Edit",
       onClick: () => router.push(`/write/${piece.id}`),
     },
+    ...(piece.isRevealed
+      ? [
+          {
+            type: "action" as const,
+            label: piece.isPublic ? "Manage public link" : "Share publicly",
+            onClick: () => onShare(piece.id),
+          },
+        ]
+      : []),
     { type: "divider" },
     {
       type: "action",
@@ -321,6 +367,27 @@ export default function PiecesGrid({
                     items={menuItems(piece)}
                     align="right"
                   />
+                </div>
+              )}
+              {piece.isPublic && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "8px",
+                    left: "8px",
+                    zIndex: 3,
+                    backgroundColor: "#00FF66",
+                    border: "2px solid #000000",
+                    padding: "2px 8px",
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    color: "#000000",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                  }}
+                >
+                  Public
                 </div>
               )}
               {isLocked && !isOwnProfile && <LockOverlay />}

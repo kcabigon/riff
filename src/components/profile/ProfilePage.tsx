@@ -7,6 +7,7 @@ import PiecesGrid, { FeaturedPiece } from "./tabs/PiecesGrid";
 import type { Piece } from "./tabs/PiecesGrid";
 import Avatar from "@/components/shared/Avatar";
 import DeletePieceModal from "@/components/profile/DeletePieceModal";
+import ShareModal, { PublicShare } from "@/components/profile/ShareModal";
 
 const AVATAR_SIZE = 80;
 
@@ -42,6 +43,7 @@ export default function ProfilePage({
     id: string;
     title: string | null;
   } | null>(null);
+  const [shareTarget, setShareTarget] = useState<string | null>(null);
 
   const firstName =
     user.firstName || user.name?.split(" ")[0] || user.username || "";
@@ -50,6 +52,22 @@ export default function ProfilePage({
 
   const handleDeleted = (pieceId: string) => {
     setPieces((prev) => prev.filter((p) => p.id !== pieceId));
+  };
+
+  const handleShareCreated = (pieceId: string, share: PublicShare) => {
+    setPieces((prev) =>
+      prev.map((p) =>
+        p.id === pieceId ? { ...p, isPublic: true, publicShareId: share.id } : p
+      )
+    );
+  };
+
+  const handleShareRevoked = (pieceId: string) => {
+    setPieces((prev) =>
+      prev.map((p) =>
+        p.id === pieceId ? { ...p, isPublic: false, publicShareId: null } : p
+      )
+    );
   };
 
   const [featured, ...rest] = pieces;
@@ -64,6 +82,30 @@ export default function ProfilePage({
           onDeleted={() => handleDeleted(deleteTarget.id)}
         />
       )}
+
+      {shareTarget &&
+        (() => {
+          const piece = pieces.find((p) => p.id === shareTarget);
+          if (!piece) return null;
+          return (
+            <ShareModal
+              pieceId={piece.id}
+              isRevealed={piece.isRevealed}
+              existingShare={
+                piece.publicShareId
+                  ? {
+                      id: piece.publicShareId,
+                      shareType: "PUBLIC",
+                      isPublic: true,
+                    }
+                  : null
+              }
+              onClose={() => setShareTarget(null)}
+              onShareCreated={(share) => handleShareCreated(piece.id, share)}
+              onShareRevoked={() => handleShareRevoked(piece.id)}
+            />
+          );
+        })()}
 
       {/* Header + avatar bridge */}
       <div style={{ position: "relative" }}>
@@ -136,6 +178,7 @@ export default function ProfilePage({
           onDelete={() =>
             setDeleteTarget({ id: featured.id, title: featured.title })
           }
+          onShare={(pieceId) => setShareTarget(pieceId)}
         />
       )}
 
@@ -149,6 +192,7 @@ export default function ProfilePage({
           onDelete={(id: string, title: string | null) =>
             setDeleteTarget({ id, title })
           }
+          onShare={(pieceId) => setShareTarget(pieceId)}
         />
       )}
 

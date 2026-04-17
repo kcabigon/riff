@@ -57,6 +57,11 @@ export default async function ProfilePageRoute({
         where: { submittedAt: { not: null } },
         select: { riff: { select: { status: true } } },
       },
+      newShares: {
+        where: { shareType: "PUBLIC" },
+        select: { id: true },
+        take: 1,
+      },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -70,6 +75,8 @@ export default async function ProfilePageRoute({
     isRevealed: p.riffs.some(
       (r) => r.riff.status === "REVEALED" || r.riff.status === "COMPLETED"
     ),
+    isPublic: p.newShares.length > 0,
+    publicShareId: p.newShares[0]?.id ?? null,
   }));
 
   const pieceCount = pieces.length;
