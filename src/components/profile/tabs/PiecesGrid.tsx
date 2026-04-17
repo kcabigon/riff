@@ -75,6 +75,36 @@ function LockIcon({ style }: { style?: React.CSSProperties }) {
   );
 }
 
+function PublicBadge({
+  top = "8px",
+  left = "8px",
+}: {
+  top?: string;
+  left?: string;
+}) {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top,
+        left,
+        zIndex: 3,
+        backgroundColor: "#00FF66",
+        border: "2px solid #000000",
+        padding: "4px 8px",
+        fontFamily: "var(--font-dm-sans)",
+        fontSize: "11px",
+        fontWeight: 700,
+        color: "#000000",
+        textTransform: "uppercase",
+        letterSpacing: "0.08em",
+      }}
+    >
+      Public
+    </div>
+  );
+}
+
 function LockOverlay() {
   return (
     <div
@@ -195,27 +225,7 @@ export function FeaturedPiece({
           </div>
         )}
 
-        {piece.isPublic && (
-          <div
-            style={{
-              position: "absolute",
-              top: "12px",
-              left: "12px",
-              zIndex: 3,
-              backgroundColor: "#00FF66",
-              border: "2px solid #000000",
-              padding: "2px 8px",
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "11px",
-              fontWeight: 700,
-              color: "#000000",
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
-            }}
-          >
-            Public
-          </div>
-        )}
+        {piece.isPublic && <PublicBadge top="12px" left="12px" />}
 
         <div
           style={{
@@ -374,27 +384,7 @@ export default function PiecesGrid({
                   />
                 </div>
               )}
-              {piece.isPublic && (
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "8px",
-                    left: "8px",
-                    zIndex: 3,
-                    backgroundColor: "#00FF66",
-                    border: "2px solid #000000",
-                    padding: "2px 8px",
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "11px",
-                    fontWeight: 700,
-                    color: "#000000",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.08em",
-                  }}
-                >
-                  Public
-                </div>
-              )}
+              {piece.isPublic && <PublicBadge />}
               {isLocked && !isOwnProfile && !piece.viewerHasClubAccess && (
                 <LockOverlay />
               )}

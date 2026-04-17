@@ -24,7 +24,7 @@ function SelectionDot({ selected }: { selected: boolean }) {
       style={{
         width: "14px",
         height: "14px",
-        borderRadius: "50%",
+        borderRadius: "64px",
         border: "2px solid #000000",
         backgroundColor: selected ? "#00FF66" : "#FFFFFF",
         flexShrink: 0,
@@ -155,7 +155,7 @@ export default function ShareModal({
             <p
               style={{
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
+                fontSize: "12px",
                 fontWeight: 300,
                 color: "#000000",
                 margin: 0,
@@ -212,7 +212,7 @@ export default function ShareModal({
             <p
               style={{
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
+                fontSize: "12px",
                 fontWeight: 300,
                 color: "#000000",
                 margin: 0,
@@ -240,7 +240,7 @@ export default function ShareModal({
           >
             <span
               style={{
-                fontFamily: "ui-monospace, monospace",
+                fontFamily: "var(--font-dm-sans)",
                 fontSize: "12px",
                 fontWeight: 400,
                 color: "#000000",
@@ -278,7 +278,7 @@ export default function ShareModal({
           <p
             style={{
               fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
+              fontSize: "12px",
               fontWeight: 300,
               color: "#DC2626",
               margin: 0,

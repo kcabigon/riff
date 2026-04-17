@@ -92,7 +92,7 @@ export default function PublicReadLayout({ piece }: PublicReadLayoutProps) {
           <p
             style={{
               fontFamily: "var(--font-dm-sans)",
-              fontSize: "20px",
+              fontSize: "16px",
               fontWeight: 300,
               color: "#808080",
               margin: "0 0 24px 0",
