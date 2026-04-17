@@ -198,6 +198,7 @@ All interactive elements: border/outline changes to green `#00FF66`.
 |-----------|------|---------|
 | **BackButton** | `BackButton.tsx` | Back navigation. Props: `href`, `onClick`, `size` |
 | **CloseButton** | `CloseButton.tsx` | Close/dismiss actions. Props: `onClick`, `size` |
+| **ThreeDotButton** | `shared/ThreeDotButton.tsx` | All 3-dot settings menus (club page, riff page, piece cards, etc.). Wraps `Dropdown` internally — just pass `items`. Props: `variant` ("dark" for banner/dark bg, "light" for white bg), `items`, `align` ("left"\|"right"). Stays cyan while open. Never build an inline 3-dot button — use this. |
 
 ### Layout & Display (`src/components/` and `src/components/shared/`)
 | Component | File | Use for |
