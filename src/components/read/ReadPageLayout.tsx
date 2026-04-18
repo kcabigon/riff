@@ -58,6 +58,7 @@ interface ReadPageLayoutProps {
   isAlreadyRead: boolean;
   previousPiece?: { id: string; title: string } | null;
   nextPiece?: { id: string; title: string } | null;
+  fromProfileUserId?: string;
 }
 
 export default function ReadPageLayout({
@@ -67,6 +68,7 @@ export default function ReadPageLayout({
   currentUser,
   initialComments,
   isAlreadyRead,
+  fromProfileUserId,
 }: ReadPageLayoutProps) {
   const router = useRouter();
   const endRef = useRef<HTMLDivElement>(null);
@@ -244,8 +246,8 @@ export default function ReadPageLayout({
           >
             <BackButton
               onClick={() => {
-                if (window.history.length > 1) {
-                  router.back();
+                if (fromProfileUserId) {
+                  router.push(`/profile/${fromProfileUserId}`);
                 } else {
                   router.push(`/riffs/${riffId}`);
                 }

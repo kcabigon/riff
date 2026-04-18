@@ -11,32 +11,17 @@ export async function DELETE(
     const user = await requireAuth();
     const { id: pieceId, shareId } = await params;
 
-    const piece = await prisma.piece.findUnique({
-      where: { id: pieceId },
-      select: { authorId: true },
+    const deleted = await prisma.share.deleteMany({
+      where: {
+        id: shareId,
+        pieceId,
+        piece: { authorId: user.id },
+      },
     });
 
-    if (!piece) {
-      return NextResponse.json({ error: "Piece not found" }, { status: 404 });
-    }
-
-    if (piece.authorId !== user.id) {
-      return NextResponse.json(
-        { error: "Only the author can revoke shares" },
-        { status: 403 }
-      );
-    }
-
-    const share = await prisma.share.findUnique({
-      where: { id: shareId },
-      select: { pieceId: true },
-    });
-
-    if (!share || share.pieceId !== pieceId) {
+    if (deleted.count === 0) {
       return NextResponse.json({ error: "Share not found" }, { status: 404 });
     }
-
-    await prisma.share.delete({ where: { id: shareId } });
 
     return NextResponse.json({ success: true });
   } catch (error: unknown) {

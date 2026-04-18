@@ -302,11 +302,13 @@ export function FeaturedPiece({
 export default function PiecesGrid({
   pieces,
   isOwnProfile,
+  profileUserId,
   onDelete,
   onShare,
 }: {
   pieces: Piece[];
   isOwnProfile: boolean;
+  profileUserId: string;
   onDelete: (id: string, title: string | null) => void;
   onShare: (pieceId: string) => void;
 }) {
@@ -360,7 +362,10 @@ export default function PiecesGrid({
               ? () => router.push(`/write/${piece.id}`)
               : undefined
             : isOwnProfile || piece.viewerHasClubAccess
-              ? () => router.push(`/read/${piece.id}`)
+              ? () =>
+                  router.push(
+                    `/read/${piece.id}?from=profile&userId=${profileUserId}`
+                  )
               : piece.isPublic
                 ? () => router.push(`/p/${piece.id}`)
                 : undefined;

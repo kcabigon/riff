@@ -4,13 +4,7 @@ import { prisma } from "@/lib/prisma";
 import PublicReadLayout from "./PublicReadLayout";
 
 async function getPiece(pieceId: string) {
-  const publicShare = await prisma.share.findFirst({
-    where: { pieceId, shareType: "PUBLIC", isPublic: true, isVisible: true },
-    select: { id: true },
-  });
-  if (!publicShare) return null;
-
-  return prisma.piece.findUnique({
+  const piece = await prisma.piece.findUnique({
     where: { id: pieceId },
     select: {
       id: true,
@@ -23,8 +17,16 @@ async function getPiece(pieceId: string) {
       author: {
         select: { id: true, name: true, username: true, avatarUrl: true },
       },
+      newShares: {
+        where: { shareType: "PUBLIC", isPublic: true, isVisible: true },
+        select: { id: true },
+        take: 1,
+      },
     },
   });
+
+  if (!piece || piece.newShares.length === 0) return null;
+  return piece;
 }
 
 export async function generateMetadata({
@@ -43,6 +45,7 @@ export async function generateMetadata({
   return {
     title,
     description,
+    robots: { index: false, follow: false },
     openGraph: {
       title,
       description,

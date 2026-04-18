@@ -173,7 +173,10 @@ export default function ProfilePage({
               : !featured.isRevealed
                 ? () => {}
                 : isOwnProfile || featured.viewerHasClubAccess
-                  ? () => router.push(`/read/${featured.id}`)
+                  ? () =>
+                      router.push(
+                        `/read/${featured.id}?from=profile&userId=${user.id}`
+                      )
                   : featured.isPublic
                     ? () => router.push(`/p/${featured.id}`)
                     : () => {}
@@ -193,6 +196,7 @@ export default function ProfilePage({
         <PiecesGrid
           pieces={rest}
           isOwnProfile={isOwnProfile}
+          profileUserId={user.id}
           onDelete={(id: string, title: string | null) =>
             setDeleteTarget({ id, title })
           }
