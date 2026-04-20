@@ -57,7 +57,11 @@ export default function ProfilePage({
         />
       )}
 
-      <ProfileHeader profileUser={user} lastActiveClubId={lastActiveClubId} />
+      <ProfileHeader
+        profileUser={user}
+        isOwnProfile={isOwnProfile}
+        lastActiveClubId={lastActiveClubId}
+      />
 
       <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
         {/* Hero piece */}

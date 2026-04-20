@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import Avatar from "@/components/shared/Avatar";
+import { useRouter } from "next/navigation";
+import Dropdown from "@/components/shared/Dropdown";
 
 interface ProfileHeaderProps {
   profileUser: {
@@ -11,15 +12,17 @@ interface ProfileHeaderProps {
     firstName: string | null;
     lastName: string | null;
     username: string | null;
-    avatarUrl: string | null;
   };
+  isOwnProfile?: boolean;
   lastActiveClubId?: string | null;
 }
 
 export default function ProfileHeader({
   profileUser,
+  isOwnProfile,
   lastActiveClubId,
 }: ProfileHeaderProps) {
+  const router = useRouter();
   const logoHref = lastActiveClubId ? `/clubs/${lastActiveClubId}` : "/";
 
   const firstName =
@@ -32,6 +35,20 @@ export default function ProfileHeader({
     profileUser.name?.split(" ").slice(1).join(" ") ||
     "";
   const displayName = [firstName, lastName].filter(Boolean).join(" ");
+
+  const nameEl = (
+    <span
+      style={{
+        fontFamily: "var(--font-dm-serif-text)",
+        fontSize: "18px",
+        fontWeight: 400,
+        color: "#FFFFFF",
+        cursor: isOwnProfile ? "pointer" : "default",
+      }}
+    >
+      {displayName}
+    </span>
+  );
 
   return (
     <nav
@@ -67,20 +84,23 @@ export default function ProfileHeader({
           />
         </Link>
 
-        {/* Right: name + avatar */}
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <span
-            style={{
-              fontFamily: "var(--font-dm-serif-text)",
-              fontSize: "18px",
-              fontWeight: 400,
-              color: "#FFFFFF",
-            }}
-          >
-            {displayName}
-          </span>
-          <Avatar user={profileUser} size={40} borderColor="#FFFFFF" />
-        </div>
+        {/* Right: name (dropdown for own profile, plain text for others) */}
+        {isOwnProfile ? (
+          <Dropdown
+            trigger={nameEl}
+            align="right"
+            minWidth={140}
+            items={[
+              {
+                type: "action",
+                label: "Edit profile",
+                onClick: () => router.push("/settings"),
+              },
+            ]}
+          />
+        ) : (
+          nameEl
+        )}
       </div>
     </nav>
   );
