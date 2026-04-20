@@ -14,7 +14,6 @@ interface ProfilePageProps {
     firstName: string | null;
     lastName: string | null;
     bio: string | null;
-    avatarUrl: string | null;
     username: string | null;
   };
   stats: {

@@ -40,10 +40,18 @@ export default function ProfileHeader({
     <span
       style={{
         fontFamily: "var(--font-dm-serif-text)",
-        fontSize: "18px",
+        fontSize: "20px",
         fontWeight: 400,
         color: "#FFFFFF",
         cursor: isOwnProfile ? "pointer" : "default",
+        transition: "color 120ms ease",
+      }}
+      onMouseEnter={(e) => {
+        if (isOwnProfile)
+          (e.currentTarget as HTMLElement).style.color = "#C01582";
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLElement).style.color = "#FFFFFF";
       }}
     >
       {displayName}
