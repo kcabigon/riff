@@ -80,7 +80,7 @@ export async function PATCH(
               email: m.user.email,
               actorName: m.user.name || "Someone",
               riffTitle: riffDisplayTitle,
-              pieceTitle,
+              clubName: riff.club.name,
               riffUrl,
             })
           )

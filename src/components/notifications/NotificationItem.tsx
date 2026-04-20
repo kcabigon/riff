@@ -11,8 +11,14 @@ interface NotificationItemProps {
     createdAt: string;
     actor: { id: string; name: string | null; avatarUrl: string | null } | null;
     club: { id: string; name: string } | null;
-    riff: { id: string; title: string | null; clubId: string } | null;
+    riff: {
+      id: string;
+      title: string | null;
+      clubId: string;
+      volumeNumber: number | null;
+    } | null;
     piece: { id: string; title: string } | null;
+    commentCount?: number;
   };
   onClose: () => void;
   onDismiss: (id: string) => void;
@@ -25,23 +31,35 @@ function getMessage(n: NotificationItemProps["notification"]): string {
     case "CLUB_MEMBER_JOINED":
       return `${actor} joined ${n.club ? n.club.name : "the club"}`;
     case "RIFF_CREATED":
-      return `${actor} started a new riff in ${n.club ? n.club.name : "your club"}`;
     case "RIFF_STARTED":
-      return `A new riff just dropped in ${n.club ? n.club.name : "your club"}`;
+      return `New riff in ${n.club ? n.club.name : "your club"}`;
     case "PIECE_SUBMITTED_TO_RIFF":
-      return `${actor} submitted a piece`;
-    case "RIFF_COMPLETED":
-      return `Pieces revealed in ${n.club ? n.club.name : "your club"}`;
+      return `${actor} submitted a piece to ${n.club ? n.club.name : "your club"}`;
+    case "RIFF_COMPLETED": {
+      if (n.riff) {
+        const display =
+          n.riff.volumeNumber && n.riff.title
+            ? `Volume ${n.riff.volumeNumber}: ${n.riff.title}`
+            : n.riff.volumeNumber
+              ? `Volume ${n.riff.volumeNumber}`
+              : n.riff.title || "The riff";
+        return `${display} has been revealed`;
+      }
+      return "A riff has been revealed";
+    }
     case "RIFF_DEADLINE_CHANGED":
-      return `${actor} moved the deadline`;
-    case "NEW_COMMENT":
-      return `New comments on ${n.piece ? `"${n.piece.title}"` : "your piece"}`;
+      return `Riff deadline change in ${n.club ? n.club.name : "your club"}`;
+    case "NEW_COMMENT": {
+      const count = n.commentCount ?? 1;
+      const label = count === 1 ? "1 new comment" : `${count} new comments`;
+      return `${label} on ${n.piece ? `"${n.piece.title}"` : "your piece"}`;
+    }
     case "COMMENT_REPLY":
       return `${actor} replied to your comment`;
     case "CLUB_INVITATION":
       return `${actor} invited you to ${n.club ? n.club.name : "a club"}`;
     case "ALL_PIECES_SUBMITTED":
-      return `All pieces submitted${n.riff ? ` for "${n.riff.title}"` : ""}`;
+      return `All pieces submitted in ${n.club ? n.club.name : "your club"}`;
     default:
       return "New notification";
   }

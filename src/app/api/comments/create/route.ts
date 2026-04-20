@@ -106,20 +106,30 @@ export async function POST(req: Request) {
       },
     });
 
-    // Notify piece author if they're not the commenter
+    // Notify piece author — upsert so multiple comments accumulate into one notification
     if (piece.authorId !== userId) {
       try {
-        await prisma.notification.create({
-          data: {
+        const existing = await prisma.notification.findFirst({
+          where: {
             type: "NEW_COMMENT",
             recipientId: piece.authorId,
-            actorId: userId,
             pieceId,
-            commentId: comment.id,
-            clubId,
-            riffId,
+            isRead: false,
           },
         });
+        if (!existing) {
+          await prisma.notification.create({
+            data: {
+              type: "NEW_COMMENT",
+              recipientId: piece.authorId,
+              actorId: userId,
+              pieceId,
+              commentId: comment.id,
+              clubId,
+              riffId,
+            },
+          });
+        }
       } catch (notifyErr) {
         console.error("Failed to send comment notification:", notifyErr);
       }

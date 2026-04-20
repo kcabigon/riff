@@ -380,6 +380,7 @@ export async function PATCH(
                 hostName: updatedRiff.creator.name || "Your host",
                 newDeadline,
                 clubUrl,
+                clubName: updatedRiff.club.name,
               })
             )
           );

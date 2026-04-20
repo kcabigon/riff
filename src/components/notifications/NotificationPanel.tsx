@@ -11,8 +11,14 @@ interface NotificationData {
   createdAt: string;
   actor: { id: string; name: string | null; avatarUrl: string | null } | null;
   club: { id: string; name: string } | null;
-  riff: { id: string; title: string; clubId: string } | null;
+  riff: {
+    id: string;
+    title: string | null;
+    clubId: string;
+    volumeNumber: number | null;
+  } | null;
   piece: { id: string; title: string } | null;
+  commentCount?: number;
 }
 
 interface NotificationPanelProps {

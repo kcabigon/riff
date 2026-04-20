@@ -19,7 +19,9 @@ export async function GET(req: Request) {
             select: { id: true, name: true, username: true, avatarUrl: true },
           },
           club: { select: { id: true, name: true } },
-          riff: { select: { id: true, title: true, clubId: true } },
+          riff: {
+            select: { id: true, title: true, clubId: true, volumeNumber: true },
+          },
           piece: { select: { id: true, title: true } },
         },
         orderBy: { createdAt: "desc" },
@@ -29,7 +31,37 @@ export async function GET(req: Request) {
       prisma.notification.count({ where: { recipientId: userId } }),
     ]);
 
-    return NextResponse.json({ notifications, total });
+    // Single grouped query to count comments for all NEW_COMMENT notifications
+    const commentNotifs = notifications.filter(
+      (n) => n.type === "NEW_COMMENT" && n.pieceId
+    );
+    const commentCountMap = new Map<string, number>();
+    if (commentNotifs.length > 0) {
+      const earliest = commentNotifs.reduce(
+        (min, n) => (n.createdAt < min ? n.createdAt : min),
+        commentNotifs[0].createdAt
+      );
+      const counts = await prisma.comment.groupBy({
+        by: ["pieceId"],
+        where: {
+          pieceId: { in: commentNotifs.map((n) => n.pieceId!) },
+          authorId: { not: userId },
+          createdAt: { gte: earliest },
+        },
+        _count: { id: true },
+      });
+      counts.forEach((c) => commentCountMap.set(c.pieceId, c._count.id));
+    }
+
+    const enriched = notifications.map((n) => ({
+      ...n,
+      commentCount:
+        n.type === "NEW_COMMENT" && n.pieceId
+          ? (commentCountMap.get(n.pieceId) ?? 1)
+          : undefined,
+    }));
+
+    return NextResponse.json({ notifications: enriched, total });
   } catch (error: any) {
     if (error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
