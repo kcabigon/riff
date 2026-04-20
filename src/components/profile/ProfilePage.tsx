@@ -45,10 +45,6 @@ export default function ProfilePage({
 
   const [featured, ...rest] = pieces;
 
-  // Stats preserved here for future use (e.g. own-profile dropdown)
-  const _stats = stats;
-  void _stats;
-
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
       {deleteTarget && (
@@ -64,6 +60,7 @@ export default function ProfilePage({
         profileUser={user}
         isOwnProfile={isOwnProfile}
         lastActiveClubId={lastActiveClubId}
+        stats={isOwnProfile ? stats : undefined}
       />
 
       <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
