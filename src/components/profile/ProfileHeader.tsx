@@ -33,6 +33,24 @@ export default function ProfileHeader({
   const [isStatsOpen, setIsStatsOpen] = useState(false);
   const logoHref = lastActiveClubId ? `/clubs/${lastActiveClubId}` : "/";
 
+  const dropdownItems = [
+    ...(stats
+      ? [
+          {
+            type: "action" as const,
+            label: "My stats",
+            onClick: () => setIsStatsOpen(true),
+          },
+          { type: "divider" as const },
+        ]
+      : []),
+    {
+      type: "action" as const,
+      label: "Edit profile",
+      onClick: () => router.push("/settings"),
+    },
+  ];
+
   const firstName =
     profileUser.firstName ||
     profileUser.name?.split(" ")[0] ||
@@ -110,23 +128,7 @@ export default function ProfileHeader({
               trigger={nameEl}
               align="right"
               minWidth={140}
-              items={[
-                ...(stats
-                  ? [
-                      {
-                        type: "action" as const,
-                        label: "My stats",
-                        onClick: () => setIsStatsOpen(true),
-                      },
-                      { type: "divider" as const },
-                    ]
-                  : []),
-                {
-                  type: "action",
-                  label: "Edit profile",
-                  onClick: () => router.push("/settings"),
-                },
-              ]}
+              items={dropdownItems}
             />
           ) : (
             nameEl

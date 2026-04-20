@@ -31,8 +31,6 @@ export default async function ProfilePageRoute({
       name: true,
       firstName: true,
       lastName: true,
-      bio: true,
-      avatarUrl: true,
       username: true,
     },
   });
