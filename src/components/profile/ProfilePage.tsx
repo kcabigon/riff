@@ -45,6 +45,10 @@ export default function ProfilePage({
 
   const [featured, ...rest] = pieces;
 
+  // Stats preserved here for future use (e.g. own-profile dropdown)
+  const _stats = stats;
+  void _stats;
+
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
       {deleteTarget && (
@@ -63,34 +67,8 @@ export default function ProfilePage({
       />
 
       <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
-        {/* Hero piece */}
-        <div style={{ padding: "32px 0 0" }}>
-          {pieces.length === 0 ? (
-            <div style={{ padding: "32px 24px", textAlign: "center" }}>
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-serif-text)",
-                  fontSize: "24px",
-                  fontWeight: 400,
-                  color: "#000000",
-                  margin: "0 0 8px 0",
-                }}
-              >
-                Every great writer starts with a blank page.
-              </p>
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#808080",
-                  margin: 0,
-                }}
-              >
-                Pieces coming soon.
-              </p>
-            </div>
-          ) : featured ? (
+        {featured && (
+          <div style={{ padding: "32px 0 0" }}>
             <FeaturedPiece
               piece={featured}
               onClick={
@@ -105,10 +83,9 @@ export default function ProfilePage({
                 setDeleteTarget({ id: featured.id, title: featured.title })
               }
             />
-          ) : null}
-        </div>
+          </div>
+        )}
 
-        {/* Piece grid */}
         {rest.length > 0 && (
           <PiecesGrid
             pieces={rest}
@@ -118,49 +95,6 @@ export default function ProfilePage({
             }
           />
         )}
-
-        {/* Footer: stats */}
-        <div
-          style={{
-            borderTop: "1px solid #E6E6E6",
-            padding: "16px 24px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "8px",
-          }}
-        >
-          <span
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              color: "#808080",
-            }}
-          >
-            {stats.pieceCount} pieces
-          </span>
-          <span
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              color: "#808080",
-            }}
-          >
-            &middot;
-          </span>
-          <span
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              color: "#808080",
-            }}
-          >
-            {stats.totalWordCount.toLocaleString()} words
-          </span>
-        </div>
       </div>
     </div>
   );
