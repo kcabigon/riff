@@ -369,12 +369,12 @@ function getRiffCreatedEmailTemplate({
     content: `
           <tr>
             <td style="padding:40px 40px 16px;">
-              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">New riff dropped.</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;"><strong style="font-weight:500;">${actorName}</strong> started a new riff.</p>
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">New riff in ${clubName}.</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">Check out the deets and join the riff.</p>
             </td>
           </tr>
 
-          ${emailButton("Join riff", clubUrl)}`,
+          ${emailButton("See the new riff", clubUrl)}`,
   });
 }
 
@@ -401,22 +401,22 @@ function getRiffRevealedEmailTemplate({
     : riffTitle || null;
 
   const titleLine = displayTitle
-    ? `<strong style="font-weight:500;">${displayTitle}</strong> has been revealed.`
-    : "A riff has been revealed.";
+    ? `${displayTitle} has been revealed`
+    : "A riff has been revealed";
 
   return emailShell({
-    title: `Riff revealed in ${clubName}`,
+    title: titleLine,
     clubName,
     footerText: `You're receiving this because you're a member of ${clubName} on Riff.`,
     content: `
           <tr>
             <td style="padding:40px 40px 16px;">
-              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">The pieces are in.</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${titleLine}</p>
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${titleLine}</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">The moment you've been waiting for…</p>
             </td>
           </tr>
 
-          ${emailButton("Read pieces", riffUrl)}`,
+          ${emailButton("Time to read", riffUrl)}`,
   });
 }
 
@@ -454,12 +454,12 @@ export async function sendMemberJoinedEmail({
         content: `
           <tr>
             <td style="padding:40px 40px 16px;">
-              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${newMemberFullName} is in.</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">The club expands. Adding ${newMemberFirstName} means the writing's about to get better.</p>
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">More voices, more angles.</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">More riffing.</p>
             </td>
           </tr>
 
-          ${emailButton("Go to club", clubUrl)}`,
+          ${emailButton("Visit club", clubUrl)}`,
       }),
     });
     if (error) console.error("Resend error (memberJoined):", error);
@@ -485,20 +485,20 @@ export async function sendPieceSubmittedEmail({
     const { error } = await getResend().emails.send({
       from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
       to: email,
-      subject: `${actorName} submitted a piece`,
+      subject: `${actorName} submitted a piece to ${clubName}`,
       html: emailShell({
-        title: `${actorName} submitted a piece`,
+        title: `${actorName} submitted a piece to ${clubName}`,
         clubName,
         footerText: `You're receiving this because you're a participant in ${riffTitle} on Riff.`,
         content: `
           <tr>
             <td style="padding:40px 40px 16px;">
-              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">A piece just dropped.</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;"><strong style="font-weight:500;">${actorName}</strong> submitted to <strong style="font-weight:500;">${riffTitle}</strong>. Get yours in before the deadline.</p>
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${actorName} submitted a piece to ${clubName}.</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">Take a peek at the piece and riff progress.</p>
             </td>
           </tr>
 
-          ${emailButton("See the riff", riffUrl)}`,
+          ${emailButton("Check it out", riffUrl)}`,
       }),
     });
     if (error) console.error("Resend error (pieceSubmitted):", error);
@@ -529,20 +529,20 @@ export async function sendDeadlineChangedEmail({
     const { error } = await getResend().emails.send({
       from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
       to: email,
-      subject: `Deadline moved to ${deadlineStr}`,
+      subject: `Riff deadline change in ${clubName}`,
       html: emailShell({
-        title: `Deadline moved to ${deadlineStr}`,
+        title: `Riff deadline change in ${clubName}`,
         clubName,
         footerText: `You're receiving this because you're a member of ${clubName} on Riff.`,
         content: `
           <tr>
             <td style="padding:40px 40px 16px;">
-              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">New deadline: ${deadlineStr}.</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;"><strong style="font-weight:500;">${hostName}</strong> moved the deadline. More time to write a banger.</p>
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">Riff deadline change in ${clubName}.</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">The new deadline is ${deadlineStr}.</p>
             </td>
           </tr>
 
-          ${emailButton("Go to club", clubUrl)}`,
+          ${emailButton("View the riff", clubUrl)}`,
       }),
     });
     if (error) console.error("Resend error (deadlineChanged):", error);
@@ -566,20 +566,20 @@ export async function sendAllPiecesSubmittedEmail({
     const { error } = await getResend().emails.send({
       from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
       to: email,
-      subject: `All pieces submitted for ${riffTitle}`,
+      subject: `All pieces submitted in ${clubName}`,
       html: emailShell({
-        title: `All pieces submitted for ${riffTitle}`,
+        title: `All pieces submitted in ${clubName}`,
         clubName,
         footerText: `You're receiving this because you're the host of this riff on Riff.`,
         content: `
           <tr>
             <td style="padding:40px 40px 16px;">
               <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">Everyone's in.</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">All pieces are submitted for <strong style="font-weight:500;">${riffTitle}</strong>. Time to reveal.</p>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">You're ready for reveal.</p>
             </td>
           </tr>
 
-          ${emailButton("Reveal riff", riffUrl)}`,
+          ${emailButton("Review and reveal", riffUrl)}`,
       }),
     });
     if (error) console.error("Resend error (allPiecesSubmitted):", error);
@@ -603,10 +603,6 @@ export async function sendCommentNotificationEmail({
   commenterNames: string[];
   pieceUrl: string;
 }): Promise<void> {
-  const subject =
-    commentCount === 1
-      ? `Someone commented on "${pieceTitle}"`
-      : `${commentCount} new comments on "${pieceTitle}"`;
   const commentLabel =
     commentCount === 1 ? "1 new comment" : `${commentCount} new comments`;
 
@@ -614,19 +610,19 @@ export async function sendCommentNotificationEmail({
     const { error } = await getResend().emails.send({
       from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
       to: email,
-      subject,
+      subject: `New comments on "${pieceTitle}"`,
       html: emailShell({
-        title: subject,
+        title: `New comments on "${pieceTitle}"`,
         footerText: `You're receiving this because someone commented on your writing on Riff.`,
         content: `
           <tr>
             <td style="padding:40px 40px 16px;">
-              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">The riff goes on.</h1>
-              <p style="margin:0 0 16px 0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">Hey ${recipientName}, ${formatNames(commenterNames)} left ${commentLabel} on <strong style="font-weight:500;">${pieceTitle}</strong>.</p>
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">New comments on "${pieceTitle}".</h1>
+              <p style="margin:0 0 16px 0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${commentLabel} just came in.</p>
             </td>
           </tr>
 
-          ${emailButton("Read comments", pieceUrl)}`,
+          ${emailButton("View comments", pieceUrl)}`,
       }),
     });
     if (error) console.error("Resend error (commentNotification):", error);
