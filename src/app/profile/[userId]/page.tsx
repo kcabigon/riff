@@ -31,8 +31,6 @@ export default async function ProfilePageRoute({
       name: true,
       firstName: true,
       lastName: true,
-      bio: true,
-      avatarUrl: true,
       username: true,
     },
   });
@@ -94,10 +92,7 @@ export default async function ProfilePageRoute({
   return (
     <ProfilePage
       user={user}
-      stats={{
-        pieceCount,
-        totalWordCount,
-      }}
+      stats={{ pieceCount, totalWordCount }}
       pieces={pieces}
       isOwnProfile={isOwnProfile}
       lastActiveClubId={currentUser?.lastActiveClubId ?? null}
