@@ -1,8 +1,10 @@
 "use client";
 
+import React, { useEffect } from "react";
 import Modal from "@/components/shared/Modal";
 import CloseButton from "@/components/CloseButton";
 import PrimaryButton from "@/components/PrimaryButton";
+import { markWhatsNextSeen } from "@/lib/whatsNextGuard";
 
 export type WhatsNextTrigger =
   | "host_created_club"
@@ -50,7 +52,7 @@ const COMPLETED_STEP: Record<WhatsNextTrigger, number> = {
 
 interface TriggerContent {
   heading: string;
-  body: string;
+  body: React.ReactNode;
   cta: string;
   steps: string[];
 }
@@ -69,14 +71,14 @@ function getContent(
     },
     host_started_riff: {
       heading: "You got the party started…",
-      body: "Your writers are off to the races. Check in to see who's started, and drop a reminder if the deadline is creeping up.",
-      cta: "See the riff",
+      body: "Now your friends can join the riff. As the host of the writing party, you can see who's joined, who's started writing, and everyone's word count progress. The goal is for everyone to submit their piece before the deadline, so if anyone is lagging you might wanna give 'em a nudge.",
+      cta: "Game on!",
       steps: HOST_STEPS,
     },
     host_submitted: {
-      heading: "Locked and loaded…",
-      body: "Now you wait till the rest of the crew crosses the finish line. When you're ready, clicking that Reveal button is all you.",
-      cta: "Sit tight",
+      heading: "Your writing is in...",
+      body: "How's the rest of the club doing? Once everyone submits or the deadline passes, you'll see the Reveal button. When the club is ready, clicking Reveal is all you.",
+      cta: "Check the riff",
       steps: HOST_STEPS,
     },
     host_revealed: {
@@ -87,7 +89,13 @@ function getContent(
     },
     member_joined_club: {
       heading: "Welcome to write club…",
-      body: "The first rule of write club is, everyone writes. The second rule of write club is, sometimes you wait. Practice patience until you see the Join Riff button, then it's on like Donkey Kong.",
+      body: (
+        <>
+          The first rule of write club is, everyone writes. The second rule of
+          write club is, sometimes you wait. Practice patience until you see the{" "}
+          <strong>Join Riff</strong> button, then it&apos;s on like Donkey Kong.
+        </>
+      ),
       cta: "Got it",
       steps: MEMBER_STEPS,
     },
@@ -130,6 +138,8 @@ function JourneyTracker({
         const dotBorder = isCompleted ? "#000000" : "#808080";
         const dotSize = isCurrent ? 14 : 10;
         const lineColor = i < completedStep ? "#00FF66" : "#CCCCCC";
+        // Align dot center with the first line of 16px/1.6 text (line box = 25.6px)
+        const dotTopOffset = Math.round((25.6 - dotSize) / 2);
 
         return (
           <div key={step} style={{ display: "flex", gap: "14px" }}>
@@ -151,6 +161,7 @@ function JourneyTracker({
                   backgroundColor: dotColor,
                   border: `2px solid ${dotBorder}`,
                   flexShrink: 0,
+                  marginTop: `${dotTopOffset}px`,
                 }}
               />
               {!isLast && (
@@ -169,12 +180,12 @@ function JourneyTracker({
             <p
               style={{
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: "12px",
+                fontSize: "16px",
                 fontWeight: isCurrent ? 700 : 300,
                 color: isCompleted ? "#000000" : "#808080",
                 margin: 0,
                 paddingBottom: !isLast ? "20px" : "0",
-                lineHeight: 1.4,
+                lineHeight: 1.6,
               }}
             >
               {step}
@@ -196,6 +207,11 @@ export default function WhatsNextModal({
   const content = getContent(trigger, hostFirstName);
   const completedStep = COMPLETED_STEP[trigger];
   const handleCTA = onCTAClick ?? onClose;
+
+  // Mark seen after the modal has rendered — avoids suppressing on unmount before render
+  useEffect(() => {
+    if (isOpen) markWhatsNextSeen(trigger);
+  }, [isOpen, trigger]);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="lg" noiseBackground>
@@ -224,27 +240,40 @@ export default function WhatsNextModal({
         {content.heading}
       </h2>
 
-      {/* Body */}
+      {/* Body + Journey tracker */}
       <div
         style={{
           backgroundColor: "#FFFFFF",
           border: "2px solid #000000",
-          padding: "16px",
           marginBottom: "24px",
         }}
       >
-        <p
+        <div style={{ padding: "16px" }}>
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "16px",
+              fontWeight: 300,
+              color: "#000000",
+              margin: 0,
+              lineHeight: 1.6,
+            }}
+          >
+            {content.body}
+          </p>
+        </div>
+
+        <div
           style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
-            fontWeight: 300,
-            color: "#000000",
-            margin: 0,
-            lineHeight: 1.6,
+            height: "1px",
+            backgroundColor: "#E6E6E6",
+            margin: "0 16px",
           }}
-        >
-          {content.body}
-        </p>
+        />
+
+        <div style={{ padding: "16px" }}>
+          <JourneyTracker steps={content.steps} completedStep={completedStep} />
+        </div>
       </div>
 
       {/* Divider */}
@@ -254,19 +283,6 @@ export default function WhatsNextModal({
           height: "1px",
           backgroundColor: "#E6E6E6",
           marginBottom: "24px",
-        }}
-      />
-
-      {/* Journey tracker */}
-      <JourneyTracker steps={content.steps} completedStep={completedStep} />
-
-      {/* Divider */}
-      <div
-        style={{
-          width: "100%",
-          height: "1px",
-          backgroundColor: "#E6E6E6",
-          margin: "24px 0",
         }}
       />
 
