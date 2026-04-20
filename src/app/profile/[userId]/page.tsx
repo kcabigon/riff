@@ -78,10 +78,7 @@ export default async function ProfilePageRoute({
   return (
     <ProfilePage
       user={user}
-      stats={{
-        pieceCount,
-        totalWordCount,
-      }}
+      stats={{ pieceCount, totalWordCount }}
       pieces={pieces}
       isOwnProfile={currentUserId === userId}
       lastActiveClubId={currentUser?.lastActiveClubId ?? null}
