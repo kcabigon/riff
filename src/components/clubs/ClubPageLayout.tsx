@@ -771,27 +771,37 @@ export default function ClubPageLayout({
                     getSubmittedPieces(r.pieces).length
                   )
                 ),
-              ].map((riff) => (
-                <CompletedRiffCard
-                  key={riff.id}
-                  riff={{
-                    id: riff.id,
-                    title: riff.title,
-                    volumeNumber: riff.volumeNumber,
-                    status: riff.status,
-                    createdAt: new Date(riff.createdAt),
-                    deadline: riff.deadline ? new Date(riff.deadline) : null,
-                  }}
-                  clubName={clubName}
-                  pieces={getSubmittedPieces(riff.pieces).map((p) => ({
-                    id: p.piece.id,
-                    title: p.piece.title,
-                    currentContent: p.piece.currentContent,
-                    coverImage: p.piece.coverImage,
-                    wordCount: p.piece.wordCount,
-                  }))}
-                />
-              ))}
+              ]
+                .sort((a, b) => {
+                  if (a.volumeNumber != null && b.volumeNumber != null) {
+                    return b.volumeNumber - a.volumeNumber;
+                  }
+                  return (
+                    new Date(b.createdAt).getTime() -
+                    new Date(a.createdAt).getTime()
+                  );
+                })
+                .map((riff) => (
+                  <CompletedRiffCard
+                    key={riff.id}
+                    riff={{
+                      id: riff.id,
+                      title: riff.title,
+                      volumeNumber: riff.volumeNumber,
+                      status: riff.status,
+                      createdAt: new Date(riff.createdAt),
+                      deadline: riff.deadline ? new Date(riff.deadline) : null,
+                    }}
+                    clubName={clubName}
+                    pieces={getSubmittedPieces(riff.pieces).map((p) => ({
+                      id: p.piece.id,
+                      title: p.piece.title,
+                      currentContent: p.piece.currentContent,
+                      coverImage: p.piece.coverImage,
+                      wordCount: p.piece.wordCount,
+                    }))}
+                  />
+                ))}
             </div>
           </div>
         )}
