@@ -13,16 +13,13 @@ export async function GET(req: Request) {
   const comments = await prisma.comment.findMany({
     where: { createdAt: { gte: since } },
     include: {
-      author: {
-        select: { id: true, firstName: true, lastName: true },
-      },
       piece: {
         select: {
           id: true,
           title: true,
           authorId: true,
           author: {
-            select: { email: true, firstName: true },
+            select: { email: true },
           },
         },
       },
@@ -35,10 +32,8 @@ export async function GET(req: Request) {
     string,
     {
       recipientEmail: string;
-      recipientName: string;
       pieceId: string;
       pieceTitle: string;
-      commenterNames: string[];
       commentCount: number;
     }
   >();
@@ -47,25 +42,14 @@ export async function GET(req: Request) {
     if (comment.authorId === comment.piece.authorId) continue;
 
     const existing = groups.get(comment.pieceId);
-    const commenterName =
-      comment.author.firstName && comment.author.lastName
-        ? `${comment.author.firstName} ${comment.author.lastName}`
-        : comment.author.firstName || "Someone";
 
     if (existing) {
-      if (!existing.commenterNames.includes(commenterName)) {
-        existing.commenterNames.push(commenterName);
-      }
       existing.commentCount++;
     } else {
       groups.set(comment.pieceId, {
         recipientEmail: comment.piece.author.email,
-        recipientName:
-          comment.piece.author.firstName ||
-          comment.piece.author.email.split("@")[0],
         pieceId: comment.pieceId,
         pieceTitle: comment.piece.title || "Untitled",
-        commenterNames: [commenterName],
         commentCount: 1,
       });
     }
@@ -77,10 +61,8 @@ export async function GET(req: Request) {
   for (const group of groups.values()) {
     await sendCommentNotificationEmail({
       email: group.recipientEmail,
-      recipientName: group.recipientName,
       pieceTitle: group.pieceTitle,
       commentCount: group.commentCount,
-      commenterNames: group.commenterNames,
       pieceUrl: `${baseUrl}/read/${group.pieceId}`,
     });
     emailsSent++;
