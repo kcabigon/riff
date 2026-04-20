@@ -509,11 +509,11 @@ export default function WritePage({
                       }
                     }}
                     style={{
-                      padding: isMobile ? "8px 24px" : "12px 48px",
-                      fontSize: isMobile ? "12px" : "16px",
+                      padding: isMobile ? "8px 24px" : "10px 32px",
+                      fontSize: "12px",
                     }}
                   >
-                    Submit piece
+                    Submit
                   </CTAButton>
                 ))}
             </div>

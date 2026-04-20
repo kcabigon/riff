@@ -1,6 +1,6 @@
 /**
  * Resend email service integration
- * Handles sending magic link emails with custom branding
+ * Handles sending magic link emails and notification emails with custom branding
  */
 
 import { Resend } from "resend";
@@ -9,10 +9,137 @@ function getResend() {
   return new Resend(process.env.RESEND_API_KEY);
 }
 
+const EMAIL_LOGO_URL =
+  "https://wmqlbbtgexpsxzwwurpi.supabase.co/storage/v1/object/public/images/riff-wordmark-email.png";
+
+// ==================== SHARED EMAIL HELPERS ====================
+
+/**
+ * Wraps email content in the standard Riff email shell:
+ * table-based layout, inline styles, logo, divider, footer.
+ *
+ * Two layouts:
+ * - Auth (clubName omitted): large Riff logo at top
+ * - Notification (clubName set): club name header at top, small logo below footer
+ */
+function emailShell({
+  title,
+  content,
+  footerText,
+  clubName,
+}: {
+  title: string;
+  content: string;
+  footerText: string;
+  clubName?: string;
+}): string {
+  const topSection = clubName
+    ? `<!-- Club name header -->
+          <tr>
+            <td style="padding:40px 40px 24px;">
+              <p style="margin:0;font-size:16px;font-weight:500;color:#000000;letter-spacing:2px;text-transform:uppercase;font-family:'DM Sans',-apple-system,sans-serif;">${clubName}</p>
+            </td>
+          </tr>
+
+          <!-- Divider -->
+          <tr>
+            <td style="padding:0 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0"><tr><td style="height:2px;background-color:#000000;font-size:0;line-height:0;">&nbsp;</td></tr></table>
+            </td>
+          </tr>`
+    : `<!-- Logo -->
+          <tr>
+            <td align="center" style="padding:48px 40px 32px;">
+              <img src="${EMAIL_LOGO_URL}" alt="Riff" width="200" height="132" style="display:block;margin:0 auto;" />
+            </td>
+          </tr>
+
+          <!-- Divider -->
+          <tr>
+            <td style="padding:0 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0"><tr><td style="height:2px;background-color:#000000;font-size:0;line-height:0;">&nbsp;</td></tr></table>
+            </td>
+          </tr>`;
+
+  const bottomLogo = clubName
+    ? `<!-- Small logo -->
+          <tr>
+            <td align="center" style="padding:0 40px 24px;">
+              <img src="${EMAIL_LOGO_URL}" alt="Riff" width="60" height="40" style="display:block;margin:0 auto;" />
+            </td>
+          </tr>`
+    : "";
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${title}</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&family=DM+Serif+Text&display=swap" rel="stylesheet">
+</head>
+<body style="margin:0;padding:0;background-color:#f5f5f5;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f5f5;padding:48px 24px;">
+    <tr>
+      <td align="center">
+        <table width="520" cellpadding="0" cellspacing="0" style="max-width:520px;width:100%;background-color:#ffffff;border:2px solid #000000;">
+
+          ${topSection}
+
+          ${content}
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:20px 40px ${clubName ? "12px" : "32px"};border-top:1px solid #eeeeee;">
+              <p style="margin:0;font-size:12px;font-weight:300;color:#bbbbbb;font-family:'DM Sans',-apple-system,sans-serif;">${footerText}</p>
+            </td>
+          </tr>
+
+          ${bottomLogo}
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
+  `.trim();
+}
+
+/** Email-safe CTA button with 8px offset shadow using nested tables */
+function emailButton(label: string, href: string): string {
+  return `
+          <tr>
+            <td style="padding:32px 40px 40px 40px;">
+              <table cellpadding="0" cellspacing="0" width="100%" style="border-collapse:separate;border-spacing:0;">
+                <tr>
+                  <td style="background-color:#00FF66;border:2px solid #000000;padding:14px 0;text-align:center;">
+                    <a href="${href}" style="font-size:17px;font-weight:300;color:#000000;text-decoration:none;font-family:'DM Sans',-apple-system,sans-serif;">${label}</a>
+                  </td>
+                  <td width="8" style="width:8px;min-width:8px;padding:0;font-size:0;line-height:0;background-color:#000000;background-image:linear-gradient(to bottom, #ffffff 8px, #000000 8px);">&nbsp;</td>
+                </tr>
+                <tr>
+                  <td colspan="2" style="padding:0;font-size:0;line-height:0;">
+                    <table cellpadding="0" cellspacing="0" width="100%" style="border-collapse:separate;border-spacing:0;">
+                      <tr>
+                        <td width="8" height="8" style="width:8px;height:8px;background-color:#ffffff;padding:0;font-size:0;line-height:0;">&nbsp;</td>
+                        <td style="background-color:#000000;height:8px;padding:0;font-size:0;line-height:0;">&nbsp;</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>`;
+}
+
+// ==================== SEND FUNCTIONS ====================
+
 /**
  * Send a magic link email for authentication (existing users)
- * @param email - Recipient email address
- * @param magicLink - The magic link URL for authentication
  */
 export async function sendSignInEmail(
   email: string,
@@ -40,8 +167,6 @@ export async function sendSignInEmail(
 
 /**
  * Send an onboarding email for new users
- * @param email - Recipient email address
- * @param magicLink - The magic link URL to start onboarding
  */
 export async function sendOnboardingEmail(
   email: string,
@@ -63,39 +188,6 @@ export async function sendOnboardingEmail(
     console.log("Onboarding email sent successfully:", data);
   } catch (error) {
     console.error("Error sending onboarding email:", error);
-    throw error;
-  }
-}
-
-/**
- * Send a club invitation email
- * @param email - Recipient email address
- * @param clubName - Name of the club
- * @param inviteUrl - The invite link URL to join the club
- * @param inviterName - Name of the person who sent the invite
- */
-export async function sendClubInviteEmail(
-  email: string,
-  clubName: string,
-  inviteUrl: string,
-  inviterName: string
-): Promise<void> {
-  try {
-    const { data, error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to: email,
-      subject: `${inviterName} invited you to join ${clubName} on Riff`,
-      html: getClubInviteEmailTemplate(clubName, inviteUrl, inviterName),
-    });
-
-    if (error) {
-      console.error("Resend API error:", error);
-      throw new Error(`Failed to send email: ${error.message}`);
-    }
-
-    console.log("Club invite email sent successfully:", data);
-  } catch (error) {
-    console.error("Error sending club invite email:", error);
     throw error;
   }
 }
@@ -202,41 +294,16 @@ export async function sendMagicLinkEmail(
   return sendSignInEmail(email, magicLink);
 }
 
+// ==================== EMAIL TEMPLATES ====================
+
 /**
- * Generate HTML email template for sign-in (existing users)
+ * Sign-in email (auth layout — big logo at top)
  */
 function getSignInEmailTemplate(magicLink: string): string {
-  return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sign in to Riff</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&family=DM+Serif+Text&display=swap" rel="stylesheet">
-</head>
-<body style="margin:0;padding:0;background-color:#f5f5f5;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f5f5;padding:48px 24px;">
-    <tr>
-      <td align="center">
-        <table width="520" cellpadding="0" cellspacing="0" style="max-width:520px;width:100%;background-color:#ffffff;border:2px solid #000000;">
-
-          <!-- Logo section -->
-          <tr>
-            <td align="center" style="padding:48px 40px 32px;">
-              <img src="https://wmqlbbtgexpsxzwwurpi.supabase.co/storage/v1/object/public/images/riff-wordmark-email.png" alt="Riff" width="200" height="132" style="display:block;margin:0 auto;" />
-            </td>
-          </tr>
-
-          <!-- Divider -->
-          <tr>
-            <td style="padding:0 40px;">
-              <table width="100%" cellpadding="0" cellspacing="0"><tr><td style="height:2px;background-color:#000000;font-size:0;line-height:0;">&nbsp;</td></tr></table>
-            </td>
-          </tr>
-
-          <!-- Content -->
+  return emailShell({
+    title: "Sign in to Riff",
+    footerText: `Button not working? Copy this link into your browser:<br><a href="${magicLink}" style="color:#888888;font-size:11px;word-break:break-all;">${magicLink}</a>`,
+    content: `
           <tr>
             <td style="padding:40px 40px 16px;">
               <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">You've got a magic link.</h1>
@@ -244,312 +311,75 @@ function getSignInEmailTemplate(magicLink: string): string {
             </td>
           </tr>
 
-          <!-- Button with email-safe offset shadow (8px right, 8px down per brand spec) -->
-          <tr>
-            <td style="padding:32px 40px 40px 40px;">
-              <table cellpadding="0" cellspacing="0" width="100%" style="border-collapse:separate;border-spacing:0;">
-                <!-- Button row + right shadow column -->
-                <tr>
-                  <td style="background-color:#00FF66;border:2px solid #000000;padding:14px 0;text-align:center;">
-                    <a href="${magicLink}" style="font-size:17px;font-weight:300;color:#000000;text-decoration:none;font-family:'DM Sans',-apple-system,sans-serif;">Sign in to Riff</a>
-                  </td>
-                  <!-- Right shadow: white top 8px (no shadow yet), black below (shadow starts 8px down) -->
-                  <td width="8" style="width:8px;min-width:8px;padding:0;font-size:0;line-height:0;background-color:#000000;background-image:linear-gradient(to bottom, #ffffff 8px, #000000 8px);">&nbsp;</td>
-                </tr>
-                <!-- Bottom shadow: 8px white spacer (no shadow yet), then black (shadow starts 8px right) -->
-                <tr>
-                  <td colspan="2" style="padding:0;font-size:0;line-height:0;">
-                    <table cellpadding="0" cellspacing="0" width="100%" style="border-collapse:separate;border-spacing:0;">
-                      <tr>
-                        <td width="8" height="8" style="width:8px;height:8px;background-color:#ffffff;padding:0;font-size:0;line-height:0;">&nbsp;</td>
-                        <td style="background-color:#000000;height:8px;padding:0;font-size:0;line-height:0;">&nbsp;</td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
+          ${emailButton("Sign in to Riff", magicLink)}
 
-          <!-- Expiry -->
           <tr>
             <td style="padding:0 40px 40px;">
               <p style="margin:0;font-size:13px;font-weight:300;color:#999999;line-height:1.5;font-family:'DM Sans',-apple-system,sans-serif;">This link expires in 24 hours and can only be used once. If you didn't request this, ignore it.</p>
             </td>
-          </tr>
+          </tr>`,
+  });
+}
 
-          <!-- Footer -->
+/**
+ * Onboarding email for new users (auth layout — big logo at top)
+ */
+function getOnboardingEmailTemplate(magicLink: string): string {
+  return emailShell({
+    title: "Welcome to Riff",
+    footerText: `Button not working? Copy this link into your browser:<br><a href="${magicLink}" style="color:#888888;font-size:11px;word-break:break-all;">${magicLink}</a>`,
+    content: `
           <tr>
-            <td style="padding:20px 40px 32px;border-top:1px solid #eeeeee;">
-              <p style="margin:0 0 6px 0;font-size:12px;font-weight:300;color:#bbbbbb;font-family:'DM Sans',-apple-system,sans-serif;">Button not working? Copy this link into your browser:</p>
-              <p style="margin:0;font-size:11px;word-break:break-all;">
-                <a href="${magicLink}" style="color:#888888;">${magicLink}</a>
-              </p>
+            <td style="padding:40px 40px 16px;">
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">Welcome to Riff.</h1>
+              <p style="margin:0 0 8px 0;font-size:16px;font-weight:300;color:#808080;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">For friends who write for fun.</p>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">You're one click away from joining your friends in a private space to share your writing. Let's get you set up!</p>
             </td>
           </tr>
 
-        </table>
-      </td>
-    </tr>
-  </table>
+          ${emailButton("Let's do this shit", magicLink)}
 
-</body>
-</html>
-  `.trim();
+          <tr>
+            <td style="padding:0 40px 40px;">
+              <p style="margin:0;font-size:13px;font-weight:300;color:#999999;line-height:1.5;font-family:'DM Sans',-apple-system,sans-serif;">This link expires in 24 hours and can only be used once. If you didn't request this, ignore it.</p>
+            </td>
+          </tr>`,
+  });
 }
 
 /**
- * Generate HTML email template for onboarding (new users)
- * Matches Riff branding with neo-brutalist design aesthetic
+ * Riff created email (notification layout — club name at top)
  */
-function getOnboardingEmailTemplate(magicLink: string): string {
-  return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome to Riff</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
-      background-color: #ffffff;
-    }
-    .container {
-      max-width: 600px;
-      margin: 40px auto;
-      padding: 40px 24px;
-      background-color: #ffffff;
-    }
-    .header {
-      text-align: center;
-      margin-bottom: 32px;
-    }
-    .title {
-      font-size: 24px;
-      font-weight: 400;
-      color: #000000;
-      margin: 0 0 8px 0;
-    }
-    .subtitle {
-      font-size: 16px;
-      font-weight: 300;
-      color: #959595;
-      margin: 0;
-    }
-    .content {
-      margin: 32px 0;
-      text-align: center;
-    }
-    .button {
-      display: inline-block;
-      padding: 12px 48px;
-      background-color: #00FF66;
-      color: #000000;
-      text-decoration: none;
-      font-size: 16px;
-      font-weight: 300;
-      border: 2px solid #000000;
-      box-shadow: 8px 8px 0px 0px #000000;
-      margin: 16px 0;
-      transition: all 0.2s;
-    }
-    .button:hover {
-      box-shadow: 4px 4px 0px 0px #000000;
-    }
-    .footer {
-      margin-top: 32px;
-      padding-top: 24px;
-      border-top: 1px solid #E6E6E6;
-      text-align: center;
-      font-size: 14px;
-      color: #959595;
-    }
-    .link {
-      color: #000000;
-      text-decoration: underline;
-      word-break: break-all;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1 class="title">Welcome to Riff!</h1>
-      <p class="subtitle">For friends who write for fun.</p>
-    </div>
+function getRiffCreatedEmailTemplate({
+  actorName,
+  clubName,
+  clubUrl,
+}: {
+  actorName: string;
+  clubName: string;
+  clubUrl: string;
+  riffTitle?: string | null;
+  prompt?: string | null;
+  deadline?: Date | null;
+}): string {
+  return emailShell({
+    title: `New riff in ${clubName}`,
+    clubName,
+    footerText: `You're receiving this because you're a member of ${clubName} on Riff.`,
+    content: `
+          <tr>
+            <td style="padding:40px 40px 16px;">
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">New riff dropped.</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;"><strong style="font-weight:500;">${actorName}</strong> started a new riff.</p>
+            </td>
+          </tr>
 
-    <div class="content">
-      <p style="font-size: 16px; color: #000000; margin: 0 0 24px 0;">
-        You're one click away from joining your friends in a private space to share your writing.
-        Let's get you set up!
-      </p>
-
-      <a href="${magicLink}" class="button">
-        Let's do this shit
-      </a>
-
-      <p style="font-size: 14px; color: #959595; margin: 24px 0 0 0;">
-        This link will expire in 24 hours and can only be used once.
-      </p>
-    </div>
-
-    <div class="footer">
-      <p>
-        If the button doesn't work, copy and paste this link into your browser:
-      </p>
-      <p>
-        <a href="${magicLink}" class="link">${magicLink}</a>
-      </p>
-      <p style="margin-top: 16px;">
-        If you didn't request this email, you can safely ignore it.
-      </p>
-    </div>
-  </div>
-</body>
-</html>
-  `.trim();
+          ${emailButton("Join riff", clubUrl)}`,
+  });
 }
 
 /**
- * Generate HTML email template for club invitations
- * Matches Riff branding with neo-brutalist design aesthetic
- */
-function getClubInviteEmailTemplate(
-  clubName: string,
-  inviteUrl: string,
-  inviterName: string
-): string {
-  return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Join ${clubName} on Riff</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
-      background-color: #ffffff;
-    }
-    .container {
-      max-width: 600px;
-      margin: 40px auto;
-      padding: 40px 24px;
-      background-color: #ffffff;
-    }
-    .header {
-      text-align: center;
-      margin-bottom: 32px;
-    }
-    .title {
-      font-size: 24px;
-      font-weight: 400;
-      color: #000000;
-      margin: 0 0 8px 0;
-    }
-    .subtitle {
-      font-size: 16px;
-      font-weight: 300;
-      color: #959595;
-      margin: 0;
-    }
-    .content {
-      margin: 32px 0;
-      text-align: center;
-    }
-    .club-name {
-      font-size: 20px;
-      font-weight: 500;
-      color: #000000;
-      margin: 16px 0;
-      padding: 16px;
-      background-color: #F9F9F9;
-      border: 2px solid #000000;
-    }
-    .button {
-      display: inline-block;
-      padding: 12px 48px;
-      background-color: #00FF66;
-      color: #000000;
-      text-decoration: none;
-      font-size: 16px;
-      font-weight: 300;
-      border: 2px solid #000000;
-      box-shadow: 8px 8px 0px 0px #000000;
-      margin: 16px 0;
-      transition: all 0.2s;
-    }
-    .button:hover {
-      box-shadow: 4px 4px 0px 0px #000000;
-    }
-    .footer {
-      margin-top: 32px;
-      padding-top: 24px;
-      border-top: 1px solid #E6E6E6;
-      text-align: center;
-      font-size: 14px;
-      color: #959595;
-    }
-    .link {
-      color: #000000;
-      text-decoration: underline;
-      word-break: break-all;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1 class="title">You're Invited!</h1>
-      <p class="subtitle">For friends who write for fun.</p>
-    </div>
-
-    <div class="content">
-      <p style="font-size: 16px; color: #000000; margin: 0 0 16px 0;">
-        <strong>\${inviterName}</strong> has invited you to join their club on Riff:
-      </p>
-
-      <div class="club-name">
-        \${clubName}
-      </div>
-
-      <p style="font-size: 16px; color: #000000; margin: 24px 0;">
-        Riff is a private space for friends to share their writing, give feedback, and connect through long-form creativity.
-      </p>
-
-      <a href="\${inviteUrl}" class="button">
-        Join Club
-      </a>
-
-      <p style="font-size: 14px; color: #959595; margin: 24px 0 0 0;">
-        This invitation link will expire in 30 days.
-      </p>
-    </div>
-
-    <div class="footer">
-      <p>
-        If the button doesn't work, copy and paste this link into your browser:
-      </p>
-      <p>
-        <a href="\${inviteUrl}" class="link">\${inviteUrl}</a>
-      </p>
-      <p style="margin-top: 16px;">
-        If you don't know \${inviterName} or didn't expect this invitation, you can safely ignore this email.
-      </p>
-    </div>
-  </div>
-</body>
-</html>
-  `.trim();
-}
-
-/**
- * Generate HTML email template for riff revealed notification
+ * Riff revealed email (notification layout — club name at top)
  */
 function getRiffRevealedEmailTemplate({
   clubName,
@@ -570,276 +400,35 @@ function getRiffRevealedEmailTemplate({
       : `Volume ${volumeNumber}`
     : riffTitle || null;
 
-  const titleBlock = displayTitle
-    ? `<p style="font-size: 20px; font-weight: 500; color: #000000; margin: 0 0 12px 0;">${displayTitle}</p>`
-    : "";
+  const titleLine = displayTitle
+    ? `<strong style="font-weight:500;">${displayTitle}</strong> has been revealed.`
+    : "A riff has been revealed.";
 
-  const pieceLabel = pieceCount === 1 ? "1 piece" : `${pieceCount} pieces`;
+  return emailShell({
+    title: `Riff revealed in ${clubName}`,
+    clubName,
+    footerText: `You're receiving this because you're a member of ${clubName} on Riff.`,
+    content: `
+          <tr>
+            <td style="padding:40px 40px 16px;">
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">The pieces are in.</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${titleLine}</p>
+            </td>
+          </tr>
 
-  return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Riff revealed in ${clubName}</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
-      background-color: #ffffff;
-    }
-    .container {
-      max-width: 600px;
-      margin: 40px auto;
-      padding: 40px 24px;
-      background-color: #ffffff;
-    }
-    .header {
-      text-align: center;
-      margin-bottom: 32px;
-    }
-    .title {
-      font-size: 24px;
-      font-weight: 400;
-      color: #000000;
-      margin: 0 0 8px 0;
-    }
-    .subtitle {
-      font-size: 16px;
-      font-weight: 300;
-      color: #959595;
-      margin: 0;
-    }
-    .content {
-      margin: 32px 0;
-    }
-    .riff-box {
-      border: 2px solid #000000;
-      padding: 24px;
-      margin: 24px 0;
-      background-color: #FAFAFA;
-    }
-    .button {
-      display: inline-block;
-      padding: 12px 48px;
-      background-color: #00FF66;
-      color: #000000;
-      text-decoration: none;
-      font-size: 16px;
-      font-weight: 300;
-      border: 2px solid #000000;
-      box-shadow: 8px 8px 0px 0px #000000;
-      margin: 24px 0 0 0;
-    }
-    .footer {
-      margin-top: 32px;
-      padding-top: 24px;
-      border-top: 1px solid #E6E6E6;
-      text-align: center;
-      font-size: 14px;
-      color: #959595;
-    }
-    .link {
-      color: #000000;
-      text-decoration: underline;
-      word-break: break-all;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1 class="title">The pieces are in.</h1>
-    </div>
-
-    <div class="content">
-      <p style="font-size: 16px; color: #000000; margin: 0 0 24px 0; font-weight: 300;">
-        A riff in <strong>${clubName}</strong> has been revealed.
-      </p>
-
-      <div class="riff-box">
-        ${titleBlock}
-        <p style="font-size: 16px; font-weight: 300; color: #808080; margin: 0;">${pieceLabel} submitted</p>
-      </div>
-
-      <a href="${riffUrl}" class="button">
-        Read pieces
-      </a>
-    </div>
-
-    <div class="footer">
-      <p>
-        If the button doesn't work, copy and paste this link into your browser:
-      </p>
-      <p>
-        <a href="${riffUrl}" class="link">${riffUrl}</a>
-      </p>
-    </div>
-  </div>
-</body>
-</html>
-  `.trim();
+          ${emailButton("Read pieces", riffUrl)}`,
+  });
 }
 
-/**
- * Generate HTML email template for riff creation notification
- */
-function getRiffCreatedEmailTemplate({
-  actorName,
-  clubName,
-  clubUrl,
-  riffTitle,
-  prompt,
-  deadline,
-}: {
-  actorName: string;
-  clubName: string;
-  clubUrl: string;
-  riffTitle?: string | null;
-  prompt?: string | null;
-  deadline?: Date | null;
-}): string {
-  const deadlineStr = deadline
-    ? deadline.toLocaleDateString("en-US", { month: "long", day: "numeric" })
-    : null;
-  const daysFromNow = deadline
-    ? Math.round(
-        (deadline.getTime() - new Date().setHours(0, 0, 0, 0)) /
-          (1000 * 60 * 60 * 24)
-      )
-    : null;
+// ==================== NOTIFICATION EMAILS ====================
 
-  const titleBlock = riffTitle
-    ? `<p style="font-size: 20px; font-weight: 500; color: #000000; margin: 0 0 16px 0;">${riffTitle}</p>`
-    : "";
-
-  const promptBlock = prompt
-    ? `<div style="border-left: 3px solid #000000; padding-left: 16px; margin: 16px 0;">
-        <p style="font-size: 16px; font-weight: 300; color: #000000; margin: 0; line-height: 1.6; font-style: italic;">${prompt}</p>
-      </div>`
-    : "";
-
-  const deadlineBlock =
-    deadlineStr && daysFromNow !== null
-      ? `<p style="font-size: 14px; font-weight: 300; color: #808080; margin: 16px 0 0 0;">Deadline: ${deadlineStr} &middot; ${daysFromNow} day${daysFromNow === 1 ? "" : "s"} from now</p>`
-      : "";
-
-  return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>New riff in ${clubName}</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
-      background-color: #ffffff;
-    }
-    .container {
-      max-width: 600px;
-      margin: 40px auto;
-      padding: 40px 24px;
-      background-color: #ffffff;
-    }
-    .header {
-      text-align: center;
-      margin-bottom: 32px;
-    }
-    .title {
-      font-size: 24px;
-      font-weight: 400;
-      color: #000000;
-      margin: 0 0 8px 0;
-    }
-    .subtitle {
-      font-size: 16px;
-      font-weight: 300;
-      color: #959595;
-      margin: 0;
-    }
-    .content {
-      margin: 32px 0;
-    }
-    .riff-box {
-      border: 2px solid #000000;
-      padding: 24px;
-      margin: 24px 0;
-      background-color: #FAFAFA;
-    }
-    .button {
-      display: inline-block;
-      padding: 12px 48px;
-      background-color: #00FF66;
-      color: #000000;
-      text-decoration: none;
-      font-size: 16px;
-      font-weight: 300;
-      border: 2px solid #000000;
-      box-shadow: 8px 8px 0px 0px #000000;
-      margin: 24px 0 0 0;
-    }
-    .footer {
-      margin-top: 32px;
-      padding-top: 24px;
-      border-top: 1px solid #E6E6E6;
-      text-align: center;
-      font-size: 14px;
-      color: #959595;
-    }
-    .link {
-      color: #000000;
-      text-decoration: underline;
-      word-break: break-all;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1 class="title">New riff dropped.</h1>
-    </div>
-
-    <div class="content">
-      <p style="font-size: 16px; color: #000000; margin: 0 0 24px 0; font-weight: 300;">
-        <strong>${actorName}</strong> just started a new riff in <strong>${clubName}</strong>.
-      </p>
-
-      <div class="riff-box">
-        ${titleBlock}
-        ${promptBlock}
-        ${deadlineBlock}
-      </div>
-
-      <a href="${clubUrl}" class="button">
-        Join riff
-      </a>
-    </div>
-
-    <div class="footer">
-      <p>
-        If the button doesn't work, copy and paste this link into your browser:
-      </p>
-      <p>
-        <a href="${clubUrl}" class="link">${clubUrl}</a>
-      </p>
-      <p style="margin-top: 16px;">
-        You're receiving this because you're a member of ${clubName} on Riff.
-      </p>
-    </div>
-  </div>
-</body>
-</html>
-  `.trim();
+function formatNames(names: string[]): string {
+  if (names.length === 0) return "Someone";
+  if (names.length === 1) return names[0];
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  return `${names[0]}, ${names[1]}, and ${names.length - 2} other${names.length - 2 === 1 ? "" : "s"}`;
 }
 
-/**
- * Send a batched comment digest email
- */
 export async function sendMemberJoinedEmail({
   email,
   newMemberFullName,
@@ -857,55 +446,21 @@ export async function sendMemberJoinedEmail({
     const { error } = await getResend().emails.send({
       from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
       to: email,
-      subject: `${newMemberFullName} joined ${clubName}!`,
-      html: `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${newMemberFullName} joined ${clubName}!</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&family=DM+Serif+Text&display=swap" rel="stylesheet">
-</head>
-<body style="margin:0;padding:0;background-color:#f5f5f5;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f5f5;padding:48px 24px;">
-    <tr>
-      <td align="center">
-        <table width="520" cellpadding="0" cellspacing="0" style="max-width:520px;width:100%;background-color:#ffffff;border:2px solid #000000;">
+      subject: `${newMemberFullName} joined ${clubName}`,
+      html: emailShell({
+        title: `${newMemberFullName} joined ${clubName}`,
+        clubName,
+        footerText: `You're receiving this because you're a member of ${clubName} on Riff.`,
+        content: `
           <tr>
             <td style="padding:40px 40px 16px;">
-              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${newMemberFullName} joined ${clubName}!</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">The club expands! Adding ${newMemberFirstName} means Riffing will be better than ever.</p>
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${newMemberFullName} is in.</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">The club expands. Adding ${newMemberFirstName} means the writing's about to get better.</p>
             </td>
           </tr>
-          <tr>
-            <td style="padding:32px 40px;" align="center">
-              <table cellpadding="0" cellspacing="0" style="background-color:#000000;">
-                <tr>
-                  <td style="padding:0 4px 4px 0;">
-                    <table cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="background-color:#00FF66;border:2px solid #000000;text-align:center;">
-                          <a href="${clubUrl}" style="display:block;padding:16px 48px;font-size:17px;font-weight:700;color:#000000;text-decoration:none;font-family:'DM Sans',-apple-system,sans-serif;white-space:nowrap;">Go to club →</a>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:0 40px 32px;">
-              <p style="margin:0;font-size:12px;font-weight:300;color:#bbbbbb;font-family:'DM Sans',-apple-system,sans-serif;">You're receiving this because you're a member of ${clubName} on Riff.</p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`.trim(),
+
+          ${emailButton("Go to club", clubUrl)}`,
+      }),
     });
     if (error) console.error("Resend error (memberJoined):", error);
   } catch (error) {
@@ -917,68 +472,34 @@ export async function sendPieceSubmittedEmail({
   email,
   actorName,
   riffTitle,
-  pieceTitle,
   riffUrl,
+  clubName,
 }: {
   email: string;
   actorName: string;
   riffTitle: string;
-  pieceTitle: string;
   riffUrl: string;
+  clubName: string;
 }): Promise<void> {
   try {
     const { error } = await getResend().emails.send({
       from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
       to: email,
-      subject: `${actorName} submitted a piece to ${riffTitle}`,
-      html: `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${actorName} submitted a piece</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&family=DM+Serif+Text&display=swap" rel="stylesheet">
-</head>
-<body style="margin:0;padding:0;background-color:#f5f5f5;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f5f5;padding:48px 24px;">
-    <tr>
-      <td align="center">
-        <table width="520" cellpadding="0" cellspacing="0" style="max-width:520px;width:100%;background-color:#ffffff;border:2px solid #000000;">
+      subject: `${actorName} submitted a piece`,
+      html: emailShell({
+        title: `${actorName} submitted a piece`,
+        clubName,
+        footerText: `You're receiving this because you're a participant in ${riffTitle} on Riff.`,
+        content: `
           <tr>
             <td style="padding:40px 40px 16px;">
-              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${actorName} submitted a piece to ${riffTitle}</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">Before you know it we'll all be commenting on <em>${pieceTitle}</em>, the reveal can't come soon enough!</p>
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">A piece just dropped.</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;"><strong style="font-weight:500;">${actorName}</strong> submitted to <strong style="font-weight:500;">${riffTitle}</strong>. Get yours in before the deadline.</p>
             </td>
           </tr>
-          <tr>
-            <td style="padding:32px 40px;" align="center">
-              <table cellpadding="0" cellspacing="0" style="background-color:#000000;">
-                <tr>
-                  <td style="padding:0 4px 4px 0;">
-                    <table cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="background-color:#00FF66;border:2px solid #000000;text-align:center;">
-                          <a href="${riffUrl}" style="display:block;padding:16px 48px;font-size:17px;font-weight:700;color:#000000;text-decoration:none;font-family:'DM Sans',-apple-system,sans-serif;white-space:nowrap;">See the riff →</a>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:0 40px 32px;">
-              <p style="margin:0;font-size:12px;font-weight:300;color:#bbbbbb;font-family:'DM Sans',-apple-system,sans-serif;">You're receiving this because you're a member of this riff on Riff.</p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`.trim(),
+
+          ${emailButton("See the riff", riffUrl)}`,
+      }),
     });
     if (error) console.error("Resend error (pieceSubmitted):", error);
   } catch (error) {
@@ -991,11 +512,13 @@ export async function sendDeadlineChangedEmail({
   hostName,
   newDeadline,
   clubUrl,
+  clubName,
 }: {
   email: string;
   hostName: string;
   newDeadline: Date;
   clubUrl: string;
+  clubName: string;
 }): Promise<void> {
   const deadlineStr = newDeadline.toLocaleDateString("en-US", {
     month: "long",
@@ -1006,55 +529,21 @@ export async function sendDeadlineChangedEmail({
     const { error } = await getResend().emails.send({
       from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
       to: email,
-      subject: `${hostName} changed the deadline to ${deadlineStr}`,
-      html: `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Deadline changed</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&family=DM+Serif+Text&display=swap" rel="stylesheet">
-</head>
-<body style="margin:0;padding:0;background-color:#f5f5f5;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f5f5;padding:48px 24px;">
-    <tr>
-      <td align="center">
-        <table width="520" cellpadding="0" cellspacing="0" style="max-width:520px;width:100%;background-color:#ffffff;border:2px solid #000000;">
+      subject: `Deadline moved to ${deadlineStr}`,
+      html: emailShell({
+        title: `Deadline moved to ${deadlineStr}`,
+        clubName,
+        footerText: `You're receiving this because you're a member of ${clubName} on Riff.`,
+        content: `
           <tr>
             <td style="padding:40px 40px 16px;">
-              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${hostName} changed the deadline to ${deadlineStr}</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">Well lets choose to look at this less as a failure and more as an opportunity to be more successful than we ever would have been without the added time. You're welcome for the reframing. Now go write a banger.</p>
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">New deadline: ${deadlineStr}.</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;"><strong style="font-weight:500;">${hostName}</strong> moved the deadline. More time to write a banger.</p>
             </td>
           </tr>
-          <tr>
-            <td style="padding:32px 40px;" align="center">
-              <table cellpadding="0" cellspacing="0" style="background-color:#000000;">
-                <tr>
-                  <td style="padding:0 4px 4px 0;">
-                    <table cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="background-color:#00FF66;border:2px solid #000000;text-align:center;">
-                          <a href="${clubUrl}" style="display:block;padding:16px 48px;font-size:17px;font-weight:700;color:#000000;text-decoration:none;font-family:'DM Sans',-apple-system,sans-serif;white-space:nowrap;">Go to club →</a>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:0 40px 32px;">
-              <p style="margin:0;font-size:12px;font-weight:300;color:#bbbbbb;font-family:'DM Sans',-apple-system,sans-serif;">You're receiving this because you're a member of this riff on Riff.</p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`.trim(),
+
+          ${emailButton("Go to club", clubUrl)}`,
+      }),
     });
     if (error) console.error("Resend error (deadlineChanged):", error);
   } catch (error) {
@@ -1078,54 +567,20 @@ export async function sendAllPiecesSubmittedEmail({
       from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
       to: email,
       subject: `All pieces submitted for ${riffTitle}`,
-      html: `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>All pieces submitted</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&family=DM+Serif+Text&display=swap" rel="stylesheet">
-</head>
-<body style="margin:0;padding:0;background-color:#f5f5f5;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f5f5;padding:48px 24px;">
-    <tr>
-      <td align="center">
-        <table width="520" cellpadding="0" cellspacing="0" style="max-width:520px;width:100%;background-color:#ffffff;border:2px solid #000000;">
+      html: emailShell({
+        title: `All pieces submitted for ${riffTitle}`,
+        clubName,
+        footerText: `You're receiving this because you're the host of this riff on Riff.`,
+        content: `
           <tr>
             <td style="padding:40px 40px 16px;">
-              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">All pieces submitted for ${riffTitle}</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">The club doesn't know everything it took to get to reveal. Way to lead the charge. ${riffTitle} is ready to become a volume of ${clubName}'s writing. Reveal and enjoy.</p>
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">Everyone's in.</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">All pieces are submitted for <strong style="font-weight:500;">${riffTitle}</strong>. Time to reveal.</p>
             </td>
           </tr>
-          <tr>
-            <td style="padding:32px 40px;" align="center">
-              <table cellpadding="0" cellspacing="0" style="background-color:#000000;">
-                <tr>
-                  <td style="padding:0 4px 4px 0;">
-                    <table cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="background-color:#00FF66;border:2px solid #000000;text-align:center;">
-                          <a href="${riffUrl}" style="display:block;padding:16px 48px;font-size:17px;font-weight:700;color:#000000;text-decoration:none;font-family:'DM Sans',-apple-system,sans-serif;white-space:nowrap;">Reveal riff →</a>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:0 40px 32px;">
-              <p style="margin:0;font-size:12px;font-weight:300;color:#bbbbbb;font-family:'DM Sans',-apple-system,sans-serif;">You're receiving this because you're the host of this riff on Riff.</p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`.trim(),
+
+          ${emailButton("Reveal riff", riffUrl)}`,
+      }),
     });
     if (error) console.error("Resend error (allPiecesSubmitted):", error);
   } catch (error) {
@@ -1133,165 +588,49 @@ export async function sendAllPiecesSubmittedEmail({
   }
 }
 
-export async function sendCommentDigestEmail({
+export async function sendCommentNotificationEmail({
   email,
   recipientName,
   pieceTitle,
   commentCount,
-  actorNames,
+  commenterNames,
   pieceUrl,
 }: {
   email: string;
   recipientName: string;
   pieceTitle: string;
   commentCount: number;
-  actorNames: string;
+  commenterNames: string[];
   pieceUrl: string;
 }): Promise<void> {
-  const subject = `${commentCount} new comment${commentCount > 1 ? "s" : ""} on "${pieceTitle}"`;
-
-  try {
-    const { data, error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to: email,
-      subject,
-      html: getCommentDigestEmailTemplate({
-        recipientName,
-        pieceTitle,
-        commentCount,
-        actorNames,
-        pieceUrl,
-      }),
-    });
-
-    if (error) {
-      console.error("Resend API error:", error);
-      throw new Error(`Failed to send email: ${error.message}`);
-    }
-
-    console.log("Comment digest email sent successfully:", data);
-  } catch (error) {
-    console.error("Error sending comment digest email:", error);
-    throw error;
-  }
-}
-
-function getCommentDigestEmailTemplate({
-  recipientName,
-  pieceTitle,
-  commentCount,
-  actorNames,
-  pieceUrl,
-}: {
-  recipientName: string;
-  pieceTitle: string;
-  commentCount: number;
-  actorNames: string;
-  pieceUrl: string;
-}): string {
+  const subject =
+    commentCount === 1
+      ? `Someone commented on "${pieceTitle}"`
+      : `${commentCount} new comments on "${pieceTitle}"`;
   const commentLabel =
     commentCount === 1 ? "1 new comment" : `${commentCount} new comments`;
 
-  return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${commentLabel} on "${pieceTitle}"</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
-      background-color: #ffffff;
-    }
-    .container {
-      max-width: 600px;
-      margin: 40px auto;
-      padding: 40px 24px;
-      background-color: #ffffff;
-    }
-    .header {
-      text-align: center;
-      margin-bottom: 32px;
-    }
-    .title {
-      font-size: 24px;
-      font-weight: 400;
-      color: #000000;
-      margin: 0 0 8px 0;
-    }
-    .content {
-      margin: 32px 0;
-    }
-    .comment-box {
-      border: 2px solid #000000;
-      padding: 24px;
-      margin: 24px 0;
-      background-color: #FAFAFA;
-    }
-    .button {
-      display: inline-block;
-      padding: 12px 48px;
-      background-color: #00FF66;
-      color: #000000;
-      text-decoration: none;
-      font-size: 16px;
-      font-weight: 300;
-      border: 2px solid #000000;
-      box-shadow: 8px 8px 0px 0px #000000;
-      margin: 24px 0 0 0;
-    }
-    .footer {
-      margin-top: 32px;
-      padding-top: 24px;
-      border-top: 1px solid #E6E6E6;
-      text-align: center;
-      font-size: 14px;
-      color: #959595;
-    }
-    .link {
-      color: #000000;
-      text-decoration: underline;
-      word-break: break-all;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1 class="title">The riff goes on.</h1>
-    </div>
+  try {
+    const { error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to: email,
+      subject,
+      html: emailShell({
+        title: subject,
+        footerText: `You're receiving this because someone commented on your writing on Riff.`,
+        content: `
+          <tr>
+            <td style="padding:40px 40px 16px;">
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">The riff goes on.</h1>
+              <p style="margin:0 0 16px 0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">Hey ${recipientName}, ${formatNames(commenterNames)} left ${commentLabel} on <strong style="font-weight:500;">${pieceTitle}</strong>.</p>
+            </td>
+          </tr>
 
-    <div class="content">
-      <p style="font-size: 16px; color: #000000; margin: 0 0 24px 0; font-weight: 300;">
-        Hey ${recipientName}, ${actorNames} left comments on your piece.
-      </p>
-
-      <div class="comment-box">
-        <p style="font-size: 20px; font-weight: 500; color: #000000; margin: 0 0 12px 0;">${pieceTitle}</p>
-        <p style="font-size: 16px; font-weight: 300; color: #808080; margin: 0;">${commentLabel}</p>
-      </div>
-
-      <a href="${pieceUrl}" class="button">
-        Read comments
-      </a>
-    </div>
-
-    <div class="footer">
-      <p>
-        If the button doesn't work, copy and paste this link into your browser:
-      </p>
-      <p>
-        <a href="${pieceUrl}" class="link">${pieceUrl}</a>
-      </p>
-      <p style="margin-top: 16px;">
-        You're receiving this because someone commented on your writing on Riff.
-      </p>
-    </div>
-  </div>
-</body>
-</html>
-  `.trim();
+          ${emailButton("Read comments", pieceUrl)}`,
+      }),
+    });
+    if (error) console.error("Resend error (commentNotification):", error);
+  } catch (error) {
+    console.error("Error sending comment notification email:", error);
+  }
 }

@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
-import { enqueueCommentEmail } from "@/lib/email-queue";
 
 export async function POST(req: Request) {
   try {
@@ -120,15 +119,6 @@ export async function POST(req: Request) {
             clubId,
             riffId,
           },
-        });
-
-        await enqueueCommentEmail({
-          recipientId: piece.authorId,
-          actorId: userId,
-          pieceId,
-          commentId: comment.id,
-          clubId,
-          riffId,
         });
       } catch (notifyErr) {
         console.error("Failed to send comment notification:", notifyErr);

@@ -10,8 +10,8 @@
   },
   "crons": [
     {
-      "path": "/api/cron/flush-email-queue",
-      "schedule": "*/15 * * * *"
+      "path": "/api/cron/daily-comment-notifications",
+      "schedule": "0 13 * * *"
     }
   ]
 }
