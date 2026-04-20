@@ -33,7 +33,7 @@ export async function GET(req: Request) {
 
     // Single grouped query to count comments for all NEW_COMMENT notifications
     const commentNotifs = notifications.filter(
-      (n) => n.type === "NEW_COMMENT" && n.pieceId
+      (n) => n.type === "NEW_COMMENT" && n.pieceId && !n.isRead
     );
     const commentCountMap = new Map<string, number>();
     if (commentNotifs.length > 0) {

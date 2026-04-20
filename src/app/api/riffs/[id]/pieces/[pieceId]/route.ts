@@ -59,7 +59,6 @@ export async function PATCH(
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const riffUrl = `${appUrl}/riffs/${riffId}`;
     const riffDisplayTitle = riff.title || "Active Riff";
-    const pieceTitle = submission.piece.title || "Untitled";
 
     // Notify all club members + send emails
     notifyClubMembers(
@@ -95,7 +94,6 @@ export async function PATCH(
       createNotification({
         type: NotificationType.ALL_PIECES_SUBMITTED,
         recipientId: riff.creatorId,
-        actorId: user.id,
         riffId,
         clubId: riff.clubId,
       }).catch(() => {});
@@ -103,7 +101,7 @@ export async function PATCH(
       prisma.user
         .findUnique({ where: { id: riff.creatorId }, select: { email: true } })
         .then((host) => {
-          if (host && riff.creatorId !== user.id) {
+          if (host) {
             sendAllPiecesSubmittedEmail({
               email: host.email,
               riffTitle: riffDisplayTitle,
