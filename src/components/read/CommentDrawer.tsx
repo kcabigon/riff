@@ -30,6 +30,22 @@ interface CommentDrawerProps {
   onUpdate: (commentId: string, newContent: string) => void;
 }
 
+const QUOTE_MAX = 40;
+
+function isEmojiOnly(text: string): boolean {
+  const t = text.trim();
+  return t.length > 0 && t.length <= 8 && !/[a-zA-Z0-9]/.test(t);
+}
+
+function shortQuote(selectedText: string): string | null {
+  if (!selectedText || selectedText === "[Image]") return null;
+  const trimmed = selectedText.trim();
+  if (!trimmed) return null;
+  return trimmed.length > QUOTE_MAX
+    ? `"${trimmed.slice(0, QUOTE_MAX)}…"`
+    : `"${trimmed}"`;
+}
+
 function timeAgo(dateStr: string): string {
   const now = Date.now();
   const then = new Date(dateStr).getTime();
@@ -341,6 +357,27 @@ export default function CommentDrawer({
                     Cancel
                   </button>
                 </div>
+              </div>
+            ) : isEmojiOnly(comment.content) ? (
+              <div>
+                {shortQuote(comment.selectedText) && (
+                  <p
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "12px",
+                      fontWeight: 300,
+                      fontStyle: "italic",
+                      color: "#808080",
+                      margin: "0 0 8px",
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {shortQuote(comment.selectedText)}
+                  </p>
+                )}
+                <p style={{ fontSize: "24px", margin: 0, lineHeight: 1 }}>
+                  {comment.content}
+                </p>
               </div>
             ) : (
               <p

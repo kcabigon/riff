@@ -120,6 +120,22 @@ function initials(author: CommentAuthor): string {
   return "?";
 }
 
+const QUOTE_MAX = 40;
+
+function isEmojiOnly(text: string): boolean {
+  const t = text.trim();
+  return t.length > 0 && t.length <= 8 && !/[a-zA-Z0-9]/.test(t);
+}
+
+function shortQuote(selectedText: string): string | null {
+  if (!selectedText || selectedText === "[Image]") return null;
+  const trimmed = selectedText.trim();
+  if (!trimmed) return null;
+  return trimmed.length > QUOTE_MAX
+    ? `"${trimmed.slice(0, QUOTE_MAX)}…"`
+    : `"${trimmed}"`;
+}
+
 function CommentCard({
   comment,
   isActive,
@@ -441,6 +457,27 @@ function CommentCard({
               Cancel
             </button>
           </div>
+        </div>
+      ) : isEmojiOnly(comment.content) ? (
+        <div>
+          {shortQuote(comment.selectedText) && (
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "11px",
+                fontWeight: 300,
+                fontStyle: "italic",
+                color: "#808080",
+                margin: "0 0 6px",
+                lineHeight: 1.4,
+              }}
+            >
+              {shortQuote(comment.selectedText)}
+            </p>
+          )}
+          <p style={{ fontSize: "20px", margin: 0, lineHeight: 1 }}>
+            {comment.content}
+          </p>
         </div>
       ) : (
         <p
@@ -899,6 +936,7 @@ function ReactionPills({
   currentUserId: string;
   onRemove: (reactionId: string) => void;
 }) {
+  const quote = shortQuote(group.selectedText);
   return (
     <div
       style={{
@@ -910,6 +948,22 @@ function ReactionPills({
         backgroundColor: "#FFFFFF",
       }}
     >
+      {quote && (
+        <p
+          style={{
+            width: "100%",
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "11px",
+            fontWeight: 300,
+            fontStyle: "italic",
+            color: "#808080",
+            margin: "0 0 2px",
+            lineHeight: 1.4,
+          }}
+        >
+          {quote}
+        </p>
+      )}
       {group.emojis.map(({ emoji, count, reactedByCurrentUser, reactions }) => {
         const tooltipText = reactions
           .map((r) => r.author.name || r.author.username || "?")
