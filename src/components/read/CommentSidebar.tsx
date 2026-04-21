@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import Image from "next/image";
 import CommentPopover from "./CommentPopover";
 import { AUTHOR_COLORS, buildAuthorColorMap } from "./ReadOnlyEditor";
+import { REACTION_EMOJIS } from "./EmojiBar";
 import type { ReactionData } from "./EmojiBar";
 
 interface CommentAuthor {
@@ -72,8 +73,8 @@ function buildReactionGroups(
     }
     return {
       key,
-      selectionStart: groupReactions[0].selectionStart,
-      selectedText: groupReactions[0].selectedText,
+      selectionStart: groupReactions[0].selectionStart ?? 0,
+      selectedText: groupReactions[0].selectedText ?? "",
       emojis: Array.from(emojiMap.entries()).map(([emoji, rs]) => ({
         emoji,
         count: rs.length,
@@ -91,6 +92,7 @@ interface CommentSidebarProps {
   currentUserId: string;
   onDelete: (commentId: string) => void;
   onUpdate: (commentId: string, newContent: string) => void;
+  onAddCommentReaction: (emoji: string, commentId: string) => void;
   onRemoveReaction: (reactionId: string) => void;
   onCommentClick?: (commentId: string) => void;
   contentColumnRef: React.RefObject<HTMLDivElement | null>;
@@ -124,6 +126,11 @@ function CommentCard({
   onSave,
   onCancelEdit,
   color,
+  commentReactions,
+  currentUserId,
+  onAddReaction,
+  onRemoveReaction,
+  onPickerToggle,
 }: {
   comment: CommentData;
   isActive: boolean;
@@ -134,11 +141,49 @@ function CommentCard({
   onSave: (newContent: string) => void;
   onCancelEdit: () => void;
   color: string;
+  commentReactions: ReactionData[];
+  currentUserId: string;
+  onAddReaction: (emoji: string) => void;
+  onRemoveReaction: (reactionId: string) => void;
+  onPickerToggle: () => void;
 }) {
   const [hovered, setHovered] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [editContent, setEditContent] = useState(comment.content);
   const [saving, setSaving] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
+
+  // Notify parent when picker height changes so positions can recalculate
+  useEffect(() => {
+    onPickerToggle();
+  }, [showEmojiPicker, onPickerToggle]);
+
+  // Close picker on click outside
+  useEffect(() => {
+    if (!showEmojiPicker) return;
+    function handlePointerDown(e: PointerEvent) {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setShowEmojiPicker(false);
+      }
+    }
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [showEmojiPicker]);
+
+  const reactionsByEmoji = useMemo(() => {
+    const map = new Map<string, ReactionData[]>();
+    for (const r of commentReactions) {
+      if (!map.has(r.emoji)) map.set(r.emoji, []);
+      map.get(r.emoji)!.push(r);
+    }
+    return Array.from(map.entries()).map(([emoji, rs]) => ({
+      emoji,
+      count: rs.length,
+      reactedByCurrentUser: rs.some((r) => r.authorId === currentUserId),
+      reactions: rs,
+    }));
+  }, [commentReactions, currentUserId]);
 
   const wasEdited =
     new Date(comment.updatedAt).getTime() -
@@ -405,6 +450,200 @@ function CommentCard({
           {comment.content}
         </p>
       )}
+
+      {/* Inline comment reactions */}
+      {reactionsByEmoji.length > 0 && (
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "4px",
+            marginTop: "8px",
+          }}
+        >
+          {reactionsByEmoji.map(
+            ({ emoji, count, reactedByCurrentUser, reactions }) => {
+              const myReaction = reactions.find(
+                (r) => r.authorId === currentUserId
+              );
+              return (
+                <button
+                  key={emoji}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (reactedByCurrentUser && myReaction) {
+                      onRemoveReaction(myReaction.id);
+                    }
+                  }}
+                  title={reactions
+                    .map((r) => r.author.name || r.author.username || "?")
+                    .join(", ")}
+                  style={{
+                    position: "relative",
+                    width: "32px",
+                    height: "32px",
+                    borderRadius: "50%",
+                    border: "none",
+                    backgroundColor: reactedByCurrentUser
+                      ? "#00FF66"
+                      : "transparent",
+                    cursor: reactedByCurrentUser ? "pointer" : "default",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "16px",
+                    padding: 0,
+                    flexShrink: 0,
+                  }}
+                >
+                  {emoji}
+                  {count > 1 && (
+                    <span
+                      style={{
+                        position: "absolute",
+                        bottom: "0px",
+                        right: "-2px",
+                        backgroundColor: "#000000",
+                        color: "#FFFFFF",
+                        borderRadius: "50%",
+                        width: "13px",
+                        height: "13px",
+                        fontSize: "8px",
+                        fontWeight: 700,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontFamily: "var(--font-dm-sans)",
+                        lineHeight: 1,
+                      }}
+                    >
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            }
+          )}
+        </div>
+      )}
+
+      {/* Footer: persistent + button (collapsed) or mini action bar (expanded) */}
+      {!isEditing && (
+        <div
+          style={{
+            marginTop: "8px",
+            paddingTop: "8px",
+            borderTop: "1px solid #E6E6E6",
+          }}
+        >
+          {showEmojiPicker ? (
+            <div
+              ref={pickerRef}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "2px",
+              }}
+            >
+              {REACTION_EMOJIS.map((emoji) => {
+                const alreadyReacted = reactionsByEmoji.find(
+                  (g) => g.emoji === emoji
+                )?.reactedByCurrentUser;
+                return (
+                  <button
+                    key={emoji}
+                    onClick={() => {
+                      if (alreadyReacted) {
+                        const myReaction = commentReactions.find(
+                          (r) =>
+                            r.emoji === emoji && r.authorId === currentUserId
+                        );
+                        if (myReaction) onRemoveReaction(myReaction.id);
+                      } else {
+                        onAddReaction(emoji);
+                      }
+                      setShowEmojiPicker(false);
+                    }}
+                    onMouseEnter={(e) => {
+                      (
+                        e.currentTarget as HTMLButtonElement
+                      ).style.backgroundColor = "#F5F5F5";
+                    }}
+                    onMouseLeave={(e) => {
+                      (
+                        e.currentTarget as HTMLButtonElement
+                      ).style.backgroundColor = "transparent";
+                    }}
+                    style={{
+                      width: "32px",
+                      height: "32px",
+                      fontSize: "16px",
+                      backgroundColor: "transparent",
+                      border: "none",
+                      borderRadius: 0,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {emoji}
+                  </button>
+                );
+              })}
+              <div
+                style={{
+                  width: "1px",
+                  height: "24px",
+                  backgroundColor: "#E6E6E6",
+                  margin: "0 4px",
+                  flexShrink: 0,
+                }}
+              />
+              <button
+                disabled
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "not-allowed",
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "12px",
+                  fontWeight: 300,
+                  color: "#AFAFAF",
+                  padding: "0 4px",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Reply…
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowEmojiPicker(true);
+                }}
+                title="React or reply"
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "14px",
+                  fontWeight: 700,
+                  color: "#AFAFAF",
+                  padding: "0 2px",
+                  lineHeight: 1,
+                }}
+              >
+                +
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -498,6 +737,7 @@ export default function CommentSidebar({
   currentUserId,
   onDelete,
   onUpdate,
+  onAddCommentReaction,
   onRemoveReaction,
   onCommentClick,
   contentColumnRef,
@@ -507,13 +747,18 @@ export default function CommentSidebar({
   const sidebarRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const authorColors = useMemo(() => buildAuthorColorMap(comments), [comments]);
+  const textReactions = useMemo(
+    () => reactions.filter((r) => !r.commentId),
+    [reactions]
+  );
   const reactionGroups = useMemo(
-    () => buildReactionGroups(reactions, currentUserId),
-    [reactions, currentUserId]
+    () => buildReactionGroups(textReactions, currentUserId),
+    [textReactions, currentUserId]
   );
   const [positions, setPositions] = useState<Record<string, number>>({});
   const [minHeight, setMinHeight] = useState(0);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [pickerVersion, setPickerVersion] = useState(0);
 
   // Measure actual rendered height of a comment card
   const getCardHeight = (id: string) => {
@@ -708,6 +953,13 @@ export default function CommentSidebar({
     return () => clearTimeout(timer);
   }, [editingId, updatePositions]);
 
+  // Recalculate when any comment picker opens/closes (height changes)
+  useEffect(() => {
+    if (pickerVersion === 0) return;
+    const timer = setTimeout(updatePositions, 50);
+    return () => clearTimeout(timer);
+  }, [pickerVersion, updatePositions]);
+
   return (
     <div
       ref={sidebarRef}
@@ -771,6 +1023,13 @@ export default function CommentSidebar({
               }}
               onCancelEdit={() => setEditingId(null)}
               color={authorColors[comment.authorId] || AUTHOR_COLORS[0]}
+              commentReactions={reactions.filter(
+                (r) => r.commentId === comment.id
+              )}
+              currentUserId={currentUserId}
+              onAddReaction={(emoji) => onAddCommentReaction(emoji, comment.id)}
+              onRemoveReaction={onRemoveReaction}
+              onPickerToggle={() => setPickerVersion((v) => v + 1)}
             />
           </div>
         );

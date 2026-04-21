@@ -176,8 +176,8 @@ export default function ReadOnlyEditor({
         seenReactionKeys.add(key);
         allHighlights.push({
           id: key,
-          selectedText: r.selectedText,
-          selectionStart: r.selectionStart,
+          selectedText: r.selectedText!,
+          selectionStart: r.selectionStart!,
           isActive: false,
           isPending: false,
           color: "#00FF66",

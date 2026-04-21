@@ -8,9 +8,10 @@ export interface ReactionData {
   id: string;
   emoji: string;
   authorId: string;
-  selectionStart: number;
-  selectionEnd: number;
-  selectedText: string;
+  commentId?: string;
+  selectionStart?: number;
+  selectionEnd?: number;
+  selectedText?: string;
   author: {
     id: string;
     name: string | null;

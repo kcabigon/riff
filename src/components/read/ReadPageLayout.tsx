@@ -211,6 +211,35 @@ export default function ReadPageLayout({
     fetch(`/api/reactions/${reactionId}`, { method: "DELETE" }).catch(() => {});
   }, []);
 
+  const handleAddCommentReaction = useCallback(
+    (emoji: string, commentId: string) => {
+      const newReaction: ReactionData = {
+        id: `local-${Date.now()}`,
+        emoji,
+        authorId: currentUser.id,
+        commentId,
+        author: {
+          id: currentUser.id,
+          name: currentUser.name,
+          username: currentUser.username,
+        },
+      };
+      setReactions((prev) => [...prev, newReaction]);
+      fetch("/api/reactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          emoji,
+          pieceId: piece.id,
+          riffId,
+          clubId,
+          commentId,
+        }),
+      }).catch(() => {});
+    },
+    [currentUser, piece.id, riffId, clubId]
+  );
+
   // Click sidebar comment → scroll to highlight in content
   const handleSidebarCommentClick = useCallback((commentId: string) => {
     setActiveHighlightId(commentId);
@@ -467,7 +496,7 @@ export default function ReadPageLayout({
           <ReadOnlyEditor
             content={piece.currentContent}
             comments={isRiffMode ? comments : []}
-            reactions={isRiffMode ? reactions : []}
+            reactions={isRiffMode ? reactions.filter((r) => !r.commentId) : []}
             isRiffMode={isRiffMode}
             activeHighlightId={activeHighlightId}
             pendingSelection={pendingSelection}
@@ -490,6 +519,7 @@ export default function ReadPageLayout({
             currentUserId={currentUser.id}
             onDelete={handleDeleteComment}
             onUpdate={handleUpdateComment}
+            onAddCommentReaction={handleAddCommentReaction}
             onRemoveReaction={handleRemoveReaction}
             onCommentClick={handleSidebarCommentClick}
             contentColumnRef={contentColumnRef}
