@@ -7,6 +7,7 @@ import ReadOnlyEditor from "./ReadOnlyEditor";
 import CommentPopover from "./CommentPopover";
 import CommentSidebar from "./CommentSidebar";
 import CommentDrawer from "./CommentDrawer";
+import EmojiBar, { ReactionData } from "./EmojiBar";
 import ReadingProgress from "./ReadingProgress";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import { useThemeColor } from "@/hooks/useThemeColor";
@@ -78,6 +79,13 @@ export default function ReadPageLayout({
   );
   const [pendingSelection, setPendingSelection] =
     useState<PendingSelection | null>(null);
+  const [showCompose, setShowCompose] = useState(false);
+  const [reactions, setReactions] = useState<ReactionData[]>([]);
+
+  // Clear compose mode whenever selection is cleared
+  useEffect(() => {
+    if (!pendingSelection) setShowCompose(false);
+  }, [pendingSelection]);
 
   const isMobile = useIsMobile();
   useThemeColor("#FFFFFF");
@@ -161,6 +169,47 @@ export default function ReadPageLayout({
     },
     []
   );
+
+  const handleAddReaction = useCallback(
+    (emoji: string) => {
+      if (!pendingSelection) return;
+      const newReaction: ReactionData = {
+        id: `local-${Date.now()}`,
+        emoji,
+        authorId: currentUser.id,
+        selectionStart: pendingSelection.start,
+        selectionEnd: pendingSelection.end,
+        selectedText: pendingSelection.text,
+        author: {
+          id: currentUser.id,
+          name: currentUser.name,
+          username: currentUser.username,
+        },
+      };
+      setReactions((prev) => [...prev, newReaction]);
+      setPendingSelection(null);
+      // Fire API — fails gracefully until schema migration lands
+      fetch("/api/reactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          emoji,
+          pieceId: piece.id,
+          riffId,
+          clubId,
+          selectionStart: pendingSelection.start,
+          selectionEnd: pendingSelection.end,
+          selectedText: pendingSelection.text,
+        }),
+      }).catch(() => {});
+    },
+    [pendingSelection, currentUser, piece.id, riffId, clubId]
+  );
+
+  const handleRemoveReaction = useCallback((reactionId: string) => {
+    setReactions((prev) => prev.filter((r) => r.id !== reactionId));
+    fetch(`/api/reactions/${reactionId}`, { method: "DELETE" }).catch(() => {});
+  }, []);
 
   // Click sidebar comment → scroll to highlight in content
   const handleSidebarCommentClick = useCallback((commentId: string) => {
@@ -418,6 +467,7 @@ export default function ReadPageLayout({
           <ReadOnlyEditor
             content={piece.currentContent}
             comments={isRiffMode ? comments : []}
+            reactions={isRiffMode ? reactions : []}
             isRiffMode={isRiffMode}
             activeHighlightId={activeHighlightId}
             pendingSelection={pendingSelection}
@@ -435,15 +485,17 @@ export default function ReadPageLayout({
         {isRiffMode && !isMobile && (
           <CommentSidebar
             comments={comments}
+            reactions={reactions}
             activeHighlightId={activeHighlightId}
             currentUserId={currentUser.id}
             onDelete={handleDeleteComment}
             onUpdate={handleUpdateComment}
+            onRemoveReaction={handleRemoveReaction}
             onCommentClick={handleSidebarCommentClick}
             contentColumnRef={contentColumnRef}
-            pendingSelection={pendingSelection}
+            pendingSelection={showCompose ? pendingSelection : null}
             pendingCommentProps={
-              pendingSelection
+              showCompose && pendingSelection
                 ? {
                     selection: pendingSelection,
                     currentUser,
@@ -459,8 +511,21 @@ export default function ReadPageLayout({
         )}
       </div>
 
-      {/* Mobile: comment popover as bottom sheet */}
-      {isMobile && pendingSelection && (
+      {/* Emoji bar — shown on text selection before compose (both mobile and desktop) */}
+      {isRiffMode && pendingSelection && !showCompose && (
+        <EmojiBar
+          selection={pendingSelection}
+          isMobile={isMobile}
+          existingReactions={reactions}
+          currentUserId={currentUser.id}
+          onReact={handleAddReaction}
+          onComment={() => setShowCompose(true)}
+          onClose={() => setPendingSelection(null)}
+        />
+      )}
+
+      {/* Mobile: comment popover as bottom sheet — only after tapping "Comment…" */}
+      {isMobile && showCompose && pendingSelection && (
         <CommentPopover
           selection={pendingSelection}
           currentUser={currentUser}

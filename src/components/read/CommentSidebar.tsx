@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import Image from "next/image";
 import CommentPopover from "./CommentPopover";
 import { AUTHOR_COLORS, buildAuthorColorMap } from "./ReadOnlyEditor";
+import type { ReactionData } from "./EmojiBar";
 
 interface CommentAuthor {
   id: string;
@@ -41,12 +42,56 @@ interface PendingCommentProps {
   onClose: () => void;
 }
 
+interface ReactionGroup {
+  key: string; // `reaction-${selectionStart}-${selectionEnd}`
+  selectionStart: number;
+  selectedText: string;
+  emojis: {
+    emoji: string;
+    count: number;
+    reactedByCurrentUser: boolean;
+    reactions: ReactionData[];
+  }[];
+}
+
+function buildReactionGroups(
+  reactions: ReactionData[],
+  currentUserId: string
+): ReactionGroup[] {
+  const map = new Map<string, ReactionData[]>();
+  for (const r of reactions) {
+    const key = `reaction-${r.selectionStart}-${r.selectionEnd}`;
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(r);
+  }
+  return Array.from(map.entries()).map(([key, groupReactions]) => {
+    const emojiMap = new Map<string, ReactionData[]>();
+    for (const r of groupReactions) {
+      if (!emojiMap.has(r.emoji)) emojiMap.set(r.emoji, []);
+      emojiMap.get(r.emoji)!.push(r);
+    }
+    return {
+      key,
+      selectionStart: groupReactions[0].selectionStart,
+      selectedText: groupReactions[0].selectedText,
+      emojis: Array.from(emojiMap.entries()).map(([emoji, rs]) => ({
+        emoji,
+        count: rs.length,
+        reactedByCurrentUser: rs.some((r) => r.authorId === currentUserId),
+        reactions: rs,
+      })),
+    };
+  });
+}
+
 interface CommentSidebarProps {
   comments: CommentData[];
+  reactions: ReactionData[];
   activeHighlightId: string | null;
   currentUserId: string;
   onDelete: (commentId: string) => void;
   onUpdate: (commentId: string, newContent: string) => void;
+  onRemoveReaction: (reactionId: string) => void;
   onCommentClick?: (commentId: string) => void;
   contentColumnRef: React.RefObject<HTMLDivElement | null>;
   pendingSelection?: PendingSelection | null;
@@ -364,12 +409,96 @@ function CommentCard({
   );
 }
 
+function ReactionPills({
+  group,
+  currentUserId,
+  onRemove,
+}: {
+  group: ReactionGroup;
+  currentUserId: string;
+  onRemove: (reactionId: string) => void;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        gap: "6px",
+        padding: "8px",
+        border: "2px solid #E6E6E6",
+        backgroundColor: "#FFFFFF",
+      }}
+    >
+      {group.emojis.map(({ emoji, count, reactedByCurrentUser, reactions }) => {
+        const tooltipText = reactions
+          .map((r) => r.author.name || r.author.username || "?")
+          .join(", ");
+        const myReaction = reactions.find((r) => r.authorId === currentUserId);
+        return (
+          <button
+            key={emoji}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (reactedByCurrentUser && myReaction) {
+                onRemove(myReaction.id);
+              }
+            }}
+            title={tooltipText}
+            style={{
+              position: "relative",
+              width: "36px",
+              height: "36px",
+              borderRadius: "50%",
+              border: "none",
+              backgroundColor: reactedByCurrentUser ? "#00FF66" : "transparent",
+              cursor: reactedByCurrentUser ? "pointer" : "default",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "18px",
+              padding: 0,
+              flexShrink: 0,
+            }}
+          >
+            {emoji}
+            {count > 1 && (
+              <span
+                style={{
+                  position: "absolute",
+                  bottom: "0px",
+                  right: "-2px",
+                  backgroundColor: "#000000",
+                  color: "#FFFFFF",
+                  borderRadius: "50%",
+                  width: "14px",
+                  height: "14px",
+                  fontSize: "9px",
+                  fontWeight: 700,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontFamily: "var(--font-dm-sans)",
+                  lineHeight: 1,
+                }}
+              >
+                {count}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function CommentSidebar({
   comments,
+  reactions,
   activeHighlightId,
   currentUserId,
   onDelete,
   onUpdate,
+  onRemoveReaction,
   onCommentClick,
   contentColumnRef,
   pendingSelection,
@@ -378,6 +507,10 @@ export default function CommentSidebar({
   const sidebarRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const authorColors = useMemo(() => buildAuthorColorMap(comments), [comments]);
+  const reactionGroups = useMemo(
+    () => buildReactionGroups(reactions, currentUserId),
+    [reactions, currentUserId]
+  );
   const [positions, setPositions] = useState<Record<string, number>>({});
   const [minHeight, setMinHeight] = useState(0);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -442,6 +575,18 @@ export default function CommentSidebar({
           const markTop = elRect.top + window.scrollY - sidebarScrollTop;
           items.push({ id: comment.id, markTop });
         }
+      }
+    }
+
+    // Add reaction group positions
+    for (const group of reactionGroups) {
+      const el = document.querySelector(
+        `mark[data-reaction-key="${group.key}"]`
+      );
+      if (el) {
+        const elRect = el.getBoundingClientRect();
+        const markTop = elRect.top + window.scrollY - sidebarScrollTop;
+        items.push({ id: group.key, markTop });
       }
     }
 
@@ -524,7 +669,13 @@ export default function CommentSidebar({
       maxBottom = Math.max(maxBottom, top + getCardHeight(item.id));
     }
     setMinHeight(maxBottom + 40);
-  }, [comments, contentColumnRef, pendingSelection, activeHighlightId]);
+  }, [
+    comments,
+    reactionGroups,
+    contentColumnRef,
+    pendingSelection,
+    activeHighlightId,
+  ]);
 
   // Recalculate on mount, scroll, resize, and when comments change
   useEffect(() => {
@@ -620,6 +771,32 @@ export default function CommentSidebar({
               }}
               onCancelEdit={() => setEditingId(null)}
               color={authorColors[comment.authorId] || AUTHOR_COLORS[0]}
+            />
+          </div>
+        );
+      })}
+
+      {/* Reaction pill groups */}
+      {reactionGroups.map((group) => {
+        const top = positions[group.key];
+        return (
+          <div
+            key={group.key}
+            ref={(el) => {
+              cardRefs.current[group.key] = el;
+            }}
+            style={{
+              position: "absolute",
+              top: `${top ?? 0}px`,
+              left: 0,
+              right: 0,
+              transition: "top 0.2s ease",
+            }}
+          >
+            <ReactionPills
+              group={group}
+              currentUserId={currentUserId}
+              onRemove={onRemoveReaction}
             />
           </div>
         );

@@ -4,6 +4,7 @@ import { useRef, useEffect, useCallback } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import { getSharedExtensions } from "@/components/editor/extensions/sharedExtensions";
 import "@/app/write/[pieceId]/editor.css";
+import type { ReactionData } from "./EmojiBar";
 
 interface CommentData {
   id: string;
@@ -56,6 +57,7 @@ interface PendingSelection {
 interface ReadOnlyEditorProps {
   content: string;
   comments: CommentData[];
+  reactions?: ReactionData[];
   isRiffMode: boolean;
   activeHighlightId: string | null;
   pendingSelection: PendingSelection | null;
@@ -91,6 +93,7 @@ function buildTextNodeMap(root: Element) {
 export default function ReadOnlyEditor({
   content,
   comments,
+  reactions = [],
   isRiffMode,
   activeHighlightId,
   pendingSelection,
@@ -118,14 +121,16 @@ export default function ReadOnlyEditor({
     // Preserve scroll position during DOM manipulation
     const scrollY = window.scrollY;
 
-    // Remove existing marks
-    proseMirror.querySelectorAll("mark[data-comment-id]").forEach((m) => {
-      const parent = m.parentNode;
-      if (parent) {
-        while (m.firstChild) parent.insertBefore(m.firstChild, m);
-        parent.removeChild(m);
-      }
-    });
+    // Remove existing comment and reaction marks
+    proseMirror
+      .querySelectorAll("mark[data-comment-id], mark[data-reaction-key]")
+      .forEach((m) => {
+        const parent = m.parentNode;
+        if (parent) {
+          while (m.firstChild) parent.insertBefore(m.firstChild, m);
+          parent.removeChild(m);
+        }
+      });
     // Normalize text nodes after unwrapping marks
     proseMirror.normalize();
 
@@ -143,7 +148,7 @@ export default function ReadOnlyEditor({
     // Build author → color map
     const authorColors = buildAuthorColorMap(comments);
 
-    // Build all items to highlight: existing comments + pending selection
+    // Build all items to highlight: existing comments + pending selection + reactions
     const allHighlights: {
       id: string;
       selectedText: string;
@@ -151,6 +156,7 @@ export default function ReadOnlyEditor({
       isActive: boolean;
       isPending: boolean;
       color: string;
+      isReaction?: boolean;
     }[] = comments
       .filter((c) => c.selectedText && c.selectionStart != null)
       .map((c) => ({
@@ -161,6 +167,24 @@ export default function ReadOnlyEditor({
         isPending: false,
         color: authorColors[c.authorId] || AUTHOR_COLORS[0],
       }));
+
+    // Add one highlight per unique reaction passage (deduplicated by selectionStart+End)
+    const seenReactionKeys = new Set<string>();
+    for (const r of reactions) {
+      const key = `reaction-${r.selectionStart}-${r.selectionEnd}`;
+      if (!seenReactionKeys.has(key)) {
+        seenReactionKeys.add(key);
+        allHighlights.push({
+          id: key,
+          selectedText: r.selectedText,
+          selectionStart: r.selectionStart,
+          isActive: false,
+          isPending: false,
+          color: "#00FF66",
+          isReaction: true,
+        });
+      }
+    }
 
     // Add pending selection as a temporary highlight
     if (
@@ -246,7 +270,11 @@ export default function ReadOnlyEditor({
           range.setEnd(tn.node, nodeEnd);
 
           const mark = document.createElement("mark");
-          mark.setAttribute("data-comment-id", highlight.id);
+          if (highlight.isReaction) {
+            mark.setAttribute("data-reaction-key", highlight.id);
+          } else {
+            mark.setAttribute("data-comment-id", highlight.id);
+          }
           mark.style.background =
             highlight.isActive || highlight.isPending
               ? hexToRgba(highlight.color, 0.4)
@@ -309,6 +337,7 @@ export default function ReadOnlyEditor({
   }, [
     editor,
     comments,
+    reactions,
     isRiffMode,
     activeHighlightId,
     pendingSelection,
