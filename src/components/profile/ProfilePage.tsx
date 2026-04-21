@@ -7,7 +7,6 @@ import PiecesGrid, { FeaturedPiece } from "./tabs/PiecesGrid";
 import type { Piece } from "./tabs/PiecesGrid";
 import DeletePieceModal from "@/components/profile/DeletePieceModal";
 import NewJamModal from "@/components/profile/NewJamModal";
-import { MOCK_JAMS } from "@/components/profile/MyJams";
 
 interface ProfilePageProps {
   user: {
@@ -22,6 +21,12 @@ interface ProfilePageProps {
     totalWordCount: number;
   };
   pieces: Piece[];
+  jams: {
+    content: string;
+    timestamp: string;
+    url: string | null;
+    note: string;
+  }[];
   isOwnProfile: boolean;
   lastActiveClubId: string | null;
 }
@@ -31,6 +36,7 @@ export default function ProfilePage({
   stats,
   lastActiveClubId,
   pieces: initialPieces,
+  jams,
   isOwnProfile,
 }: ProfilePageProps) {
   const router = useRouter();
@@ -50,7 +56,7 @@ export default function ProfilePage({
   // Update caret position whenever the panel opens or selected jam changes
   useEffect(() => {
     if (!jamsExpanded) return;
-    if (MOCK_JAMS.length === 0 && emptyStateBandRef.current) {
+    if (jams.length === 0 && emptyStateBandRef.current) {
       const rect = emptyStateBandRef.current.getBoundingClientRect();
       setCaretX(rect.left + rect.width / 2);
       return;
@@ -103,7 +109,7 @@ export default function ProfilePage({
 
       {/* Jams band + expandable panel */}
       <div ref={jamsRef}>
-        {MOCK_JAMS.length === 0 && isOwnProfile && (
+        {jams.length === 0 && isOwnProfile && (
           <>
             {/* Empty state band */}
             <div
@@ -262,7 +268,7 @@ export default function ProfilePage({
           </>
         )}
 
-        {MOCK_JAMS.length > 0 && (
+        {jams.length > 0 && (
           <>
             {/* Full-width green band with scrollable track list */}
             <div
@@ -282,15 +288,14 @@ export default function ProfilePage({
                   scrollbarWidth: "none",
                   display: "flex",
                   alignItems: "stretch",
-                  justifyContent:
-                    MOCK_JAMS.length <= 1 ? "center" : "flex-start",
+                  justifyContent: jams.length <= 1 ? "center" : "flex-start",
                   height: "100%",
                   paddingLeft:
-                    MOCK_JAMS.length <= 1
+                    jams.length <= 1
                       ? "0"
                       : "max(24px, calc((100vw - 1000px) / 2 + 24px))",
                   paddingRight:
-                    MOCK_JAMS.length <= 1
+                    jams.length <= 1
                       ? "0"
                       : "max(24px, calc((100vw - 1000px) / 2 + 24px))",
                   maskImage:
@@ -299,7 +304,7 @@ export default function ProfilePage({
                     "linear-gradient(to right, transparent max(0px, calc((100vw - 1000px) / 2)), black max(48px, calc((100vw - 1000px) / 2 + 48px)), black calc(100% - max(80px, calc((100vw - 1000px) / 2 + 80px))), transparent calc(100% - max(0px, calc((100vw - 1000px) / 2))))",
                 }}
               >
-                {MOCK_JAMS.map((jam, i) => (
+                {jams.map((jam, i) => (
                   <button
                     key={i}
                     ref={(el) => {
@@ -318,7 +323,7 @@ export default function ProfilePage({
                       background: "none",
                       border: "none",
                       borderRight:
-                        i < MOCK_JAMS.length - 1
+                        i < jams.length - 1
                           ? "1px solid rgba(0,0,0,0.12)"
                           : "none",
                       padding: "0 20px",
@@ -397,7 +402,7 @@ export default function ProfilePage({
             {/* Expanded panel */}
             {jamsExpanded &&
               (() => {
-                const jam = MOCK_JAMS[selectedJamIndex];
+                const jam = jams[selectedJamIndex];
                 return (
                   <div
                     className="jams-panel"

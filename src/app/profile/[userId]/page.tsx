@@ -94,6 +94,7 @@ export default async function ProfilePageRoute({
       user={user}
       stats={{ pieceCount, totalWordCount }}
       pieces={pieces}
+      jams={[]}
       isOwnProfile={isOwnProfile}
       lastActiveClubId={currentUser?.lastActiveClubId ?? null}
     />
