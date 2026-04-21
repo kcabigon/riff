@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import Image from "next/image";
 import AvatarStack from "@/components/shared/AvatarStack";
+import TextInput from "@/components/TextInput";
 import CommentPopover from "./CommentPopover";
 import { AUTHOR_COLORS, buildAuthorColorMap } from "./ReadOnlyEditor";
 import { REACTION_EMOJIS } from "./EmojiBar";
@@ -386,7 +387,8 @@ function CommentCard({
       {/* Comment content or edit mode */}
       {isEditing ? (
         <div onClick={(e) => e.stopPropagation()}>
-          <textarea
+          <TextInput
+            multiline
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
             onKeyDown={(e) => {
@@ -395,26 +397,7 @@ function CommentCard({
             }}
             autoFocus
             rows={3}
-            style={{
-              width: "100%",
-              padding: "8px",
-              border: "2px solid #000000",
-              borderRadius: 0,
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "13px",
-              fontWeight: 300,
-              color: "#000000",
-              lineHeight: 1.5,
-              resize: "vertical",
-              outline: "none",
-              boxSizing: "border-box",
-            }}
-            onFocus={(e) => {
-              e.target.style.borderColor = "#00FF66";
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = "#000000";
-            }}
+            style={{ fontSize: "13px", padding: "8px" }}
           />
           <div
             style={{
@@ -648,7 +631,8 @@ function CommentCard({
 
           {showReplyCompose ? (
             <div>
-              <textarea
+              <TextInput
+                multiline
                 value={replyContent}
                 onChange={(e) => setReplyContent(e.target.value)}
                 onKeyDown={(e) => {
@@ -662,26 +646,7 @@ function CommentCard({
                 autoFocus
                 placeholder="Write a reply…"
                 rows={2}
-                style={{
-                  width: "100%",
-                  padding: "8px",
-                  border: "2px solid #000000",
-                  borderRadius: 0,
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "13px",
-                  fontWeight: 300,
-                  color: "#000000",
-                  lineHeight: 1.5,
-                  resize: "none",
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = "#00FF66";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "#000000";
-                }}
+                style={{ fontSize: "13px", padding: "8px", resize: "none" }}
               />
               <div
                 style={{

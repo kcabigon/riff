@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import TextInput from "@/components/TextInput";
 
 interface CommentAuthor {
   id: string;
@@ -275,7 +276,8 @@ export default function CommentDrawer({
             {/* Comment content or edit mode */}
             {isEditing ? (
               <div>
-                <textarea
+                <TextInput
+                  multiline
                   value={editContent}
                   onChange={(e) => setEditContent(e.target.value)}
                   onKeyDown={(e) => {
@@ -289,26 +291,7 @@ export default function CommentDrawer({
                   }}
                   autoFocus
                   rows={4}
-                  style={{
-                    width: "100%",
-                    padding: "10px",
-                    border: "2px solid #000000",
-                    borderRadius: 0,
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "15px",
-                    fontWeight: 300,
-                    color: "#000000",
-                    lineHeight: 1.6,
-                    resize: "vertical",
-                    outline: "none",
-                    boxSizing: "border-box",
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = "#00FF66";
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = "#000000";
-                  }}
+                  style={{ fontSize: "15px", padding: "10px", lineHeight: 1.6 }}
                 />
                 <div
                   style={{
