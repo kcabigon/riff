@@ -590,17 +590,13 @@ export async function sendAllPiecesSubmittedEmail({
 
 export async function sendCommentNotificationEmail({
   email,
-  recipientName,
   pieceTitle,
   commentCount,
-  commenterNames,
   pieceUrl,
 }: {
   email: string;
-  recipientName: string;
   pieceTitle: string;
   commentCount: number;
-  commenterNames: string[];
   pieceUrl: string;
 }): Promise<void> {
   const commentLabel =
