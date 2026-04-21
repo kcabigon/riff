@@ -28,6 +28,7 @@ interface CommentData {
   selectionEnd: number;
   selectedText: string;
   authorId: string;
+  parentId: string | null;
   createdAt: string;
   updatedAt: string;
   author: CommentAuthor;
@@ -168,6 +169,40 @@ export default function ReadPageLayout({
       );
     },
     []
+  );
+
+  const handleNewReply = useCallback(
+    async (parentId: string, content: string) => {
+      const res = await fetch("/api/comments/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content,
+          pieceId: piece.id,
+          riffId,
+          clubId,
+          parentId,
+        }),
+      });
+      if (!res.ok) return;
+      const { comment } = await res.json();
+      setComments((prev) => [
+        ...prev,
+        {
+          id: comment.id,
+          content: comment.content,
+          selectionStart: 0,
+          selectionEnd: 0,
+          selectedText: "",
+          authorId: comment.authorId,
+          parentId: comment.parentId,
+          createdAt: comment.createdAt,
+          updatedAt: comment.updatedAt,
+          author: comment.author,
+        },
+      ]);
+    },
+    [piece.id, riffId, clubId]
   );
 
   const handleAddReaction = useCallback(
@@ -519,6 +554,7 @@ export default function ReadPageLayout({
             currentUserId={currentUser.id}
             onDelete={handleDeleteComment}
             onUpdate={handleUpdateComment}
+            onAddReply={handleNewReply}
             onAddCommentReaction={handleAddCommentReaction}
             onRemoveReaction={handleRemoveReaction}
             onCommentClick={handleSidebarCommentClick}

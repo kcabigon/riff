@@ -27,6 +27,7 @@ interface NewComment {
   selectionEnd: number;
   selectedText: string;
   authorId: string;
+  parentId: string | null;
   createdAt: string;
   updatedAt: string;
   author: CommentAuthor;

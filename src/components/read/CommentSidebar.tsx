@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import Image from "next/image";
+import AvatarStack from "@/components/shared/AvatarStack";
 import CommentPopover from "./CommentPopover";
 import { AUTHOR_COLORS, buildAuthorColorMap } from "./ReadOnlyEditor";
 import { REACTION_EMOJIS } from "./EmojiBar";
@@ -21,6 +22,7 @@ interface CommentData {
   selectionEnd: number;
   selectedText: string;
   authorId: string;
+  parentId: string | null;
   createdAt: string;
   updatedAt: string;
   author: CommentAuthor;
@@ -92,6 +94,7 @@ interface CommentSidebarProps {
   currentUserId: string;
   onDelete: (commentId: string) => void;
   onUpdate: (commentId: string, newContent: string) => void;
+  onAddReply: (parentId: string, content: string) => Promise<void>;
   onAddCommentReaction: (emoji: string, commentId: string) => void;
   onRemoveReaction: (reactionId: string) => void;
   onCommentClick?: (commentId: string) => void;
@@ -128,8 +131,10 @@ function CommentCard({
   color,
   commentReactions,
   currentUserId,
+  replies,
   onAddReaction,
   onRemoveReaction,
+  onAddReply,
   onPickerToggle,
 }: {
   comment: CommentData;
@@ -143,8 +148,10 @@ function CommentCard({
   color: string;
   commentReactions: ReactionData[];
   currentUserId: string;
+  replies: CommentData[];
   onAddReaction: (emoji: string) => void;
   onRemoveReaction: (reactionId: string) => void;
+  onAddReply: (content: string) => Promise<void>;
   onPickerToggle: () => void;
 }) {
   const [hovered, setHovered] = useState(false);
@@ -152,12 +159,16 @@ function CommentCard({
   const [editContent, setEditContent] = useState(comment.content);
   const [saving, setSaving] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showThread, setShowThread] = useState(false);
+  const [showReplyCompose, setShowReplyCompose] = useState(false);
+  const [replyContent, setReplyContent] = useState("");
+  const [submittingReply, setSubmittingReply] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
 
-  // Notify parent when picker height changes so positions can recalculate
+  // Notify parent when any height-changing state changes so positions can recalculate
   useEffect(() => {
     onPickerToggle();
-  }, [showEmojiPicker, onPickerToggle]);
+  }, [showEmojiPicker, showThread, showReplyCompose, onPickerToggle]);
 
   // Close picker on click outside
   useEffect(() => {
@@ -223,6 +234,19 @@ function CommentCard({
   const handleCancel = () => {
     setEditContent(comment.content);
     onCancelEdit();
+  };
+
+  const handleSubmitReply = async () => {
+    const trimmed = replyContent.trim();
+    if (!trimmed) return;
+    setSubmittingReply(true);
+    try {
+      await onAddReply(trimmed);
+      setReplyContent("");
+      setShowReplyCompose(false);
+    } finally {
+      setSubmittingReply(false);
+    }
   };
 
   return (
@@ -527,6 +551,212 @@ function CommentCard({
         </div>
       )}
 
+      {/* Expanded thread */}
+      {showThread && (
+        <div
+          style={{
+            marginTop: "8px",
+            paddingTop: "8px",
+            borderTop: "1px solid #E6E6E6",
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {replies.map((reply) => (
+            <div
+              key={reply.id}
+              style={{
+                paddingLeft: "10px",
+                borderLeft: "2px solid #E6E6E6",
+                marginBottom: "8px",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  marginBottom: "4px",
+                }}
+              >
+                <div
+                  style={{
+                    width: "20px",
+                    height: "20px",
+                    borderRadius: "50%",
+                    backgroundColor: "#01EFFC",
+                    border: "1px solid #000",
+                    flexShrink: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "9px",
+                    fontWeight: 700,
+                    fontFamily: "var(--font-dm-sans)",
+                    overflow: "hidden",
+                  }}
+                >
+                  {reply.author.avatarUrl ? (
+                    <img
+                      src={reply.author.avatarUrl}
+                      alt=""
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                      }}
+                    />
+                  ) : (
+                    initials(reply.author)
+                  )}
+                </div>
+                <span
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "12px",
+                    fontWeight: 500,
+                    color: "#000000",
+                  }}
+                >
+                  {reply.author.name || reply.author.username || "Unknown"}
+                </span>
+                <span
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "11px",
+                    fontWeight: 300,
+                    color: "#808080",
+                  }}
+                >
+                  {timeAgo(reply.createdAt)}
+                </span>
+              </div>
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "13px",
+                  fontWeight: 300,
+                  color: "#000000",
+                  margin: 0,
+                  lineHeight: 1.5,
+                  wordBreak: "break-word",
+                }}
+              >
+                {reply.content}
+              </p>
+            </div>
+          ))}
+
+          {showReplyCompose ? (
+            <div>
+              <textarea
+                value={replyContent}
+                onChange={(e) => setReplyContent(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey))
+                    handleSubmitReply();
+                  if (e.key === "Escape") {
+                    setShowReplyCompose(false);
+                    setReplyContent("");
+                  }
+                }}
+                autoFocus
+                placeholder="Write a reply…"
+                rows={2}
+                style={{
+                  width: "100%",
+                  padding: "8px",
+                  border: "2px solid #000000",
+                  borderRadius: 0,
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "13px",
+                  fontWeight: 300,
+                  color: "#000000",
+                  lineHeight: 1.5,
+                  resize: "none",
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = "#00FF66";
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = "#000000";
+                }}
+              />
+              <div
+                style={{
+                  display: "flex",
+                  gap: "8px",
+                  alignItems: "center",
+                  marginTop: "6px",
+                }}
+              >
+                <button
+                  onClick={handleSubmitReply}
+                  disabled={submittingReply || !replyContent.trim()}
+                  style={{
+                    backgroundColor:
+                      submittingReply || !replyContent.trim()
+                        ? "#E6E6E6"
+                        : "#00FF66",
+                    border: `2px solid ${submittingReply || !replyContent.trim() ? "#9C9C9C" : "#000000"}`,
+                    borderRadius: 0,
+                    cursor:
+                      submittingReply || !replyContent.trim()
+                        ? "not-allowed"
+                        : "pointer",
+                    padding: "4px 10px",
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    color:
+                      submittingReply || !replyContent.trim()
+                        ? "#9C9C9C"
+                        : "#000000",
+                  }}
+                >
+                  {submittingReply ? "Replying…" : "Reply"}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowReplyCompose(false);
+                    setReplyContent("");
+                    if (replies.length === 0) setShowThread(false);
+                  }}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "12px",
+                    fontWeight: 300,
+                    color: "#808080",
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowReplyCompose(true)}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "12px",
+                fontWeight: 300,
+                color: "#808080",
+                padding: 0,
+              }}
+            >
+              + Reply
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Footer: persistent + button (collapsed) or mini action bar (expanded) */}
       {!isEditing && (
         <div
@@ -602,15 +832,19 @@ function CommentCard({
                 }}
               />
               <button
-                disabled
+                onClick={() => {
+                  setShowEmojiPicker(false);
+                  setShowThread(true);
+                  setShowReplyCompose(true);
+                }}
                 style={{
                   background: "none",
                   border: "none",
-                  cursor: "not-allowed",
+                  cursor: "pointer",
                   fontFamily: "var(--font-dm-sans)",
                   fontSize: "12px",
                   fontWeight: 300,
-                  color: "#AFAFAF",
+                  color: "#000000",
                   padding: "0 4px",
                   whiteSpace: "nowrap",
                 }}
@@ -619,7 +853,50 @@ function CommentCard({
               </button>
             </div>
           ) : (
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              {replies.length > 0 ? (
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowThread((prev) => {
+                      const next = !prev;
+                      if (!next) setShowReplyCompose(false);
+                      return next;
+                    });
+                  }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    cursor: "pointer",
+                  }}
+                >
+                  <AvatarStack
+                    users={replies.slice(0, 3).map((r) => r.author)}
+                    size={24}
+                    borderWidth={1}
+                  />
+                  <span
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "12px",
+                      fontWeight: 300,
+                      color: "#808080",
+                    }}
+                  >
+                    {replies.length}{" "}
+                    {replies.length === 1 ? "reply" : "replies"}
+                  </span>
+                </div>
+              ) : (
+                <div />
+              )}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -737,6 +1014,7 @@ export default function CommentSidebar({
   currentUserId,
   onDelete,
   onUpdate,
+  onAddReply,
   onAddCommentReaction,
   onRemoveReaction,
   onCommentClick,
@@ -746,7 +1024,25 @@ export default function CommentSidebar({
 }: CommentSidebarProps) {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const authorColors = useMemo(() => buildAuthorColorMap(comments), [comments]);
+
+  const topLevelComments = useMemo(
+    () => comments.filter((c) => !c.parentId),
+    [comments]
+  );
+  const repliesByParent = useMemo(() => {
+    const map = new Map<string, CommentData[]>();
+    for (const c of comments) {
+      if (!c.parentId) continue;
+      if (!map.has(c.parentId)) map.set(c.parentId, []);
+      map.get(c.parentId)!.push(c);
+    }
+    return map;
+  }, [comments]);
+
+  const authorColors = useMemo(
+    () => buildAuthorColorMap(topLevelComments),
+    [topLevelComments]
+  );
   const textReactions = useMemo(
     () => reactions.filter((r) => !r.commentId),
     [reactions]
@@ -781,7 +1077,7 @@ export default function CommentSidebar({
     // Build items list with mark positions
     const items: { id: string; markTop: number }[] = [];
 
-    for (const comment of comments) {
+    for (const comment of topLevelComments) {
       // Check both text highlights (mark) and image highlights (img)
       const el = document.querySelector(
         `mark[data-comment-id="${comment.id}"], img[data-comment-id="${comment.id}"]`
@@ -915,7 +1211,7 @@ export default function CommentSidebar({
     }
     setMinHeight(maxBottom + 40);
   }, [
-    comments,
+    topLevelComments,
     reactionGroups,
     contentColumnRef,
     pendingSelection,
@@ -953,10 +1249,11 @@ export default function CommentSidebar({
     return () => clearTimeout(timer);
   }, [editingId, updatePositions]);
 
-  // Recalculate when any comment picker opens/closes (height changes)
+  // Recalculate when any comment picker/thread opens/closes (height changes)
   useEffect(() => {
     if (pickerVersion === 0) return;
-    const timer = setTimeout(updatePositions, 50);
+    updatePositions();
+    const timer = setTimeout(updatePositions, 150);
     return () => clearTimeout(timer);
   }, [pickerVersion, updatePositions]);
 
@@ -971,7 +1268,7 @@ export default function CommentSidebar({
         overflow: "visible",
       }}
     >
-      {comments.length === 0 && !pendingCommentProps && (
+      {topLevelComments.length === 0 && !pendingCommentProps && (
         <p
           style={{
             fontFamily: "var(--font-dm-sans)",
@@ -989,7 +1286,7 @@ export default function CommentSidebar({
         </p>
       )}
 
-      {comments.map((comment) => {
+      {topLevelComments.map((comment) => {
         const isActive = comment.id === activeHighlightId;
         const top = positions[comment.id];
 
@@ -1027,8 +1324,10 @@ export default function CommentSidebar({
                 (r) => r.commentId === comment.id
               )}
               currentUserId={currentUserId}
+              replies={repliesByParent.get(comment.id) ?? []}
               onAddReaction={(emoji) => onAddCommentReaction(emoji, comment.id)}
               onRemoveReaction={onRemoveReaction}
+              onAddReply={(content) => onAddReply(comment.id, content)}
               onPickerToggle={() => setPickerVersion((v) => v + 1)}
             />
           </div>

@@ -134,6 +134,7 @@ export default async function ReadPage({
     selectionEnd: c.selectionEnd ?? 0,
     selectedText: c.selectedText ?? "",
     authorId: c.authorId,
+    parentId: c.parentId ?? null,
     createdAt: c.createdAt.toISOString(),
     updatedAt: c.updatedAt.toISOString(),
     author: c.author,
