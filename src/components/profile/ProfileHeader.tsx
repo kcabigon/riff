@@ -21,6 +21,7 @@ interface ProfileHeaderProps {
     pieceCount: number;
     totalWordCount: number;
   };
+  onNewJam?: () => void;
 }
 
 export default function ProfileHeader({
@@ -28,9 +29,11 @@ export default function ProfileHeader({
   isOwnProfile,
   lastActiveClubId,
   stats,
+  onNewJam,
 }: ProfileHeaderProps) {
   const router = useRouter();
   const [isStatsOpen, setIsStatsOpen] = useState(false);
+  const [isNewJamHovered, setIsNewJamHovered] = useState(false);
   const logoHref = lastActiveClubId ? `/clubs/${lastActiveClubId}` : "/";
 
   const dropdownItems = [
@@ -66,7 +69,7 @@ export default function ProfileHeader({
     <span
       style={{
         fontFamily: "var(--font-dm-serif-text)",
-        fontSize: "20px",
+        fontSize: "24px",
         fontWeight: 400,
         color: "#FFFFFF",
         cursor: isOwnProfile ? "pointer" : "default",
@@ -108,19 +111,52 @@ export default function ProfileHeader({
             justifyContent: "space-between",
           }}
         >
-          {/* Left: Logo */}
-          <Link
-            href={logoHref}
-            style={{ display: "flex", alignItems: "center" }}
-          >
-            <Image
-              src="/images/landing/riff_logo.svg"
-              alt="Riff"
-              width={55}
-              height={36}
-              priority
-            />
-          </Link>
+          {/* Left: Logo + New Jam button */}
+          <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
+            <Link
+              href={logoHref}
+              style={{ display: "flex", alignItems: "center" }}
+            >
+              <Image
+                src="/images/landing/riff_logo.svg"
+                alt="Riff"
+                width={55}
+                height={36}
+                priority
+              />
+            </Link>
+
+            {isOwnProfile && onNewJam && (
+              <button
+                onClick={onNewJam}
+                onMouseEnter={() => setIsNewJamHovered(true)}
+                onMouseLeave={() => setIsNewJamHovered(false)}
+                style={{
+                  backgroundColor: "#000000",
+                  border: "2px solid #FFFFFF",
+                  boxShadow: isNewJamHovered
+                    ? "4px 4px 0px 0px #01EFFC"
+                    : "4px 4px 0px 0px #00FF66",
+                  padding: "8px 12px",
+                  display: "flex",
+                  alignItems: "center",
+                  cursor: "pointer",
+                  transition: "none",
+                }}
+              >
+                <span
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "14px",
+                    fontWeight: 300,
+                    color: "#FFFFFF",
+                  }}
+                >
+                  New jam
+                </span>
+              </button>
+            )}
+          </div>
 
           {/* Right: name (dropdown for own profile, plain text for others) */}
           {isOwnProfile ? (
