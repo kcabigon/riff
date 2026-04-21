@@ -8,6 +8,33 @@ import type { Piece } from "./tabs/PiecesGrid";
 import DeletePieceModal from "@/components/profile/DeletePieceModal";
 import NewJamModal from "@/components/profile/NewJamModal";
 
+function EQBars() {
+  return (
+    <div
+      style={{
+        display: "flex",
+        gap: "2px",
+        alignItems: "flex-end",
+        height: "10px",
+        flexShrink: 0,
+      }}
+    >
+      <div
+        className="eq-bar"
+        style={{ width: "2px", height: "10px", backgroundColor: "#000000" }}
+      />
+      <div
+        className="eq-bar"
+        style={{ width: "2px", height: "10px", backgroundColor: "#000000" }}
+      />
+      <div
+        className="eq-bar"
+        style={{ width: "2px", height: "10px", backgroundColor: "#000000" }}
+      />
+    </div>
+  );
+}
+
 interface ProfilePageProps {
   user: {
     id: string;
@@ -141,40 +168,7 @@ export default function ProfilePage({
                   }}
                 >
                   {/* EQ bars */}
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "2px",
-                      alignItems: "flex-end",
-                      height: "10px",
-                      flexShrink: 0,
-                    }}
-                  >
-                    <div
-                      className="eq-bar"
-                      style={{
-                        width: "2px",
-                        height: "10px",
-                        backgroundColor: "#000000",
-                      }}
-                    />
-                    <div
-                      className="eq-bar"
-                      style={{
-                        width: "2px",
-                        height: "10px",
-                        backgroundColor: "#000000",
-                      }}
-                    />
-                    <div
-                      className="eq-bar"
-                      style={{
-                        width: "2px",
-                        height: "10px",
-                        backgroundColor: "#000000",
-                      }}
-                    />
-                  </div>
+                  <EQBars />
                   <span
                     style={{
                       fontFamily: "var(--font-dm-serif-text)",
@@ -336,42 +330,7 @@ export default function ProfilePage({
                     }}
                   >
                     {/* EQ bars on the newest (first) jam */}
-                    {i === 0 && (
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: "2px",
-                          alignItems: "flex-end",
-                          height: "10px",
-                          flexShrink: 0,
-                        }}
-                      >
-                        <div
-                          className="eq-bar"
-                          style={{
-                            width: "2px",
-                            height: "10px",
-                            backgroundColor: "#000000",
-                          }}
-                        />
-                        <div
-                          className="eq-bar"
-                          style={{
-                            width: "2px",
-                            height: "10px",
-                            backgroundColor: "#000000",
-                          }}
-                        />
-                        <div
-                          className="eq-bar"
-                          style={{
-                            width: "2px",
-                            height: "10px",
-                            backgroundColor: "#000000",
-                          }}
-                        />
-                      </div>
-                    )}
+                    {i === 0 && <EQBars />}
                     <span
                       style={{
                         fontFamily: "var(--font-dm-serif-text)",
@@ -403,6 +362,7 @@ export default function ProfilePage({
             {jamsExpanded &&
               (() => {
                 const jam = jams[selectedJamIndex];
+                if (!jam) return null;
                 return (
                   <div
                     className="jams-panel"
