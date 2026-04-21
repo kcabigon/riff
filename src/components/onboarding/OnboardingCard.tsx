@@ -81,7 +81,7 @@ export default function OnboardingCard({
             display: "flex",
             flexDirection: "column",
             gap: "32px",
-            alignItems: "center",
+            alignItems: "stretch",
           }}
         >
           {children}

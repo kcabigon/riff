@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Modal from "@/components/shared/Modal";
-import ImageUploadModal from "@/components/shared/ImageUploadModal";
+import ImageUploadFlow from "@/components/shared/ImageUploadFlow";
+import type { ImageUploadFlowHandle } from "@/components/shared/ImageUploadFlow";
 import Image from "next/image";
 import Tagline from "@/components/Tagline";
 import PrimaryButton from "@/components/PrimaryButton";
@@ -37,8 +38,9 @@ export default function ClubSettingsModal({
     club.bannerImage
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showBannerChange, setShowBannerChange] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showBannerUpload, setShowBannerUpload] = useState(false);
+  const uploadFlowRef = useRef<ImageUploadFlowHandle>(null);
 
   // Reset form to current saved values each time the modal opens
   useEffect(() => {
@@ -46,6 +48,7 @@ export default function ClubSettingsModal({
       setName(club.name);
       setDescription(club.description || "");
       setBannerImage(club.bannerImage);
+      setShowBannerChange(false);
       setError(null);
     }
   }, [isOpen]);
@@ -55,6 +58,18 @@ export default function ClubSettingsModal({
     setIsSubmitting(true);
     setError(null);
 
+    // If the user has an unsaved crop, save it first
+    let finalBannerImage = bannerImage;
+    if (uploadFlowRef.current?.hasPendingCrop()) {
+      const url = await uploadFlowRef.current.saveCrop();
+      if (!url) {
+        // Crop/upload failed — don't submit the form
+        setIsSubmitting(false);
+        return;
+      }
+      finalBannerImage = url;
+    }
+
     try {
       const res = await fetch(`/api/clubs/${club.id}`, {
         method: "PATCH",
@@ -62,7 +77,7 @@ export default function ClubSettingsModal({
         body: JSON.stringify({
           name: name.trim(),
           description: description.trim() || null,
-          bannerImage: bannerImage || null,
+          bannerImage: finalBannerImage || null,
         }),
       });
 
@@ -77,7 +92,7 @@ export default function ClubSettingsModal({
       onUpdated({
         name: name.trim(),
         description: description.trim() || null,
-        bannerImage: bannerImage || null,
+        bannerImage: finalBannerImage || null,
       });
       onClose();
     } catch (err) {
@@ -203,33 +218,8 @@ export default function ClubSettingsModal({
               >
                 (optional)
               </span>
-              {bannerImage && (
-                <button
-                  type="button"
-                  onClick={() => setBannerImage(null)}
-                  disabled={isSubmitting}
-                  style={{
-                    marginLeft: "auto",
-                    width: "36px",
-                    height: "36px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backgroundColor: "transparent",
-                    border: "none",
-                    cursor: isSubmitting ? "not-allowed" : "pointer",
-                  }}
-                >
-                  <Image
-                    src="/icons/trash.png"
-                    alt="Remove banner"
-                    width={28}
-                    height={30}
-                  />
-                </button>
-              )}
             </div>
-            {bannerImage ? (
+            {bannerImage && !showBannerChange ? (
               <div
                 style={{
                   position: "relative",
@@ -238,7 +228,7 @@ export default function ClubSettingsModal({
                   overflow: "hidden",
                   cursor: isSubmitting ? "not-allowed" : "pointer",
                 }}
-                onClick={() => !isSubmitting && setShowBannerUpload(true)}
+                onClick={() => !isSubmitting && setShowBannerChange(true)}
               >
                 <Image
                   src={bannerImage}
@@ -248,60 +238,18 @@ export default function ClubSettingsModal({
                 />
               </div>
             ) : (
-              <button
-                type="button"
-                onClick={() => setShowBannerUpload(true)}
-                disabled={isSubmitting}
-                style={{
-                  width: "100%",
-                  aspectRatio: "3 / 1",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "8px",
-                  backgroundColor: "#FFFFFF",
-                  border: "2px dashed #CCCCCC",
-                  cursor: isSubmitting ? "not-allowed" : "pointer",
-                  opacity: isSubmitting ? 0.5 : 1,
+              <ImageUploadFlow
+                ref={uploadFlowRef}
+                onSelect={(url) => {
+                  setBannerImage(url || null);
+                  setShowBannerChange(false);
                 }}
-              >
-                <svg
-                  width="32"
-                  height="32"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#CCCCCC"
-                  strokeWidth="2"
-                >
-                  <rect x="3" y="3" width="18" height="18" rx="0" />
-                  <circle cx="8.5" cy="8.5" r="1.5" />
-                  <path d="M21 15l-5-5L5 21" />
-                </svg>
-                <span
-                  style={{
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "14px",
-                    fontWeight: 300,
-                    color: "#808080",
-                  }}
-                >
-                  Upload a banner photo
-                </span>
-              </button>
+                currentImage={bannerImage}
+                removeLabel="Remove banner"
+                aspectRatio={3 / 1}
+                hideSaveButton
+              />
             )}
-            <ImageUploadModal
-              isOpen={showBannerUpload}
-              onClose={() => setShowBannerUpload(false)}
-              onSelect={(url) => {
-                setBannerImage(url || null);
-                setShowBannerUpload(false);
-              }}
-              title="Banner image"
-              currentImage={bannerImage}
-              removeLabel="Remove banner"
-              aspectRatio={3 / 1}
-            />
           </div>
 
           {error && (

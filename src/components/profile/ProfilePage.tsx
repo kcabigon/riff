@@ -5,11 +5,8 @@ import { useRouter } from "next/navigation";
 import ProfileHeader from "./ProfileHeader";
 import PiecesGrid, { FeaturedPiece } from "./tabs/PiecesGrid";
 import type { Piece } from "./tabs/PiecesGrid";
-import Avatar from "@/components/shared/Avatar";
 import DeletePieceModal from "@/components/profile/DeletePieceModal";
 import ShareModal, { PublicShare } from "@/components/profile/ShareModal";
-
-const AVATAR_SIZE = 80;
 
 interface ProfilePageProps {
   user: {
@@ -17,8 +14,6 @@ interface ProfilePageProps {
     name: string | null;
     firstName: string | null;
     lastName: string | null;
-    bio: string | null;
-    avatarUrl: string | null;
     username: string | null;
   };
   stats: {
@@ -44,11 +39,6 @@ export default function ProfilePage({
     title: string | null;
   } | null>(null);
   const [shareTarget, setShareTarget] = useState<string | null>(null);
-
-  const firstName =
-    user.firstName || user.name?.split(" ")[0] || user.username || "";
-  const lastName =
-    user.lastName || user.name?.split(" ").slice(1).join(" ") || "";
 
   const handleDeleted = (pieceId: string) => {
     setPieces((prev) => prev.filter((p) => p.id !== pieceId));
@@ -107,33 +97,12 @@ export default function ProfilePage({
           );
         })()}
 
-      {/* Header + avatar bridge */}
-      <div style={{ position: "relative" }}>
-        <ProfileHeader
-          firstName={firstName}
-          lastName={lastName}
-          lastActiveClubId={lastActiveClubId}
-        />
-
-        {/* Avatar centered on the header's bottom edge, cutting into the featured piece */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: -(AVATAR_SIZE / 2),
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 10,
-          }}
-        >
-          <Avatar
-            user={user}
-            size={48}
-            borderColor="#FFFFFF"
-            borderWidth={4}
-            style={{ width: `${AVATAR_SIZE}px`, height: `${AVATAR_SIZE}px` }}
-          />
-        </div>
-      </div>
+      <ProfileHeader
+        profileUser={user}
+        isOwnProfile={isOwnProfile}
+        lastActiveClubId={lastActiveClubId}
+        stats={isOwnProfile ? stats : undefined}
+      />
 
       {/* Empty state */}
       {pieces.length === 0 && (
@@ -163,46 +132,48 @@ export default function ProfilePage({
         </div>
       )}
 
-      {/* Featured piece */}
-      {featured && (
-        <FeaturedPiece
-          piece={featured}
-          onClick={
-            !featured.isRevealed && isOwnProfile
-              ? () => router.push(`/write/${featured.id}`)
-              : !featured.isRevealed
-                ? () => {}
-                : isOwnProfile || featured.viewerHasClubAccess
-                  ? () =>
-                      router.push(
-                        `/read/${featured.id}?from=profile&userId=${user.id}`
-                      )
-                  : featured.isPublic
-                    ? () => router.push(`/p/${featured.id}`)
-                    : () => {}
-          }
-          isOwnProfile={isOwnProfile}
-          onDelete={() =>
-            setDeleteTarget({ id: featured.id, title: featured.title })
-          }
-          onShare={(pieceId) => setShareTarget(pieceId)}
-        />
-      )}
+      <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
+        {featured && (
+          <div style={{ padding: "32px 0 0" }}>
+            <FeaturedPiece
+              piece={featured}
+              onClick={
+                !featured.isRevealed && isOwnProfile
+                  ? () => router.push(`/write/${featured.id}`)
+                  : !featured.isRevealed
+                    ? () => {}
+                    : isOwnProfile || featured.viewerHasClubAccess
+                      ? () =>
+                          router.push(
+                            `/read/${featured.id}?from=profile&userId=${user.id}`
+                          )
+                      : featured.isPublic
+                        ? () => router.push(`/p/${featured.id}`)
+                        : () => {}
+              }
+              isOwnProfile={isOwnProfile}
+              onDelete={() =>
+                setDeleteTarget({ id: featured.id, title: featured.title })
+              }
+              onShare={(pieceId) => setShareTarget(pieceId)}
+            />
+          </div>
+        )}
 
-      {/* Jams — coming soon */}
+        {/* Jams — coming soon */}
 
-      {/* Piece grid */}
-      {rest.length > 0 && (
-        <PiecesGrid
-          pieces={rest}
-          isOwnProfile={isOwnProfile}
-          profileUserId={user.id}
-          onDelete={(id: string, title: string | null) =>
-            setDeleteTarget({ id, title })
-          }
-          onShare={(pieceId) => setShareTarget(pieceId)}
-        />
-      )}
+        {rest.length > 0 && (
+          <PiecesGrid
+            pieces={rest}
+            isOwnProfile={isOwnProfile}
+            profileUserId={user.id}
+            onDelete={(id: string, title: string | null) =>
+              setDeleteTarget({ id, title })
+            }
+            onShare={(pieceId) => setShareTarget(pieceId)}
+          />
+        )}
+      </div>
 
       {/* Footer: stats */}
       <div

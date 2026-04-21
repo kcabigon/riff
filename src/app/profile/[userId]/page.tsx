@@ -31,8 +31,6 @@ export default async function ProfilePageRoute({
       name: true,
       firstName: true,
       lastName: true,
-      bio: true,
-      avatarUrl: true,
       username: true,
     },
   });
@@ -41,14 +39,19 @@ export default async function ProfilePageRoute({
     redirect("/");
   }
 
-  // Fetch the viewer's club memberships so we can compute per-piece access
-  const viewerMemberships = await prisma.clubMember.findMany({
-    where: { userId: currentUserId },
-    select: { clubId: true },
-  });
-  const viewerClubIds = new Set(viewerMemberships.map((m) => m.clubId));
+  // Fetch viewer's club memberships to gate piece access by club
+  // (skip for own profile — owner always sees their pieces unlocked)
+  const isOwnProfile = currentUserId === userId;
+  const viewerClubIds = new Set<string>();
+  if (!isOwnProfile) {
+    const memberships = await prisma.clubMember.findMany({
+      where: { userId: currentUserId },
+      select: { clubId: true },
+    });
+    memberships.forEach((m) => viewerClubIds.add(m.clubId));
+  }
 
-  // Fetch submitted pieces by this user, with riff status and clubId to determine visibility
+  // Fetch submitted pieces by this user, with riff status + club to determine visibility
   const rawPieces = await prisma.piece.findMany({
     where: {
       authorId: userId,
@@ -79,8 +82,12 @@ export default async function ProfilePageRoute({
     coverImage: p.coverImage,
     currentContent: p.currentContent,
     wordCount: p.wordCount,
+    // Revealed = riff is REVEALED/COMPLETED AND viewer is in that club
+    // (own profile skips the club check — always accessible)
     isRevealed: p.riffs.some(
-      (r) => r.riff.status === "REVEALED" || r.riff.status === "COMPLETED"
+      (r) =>
+        (r.riff.status === "REVEALED" || r.riff.status === "COMPLETED") &&
+        (isOwnProfile || viewerClubIds.has(r.riff.clubId))
     ),
     // Viewer has club access if they're a member of any club this piece's riff belongs to
     viewerHasClubAccess: p.riffs.some((r) => viewerClubIds.has(r.riff.clubId)),
@@ -94,12 +101,9 @@ export default async function ProfilePageRoute({
   return (
     <ProfilePage
       user={user}
-      stats={{
-        pieceCount,
-        totalWordCount,
-      }}
+      stats={{ pieceCount, totalWordCount }}
       pieces={pieces}
-      isOwnProfile={currentUserId === userId}
+      isOwnProfile={isOwnProfile}
       lastActiveClubId={currentUser?.lastActiveClubId ?? null}
     />
   );

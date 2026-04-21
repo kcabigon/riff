@@ -1,55 +1,148 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
-import BackButton from "@/components/BackButton";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import Dropdown from "@/components/shared/Dropdown";
+import MyStatsModal from "./MyStatsModal";
 
 interface ProfileHeaderProps {
-  firstName: string;
-  lastName: string;
+  profileUser: {
+    id: string;
+    name: string | null;
+    firstName: string | null;
+    lastName: string | null;
+    username: string | null;
+  };
+  isOwnProfile?: boolean;
   lastActiveClubId?: string | null;
+  stats?: {
+    pieceCount: number;
+    totalWordCount: number;
+  };
 }
 
 export default function ProfileHeader({
-  firstName,
-  lastName,
+  profileUser,
+  isOwnProfile,
   lastActiveClubId,
+  stats,
 }: ProfileHeaderProps) {
+  const router = useRouter();
+  const [isStatsOpen, setIsStatsOpen] = useState(false);
+  const logoHref = lastActiveClubId ? `/clubs/${lastActiveClubId}` : "/";
+
+  const dropdownItems = [
+    ...(stats
+      ? [
+          {
+            type: "action" as const,
+            label: "My stats",
+            onClick: () => setIsStatsOpen(true),
+          },
+          { type: "divider" as const },
+        ]
+      : []),
+    {
+      type: "action" as const,
+      label: "Edit profile",
+      onClick: () => router.push("/settings"),
+    },
+  ];
+
+  const firstName =
+    profileUser.firstName ||
+    profileUser.name?.split(" ")[0] ||
+    profileUser.username ||
+    "";
+  const lastName =
+    profileUser.lastName ||
+    profileUser.name?.split(" ").slice(1).join(" ") ||
+    "";
   const displayName = [firstName, lastName].filter(Boolean).join(" ");
 
-  return (
-    <div
+  const nameEl = (
+    <span
       style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "12px 24px",
-        minHeight: "48px",
+        fontFamily: "var(--font-dm-serif-text)",
+        fontSize: "20px",
+        fontWeight: 400,
+        color: "#FFFFFF",
+        cursor: isOwnProfile ? "pointer" : "default",
+        transition: "color 120ms ease",
+      }}
+      onMouseEnter={(e) => {
+        if (isOwnProfile)
+          (e.currentTarget as HTMLElement).style.color = "#C01582";
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLElement).style.color = "#FFFFFF";
       }}
     >
-      {/* Left: back button + riff logo */}
-      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-        {lastActiveClubId && (
-          <BackButton href={`/clubs/${lastActiveClubId}`} size={24} />
-        )}
-        <Image
-          src="/images/riff_logo_black_shadow.svg"
-          alt="Riff"
-          width={40}
-          height={26}
-        />
-      </div>
+      {displayName}
+    </span>
+  );
 
-      {/* Right: name */}
-      <span
+  return (
+    <>
+      <nav
         style={{
-          fontFamily: "var(--font-dm-serif-text)",
-          fontSize: "16px",
-          fontWeight: 400,
-          color: "#000000",
+          position: "sticky",
+          top: 0,
+          zIndex: 50,
+          backgroundColor: "#000000",
+          display: "flex",
+          alignItems: "center",
+          padding: "16px 0",
         }}
       >
-        {displayName}
-      </span>
-    </div>
+        <div
+          style={{
+            maxWidth: "1000px",
+            width: "100%",
+            margin: "0 auto",
+            padding: "0 24px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          {/* Left: Logo */}
+          <Link
+            href={logoHref}
+            style={{ display: "flex", alignItems: "center" }}
+          >
+            <Image
+              src="/images/landing/riff_logo.svg"
+              alt="Riff"
+              width={55}
+              height={36}
+              priority
+            />
+          </Link>
+
+          {/* Right: name (dropdown for own profile, plain text for others) */}
+          {isOwnProfile ? (
+            <Dropdown
+              trigger={nameEl}
+              align="right"
+              minWidth={140}
+              items={dropdownItems}
+            />
+          ) : (
+            nameEl
+          )}
+        </div>
+      </nav>
+
+      {isOwnProfile && stats && (
+        <MyStatsModal
+          isOpen={isStatsOpen}
+          onClose={() => setIsStatsOpen(false)}
+          stats={stats}
+        />
+      )}
+    </>
   );
 }

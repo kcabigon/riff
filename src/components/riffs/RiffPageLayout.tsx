@@ -27,6 +27,7 @@ import NoiseBackground from "@/components/NoiseBackground";
 import WhatsNextModal, {
   type WhatsNextTrigger,
 } from "@/components/shared/WhatsNextModal";
+import { canShowWhatsNext } from "@/lib/whatsNextGuard";
 import PrimaryButton from "@/components/PrimaryButton";
 import CTAButton from "@/components/CTAButton";
 
@@ -135,6 +136,9 @@ export default function RiffPageLayout({
     const key = `riff-first-reveal-${riff.id}`;
     if (typeof window === "undefined") return;
     if (localStorage.getItem(key)) return;
+    // Double guard: per-riff key (above) prevents re-show on the same riff;
+    // global guard prevents re-show across all riffs after the first reveal.
+    if (!canShowWhatsNext("member_first_reveal")) return;
     localStorage.setItem(key, "1");
     setWhatsNextTrigger("member_first_reveal");
   }, [riff.id, isFirstReveal]);
@@ -168,6 +172,7 @@ export default function RiffPageLayout({
       if (res.ok) {
         setIsRevealModalOpen(false);
         setShowCelebration(true);
+        router.refresh();
       }
     } catch (err) {
       console.error("Error revealing riff:", err);
@@ -475,7 +480,9 @@ export default function RiffPageLayout({
                 existingPieceId={existingPieceId}
                 onJoin={() => {
                   setIsJoined(true);
-                  setWhatsNextTrigger("member_joined_riff");
+                  if (canShowWhatsNext("member_joined_riff")) {
+                    setWhatsNextTrigger("member_joined_riff");
+                  }
                 }}
               />
             ) : null}
@@ -655,7 +662,11 @@ export default function RiffPageLayout({
           pieceCount={riff.pieces.length}
           onDismiss={() => {
             setShowCelebration(false);
-            setWhatsNextTrigger("host_revealed");
+            if (canShowWhatsNext("host_revealed")) {
+              setWhatsNextTrigger("host_revealed");
+            } else {
+              router.refresh();
+            }
           }}
         />
       )}
