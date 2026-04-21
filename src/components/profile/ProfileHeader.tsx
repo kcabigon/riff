@@ -22,6 +22,7 @@ interface ProfileHeaderProps {
     totalWordCount: number;
   };
   onNewJam?: () => void;
+  isComposing?: boolean;
 }
 
 export default function ProfileHeader({
@@ -30,6 +31,7 @@ export default function ProfileHeader({
   lastActiveClubId,
   stats,
   onNewJam,
+  isComposing,
 }: ProfileHeaderProps) {
   const router = useRouter();
   const [isStatsOpen, setIsStatsOpen] = useState(false);
@@ -128,19 +130,26 @@ export default function ProfileHeader({
 
             {isOwnProfile && onNewJam && (
               <button
-                onClick={onNewJam}
-                onMouseEnter={() => setIsNewJamHovered(true)}
+                onClick={isComposing ? undefined : onNewJam}
+                onMouseEnter={() => {
+                  if (!isComposing) setIsNewJamHovered(true);
+                }}
                 onMouseLeave={() => setIsNewJamHovered(false)}
+                disabled={isComposing}
                 style={{
                   backgroundColor: "#000000",
-                  border: "2px solid #FFFFFF",
-                  boxShadow: isNewJamHovered
-                    ? "4px 4px 0px 0px #01EFFC"
-                    : "4px 4px 0px 0px #00FF66",
+                  border: isComposing
+                    ? "2px solid #555555"
+                    : "2px solid #FFFFFF",
+                  boxShadow: isComposing
+                    ? "none"
+                    : isNewJamHovered
+                      ? "4px 4px 0px 0px #01EFFC"
+                      : "4px 4px 0px 0px #00FF66",
                   padding: "8px 12px",
                   display: "flex",
                   alignItems: "center",
-                  cursor: "pointer",
+                  cursor: isComposing ? "not-allowed" : "pointer",
                   transition: "none",
                 }}
               >
@@ -149,7 +158,7 @@ export default function ProfileHeader({
                     fontFamily: "var(--font-dm-sans)",
                     fontSize: "14px",
                     fontWeight: 300,
-                    color: "#FFFFFF",
+                    color: isComposing ? "#555555" : "#FFFFFF",
                   }}
                 >
                   New jam
