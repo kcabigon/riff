@@ -65,7 +65,7 @@ export default function ProfilePage({
     if (!btn) return;
     const rect = btn.getBoundingClientRect();
     setCaretX(rect.left + rect.width / 2);
-  }, [jamsExpanded, selectedJamIndex]);
+  }, [jamsExpanded, selectedJamIndex, jams]);
 
   // Close panel when clicking outside the jams band + panel
   useEffect(() => {

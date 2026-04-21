@@ -93,6 +93,9 @@ export default function NewJamModal({ isOpen, onClose }: NewJamModalProps) {
           <div style={{ display: "flex", justifyContent: "flex-end" }}>
             <span
               style={{
+                display: "inline-block",
+                backgroundColor: "#FFFFFF",
+                padding: "2px 8px",
                 fontFamily: "var(--font-dm-sans)",
                 fontSize: "12px",
                 fontWeight: 300,
@@ -116,6 +119,9 @@ export default function NewJamModal({ isOpen, onClose }: NewJamModalProps) {
             />
             <span
               style={{
+                display: "inline-block",
+                backgroundColor: "#FFFFFF",
+                padding: "2px 8px",
                 fontFamily: "var(--font-dm-sans)",
                 fontSize: "12px",
                 fontWeight: 300,
