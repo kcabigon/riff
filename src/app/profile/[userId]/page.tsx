@@ -31,8 +31,6 @@ export default async function ProfilePageRoute({
       name: true,
       firstName: true,
       lastName: true,
-      bio: true,
-      avatarUrl: true,
       username: true,
     },
   });
@@ -41,7 +39,19 @@ export default async function ProfilePageRoute({
     redirect("/");
   }
 
-  // Fetch submitted pieces by this user, with riff status to determine visibility
+  // Fetch viewer's club memberships to gate piece access by club
+  // (skip for own profile — owner always sees their pieces unlocked)
+  const isOwnProfile = currentUserId === userId;
+  const viewerClubIds = new Set<string>();
+  if (!isOwnProfile) {
+    const memberships = await prisma.clubMember.findMany({
+      where: { userId: currentUserId },
+      select: { clubId: true },
+    });
+    memberships.forEach((m) => viewerClubIds.add(m.clubId));
+  }
+
+  // Fetch submitted pieces by this user, with riff status + club to determine visibility
   const rawPieces = await prisma.piece.findMany({
     where: {
       authorId: userId,
@@ -55,7 +65,7 @@ export default async function ProfilePageRoute({
       wordCount: true,
       riffs: {
         where: { submittedAt: { not: null } },
-        select: { riff: { select: { status: true } } },
+        select: { riff: { select: { status: true, clubId: true } } },
       },
     },
     orderBy: { createdAt: "desc" },
@@ -67,8 +77,12 @@ export default async function ProfilePageRoute({
     coverImage: p.coverImage,
     currentContent: p.currentContent,
     wordCount: p.wordCount,
+    // Revealed = riff is REVEALED/COMPLETED AND viewer is in that club
+    // (own profile skips the club check — always accessible)
     isRevealed: p.riffs.some(
-      (r) => r.riff.status === "REVEALED" || r.riff.status === "COMPLETED"
+      (r) =>
+        (r.riff.status === "REVEALED" || r.riff.status === "COMPLETED") &&
+        (isOwnProfile || viewerClubIds.has(r.riff.clubId))
     ),
   }));
 
@@ -78,12 +92,9 @@ export default async function ProfilePageRoute({
   return (
     <ProfilePage
       user={user}
-      stats={{
-        pieceCount,
-        totalWordCount,
-      }}
+      stats={{ pieceCount, totalWordCount }}
       pieces={pieces}
-      isOwnProfile={currentUserId === userId}
+      isOwnProfile={isOwnProfile}
       lastActiveClubId={currentUser?.lastActiveClubId ?? null}
     />
   );
