@@ -75,7 +75,10 @@ export default function ReadPageLayout({
   const contentRef = useRef<HTMLDivElement>(null);
   const contentColumnRef = useRef<HTMLDivElement>(null);
   const [markedRead, setMarkedRead] = useState(isAlreadyRead);
-  const [isRiffMode, setIsRiffMode] = useState(!!startInRiffMode);
+  // Always start in read mode. If this is a notification nav (startInRiffMode=true),
+  // we activate riff mode only after the editor signals it is ready — that way
+  // marks are guaranteed to be in the DOM before the sidebar ever mounts.
+  const [isRiffMode, setIsRiffMode] = useState(false);
   const [comments, setComments] = useState<CommentData[]>(initialComments);
   const [activeHighlightId, setActiveHighlightId] = useState<string | null>(
     null
@@ -572,6 +575,9 @@ export default function ReadPageLayout({
             onHighlightClick={handleHighlightClick}
             onReactionClick={handleReactionClick}
             onHighlightsApplied={() => setHighlightsVersion((v) => v + 1)}
+            onEditorReady={() => {
+              if (startInRiffMode) setIsRiffMode(true);
+            }}
             onImageComment={handleImageComment}
           />
 

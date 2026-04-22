@@ -491,6 +491,7 @@ function CommentCard({
             margin: 0,
             lineHeight: 1.5,
             wordBreak: "break-word",
+            whiteSpace: "pre-wrap",
           }}
         >
           {comment.content}
@@ -661,6 +662,7 @@ function CommentCard({
                   margin: 0,
                   lineHeight: 1.5,
                   wordBreak: "break-word",
+                  whiteSpace: "pre-wrap",
                 }}
               >
                 {reply.content}
@@ -1295,6 +1297,18 @@ export default function CommentSidebar({
     const timer = setTimeout(updatePositions, 150);
     return () => clearTimeout(timer);
   }, [pickerVersion, updatePositions]);
+
+  // Reposition when highlights are freshly injected into the DOM.
+  // On notification-nav loads (startInRiffMode=true), the editor initialises
+  // asynchronously, so marks may not exist when the sidebar first mounts.
+  // highlightsVersion increments each time ReadOnlyEditor finishes mark injection,
+  // guaranteeing we reposition once marks are actually in the DOM.
+  useEffect(() => {
+    if (!highlightsVersion) return;
+    updatePositions();
+    const timer = setTimeout(updatePositions, 100);
+    return () => clearTimeout(timer);
+  }, [highlightsVersion, updatePositions]);
 
   return (
     <div

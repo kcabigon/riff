@@ -67,6 +67,7 @@ interface ReadOnlyEditorProps {
   onReactionClick?: (reactionKey: string) => void;
   onHighlightsApplied?: () => void;
   onImageComment?: (rect: DOMRect, charOffset: number) => void;
+  onEditorReady?: () => void;
 }
 
 function getCharOffset(root: HTMLElement, node: Node, offset: number): number {
@@ -105,6 +106,7 @@ export default function ReadOnlyEditor({
   onReactionClick,
   onHighlightsApplied,
   onImageComment,
+  onEditorReady,
 }: ReadOnlyEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -114,6 +116,17 @@ export default function ReadOnlyEditor({
     content,
     editable: false,
   });
+
+  // Fire onEditorReady once when Tiptap finishes initializing.
+  // Used by ReadPageLayout to defer riff mode activation until the editor
+  // is ready, so marks are always in the DOM before the sidebar mounts.
+  const editorReadyFiredRef = useRef(false);
+  useEffect(() => {
+    if (editor && !editorReadyFiredRef.current) {
+      editorReadyFiredRef.current = true;
+      onEditorReady?.();
+    }
+  }, [editor, onEditorReady]);
 
   // Inject comment highlights via DOM manipulation
   useEffect(() => {
@@ -140,9 +153,13 @@ export default function ReadOnlyEditor({
         // ignore stale selection offset after text node split
       }
     };
-    queueMicrotask(() => {
+    // Use setTimeout (macrotask) instead of queueMicrotask so the restore
+    // happens AFTER ProseMirror's MutationObserver microtask fires and calls collapse.
+    // queueMicrotask would restore too early (FIFO microtask order) leaving collapse
+    // unpatched when the MO runs.
+    setTimeout(() => {
       Selection.prototype.collapse = origCollapse;
-    });
+    }, 0);
 
     // Remove existing comment and reaction marks
     proseMirror
@@ -233,7 +250,10 @@ export default function ReadOnlyEditor({
       });
     }
 
-    if (allHighlights.length === 0) return;
+    if (allHighlights.length === 0) {
+      onHighlightsApplied?.();
+      return;
+    }
 
     // Sort by selectionStart descending so we inject from back to front
     // This prevents offset drift when DOM is mutated

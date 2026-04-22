@@ -388,6 +388,7 @@ export default function CommentDrawer({
                   color: "#000000",
                   margin: 0,
                   lineHeight: 1.6,
+                  whiteSpace: "pre-wrap",
                 }}
               >
                 {comment.content}
