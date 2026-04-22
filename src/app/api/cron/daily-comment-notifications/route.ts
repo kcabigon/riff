@@ -11,7 +11,7 @@ export async function GET(req: Request) {
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
   const comments = await prisma.comment.findMany({
-    where: { createdAt: { gte: since } },
+    where: { createdAt: { gte: since }, parentId: null },
     include: {
       piece: {
         select: {
