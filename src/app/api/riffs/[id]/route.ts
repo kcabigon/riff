@@ -372,14 +372,14 @@ export async function PATCH(
         .then((members) => {
           const appUrl =
             process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-          const clubUrl = `${appUrl}/clubs/${riff.clubId}`;
+          const riffUrl = `${appUrl}/riffs/${riffId}`;
           return Promise.allSettled(
             members.map((m) =>
               sendDeadlineChangedEmail({
                 email: m.user.email,
                 hostName: updatedRiff.creator.name || "Your host",
                 newDeadline,
-                clubUrl,
+                riffUrl,
                 clubName: updatedRiff.club.name,
               })
             )

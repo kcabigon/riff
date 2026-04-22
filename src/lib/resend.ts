@@ -411,8 +411,8 @@ function getRiffRevealedEmailTemplate({
     content: `
           <tr>
             <td style="padding:40px 40px 16px;">
-              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${titleLine}</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">The moment you've been waiting for…</p>
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">Riff revealed in ${clubName}.</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${displayTitle ? `${displayTitle} has been revealed. ` : ""}The moment you've been waiting for…</p>
             </td>
           </tr>
 
@@ -454,8 +454,8 @@ export async function sendMemberJoinedEmail({
         content: `
           <tr>
             <td style="padding:40px 40px 16px;">
-              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">More voices, more angles.</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">More riffing.</p>
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${newMemberFullName} joined ${clubName}.</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">More voices, more angles. More riffing.</p>
             </td>
           </tr>
 
@@ -511,13 +511,13 @@ export async function sendDeadlineChangedEmail({
   email,
   hostName,
   newDeadline,
-  clubUrl,
+  riffUrl,
   clubName,
 }: {
   email: string;
   hostName: string;
   newDeadline: Date;
-  clubUrl: string;
+  riffUrl: string;
   clubName: string;
 }): Promise<void> {
   const deadlineStr = newDeadline.toLocaleDateString("en-US", {
@@ -542,7 +542,7 @@ export async function sendDeadlineChangedEmail({
             </td>
           </tr>
 
-          ${emailButton("View the riff", clubUrl)}`,
+          ${emailButton("View the riff", riffUrl)}`,
       }),
     });
     if (error) console.error("Resend error (deadlineChanged):", error);
@@ -574,8 +574,8 @@ export async function sendAllPiecesSubmittedEmail({
         content: `
           <tr>
             <td style="padding:40px 40px 16px;">
-              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">Everyone's in.</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">You're ready for reveal.</p>
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">All pieces submitted in ${clubName}.</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">Everyone's in. You're ready for reveal.</p>
             </td>
           </tr>
 

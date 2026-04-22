@@ -77,7 +77,7 @@ export async function PATCH(
           members.map((m) =>
             sendPieceSubmittedEmail({
               email: m.user.email,
-              actorName: m.user.name || "Someone",
+              actorName: user.name || "Someone",
               riffTitle: riffDisplayTitle,
               clubName: riff.club.name,
               riffUrl,

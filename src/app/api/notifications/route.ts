@@ -41,12 +41,14 @@ export async function GET(req: Request) {
         (min, n) => (n.createdAt < min ? n.createdAt : min),
         commentNotifs[0].createdAt
       );
+      // Subtract 1s so the triggering comment (created just before the notification) is included
+      const anchorTime = new Date(earliest.getTime() - 1000);
       const counts = await prisma.comment.groupBy({
         by: ["pieceId"],
         where: {
           pieceId: { in: commentNotifs.map((n) => n.pieceId!) },
           authorId: { not: userId },
-          createdAt: { gte: earliest },
+          createdAt: { gte: anchorTime },
         },
         _count: { id: true },
       });
