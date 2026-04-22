@@ -21,16 +21,75 @@ export default async function ClubPage({
 
   const userId = session.user.id;
 
-  // Verify user is a member of this club
-  const membership = await prisma.clubMember.findFirst({
-    where: {
-      clubId: id,
-      userId,
-    },
-  });
+  // Fetch club (filtered to clubs the user is a member of), user's clubs dropdown,
+  // and riffs all in parallel. If club is null, user is not a member of this club.
+  const [club, userClubs, riffs] = await Promise.all([
+    prisma.club.findFirst({
+      where: { id, members: { some: { userId } } },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        bannerImage: true,
+        adminId: true,
+        members: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                username: true,
+                avatarUrl: true,
+              },
+            },
+          },
+          orderBy: { joinedAt: "asc" },
+        },
+      },
+    }),
+    prisma.club.findMany({
+      where: {
+        members: { some: { userId } },
+        isArchived: false,
+      },
+      select: { id: true, name: true },
+      orderBy: { updatedAt: "desc" },
+    }),
+    prisma.riff.findMany({
+      where: { clubId: id },
+      include: {
+        creator: {
+          select: { id: true, name: true, username: true, avatarUrl: true },
+        },
+        participants: {
+          include: {
+            user: {
+              select: { id: true, name: true, username: true, avatarUrl: true },
+            },
+          },
+        },
+        pieces: {
+          include: {
+            piece: {
+              select: {
+                id: true,
+                title: true,
+                authorId: true,
+                currentContent: true,
+                coverImage: true,
+                wordCount: true,
+              },
+            },
+          },
+          orderBy: { id: "desc" },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
 
-  if (!membership) {
-    // User has no membership in this club — check if they have any club at all
+  if (!club) {
+    // User is not a member of this club — check if they have any club at all
     const anyMembership = await prisma.clubMember.findFirst({
       where: { userId },
       include: { club: { select: { id: true } } },
@@ -40,81 +99,13 @@ export default async function ClubPage({
       redirect(`/clubs/${anyMembership.club.id}`);
     }
 
-    // No clubs at all — send back to onboarding
     redirect("/onboarding/club-choice");
   }
 
-  // Fetch club details
-  const club = await prisma.club.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      name: true,
-      description: true,
-      bannerImage: true,
-      adminId: true,
-      members: {
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              username: true,
-              avatarUrl: true,
-            },
-          },
-        },
-        orderBy: { joinedAt: "asc" },
-      },
-    },
-  });
-
-  if (!club) {
-    redirect("/onboarding/club-choice");
-  }
-
-  // Fetch all clubs user is a member of (for the dropdown)
-  const userClubs = await prisma.club.findMany({
-    where: {
-      members: { some: { userId } },
-      isArchived: false,
-    },
-    select: { id: true, name: true },
-    orderBy: { updatedAt: "desc" },
-  });
-
-  // Fetch riffs with participants and pieces
-  const riffs = await prisma.riff.findMany({
-    where: { clubId: id },
-    include: {
-      creator: {
-        select: { id: true, name: true, username: true, avatarUrl: true },
-      },
-      participants: {
-        include: {
-          user: {
-            select: { id: true, name: true, username: true, avatarUrl: true },
-          },
-        },
-      },
-      pieces: {
-        include: {
-          piece: {
-            select: {
-              id: true,
-              title: true,
-              authorId: true,
-              currentContent: true,
-              coverImage: true,
-              wordCount: true,
-            },
-          },
-        },
-        orderBy: { id: "desc" },
-      },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  // joinedAt is available from the members list already fetched above
+  const memberJoinedAt = club.members.find(
+    (m) => m.userId === userId
+  )!.joinedAt;
 
   // Compute stats
   const riffCount = riffs.length;
@@ -138,7 +129,6 @@ export default async function ClubPage({
   // Revealed riffs are split by membership join date:
   // - post-join revealed riffs → "Current Read" (member was present for these)
   // - pre-join revealed riffs → "Past Riffs" (member joined after these revealed)
-  const memberJoinedAt = membership.joinedAt;
   const activeRiff = riffs.find((r) => r.status === "ACTIVE")
     ? serializeRiff(riffs.find((r) => r.status === "ACTIVE")!)
     : null;
