@@ -13,7 +13,7 @@ export async function GET(req: Request) {
 
     const [notifications, total] = await Promise.all([
       prisma.notification.findMany({
-        where: { recipientId: userId },
+        where: { recipientId: userId, isRead: false },
         include: {
           actor: {
             select: { id: true, name: true, username: true, avatarUrl: true },
@@ -28,31 +28,42 @@ export async function GET(req: Request) {
         skip: (page - 1) * limit,
         take: limit,
       }),
-      prisma.notification.count({ where: { recipientId: userId } }),
+      prisma.notification.count({
+        where: { recipientId: userId, isRead: false },
+      }),
     ]);
 
-    // Single grouped query to count comments for all NEW_COMMENT notifications
+    // Count comments per piece anchored to the exact triggering comment's createdAt
     const commentNotifs = notifications.filter(
-      (n) => n.type === "NEW_COMMENT" && n.pieceId && !n.isRead
+      (n) => n.type === "NEW_COMMENT" && n.pieceId && n.commentId
     );
     const commentCountMap = new Map<string, number>();
     if (commentNotifs.length > 0) {
-      const earliest = commentNotifs.reduce(
-        (min, n) => (n.createdAt < min ? n.createdAt : min),
-        commentNotifs[0].createdAt
-      );
-      // Subtract 1s so the triggering comment (created just before the notification) is included
-      const anchorTime = new Date(earliest.getTime() - 1000);
-      const counts = await prisma.comment.groupBy({
-        by: ["pieceId"],
-        where: {
-          pieceId: { in: commentNotifs.map((n) => n.pieceId!) },
-          authorId: { not: userId },
-          createdAt: { gte: anchorTime },
-        },
-        _count: { id: true },
+      // Look up each notification's triggering comment to get the exact anchor timestamp
+      const anchorCommentIds = commentNotifs.map((n) => n.commentId!);
+      const anchorComments = await prisma.comment.findMany({
+        where: { id: { in: anchorCommentIds } },
+        select: { id: true, createdAt: true },
       });
-      counts.forEach((c) => commentCountMap.set(c.pieceId, c._count.id));
+      const anchorById = new Map(
+        anchorComments.map((c) => [c.id, c.createdAt])
+      );
+
+      // Count per piece from its own anchor (parallel, typically 1-3 pieces)
+      await Promise.all(
+        commentNotifs.map(async (n) => {
+          const anchorTime = anchorById.get(n.commentId!);
+          if (!anchorTime || !n.pieceId) return;
+          const count = await prisma.comment.count({
+            where: {
+              pieceId: n.pieceId,
+              authorId: { not: userId },
+              createdAt: { gte: anchorTime },
+            },
+          });
+          commentCountMap.set(n.pieceId, count);
+        })
+      );
     }
 
     const enriched = notifications.map((n) => ({
