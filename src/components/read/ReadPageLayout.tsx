@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState, useCallback, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import Avatar from "@/components/shared/Avatar";
 import ReadToggle from "./ReadToggle";
 import ReadOnlyEditor from "./ReadOnlyEditor";
@@ -60,6 +61,7 @@ interface ReadPageLayoutProps {
   isAlreadyRead: boolean;
   previousPiece?: { id: string; title: string } | null;
   nextPiece?: { id: string; title: string } | null;
+  fromProfileUserId?: string;
 }
 
 export default function ReadPageLayout({
@@ -70,7 +72,9 @@ export default function ReadPageLayout({
   initialComments,
   startInRiffMode,
   isAlreadyRead,
+  fromProfileUserId,
 }: ReadPageLayoutProps) {
+  const router = useRouter();
   const endRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const contentColumnRef = useRef<HTMLDivElement>(null);
@@ -397,7 +401,15 @@ export default function ReadPageLayout({
               padding: "16px 0 8px",
             }}
           >
-            <BackButton href={`/riffs/${riffId}`} />
+            <BackButton
+              onClick={() => {
+                if (fromProfileUserId) {
+                  router.push(`/profile/${fromProfileUserId}`);
+                } else {
+                  router.push(`/riffs/${riffId}`);
+                }
+              }}
+            />
 
             {/* Nav title + author avatar — appears when metadata scrolls out */}
             {!isMobile && (
