@@ -75,12 +75,6 @@ export default function CreateRiffModal({
         return;
       }
 
-      // Step 3: Auto-join the creator as a participant
-      await fetch(`/api/riffs/${riff.id}/participants`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-
       // Success — reset and notify parent
       setTitle("");
       setPrompt("");
