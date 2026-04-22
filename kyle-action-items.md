@@ -14,29 +14,7 @@ _Updated 2026-04-21. Things blocking the team or waiting on you specifically._
 
 ---
 
-## 2. Fix host auto-join bug
-
-After a host creates a riff, the `RiffParticipant` record is not being created — the host ends up not joined at all, and sees "Join Riff" on the riff card instead of the participate/submit CTA.
-
-**Root cause**: The auto-join is currently handled client-side in `CreateRiffModal.tsx` as a 3-step sequential fetch (create DRAFT → PATCH to ACTIVE → POST participants). Step 3 is racing or failing silently.
-
-**Recommended fix**: Move the auto-join server-side into the PATCH activation handler in `src/app/api/riffs/[id]/route.ts`. When `status === "ACTIVE"` and `riff.status === "DRAFT"`, upsert a `RiffParticipant` for the creator inside the existing Prisma transaction — atomic and guaranteed:
-
-```ts
-if (status === "ACTIVE" && riff.status === "DRAFT") {
-  await tx.riffParticipant.upsert({
-    where: { riffId_userId: { riffId, userId: user.id } },
-    create: { riffId, userId: user.id },
-    update: {},
-  });
-}
-```
-
-Then remove Step 3 (the `POST /api/riffs/[id]/participants` call) from `CreateRiffModal.tsx`.
-
----
-
-## 3. Add `Jam` and `JamRead` models to schema
+## 2. Add `Jam` and `JamRead` models to schema
 
 The Jams front-end UI (PR #73) is merged and waiting on a backend. You need to add these two models to `prisma/schema.prisma` and create the migration.
 
@@ -78,17 +56,17 @@ jamReads JamRead[]
 
 ---
 
-## 4. Fix Supabase connection pool — switch to Transaction mode
+## 3. [Suggestion — please vet] Fix Supabase connection pool — switch to Transaction mode
 
-**What's happening**: Intermittent `MaxClientsInSessionMode: max clients reached` errors (seen on read page, probably elsewhere). PgBouncer is in Session mode, which holds a dedicated connection per client. Serverless functions spin up many clients in parallel and exhaust the pool.
+**Context**: Intermittent `MaxClientsInSessionMode: max clients reached` errors have been showing up (seen on the read page, possibly elsewhere). This is a pattern consistent with PgBouncer running in Session mode — it holds a dedicated connection per client, and serverless functions spinning up in parallel can exhaust the pool. **Please verify this matches what you're seeing in the Supabase dashboard before making any changes.**
 
-**Fix** (2 minutes in Supabase dashboard + env var update):
+**Suggested fix** (2 minutes in Supabase dashboard + env var update):
 1. In Supabase project settings → Database → Connection Pooling → switch mode to **Transaction**
 2. Update `DATABASE_URL` in all environments (local `.env.development`, Vercel staging + prod) to use port **6543** instead of 5432, and append `?pgbouncer=true&connection_limit=1`
-3. No code changes needed — Riff doesn't use interactive Prisma transactions, so the switch is safe
+3. No code changes needed — Riff doesn't use interactive Prisma transactions, so the switch should be safe
 
 ---
 
-## 5. Set `CRON_SECRET` in Vercel project settings
+## 4. Set `CRON_SECRET` in Vercel project settings
 
 Required for the daily comment digest cron (`/api/cron/daily-comment-notifications`) from PR #59 to work in production. Derek flagged this in the PR notes.
