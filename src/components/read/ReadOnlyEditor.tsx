@@ -125,6 +125,25 @@ export default function ReadOnlyEditor({
     // Preserve scroll position during DOM manipulation
     const scrollY = window.scrollY;
 
+    // ProseMirror's MutationObserver fires after this effect and tries to restore
+    // its stored selection onto text nodes we've split with mark injection.
+    // Patch collapse to swallow the resulting IndexSizeError for that one microtask.
+    const origCollapse = Selection.prototype.collapse;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (Selection.prototype as any).collapse = function (
+      node: Node | null,
+      offset?: number
+    ) {
+      try {
+        origCollapse.call(this, node, offset);
+      } catch {
+        // ignore stale selection offset after text node split
+      }
+    };
+    queueMicrotask(() => {
+      Selection.prototype.collapse = origCollapse;
+    });
+
     // Remove existing comment and reaction marks
     proseMirror
       .querySelectorAll("mark[data-comment-id], mark[data-reaction-key]")
@@ -355,7 +374,6 @@ export default function ReadOnlyEditor({
   const handleClick = useCallback(
     (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-
       // Check for reaction highlight click
       const reactionMark = target.closest(
         "mark[data-reaction-key]"

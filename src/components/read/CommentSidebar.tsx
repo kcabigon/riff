@@ -1089,6 +1089,10 @@ export default function CommentSidebar({
   const [minHeight, setMinHeight] = useState(0);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [pickerVersion, setPickerVersion] = useState(0);
+  const handlePickerToggle = useCallback(
+    () => setPickerVersion((v) => v + 1),
+    []
+  );
 
   // Measure actual rendered height of a comment card
   const getCardHeight = (id: string) => {
@@ -1363,7 +1367,7 @@ export default function CommentSidebar({
               onAddReaction={(emoji) => onAddCommentReaction(emoji, comment.id)}
               onRemoveReaction={onRemoveReaction}
               onAddReply={(content) => onAddReply(comment.id, content)}
-              onPickerToggle={() => setPickerVersion((v) => v + 1)}
+              onPickerToggle={handlePickerToggle}
             />
           </div>
         );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import Avatar from "@/components/shared/Avatar";
 import ReadToggle from "./ReadToggle";
 import ReadOnlyEditor from "./ReadOnlyEditor";
@@ -341,6 +341,11 @@ export default function ReadPageLayout({
     []
   );
 
+  const filteredReactions = useMemo(
+    () => (isRiffMode ? reactions.filter((r) => !r.commentId) : []),
+    [isRiffMode, reactions]
+  );
+
   const readMinutes = Math.max(1, piece.readLengthMin);
 
   const activeComment = activeHighlightId
@@ -554,7 +559,7 @@ export default function ReadPageLayout({
           <ReadOnlyEditor
             content={piece.currentContent}
             comments={isRiffMode ? comments : []}
-            reactions={isRiffMode ? reactions.filter((r) => !r.commentId) : []}
+            reactions={filteredReactions}
             isRiffMode={isRiffMode}
             activeHighlightId={activeHighlightId}
             pendingSelection={pendingSelection}
