@@ -149,7 +149,7 @@ export default function PieceCard({
             zIndex: 2,
           }}
         >
-          NEW
+          NEW COMMENTS
         </div>
       )}
 
