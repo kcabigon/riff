@@ -96,14 +96,14 @@ export default function ReadyToRevealCard({
               top: "8px",
               right: "8px",
               backgroundColor: "#00FF66",
-              border: "1px solid #000000",
-              padding: "2px 8px",
+              border: "2px solid #000000",
+              padding: "4px 8px",
               fontFamily: "var(--font-dm-sans)",
               fontSize: "11px",
               fontWeight: 700,
               color: "#000000",
               textTransform: "uppercase",
-              letterSpacing: "0.05em",
+              letterSpacing: "0.08em",
               zIndex: 2,
             }}
           >
