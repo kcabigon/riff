@@ -56,6 +56,7 @@ interface ReadPageLayoutProps {
   clubId: string;
   currentUser: CommentAuthor;
   initialComments: CommentData[];
+  startInRiffMode?: boolean;
   isAlreadyRead: boolean;
   previousPiece?: { id: string; title: string } | null;
   nextPiece?: { id: string; title: string } | null;
@@ -67,13 +68,14 @@ export default function ReadPageLayout({
   clubId,
   currentUser,
   initialComments,
+  startInRiffMode,
   isAlreadyRead,
 }: ReadPageLayoutProps) {
   const endRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const contentColumnRef = useRef<HTMLDivElement>(null);
   const [markedRead, setMarkedRead] = useState(isAlreadyRead);
-  const [isRiffMode, setIsRiffMode] = useState(false);
+  const [isRiffMode, setIsRiffMode] = useState(!!startInRiffMode);
   const [comments, setComments] = useState<CommentData[]>(initialComments);
   const [activeHighlightId, setActiveHighlightId] = useState<string | null>(
     null
@@ -81,6 +83,7 @@ export default function ReadPageLayout({
   const [activeReactionKey, setActiveReactionKey] = useState<string | null>(
     null
   );
+  const [highlightsVersion, setHighlightsVersion] = useState(0);
   const [pendingSelection, setPendingSelection] =
     useState<PendingSelection | null>(null);
   const [showCompose, setShowCompose] = useState(false);
@@ -563,6 +566,7 @@ export default function ReadPageLayout({
             }}
             onHighlightClick={handleHighlightClick}
             onReactionClick={handleReactionClick}
+            onHighlightsApplied={() => setHighlightsVersion((v) => v + 1)}
             onImageComment={handleImageComment}
           />
 
@@ -577,6 +581,7 @@ export default function ReadPageLayout({
             reactions={reactions}
             activeHighlightId={activeHighlightId}
             activeReactionKey={activeReactionKey}
+            highlightsVersion={highlightsVersion}
             currentUserId={currentUser.id}
             onDelete={handleDeleteComment}
             onUpdate={handleUpdateComment}

@@ -69,7 +69,12 @@ function getLink(n: NotificationItemProps["notification"]): string {
   switch (n.type) {
     case "NEW_COMMENT":
     case "COMMENT_REPLY":
-      if (n.piece) return `/read/${n.piece.id}`;
+      if (n.piece) {
+        const params = new URLSearchParams();
+        if (n.riff?.id) params.set("riff", n.riff.id);
+        params.set("notify", "1");
+        return `/read/${n.piece.id}?${params.toString()}`;
+      }
       if (n.riff) return `/riffs/${n.riff.id}`;
       break;
     case "CLUB_INVITATION":

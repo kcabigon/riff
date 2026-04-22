@@ -65,6 +65,7 @@ interface ReadOnlyEditorProps {
   onSelection: (selection: PendingSelection) => void;
   onHighlightClick: (commentId: string) => void;
   onReactionClick?: (reactionKey: string) => void;
+  onHighlightsApplied?: () => void;
   onImageComment?: (rect: DOMRect, charOffset: number) => void;
 }
 
@@ -102,6 +103,7 @@ export default function ReadOnlyEditor({
   onSelection,
   onHighlightClick,
   onReactionClick,
+  onHighlightsApplied,
   onImageComment,
 }: ReadOnlyEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -336,6 +338,9 @@ export default function ReadOnlyEditor({
 
     // Restore scroll position after DOM manipulation
     window.scrollTo(0, scrollY);
+
+    // Signal that marks are in the DOM so sidebar can reposition
+    onHighlightsApplied?.();
   }, [
     editor,
     comments,

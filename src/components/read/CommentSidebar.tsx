@@ -93,6 +93,7 @@ interface CommentSidebarProps {
   reactions: ReactionData[];
   activeHighlightId: string | null;
   activeReactionKey?: string | null;
+  highlightsVersion?: number;
   currentUserId: string;
   onDelete: (commentId: string) => void;
   onUpdate: (commentId: string, newContent: string) => void;
@@ -1043,6 +1044,7 @@ export default function CommentSidebar({
   reactions,
   activeHighlightId,
   activeReactionKey,
+  highlightsVersion,
   currentUserId,
   onDelete,
   onUpdate,
@@ -1248,6 +1250,7 @@ export default function CommentSidebar({
     contentColumnRef,
     pendingSelection,
     activeHighlightId,
+    highlightsVersion,
   ]);
 
   // Recalculate on mount, scroll, resize, and when comments change
