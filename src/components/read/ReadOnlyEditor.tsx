@@ -64,6 +64,7 @@ interface ReadOnlyEditorProps {
   currentUserId?: string;
   onSelection: (selection: PendingSelection) => void;
   onHighlightClick: (commentId: string) => void;
+  onReactionClick?: (reactionKey: string) => void;
   onImageComment?: (rect: DOMRect, charOffset: number) => void;
 }
 
@@ -100,6 +101,7 @@ export default function ReadOnlyEditor({
   currentUserId,
   onSelection,
   onHighlightClick,
+  onReactionClick,
   onImageComment,
 }: ReadOnlyEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -349,6 +351,19 @@ export default function ReadOnlyEditor({
     (e: MouseEvent) => {
       const target = e.target as HTMLElement;
 
+      // Check for reaction highlight click
+      const reactionMark = target.closest(
+        "mark[data-reaction-key]"
+      ) as HTMLElement | null;
+      if (reactionMark) {
+        const reactionKey = reactionMark.getAttribute("data-reaction-key");
+        if (reactionKey && onReactionClick) {
+          e.stopPropagation();
+          onReactionClick(reactionKey);
+          return;
+        }
+      }
+
       // Check for comment highlight click
       const mark = target.closest(
         "mark[data-comment-id]"
@@ -397,7 +412,13 @@ export default function ReadOnlyEditor({
         onImageComment(rect, charOffset);
       }
     },
-    [onHighlightClick, isRiffMode, onImageComment, activeHighlightId]
+    [
+      onHighlightClick,
+      onReactionClick,
+      isRiffMode,
+      onImageComment,
+      activeHighlightId,
+    ]
   );
 
   // Handle text selection

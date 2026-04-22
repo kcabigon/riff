@@ -92,6 +92,7 @@ interface CommentSidebarProps {
   comments: CommentData[];
   reactions: ReactionData[];
   activeHighlightId: string | null;
+  activeReactionKey?: string | null;
   currentUserId: string;
   onDelete: (commentId: string) => void;
   onUpdate: (commentId: string, newContent: string) => void;
@@ -880,7 +881,14 @@ function CommentCard({
                   }}
                 >
                   <AvatarStack
-                    users={replies.slice(0, 3).map((r) => r.author)}
+                    users={replies
+                      .reduce<typeof replies>((acc, r) => {
+                        if (!acc.some((a) => a.authorId === r.authorId))
+                          acc.push(r);
+                        return acc;
+                      }, [])
+                      .slice(0, 3)
+                      .map((r) => r.author)}
                     size={24}
                     borderWidth={1}
                   />
@@ -930,10 +938,12 @@ function CommentCard({
 function ReactionPills({
   group,
   currentUserId,
+  isActive,
   onRemove,
 }: {
   group: ReactionGroup;
   currentUserId: string;
+  isActive?: boolean;
   onRemove: (reactionId: string) => void;
 }) {
   const quote = shortQuote(group.selectedText);
@@ -944,8 +954,10 @@ function ReactionPills({
         flexWrap: "wrap",
         gap: "6px",
         padding: "8px",
-        border: "2px solid #E6E6E6",
+        border: isActive ? "2px solid #000000" : "2px solid #E6E6E6",
+        boxShadow: isActive ? "4px 4px 0px 0px #01EFFC" : "none",
         backgroundColor: "#FFFFFF",
+        transition: "border 0.15s ease, box-shadow 0.15s ease",
       }}
     >
       {quote && (
@@ -1030,6 +1042,7 @@ export default function CommentSidebar({
   comments,
   reactions,
   activeHighlightId,
+  activeReactionKey,
   currentUserId,
   onDelete,
   onUpdate,
@@ -1373,6 +1386,7 @@ export default function CommentSidebar({
             <ReactionPills
               group={group}
               currentUserId={currentUserId}
+              isActive={activeReactionKey === group.key}
               onRemove={onRemoveReaction}
             />
           </div>

@@ -78,6 +78,9 @@ export default function ReadPageLayout({
   const [activeHighlightId, setActiveHighlightId] = useState<string | null>(
     null
   );
+  const [activeReactionKey, setActiveReactionKey] = useState<string | null>(
+    null
+  );
   const [pendingSelection, setPendingSelection] =
     useState<PendingSelection | null>(null);
   const [showCompose, setShowCompose] = useState(false);
@@ -150,6 +153,7 @@ export default function ReadPageLayout({
       return updated.sort((a, b) => a.selectionStart - b.selectionStart);
     });
     setActiveHighlightId(comment.id);
+    setActiveReactionKey(null);
     setPendingSelection(null);
   }, []);
 
@@ -278,6 +282,7 @@ export default function ReadPageLayout({
   // Click sidebar comment → scroll to highlight in content
   const handleSidebarCommentClick = useCallback((commentId: string) => {
     setActiveHighlightId(commentId);
+    setActiveReactionKey(null);
 
     setTimeout(() => {
       const mark = document.querySelector(
@@ -292,12 +297,27 @@ export default function ReadPageLayout({
   // Click highlight in content → activate comment and ensure both are visible
   const handleHighlightClick = useCallback((commentId: string) => {
     setActiveHighlightId(commentId);
+    setActiveReactionKey(null);
 
     // After positions recalculate, scroll the highlight into center view
     // The sidebar comment will be repositioned next to it
     setTimeout(() => {
       const mark = document.querySelector(
         `mark[data-comment-id="${commentId}"]`
+      );
+      if (mark) {
+        mark.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 150);
+  }, []);
+
+  // Click reaction highlight in content → activate reaction pill in sidebar
+  const handleReactionClick = useCallback((reactionKey: string) => {
+    setActiveReactionKey(reactionKey);
+    setActiveHighlightId(null);
+    setTimeout(() => {
+      const mark = document.querySelector(
+        `mark[data-reaction-key="${reactionKey}"]`
       );
       if (mark) {
         mark.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -536,8 +556,13 @@ export default function ReadPageLayout({
             activeHighlightId={activeHighlightId}
             pendingSelection={pendingSelection}
             currentUserId={currentUser.id}
-            onSelection={setPendingSelection}
+            onSelection={(sel) => {
+              setActiveReactionKey(null);
+              setActiveHighlightId(null);
+              setPendingSelection(sel);
+            }}
             onHighlightClick={handleHighlightClick}
+            onReactionClick={handleReactionClick}
             onImageComment={handleImageComment}
           />
 
@@ -551,6 +576,7 @@ export default function ReadPageLayout({
             comments={comments}
             reactions={reactions}
             activeHighlightId={activeHighlightId}
+            activeReactionKey={activeReactionKey}
             currentUserId={currentUser.id}
             onDelete={handleDeleteComment}
             onUpdate={handleUpdateComment}
