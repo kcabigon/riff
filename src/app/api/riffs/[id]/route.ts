@@ -243,6 +243,15 @@ export async function PATCH(
         volumeNumber = revealedCount + 1;
       }
 
+      // Auto-join the creator when activating — atomic with the status change
+      if (status === "ACTIVE" && riff.status === "DRAFT") {
+        await tx.riffParticipant.upsert({
+          where: { riffId_userId: { riffId, userId: user.id } },
+          create: { riffId, userId: user.id },
+          update: {},
+        });
+      }
+
       return tx.riff.update({
         where: { id: riffId },
         data: {
