@@ -74,7 +74,7 @@ export default function ReadPageLayout({
   const endRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const contentColumnRef = useRef<HTMLDivElement>(null);
-  const [markedRead, setMarkedRead] = useState(isAlreadyRead);
+  const [markedRead, setMarkedRead] = useState(false);
   const [isRiffMode, setIsRiffMode] = useState(false);
   const [comments, setComments] = useState<CommentData[]>(initialComments);
   const [activeHighlightId, setActiveHighlightId] = useState<string | null>(
