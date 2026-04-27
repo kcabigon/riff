@@ -626,7 +626,9 @@ export default function ClubPageLayout({
             hasUnreadPieces(
               r.id,
               readCounts,
-              getSubmittedPieces(r.pieces).length
+              getSubmittedPieces(r.pieces).filter(
+                (p) => p.piece.authorId !== currentUserId
+              ).length
             )
           );
           if (unfinishedRevealed.length === 0) return null;
@@ -656,7 +658,11 @@ export default function ClubPageLayout({
                     key={riff.id}
                     riff={riff}
                     readCount={readCounts[riff.id] || 0}
-                    totalPieces={getSubmittedPieces(riff.pieces).length}
+                    totalPieces={
+                      getSubmittedPieces(riff.pieces).filter(
+                        (p) => p.piece.authorId !== currentUserId
+                      ).length
+                    }
                   />
                 ))}
               </div>
@@ -736,7 +742,9 @@ export default function ClubPageLayout({
             isRiffFullyRead(
               r.id,
               readCounts,
-              getSubmittedPieces(r.pieces).length
+              getSubmittedPieces(r.pieces).filter(
+                (p) => p.piece.authorId !== currentUserId
+              ).length
             )
           );
           const allPast = [
