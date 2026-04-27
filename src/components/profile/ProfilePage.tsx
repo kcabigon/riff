@@ -849,48 +849,6 @@ export default function ProfilePage({
           />
         )}
       </div>
-
-      <div
-        style={{
-          borderTop: "1px solid #E6E6E6",
-          padding: "16px 24px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "8px",
-        }}
-      >
-        <span
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
-            fontWeight: 300,
-            color: "#808080",
-          }}
-        >
-          {stats.pieceCount} pieces
-        </span>
-        <span
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
-            fontWeight: 300,
-            color: "#808080",
-          }}
-        >
-          &middot;
-        </span>
-        <span
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
-            fontWeight: 300,
-            color: "#808080",
-          }}
-        >
-          {stats.totalWordCount.toLocaleString()} words
-        </span>
-      </div>
     </div>
   );
 }
