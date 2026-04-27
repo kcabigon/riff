@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useState } from "react";
+import Badge from "@/components/shared/Badge";
 import PieceCard from "@/components/riffs/PieceCard";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import type { DropdownItem } from "@/components/shared/Dropdown";
@@ -83,25 +84,12 @@ function PublicBadge({
   left?: string;
 }) {
   return (
-    <div
-      style={{
-        position: "absolute",
-        top,
-        left,
-        zIndex: 3,
-        backgroundColor: "#00FF66",
-        border: "2px solid #000000",
-        padding: "4px 8px",
-        fontFamily: "var(--font-dm-sans)",
-        fontSize: "11px",
-        fontWeight: 700,
-        color: "#000000",
-        textTransform: "uppercase",
-        letterSpacing: "0.08em",
-      }}
+    <Badge
+      variant="purple"
+      style={{ position: "absolute", top, left, zIndex: 3 }}
     >
       Public
-    </div>
+    </Badge>
   );
 }
 
