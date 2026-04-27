@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import MosaicCollage from "./MosaicCollage";
+import Badge from "@/components/shared/Badge";
 import { getRiffDisplayTitle } from "@/lib/riff-utils";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 
@@ -88,25 +89,9 @@ export default function ReadyToRevealCard({
 
         {/* Unread badge */}
         {totalPieces - readCount > 0 && (
-          <div
-            style={{
-              position: "absolute",
-              top: "8px",
-              right: "8px",
-              backgroundColor: "#00FF66",
-              border: "2px solid #000000",
-              padding: "4px 8px",
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "11px",
-              fontWeight: 700,
-              color: "#000000",
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
-              zIndex: 2,
-            }}
-          >
+          <Badge variant="green" style={{ zIndex: 2 }}>
             {totalPieces - readCount} unread
-          </div>
+          </Badge>
         )}
 
         {/* Label strip — vertically centered */}

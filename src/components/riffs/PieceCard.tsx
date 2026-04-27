@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Avatar from "@/components/shared/Avatar";
+import Badge from "@/components/shared/Badge";
 
 interface PieceCardProps {
   piece: {
@@ -86,71 +87,23 @@ export default function PieceCard({
         }}
       />
 
-      {/* Own piece — orange comment count top-right */}
+      {/* Own piece — comment count top-right */}
       {isOwnPiece && (piece.commentCount ?? 0) > 0 && (
-        <div
-          style={{
-            position: "absolute",
-            top: "8px",
-            right: "8px",
-            backgroundColor: "#EECF01",
-            border: "1px solid #000000",
-            padding: "2px 8px",
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "11px",
-            fontWeight: 700,
-            color: "#000000",
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
-            zIndex: 2,
-          }}
-        >
+        <Badge variant="yellow" style={{ zIndex: 2 }}>
           {piece.commentCount} comments
-        </div>
+        </Badge>
       )}
 
-      {/* Top-right badge — UNREAD (green) for unread others' pieces, NEW (cyan) for new comments */}
+      {/* Top-right badge — UNREAD for unread others' pieces, NEW COMMENTS for new activity */}
       {!isOwnPiece && !isRead && (
-        <div
-          style={{
-            position: "absolute",
-            top: "8px",
-            right: "8px",
-            backgroundColor: "#00FF66",
-            border: "2px solid #000000",
-            padding: "4px 8px",
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "11px",
-            fontWeight: 700,
-            color: "#000000",
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-            zIndex: 2,
-          }}
-        >
-          UNREAD
-        </div>
+        <Badge variant="green" style={{ zIndex: 2 }}>
+          Unread
+        </Badge>
       )}
       {!isOwnPiece && isRead && hasNewComments && (
-        <div
-          style={{
-            position: "absolute",
-            top: "8px",
-            right: "8px",
-            backgroundColor: "#01EFFC",
-            border: "2px solid #000000",
-            padding: "4px 8px",
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "11px",
-            fontWeight: 700,
-            color: "#000000",
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-            zIndex: 2,
-          }}
-        >
-          NEW COMMENTS
-        </div>
+        <Badge variant="cyan" style={{ zIndex: 2 }}>
+          New Comments
+        </Badge>
       )}
 
       {/* Title — vertically centered */}
