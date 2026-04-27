@@ -43,7 +43,7 @@ const panelInputStyle: React.CSSProperties = {
   fontWeight: 300,
   color: "#000000",
   backgroundColor: "#FFFFFF",
-  border: "2px solid #555555",
+  border: "2px solid #9C9C9C",
   padding: "12px 16px",
   outline: "none",
   width: "100%",
@@ -60,7 +60,7 @@ const onPanelFocus = (
 const onPanelBlur = (
   e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>
 ) => {
-  e.target.style.borderColor = "#555555";
+  e.target.style.borderColor = "#9C9C9C";
 };
 
 interface ProfilePageProps {
@@ -281,7 +281,7 @@ export default function ProfilePage({
           onBlur={(e) => {
             e.target.style.borderColor = composingNoteOverLimit
               ? "#DC2626"
-              : "#555555";
+              : "#9C9C9C";
           }}
         />
         <div style={{ display: "flex", justifyContent: "flex-end" }}>
@@ -341,7 +341,11 @@ export default function ProfilePage({
       {/* Actions */}
       <CTAButton
         onClick={handlePostJam}
-        disabled={!composingContent.trim() || composingNoteOverLimit}
+        disabled={
+          !composingContent.trim() ||
+          !composingNote.trim() ||
+          composingNoteOverLimit
+        }
         style={{ width: "100%" }}
       >
         Post jam
@@ -361,7 +365,7 @@ export default function ProfilePage({
           border: "none",
           cursor: "pointer",
           fontFamily: "var(--font-dm-sans)",
-          fontSize: "14px",
+          fontSize: "12px",
           fontWeight: 300,
           color: "#808080",
           padding: "4px 8px",
@@ -461,7 +465,7 @@ export default function ProfilePage({
                   <span
                     style={{
                       fontFamily: "var(--font-dm-serif-text)",
-                      fontSize: "14px",
+                      fontSize: "16px",
                       fontWeight: 400,
                       color: "#000000",
                       whiteSpace: "nowrap",
@@ -511,7 +515,7 @@ export default function ProfilePage({
                           fontSize: "32px",
                           fontWeight: 400,
                           color: "#FFFFFF",
-                          margin: "0 0 6px",
+                          margin: "0 0 8px",
                           lineHeight: 1.2,
                         }}
                       >
@@ -633,7 +637,7 @@ export default function ProfilePage({
                     <span
                       style={{
                         fontFamily: "var(--font-dm-serif-text)",
-                        fontSize: "14px",
+                        fontSize: "12px",
                         fontWeight: 400,
                         color: "#000000",
                         whiteSpace: "nowrap",
@@ -700,7 +704,7 @@ export default function ProfilePage({
                               fontSize: "32px",
                               fontWeight: 400,
                               color: "#FFFFFF",
-                              margin: "0 0 6px",
+                              margin: "0 0 8px",
                               lineHeight: 1.2,
                             }}
                           >
@@ -747,7 +751,7 @@ export default function ProfilePage({
                                 fontWeight: 300,
                                 color: "#808080",
                                 textDecoration: "none",
-                                borderBottom: "1px solid #555555",
+                                borderBottom: "1px solid #808080",
                                 paddingBottom: "1px",
                               }}
                             >

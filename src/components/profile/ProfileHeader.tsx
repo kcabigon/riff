@@ -139,7 +139,7 @@ export default function ProfileHeader({
                 style={{
                   backgroundColor: "#000000",
                   border: isComposing
-                    ? "2px solid #555555"
+                    ? "2px solid #9C9C9C"
                     : "2px solid #FFFFFF",
                   boxShadow: isComposing
                     ? "none"
@@ -158,7 +158,7 @@ export default function ProfileHeader({
                     fontFamily: "var(--font-dm-sans)",
                     fontSize: "14px",
                     fontWeight: 300,
-                    color: isComposing ? "#555555" : "#FFFFFF",
+                    color: isComposing ? "#9C9C9C" : "#FFFFFF",
                   }}
                 >
                   New jam
