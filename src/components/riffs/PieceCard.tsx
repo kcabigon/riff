@@ -89,28 +89,19 @@ export default function PieceCard({
 
       {/* Own piece — comment count top-right */}
       {isOwnPiece && (piece.commentCount ?? 0) > 0 && (
-        <Badge
-          variant="yellow"
-          style={{ position: "absolute", top: "8px", right: "8px", zIndex: 2 }}
-        >
+        <Badge variant="yellow" style={{ zIndex: 2 }}>
           {piece.commentCount} comments
         </Badge>
       )}
 
       {/* Top-right badge — UNREAD for unread others' pieces, NEW COMMENTS for new activity */}
       {!isOwnPiece && !isRead && (
-        <Badge
-          variant="green"
-          style={{ position: "absolute", top: "8px", right: "8px", zIndex: 2 }}
-        >
+        <Badge variant="green" style={{ zIndex: 2 }}>
           Unread
         </Badge>
       )}
       {!isOwnPiece && isRead && hasNewComments && (
-        <Badge
-          variant="cyan"
-          style={{ position: "absolute", top: "8px", right: "8px", zIndex: 2 }}
-        >
+        <Badge variant="cyan" style={{ zIndex: 2 }}>
           New Comments
         </Badge>
       )}

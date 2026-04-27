@@ -84,10 +84,7 @@ function PublicBadge({
   left?: string;
 }) {
   return (
-    <Badge
-      variant="purple"
-      style={{ position: "absolute", top, left, zIndex: 3 }}
-    >
+    <Badge variant="pink" style={{ top, left, zIndex: 3 }}>
       Public
     </Badge>
   );
@@ -98,23 +95,16 @@ function LockOverlay() {
     <div
       style={{
         position: "absolute",
-        inset: 0,
+        top: "12px",
+        left: 0,
+        right: 0,
         display: "flex",
-        alignItems: "center",
         justifyContent: "center",
         zIndex: 4,
-        cursor: "default",
         pointerEvents: "none",
       }}
     >
-      <LockIcon
-        style={{
-          position: "absolute",
-          top: "12px",
-          left: "50%",
-          transform: "translateX(-50%)",
-        }}
-      />
+      <LockIcon />
     </div>
   );
 }
@@ -202,18 +192,7 @@ export function FeaturedPiece({
           }}
         />
 
-        {!piece.isRevealed && (
-          <div
-            style={{
-              position: "absolute",
-              top: "16px",
-              right: "16px",
-              zIndex: 3,
-            }}
-          >
-            <LockIcon />
-          </div>
-        )}
+        {!piece.isRevealed && <LockOverlay />}
 
         {piece.isPublic && <PublicBadge top="12px" left="12px" />}
 

@@ -91,15 +91,7 @@ export default function ReadyToRevealCard({
 
         {/* Unread badge */}
         {totalPieces - readCount > 0 && (
-          <Badge
-            variant="green"
-            style={{
-              position: "absolute",
-              top: "8px",
-              right: "8px",
-              zIndex: 2,
-            }}
-          >
+          <Badge variant="green" style={{ zIndex: 2 }}>
             {totalPieces - readCount} unread
           </Badge>
         )}
