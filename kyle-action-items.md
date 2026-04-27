@@ -1,0 +1,94 @@
+# Kyle — Action Items
+
+_Updated 2026-04-21. Things blocking the team or waiting on you specifically._
+
+---
+
+## 1. Review & merge PR #72 — club page DB query optimization
+
+**PR**: `perf/club-page-db-queries` → develop  
+**Author**: Jarric  
+**What it does**: Cuts the club page from 5 sequential queries to 4 queries across 2 round trips by merging the membership check into the club query and parallelizing the rest with `Promise.all`. Before: 3 sequential round trips. After: 2.
+
+**Your specific flag**: Line 106 has a non-null assertion (`!`) that's intentional — TypeScript can't infer that `club.members` always contains the current user if `club` is non-null, but it's guaranteed by the Prisma filter. Jarric flagged it for your eyes.
+
+---
+
+## 2. Fix host auto-join bug
+
+After a host creates a riff, the `RiffParticipant` record is not being created — the host ends up not joined at all, and sees "Join Riff" on the riff card instead of the participate/submit CTA.
+
+**Root cause**: The auto-join is currently handled client-side in `CreateRiffModal.tsx` as a 3-step sequential fetch (create DRAFT → PATCH to ACTIVE → POST participants). Step 3 is racing or failing silently.
+
+**Recommended fix**: Move the auto-join server-side into the PATCH activation handler in `src/app/api/riffs/[id]/route.ts`. When `status === "ACTIVE"` and `riff.status === "DRAFT"`, upsert a `RiffParticipant` for the creator inside the existing Prisma transaction — atomic and guaranteed:
+
+```ts
+if (status === "ACTIVE" && riff.status === "DRAFT") {
+  await tx.riffParticipant.upsert({
+    where: { riffId_userId: { riffId, userId: user.id } },
+    create: { riffId, userId: user.id },
+    update: {},
+  });
+}
+```
+
+Then remove Step 3 (the `POST /api/riffs/[id]/participants` call) from `CreateRiffModal.tsx`.
+
+---
+
+## 3. Add `Jam` and `JamRead` models to schema
+
+The Jams front-end UI (PR #73) is merged and waiting on a backend. You need to add these two models to `prisma/schema.prisma` and create the migration.
+
+**Suggested schema:**
+
+```prisma
+model Jam {
+  id        String   @id @default(cuid())
+  userId    String
+  content   String                    // "What are you into" — short headline
+  note      String   @db.Text         // "Why" — up to 250 words
+  url       String?                   // Optional link
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reads     JamRead[]
+}
+
+model JamRead {
+  id     String   @id @default(cuid())
+  jamId  String
+  userId String
+  readAt DateTime @default(now())
+
+  jam    Jam      @relation(fields: [jamId], references: [id], onDelete: Cascade)
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([jamId, userId])
+}
+```
+
+**Also add to `User` model:**
+```prisma
+jams     Jam[]
+jamReads JamRead[]
+```
+
+**After schema**: Team will wire up `POST /api/jams`, `GET /api/users/[id]/jams`, and connect the profile page server component.
+
+---
+
+## 4. Fix Supabase connection pool — switch to Transaction mode
+
+**What's happening**: Intermittent `MaxClientsInSessionMode: max clients reached` errors (seen on read page, probably elsewhere). PgBouncer is in Session mode, which holds a dedicated connection per client. Serverless functions spin up many clients in parallel and exhaust the pool.
+
+**Fix** (2 minutes in Supabase dashboard + env var update):
+1. In Supabase project settings → Database → Connection Pooling → switch mode to **Transaction**
+2. Update `DATABASE_URL` in all environments (local `.env.development`, Vercel staging + prod) to use port **6543** instead of 5432, and append `?pgbouncer=true&connection_limit=1`
+3. No code changes needed — Riff doesn't use interactive Prisma transactions, so the switch is safe
+
+---
+
+## 5. Set `CRON_SECRET` in Vercel project settings
+
+Required for the daily comment digest cron (`/api/cron/daily-comment-notifications`) from PR #59 to work in production. Derek flagged this in the PR notes.

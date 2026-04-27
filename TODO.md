@@ -121,7 +121,7 @@ Last updated: March 30, 2026 (modal cleanup, reveal todos, notification todos)
 ## Backlog (nice to have)
 
 - [ ] Collections system (personal, group, circle)
-- [ ] Multi-level sharing UI (CLUB, RIFF, INDIVIDUAL, PUBLIC)
+- [ ] 🔨 @jarric — Multi-level sharing UI (CLUB, RIFF, INDIVIDUAL, PUBLIC)
 - [ ] Permission helpers / reusable middleware
 - [ ] Refactor editor: extract shared tiptap logic into `useRiffEditor` hook + unified `EditorToolbar`
 

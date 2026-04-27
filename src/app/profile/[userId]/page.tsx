@@ -67,6 +67,11 @@ export default async function ProfilePageRoute({
         where: { submittedAt: { not: null } },
         select: { riff: { select: { status: true, clubId: true } } },
       },
+      newShares: {
+        where: { shareType: "PUBLIC" },
+        select: { id: true },
+        take: 1,
+      },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -84,6 +89,10 @@ export default async function ProfilePageRoute({
         (r.riff.status === "REVEALED" || r.riff.status === "COMPLETED") &&
         (isOwnProfile || viewerClubIds.has(r.riff.clubId))
     ),
+    // Viewer has club access if they're a member of any club this piece's riff belongs to
+    viewerHasClubAccess: p.riffs.some((r) => viewerClubIds.has(r.riff.clubId)),
+    isPublic: p.newShares.length > 0,
+    publicShareId: p.newShares[0]?.id ?? null,
   }));
 
   const pieceCount = pieces.length;

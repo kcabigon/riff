@@ -14,6 +14,9 @@ export interface Piece {
   coverImage: string | null;
   currentContent: string | null;
   isRevealed: boolean;
+  viewerHasClubAccess: boolean;
+  isPublic: boolean;
+  publicShareId: string | null;
 }
 
 const PLACEHOLDER_COLORS = [
@@ -72,6 +75,36 @@ function LockIcon({ style }: { style?: React.CSSProperties }) {
   );
 }
 
+function PublicBadge({
+  top = "8px",
+  left = "8px",
+}: {
+  top?: string;
+  left?: string;
+}) {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top,
+        left,
+        zIndex: 3,
+        backgroundColor: "#00FF66",
+        border: "2px solid #000000",
+        padding: "4px 8px",
+        fontFamily: "var(--font-dm-sans)",
+        fontSize: "11px",
+        fontWeight: 700,
+        color: "#000000",
+        textTransform: "uppercase",
+        letterSpacing: "0.08em",
+      }}
+    >
+      Public
+    </div>
+  );
+}
+
 function LockOverlay() {
   return (
     <div
@@ -103,11 +136,13 @@ export function FeaturedPiece({
   onClick,
   isOwnProfile,
   onDelete,
+  onShare,
 }: {
   piece: Piece;
   onClick: () => void;
   isOwnProfile: boolean;
   onDelete: () => void;
+  onShare: (pieceId: string) => void;
 }) {
   const [isHovered, setIsHovered] = useState(false);
   const router = useRouter();
@@ -122,6 +157,15 @@ export function FeaturedPiece({
       label: "Edit",
       onClick: () => router.push(`/write/${piece.id}`),
     },
+    ...(piece.isRevealed
+      ? [
+          {
+            type: "action" as const,
+            label: "Access",
+            onClick: () => onShare(piece.id),
+          },
+        ]
+      : []),
     { type: "divider" },
     {
       type: "action",
@@ -182,6 +226,8 @@ export function FeaturedPiece({
             <LockIcon />
           </div>
         )}
+
+        {piece.isPublic && <PublicBadge top="12px" left="12px" />}
 
         <div
           style={{
@@ -258,11 +304,15 @@ export function FeaturedPiece({
 export default function PiecesGrid({
   pieces,
   isOwnProfile,
+  profileUserId,
   onDelete,
+  onShare,
 }: {
   pieces: Piece[];
   isOwnProfile: boolean;
+  profileUserId: string;
   onDelete: (id: string, title: string | null) => void;
+  onShare: (pieceId: string) => void;
 }) {
   const router = useRouter();
 
@@ -272,6 +322,15 @@ export default function PiecesGrid({
       label: "Edit",
       onClick: () => router.push(`/write/${piece.id}`),
     },
+    ...(piece.isRevealed
+      ? [
+          {
+            type: "action" as const,
+            label: "Access",
+            onClick: () => onShare(piece.id),
+          },
+        ]
+      : []),
     { type: "divider" },
     {
       type: "action",
@@ -300,11 +359,18 @@ export default function PiecesGrid({
       <div className="pieces-grid">
         {pieces.map((piece) => {
           const isLocked = !piece.isRevealed;
-          const handleClick = isLocked
+          const handleClick = !piece.isRevealed
             ? isOwnProfile
               ? () => router.push(`/write/${piece.id}`)
               : undefined
-            : () => router.push(`/read/${piece.id}`);
+            : isOwnProfile || piece.viewerHasClubAccess
+              ? () =>
+                  router.push(
+                    `/read/${piece.id}?from=profile&userId=${profileUserId}`
+                  )
+              : piece.isPublic
+                ? () => router.push(`/p/${piece.id}`)
+                : undefined;
 
           return (
             <div key={piece.id} style={{ position: "relative" }}>
@@ -325,7 +391,10 @@ export default function PiecesGrid({
                   />
                 </div>
               )}
-              {isLocked && !isOwnProfile && <LockOverlay />}
+              {piece.isPublic && <PublicBadge />}
+              {isLocked && !isOwnProfile && !piece.viewerHasClubAccess && (
+                <LockOverlay />
+              )}
               <PieceCard
                 piece={{
                   id: piece.id,

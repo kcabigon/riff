@@ -146,10 +146,12 @@ export default function ClubPageLayout({
     router.refresh();
   }, []);
 
-  // After creating a riff, show the "what's next" modal then refresh
+  // After creating a riff, refresh so the new riff + host participation are reflected,
+  // then show the "what's next" modal if applicable
   const handleRiffCreated = useCallback((riffId: string) => {
     setIsCreateRiffModalOpen(false);
     setNewRiffId(riffId);
+    router.refresh();
     if (canShowWhatsNext("host_started_riff")) {
       setWhatsNextTrigger("host_started_riff");
     }

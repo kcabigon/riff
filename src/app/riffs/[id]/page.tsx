@@ -143,8 +143,10 @@ export default async function RiffPage({
     isFirstReveal = !isAdmin && reads.length === 0 && isJoined;
 
     // Fetch all comment timestamps for this riff in one query
+    // Exclude the current user's own comments — leaving a comment shouldn't
+    // trigger a "New" badge on your own piece
     const comments = await prisma.comment.findMany({
-      where: { riffId: id },
+      where: { riffId: id, authorId: { not: userId } },
       select: { pieceId: true, createdAt: true },
     });
 
