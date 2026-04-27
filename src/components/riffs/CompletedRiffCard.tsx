@@ -8,7 +8,6 @@ import { getRiffDisplayTitle } from "@/lib/riff-utils";
 interface CompletedRiffPiece {
   id: string;
   title: string;
-  currentContent: string;
   coverImage?: string | null;
   wordCount: number;
 }
