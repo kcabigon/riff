@@ -50,7 +50,18 @@ export default function OnboardingCreateClubPage() {
         <div
           style={{ width: "100%", display: "flex", alignItems: "flex-start" }}
         >
-          <BackButton href="/onboarding/club-choice" />
+          <BackButton
+            onClick={() => {
+              const fromSameApp =
+                document.referrer &&
+                new URL(document.referrer).origin === window.location.origin;
+              if (fromSameApp) {
+                router.back();
+              } else {
+                router.push("/onboarding/club-choice");
+              }
+            }}
+          />
         </div>
 
         {/* Form */}
