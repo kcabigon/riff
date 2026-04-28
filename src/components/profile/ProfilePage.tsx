@@ -7,6 +7,7 @@ import PiecesGrid, { FeaturedPiece } from "./tabs/PiecesGrid";
 import type { Piece } from "./tabs/PiecesGrid";
 import DeletePieceModal from "@/components/profile/DeletePieceModal";
 import ShareModal, { PublicShare } from "@/components/profile/ShareModal";
+import NoiseBackground from "@/components/NoiseBackground";
 
 interface ProfilePageProps {
   user: {
@@ -62,8 +63,17 @@ export default function ProfilePage({
 
   const [featured, ...rest] = pieces;
 
+  const isEmpty = pieces.length === 0;
+
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        backgroundColor: "#FFFFFF",
+        position: isEmpty ? "relative" : undefined,
+      }}
+    >
+      {isEmpty && <NoiseBackground fillMode="tile" />}
       {deleteTarget && (
         <DeletePieceModal
           pieceId={deleteTarget.id}
@@ -105,30 +115,49 @@ export default function ProfilePage({
       />
 
       {/* Empty state */}
-      {pieces.length === 0 && (
-        <div style={{ padding: "64px 24px", textAlign: "center" }}>
-          <p
+      {isEmpty && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            padding: "64px 24px",
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
+          <div
             style={{
-              fontFamily: "var(--font-dm-serif-text)",
-              fontSize: "24px",
-              fontWeight: 400,
-              color: "#000000",
-              margin: "0 0 8px 0",
+              backgroundColor: "#FFFFFF",
+              padding: "32px",
+              maxWidth: "480px",
+              width: "100%",
+              textAlign: "center",
             }}
           >
-            Every great writer starts with a blank page.
-          </p>
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              color: "#808080",
-              margin: 0,
-            }}
-          >
-            Pieces coming soon.
-          </p>
+            <p
+              style={{
+                fontFamily: "var(--font-dm-serif-text)",
+                fontSize: "24px",
+                fontWeight: 400,
+                color: "#000000",
+                margin: "0 0 24px 0",
+              }}
+            >
+              Every writer starts with a blank page.
+            </p>
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "16px",
+                fontWeight: 300,
+                color: "#000000",
+                margin: 0,
+                lineHeight: "1.6",
+              }}
+            >
+              This page will look a lot better with pieces on it.
+            </p>
+          </div>
         </div>
       )}
 
@@ -173,49 +202,6 @@ export default function ProfilePage({
             onShare={(pieceId) => setShareTarget(pieceId)}
           />
         )}
-      </div>
-
-      {/* Footer: stats */}
-      <div
-        style={{
-          borderTop: "1px solid #E6E6E6",
-          padding: "16px 24px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "8px",
-        }}
-      >
-        <span
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
-            fontWeight: 300,
-            color: "#808080",
-          }}
-        >
-          {stats.pieceCount} pieces
-        </span>
-        <span
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
-            fontWeight: 300,
-            color: "#808080",
-          }}
-        >
-          &middot;
-        </span>
-        <span
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
-            fontWeight: 300,
-            color: "#808080",
-          }}
-        >
-          {stats.totalWordCount.toLocaleString()} words
-        </span>
       </div>
     </div>
   );
