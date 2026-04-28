@@ -1,8 +1,6 @@
 "use client";
 
-import { extractFirstImage } from "@/lib/extract-first-image";
-
-// Placeholder color palette for pieces without images
+// Placeholder color palette for pieces without a cover image
 const PLACEHOLDER_COLORS = [
   "#E8E0D5",
   "#D5E0E8",
@@ -14,7 +12,6 @@ const PLACEHOLDER_COLORS = [
 
 interface MosaicPiece {
   id: string;
-  currentContent: string;
   coverImage?: string | null;
 }
 
@@ -52,11 +49,9 @@ export default function MosaicCollage({
       }}
     >
       {pieces.map((piece, index) => {
-        const imageUrl =
-          piece.coverImage || extractFirstImage(piece.currentContent);
+        const imageUrl = piece.coverImage;
         const isPlaceholder = !imageUrl;
-        const bgColor =
-          PLACEHOLDER_COLORS[index % PLACEHOLDER_COLORS.length];
+        const bgColor = PLACEHOLDER_COLORS[index % PLACEHOLDER_COLORS.length];
 
         return (
           <div

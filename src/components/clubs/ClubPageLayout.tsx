@@ -46,7 +46,6 @@ interface RiffPiece {
     id: string;
     title: string;
     authorId: string;
-    currentContent: string;
     coverImage?: string | null;
     wordCount: number;
   };
@@ -159,6 +158,26 @@ export default function ClubPageLayout({
       onClick: () => setIsDeleteClubModalOpen(true),
     },
   ];
+
+  // Returns the count of submitted pieces authored by someone other than the current user.
+  // Used to determine read progress — own pieces are never "unread" and don't need to be read.
+  const otherSubmittedCount = (riff: Riff) =>
+    getSubmittedPieces(riff.pieces).filter(
+      (p) => p.piece.authorId !== currentUserId
+    ).length;
+
+  // A riff is fully read when the user has read every friend's piece.
+  // Special case: if the user is the sole submitter there are no friend pieces to read —
+  // treat as done as long as at least one piece exists (avoids the submittedCount=0 guard
+  // in isRiffFullyRead incorrectly hiding the riff from Past Riffs).
+  const isFullyReadForUser = (riff: Riff) => {
+    const others = otherSubmittedCount(riff);
+    if (others === 0) return getSubmittedPieces(riff.pieces).length > 0;
+    return isRiffFullyRead(riff.id, readCounts, others);
+  };
+
+  const hasUnreadForUser = (riff: Riff) =>
+    hasUnreadPieces(riff.id, readCounts, otherSubmittedCount(riff));
 
   // After joining a riff, refresh the page to get updated state
   const handleJoinRiff = useCallback(() => {
@@ -611,13 +630,7 @@ export default function ClubPageLayout({
 
         {/* Current Read section — shown above Current Riff when there are unread revealed riffs */}
         {(() => {
-          const unfinishedRevealed = revealedRiffs.filter((r) =>
-            hasUnreadPieces(
-              r.id,
-              readCounts,
-              getSubmittedPieces(r.pieces).length
-            )
-          );
+          const unfinishedRevealed = revealedRiffs.filter(hasUnreadForUser);
           if (unfinishedRevealed.length === 0) return null;
           return (
             <div style={{ marginBottom: "48px" }}>
@@ -645,7 +658,7 @@ export default function ClubPageLayout({
                     key={riff.id}
                     riff={riff}
                     readCount={readCounts[riff.id] || 0}
-                    totalPieces={getSubmittedPieces(riff.pieces).length}
+                    totalPieces={otherSubmittedCount(riff)}
                   />
                 ))}
               </div>
@@ -655,13 +668,7 @@ export default function ClubPageLayout({
 
         {/* Current Riff section — hidden for members when there's a current read and no active riff */}
         {(() => {
-          const hasCurrentRead = revealedRiffs.some((r) =>
-            hasUnreadPieces(
-              r.id,
-              readCounts,
-              getSubmittedPieces(r.pieces).length
-            )
-          );
+          const hasCurrentRead = revealedRiffs.some(hasUnreadForUser);
           const showSection = activeRiff || isAdmin || !hasCurrentRead;
           if (!showSection) return null;
 
@@ -721,13 +728,7 @@ export default function ClubPageLayout({
 
         {/* Past Riffs section — includes COMPLETED + pre-join REVEALED + fully-read REVEALED riffs */}
         {(() => {
-          const fullyReadRevealed = revealedRiffs.filter((r) =>
-            isRiffFullyRead(
-              r.id,
-              readCounts,
-              getSubmittedPieces(r.pieces).length
-            )
-          );
+          const fullyReadRevealed = revealedRiffs.filter(isFullyReadForUser);
           const allPast = [
             ...completedRiffs,
             ...pastRevealedRiffs,
@@ -760,13 +761,7 @@ export default function ClubPageLayout({
               {[
                 ...completedRiffs,
                 ...pastRevealedRiffs,
-                ...revealedRiffs.filter((r) =>
-                  isRiffFullyRead(
-                    r.id,
-                    readCounts,
-                    getSubmittedPieces(r.pieces).length
-                  )
-                ),
+                ...revealedRiffs.filter(isFullyReadForUser),
               ]
                 .sort((a, b) => {
                   if (a.volumeNumber != null && b.volumeNumber != null) {
@@ -792,7 +787,6 @@ export default function ClubPageLayout({
                     pieces={getSubmittedPieces(riff.pieces).map((p) => ({
                       id: p.piece.id,
                       title: p.piece.title,
-                      currentContent: p.piece.currentContent,
                       coverImage: p.piece.coverImage,
                       wordCount: p.piece.wordCount,
                     }))}

@@ -75,7 +75,6 @@ export default async function ClubPage({
                 id: true,
                 title: true,
                 authorId: true,
-                currentContent: true,
                 coverImage: true,
                 wordCount: true,
               },
@@ -142,31 +141,31 @@ export default async function ClubPage({
     .filter((r) => r.status === "COMPLETED")
     .map(serializeRiff);
 
-  // Fetch read counts for post-join revealed riffs only (per-user)
-  // Own pieces are treated as auto-read and excluded from the "to read" total
+  // Fetch read counts for post-join revealed riffs only (per-user).
+  // Own pieces are excluded from both the read count and the total — a riff is
+  // "fully read" when every *other* participant's piece has been read. This avoids
+  // double-counting: navigating to your own piece creates a PieceRead record, which
+  // would collide with the old +1 hack and prematurely move the riff to Past Riffs.
   const revealedRiffIds = revealedRiffs.map((r) => r.id);
   let readCounts: Record<string, number> = {};
   if (revealedRiffIds.length > 0) {
+    const ownPieceIds = revealedRiffs.flatMap((r) =>
+      r.pieces
+        .filter((p) => p.piece.authorId === userId && p.submittedAt !== null)
+        .map((p) => p.piece.id)
+    );
     const readGroups = await prisma.pieceRead.groupBy({
       by: ["riffId"],
       where: {
         userId,
         riffId: { in: revealedRiffIds },
+        ...(ownPieceIds.length > 0 && { pieceId: { notIn: ownPieceIds } }),
       },
       _count: { pieceId: true },
     });
     readCounts = Object.fromEntries(
       readGroups.map((g) => [g.riffId, g._count.pieceId])
     );
-    // Add own piece to readCount so it doesn't count as unread
-    for (const riff of revealedRiffs) {
-      const hasOwnPiece = riff.pieces.some(
-        (p) => p.piece.authorId === userId && p.submittedAt !== null
-      );
-      if (hasOwnPiece) {
-        readCounts[riff.id] = (readCounts[riff.id] || 0) + 1;
-      }
-    }
   }
 
   const isAdmin = club.adminId === userId;
