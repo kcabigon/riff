@@ -29,6 +29,7 @@ import WhatsNextModal, {
   type WhatsNextTrigger,
 } from "@/components/shared/WhatsNextModal";
 import { canShowWhatsNext } from "@/lib/whatsNextGuard";
+import DeleteClubConfirmModal from "@/components/clubs/DeleteClubConfirmModal";
 
 interface ClubMember {
   user: {
@@ -124,6 +125,7 @@ export default function ClubPageLayout({
   const [isRevealing, setIsRevealing] = useState(false);
   const [isClubDetailsModalOpen, setIsClubDetailsModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [isDeleteClubModalOpen, setIsDeleteClubModalOpen] = useState(false);
   const [currentActiveRiff, setCurrentActiveRiff] = useState<Riff | null>(
     activeRiff
   );
@@ -136,6 +138,26 @@ export default function ClubPageLayout({
   const [newRiffId, setNewRiffId] = useState<string | null>(null);
   const handleAvatarClick = useProfileNavigation();
   const isMobile = useIsMobile();
+
+  const adminMenuItems = [
+    {
+      type: "action" as const,
+      label: "Club details",
+      onClick: () => setIsClubDetailsModalOpen(true),
+    },
+    {
+      type: "action" as const,
+      label: "Invite friends",
+      onClick: () => setIsInviteModalOpen(true),
+    },
+    { type: "divider" as const },
+    {
+      type: "action" as const,
+      label: "Delete club",
+      color: "#DC2626",
+      onClick: () => setIsDeleteClubModalOpen(true),
+    },
+  ];
 
   // Returns the count of submitted pieces authored by someone other than the current user.
   // Used to determine read progress — own pieces are never "unread" and don't need to be read.
@@ -286,18 +308,7 @@ export default function ClubPageLayout({
                   {isAdmin && (
                     <ThreeDotButton
                       variant="dark"
-                      items={[
-                        {
-                          type: "action",
-                          label: "Club details",
-                          onClick: () => setIsClubDetailsModalOpen(true),
-                        },
-                        {
-                          type: "action",
-                          label: "Invite friends",
-                          onClick: () => setIsInviteModalOpen(true),
-                        },
-                      ]}
+                      items={adminMenuItems}
                       align="left"
                     />
                   )}
@@ -409,18 +420,7 @@ export default function ClubPageLayout({
             {isAdmin && (
               <ThreeDotButton
                 variant="light"
-                items={[
-                  {
-                    type: "action",
-                    label: "Club details",
-                    onClick: () => setIsClubDetailsModalOpen(true),
-                  },
-                  {
-                    type: "action",
-                    label: "Invite friends",
-                    onClick: () => setIsInviteModalOpen(true),
-                  },
-                ]}
+                items={adminMenuItems}
                 align="left"
               />
             )}
@@ -531,18 +531,7 @@ export default function ClubPageLayout({
               {isAdmin && (
                 <ThreeDotButton
                   variant="light"
-                  items={[
-                    {
-                      type: "action",
-                      label: "Club details",
-                      onClick: () => setIsClubDetailsModalOpen(true),
-                    },
-                    {
-                      type: "action",
-                      label: "Invite friends",
-                      onClick: () => setIsInviteModalOpen(true),
-                    },
-                  ]}
+                  items={adminMenuItems}
                   align="left"
                 />
               )}
@@ -831,6 +820,21 @@ export default function ClubPageLayout({
           description: clubDescription,
           bannerImage: clubBannerImage,
         }}
+      />
+
+      <DeleteClubConfirmModal
+        isOpen={isDeleteClubModalOpen}
+        onClose={() => setIsDeleteClubModalOpen(false)}
+        onDeleted={() => {
+          const otherClub = userClubs.find((c) => c.id !== club.id);
+          if (otherClub) {
+            router.push(`/clubs/${otherClub.id}`);
+          } else {
+            router.push("/no-club");
+          }
+        }}
+        clubId={club.id}
+        clubName={clubName}
       />
 
       {/* Invite Friends Modal */}

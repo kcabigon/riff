@@ -25,7 +25,7 @@ export default async function ClubPage({
   // and riffs all in parallel. If club is null, user is not a member of this club.
   const [club, userClubs, riffs] = await Promise.all([
     prisma.club.findFirst({
-      where: { id, members: { some: { userId } } },
+      where: { id, members: { some: { userId } }, isArchived: false },
       select: {
         id: true,
         name: true,
@@ -88,9 +88,9 @@ export default async function ClubPage({
   ]);
 
   if (!club) {
-    // User is not a member of this club — check if they have any club at all
+    // Club is archived or user is not a member — find another active club
     const anyMembership = await prisma.clubMember.findFirst({
-      where: { userId },
+      where: { userId, club: { isArchived: false } },
       include: { club: { select: { id: true } } },
     });
 
@@ -98,7 +98,7 @@ export default async function ClubPage({
       redirect(`/clubs/${anyMembership.club.id}`);
     }
 
-    redirect("/onboarding/club-choice");
+    redirect("/no-club");
   }
 
   // joinedAt is available from the members list already fetched above
