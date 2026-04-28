@@ -140,6 +140,26 @@ export default function ClubPageLayout({
   const handleAvatarClick = useProfileNavigation();
   const isMobile = useIsMobile();
 
+  const adminMenuItems = [
+    {
+      type: "action" as const,
+      label: "Club details",
+      onClick: () => setIsClubDetailsModalOpen(true),
+    },
+    {
+      type: "action" as const,
+      label: "Invite friends",
+      onClick: () => setIsInviteModalOpen(true),
+    },
+    { type: "divider" as const },
+    {
+      type: "action" as const,
+      label: "Delete club",
+      color: "#DC2626",
+      onClick: () => setIsDeleteClubModalOpen(true),
+    },
+  ];
+
   // After joining a riff, refresh the page to get updated state
   const handleJoinRiff = useCallback(() => {
     if (canShowWhatsNext("member_joined_riff")) {
@@ -269,25 +289,7 @@ export default function ClubPageLayout({
                   {isAdmin && (
                     <ThreeDotButton
                       variant="dark"
-                      items={[
-                        {
-                          type: "action",
-                          label: "Club details",
-                          onClick: () => setIsClubDetailsModalOpen(true),
-                        },
-                        {
-                          type: "action",
-                          label: "Invite friends",
-                          onClick: () => setIsInviteModalOpen(true),
-                        },
-                        { type: "divider" },
-                        {
-                          type: "action",
-                          label: "Delete club",
-                          color: "#DC2626",
-                          onClick: () => setIsDeleteClubModalOpen(true),
-                        },
-                      ]}
+                      items={adminMenuItems}
                       align="left"
                     />
                   )}
@@ -399,25 +401,7 @@ export default function ClubPageLayout({
             {isAdmin && (
               <ThreeDotButton
                 variant="light"
-                items={[
-                  {
-                    type: "action",
-                    label: "Club details",
-                    onClick: () => setIsClubDetailsModalOpen(true),
-                  },
-                  {
-                    type: "action",
-                    label: "Invite friends",
-                    onClick: () => setIsInviteModalOpen(true),
-                  },
-                  { type: "divider" },
-                  {
-                    type: "action",
-                    label: "Delete club",
-                    color: "#DC2626",
-                    onClick: () => setIsDeleteClubModalOpen(true),
-                  },
-                ]}
+                items={adminMenuItems}
                 align="left"
               />
             )}
@@ -528,25 +512,7 @@ export default function ClubPageLayout({
               {isAdmin && (
                 <ThreeDotButton
                   variant="light"
-                  items={[
-                    {
-                      type: "action",
-                      label: "Club details",
-                      onClick: () => setIsClubDetailsModalOpen(true),
-                    },
-                    {
-                      type: "action",
-                      label: "Invite friends",
-                      onClick: () => setIsInviteModalOpen(true),
-                    },
-                    { type: "divider" },
-                    {
-                      type: "action",
-                      label: "Delete club",
-                      color: "#DC2626",
-                      onClick: () => setIsDeleteClubModalOpen(true),
-                    },
-                  ]}
+                  items={adminMenuItems}
                   align="left"
                 />
               )}

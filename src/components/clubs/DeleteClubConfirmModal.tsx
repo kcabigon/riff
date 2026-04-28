@@ -116,6 +116,7 @@ export default function DeleteClubConfirmModal({
           Type <strong>{clubName}</strong> to confirm
         </label>
         <input
+          autoFocus
           type="text"
           value={confirmText}
           onChange={(e) => setConfirmText(e.target.value)}
