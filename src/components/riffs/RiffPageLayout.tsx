@@ -509,16 +509,6 @@ export default function RiffPageLayout({
           </div>
         </div>
 
-        {/* Contribution strip for REVEALED riffs */}
-        {riff.status === "REVEALED" && contributionData.length > 0 && (
-          <div style={{ marginTop: "48px" }}>
-            <ContributionStrip
-              members={contributionData}
-              totalPieces={totalPieces}
-            />
-          </div>
-        )}
-
         {/* Pieces gallery for REVEALED riffs */}
         {riff.status === "REVEALED" && riff.pieces.length > 0 && (
           <div style={{ marginTop: "48px" }}>
@@ -557,6 +547,16 @@ export default function RiffPageLayout({
                 />
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Contribution strip for REVEALED riffs — below pieces so readers see the grid first */}
+        {riff.status === "REVEALED" && contributionData.length > 0 && (
+          <div style={{ marginTop: "48px" }}>
+            <ContributionStrip
+              members={contributionData}
+              totalPieces={totalPieces}
+            />
           </div>
         )}
 

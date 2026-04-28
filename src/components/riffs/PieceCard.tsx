@@ -90,7 +90,8 @@ export default function PieceCard({
       {/* Own piece — comment count top-right */}
       {isOwnPiece && (piece.commentCount ?? 0) > 0 && (
         <Badge variant="yellow" style={{ zIndex: 2 }}>
-          {piece.commentCount} comments
+          {piece.commentCount}{" "}
+          {piece.commentCount === 1 ? "comment" : "comments"}
         </Badge>
       )}
 
