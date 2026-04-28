@@ -29,6 +29,7 @@ import WhatsNextModal, {
   type WhatsNextTrigger,
 } from "@/components/shared/WhatsNextModal";
 import { canShowWhatsNext } from "@/lib/whatsNextGuard";
+import DeleteClubConfirmModal from "@/components/clubs/DeleteClubConfirmModal";
 
 interface ClubMember {
   user: {
@@ -125,6 +126,7 @@ export default function ClubPageLayout({
   const [isRevealing, setIsRevealing] = useState(false);
   const [isClubDetailsModalOpen, setIsClubDetailsModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [isDeleteClubModalOpen, setIsDeleteClubModalOpen] = useState(false);
   const [currentActiveRiff, setCurrentActiveRiff] = useState<Riff | null>(
     activeRiff
   );
@@ -278,6 +280,13 @@ export default function ClubPageLayout({
                           label: "Invite friends",
                           onClick: () => setIsInviteModalOpen(true),
                         },
+                        { type: "divider" },
+                        {
+                          type: "action",
+                          label: "Delete club",
+                          color: "#DC2626",
+                          onClick: () => setIsDeleteClubModalOpen(true),
+                        },
                       ]}
                       align="left"
                     />
@@ -401,6 +410,13 @@ export default function ClubPageLayout({
                     label: "Invite friends",
                     onClick: () => setIsInviteModalOpen(true),
                   },
+                  { type: "divider" },
+                  {
+                    type: "action",
+                    label: "Delete club",
+                    color: "#DC2626",
+                    onClick: () => setIsDeleteClubModalOpen(true),
+                  },
                 ]}
                 align="left"
               />
@@ -522,6 +538,13 @@ export default function ClubPageLayout({
                       type: "action",
                       label: "Invite friends",
                       onClick: () => setIsInviteModalOpen(true),
+                    },
+                    { type: "divider" },
+                    {
+                      type: "action",
+                      label: "Delete club",
+                      color: "#DC2626",
+                      onClick: () => setIsDeleteClubModalOpen(true),
                     },
                   ]}
                   align="left"
@@ -837,6 +860,21 @@ export default function ClubPageLayout({
           description: clubDescription,
           bannerImage: clubBannerImage,
         }}
+      />
+
+      <DeleteClubConfirmModal
+        isOpen={isDeleteClubModalOpen}
+        onClose={() => setIsDeleteClubModalOpen(false)}
+        onDeleted={() => {
+          const otherClub = userClubs.find((c) => c.id !== club.id);
+          if (otherClub) {
+            router.push(`/clubs/${otherClub.id}`);
+          } else {
+            router.push("/no-club");
+          }
+        }}
+        clubId={club.id}
+        clubName={clubName}
       />
 
       {/* Invite Friends Modal */}
