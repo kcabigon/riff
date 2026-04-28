@@ -75,7 +75,6 @@ export default async function ClubPage({
                 id: true,
                 title: true,
                 authorId: true,
-                currentContent: true,
                 coverImage: true,
                 wordCount: true,
               },
