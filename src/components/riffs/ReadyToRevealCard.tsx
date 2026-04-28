@@ -25,7 +25,6 @@ interface ReadyToRevealCardProps {
       piece: {
         id: string;
         title: string;
-        currentContent: string;
         coverImage?: string | null;
         wordCount: number;
         authorId: string;
@@ -82,7 +81,6 @@ export default function ReadyToRevealCard({
         <MosaicCollage
           pieces={riff.pieces.map((p) => ({
             id: p.piece.id,
-            currentContent: p.piece.currentContent,
             coverImage: p.piece.coverImage,
           }))}
           width={cardWidth}
