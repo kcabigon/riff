@@ -94,6 +94,27 @@ export default function OnboardingClubChoicePage() {
         >
           Wait, what&apos;s a write club?
         </button>
+
+        {/* Skip link — for users waiting on an invite */}
+        <button
+          onClick={() => router.push("/no-club")}
+          style={{
+            background: "none",
+            border: "none",
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "13px",
+            fontWeight: 300,
+            color: "#666666",
+            cursor: "pointer",
+            padding: 0,
+            textDecoration: "underline",
+            textDecorationColor: "#666666",
+            textAlign: "center",
+            marginTop: "-8px",
+          }}
+        >
+          I&apos;ll wait for an invite link
+        </button>
       </div>
 
       <ConversionModal
