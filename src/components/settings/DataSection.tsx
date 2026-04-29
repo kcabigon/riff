@@ -32,17 +32,17 @@ export default function DataSection() {
 
   return (
     <section>
-      <h2
+      <h1
         style={{
           fontFamily: "var(--font-dm-serif-text)",
-          fontSize: "24px",
+          fontSize: "32px",
           fontWeight: 400,
           color: "#000000",
           margin: "0 0 24px 0",
         }}
       >
         Your data
-      </h2>
+      </h1>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
         {/* Export */}

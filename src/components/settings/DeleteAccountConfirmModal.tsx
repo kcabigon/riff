@@ -121,7 +121,7 @@ export default function DeleteAccountConfirmModal({
           onKeyDown={(e) => e.key === "Enter" && handleDelete()}
           placeholder="DELETE"
           autoComplete="off"
-          style={isConfirmed ? { borderColor: "#DC2626" } : undefined}
+          style={isConfirmed ? { borderColor: "#DC2626" } : undefined} // override border to red when confirmed — TextInput's focus/blur handlers update it imperatively
         />
       </div>
 
