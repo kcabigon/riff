@@ -101,7 +101,15 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
       const update = () => {
         const w = el.clientWidth;
         const h = Math.round(w / aspectRatio);
-        setCropSize({ width: w, height: h });
+        const containerH = el.clientHeight;
+        // For portrait ratios the crop box can be taller than the container.
+        // Constrain by height in that case so the selection stays visible.
+        if (h > containerH) {
+          const constrainedW = Math.round(containerH * aspectRatio);
+          setCropSize({ width: constrainedW, height: containerH });
+        } else {
+          setCropSize({ width: w, height: h });
+        }
       };
       update();
       const observer = new ResizeObserver(update);
@@ -250,8 +258,10 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
     );
 
     // Cropper container height. cropperHeight overrides if provided.
+    // Portrait ratios (< 1) need more vertical space than landscape.
     const computedCropperHeight =
-      cropperHeight || (aspectRatio >= 2 ? "240px" : "300px");
+      cropperHeight ||
+      (aspectRatio >= 2 ? "240px" : aspectRatio >= 1 ? "300px" : "380px");
 
     return (
       <div style={{ width: "100%" }}>
