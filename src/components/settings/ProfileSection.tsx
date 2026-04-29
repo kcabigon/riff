@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Avatar from "@/components/shared/Avatar";
 import PrimaryButton from "@/components/PrimaryButton";
+import ImageUploadModal from "@/components/shared/ImageUploadModal";
 
 interface ProfileSectionProps {
   user: {
@@ -22,43 +23,10 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
   const [lastName, setLastName] = useState(user.lastName || "");
   const [bio, setBio] = useState(user.bio || "");
   const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl || "");
-  const [isUploading, setIsUploading] = useState(false);
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
-
-  const handleAvatarClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Reset input so same file can be re-selected
-    e.target.value = "";
-
-    setIsUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const res = await fetch("/api/upload/image", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setAvatarUrl(data.url);
-      }
-    } catch {
-      // silent
-    } finally {
-      setIsUploading(false);
-    }
-  };
 
   const handleRemoveAvatar = () => {
     setAvatarUrl("");
@@ -144,9 +112,9 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
           </label>
           <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
             <div
-              onClick={handleAvatarClick}
+              onClick={() => setIsAvatarModalOpen(true)}
               style={{
-                cursor: isUploading ? "wait" : "pointer",
+                cursor: "pointer",
                 position: "relative",
                 width: "72px",
                 height: "72px",
@@ -163,21 +131,17 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
                   position: "absolute",
                   inset: 0,
                   borderRadius: "64px",
-                  backgroundColor: isUploading
-                    ? "rgba(0,0,0,0.4)"
-                    : "rgba(0,0,0,0)",
+                  backgroundColor: "rgba(0,0,0,0)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   transition: "background-color 0.15s",
                 }}
                 onMouseEnter={(e) => {
-                  if (!isUploading)
-                    e.currentTarget.style.backgroundColor = "rgba(0,0,0,0.4)";
+                  e.currentTarget.style.backgroundColor = "rgba(0,0,0,0.4)";
                 }}
                 onMouseLeave={(e) => {
-                  if (!isUploading)
-                    e.currentTarget.style.backgroundColor = "rgba(0,0,0,0)";
+                  e.currentTarget.style.backgroundColor = "rgba(0,0,0,0)";
                 }}
               >
                 <span
@@ -186,24 +150,27 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
                     fontFamily: "var(--font-dm-sans)",
                     fontSize: "11px",
                     fontWeight: 500,
-                    opacity: isUploading ? 1 : 0,
+                    opacity: 0,
                     transition: "opacity 0.15s",
                   }}
                   className="avatar-upload-label"
                 >
-                  {isUploading ? "..." : "Edit"}
+                  Edit
                 </span>
               </div>
               <style>{`
                 div:hover .avatar-upload-label { opacity: 1 !important; }
               `}</style>
             </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/gif,image/webp"
-              onChange={handleFileChange}
-              style={{ display: "none" }}
+            <ImageUploadModal
+              isOpen={isAvatarModalOpen}
+              onClose={() => setIsAvatarModalOpen(false)}
+              onSelect={(url) => setAvatarUrl(url)}
+              title="Avatar upload"
+              aspectRatio={1}
+              cropShape="round"
+              currentImage={avatarUrl || null}
+              removeLabel="Remove photo"
             />
             {avatarUrl && (
               <button

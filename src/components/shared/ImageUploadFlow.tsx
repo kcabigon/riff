@@ -3,9 +3,7 @@
 import {
   useState,
   useCallback,
-  useEffect,
   useImperativeHandle,
-  useRef,
   forwardRef,
   type ComponentType,
 } from "react";
@@ -90,25 +88,6 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
     const [zoom, setZoom] = useState(1);
     const [croppedArea, setCroppedArea] = useState<Area | null>(null);
     const [isUploading, setIsUploading] = useState(false);
-    const [cropSize, setCropSize] = useState<
-      { width: number; height: number } | undefined
-    >(undefined);
-    const cropContainerRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-      const el = cropContainerRef.current;
-      if (!el || !cropSrc) return;
-      const update = () => {
-        const w = el.clientWidth;
-        const h = Math.round(w / aspectRatio);
-        setCropSize({ width: w, height: h });
-      };
-      update();
-      const observer = new ResizeObserver(update);
-      observer.observe(el);
-      return () => observer.disconnect();
-    }, [cropSrc, aspectRatio]);
-
     const onCropComplete = useCallback((_: Area, croppedPixels: Area) => {
       setCroppedArea(croppedPixels);
     }, []);
@@ -250,25 +229,13 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
     );
 
     // Cropper container height. cropperHeight overrides if provided.
+    // Portrait ratios (< 1) need more vertical space than landscape.
     const computedCropperHeight =
-      cropperHeight || (aspectRatio >= 2 ? "240px" : "300px");
+      cropperHeight ||
+      (aspectRatio >= 2 ? "240px" : aspectRatio >= 1 ? "300px" : "380px");
 
     return (
       <div style={{ width: "100%" }}>
-        {/* Save/actions bar */}
-        {cropSrc && !hideSaveButton && (
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              marginBottom: "16px",
-            }}
-          >
-            <PrimaryButton onClick={handleSaveCrop} loading={isUploading}>
-              {isUploading ? "Saving..." : "Save"}
-            </PrimaryButton>
-          </div>
-        )}
         {!cropSrc && currentImage && !inlinePreview && (
           <div style={{ marginBottom: "8px" }}>
             <button
@@ -356,7 +323,6 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
               }}
             >
               <div
-                ref={cropContainerRef}
                 style={{
                   position: "relative",
                   width: "100%",
@@ -372,8 +338,7 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
                   zoom={zoom}
                   aspect={aspectRatio}
                   cropShape={cropShape}
-                  objectFit="cover"
-                  cropSize={cropSize}
+                  objectFit="contain"
                   onCropChange={setCrop}
                   onZoomChange={setZoom}
                   onCropComplete={onCropComplete}
@@ -406,6 +371,19 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
                   style={{ flex: 1 }}
                 />
               </div>
+              {/* Save/actions bar */}
+              {!hideSaveButton && (
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                  }}
+                >
+                  <PrimaryButton onClick={handleSaveCrop} loading={isUploading}>
+                    {isUploading ? "Saving..." : "Save"}
+                  </PrimaryButton>
+                </div>
+              )}
             </div>
           ) : inlinePreview && currentImage ? (
             /* Inline image preview */
