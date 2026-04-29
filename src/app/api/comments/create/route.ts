@@ -14,6 +14,7 @@ export async function POST(req: Request) {
       selectionStart,
       selectionEnd,
       selectedText,
+      parentId,
     } = await req.json();
 
     // Validate required fields
@@ -32,9 +33,10 @@ export async function POST(req: Request) {
     }
 
     if (
-      selectionStart === undefined ||
-      selectionEnd === undefined ||
-      !selectedText
+      !parentId &&
+      (selectionStart === undefined ||
+        selectionEnd === undefined ||
+        !selectedText)
     ) {
       return NextResponse.json(
         {
@@ -43,6 +45,22 @@ export async function POST(req: Request) {
         },
         { status: 400 }
       );
+    }
+
+    // If reply, validate parent exists and belongs to the same piece
+    let parentAuthorId: string | null = null;
+    if (parentId) {
+      const parentComment = await prisma.comment.findUnique({
+        where: { id: parentId },
+        select: { authorId: true, pieceId: true },
+      });
+      if (!parentComment || parentComment.pieceId !== pieceId) {
+        return NextResponse.json(
+          { error: "Parent comment not found" },
+          { status: 404 }
+        );
+      }
+      parentAuthorId = parentComment.authorId;
     }
 
     // Verify piece exists and get author
@@ -90,9 +108,10 @@ export async function POST(req: Request) {
         riffId,
         clubId,
         authorId: userId,
-        selectionStart,
-        selectionEnd,
-        selectedText,
+        selectionStart: parentId ? null : selectionStart,
+        selectionEnd: parentId ? null : selectionEnd,
+        selectedText: parentId ? null : selectedText,
+        parentId: parentId ?? null,
       },
       include: {
         author: {
@@ -106,13 +125,13 @@ export async function POST(req: Request) {
       },
     });
 
-    // Notify piece author if they're not the commenter
-    if (piece.authorId !== userId) {
-      try {
+    // Notify — reply goes to parent author, top-level goes to piece author
+    try {
+      if (parentId && parentAuthorId && parentAuthorId !== userId) {
         await prisma.notification.create({
           data: {
-            type: "NEW_COMMENT",
-            recipientId: piece.authorId,
+            type: "COMMENT_REPLY",
+            recipientId: parentAuthorId,
             actorId: userId,
             pieceId,
             commentId: comment.id,
@@ -120,9 +139,31 @@ export async function POST(req: Request) {
             riffId,
           },
         });
-      } catch (notifyErr) {
-        console.error("Failed to send comment notification:", notifyErr);
+      } else if (!parentId && piece.authorId !== userId) {
+        const existing = await prisma.notification.findFirst({
+          where: {
+            type: "NEW_COMMENT",
+            recipientId: piece.authorId,
+            pieceId,
+            isRead: false,
+          },
+        });
+        if (!existing) {
+          await prisma.notification.create({
+            data: {
+              type: "NEW_COMMENT",
+              recipientId: piece.authorId,
+              actorId: userId,
+              pieceId,
+              commentId: comment.id,
+              clubId,
+              riffId,
+            },
+          });
+        }
       }
+    } catch (notifyErr) {
+      console.error("Failed to send notification:", notifyErr);
     }
 
     return NextResponse.json({ success: true, comment }, { status: 201 });
