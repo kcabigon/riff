@@ -59,20 +59,42 @@ export default function DeleteAccountConfirmModal({
       title="Delete your account?"
       size="sm"
     >
-      <p
+      {/* Warning box */}
+      <div
         style={{
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "16px",
-          fontWeight: 300,
-          color: "#000000",
-          margin: "0 0 16px 0",
-          lineHeight: 1.6,
+          backgroundColor: "#FFF5F5",
+          border: "2px solid #DC2626",
+          padding: "16px",
+          marginBottom: "24px",
         }}
       >
-        This will permanently delete your account, all your pieces, and all your
-        data. This cannot be undone.
-      </p>
+        <p
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "14px",
+            fontWeight: 300,
+            color: "#DC2626",
+            margin: "0 0 4px",
+            lineHeight: 1.6,
+          }}
+        >
+          Your account and all your data will be permanently deleted.
+        </p>
+        <p
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "14px",
+            fontWeight: 300,
+            color: "#808080",
+            margin: 0,
+            lineHeight: 1.6,
+          }}
+        >
+          This cannot be undone.
+        </p>
+      </div>
 
+      {/* Confirm input */}
       <div
         style={{
           display: "flex",
@@ -86,10 +108,10 @@ export default function DeleteAccountConfirmModal({
             fontFamily: "var(--font-dm-sans)",
             fontSize: "12px",
             fontWeight: 300,
-            color: "#808080",
+            color: "#000000",
           }}
         >
-          Type <strong>DELETE</strong> to confirm:
+          Type <strong>DELETE</strong> to confirm
         </label>
         <TextInput
           autoFocus
