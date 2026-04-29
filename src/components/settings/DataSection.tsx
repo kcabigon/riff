@@ -12,14 +12,14 @@ export default function DataSection() {
     try {
       const res = await fetch("/api/users/me/export");
       if (res.ok) {
-        const data = await res.json();
-        const blob = new Blob([JSON.stringify(data, null, 2)], {
-          type: "application/json",
-        });
+        const contentDisposition = res.headers.get("Content-Disposition") ?? "";
+        const filenameMatch = contentDisposition.match(/filename="([^"]+)"/);
+        const filename = filenameMatch?.[1] ?? "riff-export";
+        const blob = await res.blob();
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = "riff-export.json";
+        a.download = filename;
         a.click();
         URL.revokeObjectURL(url);
       }
@@ -76,7 +76,7 @@ export default function DataSection() {
                 margin: 0,
               }}
             >
-              Download all your pieces as a .docx file
+              Download all your pieces as .docx files
             </p>
           </div>
           <button
