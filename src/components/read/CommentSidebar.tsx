@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import Image from "next/image";
 import CommentPopover from "./CommentPopover";
+import ThreeDotButton from "@/components/shared/ThreeDotButton";
+import PrimaryButton from "@/components/PrimaryButton";
 import { AUTHOR_COLORS, buildAuthorColorMap } from "./ReadOnlyEditor";
 
 interface CommentAuthor {
@@ -91,6 +92,7 @@ function CommentCard({
   color: string;
 }) {
   const [hovered, setHovered] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [editContent, setEditContent] = useState(comment.content);
   const [saving, setSaving] = useState(false);
@@ -205,60 +207,21 @@ function CommentCard({
           </span>
         </div>
 
-        {isOwn && hovered && !isEditing && (
-          <div
-            style={{
-              display: "flex",
-              gap: "4px",
-              alignItems: "center",
-              flexShrink: 0,
-            }}
-          >
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit();
-              }}
-              title="Edit comment"
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                padding: "2px",
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path
-                  d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5.5 12.5 2 14l1.5-3.5 8-8Z"
-                  stroke="#808080"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDelete();
-              }}
-              disabled={deleting}
-              title="Delete comment"
-              style={{
-                background: "none",
-                border: "none",
-                cursor: deleting ? "not-allowed" : "pointer",
-                padding: "2px",
-                flexShrink: 0,
-              }}
-            >
-              <Image
-                src="/icons/trash.png"
-                alt="Delete comment"
-                width={24}
-                height={26}
-              />
-            </button>
+        {isOwn && !isEditing && !confirmingDelete && (
+          <div onClick={(e) => e.stopPropagation()} style={{ flexShrink: 0 }}>
+            <ThreeDotButton
+              variant="light"
+              align="right"
+              items={[
+                { type: "action", label: "Edit", onClick: onEdit },
+                {
+                  type: "action",
+                  label: "Delete",
+                  color: "#DC2626",
+                  onClick: () => setConfirmingDelete(true),
+                },
+              ]}
+            />
           </div>
         )}
       </div>
@@ -290,30 +253,12 @@ function CommentCard({
           <div
             style={{
               display: "flex",
-              gap: "8px",
+              justifyContent: "flex-end",
               alignItems: "center",
+              gap: "8px",
               marginTop: "8px",
             }}
           >
-            <button
-              onClick={handleSave}
-              disabled={saving || !editContent.trim()}
-              style={{
-                backgroundColor:
-                  saving || !editContent.trim() ? "#E6E6E6" : "#00FF66",
-                border: `2px solid ${saving || !editContent.trim() ? "#9C9C9C" : "#000000"}`,
-                borderRadius: 0,
-                cursor:
-                  saving || !editContent.trim() ? "not-allowed" : "pointer",
-                padding: "4px 10px",
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "12px",
-                fontWeight: 700,
-                color: saving || !editContent.trim() ? "#9C9C9C" : "#000000",
-              }}
-            >
-              {saving ? "Saving…" : "Save"}
-            </button>
             <button
               onClick={handleCancel}
               style={{
@@ -321,30 +266,110 @@ function CommentCard({
                 border: "none",
                 cursor: "pointer",
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: "12px",
+                fontSize: "13px",
                 fontWeight: 300,
                 color: "#808080",
               }}
             >
               Cancel
             </button>
+            <PrimaryButton
+              onClick={handleSave}
+              disabled={saving || !editContent.trim()}
+              loading={saving}
+              style={{
+                width: "auto",
+                height: "32px",
+                padding: "4px 20px",
+                fontSize: "13px",
+                boxShadow: editContent.trim()
+                  ? "4px 4px 0px 0px #000000"
+                  : "none",
+              }}
+            >
+              Save
+            </PrimaryButton>
           </div>
         </div>
       ) : (
-        <p
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "13px",
-            fontWeight: 300,
-            color: "#000000",
-            margin: 0,
-            lineHeight: 1.5,
-            wordBreak: "break-word",
-            whiteSpace: "pre-wrap",
-          }}
-        >
-          {comment.content}
-        </p>
+        <>
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "13px",
+              fontWeight: 300,
+              color: "#000000",
+              margin: 0,
+              lineHeight: 1.5,
+              wordBreak: "break-word",
+              whiteSpace: "pre-wrap",
+            }}
+          >
+            {comment.content}
+          </p>
+          {confirmingDelete && (
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                marginTop: "10px",
+                borderTop: "1px solid #E6E6E6",
+                paddingTop: "10px",
+              }}
+            >
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "12px",
+                  fontWeight: 300,
+                  color: "#000000",
+                  margin: "0 0 8px 0",
+                }}
+              >
+                Delete this comment?
+              </p>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+              >
+                <button
+                  onClick={() => setConfirmingDelete(false)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "12px",
+                    fontWeight: 300,
+                    color: "#808080",
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  style={{
+                    backgroundColor: "#DC2626",
+                    border: "2px solid #000000",
+                    cursor: deleting ? "not-allowed" : "pointer",
+                    padding: "4px 10px",
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    color: "#FFFFFF",
+                    boxShadow: "2px 2px 0px 0px #000000",
+                  }}
+                >
+                  {deleting ? "Deleting…" : "Delete"}
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import ThreeDotButton from "@/components/shared/ThreeDotButton";
+import PrimaryButton from "@/components/PrimaryButton";
 
 interface CommentAuthor {
   id: string;
@@ -56,6 +58,7 @@ export default function CommentDrawer({
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState("");
   const [saving, setSaving] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   // Reset edit state whenever a different comment is shown
   useEffect(() => {
@@ -229,7 +232,7 @@ export default function CommentDrawer({
                   initials(comment.author)
                 )}
               </div>
-              <div>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <span
                   style={{
                     fontFamily: "var(--font-dm-sans)",
@@ -252,6 +255,30 @@ export default function CommentDrawer({
                   {timeAgo(comment.createdAt)}
                 </span>
               </div>
+              {comment.authorId === currentUserId &&
+                !isEditing &&
+                !confirmingDelete && (
+                  <ThreeDotButton
+                    variant="light"
+                    align="right"
+                    items={[
+                      {
+                        type: "action",
+                        label: "Edit",
+                        onClick: () => {
+                          setEditContent(comment.content);
+                          setIsEditing(true);
+                        },
+                      },
+                      {
+                        type: "action",
+                        label: "Delete",
+                        color: "#DC2626",
+                        onClick: () => setConfirmingDelete(true),
+                      },
+                    ]}
+                  />
+                )}
             </div>
 
             {/* Quoted text */}
@@ -300,33 +327,12 @@ export default function CommentDrawer({
                 <div
                   style={{
                     display: "flex",
-                    gap: "8px",
+                    justifyContent: "flex-end",
                     alignItems: "center",
+                    gap: "8px",
                     marginTop: "10px",
                   }}
                 >
-                  <button
-                    onClick={handleSave}
-                    disabled={saving || !editContent.trim()}
-                    style={{
-                      backgroundColor:
-                        saving || !editContent.trim() ? "#E6E6E6" : "#00FF66",
-                      border: `2px solid ${saving || !editContent.trim() ? "#9C9C9C" : "#000000"}`,
-                      borderRadius: 0,
-                      cursor:
-                        saving || !editContent.trim()
-                          ? "not-allowed"
-                          : "pointer",
-                      padding: "6px 14px",
-                      fontFamily: "var(--font-dm-sans)",
-                      fontSize: "13px",
-                      fontWeight: 700,
-                      color:
-                        saving || !editContent.trim() ? "#9C9C9C" : "#000000",
-                    }}
-                  >
-                    {saving ? "Saving…" : "Save"}
-                  </button>
                   <button
                     onClick={() => {
                       setEditContent(comment.content);
@@ -344,6 +350,22 @@ export default function CommentDrawer({
                   >
                     Cancel
                   </button>
+                  <PrimaryButton
+                    onClick={handleSave}
+                    disabled={saving || !editContent.trim()}
+                    loading={saving}
+                    style={{
+                      width: "auto",
+                      height: "32px",
+                      padding: "4px 20px",
+                      fontSize: "13px",
+                      boxShadow: editContent.trim()
+                        ? "4px 4px 0px 0px #000000"
+                        : "none",
+                    }}
+                  >
+                    Save
+                  </PrimaryButton>
                 </div>
               </div>
             ) : (
@@ -362,54 +384,75 @@ export default function CommentDrawer({
               </p>
             )}
 
-            {/* Edit + Delete — own comments */}
-            {comment.authorId === currentUserId && !isEditing && (
-              <div style={{ display: "flex", gap: "8px", marginTop: "16px" }}>
-                <button
-                  onClick={() => {
-                    setEditContent(comment.content);
-                    setIsEditing(true);
-                  }}
+            {/* Inline delete confirmation */}
+            {confirmingDelete && (
+              <div
+                style={{
+                  marginTop: "16px",
+                  borderTop: "1px solid #E6E6E6",
+                  paddingTop: "12px",
+                }}
+              >
+                <p
                   style={{
-                    background: "none",
-                    border: "2px solid #000000",
-                    borderRadius: 0,
-                    cursor: "pointer",
-                    padding: "6px 12px",
                     fontFamily: "var(--font-dm-sans)",
-                    fontSize: "13px",
+                    fontSize: "14px",
                     fontWeight: 300,
                     color: "#000000",
+                    margin: "0 0 10px 0",
                   }}
                 >
-                  Edit
-                </button>
-                <button
-                  onClick={async () => {
-                    try {
-                      await fetch(`/api/comments/${comment.id}`, {
-                        method: "DELETE",
-                      });
-                      onDelete(comment.id);
-                      onClose();
-                    } catch (err) {
-                      console.error("Error deleting comment:", err);
-                    }
-                  }}
+                  Delete this comment?
+                </p>
+                <div
                   style={{
-                    background: "none",
-                    border: "2px solid #000000",
-                    borderRadius: 0,
-                    cursor: "pointer",
-                    padding: "6px 12px",
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "13px",
-                    fontWeight: 300,
-                    color: "#DC2626",
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    alignItems: "center",
+                    gap: "8px",
                   }}
                 >
-                  Delete
-                </button>
+                  <button
+                    onClick={() => setConfirmingDelete(false)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "13px",
+                      fontWeight: 300,
+                      color: "#808080",
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={async () => {
+                      try {
+                        await fetch(`/api/comments/${comment.id}`, {
+                          method: "DELETE",
+                        });
+                        onDelete(comment.id);
+                        onClose();
+                      } catch (err) {
+                        console.error("Error deleting comment:", err);
+                      }
+                    }}
+                    style={{
+                      backgroundColor: "#DC2626",
+                      border: "2px solid #000000",
+                      cursor: "pointer",
+                      padding: "6px 14px",
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "13px",
+                      fontWeight: 700,
+                      color: "#FFFFFF",
+                      boxShadow: "2px 2px 0px 0px #000000",
+                    }}
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             )}
           </div>
