@@ -85,7 +85,7 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
           <label
             style={{
               fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
+              fontSize: "12px",
               fontWeight: 300,
               color: "#000000",
             }}
@@ -93,7 +93,7 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
             Photo
           </label>
           <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-            <div
+            <button
               onClick={() => setIsAvatarModalOpen(true)}
               style={{
                 cursor: "pointer",
@@ -101,6 +101,9 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
                 width: "72px",
                 height: "72px",
                 flexShrink: 0,
+                padding: 0,
+                background: "none",
+                border: "none",
               }}
             >
               <Avatar
@@ -143,7 +146,7 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
               <style>{`
                 div:hover .avatar-upload-label { opacity: 1 !important; }
               `}</style>
-            </div>
+            </button>
             <ImageUploadModal
               isOpen={isAvatarModalOpen}
               onClose={() => setIsAvatarModalOpen(false)}
@@ -162,7 +165,7 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
                   border: "none",
                   cursor: "pointer",
                   fontFamily: "var(--font-dm-sans)",
-                  fontSize: "13px",
+                  fontSize: "12px",
                   fontWeight: 300,
                   color: "#9C9C9C",
                   padding: 0,
@@ -179,7 +182,7 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
           <label
             style={{
               fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
+              fontSize: "12px",
               fontWeight: 300,
               color: "#000000",
             }}
@@ -202,7 +205,7 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
             <label
               style={{
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
+                fontSize: "12px",
                 fontWeight: 300,
                 color: "#000000",
               }}
@@ -225,7 +228,7 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
             <label
               style={{
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
+                fontSize: "12px",
                 fontWeight: 300,
                 color: "#000000",
               }}
