@@ -64,7 +64,7 @@ export default function DeleteClubConfirmModal({
     <Modal isOpen={isOpen} onClose={onClose} title="Delete club?" size="sm">
       <div
         style={{
-          backgroundColor: "#FFF5F5",
+          backgroundColor: "#FFFFFF",
           border: "2px solid #DC2626",
           padding: "16px",
           marginBottom: "24px",

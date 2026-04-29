@@ -62,7 +62,7 @@ export default function DeleteAccountConfirmModal({
       {/* Warning box */}
       <div
         style={{
-          backgroundColor: "#FFF5F5",
+          backgroundColor: "#FFFFFF",
           border: "2px solid #DC2626",
           padding: "16px",
           marginBottom: "24px",
@@ -71,7 +71,7 @@ export default function DeleteAccountConfirmModal({
         <p
           style={{
             fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
+            fontSize: "12px",
             fontWeight: 300,
             color: "#DC2626",
             margin: "0 0 4px",
@@ -83,7 +83,7 @@ export default function DeleteAccountConfirmModal({
         <p
           style={{
             fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
+            fontSize: "12px",
             fontWeight: 300,
             color: "#808080",
             margin: 0,
