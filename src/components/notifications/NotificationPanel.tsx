@@ -39,7 +39,7 @@ export default function NotificationPanel({
         const res = await fetch("/api/notifications?limit=20");
         if (res.ok) {
           const { notifications: data } = await res.json();
-          setNotifications(data.filter((n: NotificationData) => !n.isRead));
+          setNotifications(data);
         }
       } catch {
         // silent

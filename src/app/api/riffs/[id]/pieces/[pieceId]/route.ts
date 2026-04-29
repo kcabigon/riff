@@ -102,7 +102,7 @@ export async function PATCH(
         .findUnique({ where: { id: riff.creatorId }, select: { email: true } })
         .then((host) => {
           if (host) {
-            sendAllPiecesSubmittedEmail({
+            return sendAllPiecesSubmittedEmail({
               email: host.email,
               riffTitle: riffDisplayTitle,
               clubName: riff.club.name,
