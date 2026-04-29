@@ -4,7 +4,6 @@ import {
   useState,
   useCallback,
   useImperativeHandle,
-  useRef,
   forwardRef,
   type ComponentType,
 } from "react";
@@ -89,8 +88,6 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
     const [zoom, setZoom] = useState(1);
     const [croppedArea, setCroppedArea] = useState<Area | null>(null);
     const [isUploading, setIsUploading] = useState(false);
-    const cropContainerRef = useRef<HTMLDivElement>(null);
-
     const onCropComplete = useCallback((_: Area, croppedPixels: Area) => {
       setCroppedArea(croppedPixels);
     }, []);
@@ -326,7 +323,6 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
               }}
             >
               <div
-                ref={cropContainerRef}
                 style={{
                   position: "relative",
                   width: "100%",
