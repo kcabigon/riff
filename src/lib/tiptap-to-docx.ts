@@ -298,8 +298,11 @@ async function blockElementToParagraphs(el: Element): Promise<Paragraph[]> {
           displayWidth = Math.round(dims.width * scale);
           displayHeight = Math.round(dims.height * scale);
         }
-      } catch {
-        // fall back to defaults if dimensions can't be read
+      } catch (err) {
+        console.warn(
+          "Could not read image dimensions, falling back to defaults:",
+          err
+        );
       }
 
       return [
