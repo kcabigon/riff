@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import CTAButton from "@/components/CTAButton";
 import DeleteAccountConfirmModal from "@/components/settings/DeleteAccountConfirmModal";
 
 export default function DataSection() {
@@ -34,13 +35,11 @@ export default function DataSection() {
     <section>
       <h2
         style={{
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "20px",
-          fontWeight: 300,
+          fontFamily: "var(--font-dm-serif-text)",
+          fontSize: "24px",
+          fontWeight: 400,
           color: "#000000",
           margin: "0 0 24px 0",
-          textTransform: "uppercase",
-          letterSpacing: "0.05em",
         }}
       >
         Your Data
@@ -72,32 +71,18 @@ export default function DataSection() {
             <p
               style={{
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
+                fontSize: "12px",
                 fontWeight: 300,
                 color: "#808080",
                 margin: 0,
               }}
             >
-              Download all your pieces as a JSON file
+              Download all your pieces as a .docx file
             </p>
           </div>
-          <button
-            onClick={handleExport}
-            disabled={isExporting}
-            style={{
-              backgroundColor: "#FFFFFF",
-              border: "1px solid #000000",
-              padding: "8px 24px",
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              fontWeight: 300,
-              color: "#000000",
-              cursor: isExporting ? "not-allowed" : "pointer",
-              whiteSpace: "nowrap",
-            }}
-          >
+          <CTAButton onClick={handleExport} disabled={isExporting}>
             {isExporting ? "Exporting..." : "Export"}
-          </button>
+          </CTAButton>
         </div>
 
         {/* Divider */}
@@ -134,7 +119,7 @@ export default function DataSection() {
             <p
               style={{
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
+                fontSize: "12px",
                 fontWeight: 300,
                 color: "#808080",
                 margin: 0,
@@ -147,12 +132,12 @@ export default function DataSection() {
             onClick={() => setShowDeleteModal(true)}
             style={{
               backgroundColor: "#FFFFFF",
-              border: "1px solid #FF4444",
-              padding: "8px 24px",
+              border: "2px solid #DC2626",
+              padding: "12px 24px",
               fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
+              fontSize: "16px",
               fontWeight: 300,
-              color: "#FF4444",
+              color: "#DC2626",
               cursor: "pointer",
               whiteSpace: "nowrap",
             }}

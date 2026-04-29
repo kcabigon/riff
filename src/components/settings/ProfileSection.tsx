@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Avatar from "@/components/shared/Avatar";
 import PrimaryButton from "@/components/PrimaryButton";
+import TextInput from "@/components/TextInput";
+import ImageUploadModal from "@/components/shared/ImageUploadModal";
 
 interface ProfileSectionProps {
   user: {
@@ -11,7 +13,6 @@ interface ProfileSectionProps {
     name: string | null;
     firstName: string | null;
     lastName: string | null;
-    bio: string | null;
     avatarUrl: string | null;
     email: string | null;
   };
@@ -20,45 +21,11 @@ interface ProfileSectionProps {
 export default function ProfileSection({ user }: ProfileSectionProps) {
   const [firstName, setFirstName] = useState(user.firstName || "");
   const [lastName, setLastName] = useState(user.lastName || "");
-  const [bio, setBio] = useState(user.bio || "");
   const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl || "");
-  const [isUploading, setIsUploading] = useState(false);
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
-
-  const handleAvatarClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Reset input so same file can be re-selected
-    e.target.value = "";
-
-    setIsUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const res = await fetch("/api/upload/image", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setAvatarUrl(data.url);
-      }
-    } catch {
-      // silent
-    } finally {
-      setIsUploading(false);
-    }
-  };
 
   const handleRemoveAvatar = () => {
     setAvatarUrl("");
@@ -75,7 +42,6 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
         body: JSON.stringify({
           firstName: firstName.trim(),
           lastName: lastName.trim(),
-          bio: bio.trim() || null,
           avatarUrl: avatarUrl || null,
         }),
       });
@@ -92,20 +58,6 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
     }
   };
 
-  const inputStyle = {
-    fontFamily: "var(--font-dm-sans)",
-    fontSize: "16px",
-    fontWeight: 300 as const,
-    color: "#000000",
-    backgroundColor: "#FFFFFF",
-    border: "2px solid #000000",
-    padding: "12px 16px",
-    outline: "none",
-    width: "100%",
-    boxSizing: "border-box" as const,
-  };
-
-  // Build an AvatarUser for the Avatar component preview
   const avatarUser = {
     id: user.id,
     name: [firstName, lastName].filter(Boolean).join(" ") || user.name || null,
@@ -117,13 +69,11 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
     <section>
       <h2
         style={{
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "20px",
-          fontWeight: 300,
+          fontFamily: "var(--font-dm-serif-text)",
+          fontSize: "24px",
+          fontWeight: 400,
           color: "#000000",
           margin: "0 0 24px 0",
-          textTransform: "uppercase",
-          letterSpacing: "0.05em",
         }}
       >
         Profile
@@ -144,9 +94,9 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
           </label>
           <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
             <div
-              onClick={handleAvatarClick}
+              onClick={() => setIsAvatarModalOpen(true)}
               style={{
-                cursor: isUploading ? "wait" : "pointer",
+                cursor: "pointer",
                 position: "relative",
                 width: "72px",
                 height: "72px",
@@ -163,21 +113,17 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
                   position: "absolute",
                   inset: 0,
                   borderRadius: "64px",
-                  backgroundColor: isUploading
-                    ? "rgba(0,0,0,0.4)"
-                    : "rgba(0,0,0,0)",
+                  backgroundColor: "rgba(0,0,0,0)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   transition: "background-color 0.15s",
                 }}
                 onMouseEnter={(e) => {
-                  if (!isUploading)
-                    e.currentTarget.style.backgroundColor = "rgba(0,0,0,0.4)";
+                  e.currentTarget.style.backgroundColor = "rgba(0,0,0,0.4)";
                 }}
                 onMouseLeave={(e) => {
-                  if (!isUploading)
-                    e.currentTarget.style.backgroundColor = "rgba(0,0,0,0)";
+                  e.currentTarget.style.backgroundColor = "rgba(0,0,0,0)";
                 }}
               >
                 <span
@@ -186,24 +132,27 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
                     fontFamily: "var(--font-dm-sans)",
                     fontSize: "11px",
                     fontWeight: 500,
-                    opacity: isUploading ? 1 : 0,
+                    opacity: 0,
                     transition: "opacity 0.15s",
                   }}
                   className="avatar-upload-label"
                 >
-                  {isUploading ? "..." : "Edit"}
+                  Edit
                 </span>
               </div>
               <style>{`
                 div:hover .avatar-upload-label { opacity: 1 !important; }
               `}</style>
             </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/gif,image/webp"
-              onChange={handleFileChange}
-              style={{ display: "none" }}
+            <ImageUploadModal
+              isOpen={isAvatarModalOpen}
+              onClose={() => setIsAvatarModalOpen(false)}
+              onSelect={(url) => setAvatarUrl(url)}
+              title="Avatar upload"
+              aspectRatio={1}
+              cropShape="round"
+              currentImage={avatarUrl || null}
+              removeLabel="Remove photo"
             />
             {avatarUrl && (
               <button
@@ -215,7 +164,7 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
                   fontFamily: "var(--font-dm-sans)",
                   fontSize: "13px",
                   fontWeight: 300,
-                  color: "#959595",
+                  color: "#9C9C9C",
                   padding: 0,
                 }}
               >
@@ -237,17 +186,7 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
           >
             Email
           </label>
-          <input
-            type="text"
-            value={user.email || ""}
-            disabled
-            style={{
-              ...inputStyle,
-              color: "#808080",
-              backgroundColor: "#F5F5F5",
-              cursor: "not-allowed",
-            }}
-          />
+          <TextInput value={user.email || ""} disabled />
         </div>
 
         {/* Name fields */}
@@ -270,17 +209,9 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
             >
               First name
             </label>
-            <input
-              type="text"
+            <TextInput
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
-              style={inputStyle}
-              onFocus={(e) => {
-                e.target.style.borderColor = "#00FF66";
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = "#000000";
-              }}
             />
           </div>
           <div
@@ -301,48 +232,11 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
             >
               Last name
             </label>
-            <input
-              type="text"
+            <TextInput
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
-              style={inputStyle}
-              onFocus={(e) => {
-                e.target.style.borderColor = "#00FF66";
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = "#000000";
-              }}
             />
           </div>
-        </div>
-
-        {/* Bio */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          <label
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              fontWeight: 300,
-              color: "#000000",
-            }}
-          >
-            Bio <span style={{ color: "#959595" }}>(optional)</span>
-          </label>
-          <textarea
-            value={bio}
-            onChange={(e) => setBio(e.target.value)}
-            rows={3}
-            style={{
-              ...inputStyle,
-              resize: "vertical",
-            }}
-            onFocus={(e) => {
-              e.target.style.borderColor = "#00FF66";
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = "#000000";
-            }}
-          />
         </div>
 
         {/* Save button */}

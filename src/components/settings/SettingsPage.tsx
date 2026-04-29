@@ -2,24 +2,36 @@
 
 import ProfileSection from "./ProfileSection";
 import DataSection from "./DataSection";
-import BackButton from "@/components/BackButton";
+import NavBar from "@/components/clubs/NavBar";
 
 interface SettingsPageProps {
   user: {
     id: string;
     name: string | null;
+    username: string | null;
     firstName: string | null;
     lastName: string | null;
-    bio: string | null;
     avatarUrl: string | null;
     email: string | null;
   };
+  clubs: Array<{ id: string; name: string }>;
+  currentClub: { id: string; name: string } | null;
 }
 
-export default function SettingsPage({ user }: SettingsPageProps) {
+export default function SettingsPage({
+  user,
+  clubs,
+  currentClub,
+}: SettingsPageProps) {
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
-      {/* Header */}
+      <NavBar
+        user={user}
+        clubs={clubs}
+        currentClub={currentClub}
+        showClubDropdown={false}
+      />
+
       <div
         style={{
           maxWidth: "600px",
@@ -27,10 +39,6 @@ export default function SettingsPage({ user }: SettingsPageProps) {
           padding: "48px 24px 64px",
         }}
       >
-        <div style={{ marginBottom: "32px" }}>
-          <BackButton />
-        </div>
-
         <h1
           style={{
             fontFamily: "var(--font-dm-serif-text)",
