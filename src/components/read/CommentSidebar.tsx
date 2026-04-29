@@ -46,6 +46,7 @@ interface CommentSidebarProps {
   activeHighlightId: string | null;
   currentUserId: string;
   onDelete: (commentId: string) => void;
+  onUpdate: (commentId: string, newContent: string) => void;
   onCommentClick?: (commentId: string) => void;
   contentColumnRef: React.RefObject<HTMLDivElement | null>;
   pendingSelection?: PendingSelection | null;
@@ -72,17 +73,27 @@ function CommentCard({
   comment,
   isActive,
   isOwn,
+  isEditing,
   onDelete,
+  onEdit,
+  onSave,
+  onCancelEdit,
   color,
 }: {
   comment: CommentData;
   isActive: boolean;
   isOwn: boolean;
+  isEditing: boolean;
   onDelete: () => void;
+  onEdit: () => void;
+  onSave: (newContent: string) => void;
+  onCancelEdit: () => void;
   color: string;
 }) {
   const [hovered, setHovered] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [editContent, setEditContent] = useState(comment.content);
+  const [saving, setSaving] = useState(false);
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -93,6 +104,30 @@ function CommentCard({
       console.error("Error deleting comment:", err);
       setDeleting(false);
     }
+  };
+
+  const handleSave = async () => {
+    const trimmed = editContent.trim();
+    if (!trimmed) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/comments/${comment.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: trimmed }),
+      });
+      if (!res.ok) return;
+      onSave(trimmed);
+    } catch (err) {
+      console.error("Error updating comment:", err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setEditContent(comment.content);
+    onCancelEdit();
   };
 
   return (
@@ -170,46 +205,147 @@ function CommentCard({
           </span>
         </div>
 
-        {isOwn && hovered && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDelete();
-            }}
-            disabled={deleting}
-            title="Delete comment"
+        {isOwn && hovered && !isEditing && (
+          <div
             style={{
-              background: "none",
-              border: "none",
-              cursor: deleting ? "not-allowed" : "pointer",
-              padding: "2px",
+              display: "flex",
+              gap: "4px",
+              alignItems: "center",
               flexShrink: 0,
             }}
           >
-            <Image
-              src="/icons/trash.png"
-              alt="Delete comment"
-              width={24}
-              height={26}
-            />
-          </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit();
+              }}
+              title="Edit comment"
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: "2px",
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path
+                  d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5.5 12.5 2 14l1.5-3.5 8-8Z"
+                  stroke="#808080"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDelete();
+              }}
+              disabled={deleting}
+              title="Delete comment"
+              style={{
+                background: "none",
+                border: "none",
+                cursor: deleting ? "not-allowed" : "pointer",
+                padding: "2px",
+                flexShrink: 0,
+              }}
+            >
+              <Image
+                src="/icons/trash.png"
+                alt="Delete comment"
+                width={24}
+                height={26}
+              />
+            </button>
+          </div>
         )}
       </div>
 
-      {/* Comment content */}
-      <p
-        style={{
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "13px",
-          fontWeight: 300,
-          color: "#000000",
-          margin: 0,
-          lineHeight: 1.5,
-          wordBreak: "break-word",
-        }}
-      >
-        {comment.content}
-      </p>
+      {/* Comment content or edit mode */}
+      {isEditing ? (
+        <div onClick={(e) => e.stopPropagation()}>
+          <textarea
+            value={editContent}
+            onChange={(e) => setEditContent(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSave();
+              if (e.key === "Escape") handleCancel();
+            }}
+            autoFocus
+            rows={3}
+            style={{
+              width: "100%",
+              resize: "none",
+              border: "1px solid #E6E6E6",
+              padding: "6px 8px",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "13px",
+              lineHeight: 1.5,
+              outline: "none",
+              boxSizing: "border-box",
+            }}
+          />
+          <div
+            style={{
+              display: "flex",
+              gap: "8px",
+              alignItems: "center",
+              marginTop: "8px",
+            }}
+          >
+            <button
+              onClick={handleSave}
+              disabled={saving || !editContent.trim()}
+              style={{
+                backgroundColor:
+                  saving || !editContent.trim() ? "#E6E6E6" : "#00FF66",
+                border: `2px solid ${saving || !editContent.trim() ? "#9C9C9C" : "#000000"}`,
+                borderRadius: 0,
+                cursor:
+                  saving || !editContent.trim() ? "not-allowed" : "pointer",
+                padding: "4px 10px",
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "12px",
+                fontWeight: 700,
+                color: saving || !editContent.trim() ? "#9C9C9C" : "#000000",
+              }}
+            >
+              {saving ? "Saving…" : "Save"}
+            </button>
+            <button
+              onClick={handleCancel}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "12px",
+                fontWeight: 300,
+                color: "#808080",
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        <p
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "13px",
+            fontWeight: 300,
+            color: "#000000",
+            margin: 0,
+            lineHeight: 1.5,
+            wordBreak: "break-word",
+            whiteSpace: "pre-wrap",
+          }}
+        >
+          {comment.content}
+        </p>
+      )}
     </div>
   );
 }
@@ -219,6 +355,7 @@ export default function CommentSidebar({
   activeHighlightId,
   currentUserId,
   onDelete,
+  onUpdate,
   onCommentClick,
   contentColumnRef,
   pendingSelection,
@@ -229,6 +366,7 @@ export default function CommentSidebar({
   const authorColors = useMemo(() => buildAuthorColorMap(comments), [comments]);
   const [positions, setPositions] = useState<Record<string, number>>({});
   const [minHeight, setMinHeight] = useState(0);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   // Measure actual rendered height of a comment card
   const getCardHeight = (id: string) => {
@@ -399,6 +537,12 @@ export default function CommentSidebar({
     return () => clearTimeout(timer);
   }, [activeHighlightId, pendingSelection, updatePositions]);
 
+  // Recalculate when a card enters/exits edit mode (height changes)
+  useEffect(() => {
+    const timer = setTimeout(updatePositions, 50);
+    return () => clearTimeout(timer);
+  }, [editingId, updatePositions]);
+
   return (
     <div
       ref={sidebarRef}
@@ -453,7 +597,14 @@ export default function CommentSidebar({
               comment={comment}
               isActive={isActive}
               isOwn={comment.authorId === currentUserId}
+              isEditing={editingId === comment.id}
               onDelete={() => onDelete(comment.id)}
+              onEdit={() => setEditingId(comment.id)}
+              onSave={(newContent) => {
+                onUpdate(comment.id, newContent);
+                setEditingId(null);
+              }}
+              onCancelEdit={() => setEditingId(null)}
               color={authorColors[comment.authorId] || AUTHOR_COLORS[0]}
             />
           </div>
