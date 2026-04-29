@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import Dropdown from "@/components/shared/Dropdown";
 import MyStatsModal from "./MyStatsModal";
 
@@ -29,7 +28,6 @@ export default function ProfileHeader({
   lastActiveClubId,
   stats,
 }: ProfileHeaderProps) {
-  const router = useRouter();
   const [isStatsOpen, setIsStatsOpen] = useState(false);
   const logoHref = lastActiveClubId ? `/clubs/${lastActiveClubId}` : "/";
 
@@ -44,11 +42,6 @@ export default function ProfileHeader({
           { type: "divider" as const },
         ]
       : []),
-    {
-      type: "action" as const,
-      label: "Edit profile",
-      onClick: () => router.push("/settings"),
-    },
   ];
 
   const firstName =
