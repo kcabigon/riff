@@ -56,6 +56,7 @@ interface ReadPageLayoutProps {
   currentUser: CommentAuthor;
   initialComments: CommentData[];
   isAlreadyRead: boolean;
+  startInRiffMode?: boolean;
   previousPiece?: { id: string; title: string } | null;
   nextPiece?: { id: string; title: string } | null;
   fromProfileUserId?: string;
@@ -68,6 +69,7 @@ export default function ReadPageLayout({
   currentUser,
   initialComments,
   isAlreadyRead,
+  startInRiffMode,
   fromProfileUserId,
 }: ReadPageLayoutProps) {
   const router = useRouter();
@@ -75,6 +77,9 @@ export default function ReadPageLayout({
   const contentRef = useRef<HTMLDivElement>(null);
   const contentColumnRef = useRef<HTMLDivElement>(null);
   const [markedRead, setMarkedRead] = useState(false);
+  // Always start in read mode — activate riff mode only after the editor is
+  // ready so marks are in the DOM before the sidebar mounts (prevents all
+  // comment cards stacking at top:0 on notification deep-link nav).
   const [isRiffMode, setIsRiffMode] = useState(false);
   const [comments, setComments] = useState<CommentData[]>(initialComments);
   const [activeHighlightId, setActiveHighlightId] = useState<string | null>(
@@ -424,6 +429,9 @@ export default function ReadPageLayout({
             onSelection={setPendingSelection}
             onHighlightClick={handleHighlightClick}
             onImageComment={handleImageComment}
+            onEditorReady={() => {
+              if (startInRiffMode) setIsRiffMode(true);
+            }}
           />
 
           {/* End sentinel for read tracking */}
