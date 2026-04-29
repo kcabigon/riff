@@ -76,7 +76,7 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
           margin: "0 0 24px 0",
         }}
       >
-        Profile
+        Your info
       </h2>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
