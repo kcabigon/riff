@@ -255,20 +255,6 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
 
     return (
       <div style={{ width: "100%" }}>
-        {/* Save/actions bar */}
-        {cropSrc && !hideSaveButton && (
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              marginBottom: "16px",
-            }}
-          >
-            <PrimaryButton onClick={handleSaveCrop} loading={isUploading}>
-              {isUploading ? "Saving..." : "Save"}
-            </PrimaryButton>
-          </div>
-        )}
         {!cropSrc && currentImage && !inlinePreview && (
           <div style={{ marginBottom: "8px" }}>
             <button
@@ -406,6 +392,19 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
                   style={{ flex: 1 }}
                 />
               </div>
+              {/* Save/actions bar */}
+              {!hideSaveButton && (
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                  }}
+                >
+                  <PrimaryButton onClick={handleSaveCrop} loading={isUploading}>
+                    {isUploading ? "Saving..." : "Save"}
+                  </PrimaryButton>
+                </div>
+              )}
             </div>
           ) : inlinePreview && currentImage ? (
             /* Inline image preview */
