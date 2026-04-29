@@ -73,7 +73,7 @@ export default function DeleteClubConfirmModal({
         <p
           style={{
             fontFamily: "var(--font-dm-sans)",
-            fontSize: "12px",
+            fontSize: "16px",
             fontWeight: 300,
             color: "#DC2626",
             margin: "0 0 4px",
@@ -85,7 +85,7 @@ export default function DeleteClubConfirmModal({
         <p
           style={{
             fontFamily: "var(--font-dm-sans)",
-            fontSize: "12px",
+            fontSize: "16px",
             fontWeight: 300,
             color: "#808080",
             margin: 0,
