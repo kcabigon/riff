@@ -419,3 +419,210 @@ function getRiffRevealedEmailTemplate({
           ${emailButton("Read pieces", riffUrl)}`,
   });
 }
+
+// ==================== NOTIFICATION EMAILS ====================
+
+function formatNames(names: string[]): string {
+  if (names.length === 0) return "Someone";
+  if (names.length === 1) return names[0];
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  return `${names[0]}, ${names[1]}, and ${names.length - 2} other${names.length - 2 === 1 ? "" : "s"}`;
+}
+
+export async function sendMemberJoinedEmail({
+  email,
+  newMemberFullName,
+  newMemberFirstName,
+  clubName,
+  clubUrl,
+}: {
+  email: string;
+  newMemberFullName: string;
+  newMemberFirstName: string;
+  clubName: string;
+  clubUrl: string;
+}): Promise<void> {
+  try {
+    const { error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to: email,
+      subject: `${newMemberFullName} joined ${clubName}`,
+      html: emailShell({
+        title: `${newMemberFullName} joined ${clubName}`,
+        clubName,
+        footerText: `You're receiving this because you're a member of ${clubName} on Riff.`,
+        content: `
+          <tr>
+            <td style="padding:40px 40px 16px;">
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${newMemberFullName} joined ${clubName}.</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">More voices, more angles. More riffing.</p>
+            </td>
+          </tr>
+
+          ${emailButton("Visit club", clubUrl)}`,
+      }),
+    });
+    if (error) console.error("Resend error (memberJoined):", error);
+  } catch (error) {
+    console.error("Error sending member joined email:", error);
+  }
+}
+
+export async function sendPieceSubmittedEmail({
+  email,
+  actorName,
+  riffTitle,
+  riffUrl,
+  clubName,
+}: {
+  email: string;
+  actorName: string;
+  riffTitle: string;
+  riffUrl: string;
+  clubName: string;
+}): Promise<void> {
+  try {
+    const { error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to: email,
+      subject: `${actorName} submitted a piece to ${clubName}`,
+      html: emailShell({
+        title: `${actorName} submitted a piece to ${clubName}`,
+        clubName,
+        footerText: `You're receiving this because you're a participant in ${riffTitle} on Riff.`,
+        content: `
+          <tr>
+            <td style="padding:40px 40px 16px;">
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${actorName} submitted a piece to ${clubName}.</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">Take a peek at the piece and riff progress.</p>
+            </td>
+          </tr>
+
+          ${emailButton("Check it out", riffUrl)}`,
+      }),
+    });
+    if (error) console.error("Resend error (pieceSubmitted):", error);
+  } catch (error) {
+    console.error("Error sending piece submitted email:", error);
+  }
+}
+
+export async function sendDeadlineChangedEmail({
+  email,
+  hostName,
+  newDeadline,
+  riffUrl,
+  clubName,
+}: {
+  email: string;
+  hostName: string;
+  newDeadline: Date;
+  riffUrl: string;
+  clubName: string;
+}): Promise<void> {
+  const deadlineStr = newDeadline.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+  try {
+    const { error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to: email,
+      subject: `Riff deadline change in ${clubName}`,
+      html: emailShell({
+        title: `Riff deadline change in ${clubName}`,
+        clubName,
+        footerText: `You're receiving this because you're a member of ${clubName} on Riff.`,
+        content: `
+          <tr>
+            <td style="padding:40px 40px 16px;">
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">Riff deadline change in ${clubName}.</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">The new deadline is ${deadlineStr}.</p>
+            </td>
+          </tr>
+
+          ${emailButton("View the riff", riffUrl)}`,
+      }),
+    });
+    if (error) console.error("Resend error (deadlineChanged):", error);
+  } catch (error) {
+    console.error("Error sending deadline changed email:", error);
+  }
+}
+
+export async function sendAllPiecesSubmittedEmail({
+  email,
+  riffTitle,
+  clubName,
+  riffUrl,
+}: {
+  email: string;
+  riffTitle: string;
+  clubName: string;
+  riffUrl: string;
+}): Promise<void> {
+  try {
+    const { error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to: email,
+      subject: `All pieces submitted in ${clubName}`,
+      html: emailShell({
+        title: `All pieces submitted in ${clubName}`,
+        clubName,
+        footerText: `You're receiving this because you're the host of this riff on Riff.`,
+        content: `
+          <tr>
+            <td style="padding:40px 40px 16px;">
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">All pieces submitted in ${clubName}.</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">Everyone's in. You're ready for reveal.</p>
+            </td>
+          </tr>
+
+          ${emailButton("Review and reveal", riffUrl)}`,
+      }),
+    });
+    if (error) console.error("Resend error (allPiecesSubmitted):", error);
+  } catch (error) {
+    console.error("Error sending all pieces submitted email:", error);
+  }
+}
+
+export async function sendCommentNotificationEmail({
+  email,
+  pieceTitle,
+  commentCount,
+  pieceUrl,
+}: {
+  email: string;
+  pieceTitle: string;
+  commentCount: number;
+  pieceUrl: string;
+}): Promise<void> {
+  const commentLabel =
+    commentCount === 1 ? "1 new comment" : `${commentCount} new comments`;
+
+  try {
+    const { error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to: email,
+      subject: `New comments on "${pieceTitle}"`,
+      html: emailShell({
+        title: `New comments on "${pieceTitle}"`,
+        footerText: `You're receiving this because someone commented on your writing on Riff.`,
+        content: `
+          <tr>
+            <td style="padding:40px 40px 16px;">
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">New comments on "${pieceTitle}".</h1>
+              <p style="margin:0 0 16px 0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${commentLabel} just came in.</p>
+            </td>
+          </tr>
+
+          ${emailButton("View comments", pieceUrl)}`,
+      }),
+    });
+    if (error) console.error("Resend error (commentNotification):", error);
+  } catch (error) {
+    console.error("Error sending comment notification email:", error);
+  }
+}
