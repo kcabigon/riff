@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import CTAButton from "@/components/CTAButton";
 import DeleteAccountConfirmModal from "@/components/settings/DeleteAccountConfirmModal";
 
 export default function DataSection() {
@@ -80,9 +79,24 @@ export default function DataSection() {
               Download all your pieces as a .docx file
             </p>
           </div>
-          <CTAButton onClick={handleExport} disabled={isExporting}>
+          <button
+            onClick={handleExport}
+            disabled={isExporting}
+            style={{
+              backgroundColor: "#FFFFFF",
+              border: "2px solid #000000",
+              padding: "12px 24px",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "16px",
+              fontWeight: 300,
+              color: "#000000",
+              cursor: isExporting ? "not-allowed" : "pointer",
+              whiteSpace: "nowrap",
+              opacity: isExporting ? 0.5 : 1,
+            }}
+          >
             {isExporting ? "Exporting..." : "Export"}
-          </CTAButton>
+          </button>
         </div>
 
         {/* Divider */}
