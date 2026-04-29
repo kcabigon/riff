@@ -153,6 +153,10 @@ export default function ReadPageLayout({
     setPendingSelection(null);
   }, []);
 
+  const handleEditorReady = useCallback(() => {
+    if (startInRiffMode) setIsRiffMode(true);
+  }, [startInRiffMode]);
+
   const handleDeleteComment = useCallback((commentId: string) => {
     setComments((prev) => prev.filter((c) => c.id !== commentId));
     setActiveHighlightId((prev) => (prev === commentId ? null : prev));
@@ -429,9 +433,7 @@ export default function ReadPageLayout({
             onSelection={setPendingSelection}
             onHighlightClick={handleHighlightClick}
             onImageComment={handleImageComment}
-            onEditorReady={() => {
-              if (startInRiffMode) setIsRiffMode(true);
-            }}
+            onEditorReady={handleEditorReady}
           />
 
           {/* End sentinel for read tracking */}

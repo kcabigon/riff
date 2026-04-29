@@ -142,7 +142,10 @@ export default function ReadOnlyEditor({
     ) {
       try {
         origCollapse.call(this, node, offset);
-      } catch {}
+      } catch (e) {
+        if (!(e instanceof DOMException && e.name === "IndexSizeError"))
+          throw e;
+      }
     };
     setTimeout(() => {
       Selection.prototype.collapse = origCollapse;
