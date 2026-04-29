@@ -63,6 +63,7 @@ interface ReadOnlyEditorProps {
   onSelection: (selection: PendingSelection) => void;
   onHighlightClick: (commentId: string) => void;
   onImageComment?: (rect: DOMRect, charOffset: number) => void;
+  onEditorReady?: () => void;
 }
 
 function getCharOffset(root: HTMLElement, node: Node, offset: number): number {
@@ -98,6 +99,7 @@ export default function ReadOnlyEditor({
   onSelection,
   onHighlightClick,
   onImageComment,
+  onEditorReady,
 }: ReadOnlyEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -108,6 +110,17 @@ export default function ReadOnlyEditor({
     editable: false,
   });
 
+  // Fire onEditorReady once when Tiptap finishes initializing.
+  // Used by ReadPageLayout to defer riff mode activation until the editor
+  // is ready, so marks are always in the DOM before the sidebar mounts.
+  const editorReadyFiredRef = useRef(false);
+  useEffect(() => {
+    if (editor && !editorReadyFiredRef.current) {
+      editorReadyFiredRef.current = true;
+      onEditorReady?.();
+    }
+  }, [editor, onEditorReady]);
+
   // Inject comment highlights via DOM manipulation
   useEffect(() => {
     if (!editor || !containerRef.current) return;
@@ -117,6 +130,26 @@ export default function ReadOnlyEditor({
 
     // Preserve scroll position during DOM manipulation
     const scrollY = window.scrollY;
+
+    // ProseMirror's MutationObserver fires after this effect and tries to
+    // restore its stored selection onto text nodes we've split via
+    // surroundContents. Patch collapse to swallow the resulting
+    // IndexSizeError for that one macrotask window.
+    const origCollapse = Selection.prototype.collapse;
+    Selection.prototype.collapse = function (
+      node: Node | null,
+      offset?: number
+    ) {
+      try {
+        origCollapse.call(this, node, offset);
+      } catch (e) {
+        if (!(e instanceof DOMException && e.name === "IndexSizeError"))
+          throw e;
+      }
+    };
+    setTimeout(() => {
+      Selection.prototype.collapse = origCollapse;
+    }, 0);
 
     // Remove existing marks
     proseMirror.querySelectorAll("mark[data-comment-id]").forEach((m) => {
