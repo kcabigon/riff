@@ -41,7 +41,7 @@ export default function DataSection() {
           margin: "0 0 24px 0",
         }}
       >
-        Your Data
+        Your data
       </h2>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
