@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import ProfileHeader from "./ProfileHeader";
 import PiecesGrid, { FeaturedPiece } from "./tabs/PiecesGrid";
@@ -65,6 +65,57 @@ export default function ProfilePage({
 
   const isEmpty = pieces.length === 0;
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
+  const pos = useRef({ x: 40, y: 40 });
+  const vel = useRef({ dx: 2.5, dy: 2 });
+  const [boxStyle, setBoxStyle] = useState({ left: 40, top: 40 });
+
+  useEffect(() => {
+    if (!isEmpty) return;
+    let animId: number;
+
+    const step = () => {
+      const container = containerRef.current;
+      const box = boxRef.current;
+      if (!container || !box) {
+        animId = requestAnimationFrame(step);
+        return;
+      }
+
+      const cw = container.clientWidth;
+      const ch = container.clientHeight;
+      const bw = box.offsetWidth;
+      const bh = box.offsetHeight;
+
+      pos.current.x += vel.current.dx;
+      pos.current.y += vel.current.dy;
+
+      if (pos.current.x <= 0) {
+        pos.current.x = 0;
+        vel.current.dx = Math.abs(vel.current.dx);
+      }
+      if (pos.current.x + bw >= cw) {
+        pos.current.x = cw - bw;
+        vel.current.dx = -Math.abs(vel.current.dx);
+      }
+      if (pos.current.y <= 0) {
+        pos.current.y = 0;
+        vel.current.dy = Math.abs(vel.current.dy);
+      }
+      if (pos.current.y + bh >= ch) {
+        pos.current.y = ch - bh;
+        vel.current.dy = -Math.abs(vel.current.dy);
+      }
+
+      setBoxStyle({ left: pos.current.x, top: pos.current.y });
+      animId = requestAnimationFrame(step);
+    };
+
+    animId = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(animId);
+  }, [isEmpty]);
+
   return (
     <div
       style={{
@@ -114,37 +165,35 @@ export default function ProfilePage({
         stats={isOwnProfile ? stats : undefined}
       />
 
-      {/* Empty state */}
+      {/* Empty state — bouncing box */}
       {isEmpty && (
         <div
+          ref={containerRef}
           style={{
-            display: "flex",
-            justifyContent: "center",
-            padding: "64px 24px",
             position: "relative",
+            height: "calc(100vh - 64px)",
+            overflow: "hidden",
             zIndex: 1,
           }}
         >
           <div
+            ref={boxRef}
             style={{
+              position: "absolute",
+              left: boxStyle.left,
+              top: boxStyle.top,
               backgroundColor: "#FFFFFF",
-              padding: "32px",
-              maxWidth: "480px",
-              width: "100%",
+              border: "2px solid #000000",
+              boxShadow: "8px 8px 0px 0px #000000",
+              width: "160px",
+              height: "220px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "24px",
               textAlign: "center",
             }}
           >
-            <p
-              style={{
-                fontFamily: "var(--font-dm-serif-text)",
-                fontSize: "24px",
-                fontWeight: 400,
-                color: "#000000",
-                margin: "0 0 24px 0",
-              }}
-            >
-              Every writer starts with a blank page.
-            </p>
             <p
               style={{
                 fontFamily: "var(--font-dm-sans)",
@@ -155,7 +204,7 @@ export default function ProfilePage({
                 lineHeight: "1.6",
               }}
             >
-              This page will look a lot better with pieces on it.
+              Every writer starts with a blank page.
             </p>
           </div>
         </div>
