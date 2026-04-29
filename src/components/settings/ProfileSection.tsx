@@ -27,10 +27,6 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
   const [saved, setSaved] = useState(false);
   const router = useRouter();
 
-  const handleRemoveAvatar = () => {
-    setAvatarUrl("");
-  };
-
   const handleSave = async () => {
     setIsSaving(true);
     setSaved(false);
@@ -93,59 +89,26 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
             Photo
           </label>
           <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+            <Avatar
+              user={avatarUser}
+              size={48}
+              style={{ width: "72px", height: "72px" }}
+            />
             <button
               onClick={() => setIsAvatarModalOpen(true)}
               style={{
-                cursor: "pointer",
-                position: "relative",
-                width: "72px",
-                height: "72px",
-                flexShrink: 0,
-                padding: 0,
                 background: "none",
                 border: "none",
+                cursor: "pointer",
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "12px",
+                fontWeight: 300,
+                color: "#808080",
+                padding: 0,
+                textDecoration: "underline",
               }}
             >
-              <Avatar
-                user={avatarUser}
-                size={48}
-                style={{ width: "72px", height: "72px" }}
-              />
-              <div
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  borderRadius: "64px",
-                  backgroundColor: "rgba(0,0,0,0)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  transition: "background-color 0.15s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "rgba(0,0,0,0.4)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "rgba(0,0,0,0)";
-                }}
-              >
-                <span
-                  style={{
-                    color: "#FFFFFF",
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "11px",
-                    fontWeight: 500,
-                    opacity: 0,
-                    transition: "opacity 0.15s",
-                  }}
-                  className="avatar-upload-label"
-                >
-                  Edit
-                </span>
-              </div>
-              <style>{`
-                div:hover .avatar-upload-label { opacity: 1 !important; }
-              `}</style>
+              Edit
             </button>
             <ImageUploadModal
               isOpen={isAvatarModalOpen}
@@ -157,23 +120,6 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
               currentImage={avatarUrl || null}
               removeLabel="Remove photo"
             />
-            {avatarUrl && (
-              <button
-                onClick={handleRemoveAvatar}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "12px",
-                  fontWeight: 300,
-                  color: "#9C9C9C",
-                  padding: 0,
-                }}
-              >
-                Remove
-              </button>
-            )}
           </div>
         </div>
 
