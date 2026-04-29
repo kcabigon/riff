@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";
 import Dropdown from "@/components/shared/Dropdown";
 import MyStatsModal from "./MyStatsModal";
 
@@ -28,11 +30,12 @@ export default function ProfileHeader({
   lastActiveClubId,
   stats,
 }: ProfileHeaderProps) {
+  const router = useRouter();
   const [isStatsOpen, setIsStatsOpen] = useState(false);
   const logoHref = lastActiveClubId ? `/clubs/${lastActiveClubId}` : "/";
 
   const dropdownItems = [
-    ...(stats
+    ...(isOwnProfile && stats
       ? [
           {
             type: "action" as const,
@@ -40,6 +43,20 @@ export default function ProfileHeader({
             onClick: () => setIsStatsOpen(true),
           },
           { type: "divider" as const },
+        ]
+      : []),
+    ...(isOwnProfile
+      ? [
+          {
+            type: "action" as const,
+            label: "Settings",
+            onClick: () => router.push("/settings"),
+          },
+          {
+            type: "action" as const,
+            label: "Log out",
+            onClick: () => signOut({ callbackUrl: "/" }),
+          },
         ]
       : []),
   ];
