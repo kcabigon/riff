@@ -3,7 +3,6 @@
 import {
   useState,
   useCallback,
-  useEffect,
   useImperativeHandle,
   useRef,
   forwardRef,
@@ -90,32 +89,7 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
     const [zoom, setZoom] = useState(1);
     const [croppedArea, setCroppedArea] = useState<Area | null>(null);
     const [isUploading, setIsUploading] = useState(false);
-    const [cropSize, setCropSize] = useState<
-      { width: number; height: number } | undefined
-    >(undefined);
     const cropContainerRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-      const el = cropContainerRef.current;
-      if (!el || !cropSrc) return;
-      const update = () => {
-        const w = el.clientWidth;
-        const h = Math.round(w / aspectRatio);
-        const containerH = el.clientHeight;
-        // For portrait ratios the crop box can be taller than the container.
-        // Constrain by height in that case so the selection stays visible.
-        if (h > containerH) {
-          const constrainedW = Math.round(containerH * aspectRatio);
-          setCropSize({ width: constrainedW, height: containerH });
-        } else {
-          setCropSize({ width: w, height: h });
-        }
-      };
-      update();
-      const observer = new ResizeObserver(update);
-      observer.observe(el);
-      return () => observer.disconnect();
-    }, [cropSrc, aspectRatio]);
 
     const onCropComplete = useCallback((_: Area, croppedPixels: Area) => {
       setCroppedArea(croppedPixels);
@@ -368,8 +342,7 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
                   zoom={zoom}
                   aspect={aspectRatio}
                   cropShape={cropShape}
-                  objectFit="horizontal-cover"
-                  cropSize={cropSize}
+                  objectFit="contain"
                   onCropChange={setCrop}
                   onZoomChange={setZoom}
                   onCropComplete={onCropComplete}
