@@ -166,7 +166,7 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
               isOpen={isAvatarModalOpen}
               onClose={() => setIsAvatarModalOpen(false)}
               onSelect={(url) => setAvatarUrl(url)}
-              title="Edit photo"
+              title="Avatar upload"
               aspectRatio={1}
               cropShape="round"
               currentImage={avatarUrl || null}
