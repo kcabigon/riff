@@ -42,7 +42,6 @@ export default function ProfileHeader({
             label: "My stats",
             onClick: () => setIsStatsOpen(true),
           },
-          { type: "divider" as const },
         ]
       : []),
     ...(isOwnProfile
