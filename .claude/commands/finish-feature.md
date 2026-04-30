@@ -30,7 +30,7 @@ Complete the current feature branch: validate, push, and create a PR targeting d
 
    - **Design system**: hardcoded colors not in the palette, wrong borders/shadows/fonts, spacing not on 4px grid
    - **Component reuse**: new buttons/modals/inputs/dropdowns/avatars that should use shared components
-   - **Code quality**: `console.log`, `as any` casts, `eslint-disable`, TODO/FIXME comments, hardcoded URLs
+   - **Code quality**: `console.log`, `as any` casts, `eslint-disable`, TODO/FIXME comments, hardcoded URLs, duplicate fetch calls across components (consolidate into a shared callback), inline arrow props in dep arrays (use `useCallback`), `useEffect` stale closure risk, async calls without error handling, `key={index}` on deletable/reorderable lists
    - **Security**: new API routes missing `requireAuth()`
    - **Scope creep**: files changed that don't match the feature description
    - **Breaking changes**: edits to shared components that could affect other pages

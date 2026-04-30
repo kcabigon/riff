@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import PrimaryButton from "@/components/PrimaryButton";
+import CommentButton from "./CommentButton";
 
 interface PendingSelection {
   text: string;
@@ -202,13 +202,18 @@ export default function CommentPopover({
         <textarea
           ref={textareaRef}
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => {
+            setText(e.target.value);
+            e.target.style.height = "auto";
+            e.target.style.height = `${e.target.scrollHeight}px`;
+          }}
           onPaste={handlePaste}
           placeholder="Write a comment..."
           rows={3}
           style={{
             flex: 1,
             resize: "none",
+            overflow: "hidden",
             border: "1px solid #E6E6E6",
             padding: "6px 8px",
             fontFamily: "var(--font-dm-sans)",
@@ -251,42 +256,13 @@ export default function CommentPopover({
         >
           Cancel
         </button>
-        <PrimaryButton
+        <CommentButton
           onClick={handleSubmit}
           disabled={!text.trim()}
           loading={submitting}
-          style={{
-            width: "auto",
-            height: "32px",
-            padding: "4px 20px",
-            fontSize: "13px",
-            boxShadow: text.trim() ? "4px 4px 0px 0px #000000" : "none",
-          }}
-          onMouseEnter={(e) => {
-            if (text.trim()) {
-              e.currentTarget.style.boxShadow = "4px 4px 0px 0px #01EFFC";
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (text.trim()) {
-              e.currentTarget.style.boxShadow = "4px 4px 0px 0px #000000";
-            }
-          }}
-          onMouseDown={(e) => {
-            if (text.trim()) {
-              e.currentTarget.style.boxShadow = "2px 2px 0px 0px #01EFFC";
-              e.currentTarget.style.transform = "translate(2px, 2px)";
-            }
-          }}
-          onMouseUp={(e) => {
-            if (text.trim()) {
-              e.currentTarget.style.boxShadow = "4px 4px 0px 0px #01EFFC";
-              e.currentTarget.style.transform = "translate(0, 0)";
-            }
-          }}
         >
           Post
-        </PrimaryButton>
+        </CommentButton>
       </div>
     </div>
   );

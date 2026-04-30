@@ -62,6 +62,7 @@ interface ReadOnlyEditorProps {
   currentUserId?: string;
   onSelection: (selection: PendingSelection) => void;
   onHighlightClick: (commentId: string) => void;
+  onClearHighlight?: () => void;
   onImageComment?: (rect: DOMRect, charOffset: number) => void;
   onEditorReady?: () => void;
 }
@@ -98,6 +99,7 @@ export default function ReadOnlyEditor({
   currentUserId,
   onSelection,
   onHighlightClick,
+  onClearHighlight,
   onImageComment,
   onEditorReady,
 }: ReadOnlyEditorProps) {
@@ -366,6 +368,11 @@ export default function ReadOnlyEditor({
         }
       }
 
+      // Click on non-highlighted content — clear active highlight
+      if (isRiffMode && activeHighlightId) {
+        onClearHighlight?.();
+      }
+
       // Check for image click in riff mode
       if (isRiffMode && target.tagName === "IMG") {
         e.stopPropagation();
@@ -401,7 +408,13 @@ export default function ReadOnlyEditor({
         onImageComment(rect, charOffset);
       }
     },
-    [onHighlightClick, isRiffMode, onImageComment, activeHighlightId]
+    [
+      onHighlightClick,
+      onClearHighlight,
+      isRiffMode,
+      onImageComment,
+      activeHighlightId,
+    ]
   );
 
   // Handle text selection

@@ -68,6 +68,11 @@ Run `gh pr diff <number>` and analyze the full diff. Check for:
 - `eslint-disable` comments
 - `// TODO` or `// FIXME` comments
 - Hardcoded API URLs (should use relative paths)
+- Duplicate fetch/mutation calls across files — if a `fetch` to the same endpoint appears in more than one component, the network call should live in one place (e.g. a shared callback passed down as a prop); flag the duplication and suggest where to consolidate
+- Inline arrow functions passed as props that appear in a `useCallback` or `useEffect` dep array — they create a new reference every render, causing the dep to fire every render; replace with a stable `useCallback`
+- `useEffect` with stale closure risk — effects that read state or props without listing them in the dep array (silent bugs that are hard to track down)
+- Async calls without error handling — `async` functions invoked without `await` and without `.catch()`, silently swallowing failures
+- `key={index}` on lists where items can be reordered or deleted — use a stable unique ID instead
 
 **Security**
 - New API routes missing `requireAuth()`

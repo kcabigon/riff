@@ -157,10 +157,34 @@ export default function ReadPageLayout({
     if (startInRiffMode) setIsRiffMode(true);
   }, [startInRiffMode]);
 
+  const handleClearHighlight = useCallback(
+    () => setActiveHighlightId(null),
+    []
+  );
+
   const handleDeleteComment = useCallback((commentId: string) => {
     setComments((prev) => prev.filter((c) => c.id !== commentId));
     setActiveHighlightId((prev) => (prev === commentId ? null : prev));
   }, []);
+
+  const handleUpdateComment = useCallback(
+    async (commentId: string, newContent: string) => {
+      const res = await fetch(`/api/comments/${commentId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: newContent }),
+      });
+      if (!res.ok) return;
+      setComments((prev) =>
+        prev.map((c) =>
+          c.id === commentId
+            ? { ...c, content: newContent, updatedAt: new Date().toISOString() }
+            : c
+        )
+      );
+    },
+    []
+  );
 
   // Click sidebar comment → scroll to highlight in content
   const handleSidebarCommentClick = useCallback((commentId: string) => {
@@ -432,6 +456,7 @@ export default function ReadPageLayout({
             currentUserId={currentUser.id}
             onSelection={setPendingSelection}
             onHighlightClick={handleHighlightClick}
+            onClearHighlight={handleClearHighlight}
             onImageComment={handleImageComment}
             onEditorReady={handleEditorReady}
           />
@@ -447,6 +472,7 @@ export default function ReadPageLayout({
             activeHighlightId={activeHighlightId}
             currentUserId={currentUser.id}
             onDelete={handleDeleteComment}
+            onUpdate={handleUpdateComment}
             onCommentClick={handleSidebarCommentClick}
             contentColumnRef={contentColumnRef}
             pendingSelection={pendingSelection}
@@ -487,6 +513,7 @@ export default function ReadPageLayout({
           currentUserId={currentUser.id}
           onClose={() => setActiveHighlightId(null)}
           onDelete={handleDeleteComment}
+          onUpdate={handleUpdateComment}
         />
       )}
     </div>
