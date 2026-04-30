@@ -28,7 +28,7 @@ interface CommentDrawerProps {
   currentUserId: string;
   onClose: () => void;
   onDelete: (commentId: string) => void;
-  onUpdate: (commentId: string, newContent: string) => void;
+  onUpdate: (commentId: string, newContent: string) => Promise<void>;
 }
 
 function timeAgo(dateStr: string): string {
@@ -55,6 +55,7 @@ export default function CommentDrawer({
   onUpdate,
 }: CommentDrawerProps) {
   const startYRef = useRef<number | null>(null);
+  const drawerRef = useRef<HTMLDivElement>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState("");
   const [saving, setSaving] = useState(false);
@@ -72,13 +73,7 @@ export default function CommentDrawer({
     if (!trimmed) return;
     setSaving(true);
     try {
-      const res = await fetch(`/api/comments/${comment.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: trimmed }),
-      });
-      if (!res.ok) return;
-      onUpdate(comment.id, trimmed);
+      await onUpdate(comment.id, trimmed);
       setIsEditing(false);
     } catch (err) {
       console.error("Error updating comment:", err);
@@ -128,6 +123,7 @@ export default function CommentDrawer({
 
       {/* Drawer */}
       <div
+        ref={drawerRef}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         style={{
@@ -165,30 +161,6 @@ export default function CommentDrawer({
             }}
           />
         </div>
-
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          style={{
-            position: "absolute",
-            top: "16px",
-            right: "16px",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            padding: "4px",
-            color: "#808080",
-          }}
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path
-              d="M4 4l8 8M12 4l-8 8"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-          </svg>
-        </button>
 
         {comment && (
           <div style={{ padding: "0 16px 24px" }}>
@@ -301,7 +273,15 @@ export default function CommentDrawer({
               <div>
                 <textarea
                   value={editContent}
-                  onChange={(e) => setEditContent(e.target.value)}
+                  onChange={(e) => {
+                    setEditContent(e.target.value);
+                    e.target.style.height = "auto";
+                    e.target.style.height = `${e.target.scrollHeight}px`;
+                    if (drawerRef.current) {
+                      drawerRef.current.scrollTop =
+                        drawerRef.current.scrollHeight;
+                    }
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && (e.metaKey || e.ctrlKey))
                       handleSave();
@@ -315,6 +295,7 @@ export default function CommentDrawer({
                   style={{
                     width: "100%",
                     resize: "none",
+                    overflow: "hidden",
                     border: "1px solid #E6E6E6",
                     padding: "6px 8px",
                     fontFamily: "var(--font-dm-sans)",

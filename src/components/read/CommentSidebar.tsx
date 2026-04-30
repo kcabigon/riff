@@ -47,7 +47,7 @@ interface CommentSidebarProps {
   activeHighlightId: string | null;
   currentUserId: string;
   onDelete: (commentId: string) => void;
-  onUpdate: (commentId: string, newContent: string) => void;
+  onUpdate: (commentId: string, newContent: string) => Promise<void>;
   onCommentClick?: (commentId: string) => void;
   contentColumnRef: React.RefObject<HTMLDivElement | null>;
   pendingSelection?: PendingSelection | null;
@@ -79,6 +79,7 @@ function CommentCard({
   onEdit,
   onSave,
   onCancelEdit,
+  onActivate,
   color,
 }: {
   comment: CommentData;
@@ -87,8 +88,9 @@ function CommentCard({
   isEditing: boolean;
   onDelete: () => void;
   onEdit: () => void;
-  onSave: (newContent: string) => void;
+  onSave: (newContent: string) => Promise<void>;
   onCancelEdit: () => void;
+  onActivate: () => void;
   color: string;
 }) {
   const [hovered, setHovered] = useState(false);
@@ -113,13 +115,7 @@ function CommentCard({
     if (!trimmed) return;
     setSaving(true);
     try {
-      const res = await fetch(`/api/comments/${comment.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: trimmed }),
-      });
-      if (!res.ok) return;
-      onSave(trimmed);
+      await onSave(trimmed);
     } catch (err) {
       console.error("Error updating comment:", err);
     } finally {
@@ -137,6 +133,7 @@ function CommentCard({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
+        position: "relative",
         border: isActive || hovered ? "2px solid #000000" : "2px solid #E6E6E6",
         backgroundColor: "#FFFFFF",
         boxShadow: isActive ? `4px 4px 0 ${color}` : "none",
@@ -208,7 +205,13 @@ function CommentCard({
         </div>
 
         {isOwn && !isEditing && !confirmingDelete && (
-          <div onClick={(e) => e.stopPropagation()} style={{ flexShrink: 0 }}>
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              onActivate();
+            }}
+            style={{ flexShrink: 0 }}
+          >
             <ThreeDotButton
               variant="light"
               align="right"
@@ -231,7 +234,11 @@ function CommentCard({
         <div onClick={(e) => e.stopPropagation()}>
           <textarea
             value={editContent}
-            onChange={(e) => setEditContent(e.target.value)}
+            onChange={(e) => {
+              setEditContent(e.target.value);
+              e.target.style.height = "auto";
+              e.target.style.height = `${e.target.scrollHeight}px`;
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSave();
               if (e.key === "Escape") handleCancel();
@@ -241,6 +248,7 @@ function CommentCard({
             style={{
               width: "100%",
               resize: "none",
+              overflow: "hidden",
               border: "1px solid #E6E6E6",
               padding: "6px 8px",
               fontFamily: "var(--font-dm-sans)",
@@ -311,29 +319,30 @@ function CommentCard({
             <div
               onClick={(e) => e.stopPropagation()}
               style={{
-                marginTop: "10px",
-                borderTop: "1px solid #E6E6E6",
-                paddingTop: "10px",
+                position: "absolute",
+                inset: 0,
+                backgroundColor: "rgba(220,220,220,0.92)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "12px",
               }}
             >
               <p
                 style={{
                   fontFamily: "var(--font-dm-sans)",
-                  fontSize: "12px",
+                  fontSize: "13px",
                   fontWeight: 300,
                   color: "#000000",
-                  margin: "0 0 8px 0",
+                  margin: 0,
+                  textAlign: "center",
                 }}
               >
                 Delete this comment?
               </p>
               <div
-                style={{
-                  display: "flex",
-                  justifyContent: "flex-end",
-                  alignItems: "center",
-                  gap: "8px",
-                }}
+                style={{ display: "flex", alignItems: "center", gap: "8px" }}
               >
                 <button
                   onClick={() => setConfirmingDelete(false)}
@@ -342,9 +351,9 @@ function CommentCard({
                     border: "none",
                     cursor: "pointer",
                     fontFamily: "var(--font-dm-sans)",
-                    fontSize: "12px",
+                    fontSize: "13px",
                     fontWeight: 300,
-                    color: "#808080",
+                    color: "#000000",
                   }}
                 >
                   Cancel
@@ -356,9 +365,9 @@ function CommentCard({
                     backgroundColor: "#DC2626",
                     border: "2px solid #000000",
                     cursor: deleting ? "not-allowed" : "pointer",
-                    padding: "4px 10px",
+                    padding: "4px 12px",
                     fontFamily: "var(--font-dm-sans)",
-                    fontSize: "12px",
+                    fontSize: "13px",
                     fontWeight: 700,
                     color: "#FFFFFF",
                     boxShadow: "2px 2px 0px 0px #000000",
@@ -568,6 +577,15 @@ export default function CommentSidebar({
     return () => clearTimeout(timer);
   }, [editingId, updatePositions]);
 
+  // Recalculate whenever any card changes height (e.g. textarea expanding)
+  useEffect(() => {
+    const observer = new ResizeObserver(() => updatePositions());
+    for (const el of Object.values(cardRefs.current)) {
+      if (el) observer.observe(el);
+    }
+    return () => observer.disconnect();
+  }, [comments, updatePositions]);
+
   return (
     <div
       ref={sidebarRef}
@@ -601,6 +619,10 @@ export default function CommentSidebar({
         const isActive = comment.id === activeHighlightId;
         const top = positions[comment.id];
 
+        // Don't render cards whose highlight mark couldn't be found in the DOM —
+        // they'd stack at top:0 and obscure real comments
+        if (top === undefined) return null;
+
         return (
           <div
             key={comment.id}
@@ -611,7 +633,7 @@ export default function CommentSidebar({
             onClick={() => onCommentClick?.(comment.id)}
             style={{
               position: "absolute",
-              top: `${top ?? 0}px`,
+              top: `${top}px`,
               left: 0,
               right: 0,
               cursor: "pointer",
@@ -625,11 +647,12 @@ export default function CommentSidebar({
               isEditing={editingId === comment.id}
               onDelete={() => onDelete(comment.id)}
               onEdit={() => setEditingId(comment.id)}
-              onSave={(newContent) => {
-                onUpdate(comment.id, newContent);
+              onSave={async (newContent) => {
+                await onUpdate(comment.id, newContent);
                 setEditingId(null);
               }}
               onCancelEdit={() => setEditingId(null)}
+              onActivate={() => onCommentClick?.(comment.id)}
               color={authorColors[comment.authorId] || AUTHOR_COLORS[0]}
             />
           </div>

@@ -157,13 +157,24 @@ export default function ReadPageLayout({
     if (startInRiffMode) setIsRiffMode(true);
   }, [startInRiffMode]);
 
+  const handleClearHighlight = useCallback(
+    () => setActiveHighlightId(null),
+    []
+  );
+
   const handleDeleteComment = useCallback((commentId: string) => {
     setComments((prev) => prev.filter((c) => c.id !== commentId));
     setActiveHighlightId((prev) => (prev === commentId ? null : prev));
   }, []);
 
   const handleUpdateComment = useCallback(
-    (commentId: string, newContent: string) => {
+    async (commentId: string, newContent: string) => {
+      const res = await fetch(`/api/comments/${commentId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: newContent }),
+      });
+      if (!res.ok) return;
       setComments((prev) =>
         prev.map((c) =>
           c.id === commentId
@@ -445,7 +456,7 @@ export default function ReadPageLayout({
             currentUserId={currentUser.id}
             onSelection={setPendingSelection}
             onHighlightClick={handleHighlightClick}
-            onClearHighlight={() => setActiveHighlightId(null)}
+            onClearHighlight={handleClearHighlight}
             onImageComment={handleImageComment}
             onEditorReady={handleEditorReady}
           />

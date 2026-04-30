@@ -202,13 +202,18 @@ export default function CommentPopover({
         <textarea
           ref={textareaRef}
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => {
+            setText(e.target.value);
+            e.target.style.height = "auto";
+            e.target.style.height = `${e.target.scrollHeight}px`;
+          }}
           onPaste={handlePaste}
           placeholder="Write a comment..."
           rows={3}
           style={{
             flex: 1,
             resize: "none",
+            overflow: "hidden",
             border: "1px solid #E6E6E6",
             padding: "6px 8px",
             fontFamily: "var(--font-dm-sans)",
