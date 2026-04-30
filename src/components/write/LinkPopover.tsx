@@ -56,7 +56,7 @@ export default function LinkPopover({ editor }: LinkPopoverProps) {
   useEffect(() => {
     if (!visible) return;
 
-    const handleClick = (e: MouseEvent) => {
+    const handleClick = (e: PointerEvent) => {
       if (popoverRef.current && popoverRef.current.contains(e.target as Node))
         return;
       setVisible(false);
@@ -65,12 +65,12 @@ export default function LinkPopover({ editor }: LinkPopoverProps) {
 
     // Delay so the click that triggered the popover doesn't immediately dismiss it
     const timer = setTimeout(() => {
-      document.addEventListener("mousedown", handleClick);
+      document.addEventListener("pointerdown", handleClick);
     }, 50);
 
     return () => {
       clearTimeout(timer);
-      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("pointerdown", handleClick);
     };
   }, [visible]);
 

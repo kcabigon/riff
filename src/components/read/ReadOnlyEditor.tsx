@@ -417,8 +417,8 @@ export default function ReadOnlyEditor({
     ]
   );
 
-  // Handle text selection
-  const handleMouseUp = useCallback(() => {
+  // Handle text selection (fires on both mouse and touch)
+  const handleSelectionEnd = useCallback(() => {
     if (!isRiffMode || !containerRef.current) return;
 
     const proseMirror = containerRef.current.querySelector(".ProseMirror");
@@ -460,13 +460,15 @@ export default function ReadOnlyEditor({
     if (!el) return;
 
     el.addEventListener("click", handleClick);
-    document.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener("mouseup", handleSelectionEnd);
+    document.addEventListener("touchend", handleSelectionEnd);
 
     return () => {
       el.removeEventListener("click", handleClick);
-      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("mouseup", handleSelectionEnd);
+      document.removeEventListener("touchend", handleSelectionEnd);
     };
-  }, [handleClick, handleMouseUp]);
+  }, [handleClick, handleSelectionEnd]);
 
   if (!editor) return null;
 
