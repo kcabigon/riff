@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Avatar from "@/components/shared/Avatar";
 import PrimaryButton from "@/components/PrimaryButton";
+import TextInput from "@/components/TextInput";
 import ImageUploadModal from "@/components/shared/ImageUploadModal";
 
 interface ProfileSectionProps {
@@ -12,7 +13,6 @@ interface ProfileSectionProps {
     name: string | null;
     firstName: string | null;
     lastName: string | null;
-    bio: string | null;
     avatarUrl: string | null;
     email: string | null;
   };
@@ -21,16 +21,11 @@ interface ProfileSectionProps {
 export default function ProfileSection({ user }: ProfileSectionProps) {
   const [firstName, setFirstName] = useState(user.firstName || "");
   const [lastName, setLastName] = useState(user.lastName || "");
-  const [bio, setBio] = useState(user.bio || "");
   const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl || "");
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const router = useRouter();
-
-  const handleRemoveAvatar = () => {
-    setAvatarUrl("");
-  };
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -43,7 +38,6 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
         body: JSON.stringify({
           firstName: firstName.trim(),
           lastName: lastName.trim(),
-          bio: bio.trim() || null,
           avatarUrl: avatarUrl || null,
         }),
       });
@@ -60,20 +54,6 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
     }
   };
 
-  const inputStyle = {
-    fontFamily: "var(--font-dm-sans)",
-    fontSize: "16px",
-    fontWeight: 300 as const,
-    color: "#000000",
-    backgroundColor: "#FFFFFF",
-    border: "2px solid #000000",
-    padding: "12px 16px",
-    outline: "none",
-    width: "100%",
-    boxSizing: "border-box" as const,
-  };
-
-  // Build an AvatarUser for the Avatar component preview
   const avatarUser = {
     id: user.id,
     name: [firstName, lastName].filter(Boolean).join(" ") || user.name || null,
@@ -83,19 +63,17 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
 
   return (
     <section>
-      <h2
+      <h1
         style={{
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "20px",
-          fontWeight: 300,
+          fontFamily: "var(--font-dm-serif-text)",
+          fontSize: "32px",
+          fontWeight: 400,
           color: "#000000",
           margin: "0 0 24px 0",
-          textTransform: "uppercase",
-          letterSpacing: "0.05em",
         }}
       >
-        Profile
-      </h2>
+        Your info
+      </h1>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
         {/* Avatar upload */}
@@ -103,7 +81,7 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
           <label
             style={{
               fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
+              fontSize: "12px",
               fontWeight: 300,
               color: "#000000",
             }}
@@ -111,57 +89,27 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
             Photo
           </label>
           <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-            <div
+            <Avatar
+              user={avatarUser}
+              size={48}
+              style={{ width: "72px", height: "72px" }}
+            />
+            <button
               onClick={() => setIsAvatarModalOpen(true)}
               style={{
+                background: "none",
+                border: "none",
                 cursor: "pointer",
-                position: "relative",
-                width: "72px",
-                height: "72px",
-                flexShrink: 0,
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "12px",
+                fontWeight: 300,
+                color: "#808080",
+                padding: 0,
+                textDecoration: "underline",
               }}
             >
-              <Avatar
-                user={avatarUser}
-                size={48}
-                style={{ width: "72px", height: "72px" }}
-              />
-              <div
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  borderRadius: "64px",
-                  backgroundColor: "rgba(0,0,0,0)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  transition: "background-color 0.15s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "rgba(0,0,0,0.4)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "rgba(0,0,0,0)";
-                }}
-              >
-                <span
-                  style={{
-                    color: "#FFFFFF",
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "11px",
-                    fontWeight: 500,
-                    opacity: 0,
-                    transition: "opacity 0.15s",
-                  }}
-                  className="avatar-upload-label"
-                >
-                  Edit
-                </span>
-              </div>
-              <style>{`
-                div:hover .avatar-upload-label { opacity: 1 !important; }
-              `}</style>
-            </div>
+              Edit
+            </button>
             <ImageUploadModal
               isOpen={isAvatarModalOpen}
               onClose={() => setIsAvatarModalOpen(false)}
@@ -172,23 +120,6 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
               currentImage={avatarUrl || null}
               removeLabel="Remove photo"
             />
-            {avatarUrl && (
-              <button
-                onClick={handleRemoveAvatar}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "13px",
-                  fontWeight: 300,
-                  color: "#959595",
-                  padding: 0,
-                }}
-              >
-                Remove
-              </button>
-            )}
           </div>
         </div>
 
@@ -197,24 +128,14 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
           <label
             style={{
               fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
+              fontSize: "12px",
               fontWeight: 300,
               color: "#000000",
             }}
           >
             Email
           </label>
-          <input
-            type="text"
-            value={user.email || ""}
-            disabled
-            style={{
-              ...inputStyle,
-              color: "#808080",
-              backgroundColor: "#F5F5F5",
-              cursor: "not-allowed",
-            }}
-          />
+          <TextInput value={user.email || ""} disabled />
         </div>
 
         {/* Name fields */}
@@ -230,24 +151,16 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
             <label
               style={{
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
+                fontSize: "12px",
                 fontWeight: 300,
                 color: "#000000",
               }}
             >
               First name
             </label>
-            <input
-              type="text"
+            <TextInput
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
-              style={inputStyle}
-              onFocus={(e) => {
-                e.target.style.borderColor = "#00FF66";
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = "#000000";
-              }}
             />
           </div>
           <div
@@ -261,55 +174,18 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
             <label
               style={{
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
+                fontSize: "12px",
                 fontWeight: 300,
                 color: "#000000",
               }}
             >
               Last name
             </label>
-            <input
-              type="text"
+            <TextInput
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
-              style={inputStyle}
-              onFocus={(e) => {
-                e.target.style.borderColor = "#00FF66";
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = "#000000";
-              }}
             />
           </div>
-        </div>
-
-        {/* Bio */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          <label
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              fontWeight: 300,
-              color: "#000000",
-            }}
-          >
-            Bio <span style={{ color: "#959595" }}>(optional)</span>
-          </label>
-          <textarea
-            value={bio}
-            onChange={(e) => setBio(e.target.value)}
-            rows={3}
-            style={{
-              ...inputStyle,
-              resize: "vertical",
-            }}
-            onFocus={(e) => {
-              e.target.style.borderColor = "#00FF66";
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = "#000000";
-            }}
-          />
         </div>
 
         {/* Save button */}

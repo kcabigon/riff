@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";
 import Dropdown from "@/components/shared/Dropdown";
 import MyStatsModal from "./MyStatsModal";
 
@@ -34,21 +35,29 @@ export default function ProfileHeader({
   const logoHref = lastActiveClubId ? `/clubs/${lastActiveClubId}` : "/";
 
   const dropdownItems = [
-    ...(stats
+    ...(isOwnProfile && stats
       ? [
           {
             type: "action" as const,
             label: "My stats",
             onClick: () => setIsStatsOpen(true),
           },
-          { type: "divider" as const },
         ]
       : []),
-    {
-      type: "action" as const,
-      label: "Edit profile",
-      onClick: () => router.push("/settings"),
-    },
+    ...(isOwnProfile
+      ? [
+          {
+            type: "action" as const,
+            label: "Settings",
+            onClick: () => router.push("/settings"),
+          },
+          {
+            type: "action" as const,
+            label: "Log out",
+            onClick: () => signOut({ callbackUrl: "/" }),
+          },
+        ]
+      : []),
   ];
 
   const firstName =

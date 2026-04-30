@@ -32,19 +32,17 @@ export default function DataSection() {
 
   return (
     <section>
-      <h2
+      <h1
         style={{
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "20px",
-          fontWeight: 300,
+          fontFamily: "var(--font-dm-serif-text)",
+          fontSize: "32px",
+          fontWeight: 400,
           color: "#000000",
           margin: "0 0 24px 0",
-          textTransform: "uppercase",
-          letterSpacing: "0.05em",
         }}
       >
-        Your Data
-      </h2>
+        Your data
+      </h1>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
         {/* Export */}
@@ -72,7 +70,7 @@ export default function DataSection() {
             <p
               style={{
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
+                fontSize: "12px",
                 fontWeight: 300,
                 color: "#808080",
                 margin: 0,
@@ -86,14 +84,15 @@ export default function DataSection() {
             disabled={isExporting}
             style={{
               backgroundColor: "#FFFFFF",
-              border: "1px solid #000000",
-              padding: "8px 24px",
+              border: "2px solid #000000",
+              padding: "12px 24px",
               fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
+              fontSize: "16px",
               fontWeight: 300,
               color: "#000000",
               cursor: isExporting ? "not-allowed" : "pointer",
               whiteSpace: "nowrap",
+              opacity: isExporting ? 0.5 : 1,
             }}
           >
             {isExporting ? "Exporting..." : "Export"}
@@ -134,7 +133,7 @@ export default function DataSection() {
             <p
               style={{
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
+                fontSize: "12px",
                 fontWeight: 300,
                 color: "#808080",
                 margin: 0,
@@ -147,12 +146,12 @@ export default function DataSection() {
             onClick={() => setShowDeleteModal(true)}
             style={{
               backgroundColor: "#FFFFFF",
-              border: "1px solid #FF4444",
-              padding: "8px 24px",
+              border: "2px solid #DC2626",
+              padding: "12px 24px",
               fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
+              fontSize: "16px",
               fontWeight: 300,
-              color: "#FF4444",
+              color: "#DC2626",
               cursor: "pointer",
               whiteSpace: "nowrap",
             }}

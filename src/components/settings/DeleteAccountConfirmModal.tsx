@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { signOut } from "next-auth/react";
 import Modal from "@/components/shared/Modal";
+import TextInput from "@/components/TextInput";
 
 interface DeleteAccountConfirmModalProps {
   isOpen: boolean;
@@ -58,20 +59,42 @@ export default function DeleteAccountConfirmModal({
       title="Delete your account?"
       size="sm"
     >
-      <p
+      {/* Warning box */}
+      <div
         style={{
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "16px",
-          fontWeight: 300,
-          color: "#000000",
-          margin: "0 0 16px 0",
-          lineHeight: 1.5,
+          backgroundColor: "#FFFFFF",
+          border: "2px solid #DC2626",
+          padding: "16px",
+          marginBottom: "24px",
         }}
       >
-        This will permanently delete your account, all your pieces, and all your
-        data. This cannot be undone.
-      </p>
+        <p
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "16px",
+            fontWeight: 300,
+            color: "#DC2626",
+            margin: "0 0 4px",
+            lineHeight: 1.6,
+          }}
+        >
+          Your account and all your data will be permanently deleted.
+        </p>
+        <p
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "16px",
+            fontWeight: 300,
+            color: "#808080",
+            margin: 0,
+            lineHeight: 1.6,
+          }}
+        >
+          This cannot be undone.
+        </p>
+      </div>
 
+      {/* Confirm input */}
       <div
         style={{
           display: "flex",
@@ -83,14 +106,14 @@ export default function DeleteAccountConfirmModal({
         <label
           style={{
             fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
+            fontSize: "12px",
             fontWeight: 300,
-            color: "#808080",
+            color: "#000000",
           }}
         >
-          Type <strong>DELETE</strong> to confirm:
+          Type <strong>DELETE</strong> to confirm
         </label>
-        <input
+        <TextInput
           autoFocus
           type="text"
           value={confirmText}
@@ -98,24 +121,7 @@ export default function DeleteAccountConfirmModal({
           onKeyDown={(e) => e.key === "Enter" && handleDelete()}
           placeholder="DELETE"
           autoComplete="off"
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
-            fontWeight: 300,
-            color: "#000000",
-            backgroundColor: "#FFFFFF",
-            border: `2px solid ${isConfirmed ? "#DC2626" : "#000000"}`,
-            padding: "12px 16px",
-            outline: "none",
-            width: "100%",
-            boxSizing: "border-box",
-          }}
-          onFocus={(e) => {
-            if (!isConfirmed) e.target.style.borderColor = "#00FF66";
-          }}
-          onBlur={(e) => {
-            if (!isConfirmed) e.target.style.borderColor = "#000000";
-          }}
+          style={isConfirmed ? { borderColor: "#DC2626" } : undefined} // override border to red when confirmed — TextInput's focus/blur handlers update it imperatively
         />
       </div>
 
@@ -123,7 +129,7 @@ export default function DeleteAccountConfirmModal({
         <p
           style={{
             fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
+            fontSize: "12px",
             fontWeight: 300,
             color: "#DC2626",
             margin: "0 0 16px",
@@ -161,7 +167,7 @@ export default function DeleteAccountConfirmModal({
             border: "none",
             cursor: "pointer",
             fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
+            fontSize: "12px",
             fontWeight: 300,
             color: "#808080",
             padding: "4px",
