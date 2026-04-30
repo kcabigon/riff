@@ -82,7 +82,8 @@ export default function PrimaryButton({
       }}
       onPointerUp={(e) => {
         if (!isDisabled) {
-          e.currentTarget.style.boxShadow = shadowDefault;
+          e.currentTarget.style.boxShadow =
+            e.pointerType === "touch" ? shadowDefault : shadowHover;
           e.currentTarget.style.transform = "translate(0, 0)";
         }
         props.onPointerUp?.(e);
