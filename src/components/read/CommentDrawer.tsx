@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
-import PrimaryButton from "@/components/PrimaryButton";
+import CommentButton from "./CommentButton";
+import DestructiveButton from "@/components/DestructiveButton";
 
 interface CommentAuthor {
   id: string;
@@ -331,22 +332,13 @@ export default function CommentDrawer({
                   >
                     Cancel
                   </button>
-                  <PrimaryButton
+                  <CommentButton
                     onClick={handleSave}
                     disabled={saving || !editContent.trim()}
                     loading={saving}
-                    style={{
-                      width: "auto",
-                      height: "32px",
-                      padding: "4px 20px",
-                      fontSize: "13px",
-                      boxShadow: editContent.trim()
-                        ? "4px 4px 0px 0px #000000"
-                        : "none",
-                    }}
                   >
                     Save
-                  </PrimaryButton>
+                  </CommentButton>
                 </div>
               </div>
             ) : (
@@ -407,7 +399,7 @@ export default function CommentDrawer({
                   >
                     Cancel
                   </button>
-                  <button
+                  <DestructiveButton
                     onClick={async () => {
                       try {
                         await fetch(`/api/comments/${comment.id}`, {
@@ -419,20 +411,9 @@ export default function CommentDrawer({
                         console.error("Error deleting comment:", err);
                       }
                     }}
-                    style={{
-                      backgroundColor: "#DC2626",
-                      border: "2px solid #000000",
-                      cursor: "pointer",
-                      padding: "6px 14px",
-                      fontFamily: "var(--font-dm-sans)",
-                      fontSize: "13px",
-                      fontWeight: 700,
-                      color: "#FFFFFF",
-                      boxShadow: "2px 2px 0px 0px #000000",
-                    }}
                   >
                     Delete
-                  </button>
+                  </DestructiveButton>
                 </div>
               </div>
             )}

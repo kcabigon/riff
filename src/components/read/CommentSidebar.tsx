@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import CommentPopover from "./CommentPopover";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
-import PrimaryButton from "@/components/PrimaryButton";
+import CommentButton from "./CommentButton";
+import DestructiveButton from "@/components/DestructiveButton";
 import { AUTHOR_COLORS, buildAuthorColorMap } from "./ReadOnlyEditor";
 
 interface CommentAuthor {
@@ -281,22 +282,13 @@ function CommentCard({
             >
               Cancel
             </button>
-            <PrimaryButton
+            <CommentButton
               onClick={handleSave}
               disabled={saving || !editContent.trim()}
               loading={saving}
-              style={{
-                width: "auto",
-                height: "32px",
-                padding: "4px 20px",
-                fontSize: "13px",
-                boxShadow: editContent.trim()
-                  ? "4px 4px 0px 0px #000000"
-                  : "none",
-              }}
             >
               Save
-            </PrimaryButton>
+            </CommentButton>
           </div>
         </div>
       ) : (
@@ -321,7 +313,7 @@ function CommentCard({
               style={{
                 position: "absolute",
                 inset: 0,
-                backgroundColor: "rgba(220,220,220,0.92)",
+                backgroundColor: "rgba(248,248,248,0.97)",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
@@ -353,28 +345,14 @@ function CommentCard({
                     fontFamily: "var(--font-dm-sans)",
                     fontSize: "13px",
                     fontWeight: 300,
-                    color: "#000000",
+                    color: "#808080",
                   }}
                 >
                   Cancel
                 </button>
-                <button
-                  onClick={handleDelete}
-                  disabled={deleting}
-                  style={{
-                    backgroundColor: "#DC2626",
-                    border: "2px solid #000000",
-                    cursor: deleting ? "not-allowed" : "pointer",
-                    padding: "4px 12px",
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "13px",
-                    fontWeight: 700,
-                    color: "#FFFFFF",
-                    boxShadow: "2px 2px 0px 0px #000000",
-                  }}
-                >
-                  {deleting ? "Deleting…" : "Delete"}
-                </button>
+                <DestructiveButton onClick={handleDelete} loading={deleting}>
+                  Delete
+                </DestructiveButton>
               </div>
             </div>
           )}
