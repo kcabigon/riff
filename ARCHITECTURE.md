@@ -84,18 +84,18 @@ src/app/api/
 ### Components
 ```
 src/components/
-├── shared/        # Modal, Avatar, AvatarStack, AdminBadge, EnvironmentBadge, Dropdown, ImageUploadModal
-├── clubs/         # ClubPageLayout, NavBar, ClubDropdown, AvatarDropdown, OnboardingChecklist, InviteOptions, ClubSettingsModal, JoinClubClient, ConversionModal
+├── shared/        # Modal, Avatar, AvatarStack, AdminBadge, EnvironmentBadge, Dropdown, ImageUploadModal, WhatsNextModal
+├── clubs/         # ClubPageLayout, NavBar, ClubDropdown, AvatarDropdown, InviteOptions, ClubSettingsModal, JoinClubClient, ConversionModal
 ├── riffs/         # RiffCard, RiffCTAButton, RiffPageLayout, CreateRiffModal, EditRiffModal,
 │                  # DeleteRiffConfirmModal, RevealCelebration, RevealConfirmModal, PieceCard,
-│                  # CompletedRiffCard, ReadyToRevealCard, MosaicCollage, PromptLibrary,
-│                  # EmptyRiffState, CountdownTimer
+│                  # CompletedRiffCard, ReadyToRevealCard, MosaicCollage, ProgressCard,
+│                  # RiffFormFields, EmptyRiffState, CountdownTimer
 ├── read/          # ReadPageLayout, ReadOnlyEditor, ReadToggle, ReadingProgress,
 │                  # CommentAnchor, CommentPopover, CommentSidebar, CommentDrawer
 ├── notifications/ # NotificationBell, NotificationPanel, NotificationItem
 ├── settings/      # SettingsPage, ProfileSection, DataSection
 ├── about/         # AboutPage
-├── write/         # WritePage, CoverImageModal, ShareConfirmModal, ResizableImageView,
+├── write/         # WritePage, CoverImageModal, SubmitConfirmModal, ResizableImageView,
 │                  # toolbar/StickyToolbar, toolbar/ToolbarButton, toolbar/toolbarButtons
 └── editor/        # TiptapEditor, EditorToolbar, extensions/Spotify, extensions/sharedExtensions
 ```
@@ -117,10 +117,9 @@ src/lib/
 ├── auth.ts                    # NextAuth config (Resend magic link)
 ├── auth-utils.ts              # requireAuth(), getSession(), getCurrentUser()
 ├── resend.ts                  # Email: signIn, onboarding, club invite
-├── riff-utils.ts              # getRiffDisplayTitle (volume number + title formatting)
+├── riff-utils.ts              # Shared riff logic helpers (getSubmittedPieces, isPastDeadline, formatDateShort, etc.)
 ├── notifications.ts           # createNotification, notifyClubMembers, notifyRiffParticipants
-├── supabase.ts                # Supabase admin client (Storage uploads)
-└── prompt-suggestions.ts      # 27 curated writing prompts
+└── supabase.ts                # Supabase admin client (Storage uploads)
 ```
 
 ---
