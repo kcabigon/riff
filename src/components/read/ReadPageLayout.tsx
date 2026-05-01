@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import Avatar from "@/components/shared/Avatar";
 import ReadToggle from "./ReadToggle";
 import ReadOnlyEditor from "./ReadOnlyEditor";
@@ -55,8 +56,10 @@ interface ReadPageLayoutProps {
   currentUser: CommentAuthor;
   initialComments: CommentData[];
   isAlreadyRead: boolean;
+  startInRiffMode?: boolean;
   previousPiece?: { id: string; title: string } | null;
   nextPiece?: { id: string; title: string } | null;
+  fromProfileUserId?: string;
 }
 
 export default function ReadPageLayout({
@@ -66,11 +69,17 @@ export default function ReadPageLayout({
   currentUser,
   initialComments,
   isAlreadyRead,
+  startInRiffMode,
+  fromProfileUserId,
 }: ReadPageLayoutProps) {
+  const router = useRouter();
   const endRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const contentColumnRef = useRef<HTMLDivElement>(null);
-  const [markedRead, setMarkedRead] = useState(isAlreadyRead);
+  const [markedRead, setMarkedRead] = useState(false);
+  // Always start in read mode — activate riff mode only after the editor is
+  // ready so marks are in the DOM before the sidebar mounts (prevents all
+  // comment cards stacking at top:0 on notification deep-link nav).
   const [isRiffMode, setIsRiffMode] = useState(false);
   const [comments, setComments] = useState<CommentData[]>(initialComments);
   const [activeHighlightId, setActiveHighlightId] = useState<string | null>(
@@ -144,10 +153,38 @@ export default function ReadPageLayout({
     setPendingSelection(null);
   }, []);
 
+  const handleEditorReady = useCallback(() => {
+    if (startInRiffMode) setIsRiffMode(true);
+  }, [startInRiffMode]);
+
+  const handleClearHighlight = useCallback(
+    () => setActiveHighlightId(null),
+    []
+  );
+
   const handleDeleteComment = useCallback((commentId: string) => {
     setComments((prev) => prev.filter((c) => c.id !== commentId));
     setActiveHighlightId((prev) => (prev === commentId ? null : prev));
   }, []);
+
+  const handleUpdateComment = useCallback(
+    async (commentId: string, newContent: string) => {
+      const res = await fetch(`/api/comments/${commentId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: newContent }),
+      });
+      if (!res.ok) return;
+      setComments((prev) =>
+        prev.map((c) =>
+          c.id === commentId
+            ? { ...c, content: newContent, updatedAt: new Date().toISOString() }
+            : c
+        )
+      );
+    },
+    []
+  );
 
   // Click sidebar comment → scroll to highlight in content
   const handleSidebarCommentClick = useCallback((commentId: string) => {
@@ -180,14 +217,17 @@ export default function ReadPageLayout({
   }, []);
 
   // Handle image comment
-  const handleImageComment = useCallback((rect: DOMRect) => {
-    setPendingSelection({
-      text: "[Image]",
-      start: -1,
-      end: -1,
-      rect,
-    });
-  }, []);
+  const handleImageComment = useCallback(
+    (rect: DOMRect, charOffset: number) => {
+      setPendingSelection({
+        text: "[Image]",
+        start: charOffset,
+        end: charOffset,
+        rect,
+      });
+    },
+    []
+  );
 
   const readMinutes = Math.max(1, piece.readLengthMin);
 
@@ -237,7 +277,15 @@ export default function ReadPageLayout({
               padding: "16px 0 8px",
             }}
           >
-            <BackButton href={`/riffs/${riffId}`} />
+            <BackButton
+              onClick={() => {
+                if (fromProfileUserId) {
+                  router.push(`/profile/${fromProfileUserId}`);
+                } else {
+                  router.push(`/riffs/${riffId}`);
+                }
+              }}
+            />
 
             {/* Nav title + author avatar — appears when metadata scrolls out */}
             {!isMobile && (
@@ -405,9 +453,12 @@ export default function ReadPageLayout({
             isRiffMode={isRiffMode}
             activeHighlightId={activeHighlightId}
             pendingSelection={pendingSelection}
+            currentUserId={currentUser.id}
             onSelection={setPendingSelection}
             onHighlightClick={handleHighlightClick}
+            onClearHighlight={handleClearHighlight}
             onImageComment={handleImageComment}
+            onEditorReady={handleEditorReady}
           />
 
           {/* End sentinel for read tracking */}
@@ -421,6 +472,7 @@ export default function ReadPageLayout({
             activeHighlightId={activeHighlightId}
             currentUserId={currentUser.id}
             onDelete={handleDeleteComment}
+            onUpdate={handleUpdateComment}
             onCommentClick={handleSidebarCommentClick}
             contentColumnRef={contentColumnRef}
             pendingSelection={pendingSelection}
@@ -461,6 +513,7 @@ export default function ReadPageLayout({
           currentUserId={currentUser.id}
           onClose={() => setActiveHighlightId(null)}
           onDelete={handleDeleteComment}
+          onUpdate={handleUpdateComment}
         />
       )}
     </div>

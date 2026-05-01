@@ -100,45 +100,7 @@ src/components/
 └── editor/        # TiptapEditor, EditorToolbar, extensions/Spotify, extensions/sharedExtensions
 ```
 
-### Reusable Component Catalog
-
-**IMPORTANT: Always reuse these components before building anything new.**
-
-#### Core UI (`src/components/`)
-| Component | File | Use for |
-|-----------|------|---------|
-| **PrimaryButton** | `PrimaryButton.tsx` | Primary actions (green, neo-brutalist). Props: `loading`, `disabled` |
-| **SecondaryButton** | `SecondaryButton.tsx` | Secondary actions (cyan). Same props as PrimaryButton |
-| **TextInput** | `TextInput.tsx` | All form inputs. Props: `error`, `multiline`, `rows` |
-| **BackButton** | `BackButton.tsx` | Back navigation. Props: `href`, `onClick`, `size` |
-| **CloseButton** | `CloseButton.tsx` | Close/dismiss actions. Props: `onClick`, `size` |
-| **IconButton** | `IconButton.tsx` | Generic icon button with 44px min tap target. Props: `src`, `label`, `onClick`, `size` |
-| **NoiseBackground** | `NoiseBackground.tsx` | Fractal noise SVG backdrop. Props: `fillMode` |
-| **Tagline** | `Tagline.tsx` | Colored vector highlight text. Props: `text`, `color` |
-| **WelcomeNote** | `WelcomeNote.tsx` | Handwriting-font message box |
-
-#### Shared (`src/components/shared/`)
-| Component | File | Use for |
-|-----------|------|---------|
-| **Modal** | `Modal.tsx` | All modals/dialogs. Props: `isOpen`, `onClose`, `title`, `size` ("sm"\|"md"\|"lg"), `footer` |
-| **Avatar** | `Avatar.tsx` | User avatars everywhere. Props: `user`, `size` (24\|32\|40\|48), `badge` ("admin"\|"moderator") |
-| **AvatarStack** | `AvatarStack.tsx` | Overlapping avatar groups. Props: `users`, `size`, `onAvatarClick` |
-| **Dropdown** | `Dropdown.tsx` | All dropdown menus. Props: `trigger`, `items`, `align` ("left"\|"right") |
-| **ImageUploadModal** | `ImageUploadModal.tsx` | **Go-to modal for all image uploads.** Crop, drag-drop, HEIC/GIF support. Props: `isOpen`, `onClose`, `onSelect`, `title`, `aspectRatio` (16/9 for covers, 1 for avatars), `cropShape` ("rect"\|"round"), `currentImage`, `existingImages` |
-| **AdminBadge** | `AdminBadge.tsx` | Host/moderator role indicator. Props: `type`, `size` |
-| **EnvironmentBadge** | `EnvironmentBadge.tsx` | Dev/staging/prod label |
-
-#### Onboarding (`src/components/onboarding/`)
-| Component | File | Use for |
-|-----------|------|---------|
-| **ImageUpload** | `ImageUpload.tsx` | Drag-and-drop image upload with preview. Props: `onUpload`, `currentImage` |
-| **OnboardingCard** | `OnboardingCard.tsx` | Full-screen onboarding layout. Props: `showLogo`, `headerContent` |
-| **OnboardingProgress** | `OnboardingProgress.tsx` | Step dots. Props: `currentStep`, `totalSteps` |
-
-#### Auth (`src/components/auth/`)
-| Component | File | Use for |
-|-----------|------|---------|
-| **AuthCard** | `AuthCard.tsx` | Full-screen auth layout with noise background and logo |
+For the design system, shared component catalog, and UI patterns, see `DESIGN-SYSTEM.md`.
 
 ### Hooks & Lib
 ```
@@ -182,24 +144,6 @@ User         → email, username, firstName, lastName, bio, avatarUrl, onboardin
 **Schema file**: `prisma/schema.prisma`
 
 ---
-
-## Design System
-
-### Colors
-- Primary: `#00FF66` (green) · Secondary: `#01EFFC` (cyan)
-- Yellow: `#EECF01` · Orange: `#FF6B35` · Pink: `#C01582` · Purple: `#955CB5`
-
-### Typography
-- Body: DM Sans (`--font-dm-sans`)
-- Handwriting: Over the Rainbow (`--font-over-the-rainbow`)
-- Serif display: Playfair Display (`--font-playfair`) — navbar wordmark
-- Hero: DM Serif Text (`--font-dm-serif-text`) — landing page 96px
-
-### Component Patterns
-- **PrimaryButton**: Green bg, white hover with green shadow
-- **Modal**: 2px border, 8px shadow, white bg, focus trap, ESC close
-- **Dropdown**: 2px black border, 4px hard black shadow, white bg, ESC/click-outside close. Items: action (with optional icon, active state), divider. Supports controlled and uncontrolled modes.
-- **CTA layout**: Row on desktop (text left, button right), column on mobile (text top, button full-width)
 
 ---
 

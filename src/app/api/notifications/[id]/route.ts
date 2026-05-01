@@ -9,7 +9,7 @@ export async function PATCH(
 ) {
   try {
     const user = await requireAuth();
-    const userId = (user as any).id;
+    const userId = user.id;
     const { id } = await params;
 
     const notification = await prisma.notification.findUnique({

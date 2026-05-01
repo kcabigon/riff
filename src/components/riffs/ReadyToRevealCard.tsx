@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import MosaicCollage from "./MosaicCollage";
+import Badge from "@/components/shared/Badge";
 import { getRiffDisplayTitle } from "@/lib/riff-utils";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 
@@ -24,7 +25,6 @@ interface ReadyToRevealCardProps {
       piece: {
         id: string;
         title: string;
-        currentContent: string;
         coverImage?: string | null;
         wordCount: number;
         authorId: string;
@@ -81,12 +81,18 @@ export default function ReadyToRevealCard({
         <MosaicCollage
           pieces={riff.pieces.map((p) => ({
             id: p.piece.id,
-            currentContent: p.piece.currentContent,
             coverImage: p.piece.coverImage,
           }))}
           width={cardWidth}
           height={cardHeight}
         />
+
+        {/* Unread badge */}
+        {totalPieces - readCount > 0 && (
+          <Badge variant="green" style={{ zIndex: 2 }}>
+            {totalPieces - readCount} unread
+          </Badge>
+        )}
 
         {/* Label strip — vertically centered */}
         <div
@@ -116,19 +122,6 @@ export default function ReadyToRevealCard({
           </p>
         </div>
       </div>
-
-      {/* Read progress */}
-      <p
-        style={{
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "14px",
-          fontWeight: 300,
-          color: "#808080",
-          margin: 0,
-        }}
-      >
-        {readCount} of {totalPieces} read
-      </p>
     </div>
   );
 }

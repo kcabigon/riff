@@ -13,7 +13,7 @@ export async function GET(req: Request) {
       where: {
         members: {
           some: {
-            userId: (user as any).id,
+            userId: user.id,
           },
         },
         isArchived: includeArchived ? undefined : false,

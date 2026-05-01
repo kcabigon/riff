@@ -4,21 +4,29 @@ import { useEditor, EditorContent, ReactNodeViewRenderer } from "@tiptap/react";
 import Placeholder from "@tiptap/extension-placeholder";
 import CharacterCount from "@tiptap/extension-character-count";
 import Image from "@tiptap/extension-image";
+import Link from "@tiptap/extension-link";
 import ResizableImageView from "@/components/write/ResizableImageView";
 import { getSharedExtensions } from "@/components/editor/extensions/sharedExtensions";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import "@/app/write/[pieceId]/editor.css";
 import BackButton from "@/components/BackButton";
-import IconButton from "@/components/IconButton";
 import CoverImageModal from "@/components/write/CoverImageModal";
-import ShareConfirmModal from "@/components/write/ShareConfirmModal";
+import SubmitConfirmModal from "@/components/write/SubmitConfirmModal";
+import IconButton from "@/components/IconButton";
 import { convertHeicToJpeg } from "@/lib/convert-heic";
 import NoiseBackground from "@/components/NoiseBackground";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import StickyToolbar from "@/components/write/toolbar/StickyToolbar";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { useScrollDirection } from "@/hooks/useScrollDirection";
+import EmbedModal from "@/components/write/EmbedModal";
+import LinkPopover from "@/components/write/LinkPopover";
+import WhatsNextModal, {
+  type WhatsNextTrigger,
+} from "@/components/shared/WhatsNextModal";
+import { canShowWhatsNext } from "@/lib/whatsNextGuard";
+import CTAButton from "@/components/CTAButton";
 
 interface RiffConnection {
   id: string;
@@ -39,9 +47,15 @@ interface WritePageProps {
     coverImage: string | null;
     riffs: RiffConnection[];
   };
+  isAdmin?: boolean;
+  hostFirstName?: string | null;
 }
 
-export default function WritePage({ piece }: WritePageProps) {
+export default function WritePage({
+  piece,
+  isAdmin = false,
+  hostFirstName,
+}: WritePageProps) {
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "unsaved">(
     "saved"
   );
@@ -49,8 +63,16 @@ export default function WritePage({ piece }: WritePageProps) {
   const [subtitle, setSubtitle] = useState(piece.subtitle || "");
   const [coverImage, setCoverImage] = useState<string | null>(piece.coverImage);
   const [showCoverModal, setShowCoverModal] = useState(false);
-  const [showShareModal, setShowShareModal] = useState(false);
-  const isSubmitted = piece.riffs.some((r) => r.submittedAt !== null);
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const linkSelectionRef = useRef<{ from: number; to: number } | null>(null);
+  const [showYoutubeModal, setShowYoutubeModal] = useState(false);
+  const [showSpotifyModal, setShowSpotifyModal] = useState(false);
+  const [whatsNextTrigger, setWhatsNextTrigger] =
+    useState<WhatsNextTrigger | null>(null);
+  const [isSubmitted, setIsSubmitted] = useState(
+    piece.riffs.some((r) => r.submittedAt !== null)
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
   const titleRef = useRef<HTMLTextAreaElement>(null);
   const subtitleRef = useRef<HTMLTextAreaElement>(null);
@@ -64,9 +86,27 @@ export default function WritePage({ piece }: WritePageProps) {
 
   const editor = useEditor({
     immediatelyRender: false,
+    editorProps: {},
     extensions: [
-      // Shared extensions (same as read page for fidelity)
-      ...getSharedExtensions().filter((ext) => ext.name !== "image"),
+      // Shared extensions (same as read page for fidelity), minus Image and Link (overridden below)
+      ...getSharedExtensions().filter(
+        (ext) => ext.name !== "image" && ext.name !== "link"
+      ),
+      // Write-specific: Link renders as <span> so browser can't navigate
+      Link.extend({
+        renderHTML({ HTMLAttributes }) {
+          return [
+            "span",
+            {
+              ...HTMLAttributes,
+              "data-link": HTMLAttributes.href,
+              href: undefined,
+              style: "cursor: text;",
+            },
+            0,
+          ];
+        },
+      }).configure({ openOnClick: false }),
       // Write-specific: Image with resize handles
       Image.extend({
         addAttributes() {
@@ -213,7 +253,6 @@ export default function WritePage({ piece }: WritePageProps) {
       const value = url || null;
       setCoverImage(value);
       autosaveCoverImage(value);
-      setShowCoverModal(false);
     },
     [autosaveCoverImage]
   );
@@ -281,7 +320,12 @@ export default function WritePage({ piece }: WritePageProps) {
     let file = event.target.files?.[0];
     if (!file || !editor) return;
 
-    file = await convertHeicToJpeg(file);
+    try {
+      file = await convertHeicToJpeg(file);
+    } catch {
+      alert("Could not process HEIC file. Please try converting it first.");
+      return;
+    }
 
     const formData = new FormData();
     formData.append("file", file);
@@ -381,19 +425,15 @@ export default function WritePage({ piece }: WritePageProps) {
               padding: "16px 0 8px",
             }}
           >
-            <BackButton onClick={handleBack} />
-
-            {/* Right side: save status + cover + share */}
+            {/* Left side: back button + save status */}
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
                 gap: "12px",
-                flexWrap: "wrap",
-                justifyContent: "flex-end",
               }}
             >
-              {/* Save status */}
+              <BackButton onClick={handleBack} />
               <div
                 style={{
                   display: "flex",
@@ -408,10 +448,10 @@ export default function WritePage({ piece }: WritePageProps) {
                     borderRadius: "50%",
                     background:
                       saveStatus === "saved"
-                        ? "#22c55e"
+                        ? "#00FF66"
                         : saveStatus === "saving"
-                          ? "#eab308"
-                          : "#9ca3af",
+                          ? "#EECF01"
+                          : "#808080",
                     animation:
                       saveStatus === "saving"
                         ? "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite"
@@ -421,9 +461,9 @@ export default function WritePage({ piece }: WritePageProps) {
                 <span
                   style={{
                     fontFamily: "var(--font-dm-sans)",
-                    fontSize: "14px",
-                    fontWeight: 400,
-                    color: "#999999",
+                    fontSize: "12px",
+                    fontWeight: 300,
+                    color: "#808080",
                   }}
                 >
                   {saveStatus === "saved"
@@ -433,51 +473,49 @@ export default function WritePage({ piece }: WritePageProps) {
                       : "Unsaved"}
                 </span>
               </div>
+            </div>
 
-              {/* Cover button */}
-              <IconButton
-                src="/icons/cover_photo.svg"
-                label={coverImage ? "Change cover image" : "Add cover image"}
-                onClick={() => setShowCoverModal(true)}
-                size={24}
-              />
-
-              {/* Share button */}
+            {/* Right side: CTA */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+              }}
+            >
+              {/* Submit CTA / cover icon */}
               {piece.riffs.length > 0 &&
                 (isSubmitted ? (
-                  <span
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "4px",
-                      fontFamily: "var(--font-dm-sans)",
-                      fontSize: "12px",
-                      fontWeight: 300,
-                      color: "#000000",
-                      background: "#00FF66",
-                      border: "1px solid #000000",
-                      borderRadius: "2px",
-                      padding: "2px 8px",
-                    }}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path
-                        d="M2 6L5 9L10 3"
-                        stroke="#000000"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    Shared
-                  </span>
-                ) : (
                   <IconButton
-                    src="/icons/share.svg"
-                    label="Share to riff"
-                    onClick={() => setShowShareModal(true)}
+                    src="/icons/cover_photo.svg"
+                    label={
+                      coverImage ? "Change cover image" : "Add cover image"
+                    }
+                    onClick={() => {
+                      if (coverImage) {
+                        setShowSubmitModal(true);
+                      } else {
+                        setShowCoverModal(true);
+                      }
+                    }}
                     size={24}
                   />
+                ) : (
+                  <CTAButton
+                    onClick={() => {
+                      if (coverImage) {
+                        setShowSubmitModal(true);
+                      } else {
+                        setShowCoverModal(true);
+                      }
+                    }}
+                    style={{
+                      padding: isMobile ? "8px 24px" : "10px 32px",
+                      fontSize: "12px",
+                    }}
+                  >
+                    Submit
+                  </CTAButton>
                 ))}
             </div>
           </div>
@@ -487,6 +525,7 @@ export default function WritePage({ piece }: WritePageProps) {
             <div
               style={{
                 borderBottom: "2px solid #000000",
+                paddingTop: "8px",
                 paddingBottom: "8px",
               }}
             >
@@ -610,33 +649,125 @@ export default function WritePage({ piece }: WritePageProps) {
           <div style={{ height: "32px" }} />
 
           {/* Editor content */}
-          <div className="write-editor" style={{ width: "100%" }}>
+          <div
+            className="write-editor"
+            style={{ width: "100%", position: "relative" }}
+          >
             <EditorContent editor={editor} />
+            <LinkPopover editor={editor} />
           </div>
         </div>
       </div>
 
       {/* Floating toolbar — desktop only */}
       {!isMobile && (
-        <StickyToolbar editor={editor} fileInputRef={fileInputRef} />
+        <StickyToolbar
+          editor={editor}
+          fileInputRef={fileInputRef}
+          onOpenLinkModal={() => {
+            linkSelectionRef.current = {
+              from: editor.state.selection.from,
+              to: editor.state.selection.to,
+            };
+            setShowLinkModal(true);
+          }}
+          onOpenYoutubeModal={() => setShowYoutubeModal(true)}
+          onOpenSpotifyModal={() => setShowSpotifyModal(true)}
+        />
       )}
+
+      <EmbedModal
+        isOpen={showLinkModal}
+        onClose={() => setShowLinkModal(false)}
+        title="Add link"
+        placeholder="https://..."
+        showDisplayText={
+          linkSelectionRef.current
+            ? linkSelectionRef.current.from === linkSelectionRef.current.to
+            : true
+        }
+        onConfirm={(url, displayText) => {
+          const sel = linkSelectionRef.current;
+          if (sel && sel.from !== sel.to) {
+            editor
+              .chain()
+              .focus()
+              .setTextSelection(sel)
+              .setLink({ href: url })
+              .run();
+          } else {
+            editor
+              .chain()
+              .focus()
+              .insertContent(`<a href="${url}">${displayText}</a>`)
+              .run();
+          }
+        }}
+      />
+
+      <EmbedModal
+        isOpen={showYoutubeModal}
+        onClose={() => setShowYoutubeModal(false)}
+        title="Add YouTube video"
+        placeholder="https://youtube.com/watch?v=..."
+        onConfirm={(url) => {
+          editor.chain().focus().setYoutubeVideo({ src: url }).run();
+        }}
+      />
+
+      <EmbedModal
+        isOpen={showSpotifyModal}
+        onClose={() => setShowSpotifyModal(false)}
+        title="Add Spotify track"
+        placeholder="https://open.spotify.com/track/..."
+        onConfirm={(url) => {
+          editor.commands.setSpotifyEmbed({ src: url });
+        }}
+      />
 
       <CoverImageModal
         isOpen={showCoverModal}
         onClose={() => setShowCoverModal(false)}
-        onSelect={handleCoverImageSelect}
+        onSelect={(url) => {
+          handleCoverImageSelect(url);
+          setShowCoverModal(false);
+          setShowSubmitModal(true);
+        }}
+        onSkip={() => {
+          setShowCoverModal(false);
+          setShowSubmitModal(true);
+        }}
         pieceContent={editor.getHTML()}
         currentCoverImage={coverImage}
       />
       {piece.riffs.length > 0 && (
-        <ShareConfirmModal
-          isOpen={showShareModal}
-          onClose={() => setShowShareModal(false)}
+        <SubmitConfirmModal
+          isOpen={showSubmitModal}
+          onClose={() => setShowSubmitModal(false)}
           onConfirm={async () => {
             const riff = piece.riffs[0];
             await fetch(`/api/riffs/${riff.id}/pieces/${piece.id}`, {
               method: "PATCH",
             });
+            setIsSubmitted(true);
+            setShowSubmitModal(false);
+            const submitTrigger = isAdmin
+              ? "host_submitted"
+              : "member_submitted";
+            if (canShowWhatsNext(submitTrigger)) {
+              setWhatsNextTrigger(submitTrigger);
+            } else {
+              router.push(`/riffs/${riff.id}`);
+            }
+          }}
+          submitDisabled={isSubmitted}
+          onCoverAction={() => {
+            if (coverImage) {
+              setCoverImage(null);
+              autosaveCoverImage(null);
+            }
+            setShowSubmitModal(false);
+            setShowCoverModal(true);
           }}
           piece={{
             id: piece.id,
@@ -645,6 +776,23 @@ export default function WritePage({ piece }: WritePageProps) {
             currentContent: editor?.getHTML() ?? piece.currentContent,
           }}
           riff={piece.riffs[0]}
+        />
+      )}
+
+      {/* What's Next Modal */}
+      {whatsNextTrigger && (
+        <WhatsNextModal
+          isOpen={true}
+          onClose={() => {
+            setWhatsNextTrigger(null);
+            router.push(`/riffs/${piece.riffs[0]?.id ?? ""}`);
+          }}
+          trigger={whatsNextTrigger}
+          hostFirstName={hostFirstName}
+          onCTAClick={() => {
+            setWhatsNextTrigger(null);
+            router.push(`/riffs/${piece.riffs[0]?.id ?? ""}`);
+          }}
         />
       )}
     </div>

@@ -1,155 +1,157 @@
-import Avatar from "@/components/shared/Avatar";
+"use client";
+
+import { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";
+import Dropdown from "@/components/shared/Dropdown";
+import MyStatsModal from "./MyStatsModal";
 
 interface ProfileHeaderProps {
-  user: {
+  profileUser: {
     id: string;
     name: string | null;
     firstName: string | null;
     lastName: string | null;
-    bio: string | null;
-    avatarUrl: string | null;
     username: string | null;
   };
-  stats: {
+  isOwnProfile?: boolean;
+  lastActiveClubId?: string | null;
+  stats?: {
     pieceCount: number;
     totalWordCount: number;
   };
 }
 
-export default function ProfileHeader({ user, stats }: ProfileHeaderProps) {
-  const displayName =
-    [user.firstName, user.lastName].filter(Boolean).join(" ") ||
-    user.name ||
-    user.username ||
-    "Anonymous";
+export default function ProfileHeader({
+  profileUser,
+  isOwnProfile,
+  lastActiveClubId,
+  stats,
+}: ProfileHeaderProps) {
+  const router = useRouter();
+  const [isStatsOpen, setIsStatsOpen] = useState(false);
+  const logoHref = lastActiveClubId ? `/clubs/${lastActiveClubId}` : "/";
 
-  const formattedWordCount = stats.totalWordCount.toLocaleString();
+  const dropdownItems = [
+    ...(isOwnProfile && stats
+      ? [
+          {
+            type: "action" as const,
+            label: "My stats",
+            onClick: () => setIsStatsOpen(true),
+          },
+        ]
+      : []),
+    ...(isOwnProfile
+      ? [
+          {
+            type: "action" as const,
+            label: "Settings",
+            onClick: () => router.push("/settings"),
+          },
+          {
+            type: "action" as const,
+            label: "Log out",
+            onClick: () => signOut({ callbackUrl: "/" }),
+          },
+        ]
+      : []),
+  ];
 
-  return (
-    <div
+  const firstName =
+    profileUser.firstName ||
+    profileUser.name?.split(" ")[0] ||
+    profileUser.username ||
+    "";
+  const lastName =
+    profileUser.lastName ||
+    profileUser.name?.split(" ").slice(1).join(" ") ||
+    "";
+  const displayName = [firstName, lastName].filter(Boolean).join(" ");
+
+  const nameEl = (
+    <span
       style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: "16px",
-        padding: "48px 24px 32px",
-        width: "100%",
-        boxSizing: "border-box",
+        fontFamily: "var(--font-dm-serif-text)",
+        fontSize: "20px",
+        fontWeight: 400,
+        color: "#FFFFFF",
+        cursor: isOwnProfile ? "pointer" : "default",
+        transition: "color 120ms ease",
+      }}
+      onMouseEnter={(e) => {
+        if (isOwnProfile)
+          (e.currentTarget as HTMLElement).style.color = "#C01582";
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLElement).style.color = "#FFFFFF";
       }}
     >
-      {/* Avatar with black border */}
-      <div
+      {displayName}
+    </span>
+  );
+
+  return (
+    <>
+      <nav
         style={{
-          border: "2px solid #000000",
-          borderRadius: "50%",
-          overflow: "hidden",
-          width: "52px",
-          height: "52px",
+          position: "sticky",
+          top: 0,
+          zIndex: 50,
+          backgroundColor: "#000000",
           display: "flex",
           alignItems: "center",
-          justifyContent: "center",
+          padding: "16px 0",
         }}
       >
-        <Avatar user={user} size={48} showBorder={false} />
-      </div>
-
-      {/* Name */}
-      <h1
-        style={{
-          fontFamily: "var(--font-dm-serif-text)",
-          fontSize: "32px",
-          fontWeight: 400,
-          color: "#000000",
-          margin: 0,
-          textAlign: "center",
-        }}
-      >
-        {displayName}
-      </h1>
-
-      {/* Stats row */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "12px",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "baseline", gap: "4px" }}>
-          <span
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 700,
-              color: "#000000",
-            }}
-          >
-            {stats.pieceCount}
-          </span>
-          <span
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              color: "#808080",
-            }}
-          >
-            pieces
-          </span>
-        </div>
-
-        <span
+        <div
           style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
-            fontWeight: 300,
-            color: "#808080",
+            maxWidth: "1000px",
+            width: "100%",
+            margin: "0 auto",
+            padding: "0 24px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
           }}
         >
-          ·
-        </span>
+          {/* Left: Logo */}
+          <Link
+            href={logoHref}
+            style={{ display: "flex", alignItems: "center" }}
+          >
+            <Image
+              src="/images/landing/riff_logo.svg"
+              alt="Riff"
+              width={55}
+              height={36}
+              priority
+            />
+          </Link>
 
-        <div style={{ display: "flex", alignItems: "baseline", gap: "4px" }}>
-          <span
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 700,
-              color: "#000000",
-            }}
-          >
-            {formattedWordCount}
-          </span>
-          <span
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              color: "#808080",
-            }}
-          >
-            words
-          </span>
+          {/* Right: name (dropdown for own profile, plain text for others) */}
+          {isOwnProfile ? (
+            <Dropdown
+              trigger={nameEl}
+              align="right"
+              minWidth={140}
+              items={dropdownItems}
+            />
+          ) : (
+            nameEl
+          )}
         </div>
-      </div>
+      </nav>
 
-      {/* Bio */}
-      {user.bio && (
-        <p
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
-            fontWeight: 300,
-            color: "#000000",
-            margin: 0,
-            textAlign: "center",
-            maxWidth: "480px",
-            lineHeight: 1.5,
-          }}
-        >
-          {user.bio}
-        </p>
+      {isOwnProfile && stats && (
+        <MyStatsModal
+          isOpen={isStatsOpen}
+          onClose={() => setIsStatsOpen(false)}
+          stats={stats}
+        />
       )}
-    </div>
+    </>
   );
 }

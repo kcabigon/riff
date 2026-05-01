@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import NavBar from "@/components/clubs/NavBar";
 import AvatarStack from "@/components/shared/AvatarStack";
@@ -10,13 +10,26 @@ import CompletedRiffCard from "@/components/riffs/CompletedRiffCard";
 import CreateRiffModal from "@/components/riffs/CreateRiffModal";
 import RevealConfirmModal from "@/components/riffs/RevealConfirmModal";
 import ReadyToRevealCard from "@/components/riffs/ReadyToRevealCard";
-import OnboardingChecklist from "@/components/clubs/OnboardingChecklist";
 import ClubSettingsModal from "@/components/clubs/ClubSettingsModal";
 import InviteOptions from "@/components/clubs/InviteOptions";
 import CloseButton from "@/components/CloseButton";
+import PrimaryButton from "@/components/PrimaryButton";
+import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
 import { useIsMobile } from "@/hooks/useMediaQuery";
-import { getRiffDisplayTitle } from "@/lib/riff-utils";
+import {
+  getRiffDisplayTitle,
+  getSubmittedPieces,
+  hasUnreadPieces,
+  isRiffFullyRead,
+  getWaitingParticipants,
+  getSubmittedParticipants,
+} from "@/lib/riff-utils";
+import WhatsNextModal, {
+  type WhatsNextTrigger,
+} from "@/components/shared/WhatsNextModal";
+import { canShowWhatsNext } from "@/lib/whatsNextGuard";
+import DeleteClubConfirmModal from "@/components/clubs/DeleteClubConfirmModal";
 
 interface ClubMember {
   user: {
@@ -33,7 +46,6 @@ interface RiffPiece {
     id: string;
     title: string;
     authorId: string;
-    currentContent: string;
     coverImage?: string | null;
     wordCount: number;
   };
@@ -80,6 +92,7 @@ interface ClubPageLayoutProps {
   isAdmin: boolean;
   activeRiff: Riff | null;
   revealedRiffs: Riff[];
+  pastRevealedRiffs: Riff[];
   readCounts: Record<string, number>;
   completedRiffs: Riff[];
   stats: {
@@ -87,6 +100,7 @@ interface ClubPageLayoutProps {
     pieceCount: number;
     wordCount: number;
   };
+  initialWelcome?: "host" | "member";
 }
 
 export default function ClubPageLayout({
@@ -96,9 +110,11 @@ export default function ClubPageLayout({
   isAdmin,
   activeRiff,
   revealedRiffs,
+  pastRevealedRiffs,
   readCounts,
   completedRiffs,
   stats,
+  initialWelcome,
 }: ClubPageLayoutProps) {
   const router = useRouter();
   const [clubName, setClubName] = useState(club.name);
@@ -107,39 +123,79 @@ export default function ClubPageLayout({
   const [isCreateRiffModalOpen, setIsCreateRiffModalOpen] = useState(false);
   const [isRevealModalOpen, setIsRevealModalOpen] = useState(false);
   const [isRevealing, setIsRevealing] = useState(false);
-  const [isSettingsDropdownOpen, setIsSettingsDropdownOpen] = useState(false);
   const [isClubDetailsModalOpen, setIsClubDetailsModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-  const settingsDropdownRef = useRef<HTMLDivElement>(null);
-
-  // Close settings dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        settingsDropdownRef.current &&
-        !settingsDropdownRef.current.contains(e.target as Node)
-      ) {
-        setIsSettingsDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const [isDeleteClubModalOpen, setIsDeleteClubModalOpen] = useState(false);
   const [currentActiveRiff, setCurrentActiveRiff] = useState<Riff | null>(
     activeRiff
   );
+  const [whatsNextTrigger, setWhatsNextTrigger] =
+    useState<WhatsNextTrigger | null>(() => {
+      if (initialWelcome === "host") return "host_created_club";
+      if (initialWelcome === "member") return "member_joined_club";
+      return null;
+    });
+  const [newRiffId, setNewRiffId] = useState<string | null>(null);
   const handleAvatarClick = useProfileNavigation();
   const isMobile = useIsMobile();
 
+  const adminMenuItems = [
+    {
+      type: "action" as const,
+      label: "Club details",
+      onClick: () => setIsClubDetailsModalOpen(true),
+    },
+    {
+      type: "action" as const,
+      label: "Invite friends",
+      onClick: () => setIsInviteModalOpen(true),
+    },
+    { type: "divider" as const },
+    {
+      type: "action" as const,
+      label: "Delete club",
+      color: "#DC2626",
+      onClick: () => setIsDeleteClubModalOpen(true),
+    },
+  ];
+
+  // Returns the count of submitted pieces authored by someone other than the current user.
+  // Used to determine read progress — own pieces are never "unread" and don't need to be read.
+  const otherSubmittedCount = (riff: Riff) =>
+    getSubmittedPieces(riff.pieces).filter(
+      (p) => p.piece.authorId !== currentUserId
+    ).length;
+
+  // A riff is fully read when the user has read every friend's piece.
+  // Special case: if the user is the sole submitter there are no friend pieces to read —
+  // treat as done as long as at least one piece exists (avoids the submittedCount=0 guard
+  // in isRiffFullyRead incorrectly hiding the riff from Past Riffs).
+  const isFullyReadForUser = (riff: Riff) => {
+    const others = otherSubmittedCount(riff);
+    if (others === 0) return getSubmittedPieces(riff.pieces).length > 0;
+    return isRiffFullyRead(riff.id, readCounts, others);
+  };
+
+  const hasUnreadForUser = (riff: Riff) =>
+    hasUnreadPieces(riff.id, readCounts, otherSubmittedCount(riff));
+
   // After joining a riff, refresh the page to get updated state
   const handleJoinRiff = useCallback(() => {
+    if (canShowWhatsNext("member_joined_riff")) {
+      setWhatsNextTrigger("member_joined_riff");
+    }
     router.refresh();
   }, []);
 
-  // After creating a riff, refresh the page
-  const handleRiffCreated = useCallback(() => {
+  // After creating a riff, refresh so the new riff + host participation are reflected,
+  // then show the "what's next" modal if applicable
+  const handleRiffCreated = useCallback((riffId: string) => {
     setIsCreateRiffModalOpen(false);
+    setNewRiffId(riffId);
     router.refresh();
+    if (canShowWhatsNext("host_started_riff")) {
+      setWhatsNextTrigger("host_started_riff");
+    }
   }, []);
 
   // Handle reveal confirmation
@@ -250,125 +306,11 @@ export default function ClubPageLayout({
                     {clubName}
                   </h1>
                   {isAdmin && (
-                    <div
-                      ref={settingsDropdownRef}
-                      style={{ position: "relative" }}
-                    >
-                      <button
-                        onClick={() => setIsSettingsDropdownOpen((o) => !o)}
-                        aria-label="Club settings"
-                        style={{
-                          background: "transparent",
-                          border: "2px solid transparent",
-                          cursor: "pointer",
-                          padding: "4px 6px",
-                          color: "#FFFFFF",
-                          lineHeight: 1,
-                          display: "flex",
-                          alignItems: "center",
-                          opacity: 0.7,
-                          transition:
-                            "opacity 0.15s ease, background-color 0.15s ease, box-shadow 0.1s ease",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.opacity = "1";
-                          e.currentTarget.style.backgroundColor = "#01EFFC";
-                          e.currentTarget.style.borderColor = "#000000";
-                          e.currentTarget.style.color = "#000000";
-                          e.currentTarget.style.boxShadow =
-                            "3px 3px 0px 0px #000000";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.opacity = "0.7";
-                          e.currentTarget.style.backgroundColor = "transparent";
-                          e.currentTarget.style.borderColor = "transparent";
-                          e.currentTarget.style.color = "#FFFFFF";
-                          e.currentTarget.style.boxShadow = "none";
-                        }}
-                      >
-                        <svg
-                          width="12"
-                          height="3"
-                          viewBox="0 0 12 3"
-                          fill="currentColor"
-                        >
-                          <circle cx="1.5" cy="1.5" r="1.5" />
-                          <circle cx="6" cy="1.5" r="1.5" />
-                          <circle cx="10.5" cy="1.5" r="1.5" />
-                        </svg>
-                      </button>
-                      {isSettingsDropdownOpen && (
-                        <div
-                          style={{
-                            position: "absolute",
-                            top: "calc(100% + 4px)",
-                            left: 0,
-                            backgroundColor: "#FFFFFF",
-                            border: "2px solid #000000",
-                            boxShadow: "4px 4px 0px 0px #000000",
-                            minWidth: "160px",
-                            zIndex: 10,
-                          }}
-                        >
-                          <button
-                            onClick={() => {
-                              setIsSettingsDropdownOpen(false);
-                              setIsClubDetailsModalOpen(true);
-                            }}
-                            style={{
-                              display: "block",
-                              width: "100%",
-                              padding: "12px 16px",
-                              background: "none",
-                              border: "none",
-                              textAlign: "left",
-                              fontFamily: "var(--font-dm-sans)",
-                              fontSize: "14px",
-                              fontWeight: 300,
-                              color: "#000000",
-                              cursor: "pointer",
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = "#F5F5F5";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor =
-                                "transparent";
-                            }}
-                          >
-                            Club details
-                          </button>
-                          <button
-                            style={{
-                              display: "block",
-                              width: "100%",
-                              padding: "12px 16px",
-                              background: "none",
-                              border: "none",
-                              textAlign: "left",
-                              fontFamily: "var(--font-dm-sans)",
-                              fontSize: "14px",
-                              fontWeight: 300,
-                              color: "#000000",
-                              cursor: "pointer",
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = "#F5F5F5";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor =
-                                "transparent";
-                            }}
-                            onClick={() => {
-                              setIsSettingsDropdownOpen(false);
-                              setIsInviteModalOpen(true);
-                            }}
-                          >
-                            Invite friends
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                    <ThreeDotButton
+                      variant="dark"
+                      items={adminMenuItems}
+                      align="left"
+                    />
                   )}
                 </div>
 
@@ -476,117 +418,11 @@ export default function ClubPageLayout({
               {clubName}
             </h1>
             {isAdmin && (
-              <div ref={settingsDropdownRef} style={{ position: "relative" }}>
-                <button
-                  onClick={() => setIsSettingsDropdownOpen((o) => !o)}
-                  aria-label="Club settings"
-                  style={{
-                    background: "transparent",
-                    border: "2px solid transparent",
-                    cursor: "pointer",
-                    padding: "4px 6px",
-                    color: "#000000",
-                    lineHeight: 1,
-                    display: "flex",
-                    alignItems: "center",
-                    opacity: 0.4,
-                    transition:
-                      "opacity 0.15s ease, background-color 0.15s ease, box-shadow 0.1s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.opacity = "1";
-                    e.currentTarget.style.backgroundColor = "#01EFFC";
-                    e.currentTarget.style.borderColor = "#000000";
-                    e.currentTarget.style.boxShadow = "3px 3px 0px 0px #000000";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.opacity = "0.4";
-                    e.currentTarget.style.backgroundColor = "transparent";
-                    e.currentTarget.style.borderColor = "transparent";
-                    e.currentTarget.style.boxShadow = "none";
-                  }}
-                >
-                  <svg
-                    width="12"
-                    height="3"
-                    viewBox="0 0 12 3"
-                    fill="currentColor"
-                  >
-                    <circle cx="1.5" cy="1.5" r="1.5" />
-                    <circle cx="6" cy="1.5" r="1.5" />
-                    <circle cx="10.5" cy="1.5" r="1.5" />
-                  </svg>
-                </button>
-                {isSettingsDropdownOpen && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "calc(100% + 4px)",
-                      left: 0,
-                      backgroundColor: "#FFFFFF",
-                      border: "2px solid #000000",
-                      boxShadow: "4px 4px 0px 0px #000000",
-                      minWidth: "160px",
-                      zIndex: 10,
-                    }}
-                  >
-                    <button
-                      onClick={() => {
-                        setIsSettingsDropdownOpen(false);
-                        setIsClubDetailsModalOpen(true);
-                      }}
-                      style={{
-                        display: "block",
-                        width: "100%",
-                        padding: "12px 16px",
-                        background: "none",
-                        border: "none",
-                        textAlign: "left",
-                        fontFamily: "var(--font-dm-sans)",
-                        fontSize: "14px",
-                        fontWeight: 300,
-                        color: "#000000",
-                        cursor: "pointer",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "#F5F5F5";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "transparent";
-                      }}
-                    >
-                      Club details
-                    </button>
-                    <button
-                      style={{
-                        display: "block",
-                        width: "100%",
-                        padding: "12px 16px",
-                        background: "none",
-                        border: "none",
-                        textAlign: "left",
-                        fontFamily: "var(--font-dm-sans)",
-                        fontSize: "14px",
-                        fontWeight: 300,
-                        color: "#000000",
-                        cursor: "pointer",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "#F5F5F5";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "transparent";
-                      }}
-                      onClick={() => {
-                        setIsSettingsDropdownOpen(false);
-                        setIsInviteModalOpen(true);
-                      }}
-                    >
-                      Invite friends
-                    </button>
-                  </div>
-                )}
-              </div>
+              <ThreeDotButton
+                variant="light"
+                items={adminMenuItems}
+                align="left"
+              />
             )}
           </div>
 
@@ -693,118 +529,11 @@ export default function ClubPageLayout({
                 {clubName}
               </h1>
               {isAdmin && (
-                <div ref={settingsDropdownRef} style={{ position: "relative" }}>
-                  <button
-                    onClick={() => setIsSettingsDropdownOpen((o) => !o)}
-                    aria-label="Club settings"
-                    style={{
-                      background: "transparent",
-                      border: "2px solid transparent",
-                      cursor: "pointer",
-                      padding: "4px 6px",
-                      color: "#000000",
-                      lineHeight: 1,
-                      display: "flex",
-                      alignItems: "center",
-                      opacity: 0.4,
-                      transition:
-                        "opacity 0.15s ease, background-color 0.15s ease, box-shadow 0.1s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.opacity = "1";
-                      e.currentTarget.style.backgroundColor = "#01EFFC";
-                      e.currentTarget.style.borderColor = "#000000";
-                      e.currentTarget.style.boxShadow =
-                        "3px 3px 0px 0px #000000";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.opacity = "0.4";
-                      e.currentTarget.style.backgroundColor = "transparent";
-                      e.currentTarget.style.borderColor = "transparent";
-                      e.currentTarget.style.boxShadow = "none";
-                    }}
-                  >
-                    <svg
-                      width="12"
-                      height="3"
-                      viewBox="0 0 12 3"
-                      fill="currentColor"
-                    >
-                      <circle cx="1.5" cy="1.5" r="1.5" />
-                      <circle cx="6" cy="1.5" r="1.5" />
-                      <circle cx="10.5" cy="1.5" r="1.5" />
-                    </svg>
-                  </button>
-                  {isSettingsDropdownOpen && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "calc(100% + 4px)",
-                        left: 0,
-                        backgroundColor: "#FFFFFF",
-                        border: "2px solid #000000",
-                        boxShadow: "4px 4px 0px 0px #000000",
-                        minWidth: "160px",
-                        zIndex: 10,
-                      }}
-                    >
-                      <button
-                        onClick={() => {
-                          setIsSettingsDropdownOpen(false);
-                          setIsClubDetailsModalOpen(true);
-                        }}
-                        style={{
-                          display: "block",
-                          width: "100%",
-                          padding: "12px 16px",
-                          background: "none",
-                          border: "none",
-                          textAlign: "left",
-                          fontFamily: "var(--font-dm-sans)",
-                          fontSize: "14px",
-                          fontWeight: 300,
-                          color: "#000000",
-                          cursor: "pointer",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = "#F5F5F5";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = "transparent";
-                        }}
-                      >
-                        Club details
-                      </button>
-                      <button
-                        style={{
-                          display: "block",
-                          width: "100%",
-                          padding: "12px 16px",
-                          background: "none",
-                          border: "none",
-                          textAlign: "left",
-                          fontFamily: "var(--font-dm-sans)",
-                          fontSize: "14px",
-                          fontWeight: 300,
-                          color: "#000000",
-                          cursor: "pointer",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = "#F5F5F5";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = "transparent";
-                        }}
-                        onClick={() => {
-                          setIsSettingsDropdownOpen(false);
-                          setIsInviteModalOpen(true);
-                        }}
-                      >
-                        Invite friends
-                      </button>
-                    </div>
-                  )}
-                </div>
+                <ThreeDotButton
+                  variant="light"
+                  items={adminMenuItems}
+                  align="left"
+                />
               )}
             </div>
 
@@ -881,86 +610,37 @@ export default function ClubPageLayout({
           </div>
         )}
 
-        {/* Onboarding checklist for admin of new clubs */}
-        {isAdmin && (
-          <OnboardingChecklist
-            clubId={club.id}
-            hasMembers={club.members.length > 1}
-            hasActiveRiff={!!activeRiff}
-            hasCompletedRiff={completedRiffs.length > 0}
-            onStartRiff={() => setIsCreateRiffModalOpen(true)}
-            onInvite={() => setIsInviteModalOpen(true)}
-          />
+        {/* Invite CTA — shown to host until at least one other member joins */}
+        {isAdmin && club.members.length <= 1 && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              marginBottom: "48px",
+            }}
+          >
+            <PrimaryButton
+              onClick={() => setIsInviteModalOpen(true)}
+              style={{ width: "auto" }}
+            >
+              Invite your crew
+            </PrimaryButton>
+          </div>
         )}
 
-        {/* Current Riff section */}
-        <div style={{ marginBottom: "48px" }}>
-          {/* Section header — only show if there's an active riff OR user is admin */}
-          {(activeRiff || isAdmin) && (
-            <h2
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "20px",
-                fontWeight: 300,
-                color: "#000000",
-                margin: "0 0 16px 0",
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-              }}
-            >
-              Current Riff
-            </h2>
-          )}
-
-          {activeRiff ? (
-            <RiffCard
-              riff={{
-                id: activeRiff.id,
-                title: activeRiff.title,
-                volumeNumber: activeRiff.volumeNumber,
-                status: activeRiff.status,
-                prompt: activeRiff.prompt,
-                deadline: activeRiff.deadline
-                  ? new Date(activeRiff.deadline)
-                  : null,
-                createdAt: new Date(activeRiff.createdAt),
-                participants: activeRiff.participants,
-                pieces: activeRiff.pieces,
-              }}
-              isJoined={isJoined}
-              hasDraft={hasDraft}
-              hasSubmitted={hasSubmitted}
-              currentUserId={currentUserId}
-              isAdmin={isAdmin}
-              onJoin={handleJoinRiff}
-              onReveal={() => setIsRevealModalOpen(true)}
-            />
-          ) : (
-            <EmptyRiffState
-              onStartNewRiff={() => setIsCreateRiffModalOpen(true)}
-              isAdmin={isAdmin}
-            />
-          )}
-        </div>
-
-        {/* Ready to Reveal section */}
+        {/* Current Read section — shown above Current Riff when there are unread revealed riffs */}
         {(() => {
-          // Revealed riffs where user hasn't read all pieces yet
-          const unfinishedRevealed = revealedRiffs.filter(
-            (r) => (readCounts[r.id] || 0) < r.pieces.length
-          );
+          const unfinishedRevealed = revealedRiffs.filter(hasUnreadForUser);
           if (unfinishedRevealed.length === 0) return null;
           return (
             <div style={{ marginBottom: "48px" }}>
               <h2
                 style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "20px",
-                  fontWeight: 300,
+                  fontFamily: "var(--font-dm-serif-text)",
+                  fontSize: "24px",
+                  fontWeight: 400,
                   color: "#000000",
                   margin: "0 0 16px 0",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
                 }}
               >
                 Current Read
@@ -978,7 +658,7 @@ export default function ClubPageLayout({
                     key={riff.id}
                     riff={riff}
                     readCount={readCounts[riff.id] || 0}
-                    totalPieces={riff.pieces.length}
+                    totalPieces={otherSubmittedCount(riff)}
                   />
                 ))}
               </div>
@@ -986,29 +666,87 @@ export default function ClubPageLayout({
           );
         })()}
 
-        {/* Completed Riffs section — includes COMPLETED + fully-read REVEALED riffs */}
+        {/* Current Riff section — hidden for members when there's a current read and no active riff */}
         {(() => {
-          // Revealed riffs where user has read all pieces
-          const fullyReadRevealed = revealedRiffs.filter(
-            (r) =>
-              r.pieces.length > 0 && (readCounts[r.id] || 0) >= r.pieces.length
+          const hasCurrentRead = revealedRiffs.some(hasUnreadForUser);
+          const showSection = activeRiff || isAdmin || !hasCurrentRead;
+          if (!showSection) return null;
+
+          const hostName =
+            club.members.find((m) => m.user.id === club.adminId)?.user.name ??
+            null;
+
+          return (
+            <div style={{ marginBottom: "48px" }}>
+              {(activeRiff || isAdmin) && (
+                <h2
+                  style={{
+                    fontFamily: "var(--font-dm-serif-text)",
+                    fontSize: "24px",
+                    fontWeight: 400,
+                    color: "#000000",
+                    margin: "0 0 16px 0",
+                  }}
+                >
+                  Current Riff
+                </h2>
+              )}
+
+              {activeRiff ? (
+                <RiffCard
+                  riff={{
+                    id: activeRiff.id,
+                    title: activeRiff.title,
+                    volumeNumber: activeRiff.volumeNumber,
+                    status: activeRiff.status,
+                    prompt: activeRiff.prompt,
+                    deadline: activeRiff.deadline
+                      ? new Date(activeRiff.deadline)
+                      : null,
+                    createdAt: new Date(activeRiff.createdAt),
+                    participants: activeRiff.participants,
+                    pieces: activeRiff.pieces,
+                  }}
+                  isJoined={isJoined}
+                  hasDraft={hasDraft}
+                  hasSubmitted={hasSubmitted}
+                  currentUserId={currentUserId}
+                  isAdmin={isAdmin}
+                  onJoin={handleJoinRiff}
+                  onReveal={() => setIsRevealModalOpen(true)}
+                />
+              ) : (
+                <EmptyRiffState
+                  onStartNewRiff={() => setIsCreateRiffModalOpen(true)}
+                  isAdmin={isAdmin}
+                  hostName={hostName}
+                />
+              )}
+            </div>
           );
-          const allCompleted = [...completedRiffs, ...fullyReadRevealed];
-          return allCompleted.length > 0;
+        })()}
+
+        {/* Past Riffs section — includes COMPLETED + pre-join REVEALED + fully-read REVEALED riffs */}
+        {(() => {
+          const fullyReadRevealed = revealedRiffs.filter(isFullyReadForUser);
+          const allPast = [
+            ...completedRiffs,
+            ...pastRevealedRiffs,
+            ...fullyReadRevealed,
+          ];
+          return allPast.length > 0;
         })() && (
           <div>
             <h2
               style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "20px",
-                fontWeight: 300,
+                fontFamily: "var(--font-dm-serif-text)",
+                fontSize: "24px",
+                fontWeight: 400,
                 color: "#000000",
                 margin: "0 0 16px 0",
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
               }}
             >
-              Completed Riffs
+              Past Riffs
             </h2>
 
             <div
@@ -1022,32 +760,38 @@ export default function ClubPageLayout({
             >
               {[
                 ...completedRiffs,
-                ...revealedRiffs.filter(
-                  (r) =>
-                    r.pieces.length > 0 &&
-                    (readCounts[r.id] || 0) >= r.pieces.length
-                ),
-              ].map((riff) => (
-                <CompletedRiffCard
-                  key={riff.id}
-                  riff={{
-                    id: riff.id,
-                    title: riff.title,
-                    volumeNumber: riff.volumeNumber,
-                    status: riff.status,
-                    createdAt: new Date(riff.createdAt),
-                    deadline: riff.deadline ? new Date(riff.deadline) : null,
-                  }}
-                  clubName={clubName}
-                  pieces={riff.pieces.map((p) => ({
-                    id: p.piece.id,
-                    title: p.piece.title,
-                    currentContent: p.piece.currentContent,
-                    coverImage: p.piece.coverImage,
-                    wordCount: p.piece.wordCount,
-                  }))}
-                />
-              ))}
+                ...pastRevealedRiffs,
+                ...revealedRiffs.filter(isFullyReadForUser),
+              ]
+                .sort((a, b) => {
+                  if (a.volumeNumber != null && b.volumeNumber != null) {
+                    return b.volumeNumber - a.volumeNumber;
+                  }
+                  return (
+                    new Date(b.createdAt).getTime() -
+                    new Date(a.createdAt).getTime()
+                  );
+                })
+                .map((riff) => (
+                  <CompletedRiffCard
+                    key={riff.id}
+                    riff={{
+                      id: riff.id,
+                      title: riff.title,
+                      volumeNumber: riff.volumeNumber,
+                      status: riff.status,
+                      createdAt: new Date(riff.createdAt),
+                      deadline: riff.deadline ? new Date(riff.deadline) : null,
+                    }}
+                    clubName={clubName}
+                    pieces={getSubmittedPieces(riff.pieces).map((p) => ({
+                      id: p.piece.id,
+                      title: p.piece.title,
+                      coverImage: p.piece.coverImage,
+                      wordCount: p.piece.wordCount,
+                    }))}
+                  />
+                ))}
             </div>
           </div>
         )}
@@ -1076,6 +820,21 @@ export default function ClubPageLayout({
           description: clubDescription,
           bannerImage: clubBannerImage,
         }}
+      />
+
+      <DeleteClubConfirmModal
+        isOpen={isDeleteClubModalOpen}
+        onClose={() => setIsDeleteClubModalOpen(false)}
+        onDeleted={() => {
+          const otherClub = userClubs.find((c) => c.id !== club.id);
+          if (otherClub) {
+            router.push(`/clubs/${otherClub.id}`);
+          } else {
+            router.push("/no-club");
+          }
+        }}
+        clubId={club.id}
+        clubName={clubName}
       />
 
       {/* Invite Friends Modal */}
@@ -1151,26 +910,52 @@ export default function ClubPageLayout({
           onConfirm={handleRevealConfirm}
           isRevealing={isRevealing}
           riffTitle={getRiffDisplayTitle(activeRiff)}
-          waitingUsers={activeRiff.participants
-            .filter(
-              (p) =>
-                !activeRiff.pieces.some(
-                  (piece) => piece.piece.authorId === p.user.id
-                )
-            )
-            .map((p) => ({
-              id: p.user.id,
-              name: p.user.name,
-              avatarUrl: p.user.avatarUrl,
-            }))}
+          waitingUsers={getWaitingParticipants(
+            activeRiff.participants,
+            activeRiff.pieces
+          ).map((p) => ({
+            id: p.user.id,
+            name: p.user.name,
+            avatarUrl: p.user.avatarUrl,
+          }))}
           submittedCount={
-            activeRiff.participants.filter((p) =>
-              activeRiff.pieces.some(
-                (piece) => piece.piece.authorId === p.user.id
-              )
-            ).length
+            getSubmittedParticipants(activeRiff.participants, activeRiff.pieces)
+              .length
           }
           totalParticipants={activeRiff.participants.length}
+        />
+      )}
+
+      {/* What's Next Modal */}
+      {whatsNextTrigger && (
+        <WhatsNextModal
+          isOpen={true}
+          onClose={() => {
+            setWhatsNextTrigger(null);
+            router.refresh();
+          }}
+          trigger={whatsNextTrigger}
+          onCTAClick={
+            whatsNextTrigger === "host_created_club"
+              ? () => {
+                  setWhatsNextTrigger(null);
+                  setIsInviteModalOpen(true);
+                }
+              : whatsNextTrigger === "host_started_riff" && newRiffId
+                ? () => {
+                    setWhatsNextTrigger(null);
+                    router.push(`/riffs/${newRiffId}`);
+                  }
+                : whatsNextTrigger === "member_joined_riff" && activeRiff
+                  ? () => {
+                      setWhatsNextTrigger(null);
+                      router.push(`/riffs/${activeRiff.id}`);
+                    }
+                  : () => {
+                      setWhatsNextTrigger(null);
+                      router.refresh();
+                    }
+          }
         />
       )}
     </div>

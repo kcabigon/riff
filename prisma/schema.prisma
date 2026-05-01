@@ -46,6 +46,8 @@ model User {
   receivedNotifications    Notification[]           @relation("NotificationRecipient")
   createdInvites           ClubInvite[]             // New: Club invites created by user
   pieceReads               PieceRead[]              // New: Track which pieces user has read
+  jams                     Jam[]                    // New: User's jam entries
+  jamReads                 JamRead[]                // New: Jams the user has read
 
   // DEPRECATED: Circle relations (kept for backward compatibility)
   circleMemberships        CircleMember[]
@@ -524,7 +526,10 @@ enum NotificationType {
   RIFF_STARTED
   RIFF_DEADLINE_APPROACHING
   RIFF_COMPLETED
+  RIFF_DEADLINE_CHANGED
+  ALL_PIECES_SUBMITTED
   PIECE_SUBMITTED_TO_RIFF
+  CLUB_MEMBER_JOINED
 
   // Comment notifications
   NEW_COMMENT
@@ -601,4 +606,34 @@ model ClubInvite {
   @@index([token]) // Index for fast invite lookup
   @@index([clubId]) // Index for club's invites
   @@map("club_invites")
+}
+
+// ==================== JAMS ====================
+
+model Jam {
+  id        String   @id @default(cuid())
+  userId    String
+  content   String   // "What are you into" — short headline
+  note      String   @db.Text // "Why" — up to 250 words
+  url       String?  // Optional link
+  createdAt DateTime @default(now())
+
+  user  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reads JamRead[]
+
+  @@index([userId])
+  @@map("jams")
+}
+
+model JamRead {
+  id     String   @id @default(cuid())
+  jamId  String
+  userId String
+  readAt DateTime @default(now())
+
+  jam  Jam  @relation(fields: [jamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([jamId, userId])
+  @@map("jam_reads")
 }

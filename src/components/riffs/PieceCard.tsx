@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Avatar from "@/components/shared/Avatar";
-import { extractFirstImage } from "@/lib/extract-first-image";
+import Badge from "@/components/shared/Badge";
 
 interface PieceCardProps {
   piece: {
@@ -19,6 +19,8 @@ interface PieceCardProps {
     };
   };
   isRead: boolean;
+  hasNewComments?: boolean;
+  isOwnPiece?: boolean;
   onClick: () => void;
 }
 
@@ -32,10 +34,16 @@ const PLACEHOLDER_COLORS = [
   "#E0D5E8",
 ];
 
-export default function PieceCard({ piece, isRead, onClick }: PieceCardProps) {
+export default function PieceCard({
+  piece,
+  isRead,
+  hasNewComments = false,
+  isOwnPiece = false,
+  onClick,
+}: PieceCardProps) {
   const [isHovered, setIsHovered] = useState(false);
 
-  const imageUrl = piece.coverImage || extractFirstImage(piece.currentContent);
+  const imageUrl = piece.coverImage;
   const placeholderColor =
     PLACEHOLDER_COLORS[piece.id.charCodeAt(0) % PLACEHOLDER_COLORS.length];
 
@@ -79,27 +87,24 @@ export default function PieceCard({ piece, isRead, onClick }: PieceCardProps) {
         }}
       />
 
-      {/* NEW badge for unread */}
-      {!isRead && (
-        <div
-          style={{
-            position: "absolute",
-            top: "8px",
-            right: "8px",
-            backgroundColor: "#00FF66",
-            border: "1px solid #000000",
-            padding: "2px 8px",
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "11px",
-            fontWeight: 700,
-            color: "#000000",
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
-            zIndex: 2,
-          }}
-        >
-          NEW
-        </div>
+      {/* Own piece — comment count top-right */}
+      {isOwnPiece && (piece.commentCount ?? 0) > 0 && (
+        <Badge variant="yellow" style={{ zIndex: 2 }}>
+          {piece.commentCount}{" "}
+          {piece.commentCount === 1 ? "comment" : "comments"}
+        </Badge>
+      )}
+
+      {/* Top-right badge — UNREAD for unread others' pieces, NEW COMMENTS for new activity */}
+      {!isOwnPiece && !isRead && (
+        <Badge variant="green" style={{ zIndex: 2 }}>
+          Unread
+        </Badge>
+      )}
+      {!isOwnPiece && isRead && hasNewComments && (
+        <Badge variant="cyan" style={{ zIndex: 2 }}>
+          New Comments
+        </Badge>
       )}
 
       {/* Title — vertically centered */}

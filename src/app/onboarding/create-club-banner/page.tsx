@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, FormEvent } from "react";
+import { useState, useEffect, useRef, FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import OnboardingCard from "@/components/onboarding/OnboardingCard";
-import ImageUpload from "@/components/onboarding/ImageUpload";
+import ImageUploadFlow from "@/components/shared/ImageUploadFlow";
+import type { ImageUploadFlowHandle } from "@/components/shared/ImageUploadFlow";
 import PrimaryButton from "@/components/PrimaryButton";
 import BackButton from "@/components/BackButton";
 import Tagline from "@/components/Tagline";
@@ -22,6 +22,7 @@ export default function OnboardingCreateClubBannerPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [clubData, setClubData] = useState<PendingClubData | null>(null);
+  const uploadFlowRef = useRef<ImageUploadFlowHandle>(null);
 
   // Load club data from sessionStorage
   useEffect(() => {
@@ -52,6 +53,18 @@ export default function OnboardingCreateClubBannerPage() {
     setLoading(true);
     setError("");
 
+    // If the user has an unsaved crop, save it first
+    let finalBannerImage = bannerImage;
+    if (uploadFlowRef.current?.hasPendingCrop()) {
+      const url = await uploadFlowRef.current.saveCrop();
+      if (!url) {
+        // Crop/upload failed — don't submit the form
+        setLoading(false);
+        return;
+      }
+      finalBannerImage = url;
+    }
+
     try {
       const response = await fetch("/api/clubs", {
         method: "POST",
@@ -59,7 +72,7 @@ export default function OnboardingCreateClubBannerPage() {
         body: JSON.stringify({
           name: clubData.name,
           description: clubData.description,
-          bannerImage: bannerImage || null,
+          bannerImage: finalBannerImage || null,
         }),
       });
 
@@ -71,12 +84,12 @@ export default function OnboardingCreateClubBannerPage() {
       const data = await response.json();
       const clubId = data.club.id;
 
-      // Update onboarding step to INVITE
+      // Mark onboarding complete
       await fetch("/api/onboarding/complete", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          step: "INVITE",
+          step: "COMPLETED",
           clubId: clubId,
         }),
       });
@@ -84,8 +97,8 @@ export default function OnboardingCreateClubBannerPage() {
       // Clear pending club data
       sessionStorage.removeItem("pendingClub");
 
-      // Success - redirect to invite step
-      router.push(`/onboarding/invite?clubId=${clubId}`);
+      // Redirect to club page — What's Next modal fires via ?welcome=host
+      router.push(`/clubs/${clubId}?welcome=host`);
     } catch (err: any) {
       console.error("Error creating club:", err);
       setError(err.message || "Something went wrong. Please try again.");
@@ -109,7 +122,9 @@ export default function OnboardingCreateClubBannerPage() {
         }}
       >
         {/* Back Button */}
-        <div style={{ width: "100%", display: "flex", alignItems: "flex-start" }}>
+        <div
+          style={{ width: "100%", display: "flex", alignItems: "flex-start" }}
+        >
           <BackButton href="/onboarding/create-club" />
         </div>
 
@@ -130,24 +145,21 @@ export default function OnboardingCreateClubBannerPage() {
               display: "flex",
               flexDirection: "column",
               gap: "16px",
-              alignItems: "flex-start",
             }}
           >
-            <Tagline text="Let's make it your own" color="#01EFFC" textColor="#000000" width={218} />
-            <ImageUpload
-              onUpload={setBannerImage}
-              currentImage={bannerImage}
-              disabled={loading}
-              uploadIcon={
-                <Image
-                  src="/icons/camera_icon.svg"
-                  alt=""
-                  width={56}
-                  height={42}
-                />
-              }
-              uploadText="Upload your club's cover photo"
-              hideRecommendedText={true}
+            <Tagline
+              text="Let's make it your own"
+              color="#01EFFC"
+              textColor="#000000"
+              width={218}
+            />
+            <ImageUploadFlow
+              ref={uploadFlowRef}
+              onSelect={(url) => setBannerImage(url)}
+              currentImage={bannerImage || null}
+              aspectRatio={3 / 1}
+              removeLabel="Remove photo"
+              hideSaveButton
             />
           </div>
 

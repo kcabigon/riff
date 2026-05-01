@@ -16,7 +16,7 @@ export async function PATCH(
     const membership = await prisma.circleMember.findFirst({
       where: {
         circleId,
-        userId: (user as any).id,
+        userId: user.id,
         role: { in: ["OWNER", "ADMIN"] },
       },
     });
@@ -34,10 +34,7 @@ export async function PATCH(
     });
 
     if (!prompt || prompt.circleId !== circleId) {
-      return NextResponse.json(
-        { error: "Prompt not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Prompt not found" }, { status: 404 });
     }
 
     // Validate inputs
@@ -63,8 +60,12 @@ export async function PATCH(
       where: { id: promptId },
       data: {
         ...(title !== undefined && { title: title.trim() }),
-        ...(description !== undefined && { description: description?.trim() || null }),
-        ...(deadline !== undefined && { deadline: deadline ? new Date(deadline) : null }),
+        ...(description !== undefined && {
+          description: description?.trim() || null,
+        }),
+        ...(deadline !== undefined && {
+          deadline: deadline ? new Date(deadline) : null,
+        }),
         ...(visibilityRule !== undefined && { visibilityRule }),
       },
       include: {
@@ -108,7 +109,7 @@ export async function DELETE(
     const membership = await prisma.circleMember.findFirst({
       where: {
         circleId,
-        userId: (user as any).id,
+        userId: user.id,
         role: { in: ["OWNER", "ADMIN"] },
       },
     });
@@ -126,10 +127,7 @@ export async function DELETE(
     });
 
     if (!prompt || prompt.circleId !== circleId) {
-      return NextResponse.json(
-        { error: "Prompt not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Prompt not found" }, { status: 404 });
     }
 
     // Delete prompt (pieces will have promptId set to null due to onDelete: SetNull)

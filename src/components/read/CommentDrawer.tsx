@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import ThreeDotButton from "@/components/shared/ThreeDotButton";
+import CommentButton from "./CommentButton";
+import DestructiveButton from "@/components/DestructiveButton";
 
 interface CommentAuthor {
   id: string;
@@ -26,6 +29,7 @@ interface CommentDrawerProps {
   currentUserId: string;
   onClose: () => void;
   onDelete: (commentId: string) => void;
+  onUpdate: (commentId: string, newContent: string) => Promise<void>;
 }
 
 function timeAgo(dateStr: string): string {
@@ -49,8 +53,35 @@ export default function CommentDrawer({
   currentUserId,
   onClose,
   onDelete,
+  onUpdate,
 }: CommentDrawerProps) {
   const startYRef = useRef<number | null>(null);
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+
+  // Reset edit state whenever a different comment is shown
+  useEffect(() => {
+    setIsEditing(false);
+    setEditContent(comment?.content ?? "");
+  }, [comment?.id]);
+
+  const handleSave = async () => {
+    if (!comment) return;
+    const trimmed = editContent.trim();
+    if (!trimmed) return;
+    setSaving(true);
+    try {
+      await onUpdate(comment.id, trimmed);
+      setIsEditing(false);
+    } catch (err) {
+      console.error("Error updating comment:", err);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // Swipe down to close
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -60,13 +91,11 @@ export default function CommentDrawer({
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (startYRef.current === null) return;
     const delta = e.changedTouches[0].clientY - startYRef.current;
-    if (delta > 60) {
-      onClose();
-    }
+    if (delta > 60) onClose();
     startYRef.current = null;
   };
 
-  // Close on backdrop click
+  // Close on Escape
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
@@ -95,6 +124,7 @@ export default function CommentDrawer({
 
       {/* Drawer */}
       <div
+        ref={drawerRef}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         style={{
@@ -132,30 +162,6 @@ export default function CommentDrawer({
             }}
           />
         </div>
-
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          style={{
-            position: "absolute",
-            top: "16px",
-            right: "16px",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            padding: "4px",
-            color: "#808080",
-          }}
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path
-              d="M4 4l8 8M12 4l-8 8"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-          </svg>
-        </button>
 
         {comment && (
           <div style={{ padding: "0 16px 24px" }}>
@@ -199,8 +205,7 @@ export default function CommentDrawer({
                   initials(comment.author)
                 )}
               </div>
-
-              <div>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <span
                   style={{
                     fontFamily: "var(--font-dm-sans)",
@@ -223,6 +228,30 @@ export default function CommentDrawer({
                   {timeAgo(comment.createdAt)}
                 </span>
               </div>
+              {comment.authorId === currentUserId &&
+                !isEditing &&
+                !confirmingDelete && (
+                  <ThreeDotButton
+                    variant="light"
+                    align="right"
+                    items={[
+                      {
+                        type: "action",
+                        label: "Edit",
+                        onClick: () => {
+                          setEditContent(comment.content);
+                          setIsEditing(true);
+                        },
+                      },
+                      {
+                        type: "action",
+                        label: "Delete",
+                        color: "#DC2626",
+                        onClick: () => setConfirmingDelete(true),
+                      },
+                    ]}
+                  />
+                )}
             </div>
 
             {/* Quoted text */}
@@ -240,48 +269,153 @@ export default function CommentDrawer({
               {comment.selectedText}
             </p>
 
-            {/* Comment content */}
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "15px",
-                fontWeight: 300,
-                color: "#000000",
-                margin: 0,
-                lineHeight: 1.6,
-              }}
-            >
-              {comment.content}
-            </p>
-
-            {/* Delete — own comments */}
-            {comment.authorId === currentUserId && (
-              <button
-                onClick={async () => {
-                  try {
-                    await fetch(`/api/comments/${comment.id}`, {
-                      method: "DELETE",
-                    });
-                    onDelete(comment.id);
-                    onClose();
-                  } catch (err) {
-                    console.error("Error deleting comment:", err);
-                  }
-                }}
+            {/* Comment content or edit mode */}
+            {isEditing ? (
+              <div>
+                <textarea
+                  value={editContent}
+                  onChange={(e) => {
+                    setEditContent(e.target.value);
+                    e.target.style.height = "auto";
+                    e.target.style.height = `${e.target.scrollHeight}px`;
+                    if (drawerRef.current) {
+                      drawerRef.current.scrollTop =
+                        drawerRef.current.scrollHeight;
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey))
+                      handleSave();
+                    if (e.key === "Escape") {
+                      setEditContent(comment.content);
+                      setIsEditing(false);
+                    }
+                  }}
+                  autoFocus
+                  rows={4}
+                  style={{
+                    width: "100%",
+                    resize: "none",
+                    overflow: "hidden",
+                    border: "1px solid #E6E6E6",
+                    padding: "6px 8px",
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "15px",
+                    lineHeight: 1.6,
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    alignItems: "center",
+                    gap: "8px",
+                    marginTop: "10px",
+                  }}
+                >
+                  <button
+                    onClick={() => {
+                      setEditContent(comment.content);
+                      setIsEditing(false);
+                    }}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "13px",
+                      fontWeight: 300,
+                      color: "#808080",
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <CommentButton
+                    onClick={handleSave}
+                    disabled={saving || !editContent.trim()}
+                    loading={saving}
+                  >
+                    Save
+                  </CommentButton>
+                </div>
+              </div>
+            ) : (
+              <p
                 style={{
-                  marginTop: "16px",
-                  background: "none",
-                  border: "1px solid #E6E6E6",
-                  cursor: "pointer",
-                  padding: "6px 12px",
                   fontFamily: "var(--font-dm-sans)",
-                  fontSize: "13px",
-                  color: "#808080",
-                  borderRadius: "4px",
+                  fontSize: "15px",
+                  fontWeight: 300,
+                  color: "#000000",
+                  margin: 0,
+                  lineHeight: 1.6,
+                  whiteSpace: "pre-wrap",
                 }}
               >
-                Delete comment
-              </button>
+                {comment.content}
+              </p>
+            )}
+
+            {/* Inline delete confirmation */}
+            {confirmingDelete && (
+              <div
+                style={{
+                  marginTop: "16px",
+                  borderTop: "1px solid #E6E6E6",
+                  paddingTop: "12px",
+                }}
+              >
+                <p
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "14px",
+                    fontWeight: 300,
+                    color: "#000000",
+                    margin: "0 0 10px 0",
+                  }}
+                >
+                  Delete this comment?
+                </p>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    alignItems: "center",
+                    gap: "8px",
+                  }}
+                >
+                  <button
+                    onClick={() => setConfirmingDelete(false)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "13px",
+                      fontWeight: 300,
+                      color: "#808080",
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <DestructiveButton
+                    onClick={async () => {
+                      try {
+                        await fetch(`/api/comments/${comment.id}`, {
+                          method: "DELETE",
+                        });
+                        onDelete(comment.id);
+                        onClose();
+                      } catch (err) {
+                        console.error("Error deleting comment:", err);
+                      }
+                    }}
+                  >
+                    Delete
+                  </DestructiveButton>
+                </div>
+              </div>
             )}
           </div>
         )}

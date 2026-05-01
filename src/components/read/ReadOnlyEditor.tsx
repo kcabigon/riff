@@ -10,6 +10,40 @@ interface CommentData {
   selectionStart: number;
   selectionEnd: number;
   selectedText: string;
+  authorId: string;
+}
+
+// Design system colors for per-author highlights
+const AUTHOR_COLORS = [
+  "#01EFFC", // cyan
+  "#00FF66", // green
+  "#EECF01", // yellow
+  "#FF6B35", // orange
+  "#C01582", // pink
+  "#955CB5", // purple
+];
+
+function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+export { AUTHOR_COLORS };
+
+export function buildAuthorColorMap(
+  comments: { authorId: string }[]
+): Record<string, string> {
+  const map: Record<string, string> = {};
+  const seen: string[] = [];
+  for (const c of comments) {
+    if (!map[c.authorId]) {
+      seen.push(c.authorId);
+      map[c.authorId] = AUTHOR_COLORS[(seen.length - 1) % AUTHOR_COLORS.length];
+    }
+  }
+  return map;
 }
 
 interface PendingSelection {
@@ -25,9 +59,12 @@ interface ReadOnlyEditorProps {
   isRiffMode: boolean;
   activeHighlightId: string | null;
   pendingSelection: PendingSelection | null;
+  currentUserId?: string;
   onSelection: (selection: PendingSelection) => void;
   onHighlightClick: (commentId: string) => void;
-  onImageComment?: (rect: DOMRect) => void;
+  onClearHighlight?: () => void;
+  onImageComment?: (rect: DOMRect, charOffset: number) => void;
+  onEditorReady?: () => void;
 }
 
 function getCharOffset(root: HTMLElement, node: Node, offset: number): number {
@@ -59,9 +96,12 @@ export default function ReadOnlyEditor({
   isRiffMode,
   activeHighlightId,
   pendingSelection,
+  currentUserId,
   onSelection,
   onHighlightClick,
+  onClearHighlight,
   onImageComment,
+  onEditorReady,
 }: ReadOnlyEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -72,6 +112,17 @@ export default function ReadOnlyEditor({
     editable: false,
   });
 
+  // Fire onEditorReady once when Tiptap finishes initializing.
+  // Used by ReadPageLayout to defer riff mode activation until the editor
+  // is ready, so marks are always in the DOM before the sidebar mounts.
+  const editorReadyFiredRef = useRef(false);
+  useEffect(() => {
+    if (editor && !editorReadyFiredRef.current) {
+      editorReadyFiredRef.current = true;
+      onEditorReady?.();
+    }
+  }, [editor, onEditorReady]);
+
   // Inject comment highlights via DOM manipulation
   useEffect(() => {
     if (!editor || !containerRef.current) return;
@@ -81,6 +132,26 @@ export default function ReadOnlyEditor({
 
     // Preserve scroll position during DOM manipulation
     const scrollY = window.scrollY;
+
+    // ProseMirror's MutationObserver fires after this effect and tries to
+    // restore its stored selection onto text nodes we've split via
+    // surroundContents. Patch collapse to swallow the resulting
+    // IndexSizeError for that one macrotask window.
+    const origCollapse = Selection.prototype.collapse;
+    Selection.prototype.collapse = function (
+      node: Node | null,
+      offset?: number
+    ) {
+      try {
+        origCollapse.call(this, node, offset);
+      } catch (e) {
+        if (!(e instanceof DOMException && e.name === "IndexSizeError"))
+          throw e;
+      }
+    };
+    setTimeout(() => {
+      Selection.prototype.collapse = origCollapse;
+    }, 0);
 
     // Remove existing marks
     proseMirror.querySelectorAll("mark[data-comment-id]").forEach((m) => {
@@ -93,7 +164,19 @@ export default function ReadOnlyEditor({
     // Normalize text nodes after unwrapping marks
     proseMirror.normalize();
 
+    // Reset image comment styles
+    proseMirror.querySelectorAll("img[data-comment-id]").forEach((img) => {
+      const el = img as HTMLElement;
+      el.removeAttribute("data-comment-id");
+      el.style.outline = "";
+      el.style.outlineOffset = "";
+      el.style.cursor = "";
+    });
+
     if (!isRiffMode) return;
+
+    // Build author → color map
+    const authorColors = buildAuthorColorMap(comments);
 
     // Build all items to highlight: existing comments + pending selection
     const allHighlights: {
@@ -102,6 +185,7 @@ export default function ReadOnlyEditor({
       selectionStart: number;
       isActive: boolean;
       isPending: boolean;
+      color: string;
     }[] = comments
       .filter((c) => c.selectedText && c.selectionStart != null)
       .map((c) => ({
@@ -110,6 +194,7 @@ export default function ReadOnlyEditor({
         selectionStart: c.selectionStart,
         isActive: c.id === activeHighlightId,
         isPending: false,
+        color: authorColors[c.authorId] || AUTHOR_COLORS[0],
       }));
 
     // Add pending selection as a temporary highlight
@@ -118,12 +203,21 @@ export default function ReadOnlyEditor({
       pendingSelection.text &&
       pendingSelection.start >= 0
     ) {
+      // Use current user's color, or next available color if they haven't commented yet
+      const pendingColor =
+        currentUserId && authorColors[currentUserId]
+          ? authorColors[currentUserId]
+          : AUTHOR_COLORS[
+              Object.keys(authorColors).length % AUTHOR_COLORS.length
+            ];
+
       allHighlights.push({
         id: "__pending__",
         selectedText: pendingSelection.text,
         selectionStart: pendingSelection.start,
         isActive: false,
         isPending: true,
+        color: pendingColor,
       });
     }
 
@@ -139,10 +233,32 @@ export default function ReadOnlyEditor({
       const textNodes = buildTextNodeMap(proseMirror);
       const fullText = textNodes.map((t) => t.node.textContent).join("");
 
-      const idx = fullText.indexOf(
-        highlight.selectedText,
-        Math.max(0, highlight.selectionStart - 10)
-      );
+      // Try exact position first, then nearby window, then full search as last resort
+      let idx = -1;
+      const text = highlight.selectedText;
+      const pos = highlight.selectionStart;
+
+      // 1. Exact match at stored position
+      if (fullText.substring(pos, pos + text.length) === text) {
+        idx = pos;
+      }
+      // 2. Small window around stored position (handles minor drift)
+      if (idx === -1) {
+        const windowStart = Math.max(0, pos - 30);
+        const windowEnd = Math.min(fullText.length, pos + text.length + 30);
+        const window = fullText.substring(windowStart, windowEnd);
+        const windowIdx = window.indexOf(text);
+        if (windowIdx !== -1) {
+          idx = windowStart + windowIdx;
+        }
+      }
+      // 3. Full document search — only if text is unique
+      if (idx === -1) {
+        const firstIdx = fullText.indexOf(text);
+        if (firstIdx !== -1 && fullText.indexOf(text, firstIdx + 1) === -1) {
+          idx = firstIdx;
+        }
+      }
       if (idx === -1) continue;
 
       const selStart = idx;
@@ -166,11 +282,10 @@ export default function ReadOnlyEditor({
 
           const mark = document.createElement("mark");
           mark.setAttribute("data-comment-id", highlight.id);
-          mark.style.background = highlight.isPending
-            ? "rgba(1,239,252,0.4)"
-            : highlight.isActive
-              ? "rgba(1,239,252,0.4)"
-              : "rgba(1,239,252,0.2)";
+          mark.style.background =
+            highlight.isActive || highlight.isPending
+              ? hexToRgba(highlight.color, 0.4)
+              : hexToRgba(highlight.color, 0.2);
           mark.style.cursor = "pointer";
           mark.style.padding = "0";
           mark.style.transition = "background 0.15s ease";
@@ -180,14 +295,60 @@ export default function ReadOnlyEditor({
           // surroundContents can throw if range crosses element boundaries
           continue;
         }
+      }
+    }
 
-        break;
+    // Highlight images that have comments
+    const images = proseMirror.querySelectorAll("img");
+    const imageTextOffsets: { img: HTMLElement; offset: number }[] = [];
+    if (images.length > 0) {
+      const textNodes = buildTextNodeMap(proseMirror);
+      for (const img of images) {
+        // Find the text offset just before this image
+        let offset = 0;
+        for (const tn of textNodes) {
+          if (
+            img.compareDocumentPosition(tn.node) &
+            Node.DOCUMENT_POSITION_FOLLOWING
+          ) {
+            break;
+          }
+          offset = tn.end;
+        }
+        imageTextOffsets.push({ img: img as HTMLElement, offset });
+      }
+    }
+
+    for (const highlight of allHighlights) {
+      if (highlight.selectedText !== "[Image]") continue;
+      // Find the closest image to this offset
+      let closestImg: HTMLElement | null = null;
+      let closestDist = Infinity;
+      for (const { img, offset } of imageTextOffsets) {
+        const dist = Math.abs(offset - highlight.selectionStart);
+        if (dist < closestDist) {
+          closestDist = dist;
+          closestImg = img;
+        }
+      }
+      if (closestImg) {
+        closestImg.setAttribute("data-comment-id", highlight.id);
+        closestImg.style.outline = `3px solid ${highlight.isActive || highlight.isPending ? highlight.color : hexToRgba(highlight.color, 0.5)}`;
+        closestImg.style.outlineOffset = "2px";
+        closestImg.style.cursor = "pointer";
       }
     }
 
     // Restore scroll position after DOM manipulation
     window.scrollTo(0, scrollY);
-  }, [editor, comments, isRiffMode, activeHighlightId, pendingSelection]);
+  }, [
+    editor,
+    comments,
+    isRiffMode,
+    activeHighlightId,
+    pendingSelection,
+    currentUserId,
+  ]);
 
   // Handle clicks on highlights and images
   const handleClick = useCallback(
@@ -207,18 +368,57 @@ export default function ReadOnlyEditor({
         }
       }
 
+      // Click on non-highlighted content — clear active highlight
+      if (isRiffMode && activeHighlightId) {
+        onClearHighlight?.();
+      }
+
       // Check for image click in riff mode
-      if (isRiffMode && target.tagName === "IMG" && onImageComment) {
+      if (isRiffMode && target.tagName === "IMG") {
         e.stopPropagation();
+        const existingCommentId = target.getAttribute("data-comment-id");
+        // First click: activate existing comment. Second click: open new compose
+        if (existingCommentId && existingCommentId !== activeHighlightId) {
+          onHighlightClick(existingCommentId);
+          return;
+        }
+        if (!onImageComment) return;
         const rect = target.getBoundingClientRect();
-        onImageComment(rect);
+        // Calculate the character offset of the image in the text flow
+        const proseMirror = containerRef.current?.querySelector(".ProseMirror");
+        let charOffset = 0;
+        if (proseMirror) {
+          const walker = document.createTreeWalker(
+            proseMirror,
+            NodeFilter.SHOW_TEXT
+          );
+          // Walk text nodes until we pass the image's position in the DOM
+          while (walker.nextNode()) {
+            const textNode = walker.currentNode;
+            // Check if this text node comes after the image
+            if (
+              target.compareDocumentPosition(textNode) &
+              Node.DOCUMENT_POSITION_FOLLOWING
+            ) {
+              break;
+            }
+            charOffset += (textNode.textContent || "").length;
+          }
+        }
+        onImageComment(rect, charOffset);
       }
     },
-    [onHighlightClick, isRiffMode, onImageComment]
+    [
+      onHighlightClick,
+      onClearHighlight,
+      isRiffMode,
+      onImageComment,
+      activeHighlightId,
+    ]
   );
 
-  // Handle text selection
-  const handleMouseUp = useCallback(() => {
+  // Handle text selection (fires on both mouse and touch)
+  const handleSelectionEnd = useCallback(() => {
     if (!isRiffMode || !containerRef.current) return;
 
     const proseMirror = containerRef.current.querySelector(".ProseMirror");
@@ -260,13 +460,15 @@ export default function ReadOnlyEditor({
     if (!el) return;
 
     el.addEventListener("click", handleClick);
-    document.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener("mouseup", handleSelectionEnd);
+    document.addEventListener("touchend", handleSelectionEnd);
 
     return () => {
       el.removeEventListener("click", handleClick);
-      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("mouseup", handleSelectionEnd);
+      document.removeEventListener("touchend", handleSelectionEnd);
     };
-  }, [handleClick, handleMouseUp]);
+  }, [handleClick, handleSelectionEnd]);
 
   if (!editor) return null;
 

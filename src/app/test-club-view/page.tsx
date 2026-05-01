@@ -14,6 +14,8 @@
 
 import ClubPageLayout from "@/components/clubs/ClubPageLayout";
 
+export const dynamic = "force-dynamic";
+
 // ---------------------------------------------------------------------------
 // Fake users
 // ---------------------------------------------------------------------------
@@ -192,6 +194,7 @@ export default function TestClubViewPage() {
       isAdmin={true}
       activeRiff={activeRiff}
       revealedRiffs={[]}
+      pastRevealedRiffs={[]}
       readCounts={{}}
       completedRiffs={[completedRiff1, completedRiff2]}
       stats={{ riffCount: 3, pieceCount: 6, wordCount: 250 }}

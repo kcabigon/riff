@@ -32,7 +32,7 @@ export async function PATCH(req: Request) {
 
     // Update user
     const updatedUser = await prisma.user.update({
-      where: { id: (user as any).id },
+      where: { id: user.id },
       data: {
         firstName: firstName.trim(),
         lastName: lastName.trim(),

@@ -35,6 +35,7 @@ export default function InviteOptions({
   const [loading, setLoading] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   const [showLinkBox, setShowLinkBox] = useState(false);
+
   const windowWidth = useWindowWidth();
   const isMobile = windowWidth < 768;
 
@@ -118,18 +119,6 @@ export default function InviteOptions({
     window.location.href = `sms:?&body=${smsBody}`;
   };
 
-  // Handler: Send an email
-  const handleSendEmail = async () => {
-    const url = await generateInviteLink();
-    if (!url) return;
-
-    const subject = encodeURIComponent(`Join ${clubName} on Riff`);
-    const body = encodeURIComponent(
-      `I'd love for you to join my club on Riff!\n\nClick here to join: ${url}`
-    );
-    window.location.href = `mailto:?subject=${subject}&body=${body}`;
-  };
-
   // Handler: Generate link to share
   const handleGenerateLink = async () => {
     await generateInviteLink();
@@ -205,47 +194,7 @@ export default function InviteOptions({
           </p>
         </button>
 
-        {/* Box 2: Send an email */}
-        <button
-          onClick={handleSendEmail}
-          disabled={loading}
-          style={{
-            background: "#FFFFFF",
-            border: "2px dashed #000000",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "12px",
-            padding: "16px 12px",
-            flex: isMobile ? "none" : 1,
-            width: isMobile ? "100%" : "auto",
-            height: isMobile ? "151px" : "auto",
-            cursor: loading ? "not-allowed" : "pointer",
-            opacity: loading ? 0.6 : 1,
-          }}
-        >
-          <Image
-            src="/icons/invite_email.svg"
-            alt="Send an email"
-            width={40}
-            height={42}
-          />
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              color: "#000000",
-              margin: 0,
-              textAlign: "center",
-            }}
-          >
-            Send an email
-          </p>
-        </button>
-
-        {/* Box 3: Generate link */}
+        {/* Box 2: Generate link */}
         <button
           onClick={handleGenerateLink}
           disabled={loading}

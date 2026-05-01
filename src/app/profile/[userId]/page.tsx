@@ -31,8 +31,6 @@ export default async function ProfilePageRoute({
       name: true,
       firstName: true,
       lastName: true,
-      bio: true,
-      avatarUrl: true,
       username: true,
     },
   });
@@ -41,133 +39,70 @@ export default async function ProfilePageRoute({
     redirect("/");
   }
 
-  // Compute stats
-  const stats = await prisma.piece.aggregate({
-    where: { authorId: userId },
-    _count: { id: true },
-    _sum: { wordCount: true },
-  });
+  // Fetch viewer's club memberships to gate piece access by club
+  // (skip for own profile — owner always sees their pieces unlocked)
+  const isOwnProfile = currentUserId === userId;
+  const viewerClubIds = new Set<string>();
+  if (!isOwnProfile) {
+    const memberships = await prisma.clubMember.findMany({
+      where: { userId: currentUserId },
+      select: { clubId: true },
+    });
+    memberships.forEach((m) => viewerClubIds.add(m.clubId));
+  }
 
-  // Fetch all pieces by this user with their riff and share info
-  const allPieces = await prisma.piece.findMany({
-    where: { authorId: userId },
+  // Fetch submitted pieces by this user, with riff status + club to determine visibility
+  const rawPieces = await prisma.piece.findMany({
+    where: {
+      authorId: userId,
+      riffs: { some: { submittedAt: { not: null } } },
+    },
     select: {
       id: true,
       title: true,
       coverImage: true,
       currentContent: true,
-      createdAt: true,
-      updatedAt: true,
+      wordCount: true,
       riffs: {
-        select: {
-          versionId: true,
-          riff: {
-            select: { id: true, title: true },
-          },
-        },
+        where: { submittedAt: { not: null } },
+        select: { riff: { select: { status: true, clubId: true } } },
       },
       newShares: {
+        where: { shareType: "PUBLIC" },
         select: { id: true },
-        take: 1, // We only need to know if at least one exists
+        take: 1,
       },
     },
     orderBy: { createdAt: "desc" },
   });
 
-  // Submitted pieces: have at least one PieceRiff with a non-null versionId
-  const submittedPieceIds = new Set(
-    allPieces
-      .filter((p) => p.riffs.some((r) => r.versionId !== null))
-      .map((p) => p.id)
-  );
-
-  // Pieces tab: submitted pieces only
-  const pieces = allPieces
-    .filter((p) => submittedPieceIds.has(p.id))
-    .map((p) => ({
-      id: p.id,
-      title: p.title,
-      coverImage: p.coverImage,
-      currentContent: p.currentContent,
-    }));
-
-  // Drafts tab: pieces NOT submitted (no PieceRiff with versionId)
-  const drafts = allPieces
-    .filter((p) => !submittedPieceIds.has(p.id))
-    .map((p) => ({
-      id: p.id,
-      title: p.title,
-      createdAt: p.createdAt.toISOString(),
-      updatedAt: p.updatedAt.toISOString(),
-      isShared: p.newShares.length > 0,
-      riffs: p.riffs.map((r) => ({
-        id: r.riff.id,
-        title: r.riff.title,
-      })),
-    }));
-
-  // Collections: user's own collections with their pieces
-  const collectionsRaw = await prisma.collection.findMany({
-    where: { ownerId: userId },
-    select: {
-      id: true,
-      name: true,
-      pieces: {
-        select: {
-          piece: {
-            select: {
-              id: true,
-              title: true,
-              createdAt: true,
-              updatedAt: true,
-              riffs: {
-                select: {
-                  riff: {
-                    select: { id: true, title: true },
-                  },
-                },
-              },
-              newShares: {
-                select: { id: true },
-                take: 1,
-              },
-            },
-          },
-        },
-        orderBy: { addedAt: "asc" },
-      },
-    },
-    orderBy: { createdAt: "asc" },
-  });
-
-  const collections = collectionsRaw.map((col) => ({
-    id: col.id,
-    name: col.name,
-    pieces: col.pieces.map((cp) => ({
-      id: cp.piece.id,
-      title: cp.piece.title,
-      createdAt: cp.piece.createdAt.toISOString(),
-      updatedAt: cp.piece.updatedAt.toISOString(),
-      isShared: cp.piece.newShares.length > 0,
-      riffs: cp.piece.riffs.map((r) => ({
-        id: r.riff.id,
-        title: r.riff.title,
-      })),
-    })),
+  const pieces = rawPieces.map((p) => ({
+    id: p.id,
+    title: p.title,
+    coverImage: p.coverImage,
+    currentContent: p.currentContent,
+    wordCount: p.wordCount,
+    // Revealed = riff is REVEALED/COMPLETED AND viewer is in that club
+    // (own profile skips the club check — always accessible)
+    isRevealed: p.riffs.some(
+      (r) =>
+        (r.riff.status === "REVEALED" || r.riff.status === "COMPLETED") &&
+        (isOwnProfile || viewerClubIds.has(r.riff.clubId))
+    ),
+    // Viewer has club access if they're a member of any club this piece's riff belongs to
+    viewerHasClubAccess: p.riffs.some((r) => viewerClubIds.has(r.riff.clubId)),
+    isPublic: p.newShares.length > 0,
+    publicShareId: p.newShares[0]?.id ?? null,
   }));
 
-  const isOwnProfile = currentUserId === userId;
+  const pieceCount = pieces.length;
+  const totalWordCount = pieces.reduce((sum, p) => sum + (p.wordCount ?? 0), 0);
 
   return (
     <ProfilePage
       user={user}
-      stats={{
-        pieceCount: stats._count.id,
-        totalWordCount: stats._sum.wordCount ?? 0,
-      }}
+      stats={{ pieceCount, totalWordCount }}
       pieces={pieces}
-      drafts={drafts}
-      collections={collections}
       isOwnProfile={isOwnProfile}
       lastActiveClubId={currentUser?.lastActiveClubId ?? null}
     />

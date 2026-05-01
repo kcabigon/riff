@@ -1,7 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import CommentPopover from "./CommentPopover";
+import ThreeDotButton from "@/components/shared/ThreeDotButton";
+import CommentButton from "./CommentButton";
+import DestructiveButton from "@/components/DestructiveButton";
+import { AUTHOR_COLORS, buildAuthorColorMap } from "./ReadOnlyEditor";
 
 interface CommentAuthor {
   id: string;
@@ -44,6 +48,7 @@ interface CommentSidebarProps {
   activeHighlightId: string | null;
   currentUserId: string;
   onDelete: (commentId: string) => void;
+  onUpdate: (commentId: string, newContent: string) => Promise<void>;
   onCommentClick?: (commentId: string) => void;
   contentColumnRef: React.RefObject<HTMLDivElement | null>;
   pendingSelection?: PendingSelection | null;
@@ -70,15 +75,30 @@ function CommentCard({
   comment,
   isActive,
   isOwn,
+  isEditing,
   onDelete,
+  onEdit,
+  onSave,
+  onCancelEdit,
+  onActivate,
+  color,
 }: {
   comment: CommentData;
   isActive: boolean;
   isOwn: boolean;
+  isEditing: boolean;
   onDelete: () => void;
+  onEdit: () => void;
+  onSave: (newContent: string) => Promise<void>;
+  onCancelEdit: () => void;
+  onActivate: () => void;
+  color: string;
 }) {
   const [hovered, setHovered] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [editContent, setEditContent] = useState(comment.content);
+  const [saving, setSaving] = useState(false);
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -91,14 +111,33 @@ function CommentCard({
     }
   };
 
+  const handleSave = async () => {
+    const trimmed = editContent.trim();
+    if (!trimmed) return;
+    setSaving(true);
+    try {
+      await onSave(trimmed);
+    } catch (err) {
+      console.error("Error updating comment:", err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setEditContent(comment.content);
+    onCancelEdit();
+  };
+
   return (
     <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
+        position: "relative",
         border: isActive || hovered ? "2px solid #000000" : "2px solid #E6E6E6",
         backgroundColor: "#FFFFFF",
-        boxShadow: isActive ? "4px 4px 0 #01EFFC" : "none",
+        boxShadow: isActive ? `4px 4px 0 ${color}` : "none",
         padding: "12px",
         transition:
           "border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease",
@@ -166,50 +205,159 @@ function CommentCard({
           </span>
         </div>
 
-        {isOwn && hovered && (
-          <button
+        {isOwn && !isEditing && !confirmingDelete && (
+          <div
             onClick={(e) => {
               e.stopPropagation();
-              handleDelete();
+              onActivate();
             }}
-            disabled={deleting}
-            title="Delete comment"
-            style={{
-              background: "none",
-              border: "none",
-              cursor: deleting ? "not-allowed" : "pointer",
-              padding: "2px",
-              color: "#808080",
-              flexShrink: 0,
-            }}
+            style={{ flexShrink: 0 }}
           >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path
-                d="M2 3.5h10M5.5 3.5V2.5a.5.5 0 01.5-.5h2a.5.5 0 01.5.5v1M3.5 3.5l.5 8h6l.5-8"
-                stroke="currentColor"
-                strokeWidth="1.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
+            <ThreeDotButton
+              variant="light"
+              align="right"
+              items={[
+                { type: "action", label: "Edit", onClick: onEdit },
+                {
+                  type: "action",
+                  label: "Delete",
+                  color: "#DC2626",
+                  onClick: () => setConfirmingDelete(true),
+                },
+              ]}
+            />
+          </div>
         )}
       </div>
 
-      {/* Comment content */}
-      <p
-        style={{
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "13px",
-          fontWeight: 300,
-          color: "#000000",
-          margin: 0,
-          lineHeight: 1.5,
-          wordBreak: "break-word",
-        }}
-      >
-        {comment.content}
-      </p>
+      {/* Comment content or edit mode */}
+      {isEditing ? (
+        <div onClick={(e) => e.stopPropagation()}>
+          <textarea
+            value={editContent}
+            onChange={(e) => {
+              setEditContent(e.target.value);
+              e.target.style.height = "auto";
+              e.target.style.height = `${e.target.scrollHeight}px`;
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSave();
+              if (e.key === "Escape") handleCancel();
+            }}
+            autoFocus
+            rows={3}
+            style={{
+              width: "100%",
+              resize: "none",
+              overflow: "hidden",
+              border: "1px solid #E6E6E6",
+              padding: "6px 8px",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "13px",
+              lineHeight: 1.5,
+              outline: "none",
+              boxSizing: "border-box",
+            }}
+          />
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              alignItems: "center",
+              gap: "8px",
+              marginTop: "8px",
+            }}
+          >
+            <button
+              onClick={handleCancel}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "13px",
+                fontWeight: 300,
+                color: "#808080",
+              }}
+            >
+              Cancel
+            </button>
+            <CommentButton
+              onClick={handleSave}
+              disabled={saving || !editContent.trim()}
+              loading={saving}
+            >
+              Save
+            </CommentButton>
+          </div>
+        </div>
+      ) : (
+        <>
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "13px",
+              fontWeight: 300,
+              color: "#000000",
+              margin: 0,
+              lineHeight: 1.5,
+              wordBreak: "break-word",
+              whiteSpace: "pre-wrap",
+            }}
+          >
+            {comment.content}
+          </p>
+          {confirmingDelete && (
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                position: "absolute",
+                inset: 0,
+                backgroundColor: "rgba(248,248,248,0.97)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "12px",
+              }}
+            >
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "13px",
+                  fontWeight: 300,
+                  color: "#000000",
+                  margin: 0,
+                  textAlign: "center",
+                }}
+              >
+                Delete this comment?
+              </p>
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "8px" }}
+              >
+                <button
+                  onClick={() => setConfirmingDelete(false)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "13px",
+                    fontWeight: 300,
+                    color: "#808080",
+                  }}
+                >
+                  Cancel
+                </button>
+                <DestructiveButton onClick={handleDelete} loading={deleting}>
+                  Delete
+                </DestructiveButton>
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
@@ -219,6 +367,7 @@ export default function CommentSidebar({
   activeHighlightId,
   currentUserId,
   onDelete,
+  onUpdate,
   onCommentClick,
   contentColumnRef,
   pendingSelection,
@@ -226,8 +375,10 @@ export default function CommentSidebar({
 }: CommentSidebarProps) {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const authorColors = useMemo(() => buildAuthorColorMap(comments), [comments]);
   const [positions, setPositions] = useState<Record<string, number>>({});
   const [minHeight, setMinHeight] = useState(0);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   // Measure actual rendered height of a comment card
   const getCardHeight = (id: string) => {
@@ -251,24 +402,56 @@ export default function CommentSidebar({
     const items: { id: string; markTop: number }[] = [];
 
     for (const comment of comments) {
-      const mark = document.querySelector(
-        `mark[data-comment-id="${comment.id}"]`
+      // Check both text highlights (mark) and image highlights (img)
+      const el = document.querySelector(
+        `mark[data-comment-id="${comment.id}"], img[data-comment-id="${comment.id}"]`
       );
-      if (!mark) continue;
-
-      const markRect = mark.getBoundingClientRect();
-      const markTop = markRect.top + window.scrollY - sidebarScrollTop;
-      items.push({ id: comment.id, markTop });
+      if (el) {
+        const elRect = el.getBoundingClientRect();
+        const markTop = elRect.top + window.scrollY - sidebarScrollTop;
+        items.push({ id: comment.id, markTop });
+      } else if (comment.selectedText === "[Image]") {
+        // Image comment whose data-comment-id was overwritten by another —
+        // find the image that another comment on the same image is attached to
+        const allCommentedImgs = document.querySelectorAll(
+          "img[data-comment-id]"
+        );
+        // Find the image whose sibling comments share a similar selectionStart
+        let bestImg: Element | null = null;
+        let bestDist = Infinity;
+        for (const img of allCommentedImgs) {
+          const imgRect = img.getBoundingClientRect();
+          // Use vertical position as a proxy — all comments on the same image
+          // will have similar selectionStart values
+          const otherCommentId = img.getAttribute("data-comment-id");
+          const otherComment = comments.find((c) => c.id === otherCommentId);
+          if (otherComment) {
+            const dist = Math.abs(
+              otherComment.selectionStart - comment.selectionStart
+            );
+            if (dist < bestDist) {
+              bestDist = dist;
+              bestImg = img;
+            }
+          }
+        }
+        if (bestImg) {
+          const elRect = bestImg.getBoundingClientRect();
+          const markTop = elRect.top + window.scrollY - sidebarScrollTop;
+          items.push({ id: comment.id, markTop });
+        }
+      }
     }
 
     // Add pending selection
     if (pendingSelection && pendingSelection.start >= 0) {
-      const pendingMark = document.querySelector(
-        `mark[data-comment-id="__pending__"]`
+      // Check for text highlight or image highlight
+      const pendingEl = document.querySelector(
+        `mark[data-comment-id="__pending__"], img[data-comment-id="__pending__"]`
       );
-      if (pendingMark) {
-        const markRect = pendingMark.getBoundingClientRect();
-        const markTop = markRect.top + window.scrollY - sidebarScrollTop;
+      if (pendingEl) {
+        const elRect = pendingEl.getBoundingClientRect();
+        const markTop = elRect.top + window.scrollY - sidebarScrollTop;
         items.push({ id: "__pending__", markTop });
       } else {
         const markTop =
@@ -366,6 +549,21 @@ export default function CommentSidebar({
     return () => clearTimeout(timer);
   }, [activeHighlightId, pendingSelection, updatePositions]);
 
+  // Recalculate when a card enters/exits edit mode (height changes)
+  useEffect(() => {
+    const timer = setTimeout(updatePositions, 50);
+    return () => clearTimeout(timer);
+  }, [editingId, updatePositions]);
+
+  // Recalculate whenever any card changes height (e.g. textarea expanding)
+  useEffect(() => {
+    const observer = new ResizeObserver(() => updatePositions());
+    for (const el of Object.values(cardRefs.current)) {
+      if (el) observer.observe(el);
+    }
+    return () => observer.disconnect();
+  }, [comments, updatePositions]);
+
   return (
     <div
       ref={sidebarRef}
@@ -399,6 +597,10 @@ export default function CommentSidebar({
         const isActive = comment.id === activeHighlightId;
         const top = positions[comment.id];
 
+        // Don't render cards whose highlight mark couldn't be found in the DOM —
+        // they'd stack at top:0 and obscure real comments
+        if (top === undefined) return null;
+
         return (
           <div
             key={comment.id}
@@ -409,7 +611,7 @@ export default function CommentSidebar({
             onClick={() => onCommentClick?.(comment.id)}
             style={{
               position: "absolute",
-              top: `${top ?? 0}px`,
+              top: `${top}px`,
               left: 0,
               right: 0,
               cursor: "pointer",
@@ -420,7 +622,16 @@ export default function CommentSidebar({
               comment={comment}
               isActive={isActive}
               isOwn={comment.authorId === currentUserId}
+              isEditing={editingId === comment.id}
               onDelete={() => onDelete(comment.id)}
+              onEdit={() => setEditingId(comment.id)}
+              onSave={async (newContent) => {
+                await onUpdate(comment.id, newContent);
+                setEditingId(null);
+              }}
+              onCancelEdit={() => setEditingId(null)}
+              onActivate={() => onCommentClick?.(comment.id)}
+              color={authorColors[comment.authorId] || AUTHOR_COLORS[0]}
             />
           </div>
         );

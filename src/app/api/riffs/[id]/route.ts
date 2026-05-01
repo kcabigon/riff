@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
 import { notifyClubMembers } from "@/lib/notifications";
-import { sendRiffCreatedEmail, sendRiffRevealedEmail } from "@/lib/resend";
+import {
+  sendRiffCreatedEmail,
+  sendRiffRevealedEmail,
+  sendDeadlineChangedEmail,
+} from "@/lib/resend";
 import { NotificationType } from "@prisma/client";
 
 // GET /api/riffs/[id] - Get riff details
@@ -86,7 +90,7 @@ export async function GET(
     const member = await prisma.clubMember.findFirst({
       where: {
         clubId: riff.clubId,
-        userId: (user as any).id,
+        userId: user.id,
       },
     });
 
@@ -95,14 +99,18 @@ export async function GET(
     }
 
     // Strip piece content before reveal — cover image still returned for locked card teaser
-    if (riff.status !== "REVEALED") {
-      (riff as any).pieces = riff.pieces.map((pr) => ({
-        ...pr,
-        piece: { ...pr.piece, currentContent: null },
-      }));
-    }
+    const sanitizedRiff =
+      riff.status !== "REVEALED"
+        ? {
+            ...riff,
+            pieces: riff.pieces.map((pr) => ({
+              ...pr,
+              piece: { ...pr.piece, currentContent: null },
+            })),
+          }
+        : riff;
 
-    return NextResponse.json({ riff });
+    return NextResponse.json({ riff: sanitizedRiff });
   } catch (error: any) {
     if (error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -138,7 +146,7 @@ export async function PATCH(
     const member = await prisma.clubMember.findFirst({
       where: {
         clubId: riff.clubId,
-        userId: (user as any).id,
+        userId: user.id,
       },
     });
 
@@ -160,7 +168,7 @@ export async function PATCH(
     // Only creator can update title, prompt, deadline
     if (
       (title || prompt || deadline !== undefined) &&
-      riff.creatorId !== (user as any).id
+      riff.creatorId !== user.id
     ) {
       return NextResponse.json(
         { error: "Only the riff creator can update riff details" },
@@ -183,11 +191,11 @@ export async function PATCH(
         select: { adminId: true },
       });
 
-      const isClubAdmin = club?.adminId === (user as any).id;
+      const isClubAdmin = club?.adminId === user.id;
 
       if (status === "ACTIVE" && riff.status === "DRAFT") {
         // Only creator can activate from DRAFT
-        if (riff.creatorId !== (user as any).id) {
+        if (riff.creatorId !== user.id) {
           return NextResponse.json(
             { error: "Only the riff creator can activate the riff" },
             { status: 403 }
@@ -239,6 +247,15 @@ export async function PATCH(
         volumeNumber = revealedCount + 1;
       }
 
+      // Auto-join the creator when activating — atomic with the status change
+      if (status === "ACTIVE" && riff.status === "DRAFT") {
+        await tx.riffParticipant.upsert({
+          where: { riffId_userId: { riffId, userId: user.id } },
+          create: { riffId, userId: user.id },
+          update: {},
+        });
+      }
+
       return tx.riff.update({
         where: { id: riffId },
         data: {
@@ -277,7 +294,7 @@ export async function PATCH(
 
     // Fire notifications for status changes (non-blocking)
     if (status && status !== riff.status) {
-      const actorId = (user as any).id;
+      const actorId = user.id;
       if (status === "ACTIVE") {
         notifyClubMembers(riff.clubId, NotificationType.RIFF_CREATED, actorId, {
           riffId,
@@ -342,6 +359,44 @@ export async function PATCH(
       }
     }
 
+    // Fire deadline change notification if deadline actually changed (non-blocking)
+    const deadlineChanged =
+      deadline !== undefined &&
+      deadline !== null &&
+      !status &&
+      new Date(deadline).getTime() !== (riff.deadline?.getTime() ?? null);
+    if (deadlineChanged) {
+      const newDeadline = new Date(deadline);
+      notifyClubMembers(
+        riff.clubId,
+        NotificationType.RIFF_DEADLINE_CHANGED,
+        user.id,
+        { riffId }
+      ).catch(() => {});
+      prisma.clubMember
+        .findMany({
+          where: { clubId: riff.clubId, userId: { not: user.id } },
+          include: { user: { select: { email: true } } },
+        })
+        .then((members) => {
+          const appUrl =
+            process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+          const riffUrl = `${appUrl}/riffs/${riffId}`;
+          return Promise.allSettled(
+            members.map((m) =>
+              sendDeadlineChangedEmail({
+                email: m.user.email,
+                hostName: updatedRiff.creator.name || "Your host",
+                newDeadline,
+                riffUrl,
+                clubName: updatedRiff.club.name,
+              })
+            )
+          );
+        })
+        .catch(() => {});
+    }
+
     return NextResponse.json({
       success: true,
       riff: updatedRiff,
@@ -376,10 +431,10 @@ export async function DELETE(
       return NextResponse.json({ error: "Riff not found" }, { status: 404 });
     }
 
-    // Only DRAFT riffs can be deleted
-    if (riff.status !== "DRAFT") {
+    // Only DRAFT or ACTIVE riffs can be deleted
+    if (!["DRAFT", "ACTIVE"].includes(riff.status)) {
       return NextResponse.json(
-        { error: "Only draft riffs can be deleted" },
+        { error: "Only draft or active riffs can be deleted" },
         { status: 400 }
       );
     }
@@ -393,8 +448,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Club not found" }, { status: 404 });
     }
 
-    const canDelete =
-      riff.creatorId === (user as any).id || club.adminId === (user as any).id;
+    const canDelete = riff.creatorId === user.id || club.adminId === user.id;
 
     if (!canDelete) {
       return NextResponse.json(

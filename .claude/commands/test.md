@@ -7,9 +7,12 @@ Help the user test their changes locally. This is the easiest way to see what th
    - If it's already running: "The dev server is already running! Open http://localhost:3000 in your browser."
    - If not, continue
 
-2. **Quick validation before starting**:
-   - Run `npx tsc --noEmit` silently — if there are type errors, show them and offer to fix before starting
-   - If clean, proceed
+2. **Run code quality checks**:
+   - Run `npm run lint` and `npx tsc --noEmit` in parallel
+   - **If clean**: proceed silently — no need to mention it
+   - **If issues found**: show them clearly, then ask: "Want me to fix these before starting the server, or start it anyway?"
+     - If fix: address the issues, re-run to confirm clean, then proceed
+     - If start anyway: proceed and make a note to revisit before `/finish-feature`
 
 3. **Start the dev server**:
    - Tell the user: "Starting the dev server — this will open in a new process. **Open http://localhost:3000 in your browser to see your changes.**"
@@ -17,7 +20,7 @@ Help the user test their changes locally. This is the easiest way to see what th
    - Tell them: "The server is running! Any changes you save will auto-refresh in the browser. When you're done testing, come back here and I can help you with next steps."
 
 4. **Offer next steps**:
-   - "Happy with your changes? Run `/finish-feature` to create a PR."
+   - "Happy with your changes? Run `/finish-feature` to create a PR — that's the last step!"
    - "Found a bug? Describe it and I'll help fix it."
    - "Want to keep building? Just tell me what's next."
 

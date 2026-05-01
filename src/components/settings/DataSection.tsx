@@ -1,28 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { signOut } from "next-auth/react";
-import Modal from "@/components/shared/Modal";
+import DeleteAccountConfirmModal from "@/components/settings/DeleteAccountConfirmModal";
 
 export default function DataSection() {
   const [isExporting, setIsExporting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState("");
-  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleExport = async () => {
     setIsExporting(true);
     try {
       const res = await fetch("/api/users/me/export");
       if (res.ok) {
-        const data = await res.json();
-        const blob = new Blob([JSON.stringify(data, null, 2)], {
-          type: "application/json",
-        });
+        const contentDisposition = res.headers.get("Content-Disposition") ?? "";
+        const filenameMatch = contentDisposition.match(/filename="([^"]+)"/);
+        const filename = filenameMatch?.[1] ?? "riff-export";
+        const blob = await res.blob();
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = "riff-export.json";
+        a.download = filename;
         a.click();
         URL.revokeObjectURL(url);
       }
@@ -33,36 +30,19 @@ export default function DataSection() {
     }
   };
 
-  const handleDelete = async () => {
-    if (deleteConfirm !== "DELETE") return;
-    setIsDeleting(true);
-    try {
-      const res = await fetch("/api/users/me", { method: "DELETE" });
-      if (res.ok) {
-        signOut({ callbackUrl: "/" });
-      }
-    } catch {
-      // silent
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
   return (
     <section>
-      <h2
+      <h1
         style={{
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "20px",
-          fontWeight: 300,
+          fontFamily: "var(--font-dm-serif-text)",
+          fontSize: "32px",
+          fontWeight: 400,
           color: "#000000",
           margin: "0 0 24px 0",
-          textTransform: "uppercase",
-          letterSpacing: "0.05em",
         }}
       >
-        Your Data
-      </h2>
+        Your data
+      </h1>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
         {/* Export */}
@@ -90,13 +70,13 @@ export default function DataSection() {
             <p
               style={{
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
+                fontSize: "12px",
                 fontWeight: 300,
                 color: "#808080",
                 margin: 0,
               }}
             >
-              Download all your pieces as a JSON file
+              Download all your pieces as .docx files
             </p>
           </div>
           <button
@@ -104,14 +84,15 @@ export default function DataSection() {
             disabled={isExporting}
             style={{
               backgroundColor: "#FFFFFF",
-              border: "1px solid #000000",
-              padding: "8px 24px",
+              border: "2px solid #000000",
+              padding: "12px 24px",
               fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
+              fontSize: "16px",
               fontWeight: 300,
               color: "#000000",
               cursor: isExporting ? "not-allowed" : "pointer",
               whiteSpace: "nowrap",
+              opacity: isExporting ? 0.5 : 1,
             }}
           >
             {isExporting ? "Exporting..." : "Export"}
@@ -119,7 +100,13 @@ export default function DataSection() {
         </div>
 
         {/* Divider */}
-        <hr style={{ border: "none", borderTop: "1px solid #E6E6E6", margin: "8px 0" }} />
+        <hr
+          style={{
+            border: "none",
+            borderTop: "1px solid #E6E6E6",
+            margin: "8px 0",
+          }}
+        />
 
         {/* Delete Account */}
         <div
@@ -146,7 +133,7 @@ export default function DataSection() {
             <p
               style={{
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
+                fontSize: "12px",
                 fontWeight: 300,
                 color: "#808080",
                 margin: 0,
@@ -159,12 +146,12 @@ export default function DataSection() {
             onClick={() => setShowDeleteModal(true)}
             style={{
               backgroundColor: "#FFFFFF",
-              border: "1px solid #FF4444",
-              padding: "8px 24px",
+              border: "2px solid #DC2626",
+              padding: "12px 24px",
               fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
+              fontSize: "16px",
               fontWeight: 300,
-              color: "#FF4444",
+              color: "#DC2626",
               cursor: "pointer",
               whiteSpace: "nowrap",
             }}
@@ -174,81 +161,10 @@ export default function DataSection() {
         </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
-      <Modal
+      <DeleteAccountConfirmModal
         isOpen={showDeleteModal}
-        onClose={() => {
-          setShowDeleteModal(false);
-          setDeleteConfirm("");
-        }}
-        title="Delete your account?"
-        size="sm"
-      >
-        <p
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
-            fontWeight: 300,
-            color: "#000000",
-            margin: "0 0 16px 0",
-            lineHeight: 1.5,
-          }}
-        >
-          This will permanently delete your account, all your pieces, and all
-          your data. This cannot be undone.
-        </p>
-
-        <p
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
-            fontWeight: 300,
-            color: "#808080",
-            margin: "0 0 12px 0",
-          }}
-        >
-          Type <strong>DELETE</strong> to confirm:
-        </p>
-
-        <input
-          type="text"
-          value={deleteConfirm}
-          onChange={(e) => setDeleteConfirm(e.target.value)}
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
-            fontWeight: 300,
-            color: "#000000",
-            border: "2px solid #000000",
-            padding: "12px 16px",
-            outline: "none",
-            width: "100%",
-            boxSizing: "border-box",
-            marginBottom: "16px",
-          }}
-        />
-
-        <button
-          onClick={handleDelete}
-          disabled={deleteConfirm !== "DELETE" || isDeleting}
-          style={{
-            backgroundColor:
-              deleteConfirm !== "DELETE" || isDeleting ? "#E6E6E6" : "#FF4444",
-            border: "2px solid #000000",
-            padding: "12px 48px",
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
-            fontWeight: 300,
-            color: deleteConfirm !== "DELETE" || isDeleting ? "#000000" : "#FFFFFF",
-            cursor:
-              deleteConfirm !== "DELETE" || isDeleting ? "not-allowed" : "pointer",
-            transition: "none",
-            width: "100%",
-          }}
-        >
-          {isDeleting ? "Deleting..." : "Delete my account"}
-        </button>
-      </Modal>
+        onClose={() => setShowDeleteModal(false)}
+      />
     </section>
   );
 }

@@ -1,4 +1,6 @@
-Run a pre-PR validation checklist. Do each step sequentially — stop and report if any step fails. Do NOT skip steps or make assumptions.
+Run a pre-PR validation checklist. This is a **dry-run** — it checks your code but doesn't push or create a PR. When you're ready to submit, run `/finish-feature` which does everything including these checks. You don't need to run `/pr-check` first.
+
+Do each step sequentially — stop and report if any step fails. Do NOT skip steps or make assumptions.
 
 ## Steps
 

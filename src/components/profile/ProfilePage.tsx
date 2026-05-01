@@ -1,15 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import ProfileHeader from "./ProfileHeader";
-import PiecesGrid from "./tabs/PiecesGrid";
-import DraftsList from "./tabs/DraftsList";
-import CollectionsList from "./tabs/CollectionsList";
-import PrimaryButton from "@/components/PrimaryButton";
-import BackButton from "@/components/BackButton";
-import { useDraftCreation } from "@/hooks/useDraftCreation";
-
-type TabId = "pieces" | "drafts" | "collections";
+import PiecesGrid, { FeaturedPiece } from "./tabs/PiecesGrid";
+import type { Piece } from "./tabs/PiecesGrid";
+import DeletePieceModal from "@/components/profile/DeletePieceModal";
+import ShareModal, { PublicShare } from "@/components/profile/ShareModal";
+import NoiseBackground from "@/components/NoiseBackground";
 
 interface ProfilePageProps {
   user: {
@@ -17,176 +15,241 @@ interface ProfilePageProps {
     name: string | null;
     firstName: string | null;
     lastName: string | null;
-    bio: string | null;
-    avatarUrl: string | null;
     username: string | null;
   };
   stats: {
     pieceCount: number;
     totalWordCount: number;
   };
-  pieces: Array<{
-    id: string;
-    title: string | null;
-    coverImage: string | null;
-    currentContent: string | null;
-  }>;
-  drafts: Array<{
-    id: string;
-    title: string | null;
-    createdAt: string;
-    updatedAt: string;
-    isShared: boolean;
-    riffs: Array<{ id: string; title: string | null }>;
-  }>;
-  collections: Array<{
-    id: string;
-    name: string;
-    pieces: Array<{
-      id: string;
-      title: string | null;
-      createdAt: string;
-      updatedAt: string;
-      isShared: boolean;
-      riffs: Array<{ id: string; title: string | null }>;
-    }>;
-  }>;
+  pieces: Piece[];
   isOwnProfile: boolean;
   lastActiveClubId: string | null;
 }
 
-const TABS: { id: TabId; label: string }[] = [
-  { id: "drafts", label: "DRAFTS" },
-  { id: "pieces", label: "PIECES" },
-  { id: "collections", label: "COLLECTIONS" },
-];
-
 export default function ProfilePage({
   user,
   stats,
-  pieces,
-  drafts,
-  collections,
-  isOwnProfile,
   lastActiveClubId,
+  pieces: initialPieces,
+  isOwnProfile,
 }: ProfilePageProps) {
-  const [activeTab, setActiveTab] = useState<TabId>("drafts");
-  const { createDraft, isCreating } = useDraftCreation();
+  const router = useRouter();
+  const [pieces, setPieces] = useState(initialPieces);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: string;
+    title: string | null;
+  } | null>(null);
+  const [shareTarget, setShareTarget] = useState<string | null>(null);
+
+  const handleDeleted = (pieceId: string) => {
+    setPieces((prev) => prev.filter((p) => p.id !== pieceId));
+  };
+
+  const handleShareCreated = (pieceId: string, share: PublicShare) => {
+    setPieces((prev) =>
+      prev.map((p) =>
+        p.id === pieceId ? { ...p, isPublic: true, publicShareId: share.id } : p
+      )
+    );
+  };
+
+  const handleShareRevoked = (pieceId: string) => {
+    setPieces((prev) =>
+      prev.map((p) =>
+        p.id === pieceId ? { ...p, isPublic: false, publicShareId: null } : p
+      )
+    );
+  };
+
+  const [featured, ...rest] = pieces;
+
+  const isEmpty = pieces.length === 0;
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
+  const pos = useRef({ x: 40, y: 40 });
+  const vel = useRef({ dx: 2.5, dy: 2 });
+  const [boxStyle, setBoxStyle] = useState({ left: 40, top: 40 });
+
+  useEffect(() => {
+    if (!isEmpty) return;
+    let animId: number;
+
+    const step = () => {
+      const container = containerRef.current;
+      const box = boxRef.current;
+      if (!container || !box) {
+        animId = requestAnimationFrame(step);
+        return;
+      }
+
+      const cw = container.clientWidth;
+      const ch = container.clientHeight;
+      const bw = box.offsetWidth;
+      const bh = box.offsetHeight;
+
+      pos.current.x += vel.current.dx;
+      pos.current.y += vel.current.dy;
+
+      if (pos.current.x <= 0) {
+        pos.current.x = 0;
+        vel.current.dx = Math.abs(vel.current.dx);
+      }
+      if (pos.current.x + bw >= cw) {
+        pos.current.x = cw - bw;
+        vel.current.dx = -Math.abs(vel.current.dx);
+      }
+      if (pos.current.y <= 0) {
+        pos.current.y = 0;
+        vel.current.dy = Math.abs(vel.current.dy);
+      }
+      if (pos.current.y + bh >= ch) {
+        pos.current.y = ch - bh;
+        vel.current.dy = -Math.abs(vel.current.dy);
+      }
+
+      setBoxStyle({ left: pos.current.x, top: pos.current.y });
+      animId = requestAnimationFrame(step);
+    };
+
+    animId = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(animId);
+  }, [isEmpty]);
 
   return (
     <div
       style={{
         minHeight: "100vh",
         backgroundColor: "#FFFFFF",
+        position: isEmpty ? "relative" : undefined,
       }}
     >
-      {/* Back to club */}
-      {lastActiveClubId && (
-        <div style={{ padding: "16px 24px 0" }}>
-          <BackButton href={`/clubs/${lastActiveClubId}`} />
-        </div>
+      {isEmpty && <NoiseBackground fillMode="tile" />}
+      {deleteTarget && (
+        <DeletePieceModal
+          pieceId={deleteTarget.id}
+          pieceTitle={deleteTarget.title}
+          onClose={() => setDeleteTarget(null)}
+          onDeleted={() => handleDeleted(deleteTarget.id)}
+        />
       )}
 
-      {/* Header */}
-      <ProfileHeader user={user} stats={stats} />
+      {shareTarget &&
+        (() => {
+          const piece = pieces.find((p) => p.id === shareTarget);
+          if (!piece) return null;
+          return (
+            <ShareModal
+              pieceId={piece.id}
+              isRevealed={piece.isRevealed}
+              existingShare={
+                piece.publicShareId
+                  ? {
+                      id: piece.publicShareId,
+                      shareType: "PUBLIC",
+                      isPublic: true,
+                    }
+                  : null
+              }
+              onClose={() => setShareTarget(null)}
+              onShareCreated={(share) => handleShareCreated(piece.id, share)}
+              onShareRevoked={() => handleShareRevoked(piece.id)}
+            />
+          );
+        })()}
 
-      {/* Divider */}
-      <div
-        style={{
-          width: "100%",
-          height: "1px",
-          backgroundColor: "#959595",
-        }}
+      <ProfileHeader
+        profileUser={user}
+        isOwnProfile={isOwnProfile}
+        lastActiveClubId={lastActiveClubId}
+        stats={isOwnProfile ? stats : undefined}
       />
 
-      {/* Tab bar — own profile only */}
-      {isOwnProfile && (
+      {/* Empty state — bouncing box */}
+      {isEmpty && (
         <div
+          ref={containerRef}
           style={{
-            display: "flex",
-            justifyContent: "center",
-            gap: "16px",
-            paddingTop: "0",
-            paddingBottom: "0",
-            backgroundColor: "#FFFFFF",
+            position: "relative",
+            height: "calc(100vh - 64px)",
+            overflow: "hidden",
+            zIndex: 1,
           }}
         >
-          {TABS.map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  borderBottom: isActive
-                    ? "2px solid #000000"
-                    : "2px solid transparent",
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "20px",
-                  fontWeight: isActive ? 700 : 300,
-                  color: "#000000",
-                  cursor: "pointer",
-                  padding: "12px 24px",
-                  letterSpacing: "0.02em",
-                }}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
+          <div
+            ref={boxRef}
+            style={{
+              position: "absolute",
+              left: boxStyle.left,
+              top: boxStyle.top,
+              backgroundColor: "#FFFFFF",
+              border: "2px solid #000000",
+              boxShadow: "8px 8px 0px 0px #000000",
+              width: "160px",
+              height: "220px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "24px",
+              textAlign: "center",
+            }}
+          >
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "16px",
+                fontWeight: 300,
+                color: "#000000",
+                margin: 0,
+                lineHeight: "1.6",
+              }}
+            >
+              Every writer starts with a blank page.
+            </p>
+          </div>
         </div>
       )}
 
-      {/* Divider under tabs */}
-      <div
-        style={{
-          width: "100%",
-          height: "1px",
-          backgroundColor: "#959595",
-        }}
-      />
+      <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
+        {featured && (
+          <div style={{ padding: "32px 0 0" }}>
+            <FeaturedPiece
+              piece={featured}
+              onClick={
+                !featured.isRevealed && isOwnProfile
+                  ? () => router.push(`/write/${featured.id}`)
+                  : !featured.isRevealed
+                    ? () => {}
+                    : isOwnProfile || featured.viewerHasClubAccess
+                      ? () =>
+                          router.push(
+                            `/read/${featured.id}?from=profile&userId=${user.id}`
+                          )
+                      : featured.isPublic
+                        ? () => router.push(`/p/${featured.id}`)
+                        : () => {}
+              }
+              isOwnProfile={isOwnProfile}
+              onDelete={() =>
+                setDeleteTarget({ id: featured.id, title: featured.title })
+              }
+              onShare={(pieceId) => setShareTarget(pieceId)}
+            />
+          </div>
+        )}
 
-      {/* Tab content */}
-      <div
-        style={{
-          maxWidth: "1200px",
-          margin: "0 auto",
-          width: "100%",
-          boxSizing: "border-box",
-        }}
-      >
-        {isOwnProfile ? (
-          <>
-            {activeTab === "pieces" && <PiecesGrid pieces={pieces} />}
-            {activeTab === "drafts" && (
-              <>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "flex-end",
-                    padding: "16px 24px 0",
-                  }}
-                >
-                  <PrimaryButton
-                    onClick={() => createDraft()}
-                    loading={isCreating}
-                    disabled={isCreating}
-                    style={{ width: "auto" }}
-                  >
-                    New Draft
-                  </PrimaryButton>
-                </div>
-                <DraftsList drafts={drafts} />
-              </>
-            )}
-            {activeTab === "collections" && (
-              <CollectionsList collections={collections} />
-            )}
-          </>
-        ) : (
-          <PiecesGrid pieces={pieces} />
+        {/* Jams — coming soon */}
+
+        {rest.length > 0 && (
+          <PiecesGrid
+            pieces={rest}
+            isOwnProfile={isOwnProfile}
+            profileUserId={user.id}
+            onDelete={(id: string, title: string | null) =>
+              setDeleteTarget({ id, title })
+            }
+            onShare={(pieceId) => setShareTarget(pieceId)}
+          />
         )}
       </div>
     </div>

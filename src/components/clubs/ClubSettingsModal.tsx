@@ -1,9 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Modal from "@/components/shared/Modal";
-import ImageUpload from "@/components/onboarding/ImageUpload";
+import ImageUploadFlow from "@/components/shared/ImageUploadFlow";
+import type { ImageUploadFlowHandle } from "@/components/shared/ImageUploadFlow";
+import Image from "next/image";
 import Tagline from "@/components/Tagline";
+import PrimaryButton from "@/components/PrimaryButton";
 
 interface ClubUpdatedData {
   name: string;
@@ -35,7 +38,9 @@ export default function ClubSettingsModal({
     club.bannerImage
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showBannerChange, setShowBannerChange] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const uploadFlowRef = useRef<ImageUploadFlowHandle>(null);
 
   // Reset form to current saved values each time the modal opens
   useEffect(() => {
@@ -43,6 +48,7 @@ export default function ClubSettingsModal({
       setName(club.name);
       setDescription(club.description || "");
       setBannerImage(club.bannerImage);
+      setShowBannerChange(false);
       setError(null);
     }
   }, [isOpen]);
@@ -52,6 +58,18 @@ export default function ClubSettingsModal({
     setIsSubmitting(true);
     setError(null);
 
+    // If the user has an unsaved crop, save it first
+    let finalBannerImage = bannerImage;
+    if (uploadFlowRef.current?.hasPendingCrop()) {
+      const url = await uploadFlowRef.current.saveCrop();
+      if (!url) {
+        // Crop/upload failed — don't submit the form
+        setIsSubmitting(false);
+        return;
+      }
+      finalBannerImage = url;
+    }
+
     try {
       const res = await fetch(`/api/clubs/${club.id}`, {
         method: "PATCH",
@@ -59,7 +77,7 @@ export default function ClubSettingsModal({
         body: JSON.stringify({
           name: name.trim(),
           description: description.trim() || null,
-          bannerImage: bannerImage || null,
+          bannerImage: finalBannerImage || null,
         }),
       });
 
@@ -74,7 +92,7 @@ export default function ClubSettingsModal({
       onUpdated({
         name: name.trim(),
         description: description.trim() || null,
-        bannerImage: bannerImage || null,
+        bannerImage: finalBannerImage || null,
       });
       onClose();
     } catch (err) {
@@ -85,13 +103,7 @@ export default function ClubSettingsModal({
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Club details"
-      size="md"
-      noiseBackground
-    >
+    <Modal isOpen={isOpen} onClose={onClose} title="Club details" size="md">
       <form onSubmit={handleSubmit}>
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           {/* Club name */}
@@ -100,8 +112,9 @@ export default function ClubSettingsModal({
               text="Club name"
               color="#01EFFC"
               textColor="#000000"
-              fontSize={14}
-              width={105}
+              fontSize={16}
+              width={120}
+              align="left"
             />
             <input
               type="text"
@@ -137,11 +150,15 @@ export default function ClubSettingsModal({
                 text="Description"
                 color="#00FF66"
                 textColor="#000000"
-                fontSize={14}
-                width={115}
+                fontSize={16}
+                width={132}
+                align="left"
               />
               <span
                 style={{
+                  display: "inline-block",
+                  backgroundColor: "#FFFFFF",
+                  padding: "2px 8px",
                   fontFamily: "var(--font-dm-sans)",
                   fontSize: "14px",
                   fontWeight: 300,
@@ -184,11 +201,15 @@ export default function ClubSettingsModal({
                 text="Banner image"
                 color="#EECF01"
                 textColor="#000000"
-                fontSize={14}
-                width={125}
+                fontSize={16}
+                width={144}
+                align="left"
               />
               <span
                 style={{
+                  display: "inline-block",
+                  backgroundColor: "#FFFFFF",
+                  padding: "2px 8px",
                   fontFamily: "var(--font-dm-sans)",
                   fontSize: "14px",
                   fontWeight: 300,
@@ -198,15 +219,37 @@ export default function ClubSettingsModal({
                 (optional)
               </span>
             </div>
-            <div style={{ backgroundColor: "#FFFFFF", padding: "12px" }}>
-              <ImageUpload
-                onUpload={setBannerImage}
+            {bannerImage && !showBannerChange ? (
+              <div
+                style={{
+                  position: "relative",
+                  width: "100%",
+                  aspectRatio: "3 / 1",
+                  overflow: "hidden",
+                  cursor: isSubmitting ? "not-allowed" : "pointer",
+                }}
+                onClick={() => !isSubmitting && setShowBannerChange(true)}
+              >
+                <Image
+                  src={bannerImage}
+                  alt="Banner preview"
+                  fill
+                  style={{ objectFit: "cover" }}
+                />
+              </div>
+            ) : (
+              <ImageUploadFlow
+                ref={uploadFlowRef}
+                onSelect={(url) => {
+                  setBannerImage(url || null);
+                  setShowBannerChange(false);
+                }}
                 currentImage={bannerImage}
-                disabled={isSubmitting}
-                uploadText="Upload a banner photo"
-                hideRecommendedText={true}
+                removeLabel="Remove banner"
+                aspectRatio={3 / 1}
+                hideSaveButton
               />
-            </div>
+            )}
           </div>
 
           {error && (
@@ -223,29 +266,13 @@ export default function ClubSettingsModal({
             </p>
           )}
 
-          <button
+          <PrimaryButton
             type="submit"
-            disabled={isSubmitting || !name.trim()}
-            style={{
-              backgroundColor:
-                isSubmitting || !name.trim() ? "#E6E6E6" : "#FFFFFF",
-              border: "2px solid #000000",
-              boxShadow:
-                isSubmitting || !name.trim()
-                  ? "none"
-                  : "8px 8px 0px 0px #00FF66",
-              padding: "12px 48px",
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              color: "#000000",
-              cursor: isSubmitting || !name.trim() ? "not-allowed" : "pointer",
-              transition: "none",
-              width: "100%",
-            }}
+            loading={isSubmitting}
+            disabled={!name.trim()}
           >
             {isSubmitting ? "Saving..." : "Save changes"}
-          </button>
+          </PrimaryButton>
         </div>
       </form>
     </Modal>

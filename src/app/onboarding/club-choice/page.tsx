@@ -58,21 +58,48 @@ export default function OnboardingClubChoicePage() {
           Start a write club
         </PrimaryButton>
 
-        {/* Join note */}
-        <p
+        {/* Join note + skip link */}
+        <div
           style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
-            fontWeight: 300,
-            color: "#666666",
-            margin: 0,
-            lineHeight: "1.5",
-            textAlign: "center",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "8px",
           }}
         >
-          Want to join an existing write club? Have the club host send you an
-          invite link to join.
-        </p>
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "14px",
+              fontWeight: 300,
+              color: "#666666",
+              margin: 0,
+              lineHeight: "1.5",
+              textAlign: "center",
+            }}
+          >
+            Want to join an existing write club? Have the club host send you an
+            invite link to join.
+          </p>
+          <button
+            onClick={() => router.push("/no-club")}
+            style={{
+              background: "none",
+              border: "none",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "13px",
+              fontWeight: 300,
+              color: "#666666",
+              cursor: "pointer",
+              padding: 0,
+              textDecoration: "underline",
+              textDecorationColor: "#666666",
+              textAlign: "center",
+            }}
+          >
+            I&apos;ll wait for an invite link
+          </button>
+        </div>
 
         {/* Quiet link — separate afterthought */}
         <button
@@ -89,7 +116,6 @@ export default function OnboardingClubChoicePage() {
             textDecoration: "underline",
             textDecorationColor: "#666666",
             textAlign: "center",
-            marginTop: "-8px",
           }}
         >
           Wait, what&apos;s a write club?

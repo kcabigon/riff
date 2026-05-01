@@ -13,7 +13,7 @@ export async function GET(req: Request) {
       where: {
         members: {
           some: {
-            userId: (user as any).id,
+            userId: user.id,
           },
         },
         isArchived: includeArchived ? undefined : false,
@@ -101,10 +101,10 @@ export async function POST(req: Request) {
         name: name.trim(),
         description: description?.trim() || null,
         bannerImage: bannerImage || null,
-        adminId: (user as any).id,
+        adminId: user.id,
         members: {
           create: {
-            userId: (user as any).id,
+            userId: user.id,
             role: "ADMIN",
           },
         },

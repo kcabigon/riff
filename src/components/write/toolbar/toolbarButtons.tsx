@@ -8,7 +8,12 @@ export interface ToolbarButtonConfig {
   isActive: (editor: Editor) => boolean;
   action: (
     editor: Editor,
-    fileInputRef?: React.RefObject<HTMLInputElement | null>
+    fileInputRef?: React.RefObject<HTMLInputElement | null>,
+    callbacks?: {
+      onOpenLinkModal?: () => void;
+      onOpenYoutubeModal?: () => void;
+      onOpenSpotifyModal?: () => void;
+    }
   ) => void;
   icon: (isActive: boolean) => React.ReactNode;
 }
@@ -51,26 +56,6 @@ export const allButtons: ToolbarButtonConfig[] = [
       <TextLabel text="S" strikethrough color={active ? "#fff" : "#000"} />
     ),
   },
-  // Link
-  {
-    key: "link",
-    title: "Link",
-    isActive: (editor) => editor.isActive("link"),
-    action: (editor) => {
-      const url = window.prompt("Enter URL:");
-      if (url) {
-        editor.chain().focus().setLink({ href: url }).run();
-      }
-    },
-    icon: (active) => (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <path
-          d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"
-          fill={active ? "#fff" : "#000"}
-        />
-      </svg>
-    ),
-  },
   // Media insert
   {
     key: "image",
@@ -86,15 +71,29 @@ export const allButtons: ToolbarButtonConfig[] = [
       </svg>
     ),
   },
+  // Link
+  {
+    key: "link",
+    title: "Link",
+    isActive: (editor) => editor.isActive("link"),
+    action: (_editor, _fileInputRef, callbacks) => {
+      callbacks?.onOpenLinkModal?.();
+    },
+    icon: (active) => (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path
+          d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"
+          fill={active ? "#fff" : "#000"}
+        />
+      </svg>
+    ),
+  },
   {
     key: "youtube",
     title: "YouTube",
     isActive: () => false,
-    action: (editor) => {
-      const url = window.prompt("Enter YouTube URL:");
-      if (url) {
-        editor.chain().focus().setYoutubeVideo({ src: url }).run();
-      }
+    action: (_editor, _fileInputRef, callbacks) => {
+      callbacks?.onOpenYoutubeModal?.();
     },
     icon: (active) => (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -109,11 +108,8 @@ export const allButtons: ToolbarButtonConfig[] = [
     key: "spotify",
     title: "Spotify",
     isActive: () => false,
-    action: (editor) => {
-      const url = window.prompt("Enter Spotify URL:");
-      if (url) {
-        editor.commands.setSpotifyEmbed({ src: url });
-      }
+    action: (_editor, _fileInputRef, callbacks) => {
+      callbacks?.onOpenSpotifyModal?.();
     },
     icon: (active) => (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -140,6 +136,21 @@ export const allButtons: ToolbarButtonConfig[] = [
     isActive: (editor) => editor.isActive("orderedList"),
     action: (editor) => editor.chain().focus().toggleOrderedList().run(),
     icon: (active) => <TextLabel text="1." color={active ? "#fff" : "#000"} />,
+  },
+  // Indent
+  {
+    key: "indent",
+    title: "Indent",
+    isActive: () => false,
+    action: (editor) => editor.chain().focus().indent().run(),
+    icon: (active) => (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M3 5h18v2H3V5z" fill={active ? "#fff" : "#000"} />
+        <path d="M3 11h10v2H3v-2z" fill={active ? "#fff" : "#000"} />
+        <path d="M3 17h18v2H3v-2z" fill={active ? "#fff" : "#000"} />
+        <path d="M15 9l4 3-4 3V9z" fill={active ? "#fff" : "#000"} />
+      </svg>
+    ),
   },
   // Alignment
   {

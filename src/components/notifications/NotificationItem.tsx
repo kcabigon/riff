@@ -11,30 +11,55 @@ interface NotificationItemProps {
     createdAt: string;
     actor: { id: string; name: string | null; avatarUrl: string | null } | null;
     club: { id: string; name: string } | null;
-    riff: { id: string; title: string | null; clubId: string } | null;
+    riff: {
+      id: string;
+      title: string | null;
+      clubId: string;
+      volumeNumber: number | null;
+    } | null;
     piece: { id: string; title: string } | null;
+    commentCount?: number;
   };
   onClose: () => void;
+  onDismiss: (id: string) => void;
 }
 
 function getMessage(n: NotificationItemProps["notification"]): string {
   const actor = n.actor?.name || "Someone";
 
   switch (n.type) {
+    case "CLUB_MEMBER_JOINED":
+      return `${actor} joined ${n.club ? n.club.name : "the club"}`;
     case "RIFF_CREATED":
-      return `${actor} started a new riff${n.riff ? `: "${n.riff.title}"` : ""}`;
     case "RIFF_STARTED":
-      return `A new riff just dropped${n.riff ? `: "${n.riff.title}"` : ""}`;
+      return `New riff in ${n.club ? n.club.name : "your club"}`;
     case "PIECE_SUBMITTED_TO_RIFF":
-      return `${actor} submitted a piece${n.riff ? ` to "${n.riff.title}"` : ""}`;
-    case "RIFF_COMPLETED":
-      return `Pieces have been revealed${n.riff ? ` in "${n.riff.title}"` : ""}`;
-    case "NEW_COMMENT":
-      return `${actor} commented on ${n.piece ? `"${n.piece.title}"` : "your piece"}`;
+      return `${actor} submitted a piece to ${n.club ? n.club.name : "your club"}`;
+    case "RIFF_COMPLETED": {
+      if (n.riff) {
+        const display =
+          n.riff.volumeNumber && n.riff.title
+            ? `Volume ${n.riff.volumeNumber}: ${n.riff.title}`
+            : n.riff.volumeNumber
+              ? `Volume ${n.riff.volumeNumber}`
+              : n.riff.title || "The riff";
+        return `${display} has been revealed`;
+      }
+      return "A riff has been revealed";
+    }
+    case "RIFF_DEADLINE_CHANGED":
+      return `Riff deadline change in ${n.club ? n.club.name : "your club"}`;
+    case "NEW_COMMENT": {
+      const count = n.commentCount ?? 1;
+      const label = count === 1 ? "1 new comment" : `${count} new comments`;
+      return `${label} on ${n.piece ? `"${n.piece.title}"` : "your piece"}`;
+    }
     case "COMMENT_REPLY":
       return `${actor} replied to your comment`;
     case "CLUB_INVITATION":
       return `${actor} invited you to ${n.club ? n.club.name : "a club"}`;
+    case "ALL_PIECES_SUBMITTED":
+      return `All pieces submitted in ${n.club ? n.club.name : "your club"}`;
     default:
       return "New notification";
   }
@@ -44,14 +69,25 @@ function getLink(n: NotificationItemProps["notification"]): string {
   switch (n.type) {
     case "NEW_COMMENT":
     case "COMMENT_REPLY":
-      if (n.piece) return `/read/${n.piece.id}`;
+      if (n.piece) {
+        const params = new URLSearchParams();
+        if (n.riff?.id) params.set("riff", n.riff.id);
+        params.set("notify", "1");
+        return `/read/${n.piece.id}?${params.toString()}`;
+      }
       if (n.riff) return `/riffs/${n.riff.id}`;
       break;
     case "CLUB_INVITATION":
-      if (n.club) return `/clubs/${n.club.id}`;
-      break;
+    case "CLUB_MEMBER_JOINED":
     case "RIFF_CREATED":
+    case "RIFF_DEADLINE_CHANGED":
+      if (n.club) return `/clubs/${n.club.id}`;
       if (n.riff) return `/clubs/${n.riff.clubId}`;
+      break;
+    case "ALL_PIECES_SUBMITTED":
+    case "PIECE_SUBMITTED_TO_RIFF":
+      if (n.riff) return `/riffs/${n.riff.id}`;
+      if (n.club) return `/clubs/${n.club.id}`;
       break;
     default:
       if (n.riff) return `/riffs/${n.riff.id}`;
@@ -63,13 +99,13 @@ function getLink(n: NotificationItemProps["notification"]): string {
 export default function NotificationItem({
   notification,
   onClose,
+  onDismiss,
 }: NotificationItemProps) {
   const router = useRouter();
 
   const handleClick = async () => {
-    if (!notification.isRead) {
-      fetch(`/api/notifications/${notification.id}`, { method: "PATCH" });
-    }
+    fetch(`/api/notifications/${notification.id}`, { method: "PATCH" });
+    onDismiss(notification.id);
     onClose();
     router.push(getLink(notification));
   };

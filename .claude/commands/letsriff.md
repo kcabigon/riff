@@ -1,20 +1,31 @@
 You are starting a new session on the Riff project. This is the entry point — do everything the user needs to get oriented and productive.
 
-## Step 1: Load project context
+## Step 1: Restore context (if resuming)
 
-Read the file `ARCHITECTURE.md` in the project root. This gives you the full project context: tech stack, file map, design system, current state, and what's working. Do NOT summarize it back to the user — just internalize it silently.
+Reconstruct where the user is from git state:
+- Run `git branch --show-current` — if on a feature branch, the branch name tells you what they were building
+- Run `git log --oneline develop..HEAD` — shows their progress on the branch
+- Check if any plan files exist: look in `.claude/plans/` for `.md` files. If one exists, read it to understand the plan.
+- If they're mid-feature, tell them where they are and suggest the next step:
+  - "Looks like you were working on `feature/xyz` with N commits. Want to keep going?"
+  - If there's a plan file: read it and summarize what was planned vs what's done
 
-## Step 2: Check their environment
+## Step 2: Load project context
+
+Read `ARCHITECTURE.md` and `DESIGN-SYSTEM.md` in the project root. ARCHITECTURE.md gives you the tech stack, file map, schema, and current state. DESIGN-SYSTEM.md gives you the visual design system, colors, typography, spacing, and shared component catalog. Do NOT summarize them back to the user — just internalize them silently.
+
+## Step 3: Check their environment
 
 Run these checks silently (don't narrate each one unless there's a problem):
 - `git branch --show-current` — what branch are they on?
 - `git status` — any uncommitted changes?
 - Check if `.env.development` exists — if not, they need to set up first (route to `/setup`)
 - Check if `node_modules/` exists — if not, they need to run `npm install`
+- `lsof -i :3000 2>/dev/null | grep LISTEN` — is a dev server already running? If so, mention it: "Heads up — the dev server is already running on port 3000. Want me to restart it, kill it, or leave it?"
 
 If there are problems (no env file, no node_modules, wrong branch), address them before continuing.
 
-## Step 3: Understand their state
+## Step 4: Understand their state
 
 If they're on a feature branch (not `develop`/`main`/`staging`):
 - Show what branch they're on
@@ -26,7 +37,16 @@ If they're on `develop`:
 - Read `TODO.md` in the project root and show 3-5 unclaimed items from the highest-priority section: "Here are some things on the TODO list if you're looking for ideas:" — but don't force it, they can always describe their own idea
 - Mention they can run `/todo` to see the full list
 
-## Step 4: Ask what they want to do
+## Step 5: Ask what they want to do
+
+**First, silently check for open PRs**: Run `gh pr list --base develop --json number --jq 'length'` to get the count.
+
+**If there are open PRs**, open with this before anything else:
+> "Hey, there are [N] PRs open and waiting for review. Want to take a look at those, or are you here to build something new?"
+- If review → run `/review` (it will show the full list with details)
+- If build → continue to the options below
+
+**If no open PRs**, skip straight to the options below.
 
 Present these options naturally (not as a numbered list — keep it conversational):
 
@@ -34,11 +54,22 @@ Present these options naturally (not as a numbered list — keep it conversation
 - **Continue where they left off** — Pick up on their current feature branch, read the relevant files, and get back to work.
 - **Fix a bug** — Ask what's broken, create a `fix/` branch, and investigate.
 - **Explore / understand the code** — Ask what they're curious about and walk them through it. Be patient and clear — they may not be very technical.
-- **Review or finish up** — If they have work ready, route to `/pr-check` or `/finish-feature`.
+- **Review or finish up** — If they have work ready, route to `/finish-feature`.
 
-## Step 5: Get to work
+## Step 6: Get to work
 
 Once you know what they want to do, execute. Don't over-explain or ask too many questions upfront. Get moving and check in as you go.
+
+## GitHub Username → Real Name Mapping
+
+Always use real names, never raw GitHub handles.
+
+| GitHub handle | Real name |
+|---------------|-----------|
+| `kcabigon` | Kyle |
+| `jarric22` | Jarric |
+| `djorgensen316` | Derek |
+| `riffwithfriends` | Chris |
 
 ## Important
 - Your user may not be very technical. Be clear, friendly, and avoid jargon unless they use it first.

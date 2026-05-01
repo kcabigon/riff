@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import NotificationItem from "./NotificationItem";
+import { formatDateShort } from "@/lib/riff-utils";
 
 interface NotificationData {
   id: string;
@@ -10,8 +11,14 @@ interface NotificationData {
   createdAt: string;
   actor: { id: string; name: string | null; avatarUrl: string | null } | null;
   club: { id: string; name: string } | null;
-  riff: { id: string; title: string; clubId: string } | null;
+  riff: {
+    id: string;
+    title: string | null;
+    clubId: string;
+    volumeNumber: number | null;
+  } | null;
   piece: { id: string; title: string } | null;
+  commentCount?: number;
 }
 
 interface NotificationPanelProps {
@@ -44,17 +51,18 @@ export default function NotificationPanel({
 
   const handleMarkAllRead = async () => {
     await fetch("/api/notifications", { method: "PATCH" });
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    setNotifications([]);
     onMarkAllRead();
+  };
+
+  const handleDismiss = (id: string) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
 
   // Group by date
   const grouped: Record<string, NotificationData[]> = {};
   notifications.forEach((n) => {
-    const date = new Date(n.createdAt).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    });
+    const date = formatDateShort(n.createdAt);
     if (!grouped[date]) grouped[date] = [];
     grouped[date].push(n);
   });
@@ -170,6 +178,7 @@ export default function NotificationPanel({
                 key={notification.id}
                 notification={notification}
                 onClose={onClose}
+                onDismiss={handleDismiss}
               />
             ))}
           </div>

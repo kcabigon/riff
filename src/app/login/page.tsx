@@ -38,7 +38,7 @@ export default function LoginPage() {
         setLoading(false);
       } else {
         // Redirect to check email page
-        router.push("/auth/check-email");
+        router.push(`/auth/check-email?email=${encodeURIComponent(email)}`);
       }
     } catch (error) {
       console.error("Sign in error:", error);
