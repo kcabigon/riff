@@ -206,7 +206,9 @@ export default function RiffCard({
         }}
       >
         {/* Button */}
-        {(deadlinePassed || piecesAllSubmitted) && isAdmin ? (
+        {((deadlinePassed && (!isJoined || hasSubmitted)) ||
+          piecesAllSubmitted) &&
+        isAdmin ? (
           <CTAButton onClick={handleRevealClick}>Reveal riff</CTAButton>
         ) : riff.status !== "REVEALED" ? (
           <RiffCTAButton

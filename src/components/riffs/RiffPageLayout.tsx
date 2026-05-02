@@ -448,7 +448,8 @@ export default function RiffPageLayout({
                 );
               })()}
 
-            {(deadlinePassed || piecesAllSubmitted) &&
+            {((deadlinePassed && (!isJoined || hasSubmitted)) ||
+              piecesAllSubmitted) &&
             isAdmin &&
             riff.status === "ACTIVE" ? (
               <CTAButton onClick={handleRevealClick}>Reveal riff</CTAButton>
