@@ -276,16 +276,6 @@ export default function WhatsNextModal({
         </div>
       </div>
 
-      {/* Divider */}
-      <div
-        style={{
-          width: "100%",
-          height: "1px",
-          backgroundColor: "#E6E6E6",
-          marginBottom: "24px",
-        }}
-      />
-
       {/* CTA */}
       <PrimaryButton onClick={handleCTA} style={{ width: "100%" }}>
         {content.cta}
