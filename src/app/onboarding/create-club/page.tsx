@@ -86,7 +86,12 @@ export default function OnboardingCreateClubPage() {
               gap: "8px",
             }}
           >
-            <Tagline text="Club name" color="#C01582" width={118} />
+            <Tagline
+              text="Club name"
+              color="#C01582"
+              width={118}
+              textColor="#FFFFFF"
+            />
             <TextInput
               type="text"
               name="clubName"
@@ -109,7 +114,12 @@ export default function OnboardingCreateClubPage() {
               gap: "8px",
             }}
           >
-            <Tagline text="Description" color="#955CB5" width={125} />
+            <Tagline
+              text="Description"
+              color="#955CB5"
+              width={125}
+              textColor="#FFFFFF"
+            />
             <TextInput
               multiline
               rows={3}
