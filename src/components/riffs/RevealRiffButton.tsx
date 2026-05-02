@@ -20,15 +20,10 @@ export function shouldShowReveal(p: RevealRiffParams): boolean {
   );
 }
 
-interface RevealRiffButtonProps extends RevealRiffParams {
-  onClick: (e: React.MouseEvent) => void;
-}
-
 export default function RevealRiffButton({
   onClick,
-  ...params
-}: RevealRiffButtonProps) {
-  if (!shouldShowReveal(params)) return null;
-
+}: {
+  onClick: (e: React.MouseEvent) => void;
+}) {
   return <CTAButton onClick={onClick}>Reveal riff</CTAButton>;
 }

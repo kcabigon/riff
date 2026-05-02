@@ -216,15 +216,7 @@ export default function RiffCard({
           isAdmin,
           status: riff.status,
         }) ? (
-          <RevealRiffButton
-            deadlinePassed={deadlinePassed}
-            isJoined={isJoined}
-            hasSubmitted={hasSubmitted}
-            piecesAllSubmitted={piecesAllSubmitted}
-            isAdmin={isAdmin}
-            status={riff.status}
-            onClick={handleRevealClick}
-          />
+          <RevealRiffButton onClick={handleRevealClick} />
         ) : riff.status !== "REVEALED" ? (
           <RiffCTAButton
             riffId={riff.id}
@@ -238,9 +230,12 @@ export default function RiffCard({
         ) : null}
 
         {/* Countdown Timer or Time's up */}
-        {isJoined && riff.deadline && riff.status !== "REVEALED" && (
-          <CountdownTimer deadline={new Date(riff.deadline)} />
-        )}
+        {isJoined &&
+          riff.deadline &&
+          !deadlinePassed &&
+          riff.status !== "REVEALED" && (
+            <CountdownTimer deadline={new Date(riff.deadline)} />
+          )}
         {deadlinePassed && riff.deadline && (
           <p
             style={{

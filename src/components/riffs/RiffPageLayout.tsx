@@ -458,15 +458,7 @@ export default function RiffPageLayout({
               isAdmin,
               status: riff.status,
             }) ? (
-              <RevealRiffButton
-                deadlinePassed={deadlinePassed}
-                isJoined={isJoined}
-                hasSubmitted={hasSubmitted}
-                piecesAllSubmitted={piecesAllSubmitted}
-                isAdmin={isAdmin}
-                status={riff.status}
-                onClick={handleRevealClick}
-              />
+              <RevealRiffButton onClick={handleRevealClick} />
             ) : riff.status !== "REVEALED" ? (
               <RiffCTAButton
                 riffId={riff.id}
@@ -483,9 +475,12 @@ export default function RiffPageLayout({
               />
             ) : null}
 
-            {isJoined && riff.deadline && riff.status !== "REVEALED" && (
-              <CountdownTimer deadline={new Date(riff.deadline)} />
-            )}
+            {isJoined &&
+              riff.deadline &&
+              !deadlinePassed &&
+              riff.status !== "REVEALED" && (
+                <CountdownTimer deadline={new Date(riff.deadline)} />
+              )}
             {deadlinePassed && riff.deadline && riff.status !== "REVEALED" && (
               <p
                 style={{
