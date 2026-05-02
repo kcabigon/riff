@@ -4,6 +4,7 @@ import { useState } from "react";
 import Modal from "@/components/shared/Modal";
 import RiffFormFields from "./RiffFormFields";
 import PrimaryButton from "@/components/PrimaryButton";
+import { toEndOfDay } from "@/lib/riff-utils";
 
 interface CreateRiffModalProps {
   clubId: string;
@@ -49,7 +50,7 @@ export default function CreateRiffModal({
         body: JSON.stringify({
           title: title.trim() || null,
           prompt: prompt.trim() || null,
-          deadline: deadline || null,
+          deadline: deadline ? toEndOfDay(deadline) : null,
         }),
       });
 
