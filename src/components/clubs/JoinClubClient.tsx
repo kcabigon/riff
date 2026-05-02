@@ -488,7 +488,7 @@ export default function JoinClubClient({
                   autoComplete="email"
                 />
                 <SecondaryButton type="submit" loading={loading}>
-                  Join {club.name}
+                  Join club
                 </SecondaryButton>
               </form>
               <button
@@ -562,7 +562,7 @@ export default function JoinClubClient({
                 />
                 {error && <p style={errorStyle}>{error}</p>}
                 <SecondaryButton type="submit" loading={loading}>
-                  Join {club.name}
+                  Join club
                 </SecondaryButton>
               </form>
             </>
@@ -585,7 +585,7 @@ export default function JoinClubClient({
               </p>
               {error && <p style={errorStyle}>{error}</p>}
               <SecondaryButton loading={loading} onClick={handleJoin}>
-                Join {club.name}
+                Join club
               </SecondaryButton>
               <button
                 onClick={() => setIsModalOpen(true)}
