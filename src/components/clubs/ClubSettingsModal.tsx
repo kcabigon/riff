@@ -6,7 +6,11 @@ import ImageUploadFlow from "@/components/shared/ImageUploadFlow";
 import type { ImageUploadFlowHandle } from "@/components/shared/ImageUploadFlow";
 import Image from "next/image";
 import Tagline from "@/components/Tagline";
+import TextInput from "@/components/TextInput";
 import PrimaryButton from "@/components/PrimaryButton";
+
+const CLUB_NAME_MAX = 42;
+const DESCRIPTION_MAX = 200;
 
 interface ClubUpdatedData {
   name: string;
@@ -116,32 +120,13 @@ export default function ClubSettingsModal({
               width={120}
               align="left"
             />
-            <input
+            <TextInput
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              maxLength={42}
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 300,
-                color: "#000000",
-                backgroundColor: "#FFFFFF",
-                border:
-                  name.length >= 42 ? "2px solid #FF0000" : "2px solid #000000",
-                padding: "12px 16px",
-                outline: "none",
-                width: "100%",
-                boxSizing: "border-box",
-              }}
-              onFocus={(e) => {
-                if (name.length < 42) e.target.style.borderColor = "#00FF66";
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor =
-                  name.length >= 42 ? "#FF0000" : "#000000";
-              }}
+              maxLength={CLUB_NAME_MAX}
+              error={name.length >= CLUB_NAME_MAX ? " " : undefined}
             />
           </div>
 
@@ -170,35 +155,13 @@ export default function ClubSettingsModal({
                 (optional)
               </span>
             </div>
-            <textarea
+            <TextInput
+              multiline
+              rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-              maxLength={200}
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 300,
-                color: "#000000",
-                backgroundColor: "#FFFFFF",
-                border:
-                  description.length >= 200
-                    ? "2px solid #FF0000"
-                    : "2px solid #000000",
-                padding: "12px 16px",
-                outline: "none",
-                width: "100%",
-                resize: "vertical",
-                boxSizing: "border-box",
-              }}
-              onFocus={(e) => {
-                if (description.length < 200)
-                  e.target.style.borderColor = "#00FF66";
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor =
-                  description.length >= 200 ? "#FF0000" : "#000000";
-              }}
+              maxLength={DESCRIPTION_MAX}
+              error={description.length >= DESCRIPTION_MAX ? " " : undefined}
             />
           </div>
 
