@@ -9,6 +9,9 @@ import BackButton from "@/components/BackButton";
 
 export const dynamic = "force-dynamic";
 
+const CLUB_NAME_MAX = 42;
+const DESCRIPTION_MAX = 200;
+
 export default function OnboardingCreateClubPage() {
   const router = useRouter();
   const [clubName, setClubName] = useState("");
@@ -92,6 +95,8 @@ export default function OnboardingCreateClubPage() {
               onChange={(e) => setClubName(e.target.value)}
               disabled={loading}
               autoFocus
+              maxLength={CLUB_NAME_MAX}
+              error={clubName.length >= CLUB_NAME_MAX ? " " : undefined}
             />
           </div>
 
@@ -113,6 +118,8 @@ export default function OnboardingCreateClubPage() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               disabled={loading}
+              maxLength={DESCRIPTION_MAX}
+              error={description.length >= DESCRIPTION_MAX ? " " : undefined}
             />
             <div style={{ backgroundColor: "#FFFFFF", padding: "4px 8px" }}>
               <p
