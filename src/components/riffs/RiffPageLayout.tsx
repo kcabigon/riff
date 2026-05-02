@@ -452,25 +452,6 @@ export default function RiffPageLayout({
             isAdmin &&
             riff.status === "ACTIVE" ? (
               <CTAButton onClick={handleRevealClick}>Reveal riff</CTAButton>
-            ) : deadlinePassed && !isAdmin && riff.status === "ACTIVE" ? (
-              <button
-                disabled
-                style={{
-                  backgroundColor: "#FFFFFF",
-                  border: "2px solid #000000",
-                  boxShadow: "8px 8px 0px 0px #808080",
-                  padding: "12px 48px",
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#808080",
-                  cursor: "not-allowed",
-                  transition: "none",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                Waiting for the host to reveal
-              </button>
             ) : riff.status !== "REVEALED" ? (
               <RiffCTAButton
                 riffId={riff.id}
@@ -487,12 +468,9 @@ export default function RiffPageLayout({
               />
             ) : null}
 
-            {isJoined &&
-              riff.deadline &&
-              !deadlinePassed &&
-              riff.status !== "REVEALED" && (
-                <CountdownTimer deadline={new Date(riff.deadline)} />
-              )}
+            {isJoined && riff.deadline && riff.status !== "REVEALED" && (
+              <CountdownTimer deadline={new Date(riff.deadline)} />
+            )}
             {deadlinePassed && riff.deadline && riff.status !== "REVEALED" && (
               <p
                 style={{

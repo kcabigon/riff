@@ -208,27 +208,7 @@ export default function RiffCard({
         {/* Button */}
         {(deadlinePassed || piecesAllSubmitted) && isAdmin ? (
           <CTAButton onClick={handleRevealClick}>Reveal riff</CTAButton>
-        ) : deadlinePassed && !isAdmin ? (
-          <button
-            disabled
-            style={{
-              backgroundColor: "#FFFFFF",
-              border: "2px solid #000000",
-              boxShadow: "8px 8px 0px 0px #808080",
-              padding: "12px 48px",
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              lineHeight: "normal",
-              color: "#808080",
-              cursor: "not-allowed",
-              transition: "none",
-              whiteSpace: "nowrap",
-            }}
-          >
-            Waiting for the host to reveal
-          </button>
-        ) : (
+        ) : riff.status !== "REVEALED" ? (
           <RiffCTAButton
             riffId={riff.id}
             isJoined={isJoined}
@@ -238,10 +218,10 @@ export default function RiffCard({
             onJoin={onJoin}
             stopPropagation
           />
-        )}
+        ) : null}
 
         {/* Countdown Timer or Time's up */}
-        {isJoined && riff.deadline && !deadlinePassed && (
+        {isJoined && riff.deadline && riff.status !== "REVEALED" && (
           <CountdownTimer deadline={new Date(riff.deadline)} />
         )}
         {deadlinePassed && riff.deadline && (
