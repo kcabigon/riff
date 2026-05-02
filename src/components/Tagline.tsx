@@ -34,7 +34,7 @@ export default function Tagline({
   fontWeight = 300,
   align = "center",
 }: TaglineProps) {
-  const foregroundColor = textColor || (color ? "#FFFFFF" : "#000000");
+  const foregroundColor = textColor || "#000000";
 
   // Generate CSS filter for color transformation
   // This is a simplified approach - for yellow (#EECF01), no filter
@@ -62,7 +62,7 @@ export default function Tagline({
     <div
       style={{
         width: `${width}px`,
-        height: `${fontSize + 6}px`,
+        height: `${fontSize + 14}px`,
         position: "relative",
         display: "flex",
         alignItems: "center",
@@ -75,7 +75,7 @@ export default function Tagline({
         alt=""
         fill
         style={{
-          objectFit: "contain",
+          objectFit: "fill",
           filter: getColorFilter(color),
         }}
       />
