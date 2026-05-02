@@ -121,24 +121,26 @@ export default function ClubSettingsModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              maxLength={100}
+              maxLength={42}
               style={{
                 fontFamily: "var(--font-dm-sans)",
                 fontSize: "16px",
                 fontWeight: 300,
                 color: "#000000",
                 backgroundColor: "#FFFFFF",
-                border: "2px solid #000000",
+                border:
+                  name.length >= 42 ? "2px solid #FF0000" : "2px solid #000000",
                 padding: "12px 16px",
                 outline: "none",
                 width: "100%",
                 boxSizing: "border-box",
               }}
               onFocus={(e) => {
-                e.target.style.borderColor = "#00FF66";
+                if (name.length < 42) e.target.style.borderColor = "#00FF66";
               }}
               onBlur={(e) => {
-                e.target.style.borderColor = "#000000";
+                e.target.style.borderColor =
+                  name.length >= 42 ? "#FF0000" : "#000000";
               }}
             />
           </div>
@@ -172,13 +174,17 @@ export default function ClubSettingsModal({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
+              maxLength={200}
               style={{
                 fontFamily: "var(--font-dm-sans)",
                 fontSize: "16px",
                 fontWeight: 300,
                 color: "#000000",
                 backgroundColor: "#FFFFFF",
-                border: "2px solid #000000",
+                border:
+                  description.length >= 200
+                    ? "2px solid #FF0000"
+                    : "2px solid #000000",
                 padding: "12px 16px",
                 outline: "none",
                 width: "100%",
@@ -186,10 +192,12 @@ export default function ClubSettingsModal({
                 boxSizing: "border-box",
               }}
               onFocus={(e) => {
-                e.target.style.borderColor = "#00FF66";
+                if (description.length < 200)
+                  e.target.style.borderColor = "#00FF66";
               }}
               onBlur={(e) => {
-                e.target.style.borderColor = "#000000";
+                e.target.style.borderColor =
+                  description.length >= 200 ? "#FF0000" : "#000000";
               }}
             />
           </div>
