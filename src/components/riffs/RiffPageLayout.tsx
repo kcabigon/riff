@@ -19,6 +19,9 @@ import {
   getWaitingParticipants,
 } from "@/lib/riff-utils";
 import RiffCTAButton from "@/components/riffs/RiffCTAButton";
+import RevealRiffButton, {
+  shouldShowReveal,
+} from "@/components/riffs/RevealRiffButton";
 import ProgressCard from "@/components/riffs/ProgressCard";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import type { DropdownItem } from "@/components/shared/Dropdown";
@@ -29,7 +32,6 @@ import WhatsNextModal, {
 } from "@/components/shared/WhatsNextModal";
 import { canShowWhatsNext } from "@/lib/whatsNextGuard";
 import PrimaryButton from "@/components/PrimaryButton";
-import CTAButton from "@/components/CTAButton";
 
 interface RiffPageLayoutProps {
   riff: {
@@ -448,11 +450,23 @@ export default function RiffPageLayout({
                 );
               })()}
 
-            {((deadlinePassed && (!isJoined || hasSubmitted)) ||
-              piecesAllSubmitted) &&
-            isAdmin &&
-            riff.status === "ACTIVE" ? (
-              <CTAButton onClick={handleRevealClick}>Reveal riff</CTAButton>
+            {shouldShowReveal({
+              deadlinePassed,
+              isJoined,
+              hasSubmitted,
+              piecesAllSubmitted,
+              isAdmin,
+              status: riff.status,
+            }) ? (
+              <RevealRiffButton
+                deadlinePassed={deadlinePassed}
+                isJoined={isJoined}
+                hasSubmitted={hasSubmitted}
+                piecesAllSubmitted={piecesAllSubmitted}
+                isAdmin={isAdmin}
+                status={riff.status}
+                onClick={handleRevealClick}
+              />
             ) : riff.status !== "REVEALED" ? (
               <RiffCTAButton
                 riffId={riff.id}

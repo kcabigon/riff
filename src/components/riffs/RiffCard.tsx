@@ -12,7 +12,9 @@ import {
   formatDateShort,
 } from "@/lib/riff-utils";
 import RiffCTAButton from "@/components/riffs/RiffCTAButton";
-import CTAButton from "@/components/CTAButton";
+import RevealRiffButton, {
+  shouldShowReveal,
+} from "@/components/riffs/RevealRiffButton";
 
 interface RiffCardProps {
   riff: {
@@ -206,10 +208,23 @@ export default function RiffCard({
         }}
       >
         {/* Button */}
-        {((deadlinePassed && (!isJoined || hasSubmitted)) ||
-          piecesAllSubmitted) &&
-        isAdmin ? (
-          <CTAButton onClick={handleRevealClick}>Reveal riff</CTAButton>
+        {shouldShowReveal({
+          deadlinePassed,
+          isJoined,
+          hasSubmitted,
+          piecesAllSubmitted,
+          isAdmin,
+          status: riff.status,
+        }) ? (
+          <RevealRiffButton
+            deadlinePassed={deadlinePassed}
+            isJoined={isJoined}
+            hasSubmitted={hasSubmitted}
+            piecesAllSubmitted={piecesAllSubmitted}
+            isAdmin={isAdmin}
+            status={riff.status}
+            onClick={handleRevealClick}
+          />
         ) : riff.status !== "REVEALED" ? (
           <RiffCTAButton
             riffId={riff.id}
