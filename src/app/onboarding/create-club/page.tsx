@@ -114,7 +114,7 @@ export default function OnboardingCreateClubPage() {
               multiline
               rows={3}
               name="description"
-              placeholder="We don't read and write poetry because it's cute. We read and write poetry because we are members of the human race."
+              placeholder="We don't read and write poetry because it's cute. We read and write poetry because..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               disabled={loading}
