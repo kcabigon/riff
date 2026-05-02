@@ -8,9 +8,7 @@ import Image from "next/image";
 import Tagline from "@/components/Tagline";
 import TextInput from "@/components/TextInput";
 import PrimaryButton from "@/components/PrimaryButton";
-
-const CLUB_NAME_MAX = 42;
-const DESCRIPTION_MAX = 200;
+import { CLUB_NAME_MAX, DESCRIPTION_MAX } from "@/lib/constants";
 
 interface ClubUpdatedData {
   name: string;

@@ -7,10 +7,9 @@ import TextInput from "@/components/TextInput";
 import Tagline from "@/components/Tagline";
 import BackButton from "@/components/BackButton";
 
-export const dynamic = "force-dynamic";
+import { CLUB_NAME_MAX, DESCRIPTION_MAX } from "@/lib/constants";
 
-const CLUB_NAME_MAX = 42;
-const DESCRIPTION_MAX = 200;
+export const dynamic = "force-dynamic";
 
 export default function OnboardingCreateClubPage() {
   const router = useRouter();
