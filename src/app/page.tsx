@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
@@ -13,6 +13,8 @@ import {
   type Transition,
 } from "framer-motion";
 import LandingNavBar from "@/components/LandingNavBar";
+import NoiseBackground from "@/components/NoiseBackground";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 
 // Brush-reveal easing shared by both painted SVGs
 const BRUSH_EASE: [number, number, number, number] = [0.4, 0, 0.1, 1];
@@ -29,91 +31,26 @@ const SVG_SIZES = {
   },
 } as const;
 
+type Variant = "desktop" | "mobile";
 type IdleAnim = { rotate: number[]; y: number[] };
 
-/**
- * Static grain background — same filter as the shared NoiseBackground
- * (cover mode). Painted once on mount; no runtime animation.
- *
- * Why: animating feTurbulence (e.g. SMIL on `seed`) crushes mobile GPUs.
- * Industry default (Apple, Stripe, Linear, Vercel) is static noise.
- */
-function GrainNoise() {
-  return (
-    <svg
-      style={{
-        position: "absolute",
-        inset: 0,
-        width: "100%",
-        height: "100%",
-        zIndex: 0,
-      }}
-      xmlns="http://www.w3.org/2000/svg"
-      preserveAspectRatio="xMidYMid slice"
-      viewBox="0 0 1438 1024"
-      aria-hidden
-    >
-      <g filter="url(#grainNoiseFilter)">
-        <rect width="1440" height="1024" fill="white" />
-      </g>
-      <defs>
-        <filter
-          id="grainNoiseFilter"
-          x="0"
-          y="0"
-          width="1440"
-          height="1024"
-          filterUnits="userSpaceOnUse"
-          colorInterpolationFilters="sRGB"
-        >
-          <feFlood floodOpacity="0" result="BackgroundImageFix" />
-          <feBlend
-            mode="normal"
-            in="SourceGraphic"
-            in2="BackgroundImageFix"
-            result="shape"
-          />
-          <feTurbulence
-            type="fractalNoise"
-            baseFrequency="0.5 0.5"
-            stitchTiles="stitch"
-            numOctaves="3"
-            result="noise"
-            seed="7463"
-          />
-          <feColorMatrix
-            in="noise"
-            type="luminanceToAlpha"
-            result="alphaNoise"
-          />
-          <feComponentTransfer in="alphaNoise" result="coloredNoise1">
-            <feFuncA
-              type="discrete"
-              tableValues="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "
-            />
-          </feComponentTransfer>
-          <feComposite
-            operator="in"
-            in2="shape"
-            in="coloredNoise1"
-            result="noise1Clipped"
-          />
-          <feFlood floodColor="#000000" result="color1Flood" />
-          <feComposite
-            operator="in"
-            in2="noise1Clipped"
-            in="color1Flood"
-            result="color1"
-          />
-          <feMerge result="effect1_noise_686_2149">
-            <feMergeNode in="shape" />
-            <feMergeNode in="color1" />
-          </feMerge>
-        </filter>
-      </defs>
-    </svg>
-  );
-}
+type SeqStep = { delay: number; dur: number };
+type MotionCfg = {
+  idleRiff: IdleAnim;
+  idleWriteClub: IdleAnim;
+  idleLoopRiff: Transition;
+  idleLoopWriteClub: Transition;
+  ctaBreath: { scale?: number[] };
+  ctaBreathTransition: Transition;
+  SEQ: {
+    riff: SeqStep;
+    withFriends: SeqStep;
+    startA: SeqStep;
+    writeclub: SeqStep;
+    period: SeqStep;
+    cta: SeqStep;
+  };
+};
 
 /** A plain headline word that fades in while rising 24px from below. */
 function TextWord({
@@ -139,7 +76,7 @@ function TextWord({
 
 /**
  * A painted-stroke headline word (Riff or write club). The HTML span carries
- * layout + accessible text (rendered transparent). Inside, the SVG brush-reveals
+ * layout + accessible text (rendered transparent). Inside, the WebP brush-reveals
  * on entrance, then runs an idle drift loop. Mouse parallax x/y is applied to
  * the outer span.
  */
@@ -156,7 +93,7 @@ function BrushSvg({
   onRevealed,
 }: {
   variant: "riff" | "writeclub";
-  size: "desktop" | "mobile";
+  size: Variant;
   parallaxX: MotionValue<number>;
   parallaxY: MotionValue<number>;
   delay: number;
@@ -171,9 +108,12 @@ function BrushSvg({
   const wordClass = isRiff ? "word-riff" : "word-writeclub";
   const wrapClass = `word-svg-wrap-${variant}${sizeSuffix}`;
   const imgClass = `word-svg word-svg-${variant}${sizeSuffix}`;
+  // WebP rasterized from the source SVGs (~1,200 path masks each). Bitmap
+  // layers are GPU-cheap to rotate, where vector + mask forced full
+  // re-rasterization every frame on mobile.
   const src = isRiff
-    ? "/images/landing/riff_lp.svg"
-    : "/images/landing/write_club_lp.svg";
+    ? "/images/landing/riff_lp.webp"
+    : "/images/landing/write_club_lp.webp";
   const label = isRiff ? "Riff" : "write club";
   const dim = SVG_SIZES[variant][size];
   // Riff reveals left-to-right (word baked at upper-right); write club reveals
@@ -208,12 +148,138 @@ function BrushSvg({
   );
 }
 
+/**
+ * The hero scene: two headline lines + CTA, sequenced and animated.
+ * Variant-specific class names switch between desktop and mobile layouts;
+ * everything else (animation timing, content, motion config) is shared.
+ */
+function Hero({
+  variant,
+  cfg,
+  riffX,
+  riffY,
+  writeclubX,
+  writeclubY,
+  riffRevealed,
+  writeclubRevealed,
+  onRiffRevealed,
+  onWriteclubRevealed,
+  onCTAClick,
+}: {
+  variant: Variant;
+  cfg: MotionCfg;
+  riffX: MotionValue<number>;
+  riffY: MotionValue<number>;
+  writeclubX: MotionValue<number>;
+  writeclubY: MotionValue<number>;
+  riffRevealed: boolean;
+  writeclubRevealed: boolean;
+  onRiffRevealed: () => void;
+  onWriteclubRevealed: () => void;
+  onCTAClick: () => void;
+}) {
+  const isDesktop = variant === "desktop";
+  const wrapClass = isDesktop ? "hero-desktop" : "hero-mobile";
+  const frameClass = isDesktop ? "hero-desktop-frame" : "hero-mobile-frame";
+  const lineClass = isDesktop ? "hero-line" : "hero-line-m";
+  const lineMod1 = isDesktop ? "hero-line-1" : "hero-line-m-1";
+  const lineMod2 = isDesktop ? "hero-line-2" : "hero-line-m-2";
+  const { SEQ } = cfg;
+
+  return (
+    <div className={wrapClass}>
+      <div className={frameClass}>
+        <h1 className={`${lineClass} ${lineMod1}`}>
+          <BrushSvg
+            variant="riff"
+            size={variant}
+            parallaxX={riffX}
+            parallaxY={riffY}
+            delay={SEQ.riff.delay}
+            dur={SEQ.riff.dur}
+            idleAnim={cfg.idleRiff}
+            idleTransition={cfg.idleLoopRiff}
+            revealed={riffRevealed}
+            onRevealed={onRiffRevealed}
+          />{" "}
+          <TextWord delay={SEQ.withFriends.delay} dur={SEQ.withFriends.dur}>
+            with
+          </TextWord>{" "}
+          <TextWord delay={SEQ.withFriends.delay} dur={SEQ.withFriends.dur}>
+            friends.
+          </TextWord>
+        </h1>
+
+        <h1 className={`${lineClass} ${lineMod2}`}>
+          <TextWord delay={SEQ.startA.delay} dur={SEQ.startA.dur}>
+            Start
+          </TextWord>{" "}
+          <TextWord delay={SEQ.startA.delay} dur={SEQ.startA.dur}>
+            a
+          </TextWord>{" "}
+          <BrushSvg
+            variant="writeclub"
+            size={variant}
+            parallaxX={writeclubX}
+            parallaxY={writeclubY}
+            delay={SEQ.writeclub.delay}
+            dur={SEQ.writeclub.dur}
+            idleAnim={cfg.idleWriteClub}
+            idleTransition={cfg.idleLoopWriteClub}
+            revealed={writeclubRevealed}
+            onRevealed={onWriteclubRevealed}
+          />
+          <TextWord delay={SEQ.period.delay} dur={SEQ.period.dur}>
+            .
+          </TextWord>
+        </h1>
+
+        <div className="hero-cta-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 12 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{
+              duration: SEQ.cta.dur,
+              delay: SEQ.cta.delay,
+              ease: [0.34, 1.56, 0.64, 1],
+            }}
+          >
+            <motion.button
+              className="hero-cta"
+              onClick={onCTAClick}
+              animate={cfg.ctaBreath}
+              transition={cfg.ctaBreathTransition}
+              whileTap={{
+                x: 4,
+                y: 4,
+                boxShadow: "4px 4px 0px 0px #000000",
+              }}
+            >
+              Let&apos;s do this
+            </motion.button>
+          </motion.div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function LandingPage() {
   const router = useRouter();
   const reducedMotion = useReducedMotion();
   const heroRef = useRef<HTMLElement | null>(null);
   const [riffRevealed, setRiffRevealed] = useState(false);
   const [writeclubRevealed, setWriteclubRevealed] = useState(false);
+
+  // Pre-hydration we render BOTH heroes so the existing CSS @media rule picks
+  // the correct one — no flash of desktop hero on mobile devices. After
+  // hydration we drop the unused hero so its framer-motion idle loop doesn't
+  // keep ticking in the background (the actual mobile-perf win).
+  const isMobile = useIsMobile();
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => setHydrated(true), []);
+  const renderDesktop = !hydrated || !isMobile;
+  const renderMobile = !hydrated || isMobile;
 
   // Mouse parallax — normalized cursor position [-1, 1] across the hero
   const mouseX = useMotionValue(0);
@@ -268,53 +334,71 @@ export default function LandingPage() {
     };
   }, [mouseX, mouseY]);
 
-  // Idle drift — toned down (but not killed) under reduced motion
-  const amp = reducedMotion ? 0.25 : 1;
-  const idleRiff: IdleAnim = {
-    rotate: [0, 1.5 * amp, 0, -1.5 * amp, 0],
-    y: [0, -6 * amp, 0, 6 * amp, 0],
-  };
-  const idleWriteClub: IdleAnim = {
-    rotate: [0, -1.5 * amp, 0, 1.5 * amp, 0],
-    y: [0, 6 * amp, 0, -6 * amp, 0],
-  };
-  const idleLoopRiff: Transition = {
-    duration: reducedMotion ? 9 : 5.5,
-    repeat: Infinity,
-    ease: "easeInOut",
-    delay: 1.4,
-  };
-  const idleLoopWriteClub: Transition = {
-    duration: reducedMotion ? 10 : 6,
-    repeat: Infinity,
-    ease: "easeInOut",
-    delay: 1.7,
-  };
+  // All motion config in one memo — only re-derives when reducedMotion flips.
+  // Keeps animate/transition prop identities stable across renders.
+  const cfg = useMemo<MotionCfg>(() => {
+    const amp = reducedMotion ? 0.25 : 1;
+    return {
+      idleRiff: {
+        rotate: [0, 1.5 * amp, 0, -1.5 * amp, 0],
+        y: [0, -6 * amp, 0, 6 * amp, 0],
+      },
+      idleWriteClub: {
+        rotate: [0, -1.5 * amp, 0, 1.5 * amp, 0],
+        y: [0, 6 * amp, 0, -6 * amp, 0],
+      },
+      idleLoopRiff: {
+        duration: reducedMotion ? 9 : 5.5,
+        repeat: Infinity,
+        ease: "easeInOut",
+        delay: 1.4,
+      },
+      idleLoopWriteClub: {
+        duration: reducedMotion ? 10 : 6,
+        repeat: Infinity,
+        ease: "easeInOut",
+        delay: 1.7,
+      },
+      ctaBreath: reducedMotion ? {} : { scale: [1, 1.02, 1] },
+      ctaBreathTransition: reducedMotion
+        ? {}
+        : { duration: 2.6, repeat: Infinity, ease: "easeInOut", delay: 1.6 },
+      SEQ: reducedMotion
+        ? {
+            riff: { delay: 0.1, dur: 0.5 },
+            withFriends: { delay: 0.55, dur: 0.35 },
+            startA: { delay: 0.9, dur: 0.35 },
+            writeclub: { delay: 1.2, dur: 0.5 },
+            period: { delay: 1.45, dur: 0.3 },
+            cta: { delay: 1.7, dur: 0.35 },
+          }
+        : {
+            riff: { delay: 0.15, dur: 0.95 },
+            withFriends: { delay: 0.95, dur: 0.55 },
+            startA: { delay: 1.5, dur: 0.55 },
+            writeclub: { delay: 1.95, dur: 0.95 },
+            period: { delay: 2.45, dur: 0.45 },
+            cta: { delay: 2.85, dur: 0.55 },
+          },
+    };
+  }, [reducedMotion]);
 
-  // CTA breathing scale — subtle, low amplitude
-  const ctaBreath = reducedMotion ? {} : { scale: [1, 1.02, 1] };
-  const ctaBreathTransition: Transition = reducedMotion
-    ? {}
-    : { duration: 2.6, repeat: Infinity, ease: "easeInOut", delay: 1.6 };
+  const onRiffRevealed = () => setRiffRevealed(true);
+  const onWriteclubRevealed = () => setWriteclubRevealed(true);
+  const onCTAClick = () => router.push("/login");
 
-  // Sequenced reveal — Riff → "with friends." → "Start a" → write club → "." → CTA
-  const SEQ = reducedMotion
-    ? {
-        riff: { delay: 0.1, dur: 0.5 },
-        withFriends: { delay: 0.55, dur: 0.35 },
-        startA: { delay: 0.9, dur: 0.35 },
-        writeclub: { delay: 1.2, dur: 0.5 },
-        period: { delay: 1.45, dur: 0.3 },
-        cta: { delay: 1.7, dur: 0.35 },
-      }
-    : {
-        riff: { delay: 0.15, dur: 0.95 },
-        withFriends: { delay: 0.95, dur: 0.55 },
-        startA: { delay: 1.5, dur: 0.55 },
-        writeclub: { delay: 1.95, dur: 0.95 },
-        period: { delay: 2.45, dur: 0.45 },
-        cta: { delay: 2.85, dur: 0.55 },
-      };
+  const heroProps = {
+    cfg,
+    riffX,
+    riffY,
+    writeclubX,
+    writeclubY,
+    riffRevealed,
+    writeclubRevealed,
+    onRiffRevealed,
+    onWriteclubRevealed,
+    onCTAClick,
+  };
 
   return (
     <div
@@ -325,7 +409,7 @@ export default function LandingPage() {
         backgroundColor: "#FFFFFF",
       }}
     >
-      <GrainNoise />
+      <NoiseBackground />
 
       <LandingNavBar />
 
@@ -338,157 +422,8 @@ export default function LandingPage() {
           zIndex: 1,
         }}
       >
-        {/* ===== Desktop hero ===== */}
-        <div className="hero-desktop">
-          <div className="hero-desktop-frame">
-            <h1 className="hero-line hero-line-1">
-              <BrushSvg
-                variant="riff"
-                size="desktop"
-                parallaxX={riffX}
-                parallaxY={riffY}
-                delay={SEQ.riff.delay}
-                dur={SEQ.riff.dur}
-                idleAnim={idleRiff}
-                idleTransition={idleLoopRiff}
-                revealed={riffRevealed}
-                onRevealed={() => setRiffRevealed(true)}
-              />{" "}
-              <TextWord delay={SEQ.withFriends.delay} dur={SEQ.withFriends.dur}>
-                with
-              </TextWord>{" "}
-              <TextWord delay={SEQ.withFriends.delay} dur={SEQ.withFriends.dur}>
-                friends.
-              </TextWord>
-            </h1>
-
-            <h1 className="hero-line hero-line-2">
-              <TextWord delay={SEQ.startA.delay} dur={SEQ.startA.dur}>
-                Start
-              </TextWord>{" "}
-              <TextWord delay={SEQ.startA.delay} dur={SEQ.startA.dur}>
-                a
-              </TextWord>{" "}
-              <BrushSvg
-                variant="writeclub"
-                size="desktop"
-                parallaxX={writeclubX}
-                parallaxY={writeclubY}
-                delay={SEQ.writeclub.delay}
-                dur={SEQ.writeclub.dur}
-                idleAnim={idleWriteClub}
-                idleTransition={idleLoopWriteClub}
-                revealed={writeclubRevealed}
-                onRevealed={() => setWriteclubRevealed(true)}
-              />
-              <TextWord delay={SEQ.period.delay} dur={SEQ.period.dur}>
-                .
-              </TextWord>
-            </h1>
-
-            <div className="hero-cta-center">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 12 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{
-                  duration: SEQ.cta.dur,
-                  delay: SEQ.cta.delay,
-                  ease: [0.34, 1.56, 0.64, 1],
-                }}
-              >
-                <motion.button
-                  className="hero-cta"
-                  onClick={() => router.push("/login")}
-                  animate={ctaBreath}
-                  transition={ctaBreathTransition}
-                  whileTap={{
-                    x: 4,
-                    y: 4,
-                    boxShadow: "4px 4px 0px 0px #000000",
-                  }}
-                >
-                  Let&apos;s do this
-                </motion.button>
-              </motion.div>
-            </div>
-          </div>
-        </div>
-
-        {/* ===== Mobile hero ===== */}
-        <div className="hero-mobile">
-          <div className="hero-mobile-frame">
-            <h1 className="hero-line-m hero-line-m-1">
-              <BrushSvg
-                variant="riff"
-                size="mobile"
-                parallaxX={riffX}
-                parallaxY={riffY}
-                delay={SEQ.riff.delay}
-                dur={SEQ.riff.dur}
-                idleAnim={idleRiff}
-                idleTransition={idleLoopRiff}
-                revealed={riffRevealed}
-                onRevealed={() => setRiffRevealed(true)}
-              />{" "}
-              <TextWord delay={SEQ.withFriends.delay} dur={SEQ.withFriends.dur}>
-                with
-              </TextWord>{" "}
-              <TextWord delay={SEQ.withFriends.delay} dur={SEQ.withFriends.dur}>
-                friends.
-              </TextWord>
-            </h1>
-
-            <h1 className="hero-line-m hero-line-m-2">
-              <TextWord delay={SEQ.startA.delay} dur={SEQ.startA.dur}>
-                Start
-              </TextWord>{" "}
-              <TextWord delay={SEQ.startA.delay} dur={SEQ.startA.dur}>
-                a
-              </TextWord>{" "}
-              <BrushSvg
-                variant="writeclub"
-                size="mobile"
-                parallaxX={writeclubX}
-                parallaxY={writeclubY}
-                delay={SEQ.writeclub.delay}
-                dur={SEQ.writeclub.dur}
-                idleAnim={idleWriteClub}
-                idleTransition={idleLoopWriteClub}
-                revealed={writeclubRevealed}
-                onRevealed={() => setWriteclubRevealed(true)}
-              />
-              <TextWord delay={SEQ.period.delay} dur={SEQ.period.dur}>
-                .
-              </TextWord>
-            </h1>
-
-            <div className="hero-cta-center-mobile">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 12 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{
-                  duration: SEQ.cta.dur,
-                  delay: SEQ.cta.delay,
-                  ease: [0.34, 1.56, 0.64, 1],
-                }}
-              >
-                <motion.button
-                  className="hero-cta-mobile"
-                  onClick={() => router.push("/login")}
-                  animate={ctaBreath}
-                  transition={ctaBreathTransition}
-                  whileTap={{
-                    x: 4,
-                    y: 4,
-                    boxShadow: "4px 4px 0px 0px #000000",
-                  }}
-                >
-                  Let&apos;s do this
-                </motion.button>
-              </motion.div>
-            </div>
-          </div>
-        </div>
+        {renderDesktop && <Hero variant="desktop" {...heroProps} />}
+        {renderMobile && <Hero variant="mobile" {...heroProps} />}
       </main>
 
       <style>{`
@@ -521,9 +456,11 @@ export default function LandingPage() {
         }
         /* Once the brush reveal completes, drop the clip-path entirely so
            idle drift + parallax don't get clipped at the wrap's bounds.
-           !important needed to beat framer-motion's inline style. */
+           !important needed to beat framer-motion's inline style.
+           Also drop will-change so the layer stops being permanently promoted. */
         .word-svg-wrap[data-revealed] {
           clip-path: none !important;
+          will-change: auto;
         }
         .word-svg {
           display: block;
@@ -551,9 +488,8 @@ export default function LandingPage() {
           width: 635px;
         }
 
-        /* CTA visual */
-        .hero-cta,
-        .hero-cta-mobile {
+        /* CTA visual — shared by both heroes */
+        .hero-cta {
           background-color: #01EFFC;
           border: 2px solid #000000;
           box-shadow: 8px 8px 0px 0px #000000;
@@ -566,10 +502,17 @@ export default function LandingPage() {
           white-space: nowrap;
           transition: background-color 0.2s ease, box-shadow 0.2s ease;
         }
-        .hero-cta:hover,
-        .hero-cta-mobile:hover {
+        .hero-cta:hover {
           background-color: #FFFFFF;
           box-shadow: 8px 8px 0px 0px #01EFFC;
+        }
+        .hero-cta-center {
+          position: absolute;
+          left: 0;
+          right: 0;
+          display: flex;
+          justify-content: center;
+          z-index: 3;
         }
 
         /* === DESKTOP === */
@@ -600,15 +543,7 @@ export default function LandingPage() {
         }
         .hero-line-1 { top: 0; text-align: left; }
         .hero-line-2 { top: 156px; text-align: right; }
-        .hero-cta-center {
-          position: absolute;
-          top: 312px;
-          left: 0;
-          right: 0;
-          display: flex;
-          justify-content: center;
-          z-index: 3;
-        }
+        .hero-desktop .hero-cta-center { top: 312px; }
 
         /* === MOBILE === */
         .hero-mobile {
@@ -638,15 +573,7 @@ export default function LandingPage() {
         }
         .hero-line-m-1 { top: 80px; }
         .hero-line-m-2 { top: 302px; }
-        .hero-cta-center-mobile {
-          position: absolute;
-          top: 520px;
-          left: 0;
-          right: 0;
-          display: flex;
-          justify-content: center;
-          z-index: 3;
-        }
+        .hero-mobile .hero-cta-center { top: 520px; }
 
         @media (max-width: 767px) {
           .hero-desktop { display: none !important; }
