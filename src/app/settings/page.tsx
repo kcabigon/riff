@@ -15,22 +15,35 @@ export default async function Settings() {
 
   const userId = session.user.id;
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      name: true,
-      firstName: true,
-      lastName: true,
-      bio: true,
-      avatarUrl: true,
-      email: true,
-    },
-  });
+  const [user, clubs] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        username: true,
+        firstName: true,
+        lastName: true,
+        avatarUrl: true,
+        email: true,
+        lastActiveClubId: true,
+      },
+    }),
+    prisma.clubMember.findMany({
+      where: { userId },
+      include: { club: { select: { id: true, name: true } } },
+    }),
+  ]);
 
   if (!user) {
     redirect("/login");
   }
 
-  return <SettingsPage user={user} />;
+  const clubList = clubs.map((m) => m.club);
+  const currentClub =
+    clubList.find((c) => c.id === user.lastActiveClubId) ?? clubList[0] ?? null;
+
+  return (
+    <SettingsPage user={user} clubs={clubList} currentClub={currentClub} />
+  );
 }

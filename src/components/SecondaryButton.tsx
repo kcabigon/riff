@@ -73,19 +73,27 @@ export default function SecondaryButton({
         }
         props.onMouseLeave?.(e);
       }}
-      onMouseDown={(e) => {
+      onPointerDown={(e) => {
         if (!isDisabled) {
           e.currentTarget.style.boxShadow = shadowActive;
           e.currentTarget.style.transform = translateActive;
         }
-        props.onMouseDown?.(e);
+        props.onPointerDown?.(e);
       }}
-      onMouseUp={(e) => {
+      onPointerUp={(e) => {
         if (!isDisabled) {
-          e.currentTarget.style.boxShadow = shadowHover;
+          e.currentTarget.style.boxShadow =
+            e.pointerType === "touch" ? shadowDefault : shadowHover;
           e.currentTarget.style.transform = "translate(0, 0)";
         }
-        props.onMouseUp?.(e);
+        props.onPointerUp?.(e);
+      }}
+      onPointerCancel={(e) => {
+        if (!isDisabled) {
+          e.currentTarget.style.boxShadow = shadowDefault;
+          e.currentTarget.style.transform = "translate(0, 0)";
+        }
+        props.onPointerCancel?.(e);
       }}
     >
       {loading ? "Loading..." : children}
