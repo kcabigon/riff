@@ -490,7 +490,7 @@ export default function LandingPage() {
 
         /* CTA visual — shared by both heroes */
         .hero-cta {
-          background-color: #01EFFC;
+          background-color: #00FF66;
           border: 2px solid #000000;
           box-shadow: 8px 8px 0px 0px #000000;
           padding: 12px 48px;
@@ -504,7 +504,7 @@ export default function LandingPage() {
         }
         .hero-cta:hover {
           background-color: #FFFFFF;
-          box-shadow: 8px 8px 0px 0px #01EFFC;
+          box-shadow: 8px 8px 0px 0px #00FF66;
         }
         .hero-cta-center {
           position: absolute;
