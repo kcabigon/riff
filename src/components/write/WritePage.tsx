@@ -533,6 +533,9 @@ export default function WritePage({
                 editor={editor}
                 fileInputRef={fileInputRef}
                 inline
+                onOpenLinkModal={() => setShowLinkModal(true)}
+                onOpenYoutubeModal={() => setShowYoutubeModal(true)}
+                onOpenSpotifyModal={() => setShowSpotifyModal(true)}
               />
             </div>
           )}
