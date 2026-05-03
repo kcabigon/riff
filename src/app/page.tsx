@@ -32,11 +32,13 @@ const SVG_SIZES = {
 type IdleAnim = { rotate: number[]; y: number[] };
 
 /**
- * TV-static noise — same filter as the shared NoiseBackground (cover mode),
- * but cycles the feTurbulence seed via SMIL so the noise pattern jitters
- * a few times a second. Reminiscent of an untuned 90s TV channel.
+ * Static grain background — same filter as the shared NoiseBackground
+ * (cover mode). Painted once on mount; no runtime animation.
+ *
+ * Why: animating feTurbulence (e.g. SMIL on `seed`) crushes mobile GPUs.
+ * Industry default (Apple, Stripe, Linear, Vercel) is static noise.
  */
-function TVStaticNoise({ animated }: { animated: boolean }) {
+function GrainNoise() {
   return (
     <svg
       style={{
@@ -51,12 +53,12 @@ function TVStaticNoise({ animated }: { animated: boolean }) {
       viewBox="0 0 1438 1024"
       aria-hidden
     >
-      <g filter="url(#tvStaticFilter)">
+      <g filter="url(#grainNoiseFilter)">
         <rect width="1440" height="1024" fill="white" />
       </g>
       <defs>
         <filter
-          id="tvStaticFilter"
+          id="grainNoiseFilter"
           x="0"
           y="0"
           width="1440"
@@ -78,17 +80,7 @@ function TVStaticNoise({ animated }: { animated: boolean }) {
             numOctaves="3"
             result="noise"
             seed="7463"
-          >
-            {animated && (
-              <animate
-                attributeName="seed"
-                values="7463;3197;9821;4519;6201;1873;5527;2089"
-                dur="1.2s"
-                repeatCount="indefinite"
-                calcMode="discrete"
-              />
-            )}
-          </feTurbulence>
+          />
           <feColorMatrix
             in="noise"
             type="luminanceToAlpha"
@@ -235,18 +227,45 @@ export default function LandingPage() {
   const writeclubX = useTransform(smoothX, [-1, 1], [par, -par]);
   const writeclubY = useTransform(smoothY, [-1, 1], [par * 0.55, -par * 0.55]);
 
+  // Mouse parallax is desktop-only. Gate on `(hover: hover) and (pointer: fine)`
+  // — the standard CSS signal for "real mouse cursor present" — so touch devices
+  // don't pay for an event listener + spring updates they can't even trigger.
   useEffect(() => {
     const el = heroRef.current;
     if (!el) return;
-    const handle = (e: MouseEvent) => {
-      const rect = el.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      const y = ((e.clientY - rect.top) / rect.height) * 2 - 1;
-      mouseX.set(Math.max(-1, Math.min(1, x)));
-      mouseY.set(Math.max(-1, Math.min(1, y)));
+    const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
+    let cleanupListener: (() => void) | null = null;
+
+    const attach = () => {
+      const handle = (e: MouseEvent) => {
+        const rect = el.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        const y = ((e.clientY - rect.top) / rect.height) * 2 - 1;
+        mouseX.set(Math.max(-1, Math.min(1, x)));
+        mouseY.set(Math.max(-1, Math.min(1, y)));
+      };
+      window.addEventListener("mousemove", handle);
+      cleanupListener = () => window.removeEventListener("mousemove", handle);
     };
-    window.addEventListener("mousemove", handle);
-    return () => window.removeEventListener("mousemove", handle);
+
+    const detach = () => {
+      cleanupListener?.();
+      cleanupListener = null;
+      mouseX.set(0);
+      mouseY.set(0);
+    };
+
+    if (mq.matches) attach();
+    const onChange = (e: MediaQueryListEvent) => {
+      if (e.matches) attach();
+      else detach();
+    };
+    mq.addEventListener("change", onChange);
+
+    return () => {
+      mq.removeEventListener("change", onChange);
+      detach();
+    };
   }, [mouseX, mouseY]);
 
   // Idle drift — toned down (but not killed) under reduced motion
@@ -306,7 +325,7 @@ export default function LandingPage() {
         backgroundColor: "#FFFFFF",
       }}
     >
-      <TVStaticNoise animated={!reducedMotion} />
+      <GrainNoise />
 
       <LandingNavBar />
 
