@@ -24,7 +24,7 @@ export default function LandingNavBar({ sticky = false }: LandingNavBarProps) {
       >
         <div
           style={{
-            padding: "8px 42px",
+            padding: "16px 42px",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -44,8 +44,8 @@ export default function LandingNavBar({ sticky = false }: LandingNavBarProps) {
             <Image
               src="/images/landing/riff_logo.svg"
               alt="Riff logo"
-              width={30}
-              height={22}
+              width={55}
+              height={36}
               priority
             />
             <span

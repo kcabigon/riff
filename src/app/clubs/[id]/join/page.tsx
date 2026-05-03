@@ -1,7 +1,53 @@
 import { redirect, notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import JoinClubClient from "@/components/clubs/JoinClubClient";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id: clubId } = await params;
+
+  const club = await prisma.club.findUnique({
+    where: { id: clubId },
+    select: { name: true, description: true, bannerImage: true },
+  });
+
+  if (!club) {
+    return { title: "Join a Club on Riff" };
+  }
+
+  const title = `Join ${club.name} on Riff`;
+
+  if (club.bannerImage) {
+    return {
+      title,
+      openGraph: {
+        title,
+        images: [{ url: club.bannerImage, width: 1200, height: 630 }],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title,
+        images: [club.bannerImage],
+      },
+    };
+  }
+
+  if (club.description) {
+    return {
+      title,
+      description: club.description,
+      openGraph: { title, description: club.description },
+      twitter: { card: "summary", title, description: club.description },
+    };
+  }
+
+  return { title };
+}
 
 export default async function JoinClubPage({
   params,
