@@ -174,7 +174,18 @@ export default function FoundersNotePage() {
             accidentally
           </FakeCommentHighlight>{" "}
           started a write club after our Friendsgiving in 2024. The 5 of us
-          enjoy writing and being creative, but never felt like public blogging
+          enjoy writing and being creative, but never felt like{" "}
+          <FakeCommentHighlight
+            comments={[
+              {
+                author: "Derek",
+                avatarSrc: "/images/about/founderAvatars/derek-avatar.png",
+                text: "only jarric's mom read his blog",
+              },
+            ]}
+          >
+            public blogging
+          </FakeCommentHighlight>{" "}
           or email newsletters was our jam. So we started writing stories and
           essays in Google Docs, picked a due date, and shared the docs{" "}
           <FakeCommentHighlight
