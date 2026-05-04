@@ -88,7 +88,12 @@ export default function RiffFormFields({
           value={deadline}
           onChange={(e) => setDeadline(e.target.value)}
           required={deadlineRequired}
-          style={inputStyle}
+          style={{
+            ...inputStyle,
+            display: "block",
+            WebkitAppearance: "none",
+            appearance: "none",
+          }}
           onFocus={onFocusGreen}
           onBlur={onBlurBlack}
         />
