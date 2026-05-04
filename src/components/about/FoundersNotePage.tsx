@@ -32,7 +32,7 @@ function FounderAvatars() {
           title={f.name}
           style={{
             borderRadius: "50%",
-            border: "2px solid #FFFFFF",
+            border: "2px solid #000000",
             objectFit: "cover",
             flexShrink: 0,
             marginLeft: i === 0 ? 0 : "-8px",
