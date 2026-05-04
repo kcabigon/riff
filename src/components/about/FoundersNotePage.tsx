@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import FakeCommentHighlight from "./FakeCommentHighlight";
 
 const FOUNDERS = [
   {
@@ -142,12 +143,68 @@ export default function FoundersNotePage() {
         </p>
 
         <p style={bodyStyle}>
-          We accidentally started a write club after our Friendsgiving in 2024.
-          The 5 of us enjoy writing and being creative, but never felt like
-          public blogging or email newsletters was our jam. So we started
-          writing stories and essays in Google Docs, picked a due date, and
-          shared the docs on that date. Other friends found out what we were
-          doing and wanted in. We&apos;re onto something.
+          We{" "}
+          <FakeCommentHighlight
+            comments={[
+              {
+                author: "Chris",
+                avatarSrc: "/images/about/founderAvatars/chris-avatar.jpeg",
+                text: "I blame it on Kyla",
+                replies: [
+                  {
+                    author: "Kyla",
+                    avatarSrc: "/images/about/founderAvatars/kyla-avatar.jpg",
+                    text: '"i\'ve been wanting to create more and consume less" - Chris',
+                  },
+                  {
+                    author: "Kyle",
+                    avatarSrc: "/images/about/founderAvatars/kyle-avatar.jpg",
+                    text: "haha",
+                  },
+                ],
+              },
+            ]}
+          >
+            accidentally
+          </FakeCommentHighlight>{" "}
+          started a write club after our Friendsgiving in 2024. The 5 of us
+          enjoy writing and being creative, but never felt like public blogging
+          or email newsletters was our jam. So we started writing stories and
+          essays in Google Docs, picked a due date, and shared the docs{" "}
+          <FakeCommentHighlight
+            comments={[
+              {
+                author: "Jarric",
+                avatarSrc: "/images/about/founderAvatars/jarric-avatar.png",
+                text: "Well, except for Derek who always waits until the night before to start his piece and always sends it late",
+                replies: [
+                  {
+                    author: "Derek",
+                    avatarSrc: "/images/about/founderAvatars/derek-avatar.png",
+                    text: "only cuz i know it annoys you",
+                  },
+                ],
+              },
+            ]}
+          >
+            on that date
+          </FakeCommentHighlight>
+          . Other friends found out what we were doing and wanted in.{" "}
+          <FakeCommentHighlight
+            comments={[
+              {
+                author: "Chris",
+                avatarSrc: "/images/about/founderAvatars/chris-avatar.jpeg",
+                embed: {
+                  type: "youtube",
+                  videoId: "ZJdHNwUgsPI",
+                  url: "https://www.youtube.com/watch?v=ZJdHNwUgsPI&list=RDZJdHNwUgsPI&start_radio=1",
+                },
+              },
+            ]}
+          >
+            We&apos;re onto something.
+          </FakeCommentHighlight>
         </p>
 
         {/* GIF */}
@@ -162,20 +219,76 @@ export default function FoundersNotePage() {
         <p style={bodyStyle}>
           Our write club has exchanged over 60 pieces and nearly 100,000 words,
           and we&apos;re still going strong. The original 5 of us are now
-          building Riff. This is a side project, a passion project, a
-          scratch-your-own-itch project. There is a part of us that thinks this
-          could never catch on — why start a club and write essays when you
-          could just text the group chat? Why not try and get your writing
-          published on Medium or monetized on Substack?
+          building Riff. This is a{" "}
+          <FakeCommentHighlight
+            comments={[
+              {
+                author: "Kyle",
+                avatarSrc: "/images/about/founderAvatars/kyle-avatar.jpg",
+                text: "except Jarric thinks this is his life mission",
+                replies: [
+                  {
+                    author: "Kyla",
+                    avatarSrc: "/images/about/founderAvatars/kyla-avatar.jpg",
+                    text: "haha",
+                  },
+                ],
+              },
+            ]}
+          >
+            side project
+          </FakeCommentHighlight>
+          , a passion project, a scratch-your-own-itch project. There is a part
+          of us that thinks this could never catch on — why start a club and
+          write essays when you could just text the group chat? Why not try and
+          get your writing published on Medium or monetized on Substack?
         </p>
 
         <p style={bodyStyle}>
           But there&apos;s a part of us that thinks maybe there are people and
           friend groups out there like us. Who just want to write with their
-          friends because it&apos;s private and creative and fun. Who think that
-          a writing experience that feels more like starting a garage band,
-          storytelling around the campfire, a kickback at the homie&apos;s
-          place, a literary mosh pit with friends is their jam. This is for you.
+          friends because it&apos;s{" "}
+          <FakeCommentHighlight
+            comments={[
+              {
+                author: "Chris",
+                avatarSrc: "/images/about/founderAvatars/chris-avatar.jpeg",
+                embed: {
+                  type: "youtube",
+                  videoId: "sDwcHUeG6Nc",
+                  url: "https://www.youtube.com/watch?v=sDwcHUeG6Nc",
+                },
+              },
+            ]}
+          >
+            private
+          </FakeCommentHighlight>{" "}
+          and creative and fun. Who think that a writing experience that feels
+          more like starting a garage band, storytelling around the campfire, a{" "}
+          <FakeCommentHighlight
+            comments={[
+              {
+                author: "Derek",
+                avatarSrc: "/images/about/founderAvatars/derek-avatar.png",
+                text: "whos bringing the 40s?",
+              },
+            ]}
+          >
+            kickback
+          </FakeCommentHighlight>{" "}
+          at the homie&apos;s place, a{" "}
+          <FakeCommentHighlight
+            comments={[
+              {
+                author: "Kyla",
+                avatarSrc: "/images/about/founderAvatars/kyla-avatar.jpg",
+                text: "🤘🤘",
+              },
+            ]}
+          >
+            literary mosh pit
+          </FakeCommentHighlight>{" "}
+          with friends is their jam. This is for you.
         </p>
 
         {/* CTA */}
