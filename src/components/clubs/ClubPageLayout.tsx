@@ -131,8 +131,10 @@ export default function ClubPageLayout({
   );
   const [whatsNextTrigger, setWhatsNextTrigger] =
     useState<WhatsNextTrigger | null>(() => {
-      if (initialWelcome === "host") return "host_created_club";
-      if (initialWelcome === "member") return "member_joined_club";
+      if (initialWelcome === "host" && canShowWhatsNext("host_created_club"))
+        return "host_created_club";
+      if (initialWelcome === "member" && canShowWhatsNext("member_joined_club"))
+        return "member_joined_club";
       return null;
     });
   const [newRiffId, setNewRiffId] = useState<string | null>(null);
@@ -932,7 +934,7 @@ export default function ClubPageLayout({
           isOpen={true}
           onClose={() => {
             setWhatsNextTrigger(null);
-            router.refresh();
+            router.replace(`/clubs/${club.id}`);
           }}
           trigger={whatsNextTrigger}
           onCTAClick={
