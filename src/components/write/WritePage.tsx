@@ -512,6 +512,7 @@ export default function WritePage({
                     style={{
                       padding: isMobile ? "8px 24px" : "10px 32px",
                       fontSize: "12px",
+                      boxShadow: "4px 4px 0px 0px #00FF66",
                     }}
                   >
                     Submit
@@ -533,6 +534,9 @@ export default function WritePage({
                 editor={editor}
                 fileInputRef={fileInputRef}
                 inline
+                onOpenLinkModal={() => setShowLinkModal(true)}
+                onOpenYoutubeModal={() => setShowYoutubeModal(true)}
+                onOpenSpotifyModal={() => setShowSpotifyModal(true)}
               />
             </div>
           )}

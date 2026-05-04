@@ -1,9 +1,9 @@
 import type { WhatsNextTrigger } from "@/components/shared/WhatsNextModal";
 
 // Triggers that need global suppression after first show.
-// host_created_club and member_joined_club are excluded — they're already
-// naturally 1x via the ?welcome= URL param in the onboarding flow.
 const GUARDED_TRIGGERS = new Set<WhatsNextTrigger>([
+  "host_created_club",
+  "member_joined_club",
   "host_started_riff",
   "host_submitted",
   "host_revealed",

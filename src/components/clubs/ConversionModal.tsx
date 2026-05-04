@@ -30,7 +30,7 @@ export default function ConversionModal({
     if (isOpen) setStep(1);
   }, [isOpen]);
 
-  const resolvedCtaLabel = ctaLabel ?? `Join ${clubName ?? ""}`;
+  const resolvedCtaLabel = ctaLabel ?? "Join club";
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="md">

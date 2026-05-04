@@ -19,6 +19,9 @@ import {
   getWaitingParticipants,
 } from "@/lib/riff-utils";
 import RiffCTAButton from "@/components/riffs/RiffCTAButton";
+import RevealRiffButton, {
+  shouldShowReveal,
+} from "@/components/riffs/RevealRiffButton";
 import ProgressCard from "@/components/riffs/ProgressCard";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import type { DropdownItem } from "@/components/shared/Dropdown";
@@ -29,7 +32,6 @@ import WhatsNextModal, {
 } from "@/components/shared/WhatsNextModal";
 import { canShowWhatsNext } from "@/lib/whatsNextGuard";
 import PrimaryButton from "@/components/PrimaryButton";
-import CTAButton from "@/components/CTAButton";
 
 interface RiffPageLayoutProps {
   riff: {
@@ -448,29 +450,15 @@ export default function RiffPageLayout({
                 );
               })()}
 
-            {(deadlinePassed || piecesAllSubmitted) &&
-            isAdmin &&
-            riff.status === "ACTIVE" ? (
-              <CTAButton onClick={handleRevealClick}>Reveal riff</CTAButton>
-            ) : deadlinePassed && !isAdmin && riff.status === "ACTIVE" ? (
-              <button
-                disabled
-                style={{
-                  backgroundColor: "#FFFFFF",
-                  border: "2px solid #000000",
-                  boxShadow: "8px 8px 0px 0px #808080",
-                  padding: "12px 48px",
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#808080",
-                  cursor: "not-allowed",
-                  transition: "none",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                Waiting for the host to reveal
-              </button>
+            {shouldShowReveal({
+              deadlinePassed,
+              isJoined,
+              hasSubmitted,
+              piecesAllSubmitted,
+              isAdmin,
+              status: riff.status,
+            }) ? (
+              <RevealRiffButton onClick={handleRevealClick} />
             ) : riff.status !== "REVEALED" ? (
               <RiffCTAButton
                 riffId={riff.id}

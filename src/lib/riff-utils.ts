@@ -36,6 +36,13 @@ export function isPastDeadline(deadline: string | Date | null): boolean {
   return deadline ? new Date(deadline).getTime() < Date.now() : false;
 }
 
+// Converts a YYYY-MM-DD date string to an ISO timestamp at end-of-day
+// in the user's local timezone, so "May 15" expires at 11:59pm local time.
+export function toEndOfDay(dateString: string): string {
+  const [year, month, day] = dateString.split("-").map(Number);
+  return new Date(year, month - 1, day, 23, 59, 59, 999).toISOString();
+}
+
 // Formats a date as "Jan 15" (short month + day, no year).
 export function formatDateShort(date: string | Date): string {
   return new Date(date).toLocaleDateString("en-US", {
