@@ -1,6 +1,9 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import FakeCommentHighlight from "./FakeCommentHighlight";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 
 const FOUNDERS = [
   {
@@ -51,6 +54,8 @@ const bodyStyle: React.CSSProperties = {
 };
 
 export default function FoundersNotePage() {
+  const isMobile = useIsMobile();
+
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
       {/* Minimal header — matches public piece page */}
@@ -99,8 +104,9 @@ export default function FoundersNotePage() {
         <div
           style={{
             display: "flex",
-            alignItems: "center",
-            gap: "12px",
+            flexDirection: isMobile ? "column" : "row",
+            alignItems: isMobile ? "flex-start" : "center",
+            gap: isMobile ? "8px" : "12px",
             marginBottom: "40px",
             paddingBottom: "24px",
             borderBottom: "1px solid #E6E6E6",
