@@ -222,6 +222,13 @@ export default function FoundersNotePage() {
                   videoId: "ZJdHNwUgsPI",
                   url: "https://www.youtube.com/watch?v=ZJdHNwUgsPI&list=RDZJdHNwUgsPI&start_radio=1",
                 },
+                replies: [
+                  {
+                    author: "Jarric",
+                    avatarSrc: "/images/about/founderAvatars/jarric-avatar.png",
+                    text: "better than Bowery! (hi megan)",
+                  },
+                ],
               },
             ]}
           >
