@@ -19,7 +19,6 @@ import NoiseBackground from "@/components/NoiseBackground";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import StickyToolbar from "@/components/write/toolbar/StickyToolbar";
 import { useThemeColor } from "@/hooks/useThemeColor";
-import { useScrollDirection } from "@/hooks/useScrollDirection";
 import EmbedModal from "@/components/write/EmbedModal";
 import LinkPopover from "@/components/write/LinkPopover";
 import WhatsNextModal, {
@@ -81,8 +80,24 @@ export default function WritePage({
   const subtitleSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
   const isMobile = useIsMobile();
+  // On mobile, track visual viewport height so the flex container is exactly
+  // as tall as what the user can see — this accounts for the keyboard AND
+  // Safari's input accessory bar (which 100dvh alone does not exclude).
+  const [viewportHeight, setViewportHeight] = useState<number | null>(null);
+  useEffect(() => {
+    if (!isMobile) return;
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => setViewportHeight(vv.offsetTop + vv.height);
+    update();
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+    };
+  }, [isMobile]);
   useThemeColor("#FFFFFF");
-  const navVisible = useScrollDirection({ threshold: 15 });
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -366,316 +381,209 @@ export default function WritePage({
   const wordCount = editor.storage.characterCount.words();
   const readLengthMin = Math.max(1, Math.round(wordCount / 200));
 
-  return (
+  // Shared nav bar content
+  const navBarInner = (
     <div
       style={{
-        minHeight: "100vh",
-        background: "#FFFFFF",
+        maxWidth: "720px",
+        width: "100%",
+        margin: "0 auto",
+        padding: "0 24px",
+        boxSizing: "border-box",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "16px 0 8px",
+        }}
+      >
+        {/* Left side: back button + save status */}
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <BackButton onClick={handleBack} />
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <div
+              style={{
+                width: "6px",
+                height: "6px",
+                borderRadius: "50%",
+                background:
+                  saveStatus === "saved"
+                    ? "#00FF66"
+                    : saveStatus === "saving"
+                      ? "#EECF01"
+                      : "#808080",
+                animation:
+                  saveStatus === "saving"
+                    ? "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite"
+                    : "none",
+              }}
+            />
+            <span
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "12px",
+                fontWeight: 300,
+                color: "#808080",
+              }}
+            >
+              {saveStatus === "saved"
+                ? "Saved"
+                : saveStatus === "saving"
+                  ? "Saving..."
+                  : "Unsaved"}
+            </span>
+          </div>
+        </div>
+
+        {/* Right side: CTA */}
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          {piece.riffs.length > 0 &&
+            (isSubmitted ? (
+              <IconButton
+                src="/icons/cover_photo.svg"
+                label={coverImage ? "Change cover image" : "Add cover image"}
+                onClick={() => {
+                  if (coverImage) {
+                    setShowSubmitModal(true);
+                  } else {
+                    setShowCoverModal(true);
+                  }
+                }}
+                size={24}
+              />
+            ) : (
+              <CTAButton
+                onClick={() => {
+                  if (coverImage) {
+                    setShowSubmitModal(true);
+                  } else {
+                    setShowCoverModal(true);
+                  }
+                }}
+                style={{
+                  padding: isMobile ? "8px 24px" : "10px 32px",
+                  fontSize: "12px",
+                }}
+              >
+                Submit
+              </CTAButton>
+            ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  // Shared writing area content
+  const writingArea = (
+    <div
+      style={{
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        position: "relative",
+        paddingBottom: "48px",
       }}
     >
-      {/* Noise background — desktop only */}
-      {!isMobile && (
-        <NoiseBackground fillMode="cover" style={{ position: "fixed" }} />
-      )}
-
-      {/* Hidden file input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*,.heic,.heif"
-        onChange={handleImageUpload}
-        style={{ display: "none" }}
+      {/* Title */}
+      <textarea
+        ref={titleRef}
+        value={title}
+        onChange={(e) => {
+          setTitle(e.target.value);
+          setSaveStatus("unsaved");
+        }}
+        placeholder="Untitled piece"
+        style={{
+          fontFamily: "var(--font-playfair), serif",
+          fontSize: "32px",
+          fontWeight: "bold",
+          color: "#000000",
+          margin: 0,
+          border: "none",
+          outline: "none",
+          background: "transparent",
+          textAlign: "center",
+          width: "100%",
+          padding: 0,
+          resize: "none",
+          overflow: "hidden",
+          lineHeight: "1.2",
+          minHeight: "38px",
+          height: "38px",
+          overflowWrap: "break-word",
+          wordBreak: "break-word",
+          whiteSpace: "pre-wrap",
+          boxSizing: "border-box",
+        }}
       />
 
-      {/* Top bar — fixed on mobile (with hide-on-scroll), sticky on desktop */}
-      <div
-        style={{
-          position: isMobile ? "fixed" : "sticky",
-          top: 0,
-          left: 0,
-          right: isMobile ? 0 : undefined,
-          zIndex: 50,
-          width: isMobile ? "100%" : "100%",
-          maxWidth: isMobile ? "100%" : "720px",
-          backgroundColor: "#FFFFFF",
-          transform:
-            isMobile && !navVisible ? "translateY(-100%)" : "translateY(0)",
-          transition: "transform 200ms ease",
-          willChange: isMobile ? "transform" : undefined,
+      {/* Subtitle */}
+      <textarea
+        ref={subtitleRef}
+        value={subtitle}
+        onChange={(e) => {
+          setSubtitle(e.target.value);
+          setSaveStatus("unsaved");
         }}
-      >
-        <div
-          style={{
-            maxWidth: "720px",
-            width: "100%",
-            margin: "0 auto",
-            padding: "0 24px",
-            boxSizing: "border-box",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              padding: "16px 0 8px",
-            }}
-          >
-            {/* Left side: back button + save status */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "12px",
-              }}
-            >
-              <BackButton onClick={handleBack} />
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                }}
-              >
-                <div
-                  style={{
-                    width: "6px",
-                    height: "6px",
-                    borderRadius: "50%",
-                    background:
-                      saveStatus === "saved"
-                        ? "#00FF66"
-                        : saveStatus === "saving"
-                          ? "#EECF01"
-                          : "#808080",
-                    animation:
-                      saveStatus === "saving"
-                        ? "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite"
-                        : "none",
-                  }}
-                />
-                <span
-                  style={{
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "12px",
-                    fontWeight: 300,
-                    color: "#808080",
-                  }}
-                >
-                  {saveStatus === "saved"
-                    ? "Saved"
-                    : saveStatus === "saving"
-                      ? "Saving..."
-                      : "Unsaved"}
-                </span>
-              </div>
-            </div>
-
-            {/* Right side: CTA */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "12px",
-              }}
-            >
-              {/* Submit CTA / cover icon */}
-              {piece.riffs.length > 0 &&
-                (isSubmitted ? (
-                  <IconButton
-                    src="/icons/cover_photo.svg"
-                    label={
-                      coverImage ? "Change cover image" : "Add cover image"
-                    }
-                    onClick={() => {
-                      if (coverImage) {
-                        setShowSubmitModal(true);
-                      } else {
-                        setShowCoverModal(true);
-                      }
-                    }}
-                    size={24}
-                  />
-                ) : (
-                  <CTAButton
-                    onClick={() => {
-                      if (coverImage) {
-                        setShowSubmitModal(true);
-                      } else {
-                        setShowCoverModal(true);
-                      }
-                    }}
-                    style={{
-                      padding: isMobile ? "8px 24px" : "10px 32px",
-                      fontSize: "12px",
-                    }}
-                  >
-                    Submit
-                  </CTAButton>
-                ))}
-            </div>
-          </div>
-
-          {/* Mobile toolbar — pinned under top bar */}
-          {isMobile && (
-            <div
-              style={{
-                borderBottom: "2px solid #000000",
-                paddingTop: "8px",
-                paddingBottom: "8px",
-              }}
-            >
-              <StickyToolbar
-                editor={editor}
-                fileInputRef={fileInputRef}
-                inline
-              />
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Content area */}
-      <div
+        placeholder="Add a subtitle..."
         style={{
+          fontFamily: "var(--font-dm-sans)",
+          fontSize: "16px",
+          fontWeight: 300,
+          color: "#666666",
+          margin: 0,
+          marginTop: "8px",
+          border: "none",
+          outline: "none",
+          background: "transparent",
+          textAlign: "center",
           width: "100%",
-          maxWidth: "720px",
-          padding: "0 24px",
+          padding: 0,
+          resize: "none",
+          overflow: "hidden",
+          lineHeight: "1.4",
+          minHeight: "24px",
+          height: "24px",
+          overflowWrap: "break-word",
+          wordBreak: "break-word",
+          whiteSpace: "pre-wrap",
           boxSizing: "border-box",
-          background: "#FFFFFF",
-          position: "relative",
-          zIndex: 1,
-          minHeight: "100vh",
+        }}
+      />
+
+      {/* Word count */}
+      <p
+        style={{
+          fontFamily: "var(--font-dm-sans)",
+          fontSize: "14px",
+          color: "#999999",
+          margin: "12px 0 0",
         }}
       >
-        {/* Spacer — accounts for fixed bar height on mobile */}
-        <div style={{ height: isMobile ? "140px" : "24px" }} />
+        <span style={{ fontWeight: "bold" }}>{wordCount}</span> words
+        {" • "}
+        <span style={{ fontWeight: "bold" }}>{readLengthMin}</span> min read
+      </p>
 
-        {/* Writing area */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            paddingBottom: isMobile ? "48px" : "100px",
-          }}
-        >
-          {/* Title */}
-          <textarea
-            ref={titleRef}
-            value={title}
-            onChange={(e) => {
-              setTitle(e.target.value);
-              setSaveStatus("unsaved");
-            }}
-            placeholder="Untitled piece"
-            style={{
-              fontFamily: "var(--font-playfair), serif",
-              fontSize: "32px",
-              fontWeight: "bold",
-              color: "#000000",
-              margin: 0,
-              border: "none",
-              outline: "none",
-              background: "transparent",
-              textAlign: "center",
-              width: "100%",
-              padding: 0,
-              resize: "none",
-              overflow: "hidden",
-              lineHeight: "1.2",
-              minHeight: "38px",
-              height: "38px",
-              overflowWrap: "break-word",
-              wordBreak: "break-word",
-              whiteSpace: "pre-wrap",
-              boxSizing: "border-box",
-            }}
-          />
+      {/* Spacer before editor */}
+      <div style={{ height: "32px" }} />
 
-          {/* Subtitle */}
-          <textarea
-            ref={subtitleRef}
-            value={subtitle}
-            onChange={(e) => {
-              setSubtitle(e.target.value);
-              setSaveStatus("unsaved");
-            }}
-            placeholder="Add a subtitle..."
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              color: "#666666",
-              margin: 0,
-              marginTop: "8px",
-              border: "none",
-              outline: "none",
-              background: "transparent",
-              textAlign: "center",
-              width: "100%",
-              padding: 0,
-              resize: "none",
-              overflow: "hidden",
-              lineHeight: "1.4",
-              minHeight: "24px",
-              height: "24px",
-              overflowWrap: "break-word",
-              wordBreak: "break-word",
-              whiteSpace: "pre-wrap",
-              boxSizing: "border-box",
-            }}
-          />
-
-          {/* Word count */}
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              color: "#999999",
-              margin: "12px 0 0",
-            }}
-          >
-            <span style={{ fontWeight: "bold" }}>{wordCount}</span> words
-            {" \u2022 "}
-            <span style={{ fontWeight: "bold" }}>{readLengthMin}</span> min read
-          </p>
-
-          {/* Spacer before editor */}
-          <div style={{ height: "32px" }} />
-
-          {/* Editor content */}
-          <div
-            className="write-editor"
-            style={{ width: "100%", position: "relative" }}
-          >
-            <EditorContent editor={editor} />
-            <LinkPopover editor={editor} />
-          </div>
-        </div>
+      {/* Editor content */}
+      <div
+        className="write-editor"
+        style={{ width: "100%", position: "relative" }}
+      >
+        <EditorContent editor={editor} />
+        <LinkPopover editor={editor} />
       </div>
+    </div>
+  );
 
-      {/* Floating toolbar — desktop only */}
-      {!isMobile && (
-        <StickyToolbar
-          editor={editor}
-          fileInputRef={fileInputRef}
-          onOpenLinkModal={() => {
-            linkSelectionRef.current = {
-              from: editor.state.selection.from,
-              to: editor.state.selection.to,
-            };
-            setShowLinkModal(true);
-          }}
-          onOpenYoutubeModal={() => setShowYoutubeModal(true)}
-          onOpenSpotifyModal={() => setShowSpotifyModal(true)}
-        />
-      )}
-
+  // Shared modals
+  const modals = (
+    <>
       <EmbedModal
         isOpen={showLinkModal}
         onClose={() => setShowLinkModal(false)}
@@ -740,6 +648,7 @@ export default function WritePage({
         pieceContent={editor.getHTML()}
         currentCoverImage={coverImage}
       />
+
       {piece.riffs.length > 0 && (
         <SubmitConfirmModal
           isOpen={showSubmitModal}
@@ -779,7 +688,6 @@ export default function WritePage({
         />
       )}
 
-      {/* What's Next Modal */}
       {whatsNextTrigger && (
         <WhatsNextModal
           isOpen={true}
@@ -795,6 +703,161 @@ export default function WritePage({
           }}
         />
       )}
+    </>
+  );
+
+  // Hidden file input — shared
+  const fileInput = (
+    <input
+      ref={fileInputRef}
+      type="file"
+      accept="image/*,.heic,.heif"
+      onChange={handleImageUpload}
+      style={{ display: "none" }}
+    />
+  );
+
+  // ─── Mobile layout ────────────────────────────────────────────────────────
+  // height: 100dvh shrinks when the keyboard opens, naturally pushing the
+  // toolbar up. The content area (flex: 1, overflow-y: auto) scrolls
+  // independently, so ProseMirror keeps the cursor visible automatically.
+  if (isMobile) {
+    return (
+      <>
+        {fileInput}
+
+        <div
+          style={{
+            height: viewportHeight ? `${viewportHeight}px` : "100dvh",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+            background: "#FFFFFF",
+          }}
+        >
+          {/* Nav bar — in normal flow, always visible */}
+          <div
+            style={{
+              flexShrink: 0,
+              width: "100%",
+              backgroundColor: "#FFFFFF",
+              zIndex: 50,
+            }}
+          >
+            {navBarInner}
+          </div>
+
+          {/* Scrollable writing area */}
+          <div
+            style={{
+              flex: 1,
+              overflowY: "auto",
+              WebkitOverflowScrolling: "touch",
+              width: "100%",
+            }}
+          >
+            <div
+              style={{
+                maxWidth: "720px",
+                margin: "0 auto",
+                padding: "16px 24px 0",
+                boxSizing: "border-box",
+              }}
+            >
+              {writingArea}
+            </div>
+          </div>
+
+          {/* Toolbar — in normal flow at the bottom.
+              When the keyboard opens, 100dvh shrinks and this rises naturally. */}
+          <div
+            style={{
+              flexShrink: 0,
+              width: "100%",
+              backgroundColor: "#FFFFFF",
+              borderTop: "2px solid #000000",
+              padding: "8px 0",
+            }}
+          >
+            <StickyToolbar
+              editor={editor}
+              fileInputRef={fileInputRef}
+              inline
+              onOpenLinkModal={() => setShowLinkModal(true)}
+              onOpenYoutubeModal={() => setShowYoutubeModal(true)}
+              onOpenSpotifyModal={() => setShowSpotifyModal(true)}
+            />
+          </div>
+        </div>
+
+        {modals}
+      </>
+    );
+  }
+
+  // ─── Desktop layout ───────────────────────────────────────────────────────
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#FFFFFF",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        position: "relative",
+      }}
+    >
+      <NoiseBackground fillMode="cover" style={{ position: "fixed" }} />
+
+      {fileInput}
+
+      {/* Top bar — sticky */}
+      <div
+        style={{
+          position: "sticky",
+          top: 0,
+          zIndex: 50,
+          width: "100%",
+          maxWidth: "720px",
+          backgroundColor: "#FFFFFF",
+        }}
+      >
+        {navBarInner}
+      </div>
+
+      {/* Content area */}
+      <div
+        style={{
+          width: "100%",
+          maxWidth: "720px",
+          padding: "0 24px",
+          boxSizing: "border-box",
+          background: "#FFFFFF",
+          position: "relative",
+          zIndex: 1,
+          minHeight: "100vh",
+        }}
+      >
+        <div style={{ height: "24px" }} />
+        {writingArea}
+      </div>
+
+      {/* Floating toolbar — desktop only */}
+      <StickyToolbar
+        editor={editor}
+        fileInputRef={fileInputRef}
+        onOpenLinkModal={() => {
+          linkSelectionRef.current = {
+            from: editor.state.selection.from,
+            to: editor.state.selection.to,
+          };
+          setShowLinkModal(true);
+        }}
+        onOpenYoutubeModal={() => setShowYoutubeModal(true)}
+        onOpenSpotifyModal={() => setShowSpotifyModal(true)}
+      />
+
+      {modals}
     </div>
   );
 }
