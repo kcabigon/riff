@@ -163,6 +163,11 @@ export default function FoundersNotePage() {
                     text: '"i\'ve been wanting to create more and consume less" - Chris',
                   },
                   {
+                    author: "Jarric",
+                    avatarSrc: "/images/about/founderAvatars/jarric-avatar.png",
+                    text: "aka chris wants to spend less time doomscrolling butts on instagram",
+                  },
+                  {
                     author: "Kyle",
                     avatarSrc: "/images/about/founderAvatars/kyle-avatar.jpg",
                     text: "haha",
