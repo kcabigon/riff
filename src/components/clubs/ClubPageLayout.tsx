@@ -311,7 +311,7 @@ export default function ClubPageLayout({
                     <ThreeDotButton
                       variant="dark"
                       items={adminMenuItems}
-                      align="left"
+                      align="right"
                     />
                   )}
                 </div>
@@ -423,7 +423,7 @@ export default function ClubPageLayout({
               <ThreeDotButton
                 variant="light"
                 items={adminMenuItems}
-                align="left"
+                align="right"
               />
             )}
           </div>
@@ -534,7 +534,7 @@ export default function ClubPageLayout({
                 <ThreeDotButton
                   variant="light"
                   items={adminMenuItems}
-                  align="left"
+                  align="right"
                 />
               )}
             </div>
