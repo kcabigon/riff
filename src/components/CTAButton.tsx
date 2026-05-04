@@ -29,7 +29,11 @@ export default function CTAButton({
         props.onMouseLeave?.(e);
       }}
       style={{
+        backgroundColor: isHovered ? "#00FF66" : "#FFFFFF",
         border: "2px solid #000000",
+        boxShadow: isHovered
+          ? "8px 8px 0px 0px #000000"
+          : "8px 8px 0px 0px #00FF66",
         padding: "12px 48px",
         fontFamily: "var(--font-dm-sans)",
         fontSize: "16px",
@@ -40,15 +44,6 @@ export default function CTAButton({
         transition: "none",
         whiteSpace: "nowrap" as const,
         ...style,
-        backgroundColor: isHovered
-          ? "#00FF66"
-          : (style?.backgroundColor ?? "#FFFFFF"),
-        boxShadow: isHovered
-          ? (style?.boxShadow ?? "8px 8px 0px 0px #00FF66").replace(
-              "#00FF66",
-              "#000000"
-            )
-          : (style?.boxShadow ?? "8px 8px 0px 0px #00FF66"),
       }}
     >
       {children}
