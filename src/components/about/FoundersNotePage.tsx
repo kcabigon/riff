@@ -180,7 +180,7 @@ export default function FoundersNotePage() {
               {
                 author: "Derek",
                 avatarSrc: "/images/about/founderAvatars/derek-avatar.png",
-                text: "only jarric's mom read his blog",
+                text: "only jarric's mom reads his blog",
               },
             ]}
           >
