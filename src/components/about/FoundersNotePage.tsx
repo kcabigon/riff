@@ -137,8 +137,8 @@ export default function FoundersNotePage() {
           Riff is a club-driven writing platform for friends. Why clubs? Because
           your friends are a good time, and clubs are the social infrastructure
           to keep the good times spinning (like a record, baby, right round). If
-          you want to be more creative and tell more stories with your friends,
-          you should start a write club.
+          you want to tell more stories and be creative with your friends, you
+          should start a write club.
         </p>
 
         <p style={bodyStyle}>
@@ -175,7 +175,7 @@ export default function FoundersNotePage() {
           friends because it&apos;s private and creative and fun. Who think that
           a writing experience that feels more like starting a garage band,
           storytelling around the campfire, a kickback at the homie&apos;s
-          place, a literary mosh pit with friends is the jam. This is for you.
+          place, a literary mosh pit with friends is their jam. This is for you.
         </p>
 
         {/* CTA */}
