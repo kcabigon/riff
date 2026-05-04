@@ -7,6 +7,8 @@ import TextInput from "@/components/TextInput";
 import Tagline from "@/components/Tagline";
 import BackButton from "@/components/BackButton";
 
+import { CLUB_NAME_MAX, DESCRIPTION_MAX } from "@/lib/constants";
+
 export const dynamic = "force-dynamic";
 
 export default function OnboardingCreateClubPage() {
@@ -83,7 +85,12 @@ export default function OnboardingCreateClubPage() {
               gap: "8px",
             }}
           >
-            <Tagline text="Club name" color="#C01582" width={118} />
+            <Tagline
+              text="Club name"
+              color="#C01582"
+              width={118}
+              textColor="#FFFFFF"
+            />
             <TextInput
               type="text"
               name="clubName"
@@ -92,6 +99,8 @@ export default function OnboardingCreateClubPage() {
               onChange={(e) => setClubName(e.target.value)}
               disabled={loading}
               autoFocus
+              maxLength={CLUB_NAME_MAX}
+              error={clubName.length >= CLUB_NAME_MAX ? " " : undefined}
             />
           </div>
 
@@ -104,15 +113,22 @@ export default function OnboardingCreateClubPage() {
               gap: "8px",
             }}
           >
-            <Tagline text="Description" color="#955CB5" width={125} />
+            <Tagline
+              text="Description"
+              color="#955CB5"
+              width={125}
+              textColor="#FFFFFF"
+            />
             <TextInput
               multiline
               rows={3}
               name="description"
-              placeholder="We don't read and write poetry because it's cute. We read and write poetry because we are members of the human race."
+              placeholder="We don't read and write poetry because it's cute. We read and write poetry because..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               disabled={loading}
+              maxLength={DESCRIPTION_MAX}
+              error={description.length >= DESCRIPTION_MAX ? " " : undefined}
             />
             <div style={{ backgroundColor: "#FFFFFF", padding: "4px 8px" }}>
               <p
