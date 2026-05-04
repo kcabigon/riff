@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import NotificationItem from "./NotificationItem";
 import { formatDateShort } from "@/lib/riff-utils";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 
 interface NotificationData {
   id: string;
@@ -30,6 +31,7 @@ export default function NotificationPanel({
   onClose,
   onMarkAllRead,
 }: NotificationPanelProps) {
+  const isMobile = useIsMobile();
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -69,18 +71,33 @@ export default function NotificationPanel({
 
   return (
     <div
-      style={{
-        position: "absolute",
-        top: "calc(100% + 8px)",
-        right: 0,
-        width: "360px",
-        maxHeight: "480px",
-        overflowY: "auto",
-        backgroundColor: "#FFFFFF",
-        border: "2px solid #000000",
-        boxShadow: "4px 4px 0px 0px #000000",
-        zIndex: 60,
-      }}
+      style={
+        isMobile
+          ? {
+              position: "fixed",
+              top: "68px",
+              right: "8px",
+              width: "calc(100vw - 16px)",
+              maxHeight: "480px",
+              overflowY: "auto",
+              backgroundColor: "#FFFFFF",
+              border: "2px solid #000000",
+              boxShadow: "4px 4px 0px 0px #000000",
+              zIndex: 60,
+            }
+          : {
+              position: "absolute",
+              top: "calc(100% + 8px)",
+              right: 0,
+              width: "360px",
+              maxHeight: "480px",
+              overflowY: "auto",
+              backgroundColor: "#FFFFFF",
+              border: "2px solid #000000",
+              boxShadow: "4px 4px 0px 0px #000000",
+              zIndex: 60,
+            }
+      }
     >
       {/* Header */}
       <div
