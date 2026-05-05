@@ -83,7 +83,7 @@ export default function FoundersNotePage() {
         style={{
           maxWidth: "680px",
           margin: "0 auto",
-          padding: "48px 24px 96px",
+          padding: "48px 24px 240px",
         }}
       >
         {/* Title */}
@@ -287,6 +287,13 @@ export default function FoundersNotePage() {
                   videoId: "sDwcHUeG6Nc",
                   url: "https://www.youtube.com/watch?v=sDwcHUeG6Nc",
                 },
+                replies: [
+                  {
+                    author: "Jarric",
+                    avatarSrc: "/images/about/founderAvatars/jarric-avatar.png",
+                    text: "wild in the streets, runnin, runnin",
+                  },
+                ],
               },
             ]}
           >

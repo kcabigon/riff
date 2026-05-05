@@ -67,8 +67,14 @@ export default function FakeCommentHighlight({
     if (!highlightRef.current) return;
     const rect = highlightRef.current.getBoundingClientRect();
     const popoverWidth = 280;
+    const popoverEstimatedHeight = 200;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const top =
+      spaceBelow >= popoverEstimatedHeight + 8
+        ? rect.bottom + 8
+        : rect.top - popoverEstimatedHeight - 8;
     setPos({
-      top: rect.bottom + 8,
+      top: Math.max(8, top),
       left: Math.max(
         16,
         Math.min(rect.left, window.innerWidth - popoverWidth - 16)
