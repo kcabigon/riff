@@ -59,7 +59,9 @@ export default function WritePage({
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "unsaved">(
     "saved"
   );
-  const [title, setTitle] = useState(piece.title || "Untitled");
+  const [title, setTitle] = useState(
+    piece.title && piece.title !== "Untitled" ? piece.title : ""
+  );
   const [subtitle, setSubtitle] = useState(piece.subtitle || "");
   const [coverImage, setCoverImage] = useState<string | null>(piece.coverImage);
   const [showCoverModal, setShowCoverModal] = useState(false);

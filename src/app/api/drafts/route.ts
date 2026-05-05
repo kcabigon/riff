@@ -72,7 +72,7 @@ export async function POST(req: Request) {
     // Create piece + PieceRiff + auto-join riff if not participant
     const piece = await prisma.piece.create({
       data: {
-        title: "Untitled",
+        title: "",
         currentContent: "<p></p>",
         authorId: userId,
         riffs: {
