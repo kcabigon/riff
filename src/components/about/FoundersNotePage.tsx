@@ -83,7 +83,7 @@ export default function FoundersNotePage() {
         style={{
           maxWidth: "680px",
           margin: "0 auto",
-          padding: "48px 24px 240px",
+          padding: "48px 24px 96px",
         }}
       >
         {/* Title */}
