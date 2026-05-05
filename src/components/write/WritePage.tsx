@@ -534,7 +534,13 @@ export default function WritePage({
                 editor={editor}
                 fileInputRef={fileInputRef}
                 inline
-                onOpenLinkModal={() => setShowLinkModal(true)}
+                onOpenLinkModal={() => {
+                  linkSelectionRef.current = {
+                    from: editor.state.selection.from,
+                    to: editor.state.selection.to,
+                  };
+                  setShowLinkModal(true);
+                }}
                 onOpenYoutubeModal={() => setShowYoutubeModal(true)}
                 onOpenSpotifyModal={() => setShowSpotifyModal(true)}
               />
