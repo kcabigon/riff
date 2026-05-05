@@ -84,6 +84,10 @@ export default function WritePage({
   useThemeColor("#FFFFFF");
   const navVisible = useScrollDirection({ threshold: 15 });
 
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
+  const topBarRef = useRef<HTMLDivElement>(null);
+  const [topBarHeight, setTopBarHeight] = useState(60);
+
   const editor = useEditor({
     immediatelyRender: false,
     editorProps: {},
@@ -159,6 +163,38 @@ export default function WritePage({
       }, 500);
     },
   });
+
+  // Open toolbar instantly on editor focus.
+  // Close only when visualViewport returns to full height (keyboard physically gone).
+  // No blur handler — scrolling and content reflow never falsely hide the toolbar.
+  useEffect(() => {
+    if (!isMobile || !editor) return;
+    const onFocus = () => setKeyboardOpen(true);
+    editor.on("focus", onFocus);
+    const vv = window.visualViewport;
+    if (vv) {
+      const fullHeight = vv.height; // snapshot once at mount; never updated
+      const onResize = () => {
+        // 150px threshold: large enough to ignore browser-chrome collapse (~70px),
+        // small enough to catch keyboard dismiss (~300px).
+        if (vv.height >= fullHeight - 150) setKeyboardOpen(false);
+      };
+      vv.addEventListener("resize", onResize);
+      return () => {
+        editor.off("focus", onFocus);
+        vv.removeEventListener("resize", onResize);
+      };
+    }
+    return () => editor.off("focus", onFocus);
+  }, [isMobile, editor]);
+
+  useEffect(() => {
+    const bar = topBarRef.current;
+    if (!bar) return;
+    const ro = new ResizeObserver(() => setTopBarHeight(bar.offsetHeight));
+    ro.observe(bar);
+    return () => ro.disconnect();
+  }, [editor]);
 
   const autosaveContent = useCallback(
     async (content: string, wordCount: number, readLengthMin: number) => {
@@ -393,6 +429,7 @@ export default function WritePage({
 
       {/* Top bar — fixed on mobile (with hide-on-scroll), sticky on desktop */}
       <div
+        ref={topBarRef}
         style={{
           position: isMobile ? "fixed" : "sticky",
           top: 0,
@@ -403,144 +440,155 @@ export default function WritePage({
           maxWidth: isMobile ? "100%" : "720px",
           backgroundColor: "#FFFFFF",
           transform:
-            isMobile && !navVisible ? "translateY(-100%)" : "translateY(0)",
+            isMobile && !keyboardOpen && !navVisible
+              ? "translateY(-100%)"
+              : "translateY(0)",
           transition: "transform 200ms ease",
           willChange: isMobile ? "transform" : undefined,
         }}
       >
-        <div
-          style={{
-            maxWidth: "720px",
-            width: "100%",
-            margin: "0 auto",
-            padding: "0 24px",
-            boxSizing: "border-box",
-          }}
-        >
+        {/* Header — shown when keyboard is closed */}
+        {(!isMobile || !keyboardOpen) && (
           <div
             style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              padding: "16px 0 8px",
+              maxWidth: "720px",
+              width: "100%",
+              margin: "0 auto",
+              padding: "0 24px",
+              boxSizing: "border-box",
             }}
           >
-            {/* Left side: back button + save status */}
             <div
               style={{
                 display: "flex",
+                justifyContent: "space-between",
                 alignItems: "center",
-                gap: "12px",
+                padding: "16px 0 8px",
               }}
             >
-              <BackButton onClick={handleBack} />
+              {/* Left side: back button + save status */}
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: "6px",
+                  gap: "12px",
                 }}
               >
+                <BackButton onClick={handleBack} />
                 <div
                   style={{
-                    width: "6px",
-                    height: "6px",
-                    borderRadius: "50%",
-                    background:
-                      saveStatus === "saved"
-                        ? "#00FF66"
-                        : saveStatus === "saving"
-                          ? "#EECF01"
-                          : "#808080",
-                    animation:
-                      saveStatus === "saving"
-                        ? "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite"
-                        : "none",
-                  }}
-                />
-                <span
-                  style={{
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "12px",
-                    fontWeight: 300,
-                    color: "#808080",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
                   }}
                 >
-                  {saveStatus === "saved"
-                    ? "Saved"
-                    : saveStatus === "saving"
-                      ? "Saving..."
-                      : "Unsaved"}
-                </span>
-              </div>
-            </div>
-
-            {/* Right side: CTA */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "12px",
-              }}
-            >
-              {/* Submit CTA / cover icon */}
-              {piece.riffs.length > 0 &&
-                (isSubmitted ? (
-                  <IconButton
-                    src="/icons/cover_photo.svg"
-                    label={
-                      coverImage ? "Change cover image" : "Add cover image"
-                    }
-                    onClick={() => {
-                      if (coverImage) {
-                        setShowSubmitModal(true);
-                      } else {
-                        setShowCoverModal(true);
-                      }
-                    }}
-                    size={24}
-                  />
-                ) : (
-                  <CTAButton
-                    onClick={() => {
-                      if (coverImage) {
-                        setShowSubmitModal(true);
-                      } else {
-                        setShowCoverModal(true);
-                      }
-                    }}
+                  <div
                     style={{
-                      padding: isMobile ? "8px 24px" : "10px 32px",
+                      width: "6px",
+                      height: "6px",
+                      borderRadius: "50%",
+                      background:
+                        saveStatus === "saved"
+                          ? "#00FF66"
+                          : saveStatus === "saving"
+                            ? "#EECF01"
+                            : "#808080",
+                      animation:
+                        saveStatus === "saving"
+                          ? "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite"
+                          : "none",
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
                       fontSize: "12px",
-                      boxShadow: "4px 4px 0px 0px #00FF66",
+                      fontWeight: 300,
+                      color: "#808080",
                     }}
                   >
-                    Submit
-                  </CTAButton>
-                ))}
+                    {saveStatus === "saved"
+                      ? "Saved"
+                      : saveStatus === "saving"
+                        ? "Saving..."
+                        : "Unsaved"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Right side: CTA */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                }}
+              >
+                {piece.riffs.length > 0 &&
+                  (isSubmitted ? (
+                    <IconButton
+                      src="/icons/cover_photo.svg"
+                      label={
+                        coverImage ? "Change cover image" : "Add cover image"
+                      }
+                      onClick={() => {
+                        if (coverImage) {
+                          setShowSubmitModal(true);
+                        } else {
+                          setShowCoverModal(true);
+                        }
+                      }}
+                      size={24}
+                    />
+                  ) : (
+                    <CTAButton
+                      onClick={() => {
+                        if (coverImage) {
+                          setShowSubmitModal(true);
+                        } else {
+                          setShowCoverModal(true);
+                        }
+                      }}
+                      style={{
+                        padding: isMobile ? "8px 24px" : "10px 32px",
+                        fontSize: "12px",
+                        boxShadow: "4px 4px 0px 0px #00FF66",
+                      }}
+                    >
+                      Submit
+                    </CTAButton>
+                  ))}
+              </div>
             </div>
           </div>
+        )}
 
-          {/* Mobile toolbar — pinned under top bar */}
-          {isMobile && (
-            <div
-              style={{
-                borderBottom: "2px solid #000000",
-                paddingTop: "8px",
-                paddingBottom: "8px",
-              }}
-            >
+        {/* Toolbar — shown only when keyboard is open on mobile */}
+        {isMobile && keyboardOpen && (
+          <div
+            style={{
+              paddingTop: "env(safe-area-inset-top)",
+              borderBottom: "2px solid #000000",
+            }}
+          >
+            <div style={{ paddingTop: "8px", paddingBottom: "8px" }}>
               <StickyToolbar
                 editor={editor}
                 fileInputRef={fileInputRef}
                 inline
-                onOpenLinkModal={() => setShowLinkModal(true)}
+                onOpenLinkModal={() => {
+                  linkSelectionRef.current = {
+                    from: editor.state.selection.from,
+                    to: editor.state.selection.to,
+                  };
+                  setShowLinkModal(true);
+                }}
                 onOpenYoutubeModal={() => setShowYoutubeModal(true)}
                 onOpenSpotifyModal={() => setShowSpotifyModal(true)}
               />
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Content area */}
@@ -556,8 +604,8 @@ export default function WritePage({
           minHeight: "100vh",
         }}
       >
-        {/* Spacer — accounts for fixed bar height on mobile */}
-        <div style={{ height: isMobile ? "140px" : "24px" }} />
+        {/* Spacer — matches measured fixed bar height */}
+        <div style={{ height: isMobile ? `${topBarHeight}px` : "24px" }} />
 
         {/* Writing area */}
         <div

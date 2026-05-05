@@ -49,11 +49,12 @@ export const Indent = Extension.create({
           const { $from } = state.selection;
           const node = $from.node();
           if (!INDENTABLE_TYPES.includes(node.type.name)) return false;
-          // Let StarterKit handle Tab inside list items (creates nested lists)
           const parent = $from.node($from.depth - 1);
-          if (parent && parent.type.name === "listItem") return false;
+          if (parent && parent.type.name === "listItem") {
+            return commands.sinkListItem("listItem");
+          }
           const current = node.attrs.indent || 0;
-          if (current >= MAX_INDENT) return true; // prevent default Tab, just do nothing
+          if (current >= MAX_INDENT) return true;
           return commands.updateAttributes(node.type.name, {
             indent: current + 1,
           });
@@ -64,9 +65,10 @@ export const Indent = Extension.create({
           const { $from } = state.selection;
           const node = $from.node();
           if (!INDENTABLE_TYPES.includes(node.type.name)) return false;
-          // Let StarterKit handle Shift-Tab inside list items
           const parent = $from.node($from.depth - 1);
-          if (parent && parent.type.name === "listItem") return false;
+          if (parent && parent.type.name === "listItem") {
+            return commands.liftListItem("listItem");
+          }
           const current = node.attrs.indent || 0;
           if (current <= 0) return false;
           return commands.updateAttributes(node.type.name, {
