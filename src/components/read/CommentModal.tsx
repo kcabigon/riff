@@ -246,6 +246,7 @@ export default function CommentModal({
                   fontStyle: "italic",
                   borderLeft: "2px solid #01EFFC",
                   paddingLeft: "8px",
+                  overflowWrap: "break-word",
                 }}
               >
                 {comment.selectedText}
@@ -278,7 +279,7 @@ export default function CommentModal({
                       border: "1px solid #E6E6E6",
                       padding: "6px 8px",
                       fontFamily: "var(--font-dm-sans)",
-                      fontSize: "15px",
+                      fontSize: "16px",
                       lineHeight: 1.6,
                       outline: "none",
                       boxSizing: "border-box",
@@ -323,12 +324,13 @@ export default function CommentModal({
                 <p
                   style={{
                     fontFamily: "var(--font-dm-sans)",
-                    fontSize: "15px",
+                    fontSize: "16px",
                     fontWeight: 300,
                     color: "#000000",
                     margin: 0,
                     lineHeight: 1.6,
                     whiteSpace: "pre-wrap",
+                    overflowWrap: "break-word",
                   }}
                 >
                   {comment.content}

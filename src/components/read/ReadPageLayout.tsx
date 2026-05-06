@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Avatar from "@/components/shared/Avatar";
 import ReadToggle from "./ReadToggle";
@@ -226,9 +226,13 @@ export default function ReadPageLayout({
 
   const readMinutes = Math.max(1, piece.readLengthMin);
 
-  const activeComments = activeHighlightIds
-    .map((id) => comments.find((c) => c.id === id))
-    .filter((c): c is CommentData => c !== undefined);
+  const activeComments = useMemo(
+    () =>
+      activeHighlightIds
+        .map((id) => comments.find((c) => c.id === id))
+        .filter((c): c is CommentData => c !== undefined),
+    [activeHighlightIds, comments]
+  );
 
   return (
     <div
