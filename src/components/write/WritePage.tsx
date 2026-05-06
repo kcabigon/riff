@@ -176,18 +176,14 @@ export default function WritePage({
 
         const text = event.clipboardData?.getData("text/plain")?.trim();
         if (text) {
-          const isYouTube =
-            /(youtube\.com\/watch|youtu\.be\/|youtube\.com\/shorts\/)/.test(
-              text
-            );
           const isSpotify =
             /open\.spotify\.com\/(track|album|playlist|episode|show)\//.test(
               text
             );
-          if (isYouTube || isSpotify) {
+          if (isSpotify) {
             const sel = view.state.selection;
             setMediaEmbed({
-              type: isYouTube ? "youtube" : "spotify",
+              type: "spotify",
               prefilledUrl: text,
               prefilledSelection: sel.empty
                 ? undefined
