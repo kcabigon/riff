@@ -55,7 +55,6 @@ export default function CommentModal({
   const [editContent, setEditContent] = useState("");
   const [saving, setSaving] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const [textareaFocused, setTextareaFocused] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const isOpen = comments.length > 0;
@@ -150,7 +149,7 @@ export default function CommentModal({
                   marginBottom: "12px",
                 }}
               >
-                <Avatar user={comment.author} size={32} />
+                <Avatar user={comment.author} size={32} borderWidth={1} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <span
                     style={{
@@ -228,8 +227,6 @@ export default function CommentModal({
                       e.target.style.height = "auto";
                       e.target.style.height = `${e.target.scrollHeight}px`;
                     }}
-                    onFocus={() => setTextareaFocused(true)}
-                    onBlur={() => setTextareaFocused(false)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && (e.metaKey || e.ctrlKey))
                         handleSave();
@@ -244,9 +241,7 @@ export default function CommentModal({
                       width: "100%",
                       resize: "none",
                       overflow: "hidden",
-                      border: textareaFocused
-                        ? "2px solid #00FF66"
-                        : "2px solid #000000",
+                      border: "1px solid #E6E6E6",
                       padding: "6px 8px",
                       fontFamily: "var(--font-dm-sans)",
                       fontSize: "16px",
