@@ -73,8 +73,6 @@ export default function WritePage({
   const linkSelectionRef = useRef<{ from: number; to: number } | null>(null);
   const [mediaEmbed, setMediaEmbed] = useState<{
     type: "youtube" | "spotify";
-    prefilledUrl?: string;
-    prefilledSelection?: { from: number; to: number; text: string };
   } | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
@@ -171,29 +169,6 @@ export default function WritePage({
               handleImagePaste(file);
               return true;
             }
-          }
-        }
-
-        const text = event.clipboardData?.getData("text/plain")?.trim();
-        if (text) {
-          const isSpotify =
-            /open\.spotify\.com\/(track|album|playlist|episode|show)\//.test(
-              text
-            );
-          if (isSpotify) {
-            const sel = view.state.selection;
-            setMediaEmbed({
-              type: "spotify",
-              prefilledUrl: text,
-              prefilledSelection: sel.empty
-                ? undefined
-                : {
-                    from: sel.from,
-                    to: sel.to,
-                    text: view.state.doc.textBetween(sel.from, sel.to),
-                  },
-            });
-            return true;
           }
         }
 
@@ -960,30 +935,12 @@ export default function WritePage({
       <MediaEmbedModal
         isOpen={!!mediaEmbed}
         type={mediaEmbed?.type ?? "youtube"}
-        prefilledUrl={mediaEmbed?.prefilledUrl}
         onClose={() => setMediaEmbed(null)}
         onEmbed={(url) => {
           if (mediaEmbed?.type === "youtube") {
             editor.chain().focus().setYoutubeVideo({ src: url }).run();
           } else {
             editor.commands.setSpotifyEmbed({ src: url });
-          }
-        }}
-        onAddLink={(url) => {
-          const sel = mediaEmbed?.prefilledSelection;
-          if (sel) {
-            editor
-              .chain()
-              .focus()
-              .setTextSelection({ from: sel.from, to: sel.to })
-              .setLink({ href: url })
-              .run();
-          } else {
-            editor
-              .chain()
-              .focus()
-              .insertContent(`<a href="${url}">${url}</a>`)
-              .run();
           }
         }}
       />
