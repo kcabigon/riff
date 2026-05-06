@@ -11,7 +11,6 @@ interface MediaEmbedModalProps {
   /** If provided, shows paste-confirm UI instead of URL input */
   prefilledUrl?: string;
   onEmbed: (url: string) => void;
-  onAddLink?: (url: string) => void;
 }
 
 const CONFIG = {
@@ -37,7 +36,6 @@ export default function MediaEmbedModal({
   type,
   prefilledUrl,
   onEmbed,
-  onAddLink,
 }: MediaEmbedModalProps) {
   const [url, setUrl] = useState("");
   const [urlError, setUrlError] = useState<string | null>(null);
@@ -71,42 +69,8 @@ export default function MediaEmbedModal({
     onClose();
   };
 
-  const handleAddLink = () => {
-    if (!prefilledUrl || !onAddLink) return;
-    onAddLink(prefilledUrl);
-    onClose();
-  };
-
   if (isPasteConfirm) {
-    const footer = (
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: "16px",
-          width: "100%",
-        }}
-      >
-        <PrimaryButton onClick={handleEmbed}>Embed</PrimaryButton>
-        <button
-          onClick={handleAddLink}
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
-            fontWeight: 300,
-            color: "#808080",
-            background: "#FFFFFF",
-            border: "none",
-            cursor: "pointer",
-            padding: "0 8px 8px",
-            textDecoration: "underline",
-          }}
-        >
-          Add as link
-        </button>
-      </div>
-    );
+    const footer = <PrimaryButton onClick={handleEmbed}>Embed</PrimaryButton>;
 
     return (
       <Modal
@@ -137,6 +101,7 @@ export default function MediaEmbedModal({
     >
       <div>
         <label
+          htmlFor="embed-url"
           style={{
             fontFamily: "var(--font-dm-sans)",
             fontSize: "14px",
@@ -149,6 +114,7 @@ export default function MediaEmbedModal({
           URL
         </label>
         <input
+          id="embed-url"
           ref={urlRef}
           value={url}
           onChange={(e) => {

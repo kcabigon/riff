@@ -33,6 +33,14 @@ import WhatsNextModal, {
 import { canShowWhatsNext } from "@/lib/whatsNextGuard";
 import CTAButton from "@/components/CTAButton";
 
+const ALLOWED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+];
+
 interface RiffConnection {
   id: string;
   title: string | null;
@@ -74,7 +82,6 @@ export default function WritePage({
   const [mediaEmbed, setMediaEmbed] = useState<{
     type: "youtube" | "spotify";
     prefilledUrl?: string;
-    prefilledSelection?: { from: number; to: number; text: string };
   } | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
@@ -114,14 +121,7 @@ export default function WritePage({
       }
     }
 
-    const allowedTypes = [
-      "image/jpeg",
-      "image/jpg",
-      "image/png",
-      "image/gif",
-      "image/webp",
-    ];
-    if (!allowedTypes.includes(file.type)) {
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
       setImageError(
         "Unsupported file type — use JPEG, PNG, GIF, WebP, or HEIC"
       );
@@ -181,18 +181,7 @@ export default function WritePage({
               text
             );
           if (isSpotify) {
-            const sel = view.state.selection;
-            setMediaEmbed({
-              type: "spotify",
-              prefilledUrl: text,
-              prefilledSelection: sel.empty
-                ? undefined
-                : {
-                    from: sel.from,
-                    to: sel.to,
-                    text: view.state.doc.textBetween(sel.from, sel.to),
-                  },
-            });
+            setMediaEmbed({ type: "spotify", prefilledUrl: text });
             return true;
           }
         }
@@ -454,14 +443,7 @@ export default function WritePage({
       }
     }
 
-    const allowedTypes = [
-      "image/jpeg",
-      "image/jpg",
-      "image/png",
-      "image/gif",
-      "image/webp",
-    ];
-    if (!allowedTypes.includes(file.type)) {
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
       setImageError(
         "Unsupported file type — use JPEG, PNG, GIF, WebP, or HEIC"
       );
@@ -967,23 +949,6 @@ export default function WritePage({
             editor.chain().focus().setYoutubeVideo({ src: url }).run();
           } else {
             editor.commands.setSpotifyEmbed({ src: url });
-          }
-        }}
-        onAddLink={(url) => {
-          const sel = mediaEmbed?.prefilledSelection;
-          if (sel) {
-            editor
-              .chain()
-              .focus()
-              .setTextSelection({ from: sel.from, to: sel.to })
-              .setLink({ href: url })
-              .run();
-          } else {
-            editor
-              .chain()
-              .focus()
-              .insertContent(`<a href="${url}">${url}</a>`)
-              .run();
           }
         }}
       />
