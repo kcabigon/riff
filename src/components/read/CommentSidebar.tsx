@@ -45,7 +45,7 @@ interface PendingCommentProps {
 
 interface CommentSidebarProps {
   comments: CommentData[];
-  activeHighlightId: string | null;
+  activeHighlightIds: string[];
   currentUserId: string;
   onDelete: (commentId: string) => void;
   onUpdate: (commentId: string, newContent: string) => Promise<void>;
@@ -364,7 +364,7 @@ function CommentCard({
 
 export default function CommentSidebar({
   comments,
-  activeHighlightId,
+  activeHighlightIds,
   currentUserId,
   onDelete,
   onUpdate,
@@ -469,8 +469,10 @@ export default function CommentSidebar({
       return;
     }
 
-    // Find the priority item (pending or active)
-    const priorityId = pendingSelection ? "__pending__" : activeHighlightId;
+    // Find the priority item (pending, or topmost active highlight in document order)
+    const priorityId = pendingSelection
+      ? "__pending__"
+      : (items.find((i) => activeHighlightIds.includes(i.id))?.id ?? null);
     const priorityIndex = priorityId
       ? items.findIndex((i) => i.id === priorityId)
       : -1;
@@ -522,7 +524,7 @@ export default function CommentSidebar({
       maxBottom = Math.max(maxBottom, top + getCardHeight(item.id));
     }
     setMinHeight(maxBottom + 40);
-  }, [comments, contentColumnRef, pendingSelection, activeHighlightId]);
+  }, [comments, contentColumnRef, pendingSelection, activeHighlightIds]);
 
   // Recalculate on mount, scroll, resize, and when comments change
   useEffect(() => {
@@ -547,7 +549,7 @@ export default function CommentSidebar({
     updatePositions();
     const timer = setTimeout(updatePositions, 150);
     return () => clearTimeout(timer);
-  }, [activeHighlightId, pendingSelection, updatePositions]);
+  }, [activeHighlightIds, pendingSelection, updatePositions]);
 
   // Recalculate when a card enters/exits edit mode (height changes)
   useEffect(() => {
@@ -594,7 +596,7 @@ export default function CommentSidebar({
       )}
 
       {comments.map((comment) => {
-        const isActive = comment.id === activeHighlightId;
+        const isActive = activeHighlightIds.includes(comment.id);
         const top = positions[comment.id];
 
         // Don't render cards whose highlight mark couldn't be found in the DOM —

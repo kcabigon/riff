@@ -82,9 +82,7 @@ export default function ReadPageLayout({
   // comment cards stacking at top:0 on notification deep-link nav).
   const [isRiffMode, setIsRiffMode] = useState(false);
   const [comments, setComments] = useState<CommentData[]>(initialComments);
-  const [activeHighlightId, setActiveHighlightId] = useState<string | null>(
-    null
-  );
+  const [activeHighlightIds, setActiveHighlightIds] = useState<string[]>([]);
   const [pendingSelection, setPendingSelection] =
     useState<PendingSelection | null>(null);
 
@@ -149,7 +147,7 @@ export default function ReadPageLayout({
       const updated = [...prev, comment];
       return updated.sort((a, b) => a.selectionStart - b.selectionStart);
     });
-    setActiveHighlightId(comment.id);
+    setActiveHighlightIds([comment.id]);
     setPendingSelection(null);
   }, []);
 
@@ -157,14 +155,11 @@ export default function ReadPageLayout({
     if (startInRiffMode) setIsRiffMode(true);
   }, [startInRiffMode]);
 
-  const handleClearHighlight = useCallback(
-    () => setActiveHighlightId(null),
-    []
-  );
+  const handleClearHighlight = useCallback(() => setActiveHighlightIds([]), []);
 
   const handleDeleteComment = useCallback((commentId: string) => {
     setComments((prev) => prev.filter((c) => c.id !== commentId));
-    setActiveHighlightId((prev) => (prev === commentId ? null : prev));
+    setActiveHighlightIds((prev) => prev.filter((id) => id !== commentId));
   }, []);
 
   const handleUpdateComment = useCallback(
@@ -186,9 +181,9 @@ export default function ReadPageLayout({
     []
   );
 
-  // Click sidebar comment → scroll to highlight in content
+  // Click sidebar comment → scroll to highlight in content (single activation)
   const handleSidebarCommentClick = useCallback((commentId: string) => {
-    setActiveHighlightId(commentId);
+    setActiveHighlightIds([commentId]);
 
     setTimeout(() => {
       const mark = document.querySelector(
@@ -200,15 +195,15 @@ export default function ReadPageLayout({
     }, 50);
   }, []);
 
-  // Click highlight in content → activate comment and ensure both are visible
-  const handleHighlightClick = useCallback((commentId: string) => {
-    setActiveHighlightId(commentId);
+  // Click highlight in content → activate all comments at that point.
+  // Scrolls to the topmost mark in the group.
+  const handleHighlightClick = useCallback((commentIds: string[]) => {
+    setActiveHighlightIds(commentIds);
 
-    // After positions recalculate, scroll the highlight into center view
-    // The sidebar comment will be repositioned next to it
+    // After positions recalculate, scroll the first (topmost) highlight into view
     setTimeout(() => {
       const mark = document.querySelector(
-        `mark[data-comment-id="${commentId}"]`
+        `mark[data-comment-id="${commentIds[0]}"]`
       );
       if (mark) {
         mark.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -231,9 +226,10 @@ export default function ReadPageLayout({
 
   const readMinutes = Math.max(1, piece.readLengthMin);
 
-  const activeComment = activeHighlightId
-    ? (comments.find((c) => c.id === activeHighlightId) ?? null)
-    : null;
+  const activeComment =
+    activeHighlightIds.length > 0
+      ? (comments.find((c) => c.id === activeHighlightIds[0]) ?? null)
+      : null;
 
   return (
     <div
@@ -451,7 +447,7 @@ export default function ReadPageLayout({
             content={piece.currentContent}
             comments={isRiffMode ? comments : []}
             isRiffMode={isRiffMode}
-            activeHighlightId={activeHighlightId}
+            activeHighlightIds={activeHighlightIds}
             pendingSelection={pendingSelection}
             currentUserId={currentUser.id}
             onSelection={setPendingSelection}
@@ -469,7 +465,7 @@ export default function ReadPageLayout({
         {isRiffMode && !isMobile && (
           <CommentSidebar
             comments={comments}
-            activeHighlightId={activeHighlightId}
+            activeHighlightIds={activeHighlightIds}
             currentUserId={currentUser.id}
             onDelete={handleDeleteComment}
             onUpdate={handleUpdateComment}
@@ -511,7 +507,7 @@ export default function ReadPageLayout({
         <CommentDrawer
           comment={activeComment}
           currentUserId={currentUser.id}
-          onClose={() => setActiveHighlightId(null)}
+          onClose={() => setActiveHighlightIds([])}
           onDelete={handleDeleteComment}
           onUpdate={handleUpdateComment}
         />

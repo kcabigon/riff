@@ -57,11 +57,11 @@ interface ReadOnlyEditorProps {
   content: string;
   comments: CommentData[];
   isRiffMode: boolean;
-  activeHighlightId: string | null;
+  activeHighlightIds: string[];
   pendingSelection: PendingSelection | null;
   currentUserId?: string;
   onSelection: (selection: PendingSelection) => void;
-  onHighlightClick: (commentId: string) => void;
+  onHighlightClick: (commentIds: string[]) => void;
   onClearHighlight?: () => void;
   onImageComment?: (rect: DOMRect, charOffset: number) => void;
   onEditorReady?: () => void;
@@ -94,7 +94,7 @@ export default function ReadOnlyEditor({
   content,
   comments,
   isRiffMode,
-  activeHighlightId,
+  activeHighlightIds,
   pendingSelection,
   currentUserId,
   onSelection,
@@ -192,7 +192,7 @@ export default function ReadOnlyEditor({
         id: c.id,
         selectedText: c.selectedText,
         selectionStart: c.selectionStart,
-        isActive: c.id === activeHighlightId,
+        isActive: activeHighlightIds.includes(c.id),
         isPending: false,
         color: authorColors[c.authorId] || AUTHOR_COLORS[0],
       }));
@@ -345,7 +345,7 @@ export default function ReadOnlyEditor({
     editor,
     comments,
     isRiffMode,
-    activeHighlightId,
+    activeHighlightIds,
     pendingSelection,
     currentUserId,
   ]);
@@ -353,23 +353,37 @@ export default function ReadOnlyEditor({
   // Handle clicks on highlights and images
   const handleClick = useCallback(
     (e: MouseEvent) => {
+      // Bug fix: if the user has text selected they're drag-selecting —
+      // let handleSelectionEnd take over instead of firing a highlight click
+      const sel = window.getSelection();
+      if (sel && !sel.isCollapsed) return;
+
       const target = e.target as HTMLElement;
 
-      // Check for comment highlight click
-      const mark = target.closest(
-        "mark[data-comment-id]"
-      ) as HTMLElement | null;
-      if (mark) {
-        const commentId = mark.getAttribute("data-comment-id");
-        if (commentId) {
+      // Collect ALL marks at this click point (not just the innermost one).
+      // elementsFromPoint returns elements top-to-bottom in z-order, so we get
+      // every mark that overlaps at this pixel, covering nested/overlapping highlights.
+      const marksAtPoint = document
+        .elementsFromPoint(e.clientX, e.clientY)
+        .filter((el): el is HTMLElement => el.matches("mark[data-comment-id]"));
+
+      if (marksAtPoint.length > 0) {
+        const commentIds = [
+          ...new Set(
+            marksAtPoint
+              .map((m) => m.getAttribute("data-comment-id"))
+              .filter((id): id is string => id !== null && id !== "__pending__")
+          ),
+        ];
+        if (commentIds.length > 0) {
           e.stopPropagation();
-          onHighlightClick(commentId);
+          onHighlightClick(commentIds);
           return;
         }
       }
 
-      // Click on non-highlighted content — clear active highlight
-      if (isRiffMode && activeHighlightId) {
+      // Click on non-highlighted content — clear active highlights
+      if (isRiffMode && activeHighlightIds.length > 0) {
         onClearHighlight?.();
       }
 
@@ -378,8 +392,11 @@ export default function ReadOnlyEditor({
         e.stopPropagation();
         const existingCommentId = target.getAttribute("data-comment-id");
         // First click: activate existing comment. Second click: open new compose
-        if (existingCommentId && existingCommentId !== activeHighlightId) {
-          onHighlightClick(existingCommentId);
+        if (
+          existingCommentId &&
+          !activeHighlightIds.includes(existingCommentId)
+        ) {
+          onHighlightClick([existingCommentId]);
           return;
         }
         if (!onImageComment) return;
@@ -413,7 +430,7 @@ export default function ReadOnlyEditor({
       onClearHighlight,
       isRiffMode,
       onImageComment,
-      activeHighlightId,
+      activeHighlightIds,
     ]
   );
 
