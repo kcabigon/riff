@@ -1,6 +1,11 @@
 "use client";
 
-import { useEditor, EditorContent, ReactNodeViewRenderer } from "@tiptap/react";
+import {
+  useEditor,
+  EditorContent,
+  ReactNodeViewRenderer,
+  Editor,
+} from "@tiptap/react";
 import Placeholder from "@tiptap/extension-placeholder";
 import CharacterCount from "@tiptap/extension-character-count";
 import Image from "@tiptap/extension-image";
@@ -21,6 +26,7 @@ import StickyToolbar from "@/components/write/toolbar/StickyToolbar";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { useScrollDirection } from "@/hooks/useScrollDirection";
 import EmbedModal from "@/components/write/EmbedModal";
+import MediaEmbedModal from "@/components/write/MediaEmbedModal";
 import LinkPopover from "@/components/write/LinkPopover";
 import WhatsNextModal, {
   type WhatsNextTrigger,
@@ -66,8 +72,14 @@ export default function WritePage({
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [showLinkModal, setShowLinkModal] = useState(false);
   const linkSelectionRef = useRef<{ from: number; to: number } | null>(null);
-  const [showYoutubeModal, setShowYoutubeModal] = useState(false);
-  const [showSpotifyModal, setShowSpotifyModal] = useState(false);
+  const [mediaEmbed, setMediaEmbed] = useState<{
+    type: "youtube" | "spotify";
+    prefilledUrl?: string;
+    prefilledSelection?: { from: number; to: number; text: string };
+  } | null>(null);
+  const [isPastingImage, setIsPastingImage] = useState(false);
+  const [pasteError, setPasteError] = useState<string | null>(null);
+  const editorRef = useRef<Editor | null>(null);
   const [whatsNextTrigger, setWhatsNextTrigger] =
     useState<WhatsNextTrigger | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(
@@ -84,9 +96,114 @@ export default function WritePage({
   useThemeColor("#FFFFFF");
   const navVisible = useScrollDirection({ threshold: 15 });
 
+  const handleImagePaste = useCallback(async (rawFile: File) => {
+    setPasteError(null);
+
+    let file = rawFile;
+    if (
+      rawFile.type === "image/heic" ||
+      rawFile.type === "image/heif" ||
+      rawFile.name?.toLowerCase().endsWith(".heic") ||
+      rawFile.name?.toLowerCase().endsWith(".heif")
+    ) {
+      try {
+        file = await convertHeicToJpeg(rawFile);
+      } catch {
+        setPasteError("Could not process HEIC file — try a different format");
+        return;
+      }
+    }
+
+    const allowedTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+    ];
+    if (!allowedTypes.includes(file.type)) {
+      setPasteError(
+        "Unsupported file type — use JPEG, PNG, GIF, WebP, or HEIC"
+      );
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setPasteError("File too large — max 5MB");
+      return;
+    }
+
+    setIsPastingImage(true);
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await fetch("/api/upload/image", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success || !data.url) {
+        setPasteError("Upload failed — try again");
+        return;
+      }
+      editorRef.current?.chain().focus().setImage({ src: data.url }).run();
+    } catch {
+      setPasteError("Upload failed — try again");
+    } finally {
+      setIsPastingImage(false);
+    }
+  }, []);
+
   const editor = useEditor({
     immediatelyRender: false,
-    editorProps: {},
+    editorProps: {
+      transformPastedHTML(html) {
+        return html.replace(/<img[^>]*>/gi, "");
+      },
+      handlePaste: (view, event) => {
+        const items = event.clipboardData?.items;
+        if (items) {
+          for (const item of Array.from(items)) {
+            if (item.type.startsWith("image/")) {
+              const file = item.getAsFile();
+              if (!file) continue;
+              handleImagePaste(file);
+              return true;
+            }
+          }
+        }
+
+        const text = event.clipboardData?.getData("text/plain")?.trim();
+        if (text) {
+          const isYouTube =
+            /(youtube\.com\/watch|youtu\.be\/|youtube\.com\/shorts\/)/.test(
+              text
+            );
+          const isSpotify =
+            /open\.spotify\.com\/(track|album|playlist|episode|show)\//.test(
+              text
+            );
+          if (isYouTube || isSpotify) {
+            const sel = view.state.selection;
+            setMediaEmbed({
+              type: isYouTube ? "youtube" : "spotify",
+              prefilledUrl: text,
+              prefilledSelection: sel.empty
+                ? undefined
+                : {
+                    from: sel.from,
+                    to: sel.to,
+                    text: view.state.doc.textBetween(sel.from, sel.to),
+                  },
+            });
+            return true;
+          }
+        }
+
+        return false;
+      },
+    },
     extensions: [
       // Shared extensions (same as read page for fidelity), minus Image and Link (overridden below)
       ...getSharedExtensions().filter(
@@ -135,7 +252,7 @@ export default function WritePage({
         },
       }).configure({
         inline: false,
-        allowBase64: true,
+        allowBase64: false,
       }),
       // Write-specific: placeholder + character count
       Placeholder.configure({
@@ -159,6 +276,10 @@ export default function WritePage({
       }, 500);
     },
   });
+
+  useEffect(() => {
+    editorRef.current = editor;
+  }, [editor]);
 
   const autosaveContent = useCallback(
     async (content: string, wordCount: number, readLengthMin: number) => {
@@ -541,13 +662,96 @@ export default function WritePage({
                   };
                   setShowLinkModal(true);
                 }}
-                onOpenYoutubeModal={() => setShowYoutubeModal(true)}
-                onOpenSpotifyModal={() => setShowSpotifyModal(true)}
+                onOpenYoutubeModal={() => setMediaEmbed({ type: "youtube" })}
+                onOpenSpotifyModal={() => setMediaEmbed({ type: "spotify" })}
               />
             </div>
           )}
         </div>
       </div>
+
+      {/* Image paste status toast */}
+      {(isPastingImage || pasteError) && (
+        <div
+          style={{
+            position: "fixed",
+            top: "80px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 60,
+            backgroundColor: "#FFFFFF",
+            border: "2px solid #000000",
+            boxShadow: "2px 2px 0px 0px #000000",
+            padding: "10px 14px",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {isPastingImage ? (
+            <>
+              <div
+                style={{
+                  width: "8px",
+                  height: "8px",
+                  borderRadius: "50%",
+                  background: "#EECF01",
+                  animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+                }}
+              />
+              <span
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "13px",
+                  fontWeight: 300,
+                  color: "#000",
+                }}
+              >
+                Uploading image...
+              </span>
+            </>
+          ) : (
+            <>
+              <div
+                style={{
+                  width: "8px",
+                  height: "8px",
+                  borderRadius: "50%",
+                  background: "#DC2626",
+                  flexShrink: 0,
+                }}
+              />
+              <span
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "13px",
+                  fontWeight: 300,
+                  color: "#DC2626",
+                }}
+              >
+                {pasteError}
+              </span>
+              <button
+                onClick={() => setPasteError(null)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: "0 0 0 4px",
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  color: "#808080",
+                  lineHeight: 1,
+                  flexShrink: 0,
+                }}
+              >
+                ×
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Content area */}
       <div
@@ -681,8 +885,8 @@ export default function WritePage({
             };
             setShowLinkModal(true);
           }}
-          onOpenYoutubeModal={() => setShowYoutubeModal(true)}
-          onOpenSpotifyModal={() => setShowSpotifyModal(true)}
+          onOpenYoutubeModal={() => setMediaEmbed({ type: "youtube" })}
+          onOpenSpotifyModal={() => setMediaEmbed({ type: "spotify" })}
         />
       )}
 
@@ -715,23 +919,34 @@ export default function WritePage({
         }}
       />
 
-      <EmbedModal
-        isOpen={showYoutubeModal}
-        onClose={() => setShowYoutubeModal(false)}
-        title="Add YouTube video"
-        placeholder="https://youtube.com/watch?v=..."
-        onConfirm={(url) => {
-          editor.chain().focus().setYoutubeVideo({ src: url }).run();
+      <MediaEmbedModal
+        isOpen={!!mediaEmbed}
+        type={mediaEmbed?.type ?? "youtube"}
+        prefilledUrl={mediaEmbed?.prefilledUrl}
+        onClose={() => setMediaEmbed(null)}
+        onEmbed={(url) => {
+          if (mediaEmbed?.type === "youtube") {
+            editor.chain().focus().setYoutubeVideo({ src: url }).run();
+          } else {
+            editor.commands.setSpotifyEmbed({ src: url });
+          }
         }}
-      />
-
-      <EmbedModal
-        isOpen={showSpotifyModal}
-        onClose={() => setShowSpotifyModal(false)}
-        title="Add Spotify track"
-        placeholder="https://open.spotify.com/track/..."
-        onConfirm={(url) => {
-          editor.commands.setSpotifyEmbed({ src: url });
+        onAddLink={(url) => {
+          const sel = mediaEmbed?.prefilledSelection;
+          if (sel) {
+            editor
+              .chain()
+              .focus()
+              .setTextSelection({ from: sel.from, to: sel.to })
+              .setLink({ href: url })
+              .run();
+          } else {
+            editor
+              .chain()
+              .focus()
+              .insertContent(`<a href="${url}">${url}</a>`)
+              .run();
+          }
         }}
       />
 
