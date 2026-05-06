@@ -164,29 +164,42 @@ export default function WritePage({
     },
   });
 
-  // Open toolbar instantly on editor focus.
-  // Close only when visualViewport returns to full height (keyboard physically gone).
-  // No blur handler — scrolling and content reflow never falsely hide the toolbar.
+  // Track visualViewport offset via CSS var (avoids re-render flicker on Enter).
+  // Open keyboard via focusin (instant, reliable). Close via visualViewport when it
+  // grows back to ≥75% of screen.height. Position switches sticky → fixed when open
+  // so the toolbar doesn't un-stick on upward scroll.
   useEffect(() => {
-    if (!isMobile || !editor) return;
-    const onFocus = () => setKeyboardOpen(true);
-    editor.on("focus", onFocus);
+    const onFocusIn = (e: FocusEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (
+        t &&
+        (t.tagName === "INPUT" ||
+          t.tagName === "TEXTAREA" ||
+          t.isContentEditable ||
+          !!t.closest("[contenteditable='true']"))
+      ) {
+        setKeyboardOpen(true);
+      }
+    };
+    document.addEventListener("focusin", onFocusIn);
     const vv = window.visualViewport;
-    if (vv) {
-      const fullHeight = vv.height; // snapshot once at mount; never updated
-      const onResize = () => {
-        // 150px threshold: large enough to ignore browser-chrome collapse (~70px),
-        // small enough to catch keyboard dismiss (~300px).
-        if (vv.height >= fullHeight - 150) setKeyboardOpen(false);
-      };
-      vv.addEventListener("resize", onResize);
-      return () => {
-        editor.off("focus", onFocus);
-        vv.removeEventListener("resize", onResize);
-      };
-    }
-    return () => editor.off("focus", onFocus);
-  }, [isMobile, editor]);
+    if (!vv) return () => document.removeEventListener("focusin", onFocusIn);
+    const update = () => {
+      document.documentElement.style.setProperty(
+        "--vv-offset",
+        `${vv.offsetTop}px`
+      );
+      if (vv.height >= window.screen.height * 0.75) setKeyboardOpen(false);
+    };
+    update();
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    return () => {
+      document.removeEventListener("focusin", onFocusIn);
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+    };
+  }, []);
 
   useEffect(() => {
     const bar = topBarRef.current;
@@ -440,15 +453,12 @@ export default function WritePage({
           maxWidth: isMobile ? "100%" : "720px",
           backgroundColor: "#FFFFFF",
           transform:
-            isMobile && !keyboardOpen && !navVisible
-              ? "translateY(-100%)"
-              : "translateY(0)",
+            isMobile && !navVisible ? "translateY(-100%)" : "translateY(0)",
           transition: "transform 200ms ease",
           willChange: isMobile ? "transform" : undefined,
         }}
       >
-        {/* Header — shown when keyboard is closed */}
-        {(!isMobile || !keyboardOpen) && (
+        {
           <div
             style={{
               maxWidth: "720px",
@@ -561,34 +571,7 @@ export default function WritePage({
               </div>
             </div>
           </div>
-        )}
-
-        {/* Toolbar — shown only when keyboard is open on mobile */}
-        {isMobile && keyboardOpen && (
-          <div
-            style={{
-              paddingTop: "env(safe-area-inset-top)",
-              borderBottom: "2px solid #000000",
-            }}
-          >
-            <div style={{ paddingTop: "8px", paddingBottom: "8px" }}>
-              <StickyToolbar
-                editor={editor}
-                fileInputRef={fileInputRef}
-                inline
-                onOpenLinkModal={() => {
-                  linkSelectionRef.current = {
-                    from: editor.state.selection.from,
-                    to: editor.state.selection.to,
-                  };
-                  setShowLinkModal(true);
-                }}
-                onOpenYoutubeModal={() => setShowYoutubeModal(true)}
-                onOpenSpotifyModal={() => setShowSpotifyModal(true)}
-              />
-            </div>
-          </div>
-        )}
+        }
       </div>
 
       {/* Content area */}
@@ -697,17 +680,61 @@ export default function WritePage({
             <span style={{ fontWeight: "bold" }}>{readLengthMin}</span> min read
           </p>
 
-          {/* Spacer before editor */}
+          {/* Spacer before toolbar */}
           <div style={{ height: "32px" }} />
+        </div>
 
-          {/* Editor content */}
-          <div
-            className="write-editor"
-            style={{ width: "100%", position: "relative" }}
-          >
-            <EditorContent editor={editor} />
-            <LinkPopover editor={editor} />
-          </div>
+        {/* Mobile toolbar \u2014 sticky when keyboard closed (locks below title section),
+            fixed when keyboard is open (stays at top regardless of scroll direction).
+            The placeholder reserves space when fixed so the body content doesn't shift. */}
+        {isMobile && (
+          <>
+            {keyboardOpen && <div style={{ height: "50px" }} />}
+            <div
+              style={{
+                position: keyboardOpen ? "fixed" : "sticky",
+                top: "var(--vv-offset, 0px)",
+                left: keyboardOpen ? 0 : undefined,
+                right: keyboardOpen ? 0 : undefined,
+                zIndex: 40,
+                width: "100%",
+                backgroundColor: "#FFFFFF",
+                borderTop: "2px solid #000000",
+                borderBottom: "2px solid #000000",
+                paddingTop: "8px",
+                paddingBottom: "8px",
+                boxSizing: "border-box",
+              }}
+            >
+              <StickyToolbar
+                editor={editor}
+                fileInputRef={fileInputRef}
+                inline
+                onOpenLinkModal={() => {
+                  linkSelectionRef.current = {
+                    from: editor.state.selection.from,
+                    to: editor.state.selection.to,
+                  };
+                  setShowLinkModal(true);
+                }}
+                onOpenYoutubeModal={() => setShowYoutubeModal(true)}
+                onOpenSpotifyModal={() => setShowSpotifyModal(true)}
+              />
+            </div>
+          </>
+        )}
+
+        {/* Editor content */}
+        <div
+          className="write-editor"
+          style={{
+            width: "100%",
+            position: "relative",
+            paddingBottom: isMobile ? "48px" : "100px",
+          }}
+        >
+          <EditorContent editor={editor} />
+          <LinkPopover editor={editor} />
         </div>
       </div>
 
