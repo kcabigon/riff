@@ -18,7 +18,6 @@ import "@/app/write/[pieceId]/editor.css";
 import BackButton from "@/components/BackButton";
 import CoverImageModal from "@/components/write/CoverImageModal";
 import SubmitConfirmModal from "@/components/write/SubmitConfirmModal";
-import IconButton from "@/components/IconButton";
 import { convertHeicToJpeg } from "@/lib/convert-heic";
 import NoiseBackground from "@/components/NoiseBackground";
 import { useIsMobile } from "@/hooks/useMediaQuery";
@@ -79,6 +78,7 @@ export default function WritePage({
   } | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
+  const [coverButtonHovered, setCoverButtonHovered] = useState(false);
   const editorRef = useRef<Editor | null>(null);
   const [whatsNextTrigger, setWhatsNextTrigger] =
     useState<WhatsNextTrigger | null>(null);
@@ -637,11 +637,7 @@ export default function WritePage({
               {/* Submit CTA / cover icon */}
               {piece.riffs.length > 0 &&
                 (isSubmitted ? (
-                  <IconButton
-                    src="/icons/cover_photo.svg"
-                    label={
-                      coverImage ? "Change cover image" : "Add cover image"
-                    }
+                  <button
                     onClick={() => {
                       if (coverImage) {
                         setShowSubmitModal(true);
@@ -649,8 +645,24 @@ export default function WritePage({
                         setShowCoverModal(true);
                       }
                     }}
-                    size={24}
-                  />
+                    onMouseEnter={() => setCoverButtonHovered(true)}
+                    onMouseLeave={() => setCoverButtonHovered(false)}
+                    style={{
+                      padding: isMobile ? "6px 10px" : "8px 16px",
+                      fontSize: isMobile ? "11px" : "12px",
+                      fontFamily: "var(--font-dm-sans)",
+                      fontWeight: 300,
+                      color: "#000000",
+                      backgroundColor: coverButtonHovered
+                        ? "#F5F5F5"
+                        : "#FFFFFF",
+                      border: "2px solid #000000",
+                      boxShadow: "none",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Cover
+                  </button>
                 ) : (
                   <CTAButton
                     onClick={() => {
