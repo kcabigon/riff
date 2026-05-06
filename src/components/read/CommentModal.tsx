@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Avatar from "@/components/shared/Avatar";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import CommentButton from "./CommentButton";
 import DestructiveButton from "@/components/DestructiveButton";
@@ -42,12 +43,6 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(diff / 86400)}d ago`;
 }
 
-function initials(author: CommentAuthor): string {
-  if (author.name) return author.name[0].toUpperCase();
-  if (author.username) return author.username[0].toUpperCase();
-  return "?";
-}
-
 export default function CommentModal({
   comments,
   currentUserId,
@@ -60,6 +55,7 @@ export default function CommentModal({
   const [editContent, setEditContent] = useState("");
   const [saving, setSaving] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [textareaFocused, setTextareaFocused] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const isOpen = comments.length > 0;
@@ -127,7 +123,7 @@ export default function CommentModal({
           maxHeight: "70vh",
           backgroundColor: "#FFFFFF",
           border: "2px solid #000000",
-          boxShadow: "4px 4px 0px 0px #000000",
+          boxShadow: "8px 8px 0px 0px #000000",
           zIndex: 1000,
           display: "flex",
           flexDirection: "column",
@@ -154,37 +150,7 @@ export default function CommentModal({
                   marginBottom: "12px",
                 }}
               >
-                <div
-                  style={{
-                    width: "32px",
-                    height: "32px",
-                    borderRadius: "50%",
-                    backgroundColor: "#01EFFC",
-                    border: "1px solid #000",
-                    flexShrink: 0,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "13px",
-                    fontWeight: 700,
-                    overflow: "hidden",
-                  }}
-                >
-                  {comment.author.avatarUrl ? (
-                    <img
-                      src={comment.author.avatarUrl}
-                      alt=""
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                      }}
-                    />
-                  ) : (
-                    initials(comment.author)
-                  )}
-                </div>
+                <Avatar user={comment.author} size={32} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <span
                     style={{
@@ -242,7 +208,7 @@ export default function CommentModal({
                   fontFamily: "var(--font-playfair)",
                   fontSize: "13px",
                   color: "#808080",
-                  margin: "0 0 10px 0",
+                  margin: "0 0 8px 0",
                   fontStyle: "italic",
                   borderLeft: "2px solid #01EFFC",
                   paddingLeft: "8px",
@@ -262,6 +228,8 @@ export default function CommentModal({
                       e.target.style.height = "auto";
                       e.target.style.height = `${e.target.scrollHeight}px`;
                     }}
+                    onFocus={() => setTextareaFocused(true)}
+                    onBlur={() => setTextareaFocused(false)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && (e.metaKey || e.ctrlKey))
                         handleSave();
@@ -276,7 +244,9 @@ export default function CommentModal({
                       width: "100%",
                       resize: "none",
                       overflow: "hidden",
-                      border: "1px solid #E6E6E6",
+                      border: textareaFocused
+                        ? "2px solid #00FF66"
+                        : "2px solid #000000",
                       padding: "6px 8px",
                       fontFamily: "var(--font-dm-sans)",
                       fontSize: "16px",
@@ -291,7 +261,7 @@ export default function CommentModal({
                       justifyContent: "flex-end",
                       alignItems: "center",
                       gap: "8px",
-                      marginTop: "10px",
+                      marginTop: "8px",
                     }}
                   >
                     <button
@@ -352,7 +322,7 @@ export default function CommentModal({
                       fontSize: "14px",
                       fontWeight: 300,
                       color: "#000000",
-                      margin: "0 0 10px 0",
+                      margin: "0 0 8px 0",
                     }}
                   >
                     Delete this comment?
