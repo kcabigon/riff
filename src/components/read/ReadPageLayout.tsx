@@ -7,7 +7,7 @@ import ReadToggle from "./ReadToggle";
 import ReadOnlyEditor from "./ReadOnlyEditor";
 import CommentPopover from "./CommentPopover";
 import CommentSidebar from "./CommentSidebar";
-import CommentDrawer from "./CommentDrawer";
+import CommentModal from "./CommentModal";
 import ReadingProgress from "./ReadingProgress";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import { useThemeColor } from "@/hooks/useThemeColor";
@@ -226,10 +226,9 @@ export default function ReadPageLayout({
 
   const readMinutes = Math.max(1, piece.readLengthMin);
 
-  const activeComment =
-    activeHighlightIds.length > 0
-      ? (comments.find((c) => c.id === activeHighlightIds[0]) ?? null)
-      : null;
+  const activeComments = activeHighlightIds
+    .map((id) => comments.find((c) => c.id === id))
+    .filter((c): c is CommentData => c !== undefined);
 
   return (
     <div
@@ -450,10 +449,10 @@ export default function ReadPageLayout({
             activeHighlightIds={activeHighlightIds}
             pendingSelection={pendingSelection}
             currentUserId={currentUser.id}
-            onSelection={setPendingSelection}
+            onSelection={isMobile ? () => {} : setPendingSelection}
             onHighlightClick={handleHighlightClick}
             onClearHighlight={handleClearHighlight}
-            onImageComment={handleImageComment}
+            onImageComment={isMobile ? undefined : handleImageComment}
             onEditorReady={handleEditorReady}
           />
 
@@ -502,10 +501,10 @@ export default function ReadPageLayout({
         />
       )}
 
-      {/* Mobile: bottom drawer for viewing a comment */}
+      {/* Mobile: centered modal for viewing comments */}
       {isMobile && (
-        <CommentDrawer
-          comment={activeComment}
+        <CommentModal
+          comments={activeComments}
           currentUserId={currentUser.id}
           onClose={() => setActiveHighlightIds([])}
           onDelete={handleDeleteComment}
