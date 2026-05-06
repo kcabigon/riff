@@ -19,11 +19,15 @@ const CONFIG = {
     manualTitle: "Add YouTube video",
     confirmTitle: "Embed this video?",
     placeholder: "https://youtube.com/watch?v=...",
+    validate: /(youtube\.com\/watch|youtu\.be\/|youtube\.com\/shorts\/)/,
+    errorMessage: "Please enter a valid YouTube URL",
   },
   spotify: {
     manualTitle: "Add Spotify track",
     confirmTitle: "Embed this track?",
     placeholder: "https://open.spotify.com/track/...",
+    validate: /open\.spotify\.com\/(track|album|playlist|episode|show)\//,
+    errorMessage: "Please enter a valid Spotify URL",
   },
 };
 
@@ -36,6 +40,7 @@ export default function MediaEmbedModal({
   onAddLink,
 }: MediaEmbedModalProps) {
   const [url, setUrl] = useState("");
+  const [urlError, setUrlError] = useState<string | null>(null);
   const urlRef = useRef<HTMLInputElement>(null);
   const config = CONFIG[type];
   const isPasteConfirm = !!prefilledUrl;
@@ -43,13 +48,23 @@ export default function MediaEmbedModal({
   useEffect(() => {
     if (isOpen && !isPasteConfirm) {
       setUrl("");
+      setUrlError(null);
       setTimeout(() => urlRef.current?.focus(), 100);
     }
   }, [isOpen, isPasteConfirm]);
 
+  const validate = (value: string): boolean => {
+    const normalized = /^https?:\/\//i.test(value) ? value : `https://${value}`;
+    return config.validate.test(normalized);
+  };
+
   const handleEmbed = () => {
     const target = isPasteConfirm ? prefilledUrl! : url.trim();
     if (!target) return;
+    if (!isPasteConfirm && !validate(target)) {
+      setUrlError(config.errorMessage);
+      return;
+    }
     let finalUrl = target;
     if (!/^https?:\/\//i.test(finalUrl)) finalUrl = `https://${finalUrl}`;
     onEmbed(finalUrl);
@@ -107,7 +122,7 @@ export default function MediaEmbedModal({
   }
 
   const footer = (
-    <PrimaryButton onClick={handleEmbed} disabled={!url.trim()}>
+    <PrimaryButton onClick={handleEmbed} disabled={!url.trim() || !!urlError}>
       Add
     </PrimaryButton>
   );
@@ -136,7 +151,15 @@ export default function MediaEmbedModal({
         <input
           ref={urlRef}
           value={url}
-          onChange={(e) => setUrl(e.target.value)}
+          onChange={(e) => {
+            setUrl(e.target.value);
+            if (urlError) setUrlError(null);
+          }}
+          onBlur={() => {
+            if (url.trim() && !validate(url.trim())) {
+              setUrlError(config.errorMessage);
+            }
+          }}
           placeholder={config.placeholder}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
@@ -148,7 +171,7 @@ export default function MediaEmbedModal({
           style={{
             width: "100%",
             backgroundColor: "#FFFFFF",
-            border: "2px solid #000000",
+            border: `2px solid ${urlError ? "#DC2626" : "#000000"}`,
             padding: "12px",
             fontFamily: "var(--font-dm-sans)",
             fontSize: "16px",
@@ -157,6 +180,19 @@ export default function MediaEmbedModal({
             boxSizing: "border-box",
           }}
         />
+        {urlError && (
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "12px",
+              fontWeight: 300,
+              color: "#DC2626",
+              margin: "6px 0 0",
+            }}
+          >
+            {urlError}
+          </p>
+        )}
       </div>
     </Modal>
   );
