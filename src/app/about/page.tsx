@@ -1,10 +1,10 @@
-import AboutPage from "@/components/about/AboutPage";
+import FoundersNotePage from "@/components/about/FoundersNotePage";
 
 export const metadata = {
-  title: "About - Riff",
-  description: "The story behind Riff — a private essay-sharing platform built for friends.",
+  title: "Why we are building Riff",
+  description: "A note from the founders on why they built Riff.",
 };
 
 export default function About() {
-  return <AboutPage />;
+  return <FoundersNotePage />;
 }
