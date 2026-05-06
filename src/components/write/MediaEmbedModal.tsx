@@ -24,7 +24,7 @@ const CONFIG = {
   },
   spotify: {
     manualTitle: "Add Spotify track",
-    confirmTitle: "Embed this track?",
+    confirmTitle: "Embed this Spotify track?",
     placeholder: "https://open.spotify.com/track/...",
     validate: /open\.spotify\.com\/(track|album|playlist|episode|show)\//,
     errorMessage: "Please enter a valid Spotify URL",
