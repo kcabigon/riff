@@ -77,8 +77,8 @@ export default function WritePage({
     prefilledUrl?: string;
     prefilledSelection?: { from: number; to: number; text: string };
   } | null>(null);
-  const [isPastingImage, setIsPastingImage] = useState(false);
-  const [pasteError, setPasteError] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
   const editorRef = useRef<Editor | null>(null);
   const [whatsNextTrigger, setWhatsNextTrigger] =
     useState<WhatsNextTrigger | null>(null);
@@ -97,7 +97,7 @@ export default function WritePage({
   const navVisible = useScrollDirection({ threshold: 15 });
 
   const handleImagePaste = useCallback(async (rawFile: File) => {
-    setPasteError(null);
+    setImageError(null);
 
     let file = rawFile;
     if (
@@ -109,7 +109,7 @@ export default function WritePage({
       try {
         file = await convertHeicToJpeg(rawFile);
       } catch {
-        setPasteError("Could not process HEIC file — try a different format");
+        setImageError("Could not process HEIC file — try a different format");
         return;
       }
     }
@@ -122,18 +122,18 @@ export default function WritePage({
       "image/webp",
     ];
     if (!allowedTypes.includes(file.type)) {
-      setPasteError(
+      setImageError(
         "Unsupported file type — use JPEG, PNG, GIF, WebP, or HEIC"
       );
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      setPasteError("File too large — max 5MB");
+      setImageError("File too large — max 5MB");
       return;
     }
 
-    setIsPastingImage(true);
+    setIsUploadingImage(true);
     const formData = new FormData();
     formData.append("file", file);
 
@@ -144,14 +144,14 @@ export default function WritePage({
       });
       const data = await response.json();
       if (!response.ok || !data.success || !data.url) {
-        setPasteError("Upload failed — try again");
+        setImageError("Upload failed — try again");
         return;
       }
       editorRef.current?.chain().focus().setImage({ src: data.url }).run();
     } catch {
-      setPasteError("Upload failed — try again");
+      setImageError("Upload failed — try again");
     } finally {
-      setIsPastingImage(false);
+      setIsUploadingImage(false);
     }
   }, []);
 
@@ -441,16 +441,48 @@ export default function WritePage({
     let file = event.target.files?.[0];
     if (!file || !editor) return;
 
-    try {
-      file = await convertHeicToJpeg(file);
-    } catch {
-      alert("Could not process HEIC file. Please try converting it first.");
+    setImageError(null);
+
+    if (
+      file.type === "image/heic" ||
+      file.type === "image/heif" ||
+      file.name?.toLowerCase().endsWith(".heic") ||
+      file.name?.toLowerCase().endsWith(".heif")
+    ) {
+      try {
+        file = await convertHeicToJpeg(file);
+      } catch {
+        setImageError("Could not process HEIC file — try a different format");
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        return;
+      }
+    }
+
+    const allowedTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+    ];
+    if (!allowedTypes.includes(file.type)) {
+      setImageError(
+        "Unsupported file type — use JPEG, PNG, GIF, WebP, or HEIC"
+      );
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setImageError("File too large — max 5MB");
+      if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
 
     const formData = new FormData();
     formData.append("file", file);
 
+    setIsUploadingImage(true);
     try {
       const response = await fetch("/api/upload/image", {
         method: "POST",
@@ -458,17 +490,15 @@ export default function WritePage({
       });
       const data = await response.json();
       if (!response.ok || !data.success || !data.url) {
-        alert("Failed to upload image: " + (data.error || "Unknown error"));
+        setImageError("Upload failed — " + (data.error || "try again"));
         return;
       }
       editor.chain().focus().setImage({ src: data.url }).run();
-    } catch (error) {
-      console.error("Error uploading image:", error);
-      alert("Failed to upload image. Please try again.");
-    }
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+    } catch {
+      setImageError("Upload failed — try again");
+    } finally {
+      setIsUploadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -671,17 +701,17 @@ export default function WritePage({
       </div>
 
       {/* Image paste status toast */}
-      {(isPastingImage || pasteError) && (
+      {(isUploadingImage || imageError) && (
         <div
           style={{
             position: "fixed",
-            top: "80px",
+            top: "50%",
             left: "50%",
-            transform: "translateX(-50%)",
+            transform: "translate(-50%, -50%)",
             zIndex: 60,
             backgroundColor: "#FFFFFF",
             border: "2px solid #000000",
-            boxShadow: "2px 2px 0px 0px #000000",
+            boxShadow: "4px 4px 0px 0px #000000",
             padding: "10px 14px",
             display: "flex",
             alignItems: "center",
@@ -689,7 +719,7 @@ export default function WritePage({
             whiteSpace: "nowrap",
           }}
         >
-          {isPastingImage ? (
+          {isUploadingImage ? (
             <>
               <div
                 style={{
@@ -703,7 +733,7 @@ export default function WritePage({
               <span
                 style={{
                   fontFamily: "var(--font-dm-sans)",
-                  fontSize: "13px",
+                  fontSize: "12px",
                   fontWeight: 300,
                   color: "#000",
                 }}
@@ -725,15 +755,15 @@ export default function WritePage({
               <span
                 style={{
                   fontFamily: "var(--font-dm-sans)",
-                  fontSize: "13px",
+                  fontSize: "12px",
                   fontWeight: 300,
                   color: "#DC2626",
                 }}
               >
-                {pasteError}
+                {imageError}
               </span>
               <button
-                onClick={() => setPasteError(null)}
+                onClick={() => setImageError(null)}
                 style={{
                   background: "none",
                   border: "none",
