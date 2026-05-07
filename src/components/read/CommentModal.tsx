@@ -276,72 +276,36 @@ export default function CommentModal({
 
               {/* Body or edit mode */}
               {isEditing ? (
-                <div>
-                  <textarea
-                    value={editContent}
-                    onChange={(e) => {
-                      setEditContent(e.target.value);
-                      e.target.style.height = "auto";
-                      e.target.style.height = `${e.target.scrollHeight}px`;
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && (e.metaKey || e.ctrlKey))
-                        handleSave();
-                      if (e.key === "Escape") {
-                        setEditContent(comment.content);
-                        setIsEditing(false);
-                      }
-                    }}
-                    autoFocus
-                    rows={4}
-                    style={{
-                      width: "100%",
-                      resize: "none",
-                      overflow: "hidden",
-                      border: "1px solid #E6E6E6",
-                      padding: "6px 8px",
-                      fontFamily: "var(--font-dm-sans)",
-                      fontSize: "16px",
-                      lineHeight: 1.6,
-                      outline: "none",
-                      boxSizing: "border-box",
-                    }}
-                  />
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "flex-end",
-                      alignItems: "center",
-                      gap: "8px",
-                      marginTop: "8px",
-                    }}
-                  >
-                    <button
-                      onClick={() => {
-                        setEditContent(comment.content);
-                        setIsEditing(false);
-                      }}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
-                        fontFamily: "var(--font-dm-sans)",
-                        fontSize: "13px",
-                        fontWeight: 300,
-                        color: "#808080",
-                      }}
-                    >
-                      Cancel
-                    </button>
-                    <CommentButton
-                      onClick={handleSave}
-                      disabled={saving || !editContent.trim()}
-                      loading={saving}
-                    >
-                      Save
-                    </CommentButton>
-                  </div>
-                </div>
+                <textarea
+                  value={editContent}
+                  onChange={(e) => {
+                    setEditContent(e.target.value);
+                    e.target.style.height = "auto";
+                    e.target.style.height = `${e.target.scrollHeight}px`;
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey))
+                      handleSave();
+                    if (e.key === "Escape") {
+                      setEditContent(comment.content);
+                      setIsEditing(false);
+                    }
+                  }}
+                  autoFocus
+                  rows={4}
+                  style={{
+                    width: "100%",
+                    resize: "none",
+                    overflow: "hidden",
+                    border: "1px solid #E6E6E6",
+                    padding: "6px 8px",
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "16px",
+                    lineHeight: 1.6,
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
               ) : (
                 <p
                   style={{
@@ -419,64 +383,100 @@ export default function CommentModal({
           )}
         </div>
 
-        {/* Pager — only when multiple comments; hidden during editing so Save/Cancel are always visible */}
-        {hasMultiple && !isEditing && (
+        {/* Bottom strip — Save/Cancel when editing, pager when viewing multiple comments */}
+        {(isEditing || hasMultiple) && (
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              justifyContent: "space-between",
+              justifyContent: isEditing ? "flex-end" : "space-between",
+              gap: isEditing ? "8px" : undefined,
               padding: "10px 16px",
               borderTop: "1px solid #E6E6E6",
               flexShrink: 0,
             }}
           >
-            <button
-              onClick={() => setCurrentIndex((i) => Math.max(0, i - 1))}
-              disabled={currentIndex === 0}
-              style={{
-                background: "none",
-                border: "none",
-                cursor: currentIndex === 0 ? "default" : "pointer",
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "20px",
-                color: currentIndex === 0 ? "#CCCCCC" : "#000000",
-                padding: "4px 8px",
-                lineHeight: 1,
-              }}
-            >
-              ‹
-            </button>
-            <span
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "12px",
-                fontWeight: 300,
-                color: "#808080",
-              }}
-            >
-              {currentIndex + 1} / {comments.length}
-            </span>
-            <button
-              onClick={() =>
-                setCurrentIndex((i) => Math.min(comments.length - 1, i + 1))
-              }
-              disabled={currentIndex === comments.length - 1}
-              style={{
-                background: "none",
-                border: "none",
-                cursor:
-                  currentIndex === comments.length - 1 ? "default" : "pointer",
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "20px",
-                color:
-                  currentIndex === comments.length - 1 ? "#CCCCCC" : "#000000",
-                padding: "4px 8px",
-                lineHeight: 1,
-              }}
-            >
-              ›
-            </button>
+            {isEditing ? (
+              <>
+                <button
+                  onClick={() => {
+                    setEditContent(comment?.content ?? "");
+                    setIsEditing(false);
+                  }}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "13px",
+                    fontWeight: 300,
+                    color: "#808080",
+                  }}
+                >
+                  Cancel
+                </button>
+                <CommentButton
+                  onClick={handleSave}
+                  disabled={saving || !editContent.trim()}
+                  loading={saving}
+                >
+                  Save
+                </CommentButton>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => setCurrentIndex((i) => Math.max(0, i - 1))}
+                  disabled={currentIndex === 0}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: currentIndex === 0 ? "default" : "pointer",
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "20px",
+                    color: currentIndex === 0 ? "#CCCCCC" : "#000000",
+                    padding: "4px 8px",
+                    lineHeight: 1,
+                  }}
+                >
+                  ‹
+                </button>
+                <span
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "12px",
+                    fontWeight: 300,
+                    color: "#808080",
+                  }}
+                >
+                  {currentIndex + 1} / {comments.length}
+                </span>
+                <button
+                  onClick={() =>
+                    setCurrentIndex((i) => Math.min(comments.length - 1, i + 1))
+                  }
+                  disabled={currentIndex === comments.length - 1}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor:
+                      currentIndex === comments.length - 1
+                        ? "default"
+                        : "pointer",
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "20px",
+                    color:
+                      currentIndex === comments.length - 1
+                        ? "#CCCCCC"
+                        : "#000000",
+                    padding: "4px 8px",
+                    lineHeight: 1,
+                  }}
+                >
+                  ›
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>
