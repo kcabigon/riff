@@ -6,6 +6,7 @@ import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import CommentButton from "./CommentButton";
 import DestructiveButton from "@/components/DestructiveButton";
 import { AUTHOR_COLORS, buildAuthorColorMap } from "./ReadOnlyEditor";
+import { timeAgo } from "@/lib/timeAgo";
 
 interface CommentAuthor {
   id: string;
@@ -53,16 +54,6 @@ interface CommentSidebarProps {
   contentColumnRef: React.RefObject<HTMLDivElement | null>;
   pendingSelection?: PendingSelection | null;
   pendingCommentProps?: PendingCommentProps | null;
-}
-
-function timeAgo(dateStr: string): string {
-  const now = Date.now();
-  const then = new Date(dateStr).getTime();
-  const diff = Math.floor((now - then) / 1000);
-  if (diff < 60) return `${diff}s ago`;
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return `${Math.floor(diff / 86400)}d ago`;
 }
 
 function initials(author: CommentAuthor): string {

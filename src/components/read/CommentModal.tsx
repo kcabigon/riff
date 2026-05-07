@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import Avatar from "@/components/shared/Avatar";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import CommentButton from "./CommentButton";
 import DestructiveButton from "@/components/DestructiveButton";
+import { timeAgo } from "@/lib/timeAgo";
 
 interface CommentAuthor {
   id: string;
@@ -34,16 +35,6 @@ interface CommentModalProps {
   onUpdate: (commentId: string, newContent: string) => Promise<void>;
 }
 
-function timeAgo(dateStr: string): string {
-  const now = Date.now();
-  const then = new Date(dateStr).getTime();
-  const diff = Math.floor((now - then) / 1000);
-  if (diff < 60) return `${diff}s ago`;
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return `${Math.floor(diff / 86400)}d ago`;
-}
-
 export default function CommentModal({
   comments,
   currentUserId,
@@ -65,10 +56,6 @@ export default function CommentModal({
   const scrollRef = useRef<HTMLDivElement>(null);
   const keyboardTriggerRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  const triggerKeyboard = useCallback(() => {
-    keyboardTriggerRef.current?.focus();
-  }, []);
 
   // When editing, reposition to stay above the iOS keyboard
   useEffect(() => {
@@ -193,7 +180,6 @@ export default function CommentModal({
           flexDirection: "column",
         }}
       >
-        {/* Scrollable content */}
         <div
           ref={scrollRef}
           style={{
@@ -205,7 +191,6 @@ export default function CommentModal({
         >
           {comment && (
             <>
-              {/* Header */}
               <div
                 style={{
                   display: "flex",
@@ -251,7 +236,7 @@ export default function CommentModal({
                           type: "action",
                           label: "Edit",
                           onClick: () => {
-                            triggerKeyboard();
+                            keyboardTriggerRef.current?.focus();
                             setEditContent(comment.content);
                             setIsEditing(true);
                           },
@@ -267,7 +252,6 @@ export default function CommentModal({
                   )}
               </div>
 
-              {/* Quoted text */}
               <p
                 style={{
                   fontFamily: "var(--font-playfair)",
@@ -283,7 +267,6 @@ export default function CommentModal({
                 {comment.selectedText}
               </p>
 
-              {/* Body or edit mode */}
               {isEditing ? (
                 <textarea
                   value={editContent}
@@ -333,7 +316,6 @@ export default function CommentModal({
                 </p>
               )}
 
-              {/* Delete confirmation */}
               {confirmingDelete && (
                 <div
                   style={{
@@ -400,7 +382,7 @@ export default function CommentModal({
               display: "flex",
               alignItems: "center",
               justifyContent: isEditing ? "flex-end" : "space-between",
-              gap: isEditing ? "8px" : undefined,
+              gap: "8px",
               padding: "10px 16px",
               borderTop: "1px solid #E6E6E6",
               flexShrink: 0,
@@ -410,7 +392,7 @@ export default function CommentModal({
               <>
                 <button
                   onClick={() => {
-                    setEditContent(comment?.content ?? "");
+                    setEditContent(comment.content);
                     setIsEditing(false);
                   }}
                   style={{

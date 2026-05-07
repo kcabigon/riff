@@ -151,7 +151,7 @@ export default function ReadOnlyEditor({
     };
     setTimeout(() => {
       Selection.prototype.collapse = origCollapse;
-    }, 50);
+    }, 500);
 
     // Remove existing marks
     proseMirror.querySelectorAll("mark[data-comment-id]").forEach((m) => {

@@ -85,6 +85,8 @@ export default function CommentComposeModal({
   }, []);
 
   useEffect(() => {
+    // Delay lets the iOS keyboard finish opening on the hidden trigger input
+    // before focus transfers to the textarea — without this the keyboard drops
     setTimeout(() => {
       textareaRef.current?.focus({ preventScroll: true });
     }, 100);
