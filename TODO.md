@@ -45,7 +45,7 @@ Last updated: March 30, 2026 (modal cleanup, reveal todos, notification todos)
 - [x] Don't show "Reveal pieces" until deadline passes OR all submissions are in
 
 ### Mobile Comments
-- [ ] Redesign mobile comment experience — easy commenting and navigation between comments in "comment" mode
+- [x] Redesign mobile comment experience — easy commenting and navigation between comments in "comment" mode
 
 ### Riff Card & Riff Page
 - [x] Update riff card: simplified to "Joined by" + avatars

@@ -359,9 +359,16 @@ export default function CommentModal({
                     </button>
                     <DestructiveButton
                       onClick={async () => {
-                        await fetch(`/api/comments/${comment.id}`, {
-                          method: "DELETE",
-                        });
+                        try {
+                          const res = await fetch(
+                            `/api/comments/${comment.id}`,
+                            { method: "DELETE" }
+                          );
+                          if (!res.ok) return;
+                        } catch (err) {
+                          console.error("Error deleting comment:", err);
+                          return;
+                        }
                         onDelete(comment.id);
                         onClose();
                       }}
