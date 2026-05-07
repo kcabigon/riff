@@ -2,6 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import Avatar from "@/components/shared/Avatar";
+import ThreeDotButton from "@/components/shared/ThreeDotButton";
+import CommentButton from "./CommentButton";
+import DestructiveButton from "@/components/DestructiveButton";
 
 interface CommentAuthor {
   id: string;
@@ -24,7 +27,10 @@ interface CommentData {
 
 interface CommentModalProps {
   comments: CommentData[];
+  currentUserId: string;
   onClose: () => void;
+  onDelete: (commentId: string) => void;
+  onUpdate: (commentId: string, newContent: string) => Promise<void>;
 }
 
 function timeAgo(dateStr: string): string {
@@ -37,23 +43,36 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(diff / 86400)}d ago`;
 }
 
-export default function CommentModal({ comments, onClose }: CommentModalProps) {
+export default function CommentModal({
+  comments,
+  currentUserId,
+  onClose,
+  onDelete,
+  onUpdate,
+}: CommentModalProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const isOpen = comments.length > 0;
   const comment = comments[currentIndex] ?? null;
   const hasMultiple = comments.length > 1;
 
+  // Reset per-card state when navigating between comments
+  useEffect(() => {
+    setIsEditing(false);
+    setEditContent(comment?.content ?? "");
+    setConfirmingDelete(false);
+    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+  }, [currentIndex, comment?.id]);
+
   // Reset index when a new set of comments is opened
   useEffect(() => {
     setCurrentIndex(0);
   }, [comments]);
-
-  // Scroll back to top when paging
-  useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = 0;
-  }, [currentIndex]);
 
   // Escape to close
   useEffect(() => {
@@ -63,6 +82,19 @@ export default function CommentModal({ comments, onClose }: CommentModalProps) {
     document.addEventListener("keydown", handleKey);
     return () => document.removeEventListener("keydown", handleKey);
   }, [onClose]);
+
+  const handleSave = async () => {
+    if (!comment) return;
+    const trimmed = editContent.trim();
+    if (!trimmed) return;
+    setSaving(true);
+    try {
+      await onUpdate(comment.id, trimmed);
+      setIsEditing(false);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -143,6 +175,30 @@ export default function CommentModal({ comments, onClose }: CommentModalProps) {
                     {timeAgo(comment.createdAt)}
                   </span>
                 </div>
+                {comment.authorId === currentUserId &&
+                  !isEditing &&
+                  !confirmingDelete && (
+                    <ThreeDotButton
+                      variant="light"
+                      align="right"
+                      items={[
+                        {
+                          type: "action",
+                          label: "Edit",
+                          onClick: () => {
+                            setEditContent(comment.content);
+                            setIsEditing(true);
+                          },
+                        },
+                        {
+                          type: "action",
+                          label: "Delete",
+                          color: "#DC2626",
+                          onClick: () => setConfirmingDelete(true),
+                        },
+                      ]}
+                    />
+                  )}
               </div>
 
               {/* Quoted text */}
@@ -161,21 +217,147 @@ export default function CommentModal({ comments, onClose }: CommentModalProps) {
                 {comment.selectedText}
               </p>
 
-              {/* Comment body */}
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#000000",
-                  margin: 0,
-                  lineHeight: 1.6,
-                  whiteSpace: "pre-wrap",
-                  overflowWrap: "break-word",
-                }}
-              >
-                {comment.content}
-              </p>
+              {/* Body or edit mode */}
+              {isEditing ? (
+                <div>
+                  <textarea
+                    value={editContent}
+                    onChange={(e) => {
+                      setEditContent(e.target.value);
+                      e.target.style.height = "auto";
+                      e.target.style.height = `${e.target.scrollHeight}px`;
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && (e.metaKey || e.ctrlKey))
+                        handleSave();
+                      if (e.key === "Escape") {
+                        setEditContent(comment.content);
+                        setIsEditing(false);
+                      }
+                    }}
+                    autoFocus
+                    rows={4}
+                    style={{
+                      width: "100%",
+                      resize: "none",
+                      overflow: "hidden",
+                      border: "1px solid #E6E6E6",
+                      padding: "6px 8px",
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "16px",
+                      lineHeight: 1.6,
+                      outline: "none",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "flex-end",
+                      alignItems: "center",
+                      gap: "8px",
+                      marginTop: "8px",
+                    }}
+                  >
+                    <button
+                      onClick={() => {
+                        setEditContent(comment.content);
+                        setIsEditing(false);
+                      }}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "13px",
+                        fontWeight: 300,
+                        color: "#808080",
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <CommentButton
+                      onClick={handleSave}
+                      disabled={saving || !editContent.trim()}
+                      loading={saving}
+                    >
+                      Save
+                    </CommentButton>
+                  </div>
+                </div>
+              ) : (
+                <p
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "16px",
+                    fontWeight: 300,
+                    color: "#000000",
+                    margin: 0,
+                    lineHeight: 1.6,
+                    whiteSpace: "pre-wrap",
+                    overflowWrap: "break-word",
+                  }}
+                >
+                  {comment.content}
+                </p>
+              )}
+
+              {/* Delete confirmation */}
+              {confirmingDelete && (
+                <div
+                  style={{
+                    marginTop: "16px",
+                    borderTop: "1px solid #E6E6E6",
+                    paddingTop: "12px",
+                  }}
+                >
+                  <p
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "14px",
+                      fontWeight: 300,
+                      color: "#000000",
+                      margin: "0 0 8px 0",
+                    }}
+                  >
+                    Delete this comment?
+                  </p>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "flex-end",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    <button
+                      onClick={() => setConfirmingDelete(false)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "13px",
+                        fontWeight: 300,
+                        color: "#808080",
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <DestructiveButton
+                      onClick={async () => {
+                        await fetch(`/api/comments/${comment.id}`, {
+                          method: "DELETE",
+                        });
+                        onDelete(comment.id);
+                        onClose();
+                      }}
+                    >
+                      Delete
+                    </DestructiveButton>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>

@@ -535,7 +535,10 @@ export default function ReadPageLayout({
       {isMobile && (
         <CommentModal
           comments={activeComments}
+          currentUserId={currentUser.id}
           onClose={() => setActiveHighlightIds([])}
+          onDelete={handleDeleteComment}
+          onUpdate={handleUpdateComment}
         />
       )}
     </div>
