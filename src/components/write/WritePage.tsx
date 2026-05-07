@@ -18,7 +18,7 @@ import "@/app/write/[pieceId]/editor.css";
 import BackButton from "@/components/BackButton";
 import CoverImageModal from "@/components/write/CoverImageModal";
 import SubmitConfirmModal from "@/components/write/SubmitConfirmModal";
-import { convertHeicToJpeg } from "@/lib/convert-heic";
+import { convertHeicToJpeg, isHeicFile } from "@/lib/convert-heic";
 import NoiseBackground from "@/components/NoiseBackground";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import StickyToolbar from "@/components/write/toolbar/StickyToolbar";
@@ -107,12 +107,7 @@ export default function WritePage({
     setImageError(null);
 
     let file = rawFile;
-    if (
-      rawFile.type === "image/heic" ||
-      rawFile.type === "image/heif" ||
-      rawFile.name?.toLowerCase().endsWith(".heic") ||
-      rawFile.name?.toLowerCase().endsWith(".heif")
-    ) {
+    if (isHeicFile(rawFile)) {
       try {
         file = await convertHeicToJpeg(rawFile);
       } catch {
@@ -428,12 +423,7 @@ export default function WritePage({
 
     setImageError(null);
 
-    if (
-      file.type === "image/heic" ||
-      file.type === "image/heif" ||
-      file.name?.toLowerCase().endsWith(".heic") ||
-      file.name?.toLowerCase().endsWith(".heif")
-    ) {
+    if (isHeicFile(file)) {
       try {
         file = await convertHeicToJpeg(file);
       } catch {
