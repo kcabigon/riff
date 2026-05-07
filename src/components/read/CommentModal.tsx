@@ -64,6 +64,7 @@ export default function CommentModal({
   });
   const scrollRef = useRef<HTMLDivElement>(null);
   const keyboardTriggerRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const triggerKeyboard = useCallback(() => {
     keyboardTriggerRef.current?.focus();
@@ -93,6 +94,14 @@ export default function CommentModal({
       window.visualViewport?.removeEventListener("resize", updatePosition);
       window.visualViewport?.removeEventListener("scroll", updatePosition);
     };
+  }, [isEditing]);
+
+  // Expand textarea to full content height when edit mode opens
+  useEffect(() => {
+    if (!isEditing || !textareaRef.current) return;
+    const el = textareaRef.current;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
   }, [isEditing]);
 
   const isOpen = comments.length > 0;
@@ -291,6 +300,7 @@ export default function CommentModal({
                       setIsEditing(false);
                     }
                   }}
+                  ref={textareaRef}
                   autoFocus
                   rows={4}
                   style={{
