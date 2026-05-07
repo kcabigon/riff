@@ -39,6 +39,7 @@ interface CommentComposeModalProps {
   pieceId: string;
   riffId: string;
   clubId: string;
+  quoteColor?: string;
   onSubmit: (comment: NewComment) => void;
   onClose: () => void;
 }
@@ -49,6 +50,7 @@ export default function CommentComposeModal({
   pieceId,
   riffId,
   clubId,
+  quoteColor = "#01EFFC",
   onSubmit,
   onClose,
 }: CommentComposeModalProps) {
@@ -186,7 +188,7 @@ export default function CommentComposeModal({
               color: "#808080",
               margin: "0 0 12px 0",
               fontStyle: "italic",
-              borderLeft: "2px solid #01EFFC",
+              borderLeft: `2px solid ${quoteColor}`,
               paddingLeft: "8px",
               overflowWrap: "break-word",
             }}

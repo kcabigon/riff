@@ -4,7 +4,10 @@ import { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Avatar from "@/components/shared/Avatar";
 import ReadToggle from "./ReadToggle";
-import ReadOnlyEditor from "./ReadOnlyEditor";
+import ReadOnlyEditor, {
+  buildAuthorColorMap,
+  AUTHOR_COLORS,
+} from "./ReadOnlyEditor";
 import CommentSidebar from "./CommentSidebar";
 import CommentModal from "./CommentModal";
 import CommentComposeModal from "./CommentComposeModal";
@@ -226,6 +229,15 @@ export default function ReadPageLayout({
   );
 
   const readMinutes = Math.max(1, piece.readLengthMin);
+
+  const authorColorMap = useMemo(
+    () => buildAuthorColorMap(comments),
+    [comments]
+  );
+
+  const currentUserColor =
+    authorColorMap[currentUser.id] ??
+    AUTHOR_COLORS[Object.keys(authorColorMap).length % AUTHOR_COLORS.length];
 
   const activeComments = useMemo(
     () =>
@@ -526,6 +538,7 @@ export default function ReadPageLayout({
           pieceId={piece.id}
           riffId={riffId}
           clubId={clubId}
+          quoteColor={currentUserColor}
           onSubmit={handleNewComment}
           onClose={() => setPendingSelection(null)}
         />
@@ -536,6 +549,7 @@ export default function ReadPageLayout({
         <CommentModal
           comments={activeComments}
           currentUserId={currentUser.id}
+          authorColorMap={authorColorMap}
           onClose={() => setActiveHighlightIds([])}
           onDelete={handleDeleteComment}
           onUpdate={handleUpdateComment}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import Avatar from "@/components/shared/Avatar";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import CommentButton from "./CommentButton";
@@ -28,6 +28,7 @@ interface CommentData {
 interface CommentModalProps {
   comments: CommentData[];
   currentUserId: string;
+  authorColorMap: Record<string, string>;
   onClose: () => void;
   onDelete: (commentId: string) => void;
   onUpdate: (commentId: string, newContent: string) => Promise<void>;
@@ -46,6 +47,7 @@ function timeAgo(dateStr: string): string {
 export default function CommentModal({
   comments,
   currentUserId,
+  authorColorMap,
   onClose,
   onDelete,
   onUpdate,
@@ -55,7 +57,43 @@ export default function CommentModal({
   const [editContent, setEditContent] = useState("");
   const [saving, setSaving] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [position, setPosition] = useState({
+    top: "50%",
+    left: "50%",
+    maxHeight: "70vh",
+  });
   const scrollRef = useRef<HTMLDivElement>(null);
+  const keyboardTriggerRef = useRef<HTMLInputElement>(null);
+
+  const triggerKeyboard = useCallback(() => {
+    keyboardTriggerRef.current?.focus();
+  }, []);
+
+  // When editing, reposition to stay above the iOS keyboard
+  useEffect(() => {
+    if (!isEditing) {
+      setPosition({ top: "50%", left: "50%", maxHeight: "70vh" });
+      return;
+    }
+
+    function updatePosition() {
+      const vv = window.visualViewport;
+      if (!vv) return;
+      setPosition({
+        top: `${vv.offsetTop + vv.height / 2}px`,
+        left: `${vv.offsetLeft + vv.width / 2}px`,
+        maxHeight: `${vv.height * 0.85}px`,
+      });
+    }
+
+    updatePosition();
+    window.visualViewport?.addEventListener("resize", updatePosition);
+    window.visualViewport?.addEventListener("scroll", updatePosition);
+    return () => {
+      window.visualViewport?.removeEventListener("resize", updatePosition);
+      window.visualViewport?.removeEventListener("scroll", updatePosition);
+    };
+  }, [isEditing]);
 
   const isOpen = comments.length > 0;
   const comment = comments[currentIndex] ?? null;
@@ -100,6 +138,24 @@ export default function CommentModal({
 
   return (
     <>
+      {/* Hidden input — focused synchronously on edit tap to open iOS keyboard before textarea mounts */}
+      <input
+        ref={keyboardTriggerRef}
+        type="text"
+        aria-hidden="true"
+        tabIndex={-1}
+        style={{
+          position: "fixed",
+          top: -100,
+          left: 0,
+          width: 1,
+          height: 1,
+          opacity: 0,
+          pointerEvents: "none",
+          fontSize: "16px",
+        }}
+      />
+
       {/* Backdrop */}
       <div
         onClick={onClose}
@@ -115,11 +171,11 @@ export default function CommentModal({
       <div
         style={{
           position: "fixed",
-          top: "50%",
-          left: "50%",
+          top: position.top,
+          left: position.left,
           transform: "translate(-50%, -50%)",
           width: "calc(100vw - 48px)",
-          maxHeight: "70vh",
+          maxHeight: position.maxHeight,
           backgroundColor: "#FFFFFF",
           border: "2px solid #000000",
           boxShadow: "8px 8px 0px 0px #000000",
@@ -186,6 +242,7 @@ export default function CommentModal({
                           type: "action",
                           label: "Edit",
                           onClick: () => {
+                            triggerKeyboard();
                             setEditContent(comment.content);
                             setIsEditing(true);
                           },
@@ -209,7 +266,7 @@ export default function CommentModal({
                   color: "#808080",
                   margin: "0 0 8px 0",
                   fontStyle: "italic",
-                  borderLeft: "2px solid #01EFFC",
+                  borderLeft: `2px solid ${authorColorMap[comment.authorId] ?? "#01EFFC"}`,
                   paddingLeft: "8px",
                   overflowWrap: "break-word",
                 }}
@@ -362,8 +419,8 @@ export default function CommentModal({
           )}
         </div>
 
-        {/* Pager — only when multiple comments at same point */}
-        {hasMultiple && (
+        {/* Pager — only when multiple comments; hidden during editing so Save/Cancel are always visible */}
+        {hasMultiple && !isEditing && (
           <div
             style={{
               display: "flex",
