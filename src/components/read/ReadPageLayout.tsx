@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import Avatar from "@/components/shared/Avatar";
 import ReadToggle from "./ReadToggle";
 import ReadOnlyEditor from "./ReadOnlyEditor";
-import CommentPopover from "./CommentPopover";
 import CommentSidebar from "./CommentSidebar";
 import CommentModal from "./CommentModal";
+import CommentComposeModal from "./CommentComposeModal";
 import ReadingProgress from "./ReadingProgress";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import { useThemeColor } from "@/hooks/useThemeColor";
@@ -453,7 +453,7 @@ export default function ReadPageLayout({
             activeHighlightIds={activeHighlightIds}
             pendingSelection={pendingSelection}
             currentUserId={currentUser.id}
-            onSelection={isMobile ? () => {} : setPendingSelection}
+            onSelection={setPendingSelection}
             onHighlightClick={handleHighlightClick}
             onClearHighlight={handleClearHighlight}
             onImageComment={isMobile ? undefined : handleImageComment}
@@ -492,9 +492,9 @@ export default function ReadPageLayout({
         )}
       </div>
 
-      {/* Mobile: comment popover as bottom sheet */}
+      {/* Mobile: compose modal for new comments */}
       {isMobile && pendingSelection && (
-        <CommentPopover
+        <CommentComposeModal
           selection={pendingSelection}
           currentUser={currentUser}
           pieceId={piece.id}
