@@ -87,6 +87,7 @@ export default function ReadPageLayout({
     useState<PendingSelection | null>(null);
 
   const isMobile = useIsMobile();
+  const keyboardTriggerRef = useRef<HTMLInputElement>(null);
   useThemeColor("#FFFFFF");
   const navVisible = useScrollDirection({ threshold: 15 });
   const metadataRef = useRef<HTMLDivElement>(null);
@@ -240,6 +241,26 @@ export default function ReadPageLayout({
       style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}
     >
       <ReadingProgress />
+
+      {/* Hidden input — focused synchronously on selection to open the iOS keyboard before the compose modal mounts */}
+      {isMobile && (
+        <input
+          ref={keyboardTriggerRef}
+          type="text"
+          aria-hidden="true"
+          tabIndex={-1}
+          style={{
+            position: "fixed",
+            top: -100,
+            left: 0,
+            width: 1,
+            height: 1,
+            opacity: 0,
+            pointerEvents: "none",
+            fontSize: "16px",
+          }}
+        />
+      )}
 
       {/* Top bar — full-width on mobile, 720px on desktop (stable width) */}
       <div
@@ -453,7 +474,12 @@ export default function ReadPageLayout({
             activeHighlightIds={activeHighlightIds}
             pendingSelection={pendingSelection}
             currentUserId={currentUser.id}
-            onSelection={setPendingSelection}
+            onSelection={(sel) => {
+              // Focus hidden input synchronously within the touchend gesture
+              // so iOS opens the keyboard before the modal mounts
+              if (isMobile) keyboardTriggerRef.current?.focus();
+              setPendingSelection(sel);
+            }}
             onHighlightClick={handleHighlightClick}
             onClearHighlight={handleClearHighlight}
             onImageComment={isMobile ? undefined : handleImageComment}
