@@ -315,80 +315,18 @@ export default function CommentModal({
                   {comment.content}
                 </p>
               )}
-
-              {confirmingDelete && (
-                <div
-                  style={{
-                    marginTop: "16px",
-                    borderTop: "1px solid #E6E6E6",
-                    paddingTop: "12px",
-                  }}
-                >
-                  <p
-                    style={{
-                      fontFamily: "var(--font-dm-sans)",
-                      fontSize: "14px",
-                      fontWeight: 300,
-                      color: "#000000",
-                      margin: "0 0 8px 0",
-                    }}
-                  >
-                    Delete this comment?
-                  </p>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "flex-end",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}
-                  >
-                    <button
-                      onClick={() => setConfirmingDelete(false)}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
-                        fontFamily: "var(--font-dm-sans)",
-                        fontSize: "13px",
-                        fontWeight: 300,
-                        color: "#808080",
-                      }}
-                    >
-                      Cancel
-                    </button>
-                    <DestructiveButton
-                      onClick={async () => {
-                        try {
-                          const res = await fetch(
-                            `/api/comments/${comment.id}`,
-                            { method: "DELETE" }
-                          );
-                          if (!res.ok) return;
-                        } catch (err) {
-                          console.error("Error deleting comment:", err);
-                          return;
-                        }
-                        onDelete(comment.id);
-                        onClose();
-                      }}
-                    >
-                      Delete
-                    </DestructiveButton>
-                  </div>
-                </div>
-              )}
             </>
           )}
         </div>
 
-        {/* Bottom strip — Save/Cancel when editing, pager when viewing multiple comments */}
-        {(isEditing || hasMultiple) && (
+        {/* Bottom strip — Save/Cancel when editing, delete confirm, or pager */}
+        {(isEditing || confirmingDelete || hasMultiple) && (
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              justifyContent: isEditing ? "flex-end" : "space-between",
+              justifyContent:
+                isEditing || confirmingDelete ? "flex-end" : "space-between",
               gap: "8px",
               padding: "10px 16px",
               borderTop: "1px solid #E6E6E6",
@@ -421,6 +359,51 @@ export default function CommentModal({
                 >
                   Save
                 </CommentButton>
+              </>
+            ) : confirmingDelete ? (
+              <>
+                <span
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "13px",
+                    fontWeight: 300,
+                    color: "#000000",
+                    marginRight: "auto",
+                  }}
+                >
+                  Delete this comment?
+                </span>
+                <button
+                  onClick={() => setConfirmingDelete(false)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "13px",
+                    fontWeight: 300,
+                    color: "#808080",
+                  }}
+                >
+                  Cancel
+                </button>
+                <DestructiveButton
+                  onClick={async () => {
+                    try {
+                      const res = await fetch(`/api/comments/${comment.id}`, {
+                        method: "DELETE",
+                      });
+                      if (!res.ok) return;
+                    } catch (err) {
+                      console.error("Error deleting comment:", err);
+                      return;
+                    }
+                    onDelete(comment.id);
+                    onClose();
+                  }}
+                >
+                  Delete
+                </DestructiveButton>
               </>
             ) : (
               <>
