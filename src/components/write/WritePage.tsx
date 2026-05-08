@@ -85,7 +85,12 @@ export default function WritePage({
   } | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
-  const [coverButtonHovered, setCoverButtonHovered] = useState(false);
+  const imageErrorTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const showImageError = useCallback((msg: string) => {
+    if (imageErrorTimerRef.current) clearTimeout(imageErrorTimerRef.current);
+    setImageError(msg);
+    imageErrorTimerRef.current = setTimeout(() => setImageError(null), 4000);
+  }, []);
   const editorRef = useRef<Editor | null>(null);
   const [whatsNextTrigger, setWhatsNextTrigger] =
     useState<WhatsNextTrigger | null>(null);
@@ -111,20 +116,20 @@ export default function WritePage({
       try {
         file = await convertHeicToJpeg(rawFile);
       } catch {
-        setImageError("Could not process HEIC file — try a different format");
+        showImageError("Could not process HEIC file — try a different format");
         return;
       }
     }
 
     if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      setImageError(
+      showImageError(
         "Unsupported file type — use JPEG, PNG, GIF, WebP, or HEIC"
       );
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      setImageError("File too large — max 5MB");
+      showImageError("File too large — max 5MB");
       return;
     }
 
@@ -139,12 +144,12 @@ export default function WritePage({
       });
       const data = await response.json();
       if (!response.ok || !data.success || !data.url) {
-        setImageError("Upload failed — try again");
+        showImageError("Upload failed — try again");
         return;
       }
       editorRef.current?.chain().focus().setImage({ src: data.url }).run();
     } catch {
-      setImageError("Upload failed — try again");
+      showImageError("Upload failed — try again");
     } finally {
       setIsUploadingImage(false);
     }
@@ -427,14 +432,14 @@ export default function WritePage({
       try {
         file = await convertHeicToJpeg(file);
       } catch {
-        setImageError("Could not process HEIC file — try a different format");
+        showImageError("Could not process HEIC file — try a different format");
         if (fileInputRef.current) fileInputRef.current.value = "";
         return;
       }
     }
 
     if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      setImageError(
+      showImageError(
         "Unsupported file type — use JPEG, PNG, GIF, WebP, or HEIC"
       );
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -442,7 +447,7 @@ export default function WritePage({
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      setImageError("File too large — max 5MB");
+      showImageError("File too large — max 5MB");
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
@@ -458,12 +463,12 @@ export default function WritePage({
       });
       const data = await response.json();
       if (!response.ok || !data.success || !data.url) {
-        setImageError("Upload failed — " + (data.error || "try again"));
+        showImageError("Upload failed — " + (data.error || "try again"));
         return;
       }
       editor.chain().focus().setImage({ src: data.url }).run();
     } catch {
-      setImageError("Upload failed — try again");
+      showImageError("Upload failed — try again");
     } finally {
       setIsUploadingImage(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -613,17 +618,19 @@ export default function WritePage({
                         setShowCoverModal(true);
                       }
                     }}
-                    onMouseEnter={() => setCoverButtonHovered(true)}
-                    onMouseLeave={() => setCoverButtonHovered(false)}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "#F5F5F5";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "#FFFFFF";
+                    }}
                     style={{
                       padding: isMobile ? "6px 10px" : "8px 16px",
                       fontSize: isMobile ? "11px" : "12px",
                       fontFamily: "var(--font-dm-sans)",
                       fontWeight: 300,
                       color: "#000000",
-                      backgroundColor: coverButtonHovered
-                        ? "#F5F5F5"
-                        : "#FFFFFF",
+                      backgroundColor: "#FFFFFF",
                       border: "2px solid #000000",
                       boxShadow: "none",
                       cursor: "pointer",
