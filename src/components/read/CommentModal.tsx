@@ -197,6 +197,7 @@ export default function CommentModal({
                   alignItems: "center",
                   gap: "8px",
                   marginBottom: "12px",
+                  position: "relative",
                 }}
               >
                 <Avatar user={comment.author} size={32} borderWidth={1} />
@@ -225,31 +226,29 @@ export default function CommentModal({
                     {timeAgo(comment.createdAt)}
                   </span>
                 </div>
-                {comment.authorId === currentUserId &&
-                  !isEditing &&
-                  !confirmingDelete && (
-                    <ThreeDotButton
-                      variant="light"
-                      align="right"
-                      items={[
-                        {
-                          type: "action",
-                          label: "Edit",
-                          onClick: () => {
-                            keyboardTriggerRef.current?.focus();
-                            setEditContent(comment.content);
-                            setIsEditing(true);
-                          },
+                {comment.authorId === currentUserId && !isEditing && (
+                  <ThreeDotButton
+                    variant="light"
+                    align="right"
+                    items={[
+                      {
+                        type: "action",
+                        label: "Edit",
+                        onClick: () => {
+                          keyboardTriggerRef.current?.focus();
+                          setEditContent(comment.content);
+                          setIsEditing(true);
                         },
-                        {
-                          type: "action",
-                          label: "Delete",
-                          color: "#DC2626",
-                          onClick: () => setConfirmingDelete(true),
-                        },
-                      ]}
-                    />
-                  )}
+                      },
+                      {
+                        type: "action",
+                        label: "Delete",
+                        color: "#DC2626",
+                        onClick: () => setConfirmingDelete(true),
+                      },
+                    ]}
+                  />
+                )}
               </div>
 
               <p
@@ -319,14 +318,75 @@ export default function CommentModal({
           )}
         </div>
 
-        {/* Bottom strip — Save/Cancel when editing, delete confirm, or pager */}
-        {(isEditing || confirmingDelete || hasMultiple) && (
+        {/* Delete confirmation overlay — covers entire modal, same pattern as CommentSidebar */}
+        {confirmingDelete && comment && (
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: "absolute",
+              inset: 0,
+              backgroundColor: "rgba(248,248,248,0.97)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "12px",
+            }}
+          >
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "13px",
+                fontWeight: 300,
+                color: "#000000",
+                margin: 0,
+                textAlign: "center",
+              }}
+            >
+              Delete this comment?
+            </p>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <button
+                onClick={() => setConfirmingDelete(false)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "13px",
+                  fontWeight: 300,
+                  color: "#808080",
+                }}
+              >
+                Cancel
+              </button>
+              <DestructiveButton
+                onClick={async () => {
+                  try {
+                    const res = await fetch(`/api/comments/${comment.id}`, {
+                      method: "DELETE",
+                    });
+                    if (!res.ok) return;
+                  } catch {
+                    return;
+                  }
+                  onDelete(comment.id);
+                  onClose();
+                }}
+              >
+                Delete
+              </DestructiveButton>
+            </div>
+          </div>
+        )}
+
+        {/* Bottom strip — Save/Cancel when editing, or pager */}
+        {(isEditing || hasMultiple) && (
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              justifyContent:
-                isEditing || confirmingDelete ? "flex-end" : "space-between",
+              justifyContent: isEditing ? "flex-end" : "space-between",
               gap: "8px",
               padding: "10px 16px",
               borderTop: "1px solid #E6E6E6",
@@ -359,51 +419,6 @@ export default function CommentModal({
                 >
                   Save
                 </CommentButton>
-              </>
-            ) : confirmingDelete ? (
-              <>
-                <span
-                  style={{
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "13px",
-                    fontWeight: 300,
-                    color: "#000000",
-                    marginRight: "auto",
-                  }}
-                >
-                  Delete this comment?
-                </span>
-                <button
-                  onClick={() => setConfirmingDelete(false)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "13px",
-                    fontWeight: 300,
-                    color: "#808080",
-                  }}
-                >
-                  Cancel
-                </button>
-                <DestructiveButton
-                  onClick={async () => {
-                    try {
-                      const res = await fetch(`/api/comments/${comment.id}`, {
-                        method: "DELETE",
-                      });
-                      if (!res.ok) return;
-                    } catch (err) {
-                      console.error("Error deleting comment:", err);
-                      return;
-                    }
-                    onDelete(comment.id);
-                    onClose();
-                  }}
-                >
-                  Delete
-                </DestructiveButton>
               </>
             ) : (
               <>
