@@ -392,7 +392,7 @@ export default function CommentModal({
               alignItems: "center",
               justifyContent: isEditing ? "flex-end" : "space-between",
               gap: "8px",
-              padding: "10px 16px",
+              padding: "12px 16px",
               borderTop: "1px solid #E6E6E6",
               flexShrink: 0,
             }}
