@@ -32,6 +32,21 @@ function hexToRgba(hex: string, alpha: number): string {
 
 export { AUTHOR_COLORS };
 
+// ProseMirror's MutationObserver can fire at any point after surroundContents
+// splits text nodes and attempt to restore its stored selection onto an offset
+// that no longer exists, producing an IndexSizeError. Patch once at module load
+// so the guard is always in place — no timer race possible.
+if (typeof window !== "undefined") {
+  const _origCollapse = Selection.prototype.collapse;
+  Selection.prototype.collapse = function (node: Node | null, offset?: number) {
+    try {
+      _origCollapse.call(this, node, offset);
+    } catch (e) {
+      if (!(e instanceof DOMException && e.name === "IndexSizeError")) throw e;
+    }
+  };
+}
+
 export function buildAuthorColorMap(
   comments: { authorId: string }[]
 ): Record<string, string> {
@@ -132,26 +147,6 @@ export default function ReadOnlyEditor({
 
     // Preserve scroll position during DOM manipulation
     const scrollY = window.scrollY;
-
-    // ProseMirror's MutationObserver fires after this effect and tries to
-    // restore its stored selection onto text nodes we've split via
-    // surroundContents. Patch collapse to swallow the resulting
-    // IndexSizeError for that one macrotask window.
-    const origCollapse = Selection.prototype.collapse;
-    Selection.prototype.collapse = function (
-      node: Node | null,
-      offset?: number
-    ) {
-      try {
-        origCollapse.call(this, node, offset);
-      } catch (e) {
-        if (!(e instanceof DOMException && e.name === "IndexSizeError"))
-          throw e;
-      }
-    };
-    setTimeout(() => {
-      Selection.prototype.collapse = origCollapse;
-    }, 500);
 
     // Remove existing marks
     proseMirror.querySelectorAll("mark[data-comment-id]").forEach((m) => {

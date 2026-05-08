@@ -180,77 +180,79 @@ export default function CommentModal({
           flexDirection: "column",
         }}
       >
+        {/* Header — outside scroll container so ThreeDotButton dropdown isn't
+            clipped by the overflow-y:auto scroll area on iOS Safari */}
+        {comment && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "16px 16px 0",
+              flexShrink: 0,
+            }}
+          >
+            <Avatar user={comment.author} size={32} borderWidth={1} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <span
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "14px",
+                  fontWeight: 500,
+                  color: "#000000",
+                }}
+              >
+                {comment.author.name || comment.author.username || "Unknown"}
+              </span>
+              <span
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "12px",
+                  fontWeight: 300,
+                  color: "#808080",
+                  marginLeft: "8px",
+                }}
+              >
+                {timeAgo(comment.createdAt)}
+              </span>
+            </div>
+            {comment.authorId === currentUserId && !isEditing && (
+              <ThreeDotButton
+                variant="light"
+                align="right"
+                items={[
+                  {
+                    type: "action",
+                    label: "Edit",
+                    onClick: () => {
+                      keyboardTriggerRef.current?.focus();
+                      setEditContent(comment.content);
+                      setIsEditing(true);
+                    },
+                  },
+                  {
+                    type: "action",
+                    label: "Delete",
+                    color: "#DC2626",
+                    onClick: () => setConfirmingDelete(true),
+                  },
+                ]}
+              />
+            )}
+          </div>
+        )}
+
         <div
           ref={scrollRef}
           style={{
             overflowY: "auto",
-            padding: "16px",
+            padding: "12px 16px 16px",
             flex: 1,
             minHeight: 0,
           }}
         >
           {comment && (
             <>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  marginBottom: "12px",
-                  position: "relative",
-                }}
-              >
-                <Avatar user={comment.author} size={32} borderWidth={1} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <span
-                    style={{
-                      fontFamily: "var(--font-dm-sans)",
-                      fontSize: "14px",
-                      fontWeight: 500,
-                      color: "#000000",
-                    }}
-                  >
-                    {comment.author.name ||
-                      comment.author.username ||
-                      "Unknown"}
-                  </span>
-                  <span
-                    style={{
-                      fontFamily: "var(--font-dm-sans)",
-                      fontSize: "12px",
-                      fontWeight: 300,
-                      color: "#808080",
-                      marginLeft: "8px",
-                    }}
-                  >
-                    {timeAgo(comment.createdAt)}
-                  </span>
-                </div>
-                {comment.authorId === currentUserId && !isEditing && (
-                  <ThreeDotButton
-                    variant="light"
-                    align="right"
-                    items={[
-                      {
-                        type: "action",
-                        label: "Edit",
-                        onClick: () => {
-                          keyboardTriggerRef.current?.focus();
-                          setEditContent(comment.content);
-                          setIsEditing(true);
-                        },
-                      },
-                      {
-                        type: "action",
-                        label: "Delete",
-                        color: "#DC2626",
-                        onClick: () => setConfirmingDelete(true),
-                      },
-                    ]}
-                  />
-                )}
-              </div>
-
               <p
                 style={{
                   fontFamily: "var(--font-playfair)",
@@ -284,7 +286,7 @@ export default function CommentModal({
                   }}
                   ref={textareaRef}
                   autoFocus
-                  rows={4}
+                  rows={3}
                   style={{
                     width: "100%",
                     resize: "none",
