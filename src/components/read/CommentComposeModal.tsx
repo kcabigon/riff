@@ -201,6 +201,7 @@ export default function CommentComposeModal({
           {/* Textarea — 16px prevents iOS auto-zoom on focus */}
           <textarea
             ref={textareaRef}
+            data-compose-textarea
             value={text}
             onChange={(e) => {
               setText(e.target.value);

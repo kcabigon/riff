@@ -34,16 +34,30 @@ export { AUTHOR_COLORS };
 
 // ProseMirror's MutationObserver can fire at any point after surroundContents
 // splits text nodes and attempt to restore its stored selection onto an offset
-// that no longer exists, producing an IndexSizeError. Patch once at module load
-// so the guard is always in place — no timer race possible.
+// that no longer exists, producing an IndexSizeError. It goes through multiple
+// Selection/Range methods, so patch all of them once at module load.
 if (typeof window !== "undefined") {
-  const _origCollapse = Selection.prototype.collapse;
-  Selection.prototype.collapse = function (node: Node | null, offset?: number) {
+  function swallowIndexSizeError(fn: () => void) {
     try {
-      _origCollapse.call(this, node, offset);
+      fn();
     } catch (e) {
       if (!(e instanceof DOMException && e.name === "IndexSizeError")) throw e;
     }
+  }
+
+  const _origCollapse = Selection.prototype.collapse;
+  Selection.prototype.collapse = function (node: Node | null, offset?: number) {
+    swallowIndexSizeError(() => _origCollapse.call(this, node, offset));
+  };
+
+  const _origSetStart = Range.prototype.setStart;
+  Range.prototype.setStart = function (node: Node, offset: number) {
+    swallowIndexSizeError(() => _origSetStart.call(this, node, offset));
+  };
+
+  const _origSetEnd = Range.prototype.setEnd;
+  Range.prototype.setEnd = function (node: Node, offset: number) {
+    swallowIndexSizeError(() => _origSetEnd.call(this, node, offset));
   };
 }
 

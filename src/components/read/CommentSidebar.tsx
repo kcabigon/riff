@@ -90,6 +90,15 @@ function CommentCard({
   const [deleting, setDeleting] = useState(false);
   const [editContent, setEditContent] = useState(comment.content);
   const [saving, setSaving] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Expand textarea to full content height when edit mode opens
+  useEffect(() => {
+    if (!isEditing || !textareaRef.current) return;
+    const el = textareaRef.current;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [isEditing]);
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -225,6 +234,7 @@ function CommentCard({
       {isEditing ? (
         <div onClick={(e) => e.stopPropagation()}>
           <textarea
+            ref={textareaRef}
             value={editContent}
             onChange={(e) => {
               setEditContent(e.target.value);

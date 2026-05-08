@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState, useCallback, useMemo } from "react";
+import { flushSync } from "react-dom";
 import { useRouter } from "next/navigation";
 import Avatar from "@/components/shared/Avatar";
 import ReadToggle from "./ReadToggle";
@@ -487,10 +488,20 @@ export default function ReadPageLayout({
             pendingSelection={pendingSelection}
             currentUserId={currentUser.id}
             onSelection={(sel) => {
-              // Focus hidden input synchronously within the touchend gesture
-              // so iOS opens the keyboard before the modal mounts
-              if (isMobile) keyboardTriggerRef.current?.focus();
-              setPendingSelection(sel);
+              if (isMobile) {
+                // flushSync mounts CommentComposeModal synchronously so the
+                // textarea is in the DOM while we're still in the touchend
+                // call stack. The explicit focus() below is then recognized
+                // by iOS as a user-gesture interaction and opens the keyboard.
+                flushSync(() => setPendingSelection(sel));
+                (
+                  document.querySelector(
+                    "textarea[data-compose-textarea]"
+                  ) as HTMLTextAreaElement | null
+                )?.focus();
+              } else {
+                setPendingSelection(sel);
+              }
             }}
             onHighlightClick={handleHighlightClick}
             onClearHighlight={handleClearHighlight}
