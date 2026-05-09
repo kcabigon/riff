@@ -1,13 +1,16 @@
 "use client";
 
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Avatar from "@/components/shared/Avatar";
 import ReadToggle from "./ReadToggle";
-import ReadOnlyEditor from "./ReadOnlyEditor";
-import CommentPopover from "./CommentPopover";
+import ReadOnlyEditor, {
+  buildAuthorColorMap,
+  AUTHOR_COLORS,
+} from "./ReadOnlyEditor";
 import CommentSidebar from "./CommentSidebar";
-import CommentDrawer from "./CommentDrawer";
+import CommentModal from "./CommentModal";
+import CommentComposeModal from "./CommentComposeModal";
 import ReadingProgress from "./ReadingProgress";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import { useThemeColor } from "@/hooks/useThemeColor";
@@ -82,13 +85,12 @@ export default function ReadPageLayout({
   // comment cards stacking at top:0 on notification deep-link nav).
   const [isRiffMode, setIsRiffMode] = useState(false);
   const [comments, setComments] = useState<CommentData[]>(initialComments);
-  const [activeHighlightId, setActiveHighlightId] = useState<string | null>(
-    null
-  );
+  const [activeHighlightIds, setActiveHighlightIds] = useState<string[]>([]);
   const [pendingSelection, setPendingSelection] =
     useState<PendingSelection | null>(null);
 
   const isMobile = useIsMobile();
+  const keyboardTriggerRef = useRef<HTMLInputElement>(null);
   useThemeColor("#FFFFFF");
   const navVisible = useScrollDirection({ threshold: 15 });
   const metadataRef = useRef<HTMLDivElement>(null);
@@ -149,7 +151,7 @@ export default function ReadPageLayout({
       const updated = [...prev, comment];
       return updated.sort((a, b) => a.selectionStart - b.selectionStart);
     });
-    setActiveHighlightId(comment.id);
+    setActiveHighlightIds([comment.id]);
     setPendingSelection(null);
   }, []);
 
@@ -157,14 +159,11 @@ export default function ReadPageLayout({
     if (startInRiffMode) setIsRiffMode(true);
   }, [startInRiffMode]);
 
-  const handleClearHighlight = useCallback(
-    () => setActiveHighlightId(null),
-    []
-  );
+  const handleClearHighlight = useCallback(() => setActiveHighlightIds([]), []);
 
   const handleDeleteComment = useCallback((commentId: string) => {
     setComments((prev) => prev.filter((c) => c.id !== commentId));
-    setActiveHighlightId((prev) => (prev === commentId ? null : prev));
+    setActiveHighlightIds((prev) => prev.filter((id) => id !== commentId));
   }, []);
 
   const handleUpdateComment = useCallback(
@@ -186,9 +185,9 @@ export default function ReadPageLayout({
     []
   );
 
-  // Click sidebar comment → scroll to highlight in content
+  // Click sidebar comment → scroll to highlight in content (single activation)
   const handleSidebarCommentClick = useCallback((commentId: string) => {
-    setActiveHighlightId(commentId);
+    setActiveHighlightIds([commentId]);
 
     setTimeout(() => {
       const mark = document.querySelector(
@@ -200,15 +199,15 @@ export default function ReadPageLayout({
     }, 50);
   }, []);
 
-  // Click highlight in content → activate comment and ensure both are visible
-  const handleHighlightClick = useCallback((commentId: string) => {
-    setActiveHighlightId(commentId);
+  // Click highlight in content → activate all comments at that point.
+  // Scrolls to the topmost mark in the group.
+  const handleHighlightClick = useCallback((commentIds: string[]) => {
+    setActiveHighlightIds(commentIds);
 
-    // After positions recalculate, scroll the highlight into center view
-    // The sidebar comment will be repositioned next to it
+    // After positions recalculate, scroll the first (topmost) highlight into view
     setTimeout(() => {
       const mark = document.querySelector(
-        `mark[data-comment-id="${commentId}"]`
+        `mark[data-comment-id="${commentIds[0]}"]`
       );
       if (mark) {
         mark.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -231,9 +230,22 @@ export default function ReadPageLayout({
 
   const readMinutes = Math.max(1, piece.readLengthMin);
 
-  const activeComment = activeHighlightId
-    ? (comments.find((c) => c.id === activeHighlightId) ?? null)
-    : null;
+  const authorColorMap = useMemo(
+    () => buildAuthorColorMap(comments),
+    [comments]
+  );
+
+  const currentUserColor =
+    authorColorMap[currentUser.id] ??
+    AUTHOR_COLORS[Object.keys(authorColorMap).length % AUTHOR_COLORS.length];
+
+  const activeComments = useMemo(
+    () =>
+      activeHighlightIds
+        .map((id) => comments.find((c) => c.id === id))
+        .filter((c): c is CommentData => c !== undefined),
+    [activeHighlightIds, comments]
+  );
 
   return (
     <div
@@ -241,6 +253,26 @@ export default function ReadPageLayout({
       style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}
     >
       <ReadingProgress />
+
+      {/* Hidden input — focused synchronously on selection to open the iOS keyboard before the compose modal mounts */}
+      {isMobile && (
+        <input
+          ref={keyboardTriggerRef}
+          type="text"
+          aria-hidden="true"
+          tabIndex={-1}
+          style={{
+            position: "fixed",
+            top: -100,
+            left: 0,
+            width: 1,
+            height: 1,
+            opacity: 0,
+            pointerEvents: "none",
+            fontSize: "16px",
+          }}
+        />
+      )}
 
       {/* Top bar — full-width on mobile, 720px on desktop (stable width) */}
       <div
@@ -451,13 +483,18 @@ export default function ReadPageLayout({
             content={piece.currentContent}
             comments={isRiffMode ? comments : []}
             isRiffMode={isRiffMode}
-            activeHighlightId={activeHighlightId}
+            activeHighlightIds={activeHighlightIds}
             pendingSelection={pendingSelection}
             currentUserId={currentUser.id}
-            onSelection={setPendingSelection}
+            onSelection={(sel) => {
+              // Focus hidden input synchronously within the touchend gesture
+              // so iOS opens the keyboard before the compose modal mounts
+              if (isMobile) keyboardTriggerRef.current?.focus();
+              setPendingSelection(sel);
+            }}
             onHighlightClick={handleHighlightClick}
             onClearHighlight={handleClearHighlight}
-            onImageComment={handleImageComment}
+            onImageComment={isMobile ? undefined : handleImageComment}
             onEditorReady={handleEditorReady}
           />
 
@@ -469,7 +506,7 @@ export default function ReadPageLayout({
         {isRiffMode && !isMobile && (
           <CommentSidebar
             comments={comments}
-            activeHighlightId={activeHighlightId}
+            activeHighlightIds={activeHighlightIds}
             currentUserId={currentUser.id}
             onDelete={handleDeleteComment}
             onUpdate={handleUpdateComment}
@@ -493,25 +530,27 @@ export default function ReadPageLayout({
         )}
       </div>
 
-      {/* Mobile: comment popover as bottom sheet */}
+      {/* Mobile: compose modal for new comments */}
       {isMobile && pendingSelection && (
-        <CommentPopover
+        <CommentComposeModal
           selection={pendingSelection}
           currentUser={currentUser}
           pieceId={piece.id}
           riffId={riffId}
           clubId={clubId}
+          quoteColor={currentUserColor}
           onSubmit={handleNewComment}
           onClose={() => setPendingSelection(null)}
         />
       )}
 
-      {/* Mobile: bottom drawer for viewing a comment */}
+      {/* Mobile: centered modal for viewing comments */}
       {isMobile && (
-        <CommentDrawer
-          comment={activeComment}
+        <CommentModal
+          comments={activeComments}
           currentUserId={currentUser.id}
-          onClose={() => setActiveHighlightId(null)}
+          authorColorMap={authorColorMap}
+          onClose={() => setActiveHighlightIds([])}
           onDelete={handleDeleteComment}
           onUpdate={handleUpdateComment}
         />
