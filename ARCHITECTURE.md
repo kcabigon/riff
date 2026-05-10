@@ -1,6 +1,6 @@
 # Riff — Architecture & Project Reference
 
-**Last Updated**: April 30, 2026
+**Last Updated**: May 9, 2026
 
 This file is the single source of truth for project context. The `/letsriff` slash command reads this automatically at the start of each session.
 
@@ -14,7 +14,7 @@ A private essay-sharing platform for creative communities. Users create **clubs*
 
 ---
 
-## Current State (April 30, 2026)
+## Current State (May 9, 2026)
 
 ### What's Working
 - Landing page + About page
@@ -34,6 +34,9 @@ A private essay-sharing platform for creative communities. Users create **clubs*
 - Mandatory riff deadlines with live day countdown
 - Redesigned navbar, club dropdown, and sign-in email
 - Avatar system with admin badges
+- Paste-to-insert (images auto-upload, YouTube auto-embed, Spotify confirm modal)
+- Founders note about page with fake comment highlights
+- Mobile commenting with keyboard-aware compose modal
 - Mobile responsive across all views
 - Image uploads via Supabase Storage (persistent across deploys)
 - Public piece sharing — `/p/[pieceId]` for readers without club access
@@ -96,16 +99,19 @@ src/components/
 ├── riffs/         # RiffCard, RiffCTAButton, RiffPageLayout, CreateRiffModal, EditRiffModal,
 │                  # DeleteRiffConfirmModal, RevealCelebration, RevealConfirmModal, PieceCard,
 │                  # CompletedRiffCard, ReadyToRevealCard, MosaicCollage, ProgressCard,
-│                  # RiffFormFields, ContributionStrip, EmptyRiffState, CountdownTimer
+│                  # RiffFormFields, ContributionStrip, EmptyRiffState, CountdownTimer,
+│                  # RevealRiffButton
 ├── read/          # ReadPageLayout, ReadOnlyEditor, ReadToggle, ReadingProgress,
-│                  # CommentAnchor, CommentPopover, CommentSidebar, CommentDrawer, CommentButton
+│                  # CommentAnchor, CommentPopover, CommentSidebar, CommentModal,
+│                  # CommentComposeModal, CommentButton
 ├── profile/       # ProfilePage, ProfileHeader, ProfileSection tabs, DeletePieceModal,
 │                  # MyStatsModal, ShareModal
 ├── notifications/ # NotificationBell, NotificationPanel, NotificationItem
 ├── settings/      # SettingsPage, ProfileSection, DataSection, DeleteAccountConfirmModal
-├── about/         # AboutPage
-├── write/         # WritePage, CoverImageModal, SubmitConfirmModal, EmbedModal, LinkPopover,
-│                  # ResizableImageView, toolbar/StickyToolbar, toolbar/ToolbarButton, toolbar/toolbarButtons
+├── about/         # FoundersNotePage, FakeCommentHighlight
+├── write/         # WritePage, CoverImageModal, SubmitConfirmModal, EmbedModal, MediaEmbedModal,
+│                  # LinkPopover, ResizableImageView, toolbar/StickyToolbar, toolbar/ToolbarButton,
+│                  # toolbar/toolbarButtons
 ├── editor/        # TiptapEditor, EditorToolbar, extensions/Spotify, extensions/sharedExtensions
 ├── PrimaryButton.tsx, SecondaryButton.tsx, CTAButton.tsx, DestructiveButton.tsx
 └── TextInput.tsx, BackButton.tsx, CloseButton.tsx, NoiseBackground.tsx, Tagline.tsx
@@ -132,6 +138,8 @@ src/lib/
 ├── notifications.ts           # createNotification, notifyClubMembers, notifyRiffParticipants
 ├── tiptap-to-docx.ts          # Convert Tiptap JSON to .docx (used by export route)
 ├── whatsNextGuard.ts          # WhatsNext modal suppression logic
+├── constants.ts               # Shared constants (club name/description max lengths)
+├── timeAgo.ts                 # Relative time formatting (e.g., "3 days ago")
 └── supabase.ts                # Supabase admin client (Storage uploads)
 ```
 
