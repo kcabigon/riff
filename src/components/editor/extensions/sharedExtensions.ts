@@ -46,7 +46,7 @@ export function getSharedExtensions() {
       },
     }).configure({
       inline: false,
-      allowBase64: true,
+      allowBase64: false,
     }),
     Youtube.configure({
       controls: true,

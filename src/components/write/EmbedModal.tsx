@@ -57,9 +57,38 @@ export default function EmbedModal({
   };
 
   const footer = (
-    <PrimaryButton onClick={handleSubmit} disabled={!url.trim()}>
-      Add
-    </PrimaryButton>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: "12px",
+      }}
+    >
+      <PrimaryButton onClick={handleSubmit} disabled={!url.trim()}>
+        Add
+      </PrimaryButton>
+      <div
+        style={{
+          display: "inline-block",
+          backgroundColor: "#FFFFFF",
+          padding: "2px 8px",
+        }}
+      >
+        <p
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "12px",
+            fontWeight: 300,
+            color: "#808080",
+            margin: 0,
+            textAlign: "center",
+          }}
+        >
+          Shortcut: paste the URL directly in the editor. Works for images too.
+        </p>
+      </div>
+    </div>
   );
 
   return (

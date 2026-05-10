@@ -132,3 +132,4 @@ Last updated: March 30, 2026 (modal cleanup, reveal todos, notification todos)
 - [ ] Fix tiptap Spotify `addPasteHandler` for v3.x API
 - [ ] Update old circle routes for Next.js 16 async params (or deprecate)
 - [ ] Upgrade Prisma from 6.1.0 to 7.3.0
+- [ ] Replace `useState` hover patterns with imperative DOM handlers — `CTAButton`, `ClubDropdown`, `CommentSidebar`, `ThreeDotButton`, `DeletePieceModal`, `PiecesGrid`, `ShareModal`, `ReadyToRevealCard`, `CompletedRiffCard`, `RiffCard`, `PieceCard`
