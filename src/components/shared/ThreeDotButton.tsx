@@ -7,12 +7,14 @@ interface ThreeDotButtonProps {
   variant: "dark" | "light";
   items: DropdownItem[];
   align?: "left" | "right";
+  size?: "sm";
 }
 
 export default function ThreeDotButton({
   variant,
   items,
   align = "left",
+  size,
 }: ThreeDotButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -58,6 +60,7 @@ export default function ThreeDotButton({
       }
       items={items}
       align={align}
+      size={size}
       isOpen={isOpen}
       onToggle={() => setIsOpen((o) => !o)}
       onClose={() => setIsOpen(false)}

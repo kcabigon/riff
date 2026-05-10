@@ -27,6 +27,7 @@ interface DropdownProps {
   items: DropdownItem[];
   align?: "left" | "right";
   minWidth?: number;
+  size?: "sm";
   isOpen?: boolean;
   onToggle?: () => void;
   onClose?: () => void;
@@ -37,6 +38,7 @@ export default function Dropdown({
   items,
   align = "right",
   minWidth = 160,
+  size,
   isOpen: controlledIsOpen,
   onToggle: controlledOnToggle,
   onClose: controlledOnClose,
@@ -138,7 +140,7 @@ export default function Dropdown({
                   textAlign: "left",
                   background: item.backgroundColor || "none",
                   border: "none",
-                  padding: "12px 16px",
+                  padding: size === "sm" ? "8px 12px" : "12px 16px",
                   fontFamily: "var(--font-dm-sans)",
                   fontSize: "14px",
                   fontWeight: item.active ? 700 : 300,

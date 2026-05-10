@@ -1,6 +1,11 @@
 "use client";
 
-import { useEditor, EditorContent, ReactNodeViewRenderer } from "@tiptap/react";
+import {
+  useEditor,
+  EditorContent,
+  ReactNodeViewRenderer,
+  Editor,
+} from "@tiptap/react";
 import Placeholder from "@tiptap/extension-placeholder";
 import CharacterCount from "@tiptap/extension-character-count";
 import Image from "@tiptap/extension-image";
@@ -13,20 +18,28 @@ import "@/app/write/[pieceId]/editor.css";
 import BackButton from "@/components/BackButton";
 import CoverImageModal from "@/components/write/CoverImageModal";
 import SubmitConfirmModal from "@/components/write/SubmitConfirmModal";
-import IconButton from "@/components/IconButton";
-import { convertHeicToJpeg } from "@/lib/convert-heic";
+import { convertHeicToJpeg, isHeicFile } from "@/lib/convert-heic";
 import NoiseBackground from "@/components/NoiseBackground";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import StickyToolbar from "@/components/write/toolbar/StickyToolbar";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { useScrollDirection } from "@/hooks/useScrollDirection";
 import EmbedModal from "@/components/write/EmbedModal";
+import MediaEmbedModal from "@/components/write/MediaEmbedModal";
 import LinkPopover from "@/components/write/LinkPopover";
 import WhatsNextModal, {
   type WhatsNextTrigger,
 } from "@/components/shared/WhatsNextModal";
 import { canShowWhatsNext } from "@/lib/whatsNextGuard";
 import CTAButton from "@/components/CTAButton";
+
+const ALLOWED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+];
 
 interface RiffConnection {
   id: string;
@@ -66,8 +79,19 @@ export default function WritePage({
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [showLinkModal, setShowLinkModal] = useState(false);
   const linkSelectionRef = useRef<{ from: number; to: number } | null>(null);
-  const [showYoutubeModal, setShowYoutubeModal] = useState(false);
-  const [showSpotifyModal, setShowSpotifyModal] = useState(false);
+  const [mediaEmbed, setMediaEmbed] = useState<{
+    type: "youtube" | "spotify";
+    prefilledUrl?: string;
+  } | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const imageErrorTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const showImageError = useCallback((msg: string) => {
+    if (imageErrorTimerRef.current) clearTimeout(imageErrorTimerRef.current);
+    setImageError(msg);
+    imageErrorTimerRef.current = setTimeout(() => setImageError(null), 4000);
+  }, []);
+  const editorRef = useRef<Editor | null>(null);
   const [whatsNextTrigger, setWhatsNextTrigger] =
     useState<WhatsNextTrigger | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(
@@ -84,9 +108,87 @@ export default function WritePage({
   useThemeColor("#FFFFFF");
   const navVisible = useScrollDirection({ threshold: 15 });
 
+  const handleImagePaste = useCallback(async (rawFile: File) => {
+    setImageError(null);
+
+    let file = rawFile;
+    if (isHeicFile(rawFile)) {
+      try {
+        file = await convertHeicToJpeg(rawFile);
+      } catch {
+        showImageError("Could not process HEIC file — try a different format");
+        return;
+      }
+    }
+
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      showImageError(
+        "Unsupported file type — use JPEG, PNG, GIF, WebP, or HEIC"
+      );
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      showImageError("File too large — max 5MB");
+      return;
+    }
+
+    setIsUploadingImage(true);
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await fetch("/api/upload/image", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success || !data.url) {
+        showImageError("Upload failed — try again");
+        return;
+      }
+      editorRef.current?.chain().focus().setImage({ src: data.url }).run();
+    } catch {
+      showImageError("Upload failed — try again");
+    } finally {
+      setIsUploadingImage(false);
+    }
+  }, []);
+
   const editor = useEditor({
     immediatelyRender: false,
-    editorProps: {},
+    editorProps: {
+      transformPastedHTML(html) {
+        return html.replace(/<img[^>]*>/gi, "");
+      },
+      handlePaste: (view, event) => {
+        const items = event.clipboardData?.items;
+        if (items) {
+          for (const item of Array.from(items)) {
+            if (item.type.startsWith("image/")) {
+              const file = item.getAsFile();
+              if (!file) continue;
+              handleImagePaste(file);
+              return true;
+            }
+          }
+        }
+
+        const text = event.clipboardData?.getData("text/plain")?.trim();
+        if (text) {
+          const isSpotify =
+            /open\.spotify\.com\/(track|album|playlist|episode|show)\//.test(
+              text
+            );
+          if (isSpotify) {
+            setMediaEmbed({ type: "spotify", prefilledUrl: text });
+            return true;
+          }
+        }
+
+        return false;
+      },
+    },
     extensions: [
       // Shared extensions (same as read page for fidelity), minus Image and Link (overridden below)
       ...getSharedExtensions().filter(
@@ -135,7 +237,7 @@ export default function WritePage({
         },
       }).configure({
         inline: false,
-        allowBase64: true,
+        allowBase64: false,
       }),
       // Write-specific: placeholder + character count
       Placeholder.configure({
@@ -159,6 +261,10 @@ export default function WritePage({
       }, 500);
     },
   });
+
+  useEffect(() => {
+    editorRef.current = editor;
+  }, [editor]);
 
   const autosaveContent = useCallback(
     async (content: string, wordCount: number, readLengthMin: number) => {
@@ -320,16 +426,36 @@ export default function WritePage({
     let file = event.target.files?.[0];
     if (!file || !editor) return;
 
-    try {
-      file = await convertHeicToJpeg(file);
-    } catch {
-      alert("Could not process HEIC file. Please try converting it first.");
+    setImageError(null);
+
+    if (isHeicFile(file)) {
+      try {
+        file = await convertHeicToJpeg(file);
+      } catch {
+        showImageError("Could not process HEIC file — try a different format");
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        return;
+      }
+    }
+
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      showImageError(
+        "Unsupported file type — use JPEG, PNG, GIF, WebP, or HEIC"
+      );
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      showImageError("File too large — max 5MB");
+      if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
 
     const formData = new FormData();
     formData.append("file", file);
 
+    setIsUploadingImage(true);
     try {
       const response = await fetch("/api/upload/image", {
         method: "POST",
@@ -337,17 +463,15 @@ export default function WritePage({
       });
       const data = await response.json();
       if (!response.ok || !data.success || !data.url) {
-        alert("Failed to upload image: " + (data.error || "Unknown error"));
+        showImageError("Upload failed — " + (data.error || "try again"));
         return;
       }
       editor.chain().focus().setImage({ src: data.url }).run();
-    } catch (error) {
-      console.error("Error uploading image:", error);
-      alert("Failed to upload image. Please try again.");
-    }
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+    } catch {
+      showImageError("Upload failed — try again");
+    } finally {
+      setIsUploadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -486,11 +610,7 @@ export default function WritePage({
               {/* Submit CTA / cover icon */}
               {piece.riffs.length > 0 &&
                 (isSubmitted ? (
-                  <IconButton
-                    src="/icons/cover_photo.svg"
-                    label={
-                      coverImage ? "Change cover image" : "Add cover image"
-                    }
+                  <button
                     onClick={() => {
                       if (coverImage) {
                         setShowSubmitModal(true);
@@ -498,8 +618,26 @@ export default function WritePage({
                         setShowCoverModal(true);
                       }
                     }}
-                    size={24}
-                  />
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "#F5F5F5";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "#FFFFFF";
+                    }}
+                    style={{
+                      padding: isMobile ? "6px 10px" : "8px 16px",
+                      fontSize: isMobile ? "11px" : "12px",
+                      fontFamily: "var(--font-dm-sans)",
+                      fontWeight: 300,
+                      color: "#000000",
+                      backgroundColor: "#FFFFFF",
+                      border: "2px solid #000000",
+                      boxShadow: "none",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Cover
+                  </button>
                 ) : (
                   <CTAButton
                     onClick={() => {
@@ -512,6 +650,7 @@ export default function WritePage({
                     style={{
                       padding: isMobile ? "8px 24px" : "10px 32px",
                       fontSize: "12px",
+                      boxShadow: "4px 4px 0px 0px #00FF66",
                     }}
                   >
                     Submit
@@ -533,11 +672,103 @@ export default function WritePage({
                 editor={editor}
                 fileInputRef={fileInputRef}
                 inline
+                onOpenLinkModal={() => {
+                  linkSelectionRef.current = {
+                    from: editor.state.selection.from,
+                    to: editor.state.selection.to,
+                  };
+                  setShowLinkModal(true);
+                }}
+                onOpenYoutubeModal={() => setMediaEmbed({ type: "youtube" })}
+                onOpenSpotifyModal={() => setMediaEmbed({ type: "spotify" })}
               />
             </div>
           )}
         </div>
       </div>
+
+      {/* Image paste status toast */}
+      {(isUploadingImage || imageError) && (
+        <div
+          style={{
+            position: "fixed",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            zIndex: 60,
+            backgroundColor: "#FFFFFF",
+            border: "2px solid #000000",
+            boxShadow: "4px 4px 0px 0px #000000",
+            padding: "10px 14px",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {isUploadingImage ? (
+            <>
+              <div
+                style={{
+                  width: "8px",
+                  height: "8px",
+                  borderRadius: "50%",
+                  background: "#EECF01",
+                  animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+                }}
+              />
+              <span
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "12px",
+                  fontWeight: 300,
+                  color: "#000",
+                }}
+              >
+                Uploading image...
+              </span>
+            </>
+          ) : (
+            <>
+              <div
+                style={{
+                  width: "8px",
+                  height: "8px",
+                  borderRadius: "50%",
+                  background: "#DC2626",
+                  flexShrink: 0,
+                }}
+              />
+              <span
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "12px",
+                  fontWeight: 300,
+                  color: "#DC2626",
+                }}
+              >
+                {imageError}
+              </span>
+              <button
+                onClick={() => setImageError(null)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: "0 0 0 4px",
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  color: "#808080",
+                  lineHeight: 1,
+                  flexShrink: 0,
+                }}
+              >
+                ×
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Content area */}
       <div
@@ -671,8 +902,8 @@ export default function WritePage({
             };
             setShowLinkModal(true);
           }}
-          onOpenYoutubeModal={() => setShowYoutubeModal(true)}
-          onOpenSpotifyModal={() => setShowSpotifyModal(true)}
+          onOpenYoutubeModal={() => setMediaEmbed({ type: "youtube" })}
+          onOpenSpotifyModal={() => setMediaEmbed({ type: "spotify" })}
         />
       )}
 
@@ -705,23 +936,17 @@ export default function WritePage({
         }}
       />
 
-      <EmbedModal
-        isOpen={showYoutubeModal}
-        onClose={() => setShowYoutubeModal(false)}
-        title="Add YouTube video"
-        placeholder="https://youtube.com/watch?v=..."
-        onConfirm={(url) => {
-          editor.chain().focus().setYoutubeVideo({ src: url }).run();
-        }}
-      />
-
-      <EmbedModal
-        isOpen={showSpotifyModal}
-        onClose={() => setShowSpotifyModal(false)}
-        title="Add Spotify track"
-        placeholder="https://open.spotify.com/track/..."
-        onConfirm={(url) => {
-          editor.commands.setSpotifyEmbed({ src: url });
+      <MediaEmbedModal
+        isOpen={!!mediaEmbed}
+        type={mediaEmbed?.type ?? "youtube"}
+        prefilledUrl={mediaEmbed?.prefilledUrl}
+        onClose={() => setMediaEmbed(null)}
+        onEmbed={(url) => {
+          if (mediaEmbed?.type === "youtube") {
+            editor.chain().focus().setYoutubeVideo({ src: url }).run();
+          } else {
+            editor.commands.setSpotifyEmbed({ src: url });
+          }
         }}
       />
 

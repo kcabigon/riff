@@ -45,7 +45,7 @@ Last updated: March 30, 2026 (modal cleanup, reveal todos, notification todos)
 - [x] Don't show "Reveal pieces" until deadline passes OR all submissions are in
 
 ### Mobile Comments
-- [ ] Redesign mobile comment experience — easy commenting and navigation between comments in "comment" mode
+- [x] Redesign mobile comment experience — easy commenting and navigation between comments in "comment" mode
 
 ### Riff Card & Riff Page
 - [x] Update riff card: simplified to "Joined by" + avatars
@@ -132,3 +132,4 @@ Last updated: March 30, 2026 (modal cleanup, reveal todos, notification todos)
 - [ ] Fix tiptap Spotify `addPasteHandler` for v3.x API
 - [ ] Update old circle routes for Next.js 16 async params (or deprecate)
 - [ ] Upgrade Prisma from 6.1.0 to 7.3.0
+- [ ] Replace `useState` hover patterns with imperative DOM handlers — `CTAButton`, `ClubDropdown`, `CommentSidebar`, `ThreeDotButton`, `DeletePieceModal`, `PiecesGrid`, `ShareModal`, `ReadyToRevealCard`, `CompletedRiffCard`, `RiffCard`, `PieceCard`
