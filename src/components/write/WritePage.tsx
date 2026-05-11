@@ -194,21 +194,8 @@ export default function WritePage({
       ...getSharedExtensions().filter(
         (ext) => ext.name !== "image" && ext.name !== "link"
       ),
-      // Write-specific: Link renders as <span> so browser can't navigate
-      Link.extend({
-        renderHTML({ HTMLAttributes }) {
-          return [
-            "span",
-            {
-              ...HTMLAttributes,
-              "data-link": HTMLAttributes.href,
-              href: undefined,
-              style: "cursor: text;",
-            },
-            0,
-          ];
-        },
-      }).configure({ openOnClick: false }),
+      // Write-specific: openOnClick false so clicking a link moves the cursor instead of navigating
+      Link.configure({ openOnClick: false }),
       // Write-specific: Image with resize handles
       Image.extend({
         addAttributes() {
