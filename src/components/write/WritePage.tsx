@@ -194,8 +194,21 @@ export default function WritePage({
       ...getSharedExtensions().filter(
         (ext) => ext.name !== "image" && ext.name !== "link"
       ),
-      // Write-specific: Link renders as <span> so browser can't navigate
+      // Write-specific: Link renders as <span> so tapping/clicking never navigates — the
+      // LinkPopover handles edit/remove/open instead. parseHTML recognizes the saved
+      // <span data-link> format so links survive page reload.
       Link.extend({
+        parseHTML() {
+          return [
+            ...(this.parent?.() ?? []),
+            {
+              tag: "span[data-link]",
+              getAttrs: (node) => ({
+                href: (node as HTMLElement).getAttribute("data-link"),
+              }),
+            },
+          ];
+        },
         renderHTML({ HTMLAttributes }) {
           return [
             "span",
