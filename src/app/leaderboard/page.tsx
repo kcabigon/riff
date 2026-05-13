@@ -1,6 +1,60 @@
 import LeaderboardPage from "@/components/leaderboard/LeaderboardPage";
 import { LeaderboardUser } from "@/app/api/leaderboard/route";
 
+// Map GitHub usernames to canonical keys
+const GITHUB_USERNAME_ALIASES: Record<string, string> = {
+  kcabigon: "kyle",
+};
+
+// Map variant emails to canonical keys
+const EMAIL_ALIASES: Record<string, string> = {
+  "kyle.cabigon@gmail.com": "kyle",
+  "kyle@Kyles-MacBook-Air.local": "kyle",
+  "kimberly@Kimberlys-MacBook-Air.local": "kyle",
+  "51928844+kcabigon@users.noreply.github.com": "kyle",
+};
+
+const CANONICAL_USERS: Record<
+  string,
+  { name: string; email: string; githubUsername: string }
+> = {
+  kyle: {
+    name: "Kyle Cabigon",
+    email: "kyle.cabigon@gmail.com",
+    githubUsername: "kcabigon",
+  },
+};
+
+interface GitHubCommit {
+  sha: string;
+  commit: {
+    author: {
+      name: string;
+      email: string;
+      date: string;
+    };
+    message: string;
+  };
+  author: {
+    login: string;
+    avatar_url: string;
+  } | null;
+}
+
+interface GitHubContributorStats {
+  author: {
+    login: string;
+    avatar_url: string;
+  };
+  total: number;
+  weeks: Array<{
+    w: number; // Unix timestamp (start of week)
+    a: number; // Additions
+    d: number; // Deletions
+    c: number; // Commits
+  }>;
+}
+
 async function getLeaderboardData(): Promise<LeaderboardUser[]> {
   const token = process.env.GITHUB_TOKEN;
   if (!token) return [];
@@ -10,62 +64,13 @@ async function getLeaderboardData(): Promise<LeaderboardUser[]> {
   const PER_PAGE = 100;
   const MAX_PAGES = 20;
 
-  interface GitHubCommit {
-    sha: string;
-    commit: {
-      author: {
-        name: string;
-        email: string;
-        date: string;
-      };
-      message: string;
-    };
-    author: {
-      login: string;
-      avatar_url: string;
-    } | null;
-  }
+  // Fetch commits and contributor stats in parallel
+  const [allCommits, contributorStats] = await Promise.all([
+    fetchCommits(token, REPO, BRANCH, PER_PAGE, MAX_PAGES),
+    fetchContributorStats(token, REPO),
+  ]);
 
-  const allCommits: GitHubCommit[] = [];
-
-  for (let page = 1; page <= MAX_PAGES; page++) {
-    const res = await fetch(
-      `https://api.github.com/repos/${REPO}/commits?sha=${BRANCH}&per_page=${PER_PAGE}&page=${page}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/vnd.github.v3+json",
-        },
-        next: { revalidate: 300 },
-      }
-    );
-
-    if (!res.ok) break;
-    const commits: GitHubCommit[] = await res.json();
-    if (commits.length === 0) break;
-    allCommits.push(...commits);
-    if (commits.length < PER_PAGE) break;
-  }
-
-  // Merge aliases — map variant emails/names to a canonical identity
-  const EMAIL_ALIASES: Record<string, string> = {
-    "kyle.cabigon@gmail.com": "kyle",
-    "kyle@Kyles-MacBook-Air.local": "kyle",
-    "kimberly@Kimberlys-MacBook-Air.local": "kyle",
-    "51928844+kcabigon@users.noreply.github.com": "kyle",
-  };
-
-  const CANONICAL_USERS: Record<
-    string,
-    { name: string; email: string; githubUsername: string }
-  > = {
-    kyle: {
-      name: "Kyle Cabigon",
-      email: "kyle.cabigon@gmail.com",
-      githubUsername: "kcabigon",
-    },
-  };
-
+  // Build user map from commits
   const userMap = new Map<string, LeaderboardUser>();
 
   for (const commit of allCommits) {
@@ -89,6 +94,10 @@ async function getLeaderboardData(): Promise<LeaderboardUser[]> {
         avatarUrl,
         commitsByDay: {},
         totalCommits: 0,
+        additionsByWeek: {},
+        deletionsByWeek: {},
+        totalAdditions: 0,
+        totalDeletions: 0,
       });
     }
 
@@ -100,9 +109,100 @@ async function getLeaderboardData(): Promise<LeaderboardUser[]> {
     }
   }
 
+  // Merge contributor stats (additions/deletions per week)
+  for (const contributor of contributorStats) {
+    const login = contributor.author.login;
+    const canonicalKey = GITHUB_USERNAME_ALIASES[login];
+    const key = canonicalKey || login;
+
+    // Find matching user in map — match by canonical key or githubUsername
+    let user: LeaderboardUser | undefined;
+    if (userMap.has(key)) {
+      user = userMap.get(key);
+    } else {
+      // Try to find by githubUsername
+      for (const u of userMap.values()) {
+        if (u.githubUsername === login) {
+          user = u;
+          break;
+        }
+      }
+    }
+
+    if (!user) continue;
+
+    let totalAdditions = 0;
+    let totalDeletions = 0;
+
+    for (const week of contributor.weeks) {
+      if (week.a === 0 && week.d === 0) continue;
+      const weekDate = new Date(week.w * 1000).toISOString().split("T")[0];
+      user.additionsByWeek[weekDate] =
+        (user.additionsByWeek[weekDate] || 0) + week.a;
+      user.deletionsByWeek[weekDate] =
+        (user.deletionsByWeek[weekDate] || 0) + week.d;
+      totalAdditions += week.a;
+      totalDeletions += week.d;
+    }
+
+    user.totalAdditions = totalAdditions;
+    user.totalDeletions = totalDeletions;
+  }
+
   return Array.from(userMap.values()).sort(
     (a, b) => b.totalCommits - a.totalCommits
   );
+}
+
+async function fetchCommits(
+  token: string,
+  repo: string,
+  branch: string,
+  perPage: number,
+  maxPages: number
+): Promise<GitHubCommit[]> {
+  const allCommits: GitHubCommit[] = [];
+
+  for (let page = 1; page <= maxPages; page++) {
+    const res = await fetch(
+      `https://api.github.com/repos/${repo}/commits?sha=${branch}&per_page=${perPage}&page=${page}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/vnd.github.v3+json",
+        },
+        next: { revalidate: 300 },
+      }
+    );
+
+    if (!res.ok) break;
+    const commits: GitHubCommit[] = await res.json();
+    if (commits.length === 0) break;
+    allCommits.push(...commits);
+    if (commits.length < perPage) break;
+  }
+
+  return allCommits;
+}
+
+async function fetchContributorStats(
+  token: string,
+  repo: string
+): Promise<GitHubContributorStats[]> {
+  const res = await fetch(
+    `https://api.github.com/repos/${repo}/stats/contributors`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github.v3+json",
+      },
+      next: { revalidate: 300 },
+    }
+  );
+
+  // GitHub may return 202 if stats are being computed — return empty
+  if (!res.ok || res.status === 202) return [];
+  return res.json();
 }
 
 export default async function Page() {

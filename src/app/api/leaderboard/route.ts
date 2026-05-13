@@ -23,6 +23,10 @@ export interface LeaderboardUser {
   avatarUrl: string;
   commitsByDay: Record<string, number>;
   totalCommits: number;
+  additionsByWeek: Record<string, number>;
+  deletionsByWeek: Record<string, number>;
+  totalAdditions: number;
+  totalDeletions: number;
 }
 
 const REPO = "kcabigon/riff";
@@ -85,6 +89,10 @@ export async function GET() {
           avatarUrl,
           commitsByDay: {},
           totalCommits: 0,
+          additionsByWeek: {},
+          deletionsByWeek: {},
+          totalAdditions: 0,
+          totalDeletions: 0,
         });
       }
 
