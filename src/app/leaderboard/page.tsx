@@ -189,20 +189,30 @@ async function fetchContributorStats(
   token: string,
   repo: string
 ): Promise<GitHubContributorStats[]> {
-  const res = await fetch(
-    `https://api.github.com/repos/${repo}/stats/contributors`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/vnd.github.v3+json",
-      },
-      next: { revalidate: 300 },
-    }
-  );
+  // GitHub returns 202 while computing stats — retry up to 4 times with no-cache
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const res = await fetch(
+      `https://api.github.com/repos/${repo}/stats/contributors`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/vnd.github.v3+json",
+        },
+        // Use revalidate on first attempt, no-store on retries to avoid caching 202s
+        ...(attempt === 0
+          ? { next: { revalidate: 300 } }
+          : { cache: "no-store" as const }),
+      }
+    );
 
-  // GitHub may return 202 if stats are being computed — return empty
-  if (!res.ok || res.status === 202) return [];
-  return res.json();
+    if (res.status === 200) return res.json();
+    if (res.status === 202) {
+      await new Promise((r) => setTimeout(r, 3000));
+      continue;
+    }
+    return [];
+  }
+  return [];
 }
 
 export default async function Page() {
