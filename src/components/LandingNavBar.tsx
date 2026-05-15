@@ -24,7 +24,7 @@ export default function LandingNavBar({
     ? [
         {
           type: "action",
-          label: "My Club",
+          label: "Club",
           onClick: () => router.push("/auth/post-login"),
         },
         {
@@ -164,26 +164,36 @@ export default function LandingNavBar({
             )}
           </div>
 
-          {/* Mobile: hamburger */}
-          <button
-            className="lnav-mobile"
-            onClick={() => setDrawerOpen(true)}
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: 0,
-              display: "none",
-            }}
-            aria-label="Open menu"
-          >
-            <Image
-              src="/icons/mobile_menu.svg"
-              alt="Menu"
-              width={32}
-              height={32}
-            />
-          </button>
+          {/* Mobile: avatar (logged in) or hamburger (logged out) */}
+          <div className="lnav-mobile" style={{ display: "none" }}>
+            {user ? (
+              <Avatar
+                user={user}
+                size={40}
+                borderColor="#FFFFFF"
+                style={{ cursor: "pointer" }}
+                onClick={() => setDrawerOpen(true)}
+              />
+            ) : (
+              <button
+                onClick={() => setDrawerOpen(true)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: 0,
+                }}
+                aria-label="Open menu"
+              >
+                <Image
+                  src="/icons/mobile_menu.svg"
+                  alt="Menu"
+                  width={32}
+                  height={32}
+                />
+              </button>
+            )}
+          </div>
         </div>
       </nav>
 
