@@ -129,10 +129,7 @@ export default function LandingNavBar({
                     user={user}
                     size={40}
                     borderColor="#FFFFFF"
-                    style={{
-                      cursor: "pointer",
-                      boxShadow: "2px 2px 0px 0px #FFFFFF",
-                    }}
+                    style={{ cursor: "pointer" }}
                   />
                 }
                 items={dropdownItems}
