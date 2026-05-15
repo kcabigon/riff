@@ -45,9 +45,18 @@ export default function LinkPopover({ editor }: LinkPopoverProps) {
     const coords = editor.view.coordsAtPos(from);
     const editorRect = editor.view.dom.getBoundingClientRect();
 
+    // Clamp left so the popover never overflows the editor on narrow screens
+    const POPOVER_MAX_WIDTH = 360;
+    const MARGIN = 8;
+    const rawLeft = coords.left - editorRect.left;
+    const clampedLeft = Math.max(
+      MARGIN,
+      Math.min(rawLeft, editorRect.width - POPOVER_MAX_WIDTH - MARGIN)
+    );
+
     setPosition({
       top: coords.bottom - editorRect.top + 8,
-      left: coords.left - editorRect.left,
+      left: clampedLeft,
     });
     setVisible(true);
   }, [isActive, editor.state.selection, editor]);
@@ -132,7 +141,7 @@ export default function LinkPopover({ editor }: LinkPopoverProps) {
         padding: "10px 14px",
         fontFamily: "var(--font-dm-sans)",
         fontSize: "14px",
-        maxWidth: "360px",
+        maxWidth: "min(360px, calc(100% - 16px))",
       }}
     >
       {isEditing ? (
