@@ -1,11 +1,6 @@
 import LeaderboardPage from "@/components/leaderboard/LeaderboardPage";
 import { LeaderboardUser } from "@/app/api/leaderboard/route";
 
-// Map GitHub usernames to canonical keys
-const GITHUB_USERNAME_ALIASES: Record<string, string> = {
-  kcabigon: "kyle",
-};
-
 // Map variant emails to canonical keys
 const EMAIL_ALIASES: Record<string, string> = {
   "kyle.cabigon@gmail.com": "kyle",
@@ -41,18 +36,22 @@ interface GitHubCommit {
   } | null;
 }
 
-interface GitHubContributorStats {
-  author: {
-    login: string;
-    avatar_url: string;
+interface CommitDetail {
+  sha: string;
+  stats: {
+    additions: number;
+    deletions: number;
+    total: number;
   };
-  total: number;
-  weeks: Array<{
-    w: number; // Unix timestamp (start of week)
-    a: number; // Additions
-    d: number; // Deletions
-    c: number; // Commits
-  }>;
+}
+
+// Get the Monday of the week for a given date string
+function getWeekStart(dateStr: string): string {
+  const date = new Date(dateStr);
+  const day = date.getUTCDay();
+  const diff = day === 0 ? 6 : day - 1; // Monday = 0
+  date.setUTCDate(date.getUTCDate() - diff);
+  return date.toISOString().split("T")[0];
 }
 
 async function getLeaderboardData(): Promise<LeaderboardUser[]> {
@@ -64,13 +63,23 @@ async function getLeaderboardData(): Promise<LeaderboardUser[]> {
   const PER_PAGE = 100;
   const MAX_PAGES = 20;
 
-  // Fetch commits and contributor stats in parallel
-  const [allCommits, contributorStats] = await Promise.all([
-    fetchCommits(token, REPO, BRANCH, PER_PAGE, MAX_PAGES),
-    fetchContributorStats(token, REPO),
-  ]);
+  // Fetch commit list
+  const allCommits = await fetchCommits(
+    token,
+    REPO,
+    BRANCH,
+    PER_PAGE,
+    MAX_PAGES
+  );
 
-  // Build user map from commits
+  // Fetch stats for each commit (in parallel batches)
+  const statsMap = await fetchCommitStats(
+    token,
+    REPO,
+    allCommits.map((c) => c.sha)
+  );
+
+  // Build user map
   const userMap = new Map<string, LeaderboardUser>();
 
   for (const commit of allCommits) {
@@ -84,6 +93,7 @@ async function getLeaderboardData(): Promise<LeaderboardUser[]> {
     const githubUsername =
       canonical?.githubUsername || commit.author?.login || "";
     const date = commit.commit.author.date.split("T")[0];
+    const weekStart = getWeekStart(date);
     const avatarUrl = commit.author?.avatar_url || "";
 
     if (!userMap.has(key)) {
@@ -107,46 +117,17 @@ async function getLeaderboardData(): Promise<LeaderboardUser[]> {
     if (avatarUrl && !user.avatarUrl) {
       user.avatarUrl = avatarUrl;
     }
-  }
 
-  // Merge contributor stats (additions/deletions per week)
-  for (const contributor of contributorStats) {
-    const login = contributor.author.login;
-    const canonicalKey = GITHUB_USERNAME_ALIASES[login];
-    const key = canonicalKey || login;
-
-    // Find matching user in map — match by canonical key or githubUsername
-    let user: LeaderboardUser | undefined;
-    if (userMap.has(key)) {
-      user = userMap.get(key);
-    } else {
-      // Try to find by githubUsername
-      for (const u of userMap.values()) {
-        if (u.githubUsername === login) {
-          user = u;
-          break;
-        }
-      }
+    // Add line stats from commit detail
+    const stats = statsMap.get(commit.sha);
+    if (stats) {
+      user.additionsByWeek[weekStart] =
+        (user.additionsByWeek[weekStart] || 0) + stats.additions;
+      user.deletionsByWeek[weekStart] =
+        (user.deletionsByWeek[weekStart] || 0) + stats.deletions;
+      user.totalAdditions += stats.additions;
+      user.totalDeletions += stats.deletions;
     }
-
-    if (!user) continue;
-
-    let totalAdditions = 0;
-    let totalDeletions = 0;
-
-    for (const week of contributor.weeks) {
-      if (week.a === 0 && week.d === 0) continue;
-      const weekDate = new Date(week.w * 1000).toISOString().split("T")[0];
-      user.additionsByWeek[weekDate] =
-        (user.additionsByWeek[weekDate] || 0) + week.a;
-      user.deletionsByWeek[weekDate] =
-        (user.deletionsByWeek[weekDate] || 0) + week.d;
-      totalAdditions += week.a;
-      totalDeletions += week.d;
-    }
-
-    user.totalAdditions = totalAdditions;
-    user.totalDeletions = totalDeletions;
   }
 
   return Array.from(userMap.values()).sort(
@@ -185,34 +166,53 @@ async function fetchCommits(
   return allCommits;
 }
 
-async function fetchContributorStats(
+async function fetchCommitStats(
   token: string,
-  repo: string
-): Promise<GitHubContributorStats[]> {
-  // GitHub returns 202 while computing stats — retry up to 4 times with no-cache
-  for (let attempt = 0; attempt < 4; attempt++) {
-    const res = await fetch(
-      `https://api.github.com/repos/${repo}/stats/contributors`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/vnd.github.v3+json",
-        },
-        // Use revalidate on first attempt, no-store on retries to avoid caching 202s
-        ...(attempt === 0
-          ? { next: { revalidate: 300 } }
-          : { cache: "no-store" as const }),
-      }
+  repo: string,
+  shas: string[]
+): Promise<Map<string, { additions: number; deletions: number }>> {
+  const statsMap = new Map<string, { additions: number; deletions: number }>();
+  const BATCH_SIZE = 15;
+
+  for (let i = 0; i < shas.length; i += BATCH_SIZE) {
+    const batch = shas.slice(i, i + BATCH_SIZE);
+    const results = await Promise.all(
+      batch.map(async (sha) => {
+        try {
+          const res = await fetch(
+            `https://api.github.com/repos/${repo}/commits/${sha}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: "application/vnd.github.v3+json",
+              },
+              next: { revalidate: 300 },
+            }
+          );
+          if (!res.ok) return null;
+          const data: CommitDetail = await res.json();
+          return {
+            sha,
+            additions: data.stats.additions,
+            deletions: data.stats.deletions,
+          };
+        } catch {
+          return null;
+        }
+      })
     );
 
-    if (res.status === 200) return res.json();
-    if (res.status === 202) {
-      await new Promise((r) => setTimeout(r, 3000));
-      continue;
+    for (const result of results) {
+      if (result) {
+        statsMap.set(result.sha, {
+          additions: result.additions,
+          deletions: result.deletions,
+        });
+      }
     }
-    return [];
   }
-  return [];
+
+  return statsMap;
 }
 
 export default async function Page() {
