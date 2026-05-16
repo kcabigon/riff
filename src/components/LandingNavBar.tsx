@@ -20,30 +20,28 @@ export default function LandingNavBar({
   const router = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const dropdownItems: DropdownItem[] = user
-    ? [
-        {
-          type: "action",
-          label: "Club",
-          onClick: () => router.push("/auth/post-login"),
-        },
-        {
-          type: "action",
-          label: "Profile",
-          onClick: () => router.push(`/profile/${user.id}`),
-        },
-        {
-          type: "action",
-          label: "Settings",
-          onClick: () => router.push("/settings"),
-        },
-        {
-          type: "action",
-          label: "Log out",
-          onClick: () => signOut({ callbackUrl: "/" }),
-        },
-      ]
-    : [];
+  const dropdownItems: DropdownItem[] = [
+    {
+      type: "action",
+      label: "Club",
+      onClick: () => router.push("/auth/post-login"),
+    },
+    {
+      type: "action",
+      label: "Profile",
+      onClick: () => router.push(`/profile/${user?.id}`),
+    },
+    {
+      type: "action",
+      label: "Settings",
+      onClick: () => router.push("/settings"),
+    },
+    {
+      type: "action",
+      label: "Log out",
+      onClick: () => signOut({ callbackUrl: "/" }),
+    },
+  ];
 
   const closeDrawer = () => setDrawerOpen(false);
 
