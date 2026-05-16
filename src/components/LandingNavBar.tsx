@@ -37,12 +37,10 @@ export default function LandingNavBar({
           label: "Settings",
           onClick: () => router.push("/settings"),
         },
-        { type: "divider" },
         {
           type: "action",
           label: "Log out",
           onClick: () => signOut({ callbackUrl: "/" }),
-          color: "#808080",
         },
       ]
     : [];
