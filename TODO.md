@@ -109,9 +109,9 @@ Last updated: May 16, 2026
 ### Kyle only (sensitive / infrastructure)
 - [ ] Privacy Policy page — write content, link from login page
 - [ ] Terms of Service page — write content
-- [ ] Production database — new Supabase project, run migrations, set env vars
-- [ ] Resend domain verification — verify letsriff.app, add SPF/DKIM/DMARC DNS records
-- [ ] Document missing env vars in `.env.example`
+- [x] Production database — new Supabase project, run migrations, set env vars
+- [x] Resend domain verification — verify letsriff.app, add SPF/DKIM/DMARC DNS records
+- [x] Document missing env vars in `.env.example`
 - [ ] Deprecated schema cleanup — remove Circle models, password field
 - [ ] next-auth upgrade to stable (when available)
 
