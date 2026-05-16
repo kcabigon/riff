@@ -43,7 +43,7 @@ export const metadata: Metadata = {
   },
   description:
     "Write clubs are the new book clubs. Riff is where friends can create private writing communities and read each other's writing on a consistent basis.",
-  metadataBase: new URL("https://letsriff.app"),
+  metadataBase: new URL(process.env.NEXTAUTH_URL ?? "https://letsriff.app"),
   openGraph: {
     title: "Riff",
     description: "Write with friends.",
