@@ -112,7 +112,7 @@ Last updated: May 16, 2026
 - [x] Production database — new Supabase project, run migrations, set env vars
 - [x] Resend domain verification — verify letsriff.app, add SPF/DKIM/DMARC DNS records
 - [x] Document missing env vars in `.env.example`
-- [ ] Deprecated schema cleanup — remove Circle models, password field
+- [x] Deprecated schema cleanup — remove Circle models, password field
 - [ ] next-auth upgrade to stable (when available)
 
 ### Friends
