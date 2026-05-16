@@ -13,7 +13,7 @@ export async function GET(req: Request) {
       where: {
         members: {
           some: {
-            userId: (user as any).id,
+            userId: user.id,
           },
         },
         isArchived: includeArchived ? undefined : false,
@@ -78,7 +78,7 @@ export async function POST(req: Request) {
   try {
     const user = await requireAuth();
 
-    const { name, description } = await req.json();
+    const { name, description, bannerImage } = await req.json();
 
     // Validate input
     if (!name || name.trim().length === 0) {
@@ -100,10 +100,11 @@ export async function POST(req: Request) {
       data: {
         name: name.trim(),
         description: description?.trim() || null,
-        adminId: (user as any).id,
+        bannerImage: bannerImage || null,
+        adminId: user.id,
         members: {
           create: {
-            userId: (user as any).id,
+            userId: user.id,
             role: "ADMIN",
           },
         },

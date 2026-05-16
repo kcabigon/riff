@@ -1,0 +1,35 @@
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/auth-utils";
+import { prisma } from "@/lib/prisma";
+
+export default async function OnboardingPage() {
+  // Get current user's onboarding status
+  const session = await getSession();
+
+  if (!session?.user) {
+    redirect("/login");
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      onboardingCompleted: true,
+      onboardingStep: true,
+    },
+  });
+
+  if (user?.onboardingCompleted) {
+    redirect("/clubs");
+  }
+
+  // Redirect to appropriate step
+  const step = user?.onboardingStep || "NAME";
+  const stepRoutes = {
+    NAME: "/onboarding/name",
+    CLUB_CHOICE: "/onboarding/club-choice",
+    INVITE: "/onboarding/invite",
+    COMPLETED: "/clubs",
+  };
+
+  redirect(stepRoutes[step as keyof typeof stepRoutes]);
+}

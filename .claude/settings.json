@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh pr list*)",
+      "Bash(gh pr view*)",
+      "Bash(gh pr diff*)"
+    ],
+    "deny": [
+      "Bash(git push --force*)",
+      "Bash(git push origin --force*)",
+      "Bash(git reset --hard* main*)",
+      "Bash(git reset --hard* develop*)",
+      "Bash(git reset --hard* staging*)",
+      "Bash(git checkout main && git commit*)",
+      "Bash(git checkout develop && git commit*)",
+      "Bash(git checkout staging && git commit*)",
+      "Bash(prisma migrate reset*)",
+      "Bash(prisma db push --force-reset*)",
+      "Bash(prisma db push --accept-data-loss*)",
+      "Bash(*--force-reset*)",
+      "Bash(*--accept-data-loss*)"
+    ]
+  }
+}

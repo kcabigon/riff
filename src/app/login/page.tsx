@@ -4,8 +4,8 @@ import { useState, FormEvent } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import AuthCard from "@/components/auth/AuthCard";
-import AuthInput from "@/components/auth/AuthInput";
-import AuthButton from "@/components/auth/AuthButton";
+import TextInput from "@/components/TextInput";
+import PrimaryButton from "@/components/PrimaryButton";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -30,7 +30,7 @@ export default function LoginPage() {
       const result = await signIn("resend", {
         email,
         redirect: false,
-        callbackUrl: "/auth/check-email",
+        callbackUrl: "/auth/post-login",
       });
 
       if (result?.error) {
@@ -38,7 +38,7 @@ export default function LoginPage() {
         setLoading(false);
       } else {
         // Redirect to check email page
-        router.push("/auth/check-email");
+        router.push(`/auth/check-email?email=${encodeURIComponent(email)}`);
       }
     } catch (error) {
       console.error("Sign in error:", error);
@@ -58,10 +58,10 @@ export default function LoginPage() {
           gap: "32px",
         }}
       >
-        <AuthInput
+        <TextInput
           type="email"
           name="email"
-          placeholder="kyle.cabigon@gmail.com"
+          placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           error={error}
@@ -71,25 +71,42 @@ export default function LoginPage() {
           autoComplete="email"
         />
 
-        <AuthButton type="submit" loading={loading} disabled={loading}>
+        <PrimaryButton type="submit" loading={loading} disabled={loading}>
           Let&apos;s do this shit
-        </AuthButton>
+        </PrimaryButton>
       </form>
 
-      {/* Helper text */}
-      <p
+      {/* Disclaimer */}
+      <div
         style={{
-          textAlign: "center",
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "14px",
-          fontWeight: 300,
-          lineHeight: "normal",
-          color: "#959595",
-          margin: 0,
+          width: "100%",
+          maxWidth: "344px",
+          backgroundColor: "#FFFFFF",
+          padding: "8px 0",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          marginLeft: 0,
+          marginRight: 0,
         }}
       >
-        We&apos;ll send you a magic link to sign in.
-      </p>
+        <p
+          style={{
+            textAlign: "center",
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "12px",
+            fontWeight: 300,
+            lineHeight: "normal",
+            color: "#000000",
+            margin: 0,
+            padding: 0,
+            height: "100%",
+          }}
+        >
+          By continuing, you acknowledge Riff&apos;s Privacy Policy and agree to
+          get occasional product update and promotional emails.
+        </p>
+      </div>
     </AuthCard>
   );
 }

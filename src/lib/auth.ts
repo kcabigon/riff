@@ -2,21 +2,48 @@ import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Resend from "next-auth/providers/resend";
 import { prisma } from "./prisma";
-import { sendMagicLinkEmail } from "./resend";
+import { sendSignInEmail, sendOnboardingEmail } from "./resend";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: PrismaAdapter(prisma),
+  adapter: {
+    ...PrismaAdapter(prisma),
+    // Override createUser to allow partial user creation (email only)
+    createUser: async (user: { email: string; emailVerified: Date | null }) => {
+      return await prisma.user.create({
+        data: {
+          email: user.email.toLowerCase(),
+          emailVerified: user.emailVerified,
+          name: null, // Explicitly set to null - will be collected during onboarding
+          // name and username are optional now, will be collected during onboarding
+          onboardingStep: "NAME", // Start at NAME step for new users
+          onboardingCompleted: false,
+        },
+      });
+    },
+  },
   providers: [
     Resend({
       apiKey: process.env.RESEND_API_KEY,
       from: process.env.EMAIL_FROM || "noreply@localhost",
-      // Custom email sender
-      sendVerificationRequest: async ({ identifier: email, url, provider }) => {
+      // Custom email sender - will be called for both new and existing users
+      sendVerificationRequest: async ({ identifier: email, url }) => {
         try {
-          await sendMagicLinkEmail(email, url);
+          // Check if user exists to determine which email template to use
+          const user = await prisma.user.findUnique({
+            where: { email: email.toLowerCase() },
+            select: { id: true, onboardingCompleted: true },
+          });
+
+          if (user && user.onboardingCompleted) {
+            // Existing user - send sign-in email
+            await sendSignInEmail(email, url);
+          } else {
+            // New user or incomplete onboarding - send onboarding email
+            await sendOnboardingEmail(email, url);
+          }
         } catch (error) {
-          console.error("Failed to send magic link email:", error);
-          throw new Error("Failed to send magic link email");
+          console.error("Failed to send authentication email:", error);
+          throw new Error("Failed to send authentication email");
         }
       },
     }),
@@ -33,26 +60,37 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.username = (user as any).username;
+        token.username = user.username;
+        token.firstName = user.firstName;
+        token.lastName = user.lastName;
+        token.onboardingCompleted = user.onboardingCompleted;
+        token.onboardingStep = user.onboardingStep;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).id = token.id;
-        (session.user as any).username = token.username;
+        session.user.id = token.id as string;
+        session.user.username = token.username;
+        session.user.firstName = token.firstName;
+        session.user.lastName = token.lastName;
+        session.user.onboardingCompleted = token.onboardingCompleted;
+        session.user.onboardingStep = token.onboardingStep;
       }
       return session;
     },
-    // Redirect to user's first club after successful sign-in
+    // Simple redirect — post-login routing is handled by /auth/post-login page
     async redirect({ url, baseUrl }) {
-      // If URL is already specified and valid, use it
+      // Allow same-origin URLs through
       if (url.startsWith(baseUrl)) {
         return url;
       }
-
-      // For external URLs or after sign in, redirect to clubs
-      return `${baseUrl}/clubs`;
+      // Allow relative URLs
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      }
+      // Default to post-login routing
+      return `${baseUrl}/auth/post-login`;
     },
   },
 });

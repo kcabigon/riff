@@ -1,12 +1,27 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import CountdownTimer from "./CountdownTimer";
+import AvatarStack from "@/components/shared/AvatarStack";
+import { useProfileNavigation } from "@/hooks/useProfileNavigation";
+import {
+  getRiffDisplayTitle,
+  allPiecesSubmitted,
+  isPastDeadline,
+  formatDateShort,
+} from "@/lib/riff-utils";
+import RiffCTAButton from "@/components/riffs/RiffCTAButton";
+import RevealRiffButton, {
+  shouldShowReveal,
+} from "@/components/riffs/RevealRiffButton";
 
 interface RiffCardProps {
   riff: {
     id: string;
-    title: string;
+    title: string | null;
+    volumeNumber?: number | null;
+    status: string;
     prompt?: string | null;
     deadline?: Date | null;
     createdAt: Date;
@@ -19,84 +34,82 @@ interface RiffCardProps {
       };
     }>;
     pieces: Array<{
+      submittedAt: Date | string | null;
       piece: {
         id: string;
         authorId: string;
+        title: string;
+        wordCount: number;
       };
     }>;
   };
   isJoined: boolean;
+  hasDraft: boolean;
   hasSubmitted: boolean;
   currentUserId: string;
+  isAdmin: boolean;
+  onJoin?: () => void;
+  onReveal?: () => void;
 }
 
 export default function RiffCard({
   riff,
   isJoined,
+  hasDraft,
   hasSubmitted,
   currentUserId,
+  isAdmin,
+  onJoin,
+  onReveal,
 }: RiffCardProps) {
-  const [isHovered, setIsHovered] = useState(false);
+  const [isCardHovered, setIsCardHovered] = useState(false);
+  const router = useRouter();
+  const handleAvatarClick = useProfileNavigation();
 
-  // Format date
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    });
-  };
+  const deadlinePassed = isPastDeadline(riff.deadline ?? null);
+  const piecesAllSubmitted = allPiecesSubmitted(
+    riff.pieces,
+    riff.participants.length
+  );
 
   // Get date range for joined riff
   const getDateRange = () => {
     if (!riff.deadline) return null;
-    return `${formatDate(riff.createdAt)} - ${formatDate(riff.deadline)}`;
+    return `${formatDateShort(riff.createdAt)} - ${formatDateShort(riff.deadline)}`;
   };
 
-  // Get submitted and waiting participants
-  const submittedUsers = riff.participants.filter((p) =>
-    riff.pieces.some((piece) => piece.piece.authorId === p.user.id)
-  );
-
-  const waitingUsers = riff.participants.filter(
-    (p) => !riff.pieces.some((piece) => piece.piece.authorId === p.user.id)
-  );
-
-  // Get user initials for avatar
-  const getInitials = (user: any) => {
-    if (user.name) {
-      const parts = user.name.split(" ");
-      if (parts.length >= 2) {
-        return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-      }
-      return user.name.substring(0, 2).toUpperCase();
-    }
-    if (user.username) {
-      return user.username.substring(0, 2).toUpperCase();
-    }
-    return "U";
+  const handleCardClick = () => {
+    router.push(`/riffs/${riff.id}`);
   };
 
-  const handleJoinRiff = async () => {
-    console.log("Joining riff:", riff.id);
-    // TODO: Call API to join riff
-  };
+  const existingPieceId =
+    riff.pieces.find((p) => p.piece.authorId === currentUserId)?.piece.id ??
+    null;
 
-  const handleContinueWriting = () => {
-    console.log("Continue writing for riff:", riff.id);
-    // TODO: Navigate to editor
+  const handleRevealClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onReveal?.();
   };
 
   return (
     <div
+      onClick={handleCardClick}
+      onMouseEnter={() => setIsCardHovered(true)}
+      onMouseLeave={() => setIsCardHovered(false)}
+      className="riff-card"
       style={{
         backgroundColor: "#FFFFFF",
         border: "2px solid #000000",
         padding: "32px",
         display: "flex",
-        flexDirection: "row",
         gap: "40px",
         alignItems: "center",
         justifyContent: "space-between",
+        cursor: "pointer",
+        boxShadow: isCardHovered
+          ? "8px 8px 0px 0px #01EFFC"
+          : "8px 8px 0px 0px #000000",
+        transition: "box-shadow 0.1s ease",
       }}
     >
       {/* Left Section - Riff Metadata */}
@@ -127,7 +140,7 @@ export default function RiffCard({
               margin: 0,
             }}
           >
-            {riff.title}
+            {getRiffDisplayTitle(riff)}
           </h3>
 
           {/* Date/Deadline */}
@@ -137,262 +150,54 @@ export default function RiffCard({
               fontSize: "16px",
               fontWeight: 300,
               lineHeight: "normal",
-              color: "#808080",
+              color: deadlinePassed ? "#FF4444" : "#808080",
               margin: 0,
             }}
           >
-            {isJoined && riff.deadline
-              ? getDateRange()
-              : riff.deadline
-                ? `Deadline: ${formatDate(riff.deadline)}`
-                : "No deadline"}
+            {deadlinePassed
+              ? "Deadline passed"
+              : isJoined && riff.deadline
+                ? getDateRange()
+                : riff.deadline
+                  ? `Deadline: ${formatDateShort(riff.deadline)}`
+                  : "No deadline"}
           </p>
         </div>
 
-        {/* Not Joined: Participants Section */}
-        {!isJoined && riff.participants.length > 0 && (
-          <div style={{ marginTop: "8px" }}>
+        {/* Participants */}
+        {riff.participants.length > 0 && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              marginTop: "8px",
+            }}
+          >
             <p
               style={{
                 fontFamily: "var(--font-dm-sans)",
                 fontSize: "16px",
                 fontWeight: 300,
-                lineHeight: 1.6,
+                lineHeight: "normal",
                 color: "#000000",
-                marginBottom: "12px",
+                margin: 0,
               }}
             >
               Joined by
             </p>
-            <div style={{ display: "flex", gap: "0", marginLeft: "0" }}>
-              {riff.participants.slice(0, 5).map((participant, index) => (
-                <div
-                  key={participant.user.id}
-                  style={{
-                    width: "32px",
-                    height: "32px",
-                    borderRadius: "64px",
-                    border: "1px solid #000000",
-                    backgroundColor: participant.user.avatarUrl
-                      ? "transparent"
-                      : "#E6E6E6",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    overflow: "hidden",
-                    marginLeft: index > 0 ? "-4px" : "0",
-                    position: "relative",
-                    zIndex: riff.participants.length - index,
-                  }}
-                >
-                  {participant.user.avatarUrl ? (
-                    <img
-                      src={participant.user.avatarUrl}
-                      alt={
-                        participant.user.name ||
-                        participant.user.username ||
-                        "User"
-                      }
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                      }}
-                    />
-                  ) : (
-                    <span
-                      style={{
-                        fontFamily: "var(--font-dm-serif-text)",
-                        fontSize: "12px",
-                        fontWeight: 400,
-                        color: "#000000",
-                      }}
-                    >
-                      {getInitials(participant.user)}
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Joined: Progress Section */}
-        {isJoined && (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "8px",
-            }}
-          >
-            {/* Submitted Row */}
-            {submittedUsers.length > 0 && (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "12px",
-                  height: "32px",
-                }}
-              >
-                <p
-                  style={{
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "16px",
-                    fontWeight: 300,
-                    lineHeight: "normal",
-                    color: "#000000",
-                    margin: 0,
-                  }}
-                >
-                  Submitted
-                </p>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    paddingRight: "4px",
-                  }}
-                >
-                  {submittedUsers.slice(0, 5).map((participant, index) => (
-                    <div
-                      key={participant.user.id}
-                      style={{
-                        width: "32px",
-                        height: "32px",
-                        borderRadius: "64px",
-                        border: "1px solid #000000",
-                        backgroundColor: participant.user.avatarUrl
-                          ? "transparent"
-                          : "#E6E6E6",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        overflow: "hidden",
-                        marginLeft: index > 0 ? "-4px" : "0",
-                        position: "relative",
-                        zIndex: submittedUsers.length - index,
-                      }}
-                    >
-                      {participant.user.avatarUrl ? (
-                        <img
-                          src={participant.user.avatarUrl}
-                          alt={
-                            participant.user.name ||
-                            participant.user.username ||
-                            "User"
-                          }
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                          }}
-                        />
-                      ) : (
-                        <span
-                          style={{
-                            fontFamily: "var(--font-dm-serif-text)",
-                            fontSize: "12px",
-                            fontWeight: 400,
-                            color: "#000000",
-                          }}
-                        >
-                          {getInitials(participant.user)}
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Waiting For Row */}
-            {waitingUsers.length > 0 && (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "12px",
-                  height: "32px",
-                }}
-              >
-                <p
-                  style={{
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "16px",
-                    fontWeight: 300,
-                    lineHeight: "normal",
-                    color: "#000000",
-                    margin: 0,
-                  }}
-                >
-                  Waiting for
-                </p>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    paddingRight: "4px",
-                  }}
-                >
-                  {waitingUsers.slice(0, 5).map((participant, index) => (
-                    <div
-                      key={participant.user.id}
-                      style={{
-                        width: "32px",
-                        height: "32px",
-                        borderRadius: "64px",
-                        border: "1px solid #000000",
-                        backgroundColor: participant.user.avatarUrl
-                          ? "transparent"
-                          : "#E6E6E6",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        overflow: "hidden",
-                        marginLeft: index > 0 ? "-4px" : "0",
-                        position: "relative",
-                        zIndex: waitingUsers.length - index,
-                      }}
-                    >
-                      {participant.user.avatarUrl ? (
-                        <img
-                          src={participant.user.avatarUrl}
-                          alt={
-                            participant.user.name ||
-                            participant.user.username ||
-                            "User"
-                          }
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                          }}
-                        />
-                      ) : (
-                        <span
-                          style={{
-                            fontFamily: "var(--font-dm-serif-text)",
-                            fontSize: "12px",
-                            fontWeight: 400,
-                            color: "#000000",
-                          }}
-                        >
-                          {getInitials(participant.user)}
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            <AvatarStack
+              users={riff.participants.slice(0, 5).map((p) => p.user)}
+              size={32}
+              onAvatarClick={handleAvatarClick}
+            />
           </div>
         )}
       </div>
 
       {/* Right Section - Call-to-Action */}
       <div
+        className="riff-card-cta"
         style={{
           minWidth: "200px",
           display: "flex",
@@ -403,41 +208,65 @@ export default function RiffCard({
         }}
       >
         {/* Button */}
-        <button
-          onClick={isJoined ? handleContinueWriting : handleJoinRiff}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-          style={{
-            backgroundColor: isHovered ? "#00FF66" : "#FFFFFF",
-            border: "2px solid #000000",
-            boxShadow: isHovered
-              ? "8px 8px 0px 0px #000000"
-              : isJoined
-                ? "8px 8px 0px 0px #00FF66"
-                : "8px 8px 0px 0px #01EFFC",
-            padding: "12px 48px",
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
-            fontWeight: 300,
-            lineHeight: "normal",
-            color: "#000000",
-            cursor: "pointer",
-            transition: "none",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {isJoined
-            ? hasSubmitted
-              ? "View submission"
-              : "Continue writing"
-            : "Join riff"}
-        </button>
+        {shouldShowReveal({
+          deadlinePassed,
+          isJoined,
+          hasSubmitted,
+          piecesAllSubmitted,
+          isAdmin,
+          status: riff.status,
+        }) ? (
+          <RevealRiffButton onClick={handleRevealClick} />
+        ) : riff.status !== "REVEALED" ? (
+          <RiffCTAButton
+            riffId={riff.id}
+            isJoined={isJoined}
+            hasDraft={hasDraft}
+            hasSubmitted={hasSubmitted}
+            existingPieceId={existingPieceId}
+            onJoin={onJoin}
+            stopPropagation
+          />
+        ) : null}
 
-        {/* Countdown Timer (only for joined riffs with deadline) */}
-        {isJoined && riff.deadline && (
-          <CountdownTimer deadline={new Date(riff.deadline)} />
+        {/* Countdown Timer or Time's up */}
+        {isJoined &&
+          riff.deadline &&
+          !deadlinePassed &&
+          riff.status !== "REVEALED" && (
+            <CountdownTimer deadline={new Date(riff.deadline)} />
+          )}
+        {deadlinePassed && riff.deadline && (
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "14px",
+              fontWeight: 700,
+              color: "#FF4444",
+              margin: 0,
+            }}
+          >
+            Time&apos;s up!
+          </p>
         )}
       </div>
+
+      <style>{`
+        @media (max-width: 767px) {
+          .riff-card {
+            flex-direction: column !important;
+            gap: 24px !important;
+            padding: 24px !important;
+          }
+          .riff-card-cta {
+            min-width: 0 !important;
+            width: 100% !important;
+          }
+          .riff-card-cta button {
+            width: 100% !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

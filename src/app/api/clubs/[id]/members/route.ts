@@ -32,9 +32,7 @@ export async function POST(
     }
 
     // Check if requester is admin or moderator
-    const requesterMember = club.members.find(
-      (m) => m.userId === (user as any).id
-    );
+    const requesterMember = club.members.find((m) => m.userId === user.id);
     if (
       !requesterMember ||
       !["ADMIN", "MODERATOR"].includes(requesterMember.role)

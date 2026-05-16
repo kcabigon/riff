@@ -1,0 +1,608 @@
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
+/**
+ * E2E seed script — creates users at different onboarding stages,
+ * a club with riffs, and pieces so every flow can be tested locally.
+ *
+ * Idempotent: checks for existing users by email before creating.
+ * Re-runnable: deletes clubs named "The Sunday Writers" first.
+ *
+ * Run with: npm run db:seed:dev
+ */
+
+interface SeedUser {
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  name: string | null;
+  username: string | null;
+  onboardingStep: "NAME" | "CLUB_CHOICE" | "INVITE" | "COMPLETED" | null;
+  onboardingCompleted: boolean;
+}
+
+const SEED_USERS: SeedUser[] = [
+  {
+    email: "fresh@test.local",
+    firstName: null,
+    lastName: null,
+    name: null,
+    username: null,
+    onboardingStep: "NAME",
+    onboardingCompleted: false,
+  },
+  {
+    email: "midway@test.local",
+    firstName: "Midway",
+    lastName: "Tester",
+    name: "Midway Tester",
+    username: "midwaytester",
+    onboardingStep: "CLUB_CHOICE",
+    onboardingCompleted: false,
+  },
+  {
+    email: "writer@test.local",
+    firstName: "Writer",
+    lastName: "McPen",
+    name: "Writer McPen",
+    username: "writermcpen",
+    onboardingStep: "COMPLETED",
+    onboardingCompleted: true,
+  },
+  {
+    email: "alice@test.local",
+    firstName: "Alice",
+    lastName: "Chen",
+    name: "Alice Chen",
+    username: "alicechen",
+    onboardingStep: "COMPLETED",
+    onboardingCompleted: true,
+  },
+  {
+    email: "bob@test.local",
+    firstName: "Bob",
+    lastName: "Rivera",
+    name: "Bob Rivera",
+    username: "bobrivera",
+    onboardingStep: "COMPLETED",
+    onboardingCompleted: true,
+  },
+  {
+    email: "carol@test.local",
+    firstName: "Carol",
+    lastName: "Kim",
+    name: "Carol Kim",
+    username: "carolkim",
+    onboardingStep: "COMPLETED",
+    onboardingCompleted: true,
+  },
+];
+
+async function main() {
+  console.log("=== E2E Seed Script ===\n");
+
+  // -------------------------------------------------------------------------
+  // 0. Cleanup previous seed data
+  // -------------------------------------------------------------------------
+  console.log("Cleaning up previous seed data...");
+
+  // Delete clubs named "The Sunday Writers" (cascades to riffs, participants, pieces via relations)
+  const oldClubs = await prisma.club.findMany({
+    where: { name: "The Sunday Writers" },
+    select: { id: true },
+  });
+
+  for (const club of oldClubs) {
+    // Delete riff-related data first (foreign key constraints)
+    const riffs = await prisma.riff.findMany({
+      where: { clubId: club.id },
+      select: { id: true },
+    });
+    const riffIds = riffs.map((r) => r.id);
+
+    if (riffIds.length > 0) {
+      // Delete pieceRead entries for these riffs
+      await prisma.pieceRead.deleteMany({
+        where: { riffId: { in: riffIds } },
+      });
+      // Delete pieceRiff entries for these riffs
+      await prisma.pieceRiff.deleteMany({
+        where: { riffId: { in: riffIds } },
+      });
+      // Delete riff participants
+      await prisma.riffParticipant.deleteMany({
+        where: { riffId: { in: riffIds } },
+      });
+      // Delete riffs
+      await prisma.riff.deleteMany({
+        where: { id: { in: riffIds } },
+      });
+    }
+
+    // Delete club members
+    await prisma.clubMember.deleteMany({
+      where: { clubId: club.id },
+    });
+
+    // Delete the club
+    await prisma.club.delete({ where: { id: club.id } });
+  }
+
+  if (oldClubs.length > 0) {
+    console.log(`  Deleted ${oldClubs.length} old "The Sunday Writers" club(s)`);
+  }
+
+  // Delete pieces authored by test users
+  const testEmails = SEED_USERS.map((u) => u.email);
+  const existingTestUsers = await prisma.user.findMany({
+    where: { email: { in: testEmails } },
+    select: { id: true },
+  });
+  const testUserIds = existingTestUsers.map((u) => u.id);
+
+  if (testUserIds.length > 0) {
+    // Delete pieceRiff entries for pieces by test users
+    const testPieces = await prisma.piece.findMany({
+      where: { authorId: { in: testUserIds } },
+      select: { id: true },
+    });
+    const testPieceIds = testPieces.map((p) => p.id);
+
+    if (testPieceIds.length > 0) {
+      await prisma.pieceRiff.deleteMany({
+        where: { pieceId: { in: testPieceIds } },
+      });
+      await prisma.piece.deleteMany({
+        where: { id: { in: testPieceIds } },
+      });
+    }
+  }
+
+  console.log("  Cleanup complete.\n");
+
+  // -------------------------------------------------------------------------
+  // 1. Create or update users
+  // -------------------------------------------------------------------------
+  console.log("Creating users...");
+  const users: Record<string, { id: string; email: string }> = {};
+
+  for (const u of SEED_USERS) {
+    const existing = await prisma.user.findUnique({
+      where: { email: u.email },
+    });
+
+    if (existing) {
+      // Update to match expected state
+      const updated = await prisma.user.update({
+        where: { email: u.email },
+        data: {
+          firstName: u.firstName,
+          lastName: u.lastName,
+          name: u.name,
+          username: u.username,
+          onboardingStep: u.onboardingStep,
+          onboardingCompleted: u.onboardingCompleted,
+        },
+      });
+      users[u.email] = { id: updated.id, email: updated.email };
+      console.log(`  Updated: ${u.email}`);
+    } else {
+      const created = await prisma.user.create({
+        data: {
+          email: u.email,
+          firstName: u.firstName,
+          lastName: u.lastName,
+          name: u.name,
+          username: u.username,
+          onboardingStep: u.onboardingStep,
+          onboardingCompleted: u.onboardingCompleted,
+        },
+      });
+      users[u.email] = { id: created.id, email: created.email };
+      console.log(`  Created: ${u.email}`);
+    }
+  }
+
+  const writer = users["writer@test.local"];
+  const alice = users["alice@test.local"];
+  const bob = users["bob@test.local"];
+  const carol = users["carol@test.local"];
+
+  // -------------------------------------------------------------------------
+  // 2. Create club
+  // -------------------------------------------------------------------------
+  console.log("\nCreating club...");
+  const club = await prisma.club.create({
+    data: {
+      name: "The Sunday Writers",
+      description:
+        "A small group of friends who write together every week. No pressure, just words on a page.",
+      adminId: writer.id,
+      members: {
+        create: [
+          { userId: writer.id, role: "ADMIN" },
+          { userId: alice.id, role: "MEMBER" },
+          { userId: bob.id, role: "MEMBER" },
+          { userId: carol.id, role: "MEMBER" },
+        ],
+      },
+    },
+  });
+  console.log(`  Club: "${club.name}" (${club.id})`);
+
+  // Set lastActiveClubId for completed-onboarding users
+  await prisma.user.updateMany({
+    where: {
+      email: { in: ["writer@test.local", "alice@test.local", "bob@test.local", "carol@test.local"] },
+    },
+    data: { lastActiveClubId: club.id },
+  });
+  console.log("  Set lastActiveClubId for writer, alice, bob, carol");
+
+  // -------------------------------------------------------------------------
+  // 3. Active riff — "Write About a Place"
+  // -------------------------------------------------------------------------
+  console.log("\nCreating active riff...");
+  const activeRiff = await prisma.riff.create({
+    data: {
+      clubId: club.id,
+      creatorId: writer.id,
+      title: "Write About a Place",
+      prompt:
+        "Describe a place that has changed you — not where you live now, but somewhere you carry with you. Lean into the sensory details.",
+      deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 1 week
+      status: "ACTIVE",
+    },
+  });
+  console.log(`  Active riff: "${activeRiff.title}" (${activeRiff.id})`);
+
+  // Participants: writer, alice, bob (NOT carol)
+  await prisma.riffParticipant.createMany({
+    data: [
+      { riffId: activeRiff.id, userId: writer.id },
+      { riffId: activeRiff.id, userId: alice.id },
+      { riffId: activeRiff.id, userId: bob.id },
+    ],
+  });
+  console.log("  Participants: writer, alice, bob (carol not joined)");
+
+  // Alice's submitted piece
+  const alicePiece = await prisma.piece.create({
+    data: {
+      title: "The Train Station in Prague",
+      authorId: alice.id,
+      currentContent:
+        '<p>I first arrived at Prague\'s main station on a grey Tuesday in March. The ceiling arches above you like the ribcage of some enormous creature, and the light that filters through the glass panels is the color of old honey.</p><p>I stood there for twenty minutes, not moving, just watching the pigeons.</p>',
+      wordCount: 58,
+    },
+  });
+  await prisma.pieceRiff.create({
+    data: { pieceId: alicePiece.id, riffId: activeRiff.id },
+  });
+  console.log("  Alice submitted piece to active riff");
+
+  // -------------------------------------------------------------------------
+  // 4. Revealed riff — "Sex, Money & Religion"
+  // -------------------------------------------------------------------------
+  console.log("\nCreating revealed riff...");
+  const revealedRiff = await prisma.riff.create({
+    data: {
+      clubId: club.id,
+      creatorId: writer.id,
+      title: "Volume 3 | Sex, Money & Religion",
+      prompt:
+        "Pick one of the three — sex, money, or religion — and write something honest. No judgment, no filter.",
+      deadline: new Date("2026-02-01T23:59:59Z"),
+      status: "REVEALED",
+    },
+  });
+  console.log(`  Revealed riff: "${revealedRiff.title}" (${revealedRiff.id})`);
+
+  // All 4 members are participants
+  await prisma.riffParticipant.createMany({
+    data: [
+      { riffId: revealedRiff.id, userId: writer.id },
+      { riffId: revealedRiff.id, userId: alice.id },
+      { riffId: revealedRiff.id, userId: bob.id },
+      { riffId: revealedRiff.id, userId: carol.id },
+    ],
+  });
+  console.log("  Participants: writer, alice, bob, carol (all 4)");
+
+  // All 4 submitted pieces
+  const revealedPieces = [
+    {
+      title: "The Collection Plate",
+      authorId: writer.id,
+      currentContent:
+        "<p>Every Sunday, the brass plate came around, and I watched my father drop in exactly ten percent. Not a dollar more, not a dollar less. I used to think it was about God, but it was about something else entirely — about being seen.</p><p>He never prayed at home. But in that pew, with the plate in his hands, he was the most devout man in the room.</p>",
+      wordCount: 72,
+    },
+    {
+      title: "What We Don't Talk About",
+      authorId: alice.id,
+      currentContent:
+        "<p>My mother never said the word \"money.\" She said \"the situation\" or \"things are tight\" or simply changed the subject. I learned early that wanting things was impolite, and asking for them was worse.</p><p>It wasn't until I was thirty that I realized I had internalized every one of her silences.</p>",
+      wordCount: 55,
+    },
+    {
+      title: "First Date Economics",
+      authorId: bob.id,
+      currentContent:
+        "<p>She ordered the salmon. I ordered the chicken, not because I wanted it, but because it was eight dollars cheaper. I did the math in my head — appetizer, two entrees, tax, tip — and felt my palms get damp.</p><p>She split the bill without asking. I married her two years later.</p>",
+      wordCount: 58,
+    },
+    {
+      title: "Temple of the Body",
+      authorId: carol.id,
+      currentContent:
+        "<p>The yoga studio smelled like sandalwood and ambition. Everyone was bending themselves into shapes that promised enlightenment, or at least a better Instagram. I was there because my therapist said I needed to \"reconnect with my body.\"</p><p>Three months later, I still couldn't touch my toes, but I'd stopped apologizing for taking up space.</p>",
+      wordCount: 62,
+    },
+  ];
+
+  const revealedPieceIds: string[] = [];
+  for (const p of revealedPieces) {
+    const piece = await prisma.piece.create({ data: p });
+    await prisma.pieceRiff.create({
+      data: { pieceId: piece.id, riffId: revealedRiff.id },
+    });
+    revealedPieceIds.push(piece.id);
+  }
+  console.log("  Added 4 pieces (writer, alice, bob, carol)");
+
+  // PieceReads: Alice has read 2/4 pieces (tests "Continue reading")
+  await prisma.pieceRead.createMany({
+    data: [
+      { userId: alice.id, pieceId: revealedPieceIds[0], riffId: revealedRiff.id }, // writer's piece
+      { userId: alice.id, pieceId: revealedPieceIds[2], riffId: revealedRiff.id }, // bob's piece
+    ],
+  });
+  console.log("  Alice has read 2/4 pieces (tests 'Continue reading')");
+
+  // Bob has read 0 pieces (tests "Reveal")
+  console.log("  Bob has read 0/4 pieces (tests 'Reveal')");
+
+  // Writer has read all 4 pieces (tests completed state)
+  await prisma.pieceRead.createMany({
+    data: revealedPieceIds.map((pieceId) => ({
+      userId: writer.id,
+      pieceId,
+      riffId: revealedRiff.id,
+    })),
+  });
+  console.log("  Writer has read 4/4 pieces (tests completed state)");
+
+  // -------------------------------------------------------------------------
+  // 4b. Past-deadline active riff — "Guilty Pleasures" (ready to reveal)
+  // -------------------------------------------------------------------------
+  console.log("\nCreating past-deadline active riff...");
+  const pastDeadlineRiff = await prisma.riff.create({
+    data: {
+      clubId: club.id,
+      creatorId: writer.id,
+      title: "Guilty Pleasures",
+      prompt:
+        "Write about something you enjoy that you'd never admit to in polite company.",
+      deadline: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+      status: "ACTIVE",
+    },
+  });
+  console.log(
+    `  Past-deadline riff: "${pastDeadlineRiff.title}" (${pastDeadlineRiff.id})`
+  );
+
+  // Participants: writer, alice, bob
+  await prisma.riffParticipant.createMany({
+    data: [
+      { riffId: pastDeadlineRiff.id, userId: writer.id },
+      { riffId: pastDeadlineRiff.id, userId: alice.id },
+      { riffId: pastDeadlineRiff.id, userId: bob.id },
+    ],
+  });
+
+  // All 3 submitted pieces
+  const guiltyPieces = [
+    {
+      title: "Reality TV and Me",
+      authorId: writer.id,
+      currentContent:
+        "<p>I watch three hours of reality TV every night. Not ironically. I genuinely care who gets the final rose.</p>",
+      wordCount: 24,
+    },
+    {
+      title: "The Drive-Through Confession",
+      authorId: alice.id,
+      currentContent:
+        "<p>Every Friday I tell my family I'm working late. I'm actually sitting in a McDonald's parking lot eating a Big Mac in total silence.</p>",
+      wordCount: 28,
+    },
+    {
+      title: "My Spreadsheet Empire",
+      authorId: bob.id,
+      currentContent:
+        "<p>I have a spreadsheet that tracks every cup of coffee I've bought in the last four years. Cost, location, rating. I am not okay.</p>",
+      wordCount: 29,
+    },
+  ];
+
+  for (const p of guiltyPieces) {
+    const piece = await prisma.piece.create({ data: p });
+    await prisma.pieceRiff.create({
+      data: { pieceId: piece.id, riffId: pastDeadlineRiff.id },
+    });
+  }
+  console.log("  Added 3 pieces (writer, alice, bob). Ready for host to reveal.");
+
+  // -------------------------------------------------------------------------
+  // 4c. Second club — "Solo Writers" (empty, tests onboarding checklist)
+  // -------------------------------------------------------------------------
+  console.log("\nCreating empty club for onboarding checklist...");
+
+  // Clean up old "Solo Writers" clubs
+  const oldSoloClubs = await prisma.club.findMany({
+    where: { name: "Solo Writers" },
+    select: { id: true },
+  });
+  for (const c of oldSoloClubs) {
+    await prisma.clubMember.deleteMany({ where: { clubId: c.id } });
+    await prisma.club.delete({ where: { id: c.id } });
+  }
+
+  const soloClub = await prisma.club.create({
+    data: {
+      name: "Solo Writers",
+      description: "A brand new club — no riffs yet, no other members.",
+      adminId: writer.id,
+      members: {
+        create: [{ userId: writer.id, role: "ADMIN" }],
+      },
+    },
+  });
+  console.log(`  Empty club: "${soloClub.name}" (${soloClub.id})`);
+
+  // -------------------------------------------------------------------------
+  // 4d. Seed notifications for writer
+  // -------------------------------------------------------------------------
+  console.log("\nCreating sample notifications...");
+
+  // Clean old notifications for test users
+  await prisma.notification.deleteMany({
+    where: { recipientId: { in: testUserIds } },
+  });
+
+  await prisma.notification.createMany({
+    data: [
+      {
+        type: "RIFF_CREATED",
+        recipientId: alice.id,
+        actorId: writer.id,
+        clubId: club.id,
+        riffId: activeRiff.id,
+        isRead: false,
+      },
+      {
+        type: "RIFF_CREATED",
+        recipientId: bob.id,
+        actorId: writer.id,
+        clubId: club.id,
+        riffId: activeRiff.id,
+        isRead: false,
+      },
+      {
+        type: "NEW_COMMENT",
+        recipientId: writer.id,
+        actorId: alice.id,
+        pieceId: revealedPieceIds[0],
+        clubId: club.id,
+        riffId: revealedRiff.id,
+        isRead: false,
+      },
+      {
+        type: "NEW_COMMENT",
+        recipientId: writer.id,
+        actorId: bob.id,
+        pieceId: revealedPieceIds[0],
+        clubId: club.id,
+        riffId: revealedRiff.id,
+        isRead: true,
+        createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000), // yesterday
+      },
+      {
+        type: "RIFF_COMPLETED",
+        recipientId: alice.id,
+        actorId: writer.id,
+        riffId: revealedRiff.id,
+        isRead: true,
+        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+      },
+    ],
+  });
+  console.log("  Created 5 notifications (writer: 2, alice: 2, bob: 1)");
+
+  // -------------------------------------------------------------------------
+  // 5. Completed riff — "Childhood Memories"
+  // -------------------------------------------------------------------------
+  console.log("\nCreating completed riff...");
+  const completedRiff = await prisma.riff.create({
+    data: {
+      clubId: club.id,
+      creatorId: writer.id,
+      title: "Childhood Memories",
+      prompt: "Write about something you remember from before you were ten.",
+      deadline: new Date("2026-01-15T23:59:59Z"),
+      status: "COMPLETED",
+    },
+  });
+  console.log(`  Completed riff: "${completedRiff.title}" (${completedRiff.id})`);
+
+  const completedPieces = [
+    {
+      title: "The Red Bicycle",
+      authorId: writer.id,
+      currentContent:
+        "<p>The summer I turned seven, my father brought home a red bicycle. It was too big for me — my feet barely grazed the pedals — but I rode it anyway, all the way down Maple Street and back, three times a day.</p>",
+      wordCount: 42,
+    },
+    {
+      title: "Saturday Mornings",
+      authorId: alice.id,
+      currentContent:
+        "<p>Saturday mornings meant cartoons and toast with too much butter. My sister and I would camp on the living room floor with blankets, and the whole world outside could wait.</p>",
+      wordCount: 36,
+    },
+    {
+      title: "Grandma's Kitchen",
+      authorId: bob.id,
+      currentContent:
+        "<p>The kitchen smelled like cardamom and something I still can't name. She never measured anything. She just knew — a pinch here, a handful there — and it always came out perfect.</p>",
+      wordCount: 38,
+    },
+  ];
+
+  for (const p of completedPieces) {
+    const piece = await prisma.piece.create({ data: p });
+    await prisma.pieceRiff.create({
+      data: { pieceId: piece.id, riffId: completedRiff.id },
+    });
+  }
+  console.log("  Added 3 pieces (writer, alice, bob)");
+
+  // -------------------------------------------------------------------------
+  // 6. Summary
+  // -------------------------------------------------------------------------
+  console.log("\n========================================");
+  console.log("  E2E seed data created successfully!");
+  console.log("========================================\n");
+  console.log("Club:", club.name, `(${club.id})`);
+  console.log("Empty club:", soloClub.name, `(${soloClub.id})`);
+  console.log("Active riff:", activeRiff.title, `(${activeRiff.id})`);
+  console.log("Past-deadline riff:", pastDeadlineRiff.title, `(${pastDeadlineRiff.id})`);
+  console.log("Revealed riff:", revealedRiff.title, `(${revealedRiff.id})`);
+  console.log("Completed riff:", completedRiff.title, `(${completedRiff.id})`);
+  console.log("");
+  console.log("Test scenarios (go to /dev-signin):");
+  console.log("");
+  console.log("  1. FRESH ONBOARDING — fresh@test.local → /onboarding");
+  console.log("  2. RESUME ONBOARDING — midway@test.local → /onboarding");
+  console.log(`  3. HOST (all read) — writer@test.local → /clubs/${club.id}`);
+  console.log(`  4. CONTINUE READING — alice@test.local → /clubs/${club.id}`);
+  console.log(`  5. FIRST REVEAL — bob@test.local → /clubs/${club.id}`);
+  console.log(`  6. NOT JOINED — carol@test.local → /clubs/${club.id}`);
+  console.log(`  7. PROFILE + DRAFTS — writer@test.local → /profile/${writer.id}`);
+  console.log(`  8. REVEAL + CONFETTI — writer@test.local → /riffs/${pastDeadlineRiff.id}`);
+  console.log(`  9. EMPTY CLUB (checklist) — writer@test.local → /clubs/${soloClub.id}`);
+  console.log("  10. NOTIFICATIONS — writer@test.local → (bell in navbar, 2 unread)");
+  console.log("  11. SETTINGS — writer@test.local → /settings");
+  console.log("  12. ABOUT PAGE — /about (no auth needed)");
+}
+
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

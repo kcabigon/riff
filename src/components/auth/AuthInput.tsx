@@ -17,7 +17,7 @@ export default function AuthInput({ error, ...props }: AuthInputProps) {
         {...props}
         style={{
           width: "100%",
-          height: "45px",
+          height: "auto",
           backgroundColor: "#FFFFFF",
           border: error ? "2px solid #FF0000" : "2px solid #000000",
           padding: "12px",
@@ -28,6 +28,7 @@ export default function AuthInput({ error, ...props }: AuthInputProps) {
           color: error ? "#FF0000" : "#000000",
           outline: "none",
           transition: "border-color 0.2s",
+          boxSizing: "border-box",
           ...props.style,
         }}
         onFocus={(e) => {
@@ -57,6 +58,11 @@ export default function AuthInput({ error, ...props }: AuthInputProps) {
           {error}
         </p>
       )}
+      <style jsx>{`
+        input::placeholder {
+          color: #9c9c9c;
+        }
+      `}</style>
     </div>
   );
 }

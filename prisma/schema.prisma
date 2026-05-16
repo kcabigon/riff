@@ -10,16 +10,21 @@ datasource db {
 // ==================== USER ====================
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  emailVerified DateTime?
-  password      String?   // Hashed password for credentials auth
-  name          String
-  username      String    @unique
-  bio           String?
-  avatarUrl     String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                 String             @id @default(cuid())
+  email              String             @unique
+  emailVerified      DateTime?
+  password           String?            // Hashed password for credentials auth
+  name               String?            // Made optional for magic link auth
+  username           String?            @unique // Made optional for magic link auth
+  firstName          String?            // New: First name collected during onboarding
+  lastName           String?            // New: Last name collected during onboarding
+  bio                String?
+  avatarUrl          String?
+  lastActiveClubId   String?            // New: Tracks last viewed club for redirect
+  onboardingStep     OnboardingStep?    // New: Resume onboarding progress
+  onboardingCompleted Boolean           @default(false) // New: Track if user finished onboarding
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
 
   // NextAuth relations
   accounts Account[]
@@ -39,6 +44,10 @@ model User {
   collectionCollaborations CollectionCollaborator[]
   sentNotifications        Notification[]           @relation("NotificationActor")
   receivedNotifications    Notification[]           @relation("NotificationRecipient")
+  createdInvites           ClubInvite[]             // New: Club invites created by user
+  pieceReads               PieceRead[]              // New: Track which pieces user has read
+  jams                     Jam[]                    // New: User's jam entries
+  jamReads                 JamRead[]                // New: Jams the user has read
 
   // DEPRECATED: Circle relations (kept for backward compatibility)
   circleMemberships        CircleMember[]
@@ -48,12 +57,20 @@ model User {
   @@map("users")
 }
 
+enum OnboardingStep {
+  NAME          // Collecting first/last name
+  CLUB_CHOICE   // Choosing to start or join a club
+  INVITE        // Inviting friends to club (club already created)
+  COMPLETED     // Onboarding finished
+}
+
 // ==================== CLUBS (NEW ARCHITECTURE) ====================
 
 model Club {
   id          String   @id @default(cuid())
   name        String
   description String?
+  bannerImage String?  // New: Banner image URL for club personalization
   isArchived  Boolean  @default(false)
   adminId     String   // Creator, permanent
   moderatorId String?  // Rotatable moderator role
@@ -69,6 +86,7 @@ model Club {
   collections Collection[]
   comments    Comment[]
   notifications Notification[]
+  invites     ClubInvite[] // New: Club invitation tokens
 
   @@map("clubs")
 }
@@ -97,17 +115,19 @@ model Circle {
 }
 
 model ClubMember {
-  id       String    @id @default(cuid())
-  clubId   String
-  userId   String
-  role     ClubRole  @default(MEMBER)
-  joinedAt DateTime  @default(now())
+  id           String    @id @default(cuid())
+  clubId       String
+  userId       String
+  role         ClubRole  @default(MEMBER)
+  joinedAt     DateTime  @default(now())
+  lastViewedAt DateTime? // New: Track last time user viewed this club
 
   // Relations
   club Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([clubId, userId])
+  @@index([userId, lastViewedAt]) // New: Index for efficient "last active club" queries
   @@map("club_members")
 }
 
@@ -123,10 +143,11 @@ model Riff {
   id          String     @id @default(cuid())
   clubId      String
   creatorId   String
-  title       String
-  prompt      String?    @db.Text
-  deadline    DateTime?
-  status      RiffStatus @default(DRAFT)
+  title        String?
+  prompt       String?    @db.Text
+  deadline     DateTime?
+  status       RiffStatus @default(DRAFT)
+  volumeNumber Int?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
@@ -135,6 +156,7 @@ model Riff {
   creator      User              @relation("RiffCreator", fields: [creatorId], references: [id], onDelete: Cascade)
   participants RiffParticipant[]
   pieces       PieceRiff[]
+  pieceReads   PieceRead[]
   shares       Share[]
   comments     Comment[]
   notifications Notification[]
@@ -145,6 +167,7 @@ model Riff {
 enum RiffStatus {
   DRAFT      // Creator is setting up, no invites sent yet
   ACTIVE     // Running, members can join/leave and submit pieces
+  REVEALED   // Host revealed, members can now read pieces
   COMPLETED  // Manually marked complete by any club member
 }
 
@@ -160,6 +183,23 @@ model RiffParticipant {
 
   @@unique([riffId, userId])
   @@map("riff_participants")
+}
+
+// ==================== PIECE READS (REVEAL TRACKING) ====================
+
+model PieceRead {
+  id        String   @id @default(cuid())
+  userId    String
+  pieceId   String
+  riffId    String
+  readAt    DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  piece Piece @relation(fields: [pieceId], references: [id], onDelete: Cascade)
+  riff  Riff  @relation(fields: [riffId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, pieceId, riffId])
+  @@map("piece_reads")
 }
 
 // ==================== CIRCLE MEMBERS (DEPRECATED) ====================
@@ -218,9 +258,11 @@ enum PromptVisibilityRule {
 model Piece {
   id             String   @id @default(cuid())
   title          String
+  subtitle       String?
   authorId       String
   currentContent String   @db.Text
   currentExcerpt String?
+  coverImage     String?  // Cover image URL for piece display (uploaded later)
   wordCount      Int      @default(0)
   readLengthMin  Int      @default(1)
   createdAt      DateTime @default(now())
@@ -232,6 +274,7 @@ model Piece {
   newShares  Share[]           // NEW: Multi-level sharing (club, riff, individual, public)
   shares     PieceShare[]      // DEPRECATED: Old circle-based sharing
   riffs      PieceRiff[]       // NEW: Junction for piece-riff relationships
+  pieceReads PieceRead[]       // NEW: Track which users have read this piece
   collections CollectionPiece[]
   visibility PieceVisibilitySettings?
   comments   Comment[]
@@ -266,8 +309,8 @@ model PieceRiff {
   id          String   @id @default(cuid())
   pieceId     String
   riffId      String
-  versionId   String?  // Optional: specific version submitted to riff
-  submittedAt DateTime @default(now())
+  versionId   String?   // Optional: specific version submitted to riff
+  submittedAt DateTime? // Null = attached but not finalized, non-null = submitted and ready for reveal
 
   // Relations
   piece   Piece         @relation(fields: [pieceId], references: [id], onDelete: Cascade)
@@ -357,7 +400,7 @@ model Comment {
   id             String   @id @default(cuid())
   content        String   @db.Text
   pieceId        String
-  versionId      String
+  versionId      String?  // Optional: no longer required for new riff-scoped comments
   clubId         String?  // NEW: Club context for comments
   riffId         String?  // NEW: Riff context for comments
   circleId       String?  // DEPRECATED: Old circle context
@@ -372,7 +415,7 @@ model Comment {
   // Relations
   author            User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
   piece             Piece         @relation(fields: [pieceId], references: [id], onDelete: Cascade)
-  version           PieceVersion  @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  version           PieceVersion? @relation(fields: [versionId], references: [id], onDelete: Cascade)
   club              Club?         @relation(fields: [clubId], references: [id], onDelete: Cascade)
   riff              Riff?         @relation(fields: [riffId], references: [id], onDelete: Cascade)
   circle_deprecated Circle?       @relation("DeprecatedCircleComments", fields: [circleId], references: [id], onDelete: Cascade)
@@ -483,7 +526,10 @@ enum NotificationType {
   RIFF_STARTED
   RIFF_DEADLINE_APPROACHING
   RIFF_COMPLETED
+  RIFF_DEADLINE_CHANGED
+  ALL_PIECES_SUBMITTED
   PIECE_SUBMITTED_TO_RIFF
+  CLUB_MEMBER_JOINED
 
   // Comment notifications
   NEW_COMMENT
@@ -539,4 +585,55 @@ model VerificationToken {
 
   @@unique([identifier, token])
   @@map("verification_tokens")
+}
+
+// ==================== CLUB INVITES (NEW) ====================
+
+model ClubInvite {
+  id        String    @id @default(cuid())
+  clubId    String
+  token     String    @unique // Unique token for shareable invite link
+  createdBy String    // User who created the invite
+  expiresAt DateTime  // Invite expiry (7 days default)
+  usedAt    DateTime? // Timestamp when invite was used
+  usedBy    String?   // User ID who used the invite
+  createdAt DateTime  @default(now())
+
+  // Relations
+  club    Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  creator User @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+
+  @@index([token]) // Index for fast invite lookup
+  @@index([clubId]) // Index for club's invites
+  @@map("club_invites")
+}
+
+// ==================== JAMS ====================
+
+model Jam {
+  id        String   @id @default(cuid())
+  userId    String
+  content   String   // "What are you into" — short headline
+  note      String   @db.Text // "Why" — up to 250 words
+  url       String?  // Optional link
+  createdAt DateTime @default(now())
+
+  user  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reads JamRead[]
+
+  @@index([userId])
+  @@map("jams")
+}
+
+model JamRead {
+  id     String   @id @default(cuid())
+  jamId  String
+  userId String
+  readAt DateTime @default(now())
+
+  jam  Jam  @relation(fields: [jamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([jamId, userId])
+  @@map("jam_reads")
 }

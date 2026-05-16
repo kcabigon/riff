@@ -1,0 +1,223 @@
+/* Shared content styles — used by write page (editable) and read page (read-only) */
+
+/* Base content container */
+.write-editor .ProseMirror {
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  color: #000000;
+  font-family: var(--font-playfair), serif;
+  font-size: 18px;
+  line-height: normal;
+  outline: none;
+  border: none;
+  min-height: 200px;
+  max-width: 100%;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Read-only: default cursor, no focus ring */
+.write-editor .ProseMirror[contenteditable="false"] {
+  cursor: default;
+  min-height: 0;
+}
+
+.write-editor .ProseMirror > * {
+  margin: 0;
+  padding: 0;
+}
+
+/* Paragraphs */
+.write-editor .ProseMirror p {
+  margin: 0 0 1em 0;
+  color: #000000;
+  font-family: var(--font-playfair), serif;
+  font-size: 18px;
+  line-height: normal;
+  max-width: 100%;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.write-editor .ProseMirror p:last-child {
+  margin-bottom: 0;
+}
+
+/* Placeholder (write page only) */
+.write-editor .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #cccccc;
+  pointer-events: none;
+  height: 0;
+  font-family: var(--font-playfair), serif;
+  font-size: 18px;
+}
+
+/* Headings */
+.write-editor .ProseMirror h1,
+.write-editor .ProseMirror h2,
+.write-editor .ProseMirror h3 {
+  margin: 0 0 0.5em 0;
+  padding: 0;
+  color: #000000;
+  font-family: var(--font-playfair), serif;
+  line-height: normal;
+  font-weight: bold;
+}
+
+.write-editor .ProseMirror h1 {
+  font-size: 32px;
+}
+
+.write-editor .ProseMirror h2 {
+  font-size: 24px;
+}
+
+.write-editor .ProseMirror h3 {
+  font-size: 20px;
+}
+
+/* Lists */
+.write-editor .ProseMirror ul,
+.write-editor .ProseMirror ol {
+  margin: 0 0 1em 0;
+  padding-left: 1.5em;
+  color: #000000;
+}
+
+/* Nested lists — no extra gap */
+.write-editor .ProseMirror li ul,
+.write-editor .ProseMirror li ol {
+  margin: 0;
+}
+
+.write-editor .ProseMirror li {
+  margin: 0;
+  padding: 0;
+  color: #000000;
+  font-family: var(--font-playfair), serif;
+  font-size: 18px;
+  line-height: normal;
+}
+
+/* Paragraphs inside list items — no bottom margin */
+.write-editor .ProseMirror li p {
+  margin: 0;
+}
+
+/* Links */
+.write-editor .ProseMirror a,
+.write-editor .ProseMirror span[data-link] {
+  color: #3b82f6;
+  text-decoration: underline;
+}
+
+.write-editor .ProseMirror a:hover,
+.write-editor .ProseMirror span[data-link]:hover {
+  color: #60a5fa;
+}
+
+/* Focus */
+.write-editor .ProseMirror:focus {
+  outline: none;
+}
+
+/* Images */
+.write-editor .ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1em auto;
+}
+
+/* Selected image — green outline (write page only) */
+.write-editor .ProseMirror img.ProseMirror-selectednode {
+  outline: 2px solid #00FF66;
+}
+
+/* Image alignment */
+.write-editor .ProseMirror [style*="text-align: center"] img {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.write-editor .ProseMirror [style*="text-align: right"] img {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.write-editor .ProseMirror [style*="text-align: left"] img {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+/* YouTube embeds */
+.write-editor .ProseMirror div[data-youtube-video] {
+  width: 100% !important;
+  max-width: 100%;
+  margin: 1em auto;
+  overflow: hidden;
+}
+
+.write-editor .ProseMirror div[data-youtube-video] iframe {
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 16 / 9;
+  display: block;
+}
+
+/* Spotify embeds */
+.write-editor .ProseMirror .spotify-embed-wrapper {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.write-editor .ProseMirror .spotify-embed-wrapper iframe {
+  max-width: 100%;
+  height: 152px !important;
+  display: block;
+}
+
+/* ==================== Floating Toolbar (desktop + mobile) ==================== */
+
+.write-sticky-toolbar {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  background: #FFFFFF;
+  border: 2px solid #000000;
+  box-shadow: 4px 4px 0px 0px #000000;
+  padding: 8px 16px;
+  max-width: calc(100% - 32px);
+}
+
+.write-sticky-toolbar-inner {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  overflow-x: auto;
+  overflow-y: hidden;
+  height: 32px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.write-sticky-toolbar-inner::-webkit-scrollbar {
+  display: none;
+}
+
+/* Inline toolbar (mobile — pinned under top bar) */
+.write-inline-toolbar .write-sticky-toolbar-inner {
+  justify-content: flex-start;
+}
+
+/* Saving status pulse animation */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}

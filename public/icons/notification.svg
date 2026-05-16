@@ -1,0 +1,21 @@
+<svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Bell body - wide trapezoid shape -->
+  <path d="M22 6C22 6 8 11 8 24V32H36V24C36 11 22 6 22 6Z" fill="#EECF01"/>
+  <!-- Left highlight -->
+  <path d="M22 6C22 6 8 11 8 24V32H13V24C13 13 22 6 22 6Z" fill="#F5DC3A"/>
+  <!-- Right shadow -->
+  <path d="M22 6C22 6 36 11 36 24V32H31V24C31 13 22 6 22 6Z" fill="#C8A800"/>
+  <!-- Outline -->
+  <path d="M22 6C22 6 8 11 8 24V32H36V24C36 11 22 6 22 6Z" stroke="#2D2D2D" stroke-width="2.5" stroke-linejoin="round" fill="none"/>
+
+  <!-- Wide rim bar -->
+  <rect x="5" y="31" width="34" height="6" rx="2" fill="#C8A800" stroke="#2D2D2D" stroke-width="2.5"/>
+  <!-- Rim highlight -->
+  <rect x="7" y="32.5" width="30" height="2" rx="1" fill="#F5DC3A"/>
+
+  <!-- Clapper (wide) -->
+  <ellipse cx="22" cy="40" rx="5" ry="3" fill="#EECF01" stroke="#2D2D2D" stroke-width="2"/>
+
+  <!-- Stem -->
+  <rect x="19.5" y="1.5" width="5" height="6" rx="2.5" fill="#EECF01" stroke="#2D2D2D" stroke-width="1.5"/>
+</svg>

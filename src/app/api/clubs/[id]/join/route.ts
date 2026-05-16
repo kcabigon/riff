@@ -1,0 +1,87 @@
+import { NextResponse } from "next/server";
+import { requireAuth } from "@/lib/auth-utils";
+import { prisma } from "@/lib/prisma";
+import { notifyClubMembers } from "@/lib/notifications";
+import { sendMemberJoinedEmail } from "@/lib/resend";
+import { NotificationType } from "@prisma/client";
+
+// POST /api/clubs/[id]/join — Join a club via the public join link
+export async function POST(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: clubId } = await params;
+    const user = await requireAuth();
+    const userId = user.id;
+
+    // Check club exists
+    const club = await prisma.club.findUnique({
+      where: { id: clubId },
+      select: { id: true, name: true },
+    });
+
+    if (!club) {
+      return NextResponse.json({ error: "Club not found" }, { status: 404 });
+    }
+
+    // Idempotent — return success if already a member
+    const existing = await prisma.clubMember.findFirst({
+      where: { clubId, userId },
+    });
+
+    if (existing) {
+      return NextResponse.json({ success: true, alreadyMember: true });
+    }
+
+    // Create membership
+    await prisma.clubMember.create({
+      data: { clubId, userId },
+    });
+
+    // Update lastActiveClubId
+    const newMember = await prisma.user.update({
+      where: { id: userId },
+      data: { lastActiveClubId: clubId },
+      select: { name: true, firstName: true },
+    });
+
+    // Notify existing members and send emails (non-blocking)
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const clubUrl = `${appUrl}/clubs/${clubId}`;
+    notifyClubMembers(
+      clubId,
+      NotificationType.CLUB_MEMBER_JOINED,
+      userId,
+      {}
+    ).catch(() => {});
+    prisma.clubMember
+      .findMany({
+        where: { clubId, userId: { not: userId } },
+        include: { user: { select: { email: true } } },
+      })
+      .then((members) =>
+        Promise.allSettled(
+          members.map((m) =>
+            sendMemberJoinedEmail({
+              email: m.user.email,
+              newMemberFullName: newMember.name || "A new member",
+              newMemberFirstName:
+                newMember.firstName || newMember.name?.split(" ")[0] || "them",
+              clubName: club!.name,
+              clubUrl,
+            })
+          )
+        )
+      )
+      .catch(() => {});
+
+    return NextResponse.json({ success: true });
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    console.error("Error joining club:", error);
+    return NextResponse.json({ error: "Failed to join club" }, { status: 500 });
+  }
+}

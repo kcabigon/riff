@@ -5,18 +5,19 @@ import { requireAuth } from "@/lib/auth-utils";
 export async function POST(req: Request) {
   try {
     const user = await requireAuth();
+    const userId = user.id;
     const {
       content,
       pieceId,
-      versionId,
-      circleId,
-      parentId,
+      riffId,
+      clubId,
       selectionStart,
       selectionEnd,
       selectedText,
+      parentId,
     } = await req.json();
 
-    // Validate input
+    // Validate required fields
     if (!content || content.trim().length === 0) {
       return NextResponse.json(
         { error: "Comment content is required" },
@@ -24,82 +25,78 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!pieceId || !versionId) {
+    if (!pieceId || !riffId || !clubId) {
       return NextResponse.json(
-        { error: "Piece ID and version ID are required" },
+        { error: "pieceId, riffId, and clubId are required" },
         { status: 400 }
       );
     }
 
-    // Check if version exists
-    const version = await prisma.pieceVersion.findUnique({
-      where: { id: versionId },
-      include: {
-        piece: true,
-      },
-    });
-
-    if (!version || version.pieceId !== pieceId) {
+    if (
+      !parentId &&
+      (selectionStart === undefined ||
+        selectionEnd === undefined ||
+        !selectedText)
+    ) {
       return NextResponse.json(
-        { error: "Version not found" },
-        { status: 404 }
+        {
+          error:
+            "selectionStart, selectionEnd, and selectedText are required — all comments must be anchored to a text selection",
+        },
+        { status: 400 }
       );
     }
 
-    // Check if user can comment on this piece
-    const isAuthor = version.piece.authorId === (user as any).id;
-
-    if (!isAuthor) {
-      // If commenting in circle context, must be member
-      if (circleId) {
-        const membership = await prisma.circleMember.findFirst({
-          where: {
-            circleId,
-            userId: (user as any).id,
-          },
-        });
-
-        if (!membership) {
-          return NextResponse.json(
-            { error: "You must be a member of this circle to comment" },
-            { status: 403 }
-          );
-        }
-
-        // Check if piece is shared to this circle
-        const share = await prisma.pieceShare.findFirst({
-          where: {
-            pieceId,
-            circleId,
-          },
-        });
-
-        if (!share) {
-          return NextResponse.json(
-            { error: "Piece is not shared to this circle" },
-            { status: 404 }
-          );
-        }
-      } else {
-        // Direct comment - check if piece is accessible
-        return NextResponse.json(
-          { error: "You do not have permission to comment on this piece" },
-          { status: 403 }
-        );
-      }
-    }
-
-    // If replying to another comment, verify parent exists
+    // If reply, validate parent exists and belongs to the same piece
+    let parentAuthorId: string | null = null;
     if (parentId) {
       const parentComment = await prisma.comment.findUnique({
         where: { id: parentId },
+        select: { authorId: true, pieceId: true },
       });
-
       if (!parentComment || parentComment.pieceId !== pieceId) {
         return NextResponse.json(
           { error: "Parent comment not found" },
           { status: 404 }
         );
+      }
+      parentAuthorId = parentComment.authorId;
+    }
+
+    // Verify piece exists and get author
+    const piece = await prisma.piece.findUnique({
+      where: { id: pieceId },
+      select: { id: true, authorId: true },
+    });
+
+    if (!piece) {
+      return NextResponse.json({ error: "Piece not found" }, { status: 404 });
+    }
+
+    // Auth: user must be a riff participant OR the piece author
+    const isAuthor = piece.authorId === userId;
+
+    if (!isAuthor) {
+      const isParticipant = await prisma.riffParticipant.findUnique({
+        where: { riffId_userId: { riffId, userId } },
+        select: { id: true },
+      });
+
+      if (!isParticipant) {
+        // Also allow club members who have read access (riff is REVEALED)
+        const isMember = await prisma.clubMember.findFirst({
+          where: { clubId, userId },
+          select: { id: true },
+        });
+
+        if (!isMember) {
+          return NextResponse.json(
+            {
+              error: "You must be a riff participant or club member to comment",
+            },
+            { status: 403 }
+          );
+        }
       }
     }
 
@@ -108,13 +105,13 @@ export async function POST(req: Request) {
       data: {
         content: content.trim(),
         pieceId,
-        versionId,
-        circleId: circleId || null,
-        authorId: (user as any).id,
-        parentId: parentId || null,
-        selectionStart: selectionStart || null,
-        selectionEnd: selectionEnd || null,
-        selectedText: selectedText || null,
+        riffId,
+        clubId,
+        authorId: userId,
+        selectionStart: parentId ? null : selectionStart,
+        selectionEnd: parentId ? null : selectionEnd,
+        selectedText: parentId ? null : selectedText,
+        parentId: parentId ?? null,
       },
       include: {
         author: {
@@ -128,18 +125,52 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json(
-      {
-        success: true,
-        comment,
-      },
-      { status: 201 }
-    );
+    // Notify — reply goes to parent author, top-level goes to piece author
+    try {
+      if (parentId && parentAuthorId && parentAuthorId !== userId) {
+        await prisma.notification.create({
+          data: {
+            type: "COMMENT_REPLY",
+            recipientId: parentAuthorId,
+            actorId: userId,
+            pieceId,
+            commentId: comment.id,
+            clubId,
+            riffId,
+          },
+        });
+      } else if (!parentId && piece.authorId !== userId) {
+        const existing = await prisma.notification.findFirst({
+          where: {
+            type: "NEW_COMMENT",
+            recipientId: piece.authorId,
+            pieceId,
+            isRead: false,
+          },
+        });
+        if (!existing) {
+          await prisma.notification.create({
+            data: {
+              type: "NEW_COMMENT",
+              recipientId: piece.authorId,
+              actorId: userId,
+              pieceId,
+              commentId: comment.id,
+              clubId,
+              riffId,
+            },
+          });
+        }
+      }
+    } catch (notifyErr) {
+      console.error("Failed to send notification:", notifyErr);
+    }
+
+    return NextResponse.json({ success: true, comment }, { status: 201 });
   } catch (error: any) {
     if (error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
     console.error("Error creating comment:", error);
     return NextResponse.json(
       { error: "An error occurred while creating the comment" },

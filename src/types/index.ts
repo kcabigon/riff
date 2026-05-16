@@ -29,6 +29,22 @@ export interface User {
   updatedAt: Date;
 }
 
+// ==================== AVATAR TYPES ====================
+
+// Minimal user data for avatar display
+export interface AvatarUser {
+  id: string;
+  name: string | null;
+  username: string | null;
+  avatarUrl: string | null;
+}
+
+// Avatar user with optional tag/label (e.g., "H" for host) and role badge
+export interface AvatarUserWithTag extends AvatarUser {
+  tag?: string | null;
+  badge?: "admin" | "moderator" | null;
+}
+
 // ==================== CLUBS (NEW ARCHITECTURE) ====================
 
 export interface Club {
@@ -72,10 +88,11 @@ export interface Riff {
   id: RiffId;
   clubId: ClubId;
   creatorId: UserId;
-  title: string;
+  title: string | null;
   prompt?: string;
   deadline?: Date;
   status: RiffStatus;
+  volumeNumber?: number | null;
   createdAt: Date;
   updatedAt: Date;
 
@@ -89,6 +106,7 @@ export interface Riff {
 export enum RiffStatus {
   DRAFT = "DRAFT", // Creator is setting up, no invites sent yet
   ACTIVE = "ACTIVE", // Running, members can join/leave and submit pieces
+  REVEALED = "REVEALED", // Host revealed, members can now read pieces
   COMPLETED = "COMPLETED", // Manually marked complete by any club member
 }
 
@@ -284,7 +302,7 @@ export interface Comment {
   id: CommentId;
   content: string;
   pieceId: PieceId;
-  versionId: PieceVersionId; // Tied to a specific version
+  versionId?: PieceVersionId; // Optional: not required for riff-scoped comments
   clubId?: ClubId; // NEW: Club context for comments
   riffId?: RiffId; // NEW: Riff context for comments
   circleId?: CircleId; // DEPRECATED: Old circle context
@@ -293,10 +311,10 @@ export interface Comment {
   createdAt: Date;
   updatedAt: Date;
 
-  // Text selection anchor (for inline comments like Google Docs)
-  selectionStart?: number; // Character offset in the content
-  selectionEnd?: number;
-  selectedText?: string; // Store the actual text for reference
+  // Text selection anchor (required for all new comments)
+  selectionStart: number;
+  selectionEnd: number;
+  selectedText: string;
 
   // Relational fields
   author?: User;
@@ -438,7 +456,7 @@ export interface InviteToClubInput {
 
 export interface CreateRiffInput {
   clubId: ClubId;
-  title: string;
+  title?: string;
   prompt?: string;
   deadline?: Date;
 }
@@ -532,14 +550,11 @@ export interface SharePieceInput {
 export interface CreateCommentInput {
   content: string;
   pieceId: PieceId;
-  versionId: PieceVersionId;
-  clubId?: ClubId; // NEW: Club context for comments
-  riffId?: RiffId; // NEW: Riff context for comments
-  circleId?: CircleId; // DEPRECATED: Old circle context
-  parentId?: CommentId;
-  selectionStart?: number;
-  selectionEnd?: number;
-  selectedText?: string;
+  riffId: RiffId; // required — all comments are riff-scoped
+  clubId: ClubId; // required — all comments are club-scoped
+  selectionStart: number; // required — all comments must be anchored
+  selectionEnd: number; // required
+  selectedText: string; // required
 }
 
 export interface CreateCollectionInput {

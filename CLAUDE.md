@@ -1,457 +1,104 @@
-# Riff - Architecture Documentation
+# Riff
 
-## Project Overview
+**Riff** is a private essay-sharing platform for creative communities. Clubs, riffs (writing prompts), essays, comments, notifications — built with Next.js, Prisma, Tiptap, and Tailwind.
 
-**Riff** is a private essay-sharing platform designed for creative communities to connect through long-form writing. It combines features of a collaborative text editor, essay showcase, book club functionality, and a social feed with notifications. The platform enables users to create "clubs" (groups), launch "riffs" (writing prompts/challenges within clubs), share essays with granular permission controls, and participate in threaded comments with text-level selections.
+## Getting Started
 
-**Application Type**: Full-stack web application (Next.js-based SPA with REST API backend)
+**Run `/letsriff` at the start of every session.** It loads project context, checks your environment, and gets you building. You don't need to read anything else first.
 
----
+If the user asks you to "regain context" or "catch up", run `/letsriff`.
 
-## Technology Stack
+## Slash Commands
 
-### Frontend
-- **Framework**: Next.js 16.0.7 (React 19.2.1)
-- **Language**: TypeScript 5
-- **Styling**: 
-  - Tailwind CSS 4.0.0 with PostCSS
-  - Custom CSS variables for theme
-- **Rich Text Editor**: 
-  - Tiptap 3.11.1 (headless editor framework)
-  - Extensions: starter-kit, character-count, image, link, text-align, YouTube, Spotify (custom), image-resize
-- **Type Safety**: TypeScript with strict mode enabled
+| Command | What it does |
+|---------|-------------|
+| `/letsriff` | Start of every session — loads context, checks state, asks what to build |
+| `/new-feature` | Start a new feature — creates branch, explores codebase, proposes approach |
+| `/todo` | View, claim, add, or complete items on the shared TODO list |
+| `/test` | Start the dev server and test your changes locally |
+| `/sync` | Pull latest develop into your feature branch — prevents merge conflicts |
+| `/pr-check` | Pre-PR validation — lint, type-check, build, commit format |
+| `/review` | Review a PR for design system, component reuse, code quality, and merge readiness |
+| `/finish-feature` | Push branch and create a PR targeting develop |
+| `/promote` | Kyle only — promote develop → staging or staging → main |
+| `/setup` | First-time setup — walks through environment, deps, database |
 
-### Backend
-- **Runtime**: Node.js with Next.js API Routes
-- **ORM**: Prisma 6.1.0 (with Postgres adapter)
-- **Authentication**: NextAuth.js 5.0.0-beta.30
-- **Password Hashing**: bcryptjs 3.0.3
-- **Session Management**: JWT-based sessions
+## Rules
 
-### Database
-- **Primary DB**: PostgreSQL (via Supabase)
-- **Connection Pooling**: PgBouncer (configured for connection limits)
-- **Schema Management**: Prisma migrations
-- **Authentication Adapter**: Prisma adapter for NextAuth
+### Git (mandatory)
+- **Never commit directly to `main`, `develop`, or `staging`**
+- Always use feature branches: `feature/short-description` or `fix/short-description`
+- Conventional commits (lowercase): `feat:`, `fix:`, `refactor:`, `chore:`, `style:`, `docs:`
+- Keep commits atomic — one logical change per commit
+- See `CONTRIBUTING.md` for the full workflow
 
-### Development Tools
-- **Linting**: ESLint 9 with Next.js config
-- **Code Formatting**: Prettier 3.1.0
-- **Package Manager**: npm (with lock file)
-- **Module Resolution**: TypeScript bundler mode
+### Code
+- TypeScript strict mode — no `any` unless absolutely necessary
+- Use Prisma ORM exclusively — no raw SQL
+- Use `requireAuth()` on all protected API routes
+- Run `npm run lint` and `npm run format` before committing
+- Follow existing patterns in the area you're modifying
+- **Read `DESIGN-SYSTEM.md` before building any UI.** Follow existing design patterns exactly — colors, spacing, borders, shadows. Reuse shared components from the catalog before creating new ones.
 
----
+### What NOT to commit
+- `.env` files (secrets — already in `.gitignore`)
+- `docs/` session notes (personal — already in `.gitignore`)
+- Debug code, `console.log` statements
 
-## Architecture Overview
+### Database changes
+- If you need to change `prisma/schema.prisma`, coordinate with Kyle first
+- Only one person should create migrations at a time
+- Others apply migrations with `npm run db:migrate:dev`
+- **NEVER accept a Prisma prompt to reset the database.** If `prisma migrate dev` says it needs to reset, STOP IMMEDIATELY and tell the user to contact Kyle. The dev database is shared by everyone — a reset destroys ALL test data for the entire team. This has happened before and it was catastrophic.
 
-### High-Level Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                   Frontend (Next.js/React)                  │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │  Pages: Home, Test Pages (Auth, Editor, Comments)    │  │
-│  │  Components: Editor, Comments, Pieces, etc.          │  │
-│  │  Hooks: useTextSelection, custom React hooks         │  │
-│  └──────────────────────────────────────────────────────┘  │
-├─────────────────────────────────────────────────────────────┤
-│              API Routes (Next.js Routes Handler)             │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │ /api/clubs          - Club CRUD & membership         │  │
-│  │ /api/riffs          - Riff management & participants │  │
-│  │ /api/pieces         - Essay creation & versioning    │  │
-│  │ /api/comments       - Threaded comments              │  │
-│  │ /api/circles        - DEPRECATED circle endpoints    │  │
-│  │ /api/auth           - Authentication (NextAuth)      │  │
-│  │ /api/upload/image   - Image upload handler           │  │
-│  └──────────────────────────────────────────────────────┘  │
-├─────────────────────────────────────────────────────────────┤
-│                    Prisma ORM Layer                          │
-│              (Type-safe DB access, migrations)              │
-├─────────────────────────────────────────────────────────────┤
-│                   PostgreSQL Database                        │
-│  (Supabase-hosted with PgBouncer connection pooling)       │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Data Model Architecture
-
-The application uses a **hierarchical, multi-tenant model** with gradual migration from deprecated Circle to new Club architecture:
-
-**New Architecture (Clubs/Riffs)**:
-- **Clubs**: User groups with admin/moderator roles
-- **Riffs**: Writing prompts/challenges scoped to clubs
-- **Shares**: Multi-level sharing (CLUB, RIFF, INDIVIDUAL, PUBLIC)
-- **Comments**: Club/Riff-contextual with text selection support
-
-**Legacy Architecture (Circles)** - Maintained for backward compatibility:
-- **Circles**: Deprecated group model
-- **CirclePrompts**: Deprecated prompt system
-- **PieceShare**: Deprecated sharing mechanism
-
-**Core Entities**:
-- **Users**: Identity + authentication
-- **Pieces**: Essays with versioning
-- **PieceVersions**: Frozen snapshots when shared
-- **Collections**: Organizational groupings of pieces
-- **Notifications**: Event system for user activities
-- **Comments**: Threaded discussions with character-level anchoring
-
-### Authentication Flow
-
-```
-User Input (Credentials) 
-    ↓
-NextAuth Credentials Provider
-    ↓
-bcryptjs password comparison
-    ↓
-PrismaAdapter (stores session/tokens)
-    ↓
-JWT token generation
-    ↓
-Session stored in JWT (client + server)
-    ↓
-requireAuth() middleware validates on API routes
-```
-
-### API Route Structure
-
-API routes follow Next.js file-based routing:
-
-```
-src/app/api/
-├── auth/
-│   ├── [...nextauth]/       # NextAuth handler
-│   └── register/             # User registration
-├── clubs/                    # Club management
-│   ├── route.ts             # List/create clubs
-│   ├── [id]/                # Get/update/delete club
-│   ├── [id]/members/        # Manage club members
-│   └── [id]/riffs/          # Riffs in club
-├── riffs/                   # Riff management
-│   ├── [id]/                # Get/update/delete riff
-│   ├── [id]/participants/   # Join/leave riff
-│   └── [id]/pieces/         # Submit pieces to riff
-├── pieces/                  # Essay management
-│   ├── route.ts             # Create piece
-│   ├── [id]/                # Get/update piece
-│   ├── [id]/versions/       # Piece versioning
-│   ├── [id]/autosave/       # Auto-save functionality
-│   ├── [id]/share/          # Share piece
-│   └── [id]/unshare/        # Remove share
-├── comments/                # Comment management
-│   ├── route.ts             # List comments
-│   ├── create/              # Create comment
-│   └── [id]/                # Update/delete comment
-├── circles/                 # DEPRECATED endpoints
-│   └── [various paths]/
-└── upload/image/            # Image upload
-```
-
----
-
-## Project Structure & Organization
-
-```
-riff/
-├── src/
-│   ├── app/                          # Next.js App Router
-│   │   ├── layout.tsx                # Root layout (fonts, metadata)
-│   │   ├── page.tsx                  # Home page
-│   │   ├── globals.css               # Global styles
-│   │   ├── api/                      # API routes (see above)
-│   │   └── test-*/                   # Test pages (editor, auth, comments)
-│   │
-│   ├── components/                   # Reusable React components
-│   │   ├── editor/                   # Rich text editor
-│   │   │   ├── TiptapEditor.tsx      # Main editor component
-│   │   │   ├── EditorToolbar.tsx     # Formatting toolbar
-│   │   │   └── extensions/           # Custom Tiptap extensions
-│   │   │       └── Spotify.ts        # Spotify embed extension
-│   │   │
-│   │   ├── comments/                 # Comment system components
-│   │   │   ├── CommentThread.tsx     # Thread display
-│   │   │   ├── CommentItem.tsx       # Single comment
-│   │   │   ├── CommentComposer.tsx   # Create/edit comment
-│   │   │   ├── CommentButton.tsx     # Trigger comment
-│   │   │   └── CommentHighlights.tsx # Text selection UI
-│   │   │
-│   │   └── pieces/                   # Essay/piece components
-│   │       ├── PieceViewer.tsx       # Display piece
-│   │       ├── PieceStatus.tsx       # Status indicator
-│   │       ├── VersionTimeline.tsx   # Version history UI
-│   │       └── ShareModal.tsx        # Share dialog
-│   │
-│   ├── hooks/                        # Custom React hooks
-│   │   └── useTextSelection.ts       # Text selection detection
-│   │
-│   ├── lib/                          # Utility libraries
-│   │   ├── prisma.ts                 # Prisma singleton
-│   │   ├── auth.ts                   # NextAuth configuration
-│   │   └── auth-utils.ts             # Auth helpers (requireAuth)
-│   │
-│   └── types/                        # TypeScript type definitions
-│       └── index.ts                  # Central type hub (domain types)
-│
-├── prisma/
-│   ├── schema.prisma                 # Database schema
-│   └── migrations/                   # Database migrations
-│
-├── public/
-│   ├── uploads/                      # User-uploaded files
-│   └── [static assets]/
-│
-├── .claude/                          # Claude IDE settings
-├── docs/                             # Documentation
-├── .env                              # Runtime environment variables
-├── .env.example                      # Environment template
-├── .gitignore                        # Git ignore rules
-├── .prettierrc                       # Prettier config
-├── eslint.config.mjs                 # ESLint rules
-├── next.config.ts                    # Next.js configuration
-├── tsconfig.json                     # TypeScript configuration
-├── tailwind.config.ts                # Tailwind CSS configuration
-├── postcss.config.mjs                # PostCSS configuration
-├── package.json                      # npm dependencies
-├── package-lock.json                 # Locked dependency versions
-├── README.md                         # Project README
-└── TEST_REPORT_COMMENT_SYSTEM.md     # Testing documentation
-```
-
----
-
-## Common Development Commands
-
-### Setup & Installation
+## Quick Reference
 
 ```bash
-# Install dependencies
-npm install
-
-# Setup database
-npx prisma migrate dev           # Run migrations in dev
-npx prisma generate             # Generate Prisma client
-npx prisma db push              # Push schema to database
-
-# Generate auth secret (for .env)
-openssl rand -base64 32
+npm run dev              # Start dev server (http://localhost:3000)
+npm run build            # Production build
+npm run lint             # ESLint
+npm run format           # Prettier
+npx tsc --noEmit         # Type check
+npm run db:migrate:dev   # Run database migrations
+npm run db:studio:dev    # Visual database browser
+npx prisma generate      # Regenerate Prisma client after schema changes
 ```
 
-### Development
+## Development Track
 
-```bash
-# Start development server (with hot reload)
-npm run dev
-# App runs at http://localhost:3000
-
-# Run type checking
-npx tsc --noEmit
-
-# Format code with Prettier
-npm run format
-
-# Lint code with ESLint
-npm run lint
-```
-
-### Building & Deployment
-
-```bash
-# Build production bundle
-npm run build
-
-# Start production server
-npm start
-
-# Run built app locally (after build)
-npm start
-```
-
-### Database Management
-
-```bash
-# View/edit data with Prisma Studio
-npx prisma studio
-
-# Create migration from schema changes
-npx prisma migrate dev --name <migration_name>
-
-# Reset database (destructive)
-npx prisma migrate reset
-
-# Generate new Prisma client after schema updates
-npx prisma generate
-
-# Seed database (if seed.ts exists)
-npx prisma db seed
-```
-
----
-
-## Important Configuration Files
-
-### Environment Variables (.env)
+Collaborators (Jarric, Chris, Derek) follow this flow. Guide them through it — suggest the next step, don't make them guess. Let them explore or ask questions between steps, but always bring them back to the track.
 
 ```
-DATABASE_URL=postgresql://[user]:[password]@[host]:[port]/[db]?pgbouncer=true&connection_limit=1
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=[generated-secret]
+/letsriff → /new-feature → build → /test → /finish-feature
 ```
 
-### Key Config Files
+1. **`/letsriff`** — start of every session. Loads context, checks state. → suggests `/new-feature` or `/todo`
+2. **`/new-feature`** — syncs with develop, creates branch, builds the feature. → suggests `/test`
+3. **`/test`** — starts dev server for local testing. → suggests `/finish-feature` or fix bugs
+4. **`/finish-feature`** — syncs with develop, validates, pushes, creates PR. → done
 
-| File | Purpose |
-|------|---------|
-| `tsconfig.json` | TypeScript compiler options; path alias `@/*` → `src/*` |
-| `next.config.ts` | Next.js build and runtime configuration |
-| `tailwind.config.ts` | CSS utility framework configuration |
-| `postcss.config.mjs` | CSS post-processor plugins (@tailwindcss/postcss) |
-| `eslint.config.mjs` | Code linting rules (extends Next.js config) |
-| `.prettierrc` | Code formatter rules (80 char line width, semicolons) |
-| `prisma/schema.prisma` | Database schema definition and relationships |
+After each step completes, proactively suggest the next one: "Ready to test? Run `/test`" or "Happy with it? Run `/finish-feature` to create a PR."
 
----
+### Context persistence (compaction)
 
-## Database Schema Highlights
+When context is compacted, always preserve these in the summary:
+- What branch the user is on and what they're building
+- Where they are in the development track (building, testing, finishing)
+- The plan file path if one exists (in `.claude/plans/`)
+- Any design decisions or scope choices the user confirmed
 
-### Key Models
+If context is lost, reconstruct from git: check the branch name, `git log --oneline develop..HEAD`, and plan files in `.claude/plans/`.
 
-**Multi-Tenant Organization**:
-- Club (group with admin)
-- ClubMember (role-based: ADMIN, MODERATOR, MEMBER)
-- Riff (writing prompt scoped to club)
-- RiffParticipant (users in riff)
+### Auto-sync
 
-**Content Management**:
-- Piece (essay/article)
-- PieceVersion (frozen snapshot for sharing)
-- PieceRiff (piece submission to riff)
-- Share (multi-level sharing with types: CLUB, RIFF, INDIVIDUAL, PUBLIC)
+Always sync with develop at these points (don't ask, just do it):
+- **Before creating a feature branch** (`/new-feature` step) — `git checkout develop && git pull origin develop`
+- **Before finishing** (`/finish-feature` step) — merge latest develop into the feature branch
+- **After long builds** — if the build took many commits, sync before testing to catch conflicts early
 
-**Collaboration**:
-- Comment (threaded, with text selection anchors: selectionStart, selectionEnd)
-- Collection (organize pieces)
-- CollectionPiece (junction table)
+## Project Context
 
-**Engagement**:
-- Notification (event system with types: CLUB_INVITATION, RIFF_CREATED, NEW_COMMENT, etc.)
+- **Architecture**: `ARCHITECTURE.md` — file map, schema, tech stack, current state
+- **Design system**: `DESIGN-SYSTEM.md` — colors, typography, spacing, borders, shadows, shared component catalog
 
-### Relationships
-
-- One-to-many: User → Pieces, Clubs, Riffs
-- Many-to-many: Clubs ↔ Users (via ClubMember)
-- Many-to-many: Riffs ↔ Users (via RiffParticipant)
-- Hierarchical: Piece → PieceVersion → Comment
-- Contextual: Comments tied to Club/Riff context (new) or Circle (deprecated)
-
----
-
-## Authentication & Authorization
-
-### Auth Strategy
-- **Provider**: NextAuth.js with Credentials provider
-- **Session Type**: JWT (stored client-side)
-- **Password Security**: bcryptjs hashing
-- **Adapter**: PrismaAdapter for NextAuth
-
-### Protected Routes
-API routes use `requireAuth()` middleware:
-
-```typescript
-import { requireAuth } from "@/lib/auth-utils";
-
-export async function GET(req: Request) {
-  const user = await requireAuth(); // Throws if unauthorized
-  // ... rest of handler
-}
-```
-
-### User Model Fields
-- `id` (CUID): Unique identifier
-- `email`: Unique, used for login
-- `username`: Unique display name
-- `password`: Hashed (bcryptjs)
-- `name`: Full name
-- `bio`, `avatarUrl`: Profile info
-
----
-
-## Testing & Documentation
-
-### Test Pages Available
-- `/test-editor`: Rich text editor functionality
-- `/test-editor-v2`, `/test-editor-v3`: Editor iterations
-- `/test-auth`: Authentication flow testing
-- `/test-comments`: Comment system testing
-- `/test-clubs-api`: Club API testing
-
-### Documentation Files
-- `README.md`: High-level project overview
-- `TEST_REPORT_COMMENT_SYSTEM.md`: Detailed comment system testing
-
----
-
-## Key Features & Architecture Patterns
-
-### Rich Text Editing
-- **Tiptap Editor**: Headless editor with configurable extensions
-- **Auto-save**: Debounced saves to DB
-- **Media Support**: Images (resizable), YouTube, Spotify embeds
-- **Text Alignment & Formatting**: Bold, italic, lists, quotes, etc.
-
-### Comment System
-- **Threaded Replies**: Parent-child relationships
-- **Text Selection**: Anchor comments to specific text (selectionStart/End)
-- **Context Awareness**: Comments tied to Club/Riff context
-- **User Attribution**: Author tracking with timestamps
-
-### Multi-Level Sharing
-- **Club-level**: All club members can see
-- **Riff-level**: Only riff participants can see
-- **Individual**: Share with specific users
-- **Public**: View-only with link (no editing/comments)
-
-### Version Control
-- **Piece Versions**: Frozen snapshots when sharing
-- **Version History**: Track all shared versions
-- **Comments per Version**: Comments tied to specific version
-
-### Role-Based Access
-- **Club Admin**: Creator, permanent role
-- **Club Moderator**: Rotatable role among members
-- **Club Member**: Default role
-- **Riff Participant**: Users who joined the riff
-
----
-
-## Development Best Practices
-
-1. **Type Safety**: Use TypeScript strictly; define types in `src/types/index.ts`
-2. **API Patterns**: Follow REST conventions in `src/app/api/`
-3. **Component Structure**: Separate concerns (editor, comments, pieces)
-4. **Database Access**: Use Prisma ORM exclusively; no raw SQL
-5. **Authentication**: Always use `requireAuth()` on protected routes
-6. **Code Style**: Run `npm run format` before committing
-7. **Linting**: Run `npm run lint` to catch issues
-
----
-
-## Migration Status
-
-The application is in **transition** from deprecated Circle architecture to new Club/Riff architecture:
-
-- **New Models**: Club, ClubMember, Riff, RiffParticipant, Share (with shareType)
-- **Active Development**: Club/Riff features, multi-level sharing
-- **Legacy Support**: Circle, CirclePrompt, PieceShare models still available
-- **Deprecation Path**: Old circle endpoints exist but new features use Club/Riff
-
----
-
-## Resources & References
-
-- **Next.js Docs**: https://nextjs.org/docs
-- **Prisma Docs**: https://www.prisma.io/docs/
-- **NextAuth.js Docs**: https://next-auth.js.org/
-- **Tiptap Docs**: https://www.tiptap.dev/
-- **Tailwind CSS Docs**: https://tailwindcss.com/docs
+The `/letsriff` command reads these automatically — you shouldn't need to read them manually.

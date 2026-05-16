@@ -20,7 +20,7 @@ export async function DELETE(
     }
 
     // Users can only remove themselves
-    if (targetUserId !== (user as any).id) {
+    if (targetUserId !== user.id) {
       return NextResponse.json(
         { error: "You can only remove yourself from a riff" },
         { status: 403 }

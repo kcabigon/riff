@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { RiffStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
 
@@ -17,7 +18,7 @@ export async function GET(
     const member = await prisma.clubMember.findFirst({
       where: {
         clubId,
-        userId: (user as any).id,
+        userId: user.id,
       },
     });
 
@@ -31,7 +32,7 @@ export async function GET(
     const riffs = await prisma.riff.findMany({
       where: {
         clubId,
-        ...(status && { status: status as any }),
+        ...(status && { status: status as RiffStatus }),
       },
       include: {
         creator: {
@@ -52,6 +53,22 @@ export async function GET(
                 avatarUrl: true,
               },
             },
+          },
+        },
+        pieces: {
+          include: {
+            piece: {
+              select: {
+                id: true,
+                title: true,
+                authorId: true,
+                currentContent: true,
+                wordCount: true,
+              },
+            },
+          },
+          orderBy: {
+            submittedAt: "desc",
           },
         },
         _count: {
@@ -91,31 +108,29 @@ export async function POST(
     const { title, prompt, deadline } = await req.json();
 
     // Validate input
-    if (!title || title.trim().length === 0) {
+    if (!deadline) {
       return NextResponse.json(
-        { error: "Riff title is required" },
+        { error: "Deadline is required" },
         { status: 400 }
       );
     }
 
-    if (title.length > 200) {
+    if (title && title.length > 200) {
       return NextResponse.json(
         { error: "Riff title must be 200 characters or less" },
         { status: 400 }
       );
     }
 
-    // Check if user is a club member
-    const member = await prisma.clubMember.findFirst({
-      where: {
-        clubId,
-        userId: (user as any).id,
-      },
+    // Check if user is the club admin
+    const club = await prisma.club.findUnique({
+      where: { id: clubId },
+      select: { adminId: true },
     });
 
-    if (!member) {
+    if (!club || club.adminId !== user.id) {
       return NextResponse.json(
-        { error: "You must be a club member to create a riff" },
+        { error: "Only the club admin can create a riff" },
         { status: 403 }
       );
     }
@@ -124,8 +139,8 @@ export async function POST(
     const riff = await prisma.riff.create({
       data: {
         clubId,
-        creatorId: (user as any).id,
-        title: title.trim(),
+        creatorId: user.id,
+        title: title?.trim() || null,
         prompt: prompt?.trim() || null,
         deadline: deadline ? new Date(deadline) : null,
         status: "DRAFT", // Starts in DRAFT status
