@@ -113,7 +113,6 @@ Last updated: May 16, 2026
 - [x] Resend domain verification — verify letsriff.app, add SPF/DKIM/DMARC DNS records
 - [x] Document missing env vars in `.env.example`
 - [x] Deprecated schema cleanup — remove Circle models, password field
-- [ ] next-auth upgrade to stable (when available)
 
 ### Friends
 - [ ] @derek — Fix localhost URL fallbacks: change all `http://localhost:3000` fallbacks to `https://letsriff.app` in API routes (`src/app/api/riffs/[id]/route.ts`, `src/app/api/clubs/[id]/join/route.ts`, `src/lib/env.ts`)
