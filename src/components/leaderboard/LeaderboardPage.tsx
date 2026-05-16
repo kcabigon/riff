@@ -49,7 +49,6 @@ function colorWithOpacity(hex: string, intensity: number): string {
   if (intensity === 0) return "#1a1a1a";
   const opacities = [0.3, 0.6, 1.0];
   const opacity = opacities[intensity - 1];
-  // Convert hex to rgba
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
@@ -72,8 +71,45 @@ function filterCommits(
   return filtered;
 }
 
+function filterWeeklyData(
+  data: Record<string, number>,
+  days: number | null
+): Record<string, number> {
+  if (days === null) return data;
+  const { start } = getDateRange(days);
+  const startStr = start.toISOString().split("T")[0];
+  const filtered: Record<string, number> = {};
+  for (const [date, count] of Object.entries(data)) {
+    if (date >= startStr) {
+      filtered[date] = count;
+    }
+  }
+  return filtered;
+}
+
 function totalFromFiltered(filtered: Record<string, number>): number {
   return Object.values(filtered).reduce((sum, n) => sum + n, 0);
+}
+
+function formatNumber(n: number): string {
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + "M";
+  if (n >= 1000) return (n / 1000).toFixed(1) + "K";
+  return n.toLocaleString();
+}
+
+// Get all unique week dates across all users, sorted
+function getWeekDates(
+  users: {
+    filteredAdditions: Record<string, number>;
+    filteredDeletions: Record<string, number>;
+  }[]
+): string[] {
+  const dates = new Set<string>();
+  for (const user of users) {
+    for (const d of Object.keys(user.filteredAdditions)) dates.add(d);
+    for (const d of Object.keys(user.filteredDeletions)) dates.add(d);
+  }
+  return Array.from(dates).sort();
 }
 
 interface HeatmapProps {
@@ -85,14 +121,12 @@ interface HeatmapProps {
 function Heatmap({ commitsByDay, color, days }: HeatmapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Scroll to the right (most recent) on mount
   useEffect(() => {
     if (containerRef.current) {
       containerRef.current.scrollLeft = containerRef.current.scrollWidth;
     }
   }, [days]);
 
-  // Group days into weeks (columns of 7)
   const weeks: string[][] = [];
   for (let i = 0; i < days.length; i += 7) {
     weeks.push(days.slice(i, i + 7));
@@ -136,6 +170,138 @@ function Heatmap({ commitsByDay, color, days }: HeatmapProps) {
   );
 }
 
+interface WeeklyChartProps {
+  additionsByWeek: Record<string, number>;
+  deletionsByWeek: Record<string, number>;
+  weekDates: string[];
+}
+
+function WeeklyChart({
+  additionsByWeek,
+  deletionsByWeek,
+  weekDates,
+}: WeeklyChartProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollLeft = containerRef.current.scrollWidth;
+    }
+  }, [weekDates]);
+
+  if (weekDates.length === 0) return null;
+
+  // Find max value for scaling
+  const maxVal = Math.max(
+    1,
+    ...weekDates.map((d) => additionsByWeek[d] || 0),
+    ...weekDates.map((d) => deletionsByWeek[d] || 0)
+  );
+
+  const barWidth = 20;
+  const maxBarHeight = 40;
+
+  return (
+    <div
+      ref={containerRef}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "2px",
+        overflowX: "auto",
+        paddingBottom: "4px",
+      }}
+    >
+      {weekDates.map((date) => {
+        const additions = additionsByWeek[date] || 0;
+        const deletions = deletionsByWeek[date] || 0;
+        const addHeight = Math.max(1, (additions / maxVal) * maxBarHeight);
+        const delHeight = Math.max(1, (deletions / maxVal) * maxBarHeight);
+
+        return (
+          <div
+            key={date}
+            title={`Week of ${date}: +${additions.toLocaleString()} / -${deletions.toLocaleString()}`}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "1px",
+              flexShrink: 0,
+            }}
+          >
+            {/* Additions bar (green, grows up) */}
+            <div
+              style={{
+                width: `${barWidth}px`,
+                height: `${additions > 0 ? addHeight : 0}px`,
+                backgroundColor: additions > 0 ? "#00FF66" : "transparent",
+                borderRadius: "2px 2px 0 0",
+                opacity: additions > 0 ? 0.8 : 0,
+              }}
+            />
+            {/* Deletions bar (red, grows down) */}
+            <div
+              style={{
+                width: `${barWidth}px`,
+                height: `${deletions > 0 ? delHeight : 0}px`,
+                backgroundColor: deletions > 0 ? "#FF4444" : "transparent",
+                borderRadius: "0 0 2px 2px",
+                opacity: deletions > 0 ? 0.8 : 0,
+              }}
+            />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+interface StatBoxProps {
+  label: string;
+  value: string;
+  color: string;
+}
+
+function StatBox({ label, value, color }: StatBoxProps) {
+  return (
+    <div
+      style={{
+        flex: 1,
+        minWidth: "120px",
+        backgroundColor: "#141414",
+        border: "2px solid #222222",
+        borderRadius: "12px",
+        padding: "20px 16px",
+        textAlign: "center",
+      }}
+    >
+      <div
+        style={{
+          fontSize: "32px",
+          fontWeight: 700,
+          color,
+          lineHeight: 1.1,
+        }}
+      >
+        {value}
+      </div>
+      <div
+        style={{
+          fontSize: "12px",
+          fontWeight: 300,
+          color: "#808080",
+          marginTop: "6px",
+          textTransform: "uppercase",
+          letterSpacing: "0.5px",
+        }}
+      >
+        {label}
+      </div>
+    </div>
+  );
+}
+
 interface LeaderboardPageProps {
   users: LeaderboardUser[];
 }
@@ -148,10 +314,25 @@ export default function LeaderboardPage({ users }: LeaderboardPageProps) {
       .map((user, i) => {
         const filtered = filterCommits(user.commitsByDay, activeFilter.days);
         const total = totalFromFiltered(filtered);
+        const filteredAdditions = filterWeeklyData(
+          user.additionsByWeek,
+          activeFilter.days
+        );
+        const filteredDeletions = filterWeeklyData(
+          user.deletionsByWeek,
+          activeFilter.days
+        );
+        const totalAdds = totalFromFiltered(filteredAdditions);
+        const totalDels = totalFromFiltered(filteredDeletions);
         return {
           ...user,
           filteredCommits: filtered,
           filteredTotal: total,
+          filteredAdditions,
+          filteredDeletions,
+          filteredTotalAdditions: totalAdds,
+          filteredTotalDeletions: totalDels,
+          filteredNet: totalAdds - totalDels,
           color: COLORS[i % COLORS.length],
         };
       })
@@ -160,6 +341,20 @@ export default function LeaderboardPage({ users }: LeaderboardPageProps) {
 
   const { start, end } = getDateRange(activeFilter.days);
   const days = getDaysBetween(start, end);
+  const weekDates = getWeekDates(rankedUsers);
+
+  // Top-line totals
+  const totals = useMemo(() => {
+    let commits = 0;
+    let additions = 0;
+    let deletions = 0;
+    for (const u of rankedUsers) {
+      commits += u.filteredTotal;
+      additions += u.filteredTotalAdditions;
+      deletions += u.filteredTotalDeletions;
+    }
+    return { commits, additions, deletions, net: additions - deletions };
+  }, [rankedUsers]);
 
   return (
     <div
@@ -173,7 +368,7 @@ export default function LeaderboardPage({ users }: LeaderboardPageProps) {
     >
       <div style={{ maxWidth: "960px", margin: "0 auto" }}>
         {/* Header */}
-        <div style={{ textAlign: "center", marginBottom: "48px" }}>
+        <div style={{ textAlign: "center", marginBottom: "40px" }}>
           <h1
             style={{
               fontSize: "48px",
@@ -194,6 +389,37 @@ export default function LeaderboardPage({ users }: LeaderboardPageProps) {
           >
             Who&apos;s been putting in work on Riff?
           </p>
+        </div>
+
+        {/* Top-line stats */}
+        <div
+          style={{
+            display: "flex",
+            gap: "12px",
+            marginBottom: "32px",
+            flexWrap: "wrap",
+          }}
+        >
+          <StatBox
+            label="Commits"
+            value={formatNumber(totals.commits)}
+            color="#FFFFFF"
+          />
+          <StatBox
+            label="Lines Added"
+            value={formatNumber(totals.additions)}
+            color="#00FF66"
+          />
+          <StatBox
+            label="Lines Removed"
+            value={formatNumber(totals.deletions)}
+            color="#FF4444"
+          />
+          <StatBox
+            label="Net Lines"
+            value={formatNumber(totals.net)}
+            color="#01EFFC"
+          />
         </div>
 
         {/* Time filter pills */}
@@ -340,7 +566,7 @@ export default function LeaderboardPage({ users }: LeaderboardPageProps) {
                   )}
                 </div>
 
-                {/* Commit count */}
+                {/* Stats */}
                 <div style={{ textAlign: "right" }}>
                   <div
                     style={{
@@ -363,12 +589,78 @@ export default function LeaderboardPage({ users }: LeaderboardPageProps) {
                 </div>
               </div>
 
-              {/* Heatmap */}
-              <Heatmap
-                commitsByDay={user.filteredCommits}
-                color={user.color}
-                days={days}
-              />
+              {/* Lines stats row */}
+              <div
+                style={{
+                  display: "flex",
+                  gap: "24px",
+                  marginBottom: "16px",
+                  fontSize: "13px",
+                  fontWeight: 400,
+                }}
+              >
+                <div>
+                  <span style={{ color: "#00FF66" }}>
+                    +{user.filteredTotalAdditions.toLocaleString()}
+                  </span>
+                  <span style={{ color: "#555" }}> added</span>
+                </div>
+                <div>
+                  <span style={{ color: "#FF4444" }}>
+                    -{user.filteredTotalDeletions.toLocaleString()}
+                  </span>
+                  <span style={{ color: "#555" }}> removed</span>
+                </div>
+                <div>
+                  <span style={{ color: "#01EFFC" }}>
+                    {user.filteredNet >= 0 ? "+" : ""}
+                    {user.filteredNet.toLocaleString()}
+                  </span>
+                  <span style={{ color: "#555" }}> net</span>
+                </div>
+              </div>
+
+              {/* Weekly activity chart */}
+              {weekDates.length > 0 && (
+                <div style={{ marginBottom: "16px" }}>
+                  <div
+                    style={{
+                      fontSize: "11px",
+                      color: "#555",
+                      marginBottom: "6px",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.5px",
+                    }}
+                  >
+                    Weekly lines
+                  </div>
+                  <WeeklyChart
+                    additionsByWeek={user.filteredAdditions}
+                    deletionsByWeek={user.filteredDeletions}
+                    weekDates={weekDates}
+                  />
+                </div>
+              )}
+
+              {/* Commit heatmap */}
+              <div>
+                <div
+                  style={{
+                    fontSize: "11px",
+                    color: "#555",
+                    marginBottom: "6px",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.5px",
+                  }}
+                >
+                  Commit activity
+                </div>
+                <Heatmap
+                  commitsByDay={user.filteredCommits}
+                  color={user.color}
+                  days={days}
+                />
+              </div>
             </div>
           ))}
         </div>
