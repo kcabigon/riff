@@ -272,7 +272,10 @@ export default function LandingNavBar({
               About
             </a>
             <button
-              onClick={() => signOut({ callbackUrl: "/" })}
+              onClick={() => {
+                closeDrawer();
+                signOut({ callbackUrl: "/" });
+              }}
               style={{ ...drawerLinkStyle, color: "#808080" }}
             >
               Log out
