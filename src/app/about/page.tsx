@@ -1,8 +1,9 @@
 import FoundersNotePage from "@/components/about/FoundersNotePage";
 
 export const metadata = {
-  title: "Why we are building Riff",
-  description: "A note from the founders on why they built Riff.",
+  title: "About",
+  description:
+    "Why we are building Riff, a club-driven writing platform for creative friends.",
 };
 
 export default function About() {

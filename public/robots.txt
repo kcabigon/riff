@@ -1,2 +1,19 @@
 User-agent: *
+Allow: /
+Allow: /about
 Disallow: /p/
+Disallow: /clubs/
+Disallow: /riffs/
+Disallow: /write/
+Disallow: /read/
+Disallow: /profile/
+Disallow: /settings/
+Disallow: /onboarding/
+Disallow: /auth/
+Disallow: /no-club/
+Disallow: /dev-signin
+Disallow: /test-
+Disallow: /leaderboard
+Disallow: /api/
+
+Sitemap: https://letsriff.app/sitemap.xml

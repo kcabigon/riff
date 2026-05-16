@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import SettingsPage from "@/components/settings/SettingsPage";
 
 export const metadata = {
-  title: "Settings - Riff",
+  title: "Settings",
 };
 
 export default async function Settings() {

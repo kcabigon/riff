@@ -28,18 +28,6 @@ export async function GET(
             versionNumber: "desc",
           },
         },
-        shares: {
-          include: {
-            circle: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-            version: true,
-            prompt: true,
-          },
-        },
         _count: {
           select: {
             comments: true,
@@ -54,17 +42,8 @@ export async function GET(
 
     // Check if user can view this piece
     const isAuthor = piece.authorId === user.id;
-    const isSharedToUserCircle = piece.shares.some(async (share) => {
-      const membership = await prisma.circleMember.findFirst({
-        where: {
-          circleId: share.circleId,
-          userId: user.id,
-        },
-      });
-      return membership !== null;
-    });
 
-    if (!isAuthor && !isSharedToUserCircle) {
+    if (!isAuthor) {
       return NextResponse.json(
         { error: "You do not have permission to view this piece" },
         { status: 403 }
