@@ -19,7 +19,22 @@ export function getSharedExtensions() {
     StarterKit.configure({
       heading: { levels: [1, 2, 3] },
     }),
-    Link.configure({ openOnClick: true }),
+    // parseHTML recognizes <span data-link> — the write editor serializes links this way
+    // so that tapping/clicking a link in edit mode never navigates (LinkPopover handles that).
+    // The read page receives the same HTML from the DB so needs to parse it too.
+    Link.extend({
+      parseHTML() {
+        return [
+          ...(this.parent?.() ?? []),
+          {
+            tag: "span[data-link]",
+            getAttrs: (node) => ({
+              href: (node as HTMLElement).getAttribute("data-link"),
+            }),
+          },
+        ];
+      },
+    }).configure({ openOnClick: true }),
     TextAlign.configure({ types: ["heading", "paragraph"] }),
     Underline,
     Image.extend({
