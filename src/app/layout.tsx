@@ -37,8 +37,12 @@ const overTheRainbow = Over_the_Rainbow({
 });
 
 export const metadata: Metadata = {
-  title: "Riff",
-  description: "A private essay-sharing platform for creative minds",
+  metadataBase: new URL("https://letsriff.app"),
+  title: {
+    default: "Riff",
+    template: "%s | Riff",
+  },
+  description: "Write clubs for friends",
   icons: {
     icon: [
       { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
@@ -47,6 +51,20 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
   manifest: "/site.webmanifest",
+  openGraph: {
+    title: "Riff",
+    description: "Write clubs for friends",
+    url: "https://letsriff.app",
+    siteName: "Riff",
+    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Riff",
+    description: "Write clubs for friends",
+    images: ["/og-image.png"],
+  },
 };
 
 export const viewport = {
