@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     template: "%s | Riff",
   },
   description:
-    "A private essay-sharing platform for creative communities. Write, share, and read essays with the people you trust.",
+    "Write clubs are the new book clubs. Riff is where friends can create private writing communities and read each other's writing on a consistent basis.",
   metadataBase: new URL("https://letsriff.app"),
   openGraph: {
     title: "Riff",
