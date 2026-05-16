@@ -40,7 +40,7 @@ export default function LandingNavBar({
         { type: "divider" },
         {
           type: "action",
-          label: "Sign Out",
+          label: "Log out",
           onClick: () => signOut({ callbackUrl: "/" }),
           color: "#808080",
         },
@@ -281,7 +281,7 @@ export default function LandingNavBar({
               onClick={() => signOut({ callbackUrl: "/" })}
               style={{ ...drawerLinkStyle, color: "#808080" }}
             >
-              Logout
+              Log out
             </button>
           </>
         ) : (
