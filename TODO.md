@@ -1,6 +1,6 @@
 # Riff — Master TODO
 
-Last updated: March 30, 2026 (modal cleanup, reveal todos, notification todos)
+Last updated: May 16, 2026
 
 ---
 
@@ -104,16 +104,42 @@ Last updated: March 30, 2026 (modal cleanup, reveal todos, notification todos)
 
 ---
 
-## Soon (post-staging, pre-launch)
+## Production Readiness
 
-- [x] Notification emails via Resend — riff created, pieces revealed
+### Kyle only (sensitive / infrastructure)
+- [ ] Privacy Policy page — write content, link from login page
+- [ ] Terms of Service page — write content
+- [ ] Production database — new Supabase project, run migrations, set env vars
+- [ ] Resend domain verification — verify letsriff.app, add SPF/DKIM/DMARC DNS records
+- [ ] Document missing env vars in `.env.example`
+- [ ] Deprecated schema cleanup — remove Circle models, password field
+- [ ] next-auth upgrade to stable (when available)
+
+### Friends
+- [ ] @derek — Fix localhost URL fallbacks: change all `http://localhost:3000` fallbacks to `https://letsriff.app` in API routes (`src/app/api/riffs/[id]/route.ts`, `src/app/api/clubs/[id]/join/route.ts`, `src/lib/env.ts`)
+- [ ] @jarric — Error & 404 pages: create branded `src/app/error.tsx` and `src/app/not-found.tsx` matching the app's design system
+- [ ] @derek — Security headers: add `headers()` function to `next.config.ts` with `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Strict-Transport-Security`, `Referrer-Policy`
+- [ ] @chris — Remove test pages: delete or gate `/test-*` pages behind `NODE_ENV !== "production"` check
+- [ ] @jarric — Email unsubscribe: add unsubscribe link to notification emails + email preferences toggle in settings
+- [ ] @chris — Loading states: add `loading.tsx` with loading skeletons for clubs, clubs/[id], riffs/[id], read/[pieceId], profile/[userId], settings
+- [ ] @derek — Page metadata: add `metadata` exports to login, clubs/[id], riffs/[id], profile/[userId], read/[pieceId] pages
+- [ ] @chris — Database indexes: add `@@index` to Piece(authorId), Comment(pieceId), Notification(recipientId), Riff(clubId) — coordinate with Kyle before migrating
+- [ ] @derek — Move `prisma` CLI from dependencies to devDependencies in package.json
+
+### Done
+- [x] Favicon, apple touch icon, web manifest
+- [x] OG image + default open graph and twitter meta tags
+- [x] `metadataBase` set to letsriff.app
+- [x] Sitemap (`src/app/sitemap.ts`)
+- [x] robots.txt updated (block internal pages, add sitemap directive)
+- [x] Page titles fixed (about, settings use title template)
+- [x] `EMAIL_FROM` env var set in Vercel production
+
+## Soon (post-launch)
+
 - [ ] Notification emails via Resend — deadline approaching, new comment
 - [ ] Deadline reminder cron job (Vercel Cron, 24h before deadline)
 - [ ] Toast notifications replacing `console.error` catches
-- [ ] Loading skeletons for ClubPageLayout, ProfilePage, RiffPageLayout
-- [ ] Deployment environment badge (dev/staging/production indicator)
-- [x] Onboarding invite step now generates /clubs/[id]/join links instead of single-use tokens
-- [x] Self-contained join page (email + name inline, no redirect to login/onboarding)
 - [ ] Onboarding page refinements (create-club, join-club pages)
 
 ---
