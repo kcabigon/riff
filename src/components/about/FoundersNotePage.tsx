@@ -329,7 +329,7 @@ export default function FoundersNotePage() {
 
         {/* CTA */}
         <Link
-          href="/login"
+          href="/auth/post-login"
           style={{
             display: "inline-block",
             fontFamily: "var(--font-playfair), serif",
