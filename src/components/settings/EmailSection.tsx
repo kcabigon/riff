@@ -80,6 +80,12 @@ export default function EmailSection() {
   }
 
   useEffect(() => {
+    return () => {
+      if (toastTimeout.current) clearTimeout(toastTimeout.current);
+    };
+  }, []);
+
+  useEffect(() => {
     fetch("/api/users/me/email-preferences")
       .then((r) => r.json())
       .then((data) => {
