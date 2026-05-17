@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 function OnOffToggle({
   enabled,
@@ -65,6 +65,19 @@ export default function EmailSection() {
   const [marketing, setMarketing] = useState(true);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
+  const toastTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function showToast(message: string, type: "success" | "error") {
+    if (toastTimeout.current) clearTimeout(toastTimeout.current);
+    setToast({ message, type });
+    if (type === "success") {
+      toastTimeout.current = setTimeout(() => setToast(null), 2000);
+    }
+  }
 
   useEffect(() => {
     fetch("/api/users/me/email-preferences")
@@ -90,15 +103,17 @@ export default function EmailSection() {
 
     setSaving(true);
     try {
-      await fetch("/api/users/me/email-preferences", {
+      const res = await fetch("/api/users/me/email-preferences", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ [field]: val }),
       });
+      if (!res.ok) throw new Error("Failed");
+      showToast("Saved", "success");
     } catch {
-      // revert on failure
       if (field === "emailNotifications") setAppNotifications(!val);
       else setMarketing(!val);
+      showToast("Couldn't save — changes reverted", "error");
     } finally {
       setSaving(false);
     }
@@ -189,6 +204,64 @@ export default function EmailSection() {
           </div>
         ))}
       </div>
+
+      {toast && (
+        <div
+          style={{
+            position: "fixed",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            zIndex: 60,
+            backgroundColor: "#FFFFFF",
+            border: "2px solid #000000",
+            boxShadow: "4px 4px 0px 0px #000000",
+            padding: "10px 14px",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            whiteSpace: "nowrap",
+          }}
+        >
+          <div
+            style={{
+              width: "8px",
+              height: "8px",
+              borderRadius: "50%",
+              flexShrink: 0,
+              background: toast.type === "success" ? "#00FF66" : "#DC2626",
+            }}
+          />
+          <span
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "12px",
+              fontWeight: 300,
+              color: toast.type === "success" ? "#000000" : "#DC2626",
+            }}
+          >
+            {toast.message}
+          </span>
+          {toast.type === "error" && (
+            <button
+              onClick={() => setToast(null)}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: "0 0 0 4px",
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "16px",
+                color: "#808080",
+                lineHeight: 1,
+                flexShrink: 0,
+              }}
+            >
+              ✕
+            </button>
+          )}
+        </div>
+      )}
     </section>
   );
 }

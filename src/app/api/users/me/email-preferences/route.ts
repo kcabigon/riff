@@ -20,8 +20,8 @@ export async function GET() {
     }
 
     return NextResponse.json(prefs);
-  } catch (error: any) {
-    if (error.message === "Unauthorized") {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     console.error("Error fetching email preferences:", error);
@@ -53,8 +53,8 @@ export async function PATCH(req: Request) {
     await prisma.user.update({ where: { id: user.id }, data });
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    if (error.message === "Unauthorized") {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     console.error("Error updating email preferences:", error);
