@@ -63,7 +63,7 @@ export default function EmailSection() {
     {
       label: "App notifications",
       description:
-        "Riff activity — new riffs, reveals, comments on your writing.",
+        "Club activity — new riffs, reveals, comments on your writing.",
       value: appNotifications,
       onChange: setAppNotifications,
     },
