@@ -52,10 +52,9 @@ export default function DataSection() {
             alignItems: "center",
             justifyContent: "space-between",
             gap: "16px",
-            flexWrap: "wrap",
           }}
         >
-          <div>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <p
               style={{
                 fontFamily: "var(--font-dm-sans)",
@@ -92,6 +91,7 @@ export default function DataSection() {
               color: "#000000",
               cursor: isExporting ? "not-allowed" : "pointer",
               whiteSpace: "nowrap",
+              flexShrink: 0,
               opacity: isExporting ? 0.5 : 1,
             }}
           >
@@ -115,10 +115,9 @@ export default function DataSection() {
             alignItems: "center",
             justifyContent: "space-between",
             gap: "16px",
-            flexWrap: "wrap",
           }}
         >
-          <div>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <p
               style={{
                 fontFamily: "var(--font-dm-sans)",
@@ -154,6 +153,7 @@ export default function DataSection() {
               color: "#DC2626",
               cursor: "pointer",
               whiteSpace: "nowrap",
+              flexShrink: 0,
             }}
           >
             Delete
