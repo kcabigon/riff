@@ -361,12 +361,12 @@ export default function FoundersNotePage() {
             margin: 0,
           }}
         >
-          Say hi. Product feedback. Rad ideas. Talk shit. Email{" "}
+          Say hi. Product feedback. Rad ideas. Talk shit.{" "}
           <a
             href="mailto:jarric22@gmail.com"
             style={{ color: "#808080", textDecoration: "underline" }}
           >
-            jarric22@gmail.com
+            Contact us
           </a>
         </p>
       </div>
