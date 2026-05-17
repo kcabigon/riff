@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 function OnOffToggle({
   enabled,
   onChange,
+  disabled,
 }: {
   enabled: boolean;
   onChange: (val: boolean) => void;
+  disabled?: boolean;
 }) {
   return (
     <div
@@ -16,14 +18,16 @@ function OnOffToggle({
         border: "2px solid #000000",
         overflow: "hidden",
         flexShrink: 0,
+        opacity: disabled ? 0.5 : 1,
       }}
     >
       <button
-        onClick={() => onChange(true)}
+        onClick={() => !disabled && onChange(true)}
+        disabled={disabled}
         style={{
           padding: "6px 16px",
           border: "none",
-          cursor: "pointer",
+          cursor: disabled ? "default" : "pointer",
           backgroundColor: enabled ? "#000000" : "#FFFFFF",
           color: enabled ? "#FFFFFF" : "#000000",
           fontFamily: "var(--font-dm-sans)",
@@ -35,12 +39,13 @@ function OnOffToggle({
         On
       </button>
       <button
-        onClick={() => onChange(false)}
+        onClick={() => !disabled && onChange(false)}
+        disabled={disabled}
         style={{
           padding: "6px 16px",
           border: "none",
           borderLeft: "2px solid #000000",
-          cursor: "pointer",
+          cursor: disabled ? "default" : "pointer",
           backgroundColor: !enabled ? "#000000" : "#FFFFFF",
           color: !enabled ? "#FFFFFF" : "#000000",
           fontFamily: "var(--font-dm-sans)",
@@ -58,6 +63,46 @@ function OnOffToggle({
 export default function EmailSection() {
   const [appNotifications, setAppNotifications] = useState(true);
   const [marketing, setMarketing] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/users/me/email-preferences")
+      .then((r) => r.json())
+      .then((data) => {
+        if (typeof data.emailNotifications === "boolean") {
+          setAppNotifications(data.emailNotifications);
+        }
+        if (typeof data.emailMarketing === "boolean") {
+          setMarketing(data.emailMarketing);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function handleChange(
+    field: "emailNotifications" | "emailMarketing",
+    val: boolean
+  ) {
+    if (field === "emailNotifications") setAppNotifications(val);
+    else setMarketing(val);
+
+    setSaving(true);
+    try {
+      await fetch("/api/users/me/email-preferences", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [field]: val }),
+      });
+    } catch {
+      // revert on failure
+      if (field === "emailNotifications") setAppNotifications(!val);
+      else setMarketing(!val);
+    } finally {
+      setSaving(false);
+    }
+  }
 
   const rows = [
     {
@@ -65,14 +110,14 @@ export default function EmailSection() {
       description:
         "Club activity — new riffs, reveals, comments on your writing.",
       value: appNotifications,
-      onChange: setAppNotifications,
+      field: "emailNotifications" as const,
     },
     {
       label: "Marketing & updates",
       description:
         "Occasional product news and announcements from the Riff team.",
       value: marketing,
-      onChange: setMarketing,
+      field: "emailMarketing" as const,
     },
   ];
 
@@ -125,7 +170,11 @@ export default function EmailSection() {
                   {row.description}
                 </p>
               </div>
-              <OnOffToggle enabled={row.value} onChange={row.onChange} />
+              <OnOffToggle
+                enabled={row.value}
+                onChange={(val) => handleChange(row.field, val)}
+                disabled={loading || saving}
+              />
             </div>
 
             {i < rows.length - 1 && (

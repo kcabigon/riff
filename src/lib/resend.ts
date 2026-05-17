@@ -4,9 +4,18 @@
  */
 
 import { Resend } from "resend";
+import { prisma } from "@/lib/prisma";
 
 function getResend() {
   return new Resend(process.env.RESEND_API_KEY);
+}
+
+async function notificationsEnabled(email: string): Promise<boolean> {
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: { emailNotifications: true },
+  });
+  return user?.emailNotifications ?? true;
 }
 
 const EMAIL_LOGO_URL =
@@ -218,6 +227,7 @@ export async function sendRiffCreatedEmail({
   prompt?: string | null;
   deadline?: Date | null;
 }): Promise<void> {
+  if (!(await notificationsEnabled(email))) return;
   try {
     const { data, error } = await getResend().emails.send({
       from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
@@ -263,6 +273,7 @@ export async function sendRiffRevealedEmail({
   volumeNumber?: number | null;
   pieceCount: number;
 }): Promise<void> {
+  if (!(await notificationsEnabled(email))) return;
   try {
     const { data, error } = await getResend().emails.send({
       from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
@@ -450,6 +461,7 @@ export async function sendMemberJoinedEmail({
   clubName: string;
   clubUrl: string;
 }): Promise<void> {
+  if (!(await notificationsEnabled(email))) return;
   try {
     const { error } = await getResend().emails.send({
       from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
@@ -489,6 +501,7 @@ export async function sendPieceSubmittedEmail({
   riffUrl: string;
   clubName: string;
 }): Promise<void> {
+  if (!(await notificationsEnabled(email))) return;
   try {
     const { error } = await getResend().emails.send({
       from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
@@ -528,6 +541,7 @@ export async function sendDeadlineChangedEmail({
   riffUrl: string;
   clubName: string;
 }): Promise<void> {
+  if (!(await notificationsEnabled(email))) return;
   const deadlineStr = newDeadline.toLocaleDateString("en-US", {
     month: "long",
     day: "numeric",
@@ -570,6 +584,7 @@ export async function sendAllPiecesSubmittedEmail({
   clubName: string;
   riffUrl: string;
 }): Promise<void> {
+  if (!(await notificationsEnabled(email))) return;
   try {
     const { error } = await getResend().emails.send({
       from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
@@ -607,6 +622,7 @@ export async function sendCommentNotificationEmail({
   commentCount: number;
   pieceUrl: string;
 }): Promise<void> {
+  if (!(await notificationsEnabled(email))) return;
   const commentLabel =
     commentCount === 1 ? "1 new comment" : `${commentCount} new comments`;
 
