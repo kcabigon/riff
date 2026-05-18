@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import confetti from "canvas-confetti";
 import React from "react";
 import TutorialStage from "./TutorialStage";
 import {
@@ -394,7 +395,7 @@ function ClubScene({
       x={540}
       y={110}
       width={660}
-      height={515}
+      height={478}
       rotate={1.2}
       time={time}
       scene={scene}
@@ -404,7 +405,7 @@ function ClubScene({
         style={{
           position: "relative",
           width: 660,
-          height: 515,
+          height: 478,
           overflow: "hidden",
           background: "#000",
         }}
@@ -669,6 +670,7 @@ function RevealScene({
   scene: Scene;
   isManual: boolean;
 }) {
+  const hasFiredConfetti = React.useRef(false);
   const sceneT = time - scene.start;
 
   const COVER_IN = 0.4,
@@ -677,7 +679,43 @@ function RevealScene({
   const PAGE_IN = 4.0,
     PAGE_IN_DUR = 0.9;
   const BURST_START = PAGE_IN + PAGE_IN_DUR - 0.2;
-  const BURST_LIFE = 2.2;
+
+  if (sceneT >= BURST_START && !hasFiredConfetti.current) {
+    hasFiredConfetti.current = true;
+    const colors = [
+      "#00FF66",
+      "#01EFFC",
+      "#EECF01",
+      "#FF6B35",
+      "#C01582",
+      "#955CB5",
+    ];
+    confetti({
+      particleCount: 80,
+      angle: 60,
+      spread: 60,
+      origin: { x: 0.35, y: 0.6 },
+      colors,
+    });
+    confetti({
+      particleCount: 80,
+      angle: 120,
+      spread: 60,
+      origin: { x: 0.75, y: 0.6 },
+      colors,
+    });
+    setTimeout(
+      () =>
+        confetti({
+          particleCount: 60,
+          angle: 90,
+          spread: 70,
+          origin: { x: 0.55, y: 0.5 },
+          colors,
+        }),
+      300
+    );
+  }
 
   const coverIn = rangeProgress(sceneT, COVER_IN, COVER_IN + 0.6, Ease.outBack);
   const coverOut = rangeProgress(
@@ -699,54 +737,6 @@ function RevealScene({
   const pageTy = (1 - pageIn) * 100;
   const pageScale = 0.88 + 0.12 * pageIn;
   const pageRot = 4 - 2.6 * pageIn;
-
-  const burstT = Math.max(0, sceneT - BURST_START);
-  const burstFade =
-    burstT > BURST_LIFE
-      ? 0
-      : burstT > BURST_LIFE - 0.5
-        ? 1 - (burstT - (BURST_LIFE - 0.5)) / 0.5
-        : 1;
-  const BURST_COLORS = ["#00FF66", "#01EFFC", "#EECF01", "#FF6B35", "#C01582"];
-  const PARTICLE_COUNT = 18;
-  const burstOrigin = { x: 870, y: 360 };
-
-  const confetti: Array<{
-    x: number;
-    y: number;
-    rot: number;
-    w: number;
-    h: number;
-    color: string;
-    i: number;
-  }> = [];
-
-  if (burstT > 0 && burstT < BURST_LIFE + 0.5) {
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-      const seed = ((i * 9301 + 49297) % 233280) / 233280;
-      const seed2 = ((i * 73 + 19) % 100) / 100;
-      const baseAngle = -Math.PI + (i / (PARTICLE_COUNT - 1)) * Math.PI;
-      const angle = baseAngle + (seed - 0.5) * 0.4;
-      const speed = 380 + seed * 280;
-      const vx = Math.cos(angle) * speed;
-      const vy = Math.sin(angle) * speed * 0.85 - 180;
-      const g = 720;
-      const x = vx * burstT;
-      const y = vy * burstT + 0.5 * g * burstT * burstT;
-      const rot = seed2 * 360 + burstT * (180 + seed * 720);
-      const w = 6 + Math.floor(seed * 10);
-      const h = 12 + Math.floor(seed2 * 14);
-      confetti.push({
-        x,
-        y,
-        rot,
-        w,
-        h,
-        color: BURST_COLORS[i % BURST_COLORS.length],
-        i,
-      });
-    }
-  }
 
   const polaroidBase: React.CSSProperties = {
     position: "absolute",
@@ -814,33 +804,6 @@ function RevealScene({
           />
         </div>
       )}
-      {confetti.length > 0 && (
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            pointerEvents: "none",
-            zIndex: 6,
-            opacity: burstFade,
-          }}
-        >
-          {confetti.map((p) => (
-            <div
-              key={p.i}
-              style={{
-                position: "absolute",
-                left: burstOrigin.x + p.x,
-                top: burstOrigin.y + p.y,
-                width: p.w,
-                height: p.h,
-                background: p.color,
-                border: "1.5px solid #000",
-                transform: `translate(-50%, -50%) rotate(${p.rot}deg)`,
-              }}
-            />
-          ))}
-        </div>
-      )}
     </>
   );
 }
@@ -870,7 +833,7 @@ const READ_COMMENTS = [
     name: "Kyla",
     color: "#01EFFC",
     text: "I can't wait to see Riv grow as a baseball player",
-    x: 410,
+    x: 320,
     y: 380,
     rot: -1.6,
     delay: 6.3,
@@ -1009,76 +972,6 @@ function ReadScene({
   );
 }
 
-function OutroScreen({ time, show }: { time: number; show: boolean | null }) {
-  const outroStart = SCENES[SCENES.length - 1].end - 0.7;
-  let env: number;
-  if (show != null) {
-    env = show ? 1 : 0;
-  } else {
-    env = rangeProgress(time, outroStart, outroStart + 0.7, Ease.out);
-  }
-  if (env === 0) return null;
-
-  return (
-    <div
-      style={{
-        position: "absolute",
-        inset: 0,
-        background: `rgba(255, 254, 248, ${env * 0.97})`,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexDirection: "column",
-        gap: 28,
-        pointerEvents: "none",
-        opacity: env,
-        zIndex: 20,
-        transition: show != null ? "opacity 0.5s, background 0.5s" : "none",
-      }}
-    >
-      <div
-        style={{
-          fontFamily: "var(--font-over-the-rainbow), cursive",
-          fontSize: 32,
-          color: "#000",
-          transform: "rotate(-3deg)",
-        }}
-      >
-        so —
-      </div>
-      <div
-        style={{
-          fontFamily: "var(--font-dm-serif-text), Georgia, serif",
-          fontSize: 88,
-          color: "#000",
-          letterSpacing: "-0.02em",
-          lineHeight: 1,
-          background:
-            "linear-gradient(transparent 65%, #00FF66 65%, #00FF66 95%, transparent 95%)",
-          padding: "0 12px",
-        }}
-      >
-        Ready to write?
-      </div>
-      <div
-        style={{
-          background: "#000",
-          color: "#FFF",
-          border: "2px solid #000",
-          padding: "14px 40px",
-          fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-          fontSize: 16,
-          fontWeight: 300,
-          boxShadow: "8px 8px 0 0 #00FF66",
-          marginTop: 8,
-        }}
-      >
-        Take me there →
-      </div>
-    </div>
-  );
-}
-
 const SCENE_COMPONENTS: Record<
   Scene["id"],
   React.ComponentType<{ time: number; scene: Scene; isManual: boolean }>
@@ -1101,7 +994,7 @@ export default function WelcomeTutorial() {
   return (
     <div style={{ width: "100vw", height: "100vh", overflow: "hidden" }}>
       <TutorialStage scenes={SCENES} duration={duration} onSkip={handleSkip}>
-        {(time, { isManual, outroShown }) => {
+        {(time, { isManual }) => {
           let activeScene = SCENES[0];
           for (const s of SCENES) {
             if (time < s.end) {
@@ -1165,9 +1058,6 @@ export default function WelcomeTutorial() {
                   isManual={isManual}
                 />
               ))}
-
-              {/* Outro overlay */}
-              <OutroScreen time={time} show={isManual ? outroShown : null} />
             </div>
           );
         }}

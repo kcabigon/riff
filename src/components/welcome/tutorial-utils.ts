@@ -156,8 +156,6 @@ export const SCENES: Scene[] = [
     highlightColor: "#C01582",
     readyAt: 7.5,
     note: "like leaving notes\nin the margin",
-    arrowFrom: [400, 530],
-    arrowTo: [950, 360],
     notePos: { x: 80, y: 430 },
   },
 ];

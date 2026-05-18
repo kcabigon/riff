@@ -36,7 +36,6 @@ interface TutorialStageProps {
     time: number,
     ctx: {
       isManual: boolean;
-      outroShown: boolean;
       sceneIdx: number;
       isLast: boolean;
     }
@@ -52,7 +51,6 @@ export default function TutorialStage({
   const [time, setTime] = useState(0);
   const [skipped, setSkipped] = useState(false);
   const [sceneIdx, setSceneIdx] = useState(0);
-  const [outroShown, setOutroShown] = useState(false);
   const [scale, setScale] = useState(1);
   const stageRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
@@ -98,35 +96,26 @@ export default function TutorialStage({
 
   const handleNext = useCallback(() => {
     if (sceneIdx >= scenes.length - 1) {
-      if (!outroShown) {
-        setOutroShown(true);
-        return;
-      }
       setSkipped(true);
       onSkip?.();
       setTimeout(() => {
         setSkipped(false);
         setSceneIdx(0);
         setTime(0);
-        setOutroShown(false);
       }, 2500);
       return;
     }
     const nextIdx = sceneIdx + 1;
     setSceneIdx(nextIdx);
     setTime(scenes[nextIdx].start);
-  }, [sceneIdx, scenes, outroShown, onSkip]);
+  }, [sceneIdx, scenes, onSkip]);
 
   const handleBack = useCallback(() => {
-    if (outroShown) {
-      setOutroShown(false);
-      return;
-    }
     if (sceneIdx <= 0) return;
     const prevIdx = sceneIdx - 1;
     setSceneIdx(prevIdx);
     setTime(scenes[prevIdx].start);
-  }, [sceneIdx, scenes, outroShown]);
+  }, [sceneIdx, scenes]);
 
   const handleSkip = useCallback(() => {
     setSkipped(true);
@@ -135,7 +124,6 @@ export default function TutorialStage({
       setSkipped(false);
       setTime(0);
       setSceneIdx(0);
-      setOutroShown(false);
     }, 2500);
   }, [onSkip]);
 
@@ -144,22 +132,18 @@ export default function TutorialStage({
     [time, duration, scenes]
   );
 
-  const isFirst = sceneIdx === 0 && !outroShown;
+  const isFirst = sceneIdx === 0;
   const isLast = sceneIdx >= scenes.length - 1;
-  const nextLabel = outroShown ? "Take me there" : isLast ? "Let's go" : "Next";
+  const nextLabel = isLast ? "Let's riff" : "Next";
 
   const currentScene = scenes[sceneIdx];
   let ready = false;
   if (currentScene) {
-    if (outroShown) {
-      ready = true;
-    } else {
-      const readyOffset =
-        currentScene.readyAt != null
-          ? currentScene.readyAt
-          : currentScene.end - currentScene.start - 1;
-      ready = time >= currentScene.start + readyOffset;
-    }
+    const readyOffset =
+      currentScene.readyAt != null
+        ? currentScene.readyAt
+        : currentScene.end - currentScene.start - 1;
+    ready = time >= currentScene.start + readyOffset;
   }
 
   return (
@@ -192,7 +176,6 @@ export default function TutorialStage({
           {!skipped &&
             children(time, {
               isManual: true,
-              outroShown,
               sceneIdx,
               isLast,
             })}
