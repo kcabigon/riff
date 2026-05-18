@@ -490,7 +490,7 @@ export default function WritePage({
 
   const handleBack = () => {
     if (piece.riffs.length > 0) {
-      router.push(`/clubs/${piece.riffs[0].clubId}`);
+      router.push(`/riffs/${piece.riffs[0].id}`);
     } else {
       router.back();
     }

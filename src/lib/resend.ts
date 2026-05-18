@@ -4,9 +4,21 @@
  */
 
 import { Resend } from "resend";
+import { prisma } from "@/lib/prisma";
 
 function getResend() {
   return new Resend(process.env.RESEND_API_KEY);
+}
+
+export async function batchNotificationsEnabled(
+  emails: string[]
+): Promise<Set<string>> {
+  if (emails.length === 0) return new Set();
+  const users = await prisma.user.findMany({
+    where: { email: { in: emails }, emailNotifications: true },
+    select: { email: true },
+  });
+  return new Set(users.map((u) => u.email));
 }
 
 const EMAIL_LOGO_URL =
@@ -27,12 +39,18 @@ function emailShell({
   content,
   footerText,
   clubName,
+  unsubscribe = true,
 }: {
   title: string;
   content: string;
   footerText: string;
   clubName?: string;
+  unsubscribe?: boolean;
 }): string {
+  const baseUrl = process.env.NEXTAUTH_URL || "https://letsriff.app";
+  const fullFooterText = unsubscribe
+    ? `${footerText} · <a href="${baseUrl}/settings" style="color:#bbbbbb;">Unsubscribe</a>`
+    : footerText;
   const topSection = clubName
     ? `<!-- Club name header -->
           <tr>
@@ -93,7 +111,7 @@ function emailShell({
           <!-- Footer -->
           <tr>
             <td style="padding:20px 40px ${clubName ? "12px" : "32px"};border-top:1px solid #eeeeee;">
-              <p style="margin:0;font-size:12px;font-weight:300;color:#bbbbbb;font-family:'DM Sans',-apple-system,sans-serif;">${footerText}</p>
+              <p style="margin:0;font-size:12px;font-weight:300;color:#bbbbbb;font-family:'DM Sans',-apple-system,sans-serif;">${fullFooterText}</p>
             </td>
           </tr>
 
@@ -302,6 +320,7 @@ export async function sendMagicLinkEmail(
 function getSignInEmailTemplate(magicLink: string): string {
   return emailShell({
     title: "Sign in to Riff",
+    unsubscribe: false,
     footerText: `Button not working? Copy this link into your browser:<br><a href="${magicLink}" style="color:#888888;font-size:11px;word-break:break-all;">${magicLink}</a>`,
     content: `
           <tr>
@@ -327,6 +346,7 @@ function getSignInEmailTemplate(magicLink: string): string {
 function getOnboardingEmailTemplate(magicLink: string): string {
   return emailShell({
     title: "Welcome to Riff",
+    unsubscribe: false,
     footerText: `Button not working? Copy this link into your browser:<br><a href="${magicLink}" style="color:#888888;font-size:11px;word-break:break-all;">${magicLink}</a>`,
     content: `
           <tr>

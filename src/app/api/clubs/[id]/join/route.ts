@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { notifyClubMembers } from "@/lib/notifications";
-import { sendMemberJoinedEmail } from "@/lib/resend";
+import { sendMemberJoinedEmail, batchNotificationsEnabled } from "@/lib/resend";
 import { NotificationType } from "@prisma/client";
 
 // POST /api/clubs/[id]/join — Join a club via the public join link
@@ -60,20 +60,27 @@ export async function POST(
         where: { clubId, userId: { not: userId } },
         include: { user: { select: { email: true } } },
       })
-      .then((members) =>
-        Promise.allSettled(
-          members.map((m) =>
-            sendMemberJoinedEmail({
-              email: m.user.email,
-              newMemberFullName: newMember.name || "A new member",
-              newMemberFirstName:
-                newMember.firstName || newMember.name?.split(" ")[0] || "them",
-              clubName: club!.name,
-              clubUrl,
-            })
-          )
-        )
-      )
+      .then(async (members) => {
+        const enabled = await batchNotificationsEnabled(
+          members.map((m) => m.user.email)
+        );
+        return Promise.allSettled(
+          members
+            .filter((m) => enabled.has(m.user.email))
+            .map((m) =>
+              sendMemberJoinedEmail({
+                email: m.user.email,
+                newMemberFullName: newMember.name || "A new member",
+                newMemberFirstName:
+                  newMember.firstName ||
+                  newMember.name?.split(" ")[0] ||
+                  "them",
+                clubName: club!.name,
+                clubUrl,
+              })
+            )
+        );
+      })
       .catch(() => {});
 
     return NextResponse.json({ success: true });
