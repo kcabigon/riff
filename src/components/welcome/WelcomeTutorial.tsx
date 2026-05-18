@@ -902,7 +902,7 @@ function RevealScene({
 const READ_COMMENTS = [
   {
     name: "Chris",
-    color: "#955CB5",
+    color: "#FF6B35",
     text: "Not a Dodger fan, but Freddie's walk off was pretty dope",
     x: 380,
     y: 140,
@@ -1022,6 +1022,7 @@ function ReadScene({
   isManual: boolean;
 }) {
   const sceneT = time - scene.start;
+  const overlayIn = rangeProgress(sceneT, 3.8, 4.6, Ease.out);
   return (
     <PinnedScreen
       x={540}
@@ -1055,6 +1056,16 @@ function ReadScene({
             display: "block",
           }}
         />
+        {overlayIn > 0 && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: `rgba(0,0,0,${overlayIn * 0.5})`,
+              pointerEvents: "none",
+            }}
+          />
+        )}
         {READ_COMMENTS.map((c, i) => (
           <CommentCard key={i} comment={c} t={sceneT} />
         ))}
