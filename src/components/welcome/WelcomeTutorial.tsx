@@ -140,6 +140,97 @@ function HeadlineC({
   );
 }
 
+const WRITE_TYPE = {
+  word1: "parallel.",
+  word2: "private.",
+  reverseOffset: 6.5,
+  charDur: 0.08,
+};
+
+function WriteHeadlineC({ time, scene }: { time: number; scene: Scene }) {
+  const env = sceneRise(time, scene.start, 0.5);
+  const line0Start = scene.start + T.headlineStart;
+  const line0In = rangeProgress(
+    time,
+    line0Start,
+    line0Start + T.headlineLineDur,
+    Ease.out
+  );
+  const line1Start = scene.start + T.headlineStart + T.headlineLineDelay;
+  const line1In = rangeProgress(
+    time,
+    line1Start,
+    line1Start + T.headlineLineDur,
+    Ease.out
+  );
+
+  const { word1, word2, reverseOffset, charDur } = WRITE_TYPE;
+  const reverseStart = scene.start + reverseOffset;
+  const reverseDur = word1.length * charDur;
+
+  let displayText = word1;
+  if (time >= reverseStart) {
+    const elapsed = time - reverseStart;
+    if (elapsed < reverseDur) {
+      const charsLeft = Math.max(
+        0,
+        word1.length - Math.floor(elapsed / charDur)
+      );
+      displayText = word1.slice(0, charsLeft);
+    } else {
+      const forwardElapsed = elapsed - reverseDur;
+      const charsTyped = Math.min(
+        word2.length,
+        Math.floor(forwardElapsed / charDur) + 1
+      );
+      displayText = word2.slice(0, charsTyped);
+    }
+  }
+
+  const lineBase = {
+    fontFamily: "var(--font-dm-serif-text), Georgia, serif",
+    fontWeight: 400,
+    fontSize: 72,
+    lineHeight: 1.05,
+    letterSpacing: "-0.02em",
+    alignSelf: "flex-start" as const,
+    color: "#000",
+  };
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: 80,
+        top: 140,
+        maxWidth: 560,
+        opacity: env,
+        transform: `translateY(${(1 - env) * 12}px)`,
+        pointerEvents: "none",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <div
+        style={{
+          ...lineBase,
+          opacity: line0In,
+          transform: `translateY(${(1 - line0In) * 16}px)`,
+        }}
+      >
+        Write in
+      </div>
+      <div style={{ ...lineBase, opacity: line1In }}>
+        {displayText ? (
+          <BrushHighlight color={scene.highlightColor}>
+            {displayText}
+          </BrushHighlight>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 function ArrowNote({
   scene,
   annotation,
@@ -1045,7 +1136,15 @@ export default function WelcomeTutorial() {
               />
 
               {/* Headline */}
-              <HeadlineC scene={activeScene} time={time} isManual={isManual} />
+              {activeScene.id === "write" ? (
+                <WriteHeadlineC scene={activeScene} time={time} />
+              ) : (
+                <HeadlineC
+                  scene={activeScene}
+                  time={time}
+                  isManual={isManual}
+                />
+              )}
 
               {/* Annotations */}
               {annotations.map((annotation, i) => (

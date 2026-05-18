@@ -111,7 +111,7 @@ export const SCENES: Scene[] = [
     highlightColor: "#EECF01",
     readyAt: 13,
     transition: {
-      riffOut: { start: 7.5, dur: 0.9 },
+      riffOut: { start: 8.0, dur: 0.9 },
       writeIn: { start: 8.5, dur: 1.0 },
       lockStart: 11.5,
     },
@@ -121,7 +121,7 @@ export const SCENES: Scene[] = [
         arrowFrom: [430, 435],
         arrowTo: [870, 415],
         notePos: { x: 80, y: 400 },
-        arrowFadeOut: { start: 7.5, dur: 0.55 },
+        arrowFadeOut: { start: 8.0, dur: 0.55 },
       },
       {
         note: "but your writing stays private\nuntil the reveal",
