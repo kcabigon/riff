@@ -66,7 +66,7 @@ export default function NavBar({
         >
           {/* Logo */}
           <Link
-            href={currentClub ? `/clubs/${currentClub.id}` : "/"}
+            href={currentClub ? `/clubs/${currentClub.id}` : "/no-club"}
             style={{ display: "flex", alignItems: "center" }}
           >
             <Image

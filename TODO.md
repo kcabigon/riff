@@ -107,8 +107,8 @@ Last updated: May 16, 2026
 ## Production Readiness
 
 ### Kyle only (sensitive / infrastructure)
-- [ ] Privacy Policy page — write content, link from login page
-- [ ] Terms of Service page — write content
+- [x] Privacy Policy page — write content, link from login page
+- [x] Terms of Service page — write content
 - [x] Production database — new Supabase project, run migrations, set env vars
 - [x] Resend domain verification — verify letsriff.app, add SPF/DKIM/DMARC DNS records
 - [x] Document missing env vars in `.env.example`
@@ -119,7 +119,7 @@ Last updated: May 16, 2026
 - [ ] @jarric — Error & 404 pages: create branded `src/app/error.tsx` and `src/app/not-found.tsx` matching the app's design system
 - [ ] @derek — Security headers: add `headers()` function to `next.config.ts` with `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Strict-Transport-Security`, `Referrer-Policy`
 - [ ] @chris — Remove test pages: delete or gate `/test-*` pages behind `NODE_ENV !== "production"` check
-- [ ] @jarric — Email unsubscribe: add unsubscribe link to notification emails + email preferences toggle in settings
+- [x] Email unsubscribe: add unsubscribe link to notification emails + email preferences toggle in settings
 - [ ] @chris — Loading states: add `loading.tsx` with loading skeletons for clubs, clubs/[id], riffs/[id], read/[pieceId], profile/[userId], settings
 - [ ] @derek — Page metadata: add `metadata` exports to login, clubs/[id], riffs/[id], profile/[userId], read/[pieceId] pages
 - [ ] @chris — Database indexes: add `@@index` to Piece(authorId), Comment(pieceId), Notification(recipientId), Riff(clubId) — coordinate with Kyle before migrating

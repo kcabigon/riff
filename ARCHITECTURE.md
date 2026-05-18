@@ -1,6 +1,6 @@
 # Riff — Architecture & Project Reference
 
-**Last Updated**: May 9, 2026
+**Last Updated**: May 18, 2026
 
 This file is the single source of truth for project context. The `/letsriff` slash command reads this automatically at the start of each session.
 
@@ -14,7 +14,7 @@ A private essay-sharing platform for creative communities. Users create **clubs*
 
 ---
 
-## Current State (May 9, 2026)
+## Current State (May 18, 2026)
 
 ### What's Working
 - Landing page + About page
@@ -48,6 +48,10 @@ A private essay-sharing platform for creative communities. Users create **clubs*
 - Badge shared component (Public, New Comments, etc.)
 - ThreeDotButton shared component (dark/light variants)
 - DestructiveButton shared component
+- Email preferences (notification + marketing toggles in settings, unsubscribe link in emails)
+- Terms of Service page
+- Landing page detects logged-in users (avatar + dropdown navigation)
+- Deprecated Circle architecture fully removed (schema + routes)
 
 ---
 
@@ -68,6 +72,7 @@ src/app/
 ├── write/[pieceId]/page.tsx   # Draft editor
 ├── profile/[userId]/page.tsx  # User profile
 ├── no-club/page.tsx           # Holding page for users without a club
+├── terms/page.tsx             # Terms of Service
 └── onboarding/                # Onboarding flow (name, club-choice, create-club, banner)
 ```
 
@@ -83,7 +88,7 @@ src/app/api/
 ├── comments/                  # List + create (with selection anchor)
 ├── notifications/             # List, mark read, unread count
 ├── cron/daily-comment-notifications/  # Vercel Cron — daily comment digest emails
-├── users/me/                  # Current user, update, delete, export (docx/zip)
+├── users/me/                  # Current user, update, delete, export (docx/zip), email preferences
 ├── users/[id]/                # User profile data
 └── upload/image/              # Image upload (auth required, 5MB max)
 ```
@@ -107,7 +112,7 @@ src/components/
 ├── profile/       # ProfilePage, ProfileHeader, ProfileSection tabs, DeletePieceModal,
 │                  # MyStatsModal, ShareModal
 ├── notifications/ # NotificationBell, NotificationPanel, NotificationItem
-├── settings/      # SettingsPage, ProfileSection, DataSection, DeleteAccountConfirmModal
+├── settings/      # SettingsPage, ProfileSection, EmailSection, DataSection, DeleteAccountConfirmModal
 ├── about/         # FoundersNotePage, FakeCommentHighlight
 ├── write/         # WritePage, CoverImageModal, SubmitConfirmModal, EmbedModal, MediaEmbedModal,
 │                  # LinkPopover, ResizableImageView, toolbar/StickyToolbar, toolbar/ToolbarButton,

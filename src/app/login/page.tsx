@@ -103,8 +103,14 @@ export default function LoginPage() {
             height: "100%",
           }}
         >
-          By continuing, you acknowledge Riff&apos;s Privacy Policy and agree to
-          get occasional product update and promotional emails.
+          By continuing, you acknowledge Riff&apos;s{" "}
+          <a
+            href="/terms"
+            style={{ color: "#000000", textDecoration: "underline" }}
+          >
+            Terms & Privacy Policy
+          </a>{" "}
+          and agree to get occasional product update and promotional emails.
         </p>
       </div>
     </AuthCard>

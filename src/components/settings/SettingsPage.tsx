@@ -1,6 +1,7 @@
 "use client";
 
 import ProfileSection from "./ProfileSection";
+import EmailSection from "./EmailSection";
 import DataSection from "./DataSection";
 import NavBar from "@/components/clubs/NavBar";
 
@@ -41,6 +42,7 @@ export default function SettingsPage({
       >
         <div style={{ display: "flex", flexDirection: "column", gap: "48px" }}>
           <ProfileSection user={user} />
+          <EmailSection />
           <DataSection />
         </div>
       </div>

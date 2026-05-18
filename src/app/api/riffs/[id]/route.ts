@@ -6,6 +6,7 @@ import {
   sendRiffCreatedEmail,
   sendRiffRevealedEmail,
   sendDeadlineChangedEmail,
+  batchNotificationsEnabled,
 } from "@/lib/resend";
 import { NotificationType } from "@prisma/client";
 
@@ -309,21 +310,26 @@ export async function PATCH(
             where: { clubId: riff.clubId, userId: { not: actorId } },
             include: { user: { select: { email: true, name: true } } },
           })
-          .then((members) =>
-            Promise.allSettled(
-              members.map((m) =>
-                sendRiffCreatedEmail({
-                  email: m.user.email,
-                  actorName: updatedRiff.creator.name || "Your host",
-                  clubName: updatedRiff.club.name,
-                  clubUrl,
-                  riffTitle: riff.title,
-                  prompt: riff.prompt,
-                  deadline: riff.deadline ?? null,
-                })
-              )
-            )
-          )
+          .then(async (members) => {
+            const enabled = await batchNotificationsEnabled(
+              members.map((m) => m.user.email)
+            );
+            return Promise.allSettled(
+              members
+                .filter((m) => enabled.has(m.user.email))
+                .map((m) =>
+                  sendRiffCreatedEmail({
+                    email: m.user.email,
+                    actorName: updatedRiff.creator.name || "Your host",
+                    clubName: updatedRiff.club.name,
+                    clubUrl,
+                    riffTitle: riff.title,
+                    prompt: riff.prompt,
+                    deadline: riff.deadline ?? null,
+                  })
+                )
+            );
+          })
           .catch(() => {});
       } else if (status === "REVEALED") {
         notifyClubMembers(
@@ -341,20 +347,25 @@ export async function PATCH(
             where: { clubId: riff.clubId, userId: { not: actorId } },
             include: { user: { select: { email: true, name: true } } },
           })
-          .then((members) =>
-            Promise.allSettled(
-              members.map((m) =>
-                sendRiffRevealedEmail({
-                  email: m.user.email,
-                  clubName: updatedRiff.club.name,
-                  riffUrl,
-                  riffTitle: updatedRiff.title,
-                  volumeNumber: updatedRiff.volumeNumber,
-                  pieceCount: updatedRiff._count.pieces,
-                })
-              )
-            )
-          )
+          .then(async (members) => {
+            const enabled = await batchNotificationsEnabled(
+              members.map((m) => m.user.email)
+            );
+            return Promise.allSettled(
+              members
+                .filter((m) => enabled.has(m.user.email))
+                .map((m) =>
+                  sendRiffRevealedEmail({
+                    email: m.user.email,
+                    clubName: updatedRiff.club.name,
+                    riffUrl,
+                    riffTitle: updatedRiff.title,
+                    volumeNumber: updatedRiff.volumeNumber,
+                    pieceCount: updatedRiff._count.pieces,
+                  })
+                )
+            );
+          })
           .catch(() => {});
       }
     }
@@ -378,20 +389,25 @@ export async function PATCH(
           where: { clubId: riff.clubId, userId: { not: user.id } },
           include: { user: { select: { email: true } } },
         })
-        .then((members) => {
+        .then(async (members) => {
           const appUrl =
             process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
           const riffUrl = `${appUrl}/riffs/${riffId}`;
+          const enabled = await batchNotificationsEnabled(
+            members.map((m) => m.user.email)
+          );
           return Promise.allSettled(
-            members.map((m) =>
-              sendDeadlineChangedEmail({
-                email: m.user.email,
-                hostName: updatedRiff.creator.name || "Your host",
-                newDeadline,
-                riffUrl,
-                clubName: updatedRiff.club.name,
-              })
-            )
+            members
+              .filter((m) => enabled.has(m.user.email))
+              .map((m) =>
+                sendDeadlineChangedEmail({
+                  email: m.user.email,
+                  hostName: updatedRiff.creator.name || "Your host",
+                  newDeadline,
+                  riffUrl,
+                  clubName: updatedRiff.club.name,
+                })
+              )
           );
         })
         .catch(() => {});

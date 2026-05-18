@@ -5,6 +5,7 @@ import { notifyClubMembers, createNotification } from "@/lib/notifications";
 import {
   sendPieceSubmittedEmail,
   sendAllPiecesSubmittedEmail,
+  batchNotificationsEnabled,
 } from "@/lib/resend";
 import { NotificationType } from "@prisma/client";
 
@@ -72,19 +73,24 @@ export async function PATCH(
         where: { clubId: riff.clubId, userId: { not: user.id } },
         include: { user: { select: { email: true, name: true } } },
       })
-      .then((members) =>
-        Promise.allSettled(
-          members.map((m) =>
-            sendPieceSubmittedEmail({
-              email: m.user.email,
-              actorName: user.name || "Someone",
-              riffTitle: riffDisplayTitle,
-              clubName: riff.club.name,
-              riffUrl,
-            })
-          )
-        )
-      )
+      .then(async (members) => {
+        const enabled = await batchNotificationsEnabled(
+          members.map((m) => m.user.email)
+        );
+        return Promise.allSettled(
+          members
+            .filter((m) => enabled.has(m.user.email))
+            .map((m) =>
+              sendPieceSubmittedEmail({
+                email: m.user.email,
+                actorName: user.name || "Someone",
+                riffTitle: riffDisplayTitle,
+                clubName: riff.club.name,
+                riffUrl,
+              })
+            )
+        );
+      })
       .catch(() => {});
 
     // Check if all participants have now submitted — notify host
@@ -99,9 +105,12 @@ export async function PATCH(
       }).catch(() => {});
 
       prisma.user
-        .findUnique({ where: { id: riff.creatorId }, select: { email: true } })
+        .findUnique({
+          where: { id: riff.creatorId },
+          select: { email: true, emailNotifications: true },
+        })
         .then((host) => {
-          if (host) {
+          if (host && host.emailNotifications) {
             return sendAllPiecesSubmittedEmail({
               email: host.email,
               riffTitle: riffDisplayTitle,
