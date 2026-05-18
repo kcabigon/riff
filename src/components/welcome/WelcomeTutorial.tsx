@@ -211,19 +211,32 @@ function ArrowNote({
   if (hasArrow && annotation.arrowFrom && annotation.arrowTo) {
     const [fx, fy] = annotation.arrowFrom;
     [tx, ty] = annotation.arrowTo;
-    const adx = tx - fx,
-      ady = ty - fy;
-    const len = Math.hypot(adx, ady);
-    const nx = -ady / len,
-      ny = adx / len;
-    const bow = len * 0.12;
-    const cx1 = fx + adx * 0.35 + nx * bow;
-    const cy1 = fy + ady * 0.35 + ny * bow;
-    const cx2 = tx - adx * 0.25 + nx * bow * 0.4;
-    const cy2 = ty - ady * 0.25 + ny * bow * 0.4;
-    path = `M ${fx} ${fy} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${tx} ${ty}`;
+    const midX = fx + (tx - fx) * 0.55;
+    const midY = fy + (ty - fy) * 0.55;
+    const armLen = Math.hypot(tx - fx, ty - fy);
+    const lr = Math.max(16, Math.min(28, armLen * 0.06));
+    const lcx = midX,
+      lcy = midY - lr * 0.6;
+    const ls = [lcx, lcy + lr];
+    const p1c1x = fx + (ls[0] - fx) * 0.4 + 30;
+    const p1c1y = fy + (ls[1] - fy) * 0.2 - 30;
+    const p1c2x = fx + (ls[0] - fx) * 0.7;
+    const p1c2y = fy + (ls[1] - fy) * 0.8 + 10;
+    const k = lr * 1.4;
+    const p3c1x = ls[0] + (tx - ls[0]) * 0.4 - 10;
+    const p3c1y = ls[1] + (ty - ls[1]) * 0.2 + 30;
+    const p3c2x = ls[0] + (tx - ls[0]) * 0.75;
+    const p3c2y = ls[1] + (ty - ls[1]) * 0.8 + 15;
+    path =
+      `M ${fx} ${fy} ` +
+      `C ${p1c1x} ${p1c1y}, ${p1c2x} ${p1c2y}, ${ls[0]} ${ls[1]} ` +
+      `C ${lcx + k} ${lcy + lr}, ${lcx + k} ${lcy - lr}, ${lcx} ${lcy - lr} ` +
+      `C ${lcx - k} ${lcy - lr}, ${lcx - k} ${lcy + lr}, ${ls[0]} ${ls[1]} ` +
+      `C ${p3c1x} ${p3c1y}, ${p3c2x} ${p3c2y}, ${tx} ${ty}`;
     dashOffset = 100 * (1 - arrowIn);
-    headAngle = (Math.atan2(ty - cy2, tx - cx2) * 180) / Math.PI;
+    const dx = tx - p3c2x,
+      dy = ty - p3c2y;
+    headAngle = (Math.atan2(dy, dx) * 180) / Math.PI;
   }
 
   const headlineBottom = 140 + scene.headline.length * 76;
