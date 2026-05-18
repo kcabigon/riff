@@ -19,7 +19,7 @@ export async function GET(req: Request) {
           title: true,
           authorId: true,
           author: {
-            select: { email: true },
+            select: { email: true, emailNotifications: true },
           },
         },
       },
@@ -40,6 +40,7 @@ export async function GET(req: Request) {
 
   for (const comment of comments) {
     if (comment.authorId === comment.piece.authorId) continue;
+    if (!comment.piece.author.emailNotifications) continue;
 
     const existing = groups.get(comment.pieceId);
 
