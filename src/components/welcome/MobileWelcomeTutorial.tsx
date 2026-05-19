@@ -17,6 +17,20 @@ import {
 const CANVAS_W = 390;
 const CANVAS_H = 780;
 
+// Desktop readyAt values include arrow animation time (~1.8s) that doesn't
+// exist on mobile. Override to note-finish + small read buffer instead.
+const MOBILE_READY_AT: Partial<Record<Scene["id"], number>> = {
+  club: 4.0, // note ~11 words → done at 3.6s; was 6 (included arrow draw)
+  riff: 4.0, // note ~11 words → done at 3.6s; was 7
+  write: 12.5, // lock badge stamps at 11.5s; was 13
+  reveal: 7.0, // note starts at 5.5s + 7 words; was 7.5
+  read: 7.0, // last comment card at 6.3s; was 7.5
+};
+
+const MOBILE_SCENES: Scene[] = SCENES.map((s) =>
+  MOBILE_READY_AT[s.id] != null ? { ...s, readyAt: MOBILE_READY_AT[s.id]! } : s
+);
+
 // ─── Shared brush highlight (same as desktop)
 
 const BRUSH_FILTERS: Record<string, string> = {
@@ -1304,7 +1318,7 @@ const MOBILE_SCENE_COMPONENTS: Record<
 
 export default function MobileWelcomeTutorial() {
   const router = useRouter();
-  const duration = SCENES[SCENES.length - 1].end;
+  const duration = MOBILE_SCENES[MOBILE_SCENES.length - 1].end;
 
   const handleSkip = async () => {
     try {
@@ -1323,15 +1337,15 @@ export default function MobileWelcomeTutorial() {
   return (
     <div style={{ width: "100vw", height: "100vh", overflow: "hidden" }}>
       <TutorialStage
-        scenes={SCENES}
+        scenes={MOBILE_SCENES}
         duration={duration}
         onSkip={handleSkip}
         canvasW={CANVAS_W}
         canvasH={CANVAS_H}
       >
         {(time, { isManual }) => {
-          let activeScene = SCENES[0];
-          for (const s of SCENES) {
+          let activeScene = MOBILE_SCENES[0];
+          for (const s of MOBILE_SCENES) {
             if (time < s.end) {
               activeScene = s;
               break;
