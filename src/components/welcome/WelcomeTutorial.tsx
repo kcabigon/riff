@@ -1047,7 +1047,7 @@ function CommentCard({
         background: "#FFFEF8",
         border: "2px solid #000",
         boxShadow: `5px 5px 0 0 ${comment.color}`,
-        padding: "10px 12px 12px",
+        padding: "8px 12px 12px",
         display: "flex",
         gap: 10,
         alignItems: "flex-start",
@@ -1178,8 +1178,18 @@ export default function WelcomeTutorial() {
   const router = useRouter();
   const duration = SCENES[SCENES.length - 1].end;
 
-  const handleSkip = () => {
-    router.back();
+  const handleSkip = async () => {
+    try {
+      const res = await fetch("/api/users/me");
+      const { user } = await res.json();
+      if (user?.lastActiveClubId) {
+        router.push(`/clubs/${user.lastActiveClubId}`);
+      } else {
+        router.push("/");
+      }
+    } catch {
+      router.push("/");
+    }
   };
 
   return (

@@ -24,21 +24,6 @@ export function rangeProgress(
   return ease ? ease(u) : u;
 }
 
-export function sceneEnvelope(
-  t: number,
-  start: number,
-  end: number,
-  entry = 0.5,
-  exit = 0.5
-): number {
-  if (t < start || t > end) return 0;
-  const local = t - start;
-  const dur = end - start;
-  if (local < entry) return Ease.out(local / entry);
-  if (local > dur - exit) return 1 - Ease.out((local - (dur - exit)) / exit);
-  return 1;
-}
-
 export function sceneRise(time: number, start: number, entry = 0.5): number {
   if (time < start) return 0;
   const u = (time - start) / entry;

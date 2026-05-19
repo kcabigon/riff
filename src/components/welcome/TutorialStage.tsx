@@ -49,7 +49,6 @@ export default function TutorialStage({
   children,
 }: TutorialStageProps) {
   const [time, setTime] = useState(0);
-  const [skipped, setSkipped] = useState(false);
   const [sceneIdx, setSceneIdx] = useState(0);
   const [scale, setScale] = useState(1);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -75,7 +74,6 @@ export default function TutorialStage({
   }, []);
 
   useEffect(() => {
-    if (skipped) return;
     const step = (ts: number) => {
       if (lastTsRef.current == null) lastTsRef.current = ts;
       const dt = (ts - lastTsRef.current) / 1000;
@@ -93,17 +91,11 @@ export default function TutorialStage({
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       lastTsRef.current = null;
     };
-  }, [skipped, sceneIdx, scenes]);
+  }, [sceneIdx, scenes]);
 
   const handleNext = useCallback(() => {
     if (sceneIdx >= scenes.length - 1) {
-      setSkipped(true);
       onSkip?.();
-      setTimeout(() => {
-        setSkipped(false);
-        setSceneIdx(0);
-        setTime(0);
-      }, 2500);
       return;
     }
     const nextIdx = sceneIdx + 1;
@@ -129,13 +121,7 @@ export default function TutorialStage({
   }, [sceneIdx, scenes]);
 
   const handleSkip = useCallback(() => {
-    setSkipped(true);
     onSkip?.();
-    setTimeout(() => {
-      setSkipped(false);
-      setTime(0);
-      setSceneIdx(0);
-    }, 2500);
   }, [onSkip]);
 
   const ctxValue = useMemo(
@@ -184,25 +170,18 @@ export default function TutorialStage({
         }}
       >
         <TutorialCtx.Provider value={ctxValue}>
-          {!skipped &&
-            children(time, {
-              isManual: true,
-              sceneIdx,
-              isLast,
-            })}
+          {children(time, {
+            isManual: true,
+            sceneIdx,
+            isLast,
+          })}
         </TutorialCtx.Provider>
 
-        {skipped && <SkippedFrame />}
-
-        {!skipped && (
-          <>
-            <SkipButton onClick={handleSkip} />
-            <BackLink onClick={handleBack} disabled={isFirst} />
-            <ProgressChips scenes={scenes} activeIdx={sceneIdx} time={time} />
-            {!currentScene?.autoAdvance && (
-              <NextCTA onClick={handleNext} label={nextLabel} ready={ready} />
-            )}
-          </>
+        <SkipButton onClick={handleSkip} />
+        <BackLink onClick={handleBack} disabled={isFirst} />
+        <ProgressChips scenes={scenes} activeIdx={sceneIdx} time={time} />
+        {!currentScene?.autoAdvance && (
+          <NextCTA onClick={handleNext} label={nextLabel} ready={ready} />
         )}
       </div>
     </div>
@@ -258,9 +237,9 @@ function BackLink({
         left: 36,
         background: "transparent",
         border: "none",
-        padding: "6px 2px",
+        padding: "8px 2px",
         fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-        fontSize: 14,
+        fontSize: 16,
         fontWeight: 500,
         letterSpacing: "0.02em",
         color: disabled ? "#CCCCCC" : "#000",
@@ -322,9 +301,9 @@ function NextCTA({
             ? "6px 6px 0 0 #000"
             : "6px 6px 0 0 #00FF66",
         transform: press ? "translate(4px, 4px)" : "translate(0, 0)",
-        padding: "10px 22px",
+        padding: "8px 24px",
         fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-        fontSize: 15,
+        fontSize: 16,
         fontWeight: 500,
         letterSpacing: "0.02em",
         color: "#000",
@@ -419,59 +398,4 @@ function ProgressChips({
         })}
     </div>
   );
-}
-
-function SkippedFrame() {
-  return (
-    <div
-      style={{
-        position: "absolute",
-        inset: 0,
-        background: "#FFFEF8",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexDirection: "column",
-        gap: 16,
-        animation: "riff-tutorial-fade-in 0.4s ease",
-      }}
-    >
-      <div
-        style={{
-          fontFamily: "var(--font-dm-serif-text), Georgia, serif",
-          fontSize: 28,
-          color: "rgba(0,0,0,0.4)",
-        }}
-      >
-        Loading your club…
-      </div>
-      <div
-        style={{
-          width: 40,
-          height: 40,
-          border: "3px solid #000",
-          borderTopColor: "transparent",
-          borderRadius: 999,
-          animation: "riff-tutorial-spin 0.8s linear infinite",
-        }}
-      />
-    </div>
-  );
-}
-
-// Inject keyframes once (client-side only)
-if (typeof document !== "undefined") {
-  if (!document.getElementById("riff-tutorial-keyframes")) {
-    const s = document.createElement("style");
-    s.id = "riff-tutorial-keyframes";
-    s.textContent = `
-      @keyframes riff-tutorial-fade-in { from { opacity: 0; } to { opacity: 1; } }
-      @keyframes riff-tutorial-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-      @keyframes riff-tutorial-rise-in {
-        from { opacity: 0; transform: translateY(20px); }
-        to   { opacity: 1; transform: translateY(0); }
-      }
-    `;
-    document.head.appendChild(s);
-  }
 }
