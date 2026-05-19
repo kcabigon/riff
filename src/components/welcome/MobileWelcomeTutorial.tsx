@@ -223,7 +223,7 @@ function MobileSceneLayout({
         style={{
           position: "absolute",
           left: 24,
-          top: 40,
+          top: 68,
           maxWidth: CANVAS_W - 48,
           opacity: env,
           transform: `translateY(${(1 - env) * 10}px)`,
@@ -501,7 +501,7 @@ function MobileWriteScene({
         style={{
           position: "absolute",
           left: 24,
-          top: 40,
+          top: 68,
           maxWidth: CANVAS_W - 48,
           opacity: env,
           transform: `translateY(${(1 - env) * 10}px)`,
@@ -835,7 +835,7 @@ function MobileRevealScene({
         style={{
           position: "absolute",
           left: 24,
-          top: 40,
+          top: 68,
           maxWidth: CANVAS_W - 48,
           opacity: env,
           transform: `translateY(${(1 - env) * 10}px)`,
@@ -1083,7 +1083,7 @@ function MobileReadScene({
         style={{
           position: "absolute",
           left: 24,
-          top: 40,
+          top: 68,
           maxWidth: CANVAS_W - 48,
           opacity: env,
           transform: `translateY(${(1 - env) * 10}px)`,

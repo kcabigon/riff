@@ -117,6 +117,7 @@ export default function TutorialStage({
   const handleBack = useCallback(() => {
     if (sceneIdx <= 0) return;
     const prevIdx = sceneIdx - 1;
+    autoAdvancedSceneRef.current = -1;
     setSceneIdx(prevIdx);
     setTime(scenes[prevIdx].start);
   }, [sceneIdx, scenes]);
@@ -130,6 +131,7 @@ export default function TutorialStage({
     [time, duration, scenes]
   );
 
+  const compact = canvasW < 500;
   const isFirst = sceneIdx === 0;
   const isLast = sceneIdx >= scenes.length - 1;
   const nextLabel = isLast ? "Let's riff" : "Next";
@@ -178,18 +180,34 @@ export default function TutorialStage({
           })}
         </TutorialCtx.Provider>
 
-        <SkipButton onClick={handleSkip} />
-        <BackLink onClick={handleBack} disabled={isFirst} />
-        <ProgressChips scenes={scenes} activeIdx={sceneIdx} time={time} />
+        <SkipButton onClick={handleSkip} compact={compact} />
+        <BackLink onClick={handleBack} disabled={isFirst} compact={compact} />
+        <ProgressChips
+          scenes={scenes}
+          activeIdx={sceneIdx}
+          time={time}
+          compact={compact}
+        />
         {!currentScene?.autoAdvance && (
-          <NextCTA onClick={handleNext} label={nextLabel} ready={ready} />
+          <NextCTA
+            onClick={handleNext}
+            label={nextLabel}
+            ready={ready}
+            compact={compact}
+          />
         )}
       </div>
     </div>
   );
 }
 
-function SkipButton({ onClick }: { onClick: () => void }) {
+function SkipButton({
+  onClick,
+  compact,
+}: {
+  onClick: () => void;
+  compact?: boolean;
+}) {
   const [hover, setHover] = useState(false);
   return (
     <button
@@ -198,8 +216,8 @@ function SkipButton({ onClick }: { onClick: () => void }) {
       onMouseLeave={() => setHover(false)}
       style={{
         position: "absolute",
-        top: 28,
-        right: 36,
+        top: compact ? 20 : 28,
+        right: compact ? 20 : 36,
         background: "transparent",
         border: "none",
         padding: "4px 2px",
@@ -221,9 +239,11 @@ function SkipButton({ onClick }: { onClick: () => void }) {
 function BackLink({
   onClick,
   disabled,
+  compact,
 }: {
   onClick: () => void;
   disabled: boolean;
+  compact?: boolean;
 }) {
   const [hover, setHover] = useState(false);
   return (
@@ -234,27 +254,27 @@ function BackLink({
       onMouseLeave={() => setHover(false)}
       style={{
         position: "absolute",
-        bottom: 38,
-        left: 36,
+        bottom: compact ? 22 : 38,
+        left: compact ? 20 : 36,
         background: "transparent",
         border: "none",
-        padding: "8px 2px",
+        padding: compact ? "6px 2px" : "8px 2px",
         fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-        fontSize: 16,
+        fontSize: compact ? 13 : 16,
         fontWeight: 500,
         letterSpacing: "0.02em",
         color: disabled ? "#CCCCCC" : "#000",
         cursor: disabled ? "default" : "pointer",
         display: "flex",
         alignItems: "center",
-        gap: 8,
+        gap: compact ? 6 : 8,
         borderBottom: `2px solid ${hover ? "#000" : "transparent"}`,
         transform: hover ? "translateX(-2px)" : "translateX(0)",
         transition: "transform 0.15s, border-color 0.15s",
         zIndex: 10,
       }}
     >
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
         <path
           d="M12 7H2M5 3L1.5 7L5 11"
           stroke="currentColor"
@@ -272,14 +292,17 @@ function NextCTA({
   onClick,
   label,
   ready,
+  compact,
 }: {
   onClick: () => void;
   label: string;
   ready: boolean;
+  compact?: boolean;
 }) {
   const [hover, setHover] = useState(false);
   const [press, setPress] = useState(false);
   const active = hover || ready;
+  const shadow = compact ? "4px 4px 0 0" : "6px 6px 0 0";
   return (
     <button
       onClick={onClick}
@@ -292,19 +315,21 @@ function NextCTA({
       onPointerUp={() => setPress(false)}
       style={{
         position: "absolute",
-        bottom: 32,
-        right: 36,
+        bottom: compact ? 18 : 32,
+        right: compact ? 20 : 36,
         background: active ? "#00FF66" : "#FFF",
         border: "2px solid #000",
         boxShadow: press
           ? "2px 2px 0 0 #000"
           : active
-            ? "6px 6px 0 0 #000"
-            : "6px 6px 0 0 #00FF66",
-        transform: press ? "translate(4px, 4px)" : "translate(0, 0)",
-        padding: "8px 24px",
+            ? `${shadow} #000`
+            : `${shadow} #00FF66`,
+        transform: press
+          ? `translate(${compact ? 3 : 4}px, ${compact ? 3 : 4}px)`
+          : "translate(0, 0)",
+        padding: compact ? "7px 16px" : "8px 24px",
         fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-        fontSize: 16,
+        fontSize: compact ? 13 : 16,
         fontWeight: 500,
         letterSpacing: "0.02em",
         color: "#000",
@@ -313,7 +338,7 @@ function NextCTA({
           "box-shadow 0.35s ease-out, background 0.35s ease-out, transform 0.06s",
         display: "flex",
         alignItems: "center",
-        gap: 10,
+        gap: compact ? 8 : 10,
         zIndex: 10,
       }}
     >
@@ -335,20 +360,22 @@ function ProgressChips({
   scenes,
   activeIdx,
   time,
+  compact,
 }: {
   scenes: Scene[];
   activeIdx: number;
   time: number;
+  compact?: boolean;
 }) {
   return (
     <div
       style={{
         position: "absolute",
-        bottom: 44,
+        bottom: compact ? 26 : 44,
         left: "50%",
         transform: "translateX(-50%)",
         display: "flex",
-        gap: 10,
+        gap: compact ? 8 : 10,
         alignItems: "center",
         pointerEvents: "none",
         zIndex: 10,
@@ -360,6 +387,23 @@ function ProgressChips({
           const globalIdx = scenes.indexOf(sc);
           const isActive = globalIdx === activeIdx;
           const isPast = globalIdx < activeIdx;
+
+          if (compact) {
+            return (
+              <div
+                key={i}
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  background: isActive || isPast ? "#000" : "#E6E6E6",
+                  transition: "background 0.3s",
+                  flexShrink: 0,
+                }}
+              />
+            );
+          }
+
           const localProgress = isActive
             ? Math.max(
                 0,
