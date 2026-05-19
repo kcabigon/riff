@@ -11,6 +11,7 @@ const protectedPrefixes = [
   "/onboarding",
   "/auth/post-login",
   "/no-club",
+  "/admin",
 ];
 
 function isProtectedRoute(pathname: string): boolean {
