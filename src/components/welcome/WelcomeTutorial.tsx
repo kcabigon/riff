@@ -765,11 +765,11 @@ function RevealScene({
   const sceneT = time - scene.start;
 
   const COVER_IN = 0.4,
-    COVER_OUT = 3.8,
-    COVER_OUT_DUR = 0.9;
-  const PAGE_IN = 4.0,
-    PAGE_IN_DUR = 0.9;
-  const BURST_START = PAGE_IN + PAGE_IN_DUR - 0.2;
+    COVER_OUT = 3.5,
+    COVER_OUT_DUR = 0.8;
+  const PAGE_IN = 3.6,
+    PAGE_IN_DUR = 0.8;
+  const BURST_START = 1.8;
 
   if (sceneT >= BURST_START && !hasFiredConfetti.current) {
     hasFiredConfetti.current = true;
@@ -816,17 +816,17 @@ function RevealScene({
     Ease.inOut
   );
   const coverOpacity = coverIn * (1 - coverOut);
-  const coverScale = 0.85 + 0.15 * coverIn + coverOut * 0.8;
-  const coverRot = -2 + coverOut * 1;
+  const coverScale = 0.85 + 0.15 * coverIn + coverOut * 0.08;
+  const coverRot = -2 + coverOut * 0.5;
 
   const pageIn = rangeProgress(
     sceneT,
     PAGE_IN,
     PAGE_IN + PAGE_IN_DUR,
-    Ease.outBack
+    Ease.out
   );
-  const pageTy = (1 - pageIn) * 100;
-  const pageScale = 0.88 + 0.12 * pageIn;
+  const pageTy = (1 - pageIn) * 18;
+  const pageScale = 0.97 + 0.03 * pageIn;
   const pageRot = 4 - 2.6 * pageIn;
 
   const polaroidBase: React.CSSProperties = {
