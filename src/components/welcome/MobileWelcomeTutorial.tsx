@@ -17,19 +17,34 @@ import {
 const CANVAS_W = 390;
 const CANVAS_H = 780;
 
-// Desktop readyAt values include arrow animation time (~1.8s) that doesn't
-// exist on mobile. Override to note-finish + small read buffer instead.
-const MOBILE_READY_AT: Partial<Record<Scene["id"], number>> = {
-  club: 4.0, // note ~11 words → done at 3.6s; was 6 (included arrow draw)
-  riff: 4.0, // note ~11 words → done at 3.6s; was 7
-  write: 12.5, // lock badge stamps at 11.5s; was 13
-  reveal: 7.0, // note starts at 5.5s + 7 words; was 7.5
-  read: 7.0, // last comment card at 6.3s; was 7.5
-};
+// Mobile scenes split the desktop "write" scene into two swipeable scenes
+// mirroring the two phases on desktop:
+//   write-a (25–33s): riff page still showing + "title/word count visible"
+//   write   (33–39s): editor slides in + type transition + lock badge
+const writeScene = SCENES.find((s) => s.id === "write")!;
 
-const MOBILE_SCENES: Scene[] = SCENES.map((s) =>
-  MOBILE_READY_AT[s.id] != null ? { ...s, readyAt: MOBILE_READY_AT[s.id]! } : s
-);
+const MOBILE_SCENES: Scene[] = [
+  SCENES[0], // intro: 0–6, autoAdvance
+  { ...SCENES[1], readyAt: 4.0 }, // club: 6–16
+  { ...SCENES[2], readyAt: 4.0 }, // riff: 16–25
+  {
+    // write-a: riff page + "title and word count are visible" (scene 3.0)
+    ...writeScene,
+    id: "write-a" as const,
+    start: 25,
+    end: 33,
+    readyAt: 4.5,
+  },
+  {
+    // write-b: editor + type transition → "private." + lock badge (scene 3.5)
+    ...writeScene,
+    start: 33,
+    end: 39,
+    readyAt: 5.0,
+  },
+  { ...SCENES[4], readyAt: 7.0 }, // reveal: 39–49
+  { ...SCENES[5], readyAt: 7.0 }, // read: 49–59
+];
 
 // ─── Shared brush highlight (same as desktop)
 
@@ -415,11 +430,37 @@ function MobileRiffScene({
   );
 }
 
-// Write scene keeps the type-transition animation (parallel. → private.)
+// Scene 3.0 — riff page stays visible, "title and word count are visible"
+// Mirrors desktop write Phase A before the riff polaroid flies off at t=8s
+
+function MobileWritePhaseAScene({
+  time,
+  scene,
+  isManual,
+}: {
+  time: number;
+  scene: Scene;
+  isManual: boolean;
+}) {
+  void isManual;
+  return (
+    <MobileSceneLayout
+      time={time}
+      scene={scene}
+      screenshotSrc="/tutorial/screens/riff-page.png"
+      screenshotWidth={2272}
+      screenshotHeight={1440}
+      screenshotRotate={1.0}
+      note="your title and word count are visible to friends"
+    />
+  );
+}
+
+// Scene 3.5 — editor slides in, type transition parallel. → private., lock badge:
 const WRITE_TYPE = {
   word1: "parallel.",
   word2: "private.",
-  reverseOffset: 6.5,
+  reverseOffset: 1.5,
   charDur: 0.08,
 };
 
@@ -480,8 +521,8 @@ function MobileWriteScene({
     Ease.outBack
   );
 
-  // LockBadge timing
-  const lockSettleAt = scene.start + 11.5;
+  // LockBadge timing — compressed for mobile write-b (6s scene)
+  const lockSettleAt = scene.start + 3.5;
   const lockT = time - lockSettleAt;
   const stampIn = lockT >= 0 ? rangeProgress(lockT, 0, 0.4, Ease.outBack) : 0;
   const wobbleDecay =
@@ -705,8 +746,8 @@ function MobileWriteScene({
           (word, wi) => {
             const wIn = rangeProgress(
               time,
-              scene.start + 2.2 + wi * 0.14,
-              scene.start + 2.2 + wi * 0.14 + 0.18,
+              scene.start + 3.2 + wi * 0.14,
+              scene.start + 3.2 + wi * 0.14 + 0.18,
               Ease.out
             );
             return (
@@ -1317,6 +1358,7 @@ const MOBILE_SCENE_COMPONENTS: Record<
   intro: MobileIntroScene,
   club: MobileClubScene,
   riff: MobileRiffScene,
+  "write-a": MobileWritePhaseAScene,
   write: MobileWriteScene,
   reveal: MobileRevealScene,
   read: MobileReadScene,
