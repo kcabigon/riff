@@ -2,10 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import TutorialStage from "./TutorialStage";
 import NoiseBackground from "@/components/NoiseBackground";
+import MobileWelcomeTutorial from "./MobileWelcomeTutorial";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 import {
   Annotation,
   Ease,
@@ -1176,6 +1178,23 @@ const SCENE_COMPONENTS: Record<
 
 export default function WelcomeTutorial() {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+  const isMobile = useIsMobile();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div style={{ width: "100vw", height: "100vh", background: "#0a0a0a" }} />
+    );
+  }
+
+  if (isMobile) {
+    return <MobileWelcomeTutorial />;
+  }
+
   const duration = SCENES[SCENES.length - 1].end;
 
   const handleSkip = async () => {

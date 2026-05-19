@@ -9,9 +9,6 @@ import React, {
 } from "react";
 import { Scene } from "./tutorial-utils";
 
-const CANVAS_W = 1280;
-const CANVAS_H = 800;
-
 export interface TutorialCtxValue {
   time: number;
   duration: number;
@@ -32,6 +29,8 @@ interface TutorialStageProps {
   scenes: Scene[];
   duration: number;
   onSkip?: () => void;
+  canvasW?: number;
+  canvasH?: number;
   children: (
     time: number,
     ctx: {
@@ -46,6 +45,8 @@ export default function TutorialStage({
   scenes,
   duration,
   onSkip,
+  canvasW = 1280,
+  canvasH = 800,
   children,
 }: TutorialStageProps) {
   const [time, setTime] = useState(0);
@@ -60,7 +61,7 @@ export default function TutorialStage({
     const el = stageRef.current;
     if (!el) return;
     const measure = () => {
-      const s = Math.min(el.clientWidth / CANVAS_W, el.clientHeight / CANVAS_H);
+      const s = Math.min(el.clientWidth / canvasW, el.clientHeight / canvasH);
       setScale(Math.max(0.05, s));
     };
     measure();
@@ -71,7 +72,7 @@ export default function TutorialStage({
       ro.disconnect();
       window.removeEventListener("resize", measure);
     };
-  }, []);
+  }, [canvasW, canvasH]);
 
   useEffect(() => {
     const step = (ts: number) => {
@@ -159,8 +160,8 @@ export default function TutorialStage({
     >
       <div
         style={{
-          width: CANVAS_W,
-          height: CANVAS_H,
+          width: canvasW,
+          height: canvasH,
           background: "#FFFEF8",
           transform: `scale(${scale})`,
           transformOrigin: "center",
