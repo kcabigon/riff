@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
 import React from "react";
+import Image from "next/image";
 import TutorialStage from "./TutorialStage";
 import NoiseBackground from "@/components/NoiseBackground";
 import {
@@ -580,10 +581,12 @@ function ClubScene({
           background: "#000",
         }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Image
           src="/tutorial/screens/club-page.png"
           alt="Riff club page"
+          width={720}
+          height={483}
+          priority
           style={{
             position: "absolute",
             width: "108%",
@@ -647,10 +650,12 @@ function RiffPolaroid({ time, isManual }: { time: number; isManual: boolean }) {
         zIndex: 2,
       }}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      <Image
         src="/tutorial/screens/riff-page.png"
         alt="Riff active riff page"
+        width={720}
+        height={576}
+        priority
         style={{
           position: "absolute",
           width: "108%",
@@ -701,10 +706,12 @@ function WriteScene(props: { time: number; scene: Scene; isManual: boolean }) {
             zIndex: 1,
           }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src="/tutorial/screens/write-page.png"
             alt="Riff draft editor"
+            width={610}
+            height={670}
+            priority
             style={{
               position: "absolute",
               width: "108%",
@@ -932,16 +939,14 @@ function RevealScene({
             zIndex: 2,
           }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src="/tutorial/screens/reveal-cover.png"
             alt="Riff volume cover"
+            fill
+            priority
             style={{
-              width: "100%",
-              height: "100%",
               objectFit: "cover",
               objectPosition: "center",
-              display: "block",
             }}
           />
         </div>
@@ -959,10 +964,12 @@ function RevealScene({
             zIndex: 1,
           }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src="/tutorial/screens/reveal-page.png"
             alt="Riff post-reveal page"
+            width={720}
+            height={456}
+            priority
             style={{
               position: "absolute",
               width: "108%",
@@ -1122,10 +1129,12 @@ function ReadScene({
           background: "#FFFEF8",
         }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Image
           src="/tutorial/screens/read-page.png"
           alt="Riff reading page"
+          width={760}
+          height={628}
+          priority
           style={{
             position: "absolute",
             width: "108%",
