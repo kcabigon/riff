@@ -89,14 +89,22 @@ function BrushHighlight({
 // ─── Intro scene (portrait canvas — 390×780 center)
 
 const MOBILE_INTRO_COPIES = Array.from({ length: 20 }, (_, i) => {
-  const s1 = ((i * 9301 + 49297) % 233280) / 233280;
-  const s2 = ((i * 73 + 19) % 100) / 100;
+  const angle = (i / 20) * 2 * Math.PI + 0.3;
   const s3 = ((i * 6271 + 2499) % 4789) / 4789;
   const s4 = ((i * 1181 + 5003) % 7919) / 7919;
   const s5 = ((i * 3571 + 1009) % 1597) / 1597;
+  const cosA = Math.cos(angle);
+  const sinA = Math.sin(angle);
+  // Distance from center (195, 390) to canvas edge in direction (cosA, sinA)
+  let t = Infinity;
+  if (cosA > 0.0001) t = Math.min(t, (390 - 195) / cosA);
+  if (cosA < -0.0001) t = Math.min(t, -195 / cosA);
+  if (sinA > 0.0001) t = Math.min(t, (780 - 390) / sinA);
+  if (sinA < -0.0001) t = Math.min(t, -390 / sinA);
+  const r = t * (0.7 + s3 * 0.3);
   return {
-    x: 30 + s1 * 330,
-    y: 40 + s2 * 700,
+    x: 195 + cosA * r,
+    y: 390 + sinA * r,
     rot: (s3 - 0.5) * 56,
     size: 36 + s4 * 56,
     delay: s5 * 0.18,
@@ -321,7 +329,7 @@ function MobileSceneLayout({
         style={{
           position: "absolute",
           left: 24,
-          top: screenY + maxH + 24,
+          top: screenY + dispH + 24,
           maxWidth: CANVAS_W - 48,
           fontFamily: "var(--font-over-the-rainbow), cursive",
           fontSize: 26,
@@ -399,8 +407,8 @@ function MobileRiffScene({
       time={time}
       scene={scene}
       screenshotSrc="/tutorial/screens/riff-page.png"
-      screenshotWidth={720}
-      screenshotHeight={576}
+      screenshotWidth={2272}
+      screenshotHeight={1440}
       screenshotRotate={-1.4}
       note="this is the riff page, everyone writes before time runs out"
     />
@@ -485,10 +493,10 @@ function MobileWriteScene({
   const ring2 = lockT >= 0 ? rangeProgress(lockT, 0.4, 1.15, Ease.out) : 0;
   const accentColor = scene.highlightColor;
 
-  // Screenshot dimensions
+  // Screenshot dimensions — actual write-page.png is 2020×1670 (landscape)
   const maxW = 358;
   const maxH = 290;
-  const ratio = 610 / 670;
+  const ratio = 2020 / 1670;
   let dispW = maxW;
   let dispH = dispW / ratio;
   if (dispH > maxH) {
@@ -577,8 +585,8 @@ function MobileWriteScene({
           <Image
             src="/tutorial/screens/write-page.png"
             alt="Riff draft editor"
-            width={610}
-            height={670}
+            width={2020}
+            height={1670}
             priority
             style={{
               width: "100%",
@@ -681,7 +689,7 @@ function MobileWriteScene({
         style={{
           position: "absolute",
           left: 24,
-          top: screenY + maxH + 24,
+          top: screenY + dispH + 24,
           maxWidth: CANVAS_W - 48,
           fontFamily: "var(--font-over-the-rainbow), cursive",
           fontSize: 26,
@@ -1262,7 +1270,7 @@ function MobileReadScene({
         style={{
           position: "absolute",
           left: 24,
-          top: screenY + maxH + 24,
+          top: screenY + dispH + 24,
           maxWidth: CANVAS_W - 48,
           fontFamily: "var(--font-over-the-rainbow), cursive",
           fontSize: 26,
