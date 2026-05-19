@@ -3,14 +3,24 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { signOut } from "next-auth/react";
+import Avatar from "@/components/shared/Avatar";
+import Dropdown, { DropdownItem } from "@/components/shared/Dropdown";
+import { AvatarUser } from "@/types";
 
 interface LandingNavBarProps {
   sticky?: boolean;
+  user?: AvatarUser | null;
 }
 
-export default function LandingNavBar({ sticky = false }: LandingNavBarProps) {
+export default function LandingNavBar({
+  sticky = false,
+  user = null,
+}: LandingNavBarProps) {
   const router = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const closeDrawer = () => setDrawerOpen(false);
 
   return (
     <>
@@ -63,7 +73,7 @@ export default function LandingNavBar({ sticky = false }: LandingNavBarProps) {
             </span>
           </a>
 
-          {/* Right: About + Sign In (desktop only) */}
+          {/* Right: About + Sign In / Avatar (desktop only) */}
           <div
             className="lnav-desktop"
             style={{
@@ -84,59 +94,107 @@ export default function LandingNavBar({ sticky = false }: LandingNavBarProps) {
             >
               About
             </a>
-            <button
-              onClick={() => router.push("/login")}
-              style={{
-                backgroundColor: "#000000",
-                border: "1px solid #FFFFFF",
-                padding: "12px 24px",
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 400,
-                color: "#FFFFFF",
-                cursor: "pointer",
-                transition: "all 0.2s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#FFFFFF";
-                e.currentTarget.style.color = "#000000";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#000000";
-                e.currentTarget.style.color = "#FFFFFF";
-              }}
-            >
-              Sign In
-            </button>
+
+            {user ? (
+              <Dropdown
+                trigger={
+                  <Avatar
+                    user={user}
+                    size={40}
+                    borderColor="#FFFFFF"
+                    style={{ cursor: "pointer" }}
+                  />
+                }
+                items={[
+                  {
+                    type: "action",
+                    label: "Club",
+                    onClick: () => router.push("/auth/post-login"),
+                  },
+                  {
+                    type: "action",
+                    label: "Profile",
+                    onClick: () => router.push(`/profile/${user.id}`),
+                  },
+                  {
+                    type: "action",
+                    label: "Settings",
+                    onClick: () => router.push("/settings"),
+                  },
+                  {
+                    type: "action",
+                    label: "Log out",
+                    onClick: () => signOut({ callbackUrl: "/" }),
+                  },
+                ]}
+                align="right"
+                minWidth={160}
+              />
+            ) : (
+              <button
+                onClick={() => router.push("/login")}
+                style={{
+                  backgroundColor: "#000000",
+                  border: "1px solid #FFFFFF",
+                  padding: "12px 24px",
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 400,
+                  color: "#FFFFFF",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#FFFFFF";
+                  e.currentTarget.style.color = "#000000";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "#000000";
+                  e.currentTarget.style.color = "#FFFFFF";
+                }}
+              >
+                Sign In
+              </button>
+            )}
           </div>
 
-          {/* Mobile: hamburger */}
-          <button
-            className="lnav-mobile"
-            onClick={() => setDrawerOpen(true)}
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: 0,
-              display: "none",
-            }}
-            aria-label="Open menu"
-          >
-            <Image
-              src="/icons/mobile_menu.svg"
-              alt="Menu"
-              width={32}
-              height={32}
-            />
-          </button>
+          {/* Mobile: avatar (logged in) or hamburger (logged out) */}
+          <div className="lnav-mobile" style={{ display: "none" }}>
+            {user ? (
+              <Avatar
+                user={user}
+                size={40}
+                borderColor="#FFFFFF"
+                style={{ cursor: "pointer" }}
+                onClick={() => setDrawerOpen(true)}
+              />
+            ) : (
+              <button
+                onClick={() => setDrawerOpen(true)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: 0,
+                }}
+                aria-label="Open menu"
+              >
+                <Image
+                  src="/icons/mobile_menu.svg"
+                  alt="Menu"
+                  width={32}
+                  height={32}
+                />
+              </button>
+            )}
+          </div>
         </div>
       </nav>
 
       {/* Mobile Drawer Overlay */}
       {drawerOpen && (
         <div
-          onClick={() => setDrawerOpen(false)}
+          onClick={closeDrawer}
           style={{
             position: "fixed",
             inset: 0,
@@ -165,7 +223,7 @@ export default function LandingNavBar({ sticky = false }: LandingNavBarProps) {
         }}
       >
         <button
-          onClick={() => setDrawerOpen(false)}
+          onClick={closeDrawer}
           style={{
             alignSelf: "flex-end",
             background: "none",
@@ -181,38 +239,73 @@ export default function LandingNavBar({ sticky = false }: LandingNavBarProps) {
           ✕
         </button>
 
-        <button
-          onClick={() => {
-            setDrawerOpen(false);
-            router.push("/login");
-          }}
-          style={{
-            backgroundColor: "#000000",
-            border: "1px solid #FFFFFF",
-            padding: "12px 24px",
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
-            fontWeight: 400,
-            color: "#FFFFFF",
-            cursor: "pointer",
-          }}
-        >
-          Sign In
-        </button>
-
-        <a
-          href="/about"
-          onClick={() => setDrawerOpen(false)}
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
-            fontWeight: 300,
-            color: "#FFFFFF",
-            textDecoration: "none",
-          }}
-        >
-          About
-        </a>
+        {user ? (
+          <>
+            <button
+              onClick={() => {
+                closeDrawer();
+                router.push("/auth/post-login");
+              }}
+              style={drawerLinkStyle}
+            >
+              Club
+            </button>
+            <button
+              onClick={() => {
+                closeDrawer();
+                router.push(`/profile/${user.id}`);
+              }}
+              style={drawerLinkStyle}
+            >
+              Profile
+            </button>
+            <button
+              onClick={() => {
+                closeDrawer();
+                router.push("/settings");
+              }}
+              style={drawerLinkStyle}
+            >
+              Settings
+            </button>
+            <a href="/about" onClick={closeDrawer} style={drawerAnchorStyle}>
+              About
+            </a>
+            <button
+              onClick={() => {
+                closeDrawer();
+                signOut({ callbackUrl: "/" });
+              }}
+              style={{ ...drawerLinkStyle, color: "#808080" }}
+            >
+              Log out
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={() => {
+                closeDrawer();
+                router.push("/login");
+              }}
+              style={{
+                backgroundColor: "#000000",
+                border: "1px solid #FFFFFF",
+                padding: "12px 24px",
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "16px",
+                fontWeight: 400,
+                color: "#FFFFFF",
+                cursor: "pointer",
+              }}
+            >
+              Sign In
+            </button>
+            <a href="/about" onClick={closeDrawer} style={drawerAnchorStyle}>
+              About
+            </a>
+          </>
+        )}
       </div>
 
       <style>{`
@@ -228,3 +321,23 @@ export default function LandingNavBar({ sticky = false }: LandingNavBarProps) {
     </>
   );
 }
+
+const drawerLinkStyle: React.CSSProperties = {
+  background: "none",
+  border: "none",
+  padding: 0,
+  fontFamily: "var(--font-dm-sans)",
+  fontSize: "16px",
+  fontWeight: 300,
+  color: "#FFFFFF",
+  cursor: "pointer",
+  textAlign: "left",
+};
+
+const drawerAnchorStyle: React.CSSProperties = {
+  fontFamily: "var(--font-dm-sans)",
+  fontSize: "16px",
+  fontWeight: 300,
+  color: "#FFFFFF",
+  textDecoration: "none",
+};

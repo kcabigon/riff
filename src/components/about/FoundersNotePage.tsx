@@ -329,7 +329,7 @@ export default function FoundersNotePage() {
 
         {/* CTA */}
         <Link
-          href="/login"
+          href="/auth/post-login"
           style={{
             display: "inline-block",
             fontFamily: "var(--font-playfair), serif",
@@ -342,6 +342,33 @@ export default function FoundersNotePage() {
         >
           Let&apos;s riff!
         </Link>
+      </div>
+
+      {/* Footer */}
+      <div
+        style={{
+          borderTop: "1px solid #E6E6E6",
+          padding: "24px",
+          textAlign: "center",
+        }}
+      >
+        <p
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "12px",
+            fontWeight: 300,
+            color: "#808080",
+            margin: 0,
+          }}
+        >
+          Say hi. Product feedback. Rad ideas. Talk shit.{" "}
+          <a
+            href="mailto:jarric22@gmail.com"
+            style={{ color: "#808080", textDecoration: "underline" }}
+          >
+            Contact us
+          </a>
+        </p>
       </div>
     </div>
   );

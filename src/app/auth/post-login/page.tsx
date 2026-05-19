@@ -52,6 +52,6 @@ export default async function PostLoginPage() {
     redirect(`/clubs/${user.clubMemberships[0].clubId}`);
   }
 
-  // No clubs — edge case
-  redirect("/onboarding/create-club");
+  // No clubs — waiting on an invite
+  redirect("/no-club");
 }
