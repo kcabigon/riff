@@ -148,7 +148,7 @@ export const SCENES: Scene[] = [
     id: "reveal",
     start: 39,
     end: 49,
-    headline: ["Then —", "all at once."],
+    headline: ["Then —", "the reveal."],
     highlightColor: "#FF6B35",
     readyAt: 7.5,
     annotations: [

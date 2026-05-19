@@ -2,7 +2,7 @@ import { requireAuth } from "@/lib/auth-utils";
 import WelcomeTutorial from "@/components/welcome/WelcomeTutorial";
 
 export const metadata = {
-  title: "Welcome · Riff",
+  title: "Welcome",
 };
 
 export default async function WelcomePage() {
