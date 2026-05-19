@@ -411,7 +411,7 @@ export default function ClubPageLayout({
             <h1
               style={{
                 fontFamily: "var(--font-dm-serif-text)",
-                fontSize: "28px",
+                fontSize: "32px",
                 fontWeight: 400,
                 color: "#000000",
                 margin: 0,
@@ -439,7 +439,7 @@ export default function ClubPageLayout({
             <p
               style={{
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
+                fontSize: "16px",
                 fontWeight: 300,
                 color: "#000000",
                 margin: 0,
@@ -450,7 +450,7 @@ export default function ClubPageLayout({
             <p
               style={{
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
+                fontSize: "16px",
                 fontWeight: 300,
                 color: "#000000",
                 margin: 0,
@@ -461,7 +461,7 @@ export default function ClubPageLayout({
             <p
               style={{
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
+                fontSize: "16px",
                 fontWeight: 300,
                 color: "#000000",
                 margin: 0,
@@ -487,7 +487,7 @@ export default function ClubPageLayout({
             <p
               style={{
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: "15px",
+                fontSize: "16px",
                 fontWeight: 300,
                 color: "#000000",
                 margin: 0,
@@ -588,7 +588,7 @@ export default function ClubPageLayout({
 
             <AvatarStack
               users={club.members.map((m) => m.user)}
-              size={48}
+              size={isMobile ? 40 : 48}
               showBorder={true}
               borderColor="#000000"
               borderWidth={2}
