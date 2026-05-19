@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import CountdownTimer from "./CountdownTimer";
 import AvatarStack from "@/components/shared/AvatarStack";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 import {
   getRiffDisplayTitle,
   allPiecesSubmitted,
@@ -65,6 +66,7 @@ export default function RiffCard({
   const [isCardHovered, setIsCardHovered] = useState(false);
   const router = useRouter();
   const handleAvatarClick = useProfileNavigation();
+  const isMobile = useIsMobile();
 
   const deadlinePassed = isPastDeadline(riff.deadline ?? null);
   const piecesAllSubmitted = allPiecesSubmitted(
@@ -81,6 +83,8 @@ export default function RiffCard({
   const handleCardClick = () => {
     router.push(`/riffs/${riff.id}`);
   };
+
+  const avatarCap = isMobile ? (riff.participants.length > 5 ? 11 : 5) : 20;
 
   const existingPieceId =
     riff.pieces.find((p) => p.piece.authorId === currentUserId)?.piece.id ??
@@ -150,7 +154,7 @@ export default function RiffCard({
               fontSize: "16px",
               fontWeight: 300,
               lineHeight: "normal",
-              color: deadlinePassed ? "#FF4444" : "#808080",
+              color: deadlinePassed ? "#DC2626" : "#808080",
               margin: 0,
             }}
           >
@@ -175,6 +179,11 @@ export default function RiffCard({
             }}
           >
             <p
+              className={
+                riff.participants.length > 5
+                  ? "riff-joined-by-mobile-hidden"
+                  : ""
+              }
               style={{
                 fontFamily: "var(--font-dm-sans)",
                 fontSize: "16px",
@@ -187,7 +196,7 @@ export default function RiffCard({
               Joined by
             </p>
             <AvatarStack
-              users={riff.participants.slice(0, 5).map((p) => p.user)}
+              users={riff.participants.slice(0, avatarCap).map((p) => p.user)}
               size={32}
               onAvatarClick={handleAvatarClick}
             />
@@ -240,9 +249,9 @@ export default function RiffCard({
           <p
             style={{
               fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
+              fontSize: "16px",
               fontWeight: 700,
-              color: "#FF4444",
+              color: "#DC2626",
               margin: 0,
             }}
           >
@@ -264,6 +273,9 @@ export default function RiffCard({
           }
           .riff-card-cta button {
             width: 100% !important;
+          }
+          .riff-joined-by-mobile-hidden {
+            display: none !important;
           }
         }
       `}</style>
