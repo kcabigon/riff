@@ -816,8 +816,8 @@ function RevealScene({
     Ease.inOut
   );
   const coverOpacity = coverIn * (1 - coverOut);
-  const coverScale = 0.85 + 0.15 * coverIn + coverOut * 0.08;
-  const coverRot = -2 + coverOut * 0.5;
+  const coverScale = 0.85 + 0.15 * coverIn + coverOut * 0.8;
+  const coverRot = -2 + coverOut * 1;
 
   const pageIn = rangeProgress(
     sceneT,
