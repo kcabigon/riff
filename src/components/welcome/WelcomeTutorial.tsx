@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
 import React from "react";
 import TutorialStage from "./TutorialStage";
+import NoiseBackground from "@/components/NoiseBackground";
 import {
   Annotation,
   Ease,
@@ -171,6 +172,7 @@ function IntroScene({
 
   return (
     <>
+      <NoiseBackground fillMode="cover" />
       {INTRO_COPIES.map((copy, i) => {
         const burstT = rangeProgress(time, 1.0 + copy.delay, 2.0, Ease.outBack);
         const prog = burstT * (1 - collapseT);

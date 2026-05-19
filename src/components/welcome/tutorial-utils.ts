@@ -71,6 +71,7 @@ export interface Scene {
   highlightColor: string;
   readyAt: number;
   skipProgress?: boolean;
+  autoAdvance?: boolean;
   note?: string;
   arrowFrom?: [number, number];
   arrowTo?: [number, number];
@@ -88,6 +89,7 @@ export const SCENES: Scene[] = [
     highlightColor: "#00FF66",
     readyAt: 4.2,
     skipProgress: true,
+    autoAdvance: true,
   },
   {
     id: "club",

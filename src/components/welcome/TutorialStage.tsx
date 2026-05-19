@@ -55,6 +55,7 @@ export default function TutorialStage({
   const stageRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
   const lastTsRef = useRef<number | null>(null);
+  const autoAdvancedSceneRef = useRef<number>(-1);
 
   useEffect(() => {
     const el = stageRef.current;
@@ -109,6 +110,16 @@ export default function TutorialStage({
     setSceneIdx(nextIdx);
     setTime(scenes[nextIdx].start);
   }, [sceneIdx, scenes, onSkip]);
+
+  useEffect(() => {
+    const sc = scenes[sceneIdx];
+    if (!sc?.autoAdvance) return;
+    if (autoAdvancedSceneRef.current === sceneIdx) return;
+    if (time >= sc.end - 0.002) {
+      autoAdvancedSceneRef.current = sceneIdx;
+      handleNext();
+    }
+  }, [time, sceneIdx, scenes, handleNext]);
 
   const handleBack = useCallback(() => {
     if (sceneIdx <= 0) return;
@@ -188,7 +199,9 @@ export default function TutorialStage({
             <SkipButton onClick={handleSkip} />
             <BackLink onClick={handleBack} disabled={isFirst} />
             <ProgressChips scenes={scenes} activeIdx={sceneIdx} time={time} />
-            <NextCTA onClick={handleNext} label={nextLabel} ready={ready} />
+            {!currentScene?.autoAdvance && (
+              <NextCTA onClick={handleNext} label={nextLabel} ready={ready} />
+            )}
           </>
         )}
       </div>
