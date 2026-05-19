@@ -361,46 +361,49 @@ function ProgressChips({
         zIndex: 10,
       }}
     >
-      {scenes.map((sc, i) => {
-        const isActive = i === activeIdx;
-        const isPast = i < activeIdx;
-        const localProgress = isActive
-          ? Math.max(
-              0,
-              Math.min(
-                1,
-                (time - sc.start) / Math.max(0.001, sc.end - sc.start)
+      {scenes
+        .filter((s) => !s.skipProgress)
+        .map((sc, i) => {
+          const globalIdx = scenes.indexOf(sc);
+          const isActive = globalIdx === activeIdx;
+          const isPast = globalIdx < activeIdx;
+          const localProgress = isActive
+            ? Math.max(
+                0,
+                Math.min(
+                  1,
+                  (time - sc.start) / Math.max(0.001, sc.end - sc.start)
+                )
               )
-            )
-          : isPast
-            ? 1
-            : 0;
-        return (
-          <div
-            key={i}
-            style={{
-              width: isActive ? 32 : 20,
-              height: 2,
-              background: "#E6E6E6",
-              position: "relative",
-              overflow: "hidden",
-              transition: "width 0.3s",
-            }}
-          >
+            : isPast
+              ? 1
+              : 0;
+          return (
             <div
+              key={i}
               style={{
-                position: "absolute",
-                left: 0,
-                top: 0,
-                height: "100%",
-                width: `${localProgress * 100}%`,
-                background: "#000",
-                transition: isPast ? "width 0.3s" : "none",
+                width: isActive ? 32 : 20,
+                height: 2,
+                background: "#E6E6E6",
+                position: "relative",
+                overflow: "hidden",
+                transition: "width 0.3s",
               }}
-            />
-          </div>
-        );
-      })}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  top: 0,
+                  height: "100%",
+                  width: `${localProgress * 100}%`,
+                  background: "#000",
+                  transition: isPast ? "width 0.3s" : "none",
+                }}
+              />
+            </div>
+          );
+        })}
     </div>
   );
 }

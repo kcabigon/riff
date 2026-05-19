@@ -64,12 +64,13 @@ export interface SceneTransition {
 }
 
 export interface Scene {
-  id: "club" | "riff" | "write" | "reveal" | "read";
+  id: "intro" | "club" | "riff" | "write" | "reveal" | "read";
   start: number;
   end: number;
   headline: string[];
   highlightColor: string;
   readyAt: number;
+  skipProgress?: boolean;
   note?: string;
   arrowFrom?: [number, number];
   arrowTo?: [number, number];
@@ -80,9 +81,18 @@ export interface Scene {
 
 export const SCENES: Scene[] = [
   {
-    id: "club",
+    id: "intro",
     start: 0,
-    end: 10,
+    end: 6,
+    headline: [],
+    highlightColor: "#00FF66",
+    readyAt: 4.2,
+    skipProgress: true,
+  },
+  {
+    id: "club",
+    start: 6,
+    end: 16,
     headline: ["Welcome to", "write club."],
     highlightColor: "#00FF66",
     readyAt: 6,
@@ -93,8 +103,8 @@ export const SCENES: Scene[] = [
   },
   {
     id: "riff",
-    start: 10,
-    end: 19,
+    start: 16,
+    end: 25,
     headline: ["Every month,", "a new riff."],
     highlightColor: "#01EFFC",
     readyAt: 7,
@@ -105,8 +115,8 @@ export const SCENES: Scene[] = [
   },
   {
     id: "write",
-    start: 19,
-    end: 33,
+    start: 25,
+    end: 39,
     headline: ["Write in", "parallel."],
     highlightColor: "#EECF01",
     readyAt: 13,
@@ -134,8 +144,8 @@ export const SCENES: Scene[] = [
   },
   {
     id: "reveal",
-    start: 33,
-    end: 43,
+    start: 39,
+    end: 49,
     headline: ["Then —", "all at once."],
     highlightColor: "#FF6B35",
     readyAt: 7.5,
@@ -150,8 +160,8 @@ export const SCENES: Scene[] = [
   },
   {
     id: "read",
-    start: 43,
-    end: 53,
+    start: 49,
+    end: 59,
     headline: ["The riff", "goes on in", "the comments."],
     highlightColor: "#C01582",
     readyAt: 7.5,

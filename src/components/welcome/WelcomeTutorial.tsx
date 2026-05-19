@@ -140,6 +140,83 @@ function HeadlineC({
   );
 }
 
+// ─── Intro scene
+
+const INTRO_COPIES = Array.from({ length: 26 }, (_, i) => {
+  const s1 = ((i * 9301 + 49297) % 233280) / 233280;
+  const s2 = ((i * 73 + 19) % 100) / 100;
+  const s3 = ((i * 6271 + 2499) % 4789) / 4789;
+  const s4 = ((i * 1181 + 5003) % 7919) / 7919;
+  const s5 = ((i * 3571 + 1009) % 1597) / 1597;
+  return {
+    x: 80 + s1 * 1120,
+    y: 60 + s2 * 680,
+    rot: (s3 - 0.5) * 56,
+    size: 70 + s4 * 90,
+    delay: s5 * 0.18,
+  };
+});
+
+function IntroScene({
+  time,
+}: {
+  time: number;
+  scene: Scene;
+  isManual: boolean;
+}) {
+  const centerIn = rangeProgress(time, 0, 0.5, Ease.out);
+  const centerOut = rangeProgress(time, 4.0, 4.8, Ease.out);
+  const centerOpacity = centerIn * (1 - centerOut);
+  const collapseT = rangeProgress(time, 3.0, 3.8, Ease.inOut);
+
+  return (
+    <>
+      {INTRO_COPIES.map((copy, i) => {
+        const burstT = rangeProgress(time, 1.0 + copy.delay, 2.0, Ease.outBack);
+        const prog = burstT * (1 - collapseT);
+        const copyOpacity = Math.min(burstT, 1 - collapseT);
+        if (copyOpacity <= 0) return null;
+        return (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            key={i}
+            src="/images/riff_wordmark_black_outline.svg"
+            alt=""
+            aria-hidden
+            style={{
+              position: "absolute",
+              width: copy.size,
+              height: "auto",
+              left: 640 + (copy.x - 640) * prog,
+              top: 400 + (copy.y - 400) * prog,
+              transform: `translate(-50%, -50%) rotate(${copy.rot * prog}deg)`,
+              opacity: copyOpacity,
+              pointerEvents: "none",
+            }}
+          />
+        );
+      })}
+      {centerOpacity > 0 && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src="/images/riff_wordmark_black_outline.svg"
+          alt="Riff"
+          style={{
+            position: "absolute",
+            width: 200,
+            height: "auto",
+            left: 640,
+            top: 400,
+            transform: "translate(-50%, -50%)",
+            opacity: centerOpacity,
+            pointerEvents: "none",
+          }}
+        />
+      )}
+    </>
+  );
+}
+
 const WRITE_TYPE = {
   word1: "parallel.",
   word2: "private.",
@@ -1078,6 +1155,7 @@ const SCENE_COMPONENTS: Record<
   Scene["id"],
   React.ComponentType<{ time: number; scene: Scene; isManual: boolean }>
 > = {
+  intro: IntroScene,
   club: ClubScene,
   riff: () => null, // hoisted as RiffPolaroid
   write: WriteScene,
@@ -1129,22 +1207,24 @@ export default function WelcomeTutorial() {
               {/* Active scene */}
               <SceneComp time={time} scene={activeScene} isManual={isManual} />
 
-              {/* Wordmark — top left, present on every scene */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/images/riff_wordmark_black_outline.svg"
-                alt="Riff"
-                style={{
-                  position: "absolute",
-                  left: 28,
-                  top: 22,
-                  width: 60,
-                  height: "auto",
-                  display: "block",
-                  pointerEvents: "none",
-                  zIndex: 3,
-                }}
-              />
+              {/* Wordmark — top left, all scenes except intro */}
+              {activeScene.id !== "intro" && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src="/images/riff_wordmark_black_outline.svg"
+                  alt="Riff"
+                  style={{
+                    position: "absolute",
+                    left: 28,
+                    top: 22,
+                    width: 60,
+                    height: "auto",
+                    display: "block",
+                    pointerEvents: "none",
+                    zIndex: 3,
+                  }}
+                />
+              )}
 
               {/* Headline */}
               {activeScene.id === "write" ? (
@@ -1158,16 +1238,17 @@ export default function WelcomeTutorial() {
               )}
 
               {/* Annotations */}
-              {annotations.map((annotation, i) => (
-                <ArrowNote
-                  key={i}
-                  scene={activeScene}
-                  annotation={annotation}
-                  timing={annotationTiming(activeScene, i)}
-                  time={time}
-                  isManual={isManual}
-                />
-              ))}
+              {activeScene.id !== "intro" &&
+                annotations.map((annotation, i) => (
+                  <ArrowNote
+                    key={i}
+                    scene={activeScene}
+                    annotation={annotation}
+                    timing={annotationTiming(activeScene, i)}
+                    time={time}
+                    isManual={isManual}
+                  />
+                ))}
             </div>
           );
         }}
