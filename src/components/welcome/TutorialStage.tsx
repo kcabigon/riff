@@ -56,6 +56,7 @@ export default function TutorialStage({
   const rafRef = useRef<number | null>(null);
   const lastTsRef = useRef<number | null>(null);
   const autoAdvancedSceneRef = useRef<number>(-1);
+  const touchStartXRef = useRef<number | null>(null);
 
   useEffect(() => {
     const el = stageRef.current;
@@ -171,6 +172,25 @@ export default function TutorialStage({
           overflow: "hidden",
           flexShrink: 0,
         }}
+        onTouchStart={
+          compact
+            ? (e) => {
+                touchStartXRef.current = e.touches[0].clientX;
+              }
+            : undefined
+        }
+        onTouchEnd={
+          compact
+            ? (e) => {
+                if (touchStartXRef.current === null) return;
+                const deltaX =
+                  e.changedTouches[0].clientX - touchStartXRef.current;
+                touchStartXRef.current = null;
+                if (deltaX < -40) handleNext();
+                else if (deltaX > 40) handleBack();
+              }
+            : undefined
+        }
       >
         <TutorialCtx.Provider value={ctxValue}>
           {children(time, {
@@ -181,14 +201,16 @@ export default function TutorialStage({
         </TutorialCtx.Provider>
 
         <SkipButton onClick={handleSkip} compact={compact} />
-        <BackLink onClick={handleBack} disabled={isFirst} compact={compact} />
+        {!compact && (
+          <BackLink onClick={handleBack} disabled={isFirst} compact={compact} />
+        )}
         <ProgressChips
           scenes={scenes}
           activeIdx={sceneIdx}
           time={time}
           compact={compact}
         />
-        {!currentScene?.autoAdvance && (
+        {!compact && !currentScene?.autoAdvance && (
           <NextCTA
             onClick={handleNext}
             label={nextLabel}
