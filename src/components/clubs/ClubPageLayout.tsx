@@ -290,7 +290,7 @@ export default function ClubPageLayout({
                   flexDirection: "column",
                   gap: "16px",
                   alignItems: "flex-start",
-                  maxWidth: "360px",
+                  maxWidth: "396px",
                 }}
               >
                 <div
