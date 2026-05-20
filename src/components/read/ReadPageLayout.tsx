@@ -43,6 +43,15 @@ interface PendingSelection {
   rect: DOMRect;
 }
 
+function formatSubmittedDate(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 interface ReadPageLayoutProps {
   piece: {
     id: string;
@@ -52,6 +61,7 @@ interface ReadPageLayoutProps {
     coverImage: string | null;
     wordCount: number;
     readLengthMin: number;
+    submittedAt: string | null;
     author: CommentAuthor;
   };
   riffId: string;
@@ -437,12 +447,15 @@ export default function ReadPageLayout({
                 textAlign: "center",
               }}
             >
-              <span style={{ fontWeight: "bold" }}>{readMinutes}</span> min read
+              {piece.submittedAt && (
+                <>
+                  {formatSubmittedDate(piece.submittedAt)}
+                  {" \u2022 "}
+                </>
+              )}
+              {readMinutes} min read
               {" \u2022 "}
-              <span style={{ fontWeight: "bold" }}>
-                {piece.wordCount.toLocaleString()}
-              </span>{" "}
-              words
+              {piece.wordCount.toLocaleString()} words
             </p>
 
             {/* Author */}

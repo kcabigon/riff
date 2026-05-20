@@ -6,6 +6,15 @@ import "@/app/write/[pieceId]/editor.css";
 import Image from "next/image";
 import Link from "next/link";
 
+function formatSubmittedDate(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 interface PublicReadLayoutProps {
   piece: {
     id: string;
@@ -14,6 +23,7 @@ interface PublicReadLayoutProps {
     currentContent: string;
     wordCount: number;
     readLengthMin: number;
+    submittedAt: string | null;
     author: {
       id: string;
       name: string | null;
@@ -164,6 +174,8 @@ export default function PublicReadLayout({ piece }: PublicReadLayoutProps) {
                 margin: 0,
               }}
             >
+              {piece.submittedAt &&
+                `${formatSubmittedDate(piece.submittedAt)} · `}
               {piece.readLengthMin} min read
               {piece.wordCount > 0 &&
                 ` · ${piece.wordCount.toLocaleString()} words`}

@@ -55,6 +55,8 @@ export default async function ReadPage({
   let validRiffId: string | null = null;
   let clubId: string | null = null;
 
+  let submittedAt: string | null = null;
+
   if (riffId) {
     const pieceRiff = await prisma.pieceRiff.findFirst({
       where: {
@@ -69,6 +71,7 @@ export default async function ReadPage({
       },
       select: {
         riffId: true,
+        submittedAt: true,
         riff: { select: { clubId: true } },
       },
     });
@@ -76,6 +79,7 @@ export default async function ReadPage({
     if (pieceRiff) {
       validRiffId = pieceRiff.riffId;
       clubId = pieceRiff.riff.clubId;
+      submittedAt = pieceRiff.submittedAt?.toISOString() ?? null;
     }
   }
 
@@ -92,6 +96,7 @@ export default async function ReadPage({
       },
       select: {
         riffId: true,
+        submittedAt: true,
         riff: { select: { clubId: true } },
       },
     });
@@ -102,6 +107,7 @@ export default async function ReadPage({
 
     validRiffId = pieceRiff.riffId;
     clubId = pieceRiff.riff.clubId;
+    submittedAt = pieceRiff.submittedAt?.toISOString() ?? null;
   }
 
   // Check if already read
@@ -185,6 +191,7 @@ export default async function ReadPage({
         coverImage: piece.coverImage,
         wordCount: piece.wordCount,
         readLengthMin: piece.readLengthMin,
+        submittedAt,
         author: piece.author,
       }}
       riffId={validRiffId}
