@@ -608,6 +608,7 @@ export default function ClubPageLayout({
               borderColor="#000000"
               borderWidth={2}
               onAvatarClick={handleAvatarClick}
+              style={isMobile ? { overflowX: "auto" } : undefined}
             />
 
             {clubDescription && (

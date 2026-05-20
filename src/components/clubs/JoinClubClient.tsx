@@ -446,6 +446,7 @@ export default function JoinClubClient({
               showBorder={true}
               borderColor="#000000"
               borderWidth={2}
+              style={isMobile ? { overflowX: "auto" } : undefined}
             />
 
             {club.description && (
