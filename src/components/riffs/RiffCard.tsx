@@ -210,12 +210,11 @@ export default function RiffCard({
                     borderRadius: 64,
                     backgroundColor: "#E6E6E6",
                     border: "2px solid #000000",
-                    boxShadow: "2px 2px 0px 0px #000000",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     marginLeft: "-4px",
-                    zIndex: 10,
+                    zIndex: MAX_AVATARS,
                     flexShrink: 0,
                   }}
                 >
