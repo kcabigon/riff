@@ -189,6 +189,41 @@ export function getAnnotations(scene: Scene): Annotation[] {
   ];
 }
 
+export type IntroCopy = {
+  x: number;
+  y: number;
+  rot: number;
+  size: number;
+  delay: number;
+  speed: number;
+};
+
+export function makeIntroCopies(bounds: {
+  xMin: number;
+  xW: number;
+  yMin: number;
+  yH: number;
+  sizeMin: number;
+  sizeRange: number;
+}): IntroCopy[] {
+  return Array.from({ length: 26 }, (_, i) => {
+    const s1 = ((i * 9301 + 49297) % 233280) / 233280;
+    const s2 = ((i * 73 + 19) % 100) / 100;
+    const s3 = ((i * 6271 + 2499) % 4789) / 4789;
+    const s4 = ((i * 1181 + 5003) % 7919) / 7919;
+    const s5 = ((i * 3571 + 1009) % 1597) / 1597;
+    const s6 = ((i * 4973 + 3571) % 6271) / 6271;
+    return {
+      x: bounds.xMin + s1 * bounds.xW,
+      y: bounds.yMin + s2 * bounds.yH,
+      rot: (s3 - 0.5) * 56,
+      size: bounds.sizeMin + s4 * bounds.sizeRange,
+      delay: s5 * 0.18,
+      speed: 0.75 + s6 * 0.6,
+    };
+  });
+}
+
 export function annotationTiming(
   scene: Scene,
   idx: number

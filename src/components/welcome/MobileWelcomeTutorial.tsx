@@ -1,13 +1,11 @@
 "use client";
 
-import confetti from "canvas-confetti";
-import React, { useEffect, useRef } from "react";
+import React from "react";
 import Image from "next/image";
 import TutorialStage from "./TutorialStage";
-import NoiseBackground from "@/components/NoiseBackground";
 import {
-  BRUSH_FILTERS,
   Ease,
+  makeIntroCopies,
   PAPER_NOISE_BG,
   PAPER_WHITE,
   Scene,
@@ -15,6 +13,14 @@ import {
   rangeProgress,
   sceneRise,
 } from "./tutorial-utils";
+import {
+  BrushHighlight,
+  CommentCard,
+  IntroOrbit,
+  LockBadge,
+  MobileWordNote,
+  useRevealConfetti,
+} from "./tutorial-shared";
 
 const CANVAS_W = 390;
 const CANVAS_H = 780;
@@ -33,45 +39,6 @@ const MOBILE_SCENES: Scene[] = [
   { ...SCENES[4], readyAt: 7.0 }, // reveal: 39–49
   { ...SCENES[5], readyAt: 7.0 }, // read: 49–59
 ];
-
-function BrushHighlight({
-  children,
-  color = "#EECF01",
-}: {
-  children: React.ReactNode;
-  color?: string;
-}) {
-  return (
-    <span
-      style={{
-        position: "relative",
-        display: "inline-block",
-        padding: "0 10px",
-        zIndex: 0,
-      }}
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/images/tagline_vector.svg"
-        alt=""
-        aria-hidden
-        style={{
-          position: "absolute",
-          left: 0,
-          right: 0,
-          top: "12%",
-          bottom: "-4%",
-          width: "100%",
-          height: "92%",
-          filter: BRUSH_FILTERS[color] ?? "none",
-          pointerEvents: "none",
-          zIndex: -1,
-        }}
-      />
-      <span style={{ position: "relative", zIndex: 1 }}>{children}</span>
-    </span>
-  );
-}
 
 // ─── Hand-drawn circle annotation
 
@@ -136,21 +103,13 @@ function HandDrawnCircle({
 
 // ─── Intro scene (portrait canvas — 390×780 center)
 
-const MOBILE_INTRO_COPIES = Array.from({ length: 26 }, (_, i) => {
-  const s1 = ((i * 9301 + 49297) % 233280) / 233280;
-  const s2 = ((i * 73 + 19) % 100) / 100;
-  const s3 = ((i * 6271 + 2499) % 4789) / 4789;
-  const s4 = ((i * 1181 + 5003) % 7919) / 7919;
-  const s5 = ((i * 3571 + 1009) % 1597) / 1597;
-  const s6 = ((i * 4973 + 3571) % 6271) / 6271;
-  return {
-    x: 24 + s1 * 342,
-    y: 58 + s2 * 663,
-    rot: (s3 - 0.5) * 56,
-    size: 36 + s4 * 56,
-    delay: s5 * 0.18,
-    speed: 0.75 + s6 * 0.6,
-  };
+const MOBILE_INTRO_COPIES = makeIntroCopies({
+  xMin: 24,
+  xW: 342,
+  yMin: 58,
+  yH: 663,
+  sizeMin: 36,
+  sizeRange: 56,
 });
 
 function MobileIntroScene({
@@ -160,65 +119,14 @@ function MobileIntroScene({
   scene: Scene;
   isManual: boolean;
 }) {
-  const CX = 195;
-  const CY = 390;
-  const centerIn = rangeProgress(time, 0, 0.5, Ease.out);
-  const centerOut = rangeProgress(time, 4.4, 5.2, Ease.out);
-  const centerOpacity = centerIn * (1 - centerOut);
-  const orbitT = rangeProgress(time, 2.2, 3.8, Ease.linear);
-  const collapseT = rangeProgress(time, 3.8, 4.6, Ease.inOut);
-
   return (
-    <>
-      <NoiseBackground fillMode="cover" />
-      {MOBILE_INTRO_COPIES.map((copy, i) => {
-        const burstT = rangeProgress(time, 1.0 + copy.delay, 2.0, Ease.outBack);
-        const prog = burstT * (1 - collapseT);
-        const copyOpacity = Math.min(burstT, 1 - collapseT);
-        if (copyOpacity <= 0) return null;
-        const θ = orbitT * Math.PI * 2 * copy.speed;
-        const dx = copy.x - CX;
-        const dy = copy.y - CY;
-        const targetX = CX + dx * Math.cos(θ) - dy * Math.sin(θ);
-        const targetY = CY + dx * Math.sin(θ) + dy * Math.cos(θ);
-        return (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            key={i}
-            src="/images/riff_wordmark_black_outline.svg"
-            alt=""
-            aria-hidden
-            style={{
-              position: "absolute",
-              width: copy.size,
-              height: "auto",
-              left: CX + (targetX - CX) * prog,
-              top: CY + (targetY - CY) * prog,
-              transform: `translate(-50%, -50%) rotate(${copy.rot * prog}deg)`,
-              opacity: copyOpacity,
-              pointerEvents: "none",
-            }}
-          />
-        );
-      })}
-      {centerOpacity > 0 && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src="/images/riff_wordmark_black_outline.svg"
-          alt="Riff"
-          style={{
-            position: "absolute",
-            width: 140,
-            height: "auto",
-            left: 195,
-            top: 390,
-            transform: "translate(-50%, -50%)",
-            opacity: centerOpacity,
-            pointerEvents: "none",
-          }}
-        />
-      )}
-    </>
+    <IntroOrbit
+      time={time}
+      copies={MOBILE_INTRO_COPIES}
+      cx={195}
+      cy={390}
+      centerSize={140}
+    />
   );
 }
 
@@ -260,10 +168,6 @@ function MobileSceneLayout({
     Ease.outBack
   );
 
-  // Note reveal (word by word)
-  const noteStart = scene.start + 2.2;
-  const noteWords = note.split(/\s+/).filter(Boolean);
-
   // Constrain screenshot to fit the allotted zone (y:210–510 = 300px tall, 358px wide)
   const maxW = 358;
   const maxH = 290;
@@ -276,6 +180,10 @@ function MobileSceneLayout({
   }
   const screenX = (CANVAS_W - dispW) / 2;
   const screenY = 240;
+
+  const noteWords = note.split(/\s+/).filter(Boolean);
+  const noteStart = scene.start + 2.2;
+  const noteRotate = -1 + (scene.id.charCodeAt(0) % 3);
 
   return (
     <div style={{ position: "absolute", inset: 0, background: PAPER_WHITE }}>
@@ -329,7 +237,7 @@ function MobileSceneLayout({
               }}
             >
               {isHighlight ? (
-                <BrushHighlight color={scene.highlightColor}>
+                <BrushHighlight color={scene.highlightColor} padding={10}>
                   {line}
                 </BrushHighlight>
               ) : (
@@ -375,44 +283,13 @@ function MobileSceneLayout({
       )}
 
       {/* Handwritten note */}
-      <div
-        style={{
-          position: "absolute",
-          left: 24,
-          top: 550,
-          maxWidth: CANVAS_W - 48,
-          fontFamily: "var(--font-over-the-rainbow), cursive",
-          fontSize: 26,
-          color: "#000",
-          lineHeight: 1.3,
-          transform: `rotate(${-1 + (scene.id.charCodeAt(0) % 3)}deg)`,
-          pointerEvents: "none",
-          textShadow: `0 0 6px ${PAPER_WHITE}, 0 0 6px ${PAPER_WHITE}`,
-          zIndex: 5,
-        }}
-      >
-        {noteWords.map((word, wi) => {
-          const wIn = rangeProgress(
-            time,
-            noteStart + wi * 0.14,
-            noteStart + wi * 0.14 + 0.18,
-            Ease.out
-          );
-          return (
-            <span
-              key={wi}
-              style={{
-                display: "inline-block",
-                opacity: wIn,
-                transform: `translateY(${(1 - wIn) * 5}px)`,
-                marginRight: wi < noteWords.length - 1 ? "0.25em" : 0,
-              }}
-            >
-              {word}
-            </span>
-          );
-        })}
-      </div>
+      <MobileWordNote
+        words={noteWords}
+        time={time}
+        startTime={noteStart}
+        top={550}
+        rotate={noteRotate}
+      />
     </div>
   );
 }
@@ -427,7 +304,6 @@ function MobileClubScene({
   scene: Scene;
   isManual: boolean;
 }) {
-  // Circle draws in after the screenshot lands, just before the note appears
   const circleProgress = rangeProgress(
     time,
     scene.start + 3.8,
@@ -464,7 +340,6 @@ function MobileRiffScene({
   scene: Scene;
   isManual: boolean;
 }) {
-  // Circle draws in after screenshot lands, just before the note appears
   const circleProgress = rangeProgress(
     time,
     scene.start + 3.8,
@@ -526,7 +401,7 @@ function MobileWriteScene({
     Ease.out
   );
 
-  // Type transition: "parallel." erases, "private." types in — matches desktop timing
+  // Type transition: "parallel." erases, "private." types in
   const { word1, word2, reverseOffset, charDur } = WRITE_TYPE;
   const reverseStart = scene.start + reverseOffset;
   const reverseDur = word1.length * charDur;
@@ -573,7 +448,7 @@ function MobileWriteScene({
   const riffOpacity = riffEnter * (1 - riffExit);
   const riffScale = riffEnter * (1 + riffExit * 0.55);
 
-  // Write page — phase B (enters at sceneT 8.5, matches desktop writeIn)
+  // Write page — phase B (enters at sceneT 8.5)
   const maxW = 358;
   const maxH = 290;
   const writeRatio = 2020 / 1670;
@@ -596,18 +471,9 @@ function MobileWriteScene({
   const writeRot = 4 - 2.6 * writeIn;
 
   // Lock badge
-  const lockSettleAt = scene.start + 9.8;
-  const lockT = time - lockSettleAt;
-  const stampIn = lockT >= 0 ? rangeProgress(lockT, 0, 0.4, Ease.outBack) : 0;
-  const wobbleDecay =
-    stampIn > 0 ? Math.max(0, 1 - Math.max(0, lockT - 0.4) / 0.6) : 0;
-  const wobble =
-    wobbleDecay > 0 ? Math.sin((lockT - 0.4) * 28) * wobbleDecay * 5 : 0;
-  const lockScale = stampIn > 0 ? 2.2 - 1.2 * stampIn : 0;
-  const ring1 = lockT >= 0 ? rangeProgress(lockT, 0.25, 0.95, Ease.out) : 0;
-  const ring2 = lockT >= 0 ? rangeProgress(lockT, 0.4, 1.15, Ease.out) : 0;
+  const lockT = time - (scene.start + 9.8);
 
-  // Note 1 fades in at sceneT 2.2, fades out at sceneT 5.8
+  // Note 1 fades out as riff page exits
   const note1FadeOut = rangeProgress(
     time,
     scene.start + 5.8,
@@ -626,7 +492,7 @@ function MobileWriteScene({
     "friends",
   ];
 
-  // Note 2 appears at sceneT 7.8 after write page is in
+  // Note 2 appears after write page is in
   const note2Start = scene.start + 7.8;
   const note2Words = [
     "your",
@@ -637,20 +503,6 @@ function MobileWriteScene({
     "the",
     "reveal",
   ];
-
-  const noteBase: React.CSSProperties = {
-    position: "absolute",
-    left: 24,
-    top: 570,
-    maxWidth: CANVAS_W - 48,
-    fontFamily: "var(--font-over-the-rainbow), cursive",
-    fontSize: 26,
-    color: "#000",
-    lineHeight: 1.3,
-    pointerEvents: "none",
-    textShadow: `0 0 6px ${PAPER_WHITE}, 0 0 6px ${PAPER_WHITE}`,
-    zIndex: 5,
-  };
 
   return (
     <div style={{ position: "absolute", inset: 0, background: PAPER_WHITE }}>
@@ -706,7 +558,9 @@ function MobileWriteScene({
           }}
         >
           {displayText ? (
-            <BrushHighlight color={accentColor}>{displayText}</BrushHighlight>
+            <BrushHighlight color={accentColor} padding={10}>
+              {displayText}
+            </BrushHighlight>
           ) : null}
         </div>
       </div>
@@ -794,146 +648,42 @@ function MobileWriteScene({
       )}
 
       {/* Lock badge — stamps in at sceneT 11.5 */}
-      {stampIn > 0 && (
-        <div
-          style={{
-            position: "absolute",
-            left: writeScreenX + writeDispW / 2,
-            top: screenY + writeDispH / 2,
-            pointerEvents: "none",
-            zIndex: 5,
-          }}
-        >
-          {ring1 > 0 && ring1 < 1 && (
-            <div
-              style={{
-                position: "absolute",
-                left: 0,
-                top: 0,
-                width: 72,
-                height: 72,
-                borderRadius: "50%",
-                border: "4px solid #000",
-                transform: `translate(-50%, -50%) scale(${0.45 + ring1 * 1.85})`,
-                opacity: 0.55 * (1 - ring1),
-              }}
-            />
-          )}
-          {ring2 > 0 && ring2 < 1 && (
-            <div
-              style={{
-                position: "absolute",
-                left: 0,
-                top: 0,
-                width: 72,
-                height: 72,
-                borderRadius: "50%",
-                border: `4px solid ${accentColor}`,
-                transform: `translate(-50%, -50%) scale(${0.45 + ring2 * 1.55})`,
-                opacity: 0.85 * (1 - ring2),
-              }}
-            />
-          )}
-          <div
-            style={{
-              transform: `translate(-50%, -50%) scale(${lockScale}) rotate(${-10 + wobble}deg)`,
-              transformOrigin: "center",
-              opacity: stampIn,
-              filter: "drop-shadow(3px 3px 0 rgba(0,0,0,0.9))",
-            }}
-          >
-            <svg
-              width="60"
-              height="72"
-              viewBox="0 0 64 80"
-              style={{ display: "block" }}
-            >
-              <path
-                d="M 18 32 V 22 a 14 14 0 0 1 28 0 V 32"
-                fill="none"
-                stroke="#000"
-                strokeWidth="7"
-                strokeLinecap="round"
-              />
-              <rect
-                x="8"
-                y="32"
-                width="48"
-                height="42"
-                rx="5"
-                fill="#000"
-                stroke="#000"
-                strokeWidth="2"
-              />
-              <circle cx="32" cy="49" r="4.5" fill={accentColor} />
-              <rect
-                x="29.6"
-                y="49"
-                width="4.8"
-                height="13"
-                rx="1"
-                fill={accentColor}
-              />
-            </svg>
-          </div>
-        </div>
-      )}
-
-      {/* Note 1 — phase A, fades out as riff page exits */}
       <div
         style={{
-          ...noteBase,
-          transform: "rotate(1.0deg)",
-          opacity: 1 - note1FadeOut,
+          position: "absolute",
+          left: writeScreenX + writeDispW / 2,
+          top: screenY + writeDispH / 2,
+          pointerEvents: "none",
+          zIndex: 5,
         }}
       >
-        {note1Words.map((word, wi) => {
-          const wIn = rangeProgress(
-            time,
-            scene.start + 2.2 + wi * 0.14,
-            scene.start + 2.2 + wi * 0.14 + 0.18,
-            Ease.out
-          );
-          return (
-            <span
-              key={wi}
-              style={{
-                display: "inline-block",
-                opacity: wIn,
-                transform: `translateY(${(1 - wIn) * 5}px)`,
-                marginRight: wi < note1Words.length - 1 ? "0.25em" : 0,
-              }}
-            >
-              {word}
-            </span>
-          );
-        })}
+        <LockBadge
+          t={lockT}
+          accentColor={accentColor}
+          svgW={60}
+          svgH={72}
+          ringSize={72}
+        />
       </div>
 
+      {/* Note 1 — phase A, fades out as riff page exits */}
+      <MobileWordNote
+        words={note1Words}
+        time={time}
+        startTime={scene.start + 2.2}
+        top={570}
+        rotate={1.0}
+        opacity={1 - note1FadeOut}
+      />
+
       {/* Note 2 — phase B, appears after write page lands */}
-      <div style={{ ...noteBase, transform: "rotate(-1.0deg)" }}>
-        {note2Words.map((word, wi) => {
-          const wIn = rangeProgress(
-            time,
-            note2Start + wi * 0.14,
-            note2Start + wi * 0.14 + 0.18,
-            Ease.out
-          );
-          return (
-            <span
-              key={wi}
-              style={{
-                display: "inline-block",
-                opacity: wIn,
-                transform: `translateY(${(1 - wIn) * 5}px)`,
-                marginRight: wi < note2Words.length - 1 ? "0.25em" : 0,
-              }}
-            >
-              {word}
-            </span>
-          );
-        })}
-      </div>
+      <MobileWordNote
+        words={note2Words}
+        time={time}
+        startTime={note2Start}
+        top={570}
+        rotate={-1.0}
+      />
     </div>
   );
 }
@@ -946,7 +696,6 @@ function MobileRevealScene({
   scene: Scene;
   isManual: boolean;
 }) {
-  const hasFiredConfetti = useRef(false);
   const sceneT = time - scene.start;
 
   const COVER_IN = 0.4,
@@ -955,46 +704,14 @@ function MobileRevealScene({
   const PAGE_IN = 3.6,
     PAGE_IN_DUR = 0.7;
   const BURST_START = 1.8;
-  const shouldFire = sceneT >= BURST_START;
 
-  useEffect(() => {
-    if (!shouldFire || hasFiredConfetti.current) return;
-    hasFiredConfetti.current = true;
-    const colors = [
-      "#00FF66",
-      "#01EFFC",
-      "#EECF01",
-      "#FF6B35",
-      "#C01582",
-      "#955CB5",
-    ];
-    confetti({
-      particleCount: 70,
-      angle: 60,
-      spread: 60,
-      origin: { x: 0.3, y: 0.65 },
-      colors,
-    });
-    confetti({
-      particleCount: 70,
-      angle: 120,
-      spread: 60,
-      origin: { x: 0.7, y: 0.65 },
-      colors,
-    });
-    const timer = setTimeout(
-      () =>
-        confetti({
-          particleCount: 50,
-          angle: 90,
-          spread: 70,
-          origin: { x: 0.5, y: 0.55 },
-          colors,
-        }),
-      300
-    );
-    return () => clearTimeout(timer);
-  }, [shouldFire]);
+  useRevealConfetti(
+    sceneT >= BURST_START,
+    [0.3, 0.65],
+    [0.7, 0.65],
+    [0.5, 0.55],
+    [70, 70, 50]
+  );
 
   const coverIn = rangeProgress(sceneT, COVER_IN, COVER_IN + 0.5, Ease.outBack);
   const coverOut = rangeProgress(
@@ -1101,7 +818,7 @@ function MobileRevealScene({
             color: "#000",
           }}
         >
-          <BrushHighlight color={scene.highlightColor}>
+          <BrushHighlight color={scene.highlightColor} padding={10}>
             the reveal.
           </BrushHighlight>
         </div>
@@ -1166,63 +883,20 @@ function MobileRevealScene({
       )}
 
       {/* Note */}
-      {(() => {
-        const noteWords = [
-          "once everyone submits,",
-          "pieces unlock simultaneously",
-        ];
-        const noteStart = scene.start + 5.5;
-        return (
-          <div
-            style={{
-              position: "absolute",
-              left: 24,
-              top: 550,
-              maxWidth: CANVAS_W - 48,
-              fontFamily: "var(--font-over-the-rainbow), cursive",
-              fontSize: 26,
-              color: "#000",
-              lineHeight: 1.3,
-              transform: "rotate(-0.5deg)",
-              pointerEvents: "none",
-              textShadow: `0 0 6px ${PAPER_WHITE}, 0 0 6px ${PAPER_WHITE}`,
-              zIndex: 5,
-            }}
-          >
-            {noteWords.map((phrase, pi) => (
-              <div key={pi}>
-                {phrase.split(/\s+/).map((word, wi) => {
-                  const idx =
-                    noteWords
-                      .slice(0, pi)
-                      .join(" ")
-                      .split(/\s+/)
-                      .filter(Boolean).length + wi;
-                  const wIn = rangeProgress(
-                    time,
-                    noteStart + idx * 0.14,
-                    noteStart + idx * 0.14 + 0.18,
-                    Ease.out
-                  );
-                  return (
-                    <span
-                      key={wi}
-                      style={{
-                        display: "inline-block",
-                        opacity: wIn,
-                        transform: `translateY(${(1 - wIn) * 5}px)`,
-                        marginRight: "0.25em",
-                      }}
-                    >
-                      {word}
-                    </span>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-        );
-      })()}
+      <MobileWordNote
+        words={[
+          "once",
+          "everyone",
+          "submits,",
+          "pieces",
+          "unlock",
+          "simultaneously",
+        ]}
+        time={time}
+        startTime={scene.start + 5.5}
+        top={550}
+        rotate={-0.5}
+      />
     </div>
   );
 }
@@ -1347,7 +1021,7 @@ function MobileReadScene({
               }}
             >
               {isHighlight ? (
-                <BrushHighlight color={scene.highlightColor}>
+                <BrushHighlight color={scene.highlightColor} padding={10}>
                   {line}
                 </BrushHighlight>
               ) : (
@@ -1398,120 +1072,20 @@ function MobileReadScene({
               }}
             />
           )}
-          {MOBILE_READ_COMMENTS.map((c, i) => {
-            const cardIn = rangeProgress(
-              sceneT,
-              c.delay,
-              c.delay + 0.5,
-              Ease.outBack
-            );
-            if (cardIn <= 0) return null;
-            return (
-              <div
-                key={i}
-                style={{
-                  position: "absolute",
-                  left: c.x,
-                  top: c.y,
-                  width: c.w,
-                  transform: `translateY(${(1 - cardIn) * 20}px) rotate(${c.rot}deg) scale(${0.88 + 0.12 * cardIn})`,
-                  transformOrigin: "center",
-                  opacity: cardIn,
-                  background: PAPER_WHITE,
-                  border: "2px solid #000",
-                  boxShadow: `4px 4px 0 0 ${c.color}`,
-                  padding: "6px 10px 10px",
-                  display: "flex",
-                  gap: 8,
-                  alignItems: "flex-start",
-                  fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                }}
-              >
-                <div
-                  style={{
-                    flex: "0 0 auto",
-                    width: 22,
-                    height: 22,
-                    borderRadius: "50%",
-                    background: c.color,
-                    border: "1.5px solid #000",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontWeight: 700,
-                    fontSize: 11,
-                    color: "#000",
-                  }}
-                >
-                  {c.name[0]}
-                </div>
-                <div style={{ minWidth: 0 }}>
-                  <div
-                    style={{
-                      fontSize: 10,
-                      fontWeight: 700,
-                      lineHeight: 1,
-                      marginBottom: 3,
-                    }}
-                  >
-                    {c.name}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 400,
-                      lineHeight: 1.3,
-                      color: "#000",
-                    }}
-                  >
-                    {c.text}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+          {MOBILE_READ_COMMENTS.map((c, i) => (
+            <CommentCard key={i} comment={c} t={sceneT} compact />
+          ))}
         </div>
       )}
 
       {/* Note */}
-      <div
-        style={{
-          position: "absolute",
-          left: 24,
-          top: 570,
-          maxWidth: CANVAS_W - 48,
-          fontFamily: "var(--font-over-the-rainbow), cursive",
-          fontSize: 26,
-          color: "#000",
-          lineHeight: 1.3,
-          transform: "rotate(1deg)",
-          pointerEvents: "none",
-          textShadow: `0 0 6px ${PAPER_WHITE}, 0 0 6px ${PAPER_WHITE}`,
-          zIndex: 5,
-        }}
-      >
-        {["like", "leaving", "notes", "in", "the", "margin"].map((word, wi) => {
-          const wIn = rangeProgress(
-            time,
-            scene.start + 2.2 + wi * 0.14,
-            scene.start + 2.2 + wi * 0.14 + 0.18,
-            Ease.out
-          );
-          return (
-            <span
-              key={wi}
-              style={{
-                display: "inline-block",
-                opacity: wIn,
-                transform: `translateY(${(1 - wIn) * 5}px)`,
-                marginRight: wi < 5 ? "0.25em" : 0,
-              }}
-            >
-              {word}
-            </span>
-          );
-        })}
-      </div>
+      <MobileWordNote
+        words={["like", "leaving", "notes", "in", "the", "margin"]}
+        time={time}
+        startTime={scene.start + 2.2}
+        top={570}
+        rotate={1}
+      />
     </div>
   );
 }
@@ -1561,7 +1135,6 @@ export default function MobileWelcomeTutorial({
 
           return (
             <>
-              {/* Paper noise for intro scene */}
               {activeScene.id !== "intro" && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img

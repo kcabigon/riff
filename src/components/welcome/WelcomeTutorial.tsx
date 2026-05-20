@@ -1,14 +1,12 @@
 "use client";
 
-import confetti from "canvas-confetti";
-import React, { useEffect, useRef } from "react";
+import React from "react";
 import Image from "next/image";
 import TutorialStage from "./TutorialStage";
-import NoiseBackground from "@/components/NoiseBackground";
 import {
   Annotation,
-  BRUSH_FILTERS,
   Ease,
+  makeIntroCopies,
   PAPER_NOISE_BG,
   PAPER_WHITE,
   Scene,
@@ -18,45 +16,13 @@ import {
   rangeProgress,
   sceneRise,
 } from "./tutorial-utils";
-
-function BrushHighlight({
-  children,
-  color = "#EECF01",
-}: {
-  children: React.ReactNode;
-  color?: string;
-}) {
-  return (
-    <span
-      style={{
-        position: "relative",
-        display: "inline-block",
-        padding: "0 14px",
-        zIndex: 0,
-      }}
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/images/tagline_vector.svg"
-        alt=""
-        aria-hidden
-        style={{
-          position: "absolute",
-          left: 0,
-          right: 0,
-          top: "12%",
-          bottom: "-4%",
-          width: "100%",
-          height: "92%",
-          filter: BRUSH_FILTERS[color] ?? "none",
-          pointerEvents: "none",
-          zIndex: -1,
-        }}
-      />
-      <span style={{ position: "relative", zIndex: 1 }}>{children}</span>
-    </span>
-  );
-}
+import {
+  BrushHighlight,
+  CommentCard,
+  IntroOrbit,
+  LockBadge,
+  useRevealConfetti,
+} from "./tutorial-shared";
 
 // ─── Timing constants (seconds from scene.start)
 const T = {
@@ -130,21 +96,13 @@ function HeadlineC({
 
 // ─── Intro scene
 
-const INTRO_COPIES = Array.from({ length: 26 }, (_, i) => {
-  const s1 = ((i * 9301 + 49297) % 233280) / 233280;
-  const s2 = ((i * 73 + 19) % 100) / 100;
-  const s3 = ((i * 6271 + 2499) % 4789) / 4789;
-  const s4 = ((i * 1181 + 5003) % 7919) / 7919;
-  const s5 = ((i * 3571 + 1009) % 1597) / 1597;
-  const s6 = ((i * 4973 + 3571) % 6271) / 6271;
-  return {
-    x: 80 + s1 * 1120,
-    y: 60 + s2 * 680,
-    rot: (s3 - 0.5) * 56,
-    size: 70 + s4 * 90,
-    delay: s5 * 0.18,
-    speed: 0.75 + s6 * 0.6, // range [0.75, 1.35] — gives mosh-pit spread
-  };
+const INTRO_COPIES = makeIntroCopies({
+  xMin: 80,
+  xW: 1120,
+  yMin: 60,
+  yH: 680,
+  sizeMin: 70,
+  sizeRange: 90,
 });
 
 function IntroScene({
@@ -154,67 +112,14 @@ function IntroScene({
   scene: Scene;
   isManual: boolean;
 }) {
-  const CX = 640;
-  const CY = 400;
-  const centerIn = rangeProgress(time, 0, 0.5, Ease.out);
-  const centerOut = rangeProgress(time, 4.4, 5.2, Ease.out);
-  const centerOpacity = centerIn * (1 - centerOut);
-  const orbitT = rangeProgress(time, 2.2, 3.8, Ease.linear);
-  const collapseT = rangeProgress(time, 3.8, 4.6, Ease.inOut);
-
   return (
-    <>
-      <NoiseBackground fillMode="cover" />
-      {INTRO_COPIES.map((copy, i) => {
-        const burstT = rangeProgress(time, 1.0 + copy.delay, 2.0, Ease.outBack);
-        const prog = burstT * (1 - collapseT);
-        const copyOpacity = Math.min(burstT, 1 - collapseT);
-        if (copyOpacity <= 0) return null;
-        // Orbit each logo around the canvas center at its own speed.
-        // At orbitT=0, θ=0 and the formula reduces to (copy.x, copy.y) — no jump.
-        const θ = orbitT * Math.PI * 2 * copy.speed;
-        const dx = copy.x - CX;
-        const dy = copy.y - CY;
-        const targetX = CX + dx * Math.cos(θ) - dy * Math.sin(θ);
-        const targetY = CY + dx * Math.sin(θ) + dy * Math.cos(θ);
-        return (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            key={i}
-            src="/images/riff_wordmark_black_outline.svg"
-            alt=""
-            aria-hidden
-            style={{
-              position: "absolute",
-              width: copy.size,
-              height: "auto",
-              left: CX + (targetX - CX) * prog,
-              top: CY + (targetY - CY) * prog,
-              transform: `translate(-50%, -50%) rotate(${copy.rot * prog}deg)`,
-              opacity: copyOpacity,
-              pointerEvents: "none",
-            }}
-          />
-        );
-      })}
-      {centerOpacity > 0 && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src="/images/riff_wordmark_black_outline.svg"
-          alt="Riff"
-          style={{
-            position: "absolute",
-            width: 200,
-            height: "auto",
-            left: 640,
-            top: 400,
-            transform: "translate(-50%, -50%)",
-            opacity: centerOpacity,
-            pointerEvents: "none",
-          }}
-        />
-      )}
-    </>
+    <IntroOrbit
+      time={time}
+      copies={INTRO_COPIES}
+      cx={640}
+      cy={400}
+      centerSize={200}
+    />
   );
 }
 
@@ -684,6 +589,12 @@ function WriteScene(props: { time: number; scene: Scene; isManual: boolean }) {
   const writeScale = 0.88 + 0.12 * writeIn;
   const writeRot = 4 - 2.6 * writeIn;
 
+  const lockOffset =
+    tx.lockStart != null
+      ? tx.lockStart
+      : tx.writeIn.start + tx.writeIn.dur - 0.1;
+  const lockT = time - (scene.start + lockOffset);
+
   return (
     <>
       {writeIn > 0.005 && (
@@ -721,119 +632,18 @@ function WriteScene(props: { time: number; scene: Scene; isManual: boolean }) {
           />
         </div>
       )}
-      <LockBadge time={time} scene={scene} />
-    </>
-  );
-}
-
-function LockBadge({ time, scene }: { time: number; scene: Scene }) {
-  if (!scene.transition) return null;
-  const tx = scene.transition;
-  const lockOffset =
-    tx.lockStart != null
-      ? tx.lockStart
-      : tx.writeIn.start + tx.writeIn.dur - 0.1;
-  const settleAt = scene.start + lockOffset;
-  const t = time - settleAt;
-  if (t < 0) return null;
-
-  const stampIn = rangeProgress(t, 0, 0.4, Ease.outBack);
-  if (stampIn <= 0) return null;
-
-  const wobbleStart = 0.4;
-  const wobbleDur = 0.6;
-  const wobbleDecay = Math.max(0, 1 - Math.max(0, t - wobbleStart) / wobbleDur);
-  const wobble =
-    wobbleDecay > 0 ? Math.sin((t - wobbleStart) * 28) * wobbleDecay * 5 : 0;
-
-  const ring1 = rangeProgress(t, 0.25, 0.95, Ease.out);
-  const ring2 = rangeProgress(t, 0.4, 1.15, Ease.out);
-  const scale = 2.2 - 1.2 * stampIn;
-  const accentColor = scene.highlightColor;
-
-  return (
-    <div
-      style={{
-        position: "absolute",
-        left: 1100,
-        top: 158,
-        pointerEvents: "none",
-        zIndex: 5,
-      }}
-    >
-      {ring1 > 0 && ring1 < 1 && (
-        <div
-          style={{
-            position: "absolute",
-            left: 0,
-            top: 0,
-            width: 92,
-            height: 92,
-            borderRadius: "50%",
-            border: "4px solid #000",
-            transform: `translate(-50%, -50%) scale(${0.45 + ring1 * 1.85})`,
-            opacity: 0.55 * (1 - ring1),
-          }}
-        />
-      )}
-      {ring2 > 0 && ring2 < 1 && (
-        <div
-          style={{
-            position: "absolute",
-            left: 0,
-            top: 0,
-            width: 92,
-            height: 92,
-            borderRadius: "50%",
-            border: `4px solid ${accentColor}`,
-            transform: `translate(-50%, -50%) scale(${0.45 + ring2 * 1.55})`,
-            opacity: 0.85 * (1 - ring2),
-          }}
-        />
-      )}
       <div
         style={{
-          transform: `translate(-50%, -50%) scale(${scale}) rotate(${-10 + wobble}deg)`,
-          transformOrigin: "center",
-          opacity: stampIn,
-          filter: "drop-shadow(3px 3px 0 rgba(0,0,0,0.9))",
+          position: "absolute",
+          left: 1100,
+          top: 158,
+          pointerEvents: "none",
+          zIndex: 5,
         }}
       >
-        <svg
-          width="76"
-          height="92"
-          viewBox="0 0 64 80"
-          style={{ display: "block" }}
-        >
-          <path
-            d="M 18 32 V 22 a 14 14 0 0 1 28 0 V 32"
-            fill="none"
-            stroke="#000"
-            strokeWidth="7"
-            strokeLinecap="round"
-          />
-          <rect
-            x="8"
-            y="32"
-            width="48"
-            height="42"
-            rx="5"
-            fill="#000"
-            stroke="#000"
-            strokeWidth="2"
-          />
-          <circle cx="32" cy="49" r="4.5" fill={accentColor} />
-          <rect
-            x="29.6"
-            y="49"
-            width="4.8"
-            height="13"
-            rx="1"
-            fill={accentColor}
-          />
-        </svg>
+        <LockBadge t={lockT} accentColor={scene.highlightColor} />
       </div>
-    </div>
+    </>
   );
 }
 
@@ -845,7 +655,6 @@ function RevealScene({
   scene: Scene;
   isManual: boolean;
 }) {
-  const hasFiredConfetti = useRef(false);
   const sceneT = time - scene.start;
 
   const COVER_IN = 0.4,
@@ -854,46 +663,14 @@ function RevealScene({
   const PAGE_IN = 3.6,
     PAGE_IN_DUR = 0.8;
   const BURST_START = 1.8;
-  const shouldFire = sceneT >= BURST_START;
 
-  useEffect(() => {
-    if (!shouldFire || hasFiredConfetti.current) return;
-    hasFiredConfetti.current = true;
-    const colors = [
-      "#00FF66",
-      "#01EFFC",
-      "#EECF01",
-      "#FF6B35",
-      "#C01582",
-      "#955CB5",
-    ];
-    confetti({
-      particleCount: 80,
-      angle: 60,
-      spread: 60,
-      origin: { x: 0.35, y: 0.6 },
-      colors,
-    });
-    confetti({
-      particleCount: 80,
-      angle: 120,
-      spread: 60,
-      origin: { x: 0.75, y: 0.6 },
-      colors,
-    });
-    const timer = setTimeout(
-      () =>
-        confetti({
-          particleCount: 60,
-          angle: 90,
-          spread: 70,
-          origin: { x: 0.55, y: 0.5 },
-          colors,
-        }),
-      300
-    );
-    return () => clearTimeout(timer);
-  }, [shouldFire]);
+  useRevealConfetti(
+    sceneT >= BURST_START,
+    [0.35, 0.6],
+    [0.75, 0.6],
+    [0.55, 0.5],
+    [80, 80, 60]
+  );
 
   const coverIn = rangeProgress(sceneT, COVER_IN, COVER_IN + 0.6, Ease.outBack);
   const coverOut = rangeProgress(
@@ -1018,86 +795,6 @@ const READ_COMMENTS = [
     w: 270,
   },
 ];
-
-function CommentCard({
-  comment,
-  t,
-}: {
-  comment: (typeof READ_COMMENTS)[0];
-  t: number;
-}) {
-  const cardIn = rangeProgress(
-    t,
-    comment.delay,
-    comment.delay + 0.55,
-    Ease.outBack
-  );
-  if (cardIn <= 0) return null;
-  const ty = (1 - cardIn) * 24;
-  const scale = 0.85 + 0.15 * cardIn;
-  return (
-    <div
-      style={{
-        position: "absolute",
-        left: comment.x,
-        top: comment.y,
-        width: comment.w,
-        transform: `translateY(${ty}px) rotate(${comment.rot}deg) scale(${scale})`,
-        transformOrigin: "center",
-        opacity: cardIn,
-        background: PAPER_WHITE,
-        border: "2px solid #000",
-        boxShadow: `5px 5px 0 0 ${comment.color}`,
-        padding: "8px 12px 12px",
-        display: "flex",
-        gap: 10,
-        alignItems: "flex-start",
-        fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-      }}
-    >
-      <div
-        style={{
-          flex: "0 0 auto",
-          width: 28,
-          height: 28,
-          borderRadius: "50%",
-          background: comment.color,
-          border: "1.5px solid #000",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontWeight: 700,
-          fontSize: 13,
-          color: "#000",
-        }}
-      >
-        {comment.name[0]}
-      </div>
-      <div style={{ minWidth: 0 }}>
-        <div
-          style={{
-            fontSize: 12,
-            fontWeight: 700,
-            lineHeight: 1,
-            marginBottom: 4,
-          }}
-        >
-          {comment.name}
-        </div>
-        <div
-          style={{
-            fontSize: 13,
-            fontWeight: 400,
-            lineHeight: 1.3,
-            color: "#000",
-          }}
-        >
-          {comment.text}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function ReadScene({
   time,
