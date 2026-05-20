@@ -316,7 +316,7 @@ export default function JoinClubClient({
           <h1
             style={{
               fontFamily: "var(--font-dm-serif-text)",
-              fontSize: "28px",
+              fontSize: "32px",
               fontWeight: 400,
               color: "#000000",
               margin: 0,
@@ -333,13 +333,13 @@ export default function JoinClubClient({
               alignItems: "start",
             }}
           >
-            <p style={statStyle("#000000", "14px")}>
+            <p style={statStyle("#000000")}>
               <span style={{ fontWeight: 700 }}>{stats.riffCount}</span> riffs
             </p>
-            <p style={statStyle("#000000", "14px")}>
+            <p style={statStyle("#000000")}>
               <span style={{ fontWeight: 700 }}>{stats.pieceCount}</span> pieces
             </p>
-            <p style={statStyle("#000000", "14px")}>
+            <p style={statStyle("#000000")}>
               <span style={{ fontWeight: 700 }}>
                 {formatNumber(stats.wordCount)}
               </span>{" "}
@@ -359,7 +359,7 @@ export default function JoinClubClient({
             <p
               style={{
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: "15px",
+                fontSize: "16px",
                 fontWeight: 300,
                 color: "#000000",
                 margin: 0,
