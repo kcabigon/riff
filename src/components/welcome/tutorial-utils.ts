@@ -31,6 +31,26 @@ export function sceneRise(time: number, start: number, entry = 0.5): number {
   return Ease.out(Math.max(0, u));
 }
 
+export const PAPER_WHITE = "#FFFEF8";
+
+export const PAPER_NOISE_BG = `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence baseFrequency='0.9' numOctaves='2'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.08 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>")`;
+
+// CSS filter map to recolor tagline_vector.svg per accent color.
+// Mirrors the filter pipeline in src/components/Tagline.tsx.
+export const BRUSH_FILTERS: Record<string, string> = {
+  "#EECF01": "none",
+  "#C01582":
+    "brightness(0) saturate(100%) invert(18%) sepia(82%) saturate(3721%) hue-rotate(307deg) brightness(95%) contrast(98%)",
+  "#955CB5":
+    "brightness(0) saturate(100%) invert(42%) sepia(42%) saturate(887%) hue-rotate(232deg) brightness(94%) contrast(89%)",
+  "#FF6B35":
+    "brightness(0) saturate(100%) invert(57%) sepia(87%) saturate(2645%) hue-rotate(339deg) brightness(101%) contrast(101%)",
+  "#01EFFC":
+    "brightness(0) saturate(100%) invert(79%) sepia(91%) saturate(2670%) hue-rotate(137deg) brightness(103%) contrast(101%)",
+  "#00FF66":
+    "brightness(0) saturate(100%) invert(61%) sepia(97%) saturate(1000%) hue-rotate(88deg) brightness(102%) contrast(101%)",
+};
+
 export interface Annotation {
   note: string;
   arrowFrom?: [number, number];

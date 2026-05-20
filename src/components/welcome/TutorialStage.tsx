@@ -7,7 +7,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Scene } from "./tutorial-utils";
+import { PAPER_WHITE, Scene } from "./tutorial-utils";
 
 export interface TutorialCtxValue {
   time: number;
@@ -165,7 +165,7 @@ export default function TutorialStage({
         style={{
           width: canvasW,
           height: canvasH,
-          background: "#FFFEF8",
+          background: PAPER_WHITE,
           transform: `scale(${scale})`,
           transformOrigin: "center",
           position: "relative",
@@ -424,7 +424,7 @@ function ProgressChips({
           if (compact) {
             return (
               <div
-                key={i}
+                key={sc.id}
                 style={{
                   width: 8,
                   height: 8,
@@ -450,7 +450,7 @@ function ProgressChips({
               : 0;
           return (
             <div
-              key={i}
+              key={sc.id}
               style={{
                 width: isActive ? 32 : 20,
                 height: 2,

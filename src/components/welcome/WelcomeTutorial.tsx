@@ -1,16 +1,16 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import Image from "next/image";
 import TutorialStage from "./TutorialStage";
 import NoiseBackground from "@/components/NoiseBackground";
-import MobileWelcomeTutorial from "./MobileWelcomeTutorial";
-import { useIsMobile } from "@/hooks/useMediaQuery";
 import {
   Annotation,
+  BRUSH_FILTERS,
   Ease,
+  PAPER_NOISE_BG,
+  PAPER_WHITE,
   Scene,
   SCENES,
   annotationTiming,
@@ -18,22 +18,6 @@ import {
   rangeProgress,
   sceneRise,
 } from "./tutorial-utils";
-
-// CSS filter map to recolor tagline_vector.svg per accent color.
-// Mirrors the filter pipeline in src/components/Tagline.tsx.
-const BRUSH_FILTERS: Record<string, string> = {
-  "#EECF01": "none",
-  "#C01582":
-    "brightness(0) saturate(100%) invert(18%) sepia(82%) saturate(3721%) hue-rotate(307deg) brightness(95%) contrast(98%)",
-  "#955CB5":
-    "brightness(0) saturate(100%) invert(42%) sepia(42%) saturate(887%) hue-rotate(232deg) brightness(94%) contrast(89%)",
-  "#FF6B35":
-    "brightness(0) saturate(100%) invert(57%) sepia(87%) saturate(2645%) hue-rotate(339deg) brightness(101%) contrast(101%)",
-  "#01EFFC":
-    "brightness(0) saturate(100%) invert(79%) sepia(91%) saturate(2670%) hue-rotate(137deg) brightness(103%) contrast(101%)",
-  "#00FF66":
-    "brightness(0) saturate(100%) invert(61%) sepia(97%) saturate(1000%) hue-rotate(88deg) brightness(102%) contrast(101%)",
-};
 
 function BrushHighlight({
   children,
@@ -451,7 +435,7 @@ function ArrowNote({
             d={path}
             pathLength="100"
             fill="none"
-            stroke="#FFFEF8"
+            stroke={PAPER_WHITE}
             strokeWidth="7"
             strokeDasharray="100"
             strokeDashoffset={dashOffset}
@@ -473,7 +457,7 @@ function ArrowNote({
               <path
                 d="M-10 -6 L0 0 L-10 6"
                 fill="none"
-                stroke="#FFFEF8"
+                stroke={PAPER_WHITE}
                 strokeWidth="6"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -504,7 +488,7 @@ function ArrowNote({
           maxWidth: annotation.maxWidth ?? 380,
           pointerEvents: "none",
           zIndex: 5,
-          textShadow: "0 0 6px #FFFEF8, 0 0 6px #FFFEF8",
+          textShadow: `0 0 6px ${PAPER_WHITE}, 0 0 6px ${PAPER_WHITE}`,
           opacity: env,
         }}
       >
@@ -861,7 +845,7 @@ function RevealScene({
   scene: Scene;
   isManual: boolean;
 }) {
-  const hasFiredConfetti = React.useRef(false);
+  const hasFiredConfetti = useRef(false);
   const sceneT = time - scene.start;
 
   const COVER_IN = 0.4,
@@ -870,8 +854,10 @@ function RevealScene({
   const PAGE_IN = 3.6,
     PAGE_IN_DUR = 0.8;
   const BURST_START = 1.8;
+  const shouldFire = sceneT >= BURST_START;
 
-  if (sceneT >= BURST_START && !hasFiredConfetti.current) {
+  useEffect(() => {
+    if (!shouldFire || hasFiredConfetti.current) return;
     hasFiredConfetti.current = true;
     const colors = [
       "#00FF66",
@@ -895,7 +881,7 @@ function RevealScene({
       origin: { x: 0.75, y: 0.6 },
       colors,
     });
-    setTimeout(
+    const timer = setTimeout(
       () =>
         confetti({
           particleCount: 60,
@@ -906,7 +892,8 @@ function RevealScene({
         }),
       300
     );
-  }
+    return () => clearTimeout(timer);
+  }, [shouldFire]);
 
   const coverIn = rangeProgress(sceneT, COVER_IN, COVER_IN + 0.6, Ease.outBack);
   const coverOut = rangeProgress(
@@ -1058,7 +1045,7 @@ function CommentCard({
         transform: `translateY(${ty}px) rotate(${comment.rot}deg) scale(${scale})`,
         transformOrigin: "center",
         opacity: cardIn,
-        background: "#FFFEF8",
+        background: PAPER_WHITE,
         border: "2px solid #000",
         boxShadow: `5px 5px 0 0 ${comment.color}`,
         padding: "8px 12px 12px",
@@ -1140,7 +1127,7 @@ function ReadScene({
           width: 700,
           height: 560,
           overflow: "hidden",
-          background: "#FFFEF8",
+          background: PAPER_WHITE,
         }}
       >
         <Image
@@ -1188,44 +1175,12 @@ const SCENE_COMPONENTS: Record<
   read: ReadScene,
 };
 
-export default function WelcomeTutorial() {
-  const router = useRouter();
-  const [mounted, setMounted] = useState(false);
-  const isMobile = useIsMobile();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return (
-      <div style={{ width: "100vw", height: "100vh", background: "#0a0a0a" }} />
-    );
-  }
-
-  if (isMobile) {
-    return <MobileWelcomeTutorial />;
-  }
-
+export default function WelcomeTutorial({ onSkip }: { onSkip: () => void }) {
   const duration = SCENES[SCENES.length - 1].end;
-
-  const handleSkip = async () => {
-    try {
-      const res = await fetch("/api/users/me");
-      const { user } = await res.json();
-      if (user?.lastActiveClubId) {
-        router.push(`/clubs/${user.lastActiveClubId}`);
-      } else {
-        router.push("/");
-      }
-    } catch {
-      router.push("/");
-    }
-  };
 
   return (
     <div style={{ width: "100vw", height: "100vh", overflow: "hidden" }}>
-      <TutorialStage scenes={SCENES} duration={duration} onSkip={handleSkip}>
+      <TutorialStage scenes={SCENES} duration={duration} onSkip={onSkip}>
         {(time, { isManual }) => {
           let activeScene = SCENES[0];
           for (const s of SCENES) {
@@ -1240,14 +1195,18 @@ export default function WelcomeTutorial() {
 
           return (
             <div
-              style={{ position: "absolute", inset: 0, background: "#FFFEF8" }}
+              style={{
+                position: "absolute",
+                inset: 0,
+                background: PAPER_WHITE,
+              }}
             >
               {/* Paper texture noise */}
               <div
                 style={{
                   position: "absolute",
                   inset: 0,
-                  backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence baseFrequency='0.9' numOctaves='2'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.08 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>")`,
+                  backgroundImage: PAPER_NOISE_BG,
                   opacity: 0.6,
                   pointerEvents: "none",
                 }}

@@ -1,13 +1,15 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import Image from "next/image";
 import TutorialStage from "./TutorialStage";
 import NoiseBackground from "@/components/NoiseBackground";
 import {
+  BRUSH_FILTERS,
   Ease,
+  PAPER_NOISE_BG,
+  PAPER_WHITE,
   Scene,
   SCENES,
   rangeProgress,
@@ -31,22 +33,6 @@ const MOBILE_SCENES: Scene[] = [
   { ...SCENES[4], readyAt: 7.0 }, // reveal: 39–49
   { ...SCENES[5], readyAt: 7.0 }, // read: 49–59
 ];
-
-// ─── Shared brush highlight (same as desktop)
-
-const BRUSH_FILTERS: Record<string, string> = {
-  "#EECF01": "none",
-  "#C01582":
-    "brightness(0) saturate(100%) invert(18%) sepia(82%) saturate(3721%) hue-rotate(307deg) brightness(95%) contrast(98%)",
-  "#955CB5":
-    "brightness(0) saturate(100%) invert(42%) sepia(42%) saturate(887%) hue-rotate(232deg) brightness(94%) contrast(89%)",
-  "#FF6B35":
-    "brightness(0) saturate(100%) invert(57%) sepia(87%) saturate(2645%) hue-rotate(339deg) brightness(101%) contrast(101%)",
-  "#01EFFC":
-    "brightness(0) saturate(100%) invert(79%) sepia(91%) saturate(2670%) hue-rotate(137deg) brightness(103%) contrast(101%)",
-  "#00FF66":
-    "brightness(0) saturate(100%) invert(61%) sepia(97%) saturate(1000%) hue-rotate(88deg) brightness(102%) contrast(101%)",
-};
 
 function BrushHighlight({
   children,
@@ -127,7 +113,7 @@ function HandDrawnCircle({
         d={d}
         pathLength={totalLen}
         fill="none"
-        stroke="#FFFEF8"
+        stroke={PAPER_WHITE}
         strokeWidth="7"
         strokeLinecap="round"
         strokeDasharray={totalLen}
@@ -292,13 +278,13 @@ function MobileSceneLayout({
   const screenY = 240;
 
   return (
-    <div style={{ position: "absolute", inset: 0, background: "#FFFEF8" }}>
+    <div style={{ position: "absolute", inset: 0, background: PAPER_WHITE }}>
       {/* Paper noise */}
       <div
         style={{
           position: "absolute",
           inset: 0,
-          backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence baseFrequency='0.9' numOctaves='2'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.08 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>")`,
+          backgroundImage: PAPER_NOISE_BG,
           opacity: 0.6,
           pointerEvents: "none",
         }}
@@ -401,7 +387,7 @@ function MobileSceneLayout({
           lineHeight: 1.3,
           transform: `rotate(${-1 + (scene.id.charCodeAt(0) % 3)}deg)`,
           pointerEvents: "none",
-          textShadow: "0 0 6px #FFFEF8, 0 0 6px #FFFEF8",
+          textShadow: `0 0 6px ${PAPER_WHITE}, 0 0 6px ${PAPER_WHITE}`,
           zIndex: 5,
         }}
       >
@@ -436,13 +422,11 @@ function MobileSceneLayout({
 function MobileClubScene({
   time,
   scene,
-  isManual,
 }: {
   time: number;
   scene: Scene;
   isManual: boolean;
 }) {
-  void isManual;
   // Circle draws in after the screenshot lands, just before the note appears
   const circleProgress = rangeProgress(
     time,
@@ -475,13 +459,11 @@ function MobileClubScene({
 function MobileRiffScene({
   time,
   scene,
-  isManual,
 }: {
   time: number;
   scene: Scene;
   isManual: boolean;
 }) {
-  void isManual;
   // Circle draws in after screenshot lands, just before the note appears
   const circleProgress = rangeProgress(
     time,
@@ -521,13 +503,11 @@ const WRITE_TYPE = {
 function MobileWriteScene({
   time,
   scene,
-  isManual,
 }: {
   time: number;
   scene: Scene;
   isManual: boolean;
 }) {
-  void isManual;
   const env = sceneRise(time, scene.start, 0.5);
   const headlineStart = scene.start + 0.3;
   const headlineDur = 0.55;
@@ -668,17 +648,17 @@ function MobileWriteScene({
     color: "#000",
     lineHeight: 1.3,
     pointerEvents: "none",
-    textShadow: "0 0 6px #FFFEF8, 0 0 6px #FFFEF8",
+    textShadow: `0 0 6px ${PAPER_WHITE}, 0 0 6px ${PAPER_WHITE}`,
     zIndex: 5,
   };
 
   return (
-    <div style={{ position: "absolute", inset: 0, background: "#FFFEF8" }}>
+    <div style={{ position: "absolute", inset: 0, background: PAPER_WHITE }}>
       <div
         style={{
           position: "absolute",
           inset: 0,
-          backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence baseFrequency='0.9' numOctaves='2'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.08 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>")`,
+          backgroundImage: PAPER_NOISE_BG,
           opacity: 0.6,
           pointerEvents: "none",
         }}
@@ -961,13 +941,11 @@ function MobileWriteScene({
 function MobileRevealScene({
   time,
   scene,
-  isManual,
 }: {
   time: number;
   scene: Scene;
   isManual: boolean;
 }) {
-  void isManual;
   const hasFiredConfetti = useRef(false);
   const sceneT = time - scene.start;
 
@@ -977,8 +955,10 @@ function MobileRevealScene({
   const PAGE_IN = 3.6,
     PAGE_IN_DUR = 0.7;
   const BURST_START = 1.8;
+  const shouldFire = sceneT >= BURST_START;
 
-  if (sceneT >= BURST_START && !hasFiredConfetti.current) {
+  useEffect(() => {
+    if (!shouldFire || hasFiredConfetti.current) return;
     hasFiredConfetti.current = true;
     const colors = [
       "#00FF66",
@@ -1002,7 +982,7 @@ function MobileRevealScene({
       origin: { x: 0.7, y: 0.65 },
       colors,
     });
-    setTimeout(
+    const timer = setTimeout(
       () =>
         confetti({
           particleCount: 50,
@@ -1013,7 +993,8 @@ function MobileRevealScene({
         }),
       300
     );
-  }
+    return () => clearTimeout(timer);
+  }, [shouldFire]);
 
   const coverIn = rangeProgress(sceneT, COVER_IN, COVER_IN + 0.5, Ease.outBack);
   const coverOut = rangeProgress(
@@ -1070,12 +1051,12 @@ function MobileRevealScene({
   );
 
   return (
-    <div style={{ position: "absolute", inset: 0, background: "#FFFEF8" }}>
+    <div style={{ position: "absolute", inset: 0, background: PAPER_WHITE }}>
       <div
         style={{
           position: "absolute",
           inset: 0,
-          backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence baseFrequency='0.9' numOctaves='2'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.08 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>")`,
+          backgroundImage: PAPER_NOISE_BG,
           opacity: 0.6,
           pointerEvents: "none",
         }}
@@ -1204,7 +1185,7 @@ function MobileRevealScene({
               lineHeight: 1.3,
               transform: "rotate(-0.5deg)",
               pointerEvents: "none",
-              textShadow: "0 0 6px #FFFEF8, 0 0 6px #FFFEF8",
+              textShadow: `0 0 6px ${PAPER_WHITE}, 0 0 6px ${PAPER_WHITE}`,
               zIndex: 5,
             }}
           >
@@ -1284,13 +1265,11 @@ const MOBILE_READ_COMMENTS = [
 function MobileReadScene({
   time,
   scene,
-  isManual,
 }: {
   time: number;
   scene: Scene;
   isManual: boolean;
 }) {
-  void isManual;
   const sceneT = time - scene.start;
 
   const screenIn = rangeProgress(
@@ -1318,12 +1297,12 @@ function MobileReadScene({
   const headlineStart = scene.start + 0.3;
 
   return (
-    <div style={{ position: "absolute", inset: 0, background: "#FFFEF8" }}>
+    <div style={{ position: "absolute", inset: 0, background: PAPER_WHITE }}>
       <div
         style={{
           position: "absolute",
           inset: 0,
-          backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence baseFrequency='0.9' numOctaves='2'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.08 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>")`,
+          backgroundImage: PAPER_NOISE_BG,
           opacity: 0.6,
           pointerEvents: "none",
         }}
@@ -1438,7 +1417,7 @@ function MobileReadScene({
                   transform: `translateY(${(1 - cardIn) * 20}px) rotate(${c.rot}deg) scale(${0.88 + 0.12 * cardIn})`,
                   transformOrigin: "center",
                   opacity: cardIn,
-                  background: "#FFFEF8",
+                  background: PAPER_WHITE,
                   border: "2px solid #000",
                   boxShadow: `4px 4px 0 0 ${c.color}`,
                   padding: "6px 10px 10px",
@@ -1507,7 +1486,7 @@ function MobileReadScene({
           lineHeight: 1.3,
           transform: "rotate(1deg)",
           pointerEvents: "none",
-          textShadow: "0 0 6px #FFFEF8, 0 0 6px #FFFEF8",
+          textShadow: `0 0 6px ${PAPER_WHITE}, 0 0 6px ${PAPER_WHITE}`,
           zIndex: 5,
         }}
       >
@@ -1553,30 +1532,19 @@ const MOBILE_SCENE_COMPONENTS: Record<
 
 // ─── Orchestrator
 
-export default function MobileWelcomeTutorial() {
-  const router = useRouter();
+export default function MobileWelcomeTutorial({
+  onSkip,
+}: {
+  onSkip: () => void;
+}) {
   const duration = MOBILE_SCENES[MOBILE_SCENES.length - 1].end;
-
-  const handleSkip = async () => {
-    try {
-      const res = await fetch("/api/users/me");
-      const { user } = await res.json();
-      if (user?.lastActiveClubId) {
-        router.push(`/clubs/${user.lastActiveClubId}`);
-      } else {
-        router.push("/");
-      }
-    } catch {
-      router.push("/");
-    }
-  };
 
   return (
     <div style={{ width: "100vw", height: "100vh", overflow: "hidden" }}>
       <TutorialStage
         scenes={MOBILE_SCENES}
         duration={duration}
-        onSkip={handleSkip}
+        onSkip={onSkip}
         canvasW={CANVAS_W}
         canvasH={CANVAS_H}
       >
