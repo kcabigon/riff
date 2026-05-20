@@ -367,6 +367,7 @@ export default function JoinClubClient({
             showBorder={true}
             borderColor="#000000"
             borderWidth={2}
+            style={{ overflowX: "auto" }}
           />
 
           {club.description && (

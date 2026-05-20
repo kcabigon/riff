@@ -495,6 +495,7 @@ export default function ClubPageLayout({
             borderColor="#000000"
             borderWidth={2}
             onAvatarClick={handleAvatarClick}
+            style={{ overflowX: "auto" }}
           />
 
           {clubDescription && (
