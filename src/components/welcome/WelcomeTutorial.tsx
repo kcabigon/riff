@@ -152,12 +152,14 @@ const INTRO_COPIES = Array.from({ length: 26 }, (_, i) => {
   const s3 = ((i * 6271 + 2499) % 4789) / 4789;
   const s4 = ((i * 1181 + 5003) % 7919) / 7919;
   const s5 = ((i * 3571 + 1009) % 1597) / 1597;
+  const s6 = ((i * 4973 + 3571) % 6271) / 6271;
   return {
     x: 80 + s1 * 1120,
     y: 60 + s2 * 680,
     rot: (s3 - 0.5) * 56,
     size: 70 + s4 * 90,
     delay: s5 * 0.18,
+    speed: 0.75 + s6 * 0.6, // range [0.75, 1.35] — gives mosh-pit spread
   };
 });
 
@@ -168,10 +170,13 @@ function IntroScene({
   scene: Scene;
   isManual: boolean;
 }) {
+  const CX = 640;
+  const CY = 400;
   const centerIn = rangeProgress(time, 0, 0.5, Ease.out);
-  const centerOut = rangeProgress(time, 4.0, 4.8, Ease.out);
+  const centerOut = rangeProgress(time, 4.4, 5.2, Ease.out);
   const centerOpacity = centerIn * (1 - centerOut);
-  const collapseT = rangeProgress(time, 3.0, 3.8, Ease.inOut);
+  const orbitT = rangeProgress(time, 2.2, 3.8, Ease.linear);
+  const collapseT = rangeProgress(time, 3.8, 4.6, Ease.inOut);
 
   return (
     <>
@@ -181,6 +186,13 @@ function IntroScene({
         const prog = burstT * (1 - collapseT);
         const copyOpacity = Math.min(burstT, 1 - collapseT);
         if (copyOpacity <= 0) return null;
+        // Orbit each logo around the canvas center at its own speed.
+        // At orbitT=0, θ=0 and the formula reduces to (copy.x, copy.y) — no jump.
+        const θ = orbitT * Math.PI * 2 * copy.speed;
+        const dx = copy.x - CX;
+        const dy = copy.y - CY;
+        const targetX = CX + dx * Math.cos(θ) - dy * Math.sin(θ);
+        const targetY = CY + dx * Math.sin(θ) + dy * Math.cos(θ);
         return (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -192,8 +204,8 @@ function IntroScene({
               position: "absolute",
               width: copy.size,
               height: "auto",
-              left: 640 + (copy.x - 640) * prog,
-              top: 400 + (copy.y - 400) * prog,
+              left: CX + (targetX - CX) * prog,
+              top: CY + (targetY - CY) * prog,
               transform: `translate(-50%, -50%) rotate(${copy.rot * prog}deg)`,
               opacity: copyOpacity,
               pointerEvents: "none",
