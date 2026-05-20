@@ -65,7 +65,10 @@ export default async function ProfilePageRoute({
       wordCount: true,
       riffs: {
         where: { submittedAt: { not: null } },
-        select: { riff: { select: { status: true, clubId: true } } },
+        select: {
+          submittedAt: true,
+          riff: { select: { status: true, clubId: true } },
+        },
       },
       newShares: {
         where: { shareType: "PUBLIC" },
@@ -73,7 +76,12 @@ export default async function ProfilePageRoute({
         take: 1,
       },
     },
-    orderBy: { createdAt: "desc" },
+  });
+
+  rawPieces.sort((a, b) => {
+    const latestA = Math.max(...a.riffs.map((r) => r.submittedAt!.getTime()));
+    const latestB = Math.max(...b.riffs.map((r) => r.submittedAt!.getTime()));
+    return latestB - latestA;
   });
 
   const pieces = rawPieces.map((p) => ({
