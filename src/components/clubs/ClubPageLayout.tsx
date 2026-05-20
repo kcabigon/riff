@@ -257,7 +257,7 @@ export default function ClubPageLayout({
         />
       </div>
 
-      {/* Banner — full width, 320px desktop / 200px mobile */}
+      {/* Banner — full width, 320px desktop / 200px mobile — KEEP IN SYNC WITH: JoinClubClient.tsx (banner header layout, avatar sizes, maxWidth) */}
       {clubBannerImage && (
         <div
           className="club-banner"

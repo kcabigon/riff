@@ -199,7 +199,7 @@ export default function JoinClubClient({
         <LandingNavBar sticky />
       )}
 
-      {/* Banner */}
+      {/* Banner — KEEP IN SYNC WITH: ClubPageLayout.tsx (banner header layout, avatar sizes, maxWidth) */}
       {club.bannerImage && (
         <div
           className="club-banner"
@@ -232,7 +232,7 @@ export default function JoinClubClient({
                   flexDirection: "column",
                   gap: "16px",
                   alignItems: "flex-start",
-                  maxWidth: "360px",
+                  maxWidth: "396px",
                 }}
               >
                 <h1
@@ -427,7 +427,7 @@ export default function JoinClubClient({
 
             <AvatarStack
               users={club.members.map((m) => m.user)}
-              size={48}
+              size={isMobile ? 40 : 48}
               showBorder={true}
               borderColor="#000000"
               borderWidth={2}
