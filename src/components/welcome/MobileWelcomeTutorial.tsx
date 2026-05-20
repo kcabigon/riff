@@ -965,7 +965,7 @@ function MobileReadScene({
     dispW = dispH * ratio;
   }
   const screenX = (CANVAS_W - dispW) / 2;
-  const screenY = 240;
+  const screenY = 260;
 
   const env = sceneRise(time, scene.start, 0.5);
   const headlineStart = scene.start + 0.3;
@@ -1083,7 +1083,7 @@ function MobileReadScene({
         words={["like", "leaving", "notes", "in", "the", "margin"]}
         time={time}
         startTime={scene.start + 2.2}
-        top={570}
+        top={620}
         rotate={1}
       />
     </div>
