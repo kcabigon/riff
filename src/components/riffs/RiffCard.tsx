@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import CountdownTimer from "./CountdownTimer";
 import AvatarStack from "@/components/shared/AvatarStack";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
-import { useIsMobile } from "@/hooks/useMediaQuery";
 import {
   getRiffDisplayTitle,
   allPiecesSubmitted,
@@ -66,8 +65,6 @@ export default function RiffCard({
   const [isCardHovered, setIsCardHovered] = useState(false);
   const router = useRouter();
   const handleAvatarClick = useProfileNavigation();
-  const isMobile = useIsMobile();
-
   const deadlinePassed = isPastDeadline(riff.deadline ?? null);
   const piecesAllSubmitted = allPiecesSubmitted(
     riff.pieces,
@@ -84,7 +81,8 @@ export default function RiffCard({
     router.push(`/riffs/${riff.id}`);
   };
 
-  const avatarCap = isMobile ? (riff.participants.length > 5 ? 11 : 5) : 20;
+  const MAX_AVATARS = 10;
+  const overflowCount = Math.max(0, riff.participants.length - MAX_AVATARS);
 
   const existingPieceId =
     riff.pieces.find((p) => p.piece.authorId === currentUserId)?.piece.id ??
@@ -195,11 +193,46 @@ export default function RiffCard({
             >
               Joined by
             </p>
-            <AvatarStack
-              users={riff.participants.slice(0, avatarCap).map((p) => p.user)}
-              size={32}
-              onAvatarClick={handleAvatarClick}
-            />
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <AvatarStack
+                users={riff.participants
+                  .slice(0, MAX_AVATARS)
+                  .map((p) => p.user)}
+                size={32}
+                onAvatarClick={handleAvatarClick}
+                style={overflowCount > 0 ? { paddingRight: 0 } : undefined}
+              />
+              {overflowCount > 0 && (
+                <div
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 64,
+                    backgroundColor: "#E6E6E6",
+                    border: "2px solid #000000",
+                    boxShadow: "2px 2px 0px 0px #000000",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginLeft: "-4px",
+                    zIndex: 10,
+                    flexShrink: 0,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      color: "#000000",
+                      lineHeight: 1,
+                    }}
+                  >
+                    +{overflowCount}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
