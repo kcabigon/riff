@@ -136,7 +136,7 @@ Last updated: May 16, 2026
 
 ## Soon (post-launch)
 
-- [ ] 🔨 @jarric — Welcome tutorial: mobile-optimized version (portrait layout, stacked branch off feature/welcome-tutorial)
+- [x] Welcome tutorial: mobile-optimized version (portrait layout, swipe navigation)
 - [ ] Notification emails via Resend — deadline approaching, new comment
 - [ ] Deadline reminder cron job (Vercel Cron, 24h before deadline)
 - [ ] Toast notifications replacing `console.error` catches
