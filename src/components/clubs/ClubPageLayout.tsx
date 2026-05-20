@@ -284,14 +284,27 @@ export default function ClubPageLayout({
                 }}
               />
               <div
-                style={{
-                  position: "relative",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "16px",
-                  alignItems: "flex-start",
-                  maxWidth: "396px",
-                }}
+                style={
+                  club.members.length > 9
+                    ? {
+                        position: "relative",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "16px",
+                        alignItems: "flex-start",
+                        width: "100%",
+                        maxWidth: "1000px",
+                        padding: "0 24px",
+                      }
+                    : {
+                        position: "relative",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "16px",
+                        alignItems: "flex-start",
+                        maxWidth: "396px",
+                      }
+                }
               >
                 <div
                   style={{ display: "flex", alignItems: "center", gap: "12px" }}
@@ -382,6 +395,7 @@ export default function ClubPageLayout({
                       color: "#FFFFFF",
                       margin: 0,
                       lineHeight: "1.4",
+                      maxWidth: "600px",
                       display: "-webkit-box",
                       WebkitLineClamp: 4,
                       WebkitBoxOrient: "vertical",
@@ -604,6 +618,7 @@ export default function ClubPageLayout({
                   color: "#000000",
                   margin: 0,
                   lineHeight: "normal",
+                  maxWidth: "600px",
                 }}
               >
                 {clubDescription}
