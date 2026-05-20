@@ -359,9 +359,7 @@ export default function PiecesGrid({
                 </div>
               )}
               {piece.isPublic && <PublicBadge />}
-              {isLocked && !isOwnProfile && !piece.viewerHasClubAccess && (
-                <LockOverlay />
-              )}
+              {isLocked && <LockOverlay />}
               <PieceCard
                 piece={{
                   id: piece.id,
