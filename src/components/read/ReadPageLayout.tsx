@@ -447,15 +447,15 @@ export default function ReadPageLayout({
                 textAlign: "center",
               }}
             >
-              {piece.submittedAt && (
-                <>
-                  {formatSubmittedDate(piece.submittedAt)}
-                  {" \u2022 "}
-                </>
-              )}
               {readMinutes} min read
               {" \u2022 "}
               {piece.wordCount.toLocaleString()} words
+              {piece.submittedAt && (
+                <>
+                  {" \u2022 "}
+                  {formatSubmittedDate(piece.submittedAt)}
+                </>
+              )}
             </p>
 
             {/* Author */}

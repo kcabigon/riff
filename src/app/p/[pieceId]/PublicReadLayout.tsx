@@ -174,11 +174,11 @@ export default function PublicReadLayout({ piece }: PublicReadLayoutProps) {
                 margin: 0,
               }}
             >
-              {piece.submittedAt &&
-                `${formatSubmittedDate(piece.submittedAt)} · `}
               {piece.readLengthMin} min read
               {piece.wordCount > 0 &&
                 ` · ${piece.wordCount.toLocaleString()} words`}
+              {piece.submittedAt &&
+                ` · ${formatSubmittedDate(piece.submittedAt)}`}
             </p>
           </div>
         </div>
