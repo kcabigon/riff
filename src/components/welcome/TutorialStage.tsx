@@ -210,12 +210,13 @@ export default function TutorialStage({
           time={time}
           compact={compact}
         />
-        {!compact && !currentScene?.autoAdvance && (
+        {(!compact || isLast) && !currentScene?.autoAdvance && (
           <NextCTA
             onClick={handleNext}
             label={nextLabel}
             ready={ready}
             compact={compact}
+            dropIn={isLast}
           />
         )}
       </div>
@@ -315,16 +316,31 @@ function NextCTA({
   label,
   ready,
   compact,
+  dropIn,
 }: {
   onClick: () => void;
   label: string;
   ready: boolean;
   compact?: boolean;
+  dropIn?: boolean;
 }) {
   const [hover, setHover] = useState(false);
   const [press, setPress] = useState(false);
+  const [shown, setShown] = useState(!dropIn);
+
+  useEffect(() => {
+    if (!dropIn) {
+      setShown(true);
+    } else if (ready) {
+      setShown(true);
+    } else {
+      setShown(false);
+    }
+  }, [dropIn, ready]);
+
   const active = hover || ready;
   const shadow = compact ? "4px 4px 0 0" : "6px 6px 0 0";
+  const pressShift = compact ? 3 : 4;
   return (
     <button
       onClick={onClick}
@@ -347,8 +363,11 @@ function NextCTA({
             ? `${shadow} #000`
             : `${shadow} #00FF66`,
         transform: press
-          ? `translate(${compact ? 3 : 4}px, ${compact ? 3 : 4}px)`
-          : "translate(0, 0)",
+          ? `translate(${pressShift}px, ${pressShift}px)`
+          : shown
+            ? "translate(0, 0)"
+            : "translate(0, -70px)",
+        opacity: shown ? 1 : 0,
         padding: compact ? "7px 16px" : "8px 24px",
         fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
         fontSize: compact ? 13 : 16,
@@ -356,8 +375,9 @@ function NextCTA({
         letterSpacing: "0.02em",
         color: "#000",
         cursor: "pointer",
-        transition:
-          "box-shadow 0.35s ease-out, background 0.35s ease-out, transform 0.06s",
+        transition: shown
+          ? "box-shadow 0.35s ease-out, background 0.35s ease-out, transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease-out"
+          : "none",
         display: "flex",
         alignItems: "center",
         gap: compact ? 8 : 10,
@@ -365,15 +385,6 @@ function NextCTA({
       }}
     >
       {label}
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-        <path
-          d="M2 7h10M9 3l3.5 4-3.5 4"
-          stroke="#000"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
     </button>
   );
 }

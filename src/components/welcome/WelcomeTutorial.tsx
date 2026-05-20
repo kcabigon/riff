@@ -1171,7 +1171,6 @@ const SCENE_COMPONENTS: Record<
   intro: IntroScene,
   club: ClubScene,
   riff: () => null, // hoisted as RiffPolaroid
-  "write-a": () => null, // mobile-only split scene, not rendered on desktop
   write: WriteScene,
   reveal: RevealScene,
   read: ReadScene,

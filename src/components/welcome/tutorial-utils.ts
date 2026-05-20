@@ -49,7 +49,7 @@ export interface SceneTransition {
 }
 
 export interface Scene {
-  id: "intro" | "club" | "riff" | "write-a" | "write" | "reveal" | "read";
+  id: "intro" | "club" | "riff" | "write" | "reveal" | "read";
   start: number;
   end: number;
   headline: string[];

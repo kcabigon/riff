@@ -27,21 +27,7 @@ const MOBILE_SCENES: Scene[] = [
   SCENES[0], // intro: 0–6, autoAdvance
   { ...SCENES[1], readyAt: 4.0 }, // club: 6–16
   { ...SCENES[2], readyAt: 4.0 }, // riff: 16–25
-  {
-    // write-a: riff page + "title and word count are visible" (scene 3.0)
-    ...writeScene,
-    id: "write-a" as const,
-    start: 25,
-    end: 33,
-    readyAt: 4.5,
-  },
-  {
-    // write-b: editor + type transition → "private." + lock badge (scene 3.5)
-    ...writeScene,
-    start: 33,
-    end: 39,
-    readyAt: 5.0,
-  },
+  { ...writeScene, start: 25, end: 39, readyAt: 13 }, // write: 25–39, both phases auto-flow
   { ...SCENES[4], readyAt: 7.0 }, // reveal: 39–49
   { ...SCENES[5], readyAt: 7.0 }, // read: 49–59
 ];
@@ -101,25 +87,78 @@ function BrushHighlight({
   );
 }
 
+// ─── Hand-drawn circle annotation
+
+function HandDrawnCircle({
+  cx,
+  cy,
+  rx,
+  ry,
+  progress,
+  opacity = 1,
+}: {
+  cx: number;
+  cy: number;
+  rx: number;
+  ry: number;
+  progress: number;
+  opacity?: number;
+}) {
+  const d =
+    `M ${cx - rx} ${cy} ` +
+    `A ${rx} ${ry} 0 1 1 ${cx + rx} ${cy} ` +
+    `A ${rx} ${ry} 0 1 1 ${cx - rx} ${cy}`;
+  const totalLen = 100;
+  const dashOffset = totalLen * (1 - Math.max(0, Math.min(1, progress)));
+  return (
+    <svg
+      style={{
+        position: "absolute",
+        inset: 0,
+        width: "100%",
+        height: "100%",
+        pointerEvents: "none",
+        opacity,
+        zIndex: 4,
+        overflow: "visible",
+      }}
+    >
+      <path
+        d={d}
+        pathLength={totalLen}
+        fill="none"
+        stroke="#FFFEF8"
+        strokeWidth="7"
+        strokeLinecap="round"
+        strokeDasharray={totalLen}
+        strokeDashoffset={dashOffset}
+        opacity={0.9}
+      />
+      <path
+        d={d}
+        pathLength={totalLen}
+        fill="none"
+        stroke="#000"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeDasharray={totalLen}
+        strokeDashoffset={dashOffset}
+      />
+    </svg>
+  );
+}
+
 // ─── Intro scene (portrait canvas — 390×780 center)
 
-const MOBILE_INTRO_COPIES = Array.from({ length: 20 }, (_, i) => {
-  const angle = (i / 20) * 2 * Math.PI + 0.3;
+const MOBILE_INTRO_COPIES = Array.from({ length: 26 }, (_, i) => {
+  const s1 = ((i * 9301 + 49297) % 233280) / 233280;
+  const s2 = ((i * 73 + 19) % 100) / 100;
   const s3 = ((i * 6271 + 2499) % 4789) / 4789;
   const s4 = ((i * 1181 + 5003) % 7919) / 7919;
   const s5 = ((i * 3571 + 1009) % 1597) / 1597;
-  const cosA = Math.cos(angle);
-  const sinA = Math.sin(angle);
-  // Distance from center (195, 390) to canvas edge in direction (cosA, sinA)
-  let t = Infinity;
-  if (cosA > 0.0001) t = Math.min(t, (390 - 195) / cosA);
-  if (cosA < -0.0001) t = Math.min(t, -195 / cosA);
-  if (sinA > 0.0001) t = Math.min(t, (780 - 390) / sinA);
-  if (sinA < -0.0001) t = Math.min(t, -390 / sinA);
-  const r = t * (0.7 + s3 * 0.3);
   return {
-    x: 195 + cosA * r,
-    y: 390 + sinA * r,
+    x: 24 + s1 * 342,
+    y: 58 + s2 * 663,
     rot: (s3 - 0.5) * 56,
     size: 36 + s4 * 56,
     delay: s5 * 0.18,
@@ -240,7 +279,7 @@ function MobileSceneLayout({
     dispW = dispH * ratio;
   }
   const screenX = (CANVAS_W - dispW) / 2;
-  const screenY = 215;
+  const screenY = 240;
 
   return (
     <div style={{ position: "absolute", inset: 0, background: "#FFFEF8" }}>
@@ -260,7 +299,7 @@ function MobileSceneLayout({
         style={{
           position: "absolute",
           left: 24,
-          top: 68,
+          top: 75,
           maxWidth: CANVAS_W - 48,
           opacity: env,
           transform: `translateY(${(1 - env) * 10}px)`,
@@ -344,7 +383,7 @@ function MobileSceneLayout({
         style={{
           position: "absolute",
           left: 24,
-          top: screenY + dispH + 24,
+          top: 550,
           maxWidth: CANVAS_W - 48,
           fontFamily: "var(--font-over-the-rainbow), cursive",
           fontSize: 26,
@@ -394,6 +433,13 @@ function MobileClubScene({
   isManual: boolean;
 }) {
   void isManual;
+  // Circle draws in after the screenshot lands, just before the note appears
+  const circleProgress = rangeProgress(
+    time,
+    scene.start + 3.8,
+    scene.start + 4.6,
+    Ease.out
+  );
   return (
     <MobileSceneLayout
       time={time}
@@ -403,7 +449,16 @@ function MobileClubScene({
       screenshotHeight={483}
       screenshotRotate={1.2}
       note="this is the club page, and here's you and your friends"
-    />
+    >
+      {/* Circle the club header — "LIT KIDS" title + avatars + stats */}
+      <HandDrawnCircle
+        cx={179}
+        cy={76}
+        rx={115}
+        ry={40}
+        progress={circleProgress}
+      />
+    </MobileSceneLayout>
   );
 }
 
@@ -417,6 +472,13 @@ function MobileRiffScene({
   isManual: boolean;
 }) {
   void isManual;
+  // Circle draws in after screenshot lands, just before the note appears
+  const circleProgress = rangeProgress(
+    time,
+    scene.start + 3.8,
+    scene.start + 4.6,
+    Ease.out
+  );
   return (
     <MobileSceneLayout
       time={time}
@@ -426,41 +488,23 @@ function MobileRiffScene({
       screenshotHeight={1440}
       screenshotRotate={-1.4}
       note="this is the riff page, everyone writes before time runs out"
-    />
+    >
+      {/* Circle the CTA + countdown — top-right corner of riff page */}
+      <HandDrawnCircle
+        cx={282}
+        cy={43}
+        rx={60}
+        ry={26}
+        progress={circleProgress}
+      />
+    </MobileSceneLayout>
   );
 }
 
-// Scene 3.0 — riff page stays visible, "title and word count are visible"
-// Mirrors desktop write Phase A before the riff polaroid flies off at t=8s
-
-function MobileWritePhaseAScene({
-  time,
-  scene,
-  isManual,
-}: {
-  time: number;
-  scene: Scene;
-  isManual: boolean;
-}) {
-  void isManual;
-  return (
-    <MobileSceneLayout
-      time={time}
-      scene={scene}
-      screenshotSrc="/tutorial/screens/riff-page.png"
-      screenshotWidth={2272}
-      screenshotHeight={1440}
-      screenshotRotate={1.0}
-      note="your title and word count are visible to friends"
-    />
-  );
-}
-
-// Scene 3.5 — editor slides in, type transition parallel. → private., lock badge:
 const WRITE_TYPE = {
   word1: "parallel.",
   word2: "private.",
-  reverseOffset: 1.5,
+  reverseOffset: 4.8,
   charDur: 0.08,
 };
 
@@ -492,6 +536,7 @@ function MobileWriteScene({
     Ease.out
   );
 
+  // Type transition: "parallel." erases, "private." types in — matches desktop timing
   const { word1, word2, reverseOffset, charDur } = WRITE_TYPE;
   const reverseStart = scene.start + reverseOffset;
   const reverseDur = word1.length * charDur;
@@ -514,15 +559,54 @@ function MobileWriteScene({
     }
   }
 
-  const screenIn = rangeProgress(
+  const screenY = 240;
+  const accentColor = scene.highlightColor;
+
+  // Riff page — phase A (enters at start, exits at sceneT 8.0)
+  const riffRatio = 2272 / 1440;
+  const riffDispW = 358;
+  const riffDispH = riffDispW / riffRatio;
+  const riffScreenX = (CANVAS_W - riffDispW) / 2;
+  const riffEnter = rangeProgress(
     time,
     scene.start,
     scene.start + 0.7,
     Ease.outBack
   );
+  const riffExitStart = scene.start + 6.3;
+  const riffExit = rangeProgress(
+    time,
+    riffExitStart,
+    riffExitStart + 0.9,
+    Ease.inOut
+  );
+  const riffOpacity = riffEnter * (1 - riffExit);
+  const riffScale = riffEnter * (1 + riffExit * 0.55);
 
-  // LockBadge timing — compressed for mobile write-b (6s scene)
-  const lockSettleAt = scene.start + 3.5;
+  // Write page — phase B (enters at sceneT 8.5, matches desktop writeIn)
+  const maxW = 358;
+  const maxH = 290;
+  const writeRatio = 2020 / 1670;
+  let writeDispW = maxW;
+  let writeDispH = writeDispW / writeRatio;
+  if (writeDispH > maxH) {
+    writeDispH = maxH;
+    writeDispW = writeDispH * writeRatio;
+  }
+  const writeScreenX = (CANVAS_W - writeDispW) / 2;
+  const writeInStart = scene.start + 6.8;
+  const writeIn = rangeProgress(
+    time,
+    writeInStart,
+    writeInStart + 1.0,
+    Ease.outBack
+  );
+  const writeTy = (1 - writeIn) * 110;
+  const writeScale = 0.88 + 0.12 * writeIn;
+  const writeRot = 4 - 2.6 * writeIn;
+
+  // Lock badge
+  const lockSettleAt = scene.start + 9.8;
   const lockT = time - lockSettleAt;
   const stampIn = lockT >= 0 ? rangeProgress(lockT, 0, 0.4, Ease.outBack) : 0;
   const wobbleDecay =
@@ -532,20 +616,51 @@ function MobileWriteScene({
   const lockScale = stampIn > 0 ? 2.2 - 1.2 * stampIn : 0;
   const ring1 = lockT >= 0 ? rangeProgress(lockT, 0.25, 0.95, Ease.out) : 0;
   const ring2 = lockT >= 0 ? rangeProgress(lockT, 0.4, 1.15, Ease.out) : 0;
-  const accentColor = scene.highlightColor;
 
-  // Screenshot dimensions — actual write-page.png is 2020×1670 (landscape)
-  const maxW = 358;
-  const maxH = 290;
-  const ratio = 2020 / 1670;
-  let dispW = maxW;
-  let dispH = dispW / ratio;
-  if (dispH > maxH) {
-    dispH = maxH;
-    dispW = dispH * ratio;
-  }
-  const screenX = (CANVAS_W - dispW) / 2;
-  const screenY = 215;
+  // Note 1 fades in at sceneT 2.2, fades out at sceneT 5.8
+  const note1FadeOut = rangeProgress(
+    time,
+    scene.start + 5.8,
+    scene.start + 6.5,
+    Ease.out
+  );
+  const note1Words = [
+    "your",
+    "title",
+    "and",
+    "word",
+    "count",
+    "are",
+    "visible",
+    "to",
+    "friends",
+  ];
+
+  // Note 2 appears at sceneT 7.8 after write page is in
+  const note2Start = scene.start + 7.8;
+  const note2Words = [
+    "your",
+    "writing",
+    "stays",
+    "private",
+    "until",
+    "the",
+    "reveal",
+  ];
+
+  const noteBase: React.CSSProperties = {
+    position: "absolute",
+    left: 24,
+    top: 570,
+    maxWidth: CANVAS_W - 48,
+    fontFamily: "var(--font-over-the-rainbow), cursive",
+    fontSize: 26,
+    color: "#000",
+    lineHeight: 1.3,
+    pointerEvents: "none",
+    textShadow: "0 0 6px #FFFEF8, 0 0 6px #FFFEF8",
+    zIndex: 5,
+  };
 
   return (
     <div style={{ position: "absolute", inset: 0, background: "#FFFEF8" }}>
@@ -559,12 +674,12 @@ function MobileWriteScene({
         }}
       />
 
-      {/* Headline with type transition */}
+      {/* Headline — persists through both phases, type transition at sceneT 6.5 */}
       <div
         style={{
           position: "absolute",
           left: 24,
-          top: 68,
+          top: 75,
           maxWidth: CANVAS_W - 48,
           opacity: env,
           transform: `translateY(${(1 - env) * 10}px)`,
@@ -606,20 +721,69 @@ function MobileWriteScene({
         </div>
       </div>
 
-      {/* Write page screenshot */}
-      {screenIn > 0.005 && (
+      {/* Riff page — phase A, zoom-punches out at sceneT 8 */}
+      {riffOpacity > 0.005 && (
         <div
           style={{
             position: "absolute",
-            left: screenX,
+            left: riffScreenX,
             top: screenY,
-            width: dispW,
-            height: dispH,
+            width: riffDispW,
+            height: riffDispH,
             background: "#FFF",
             border: "2px solid #000",
             boxShadow: "8px 8px 0 0 rgba(0,0,0,0.85)",
-            transform: `rotate(-1.2deg) scale(${screenIn})`,
+            transform: `rotate(1.0deg) scale(${riffScale})`,
             transformOrigin: "center",
+            opacity: riffOpacity,
+            overflow: "hidden",
+          }}
+        >
+          <Image
+            src="/tutorial/screens/riff-page.png"
+            alt="Riff active riff page"
+            width={2272}
+            height={1440}
+            priority
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              objectPosition: "top",
+            }}
+          />
+          {/* Circle the 3-piece card row, fades out with the riff page */}
+          <HandDrawnCircle
+            cx={179}
+            cy={132}
+            rx={155}
+            ry={56}
+            progress={rangeProgress(
+              time,
+              scene.start + 3.8,
+              scene.start + 4.6,
+              Ease.out
+            )}
+            opacity={1 - riffExit}
+          />
+        </div>
+      )}
+
+      {/* Write page — phase B, slides in at sceneT 8.5 */}
+      {writeIn > 0.005 && (
+        <div
+          style={{
+            position: "absolute",
+            left: writeScreenX,
+            top: screenY,
+            width: writeDispW,
+            height: writeDispH,
+            background: "#FFF",
+            border: "2px solid #000",
+            boxShadow: "8px 8px 0 0 rgba(0,0,0,0.85)",
+            transform: `translateY(${writeTy}px) rotate(${writeRot}deg) scale(${writeScale})`,
+            transformOrigin: "center",
+            opacity: writeIn,
             overflow: "hidden",
           }}
         >
@@ -639,13 +803,13 @@ function MobileWriteScene({
         </div>
       )}
 
-      {/* Lock badge — repositioned for portrait canvas */}
+      {/* Lock badge — stamps in at sceneT 11.5 */}
       {stampIn > 0 && (
         <div
           style={{
             position: "absolute",
-            left: screenX + dispW - 10,
-            top: screenY + 30,
+            left: writeScreenX + writeDispW / 2,
+            top: screenY + writeDispH / 2,
             pointerEvents: "none",
             zIndex: 5,
           }}
@@ -725,46 +889,60 @@ function MobileWriteScene({
         </div>
       )}
 
-      {/* Note */}
+      {/* Note 1 — phase A, fades out as riff page exits */}
       <div
         style={{
-          position: "absolute",
-          left: 24,
-          top: screenY + dispH + 24,
-          maxWidth: CANVAS_W - 48,
-          fontFamily: "var(--font-over-the-rainbow), cursive",
-          fontSize: 26,
-          color: "#000",
-          lineHeight: 1.3,
-          transform: "rotate(-1deg)",
-          pointerEvents: "none",
-          textShadow: "0 0 6px #FFFEF8, 0 0 6px #FFFEF8",
-          zIndex: 5,
+          ...noteBase,
+          transform: "rotate(1.0deg)",
+          opacity: 1 - note1FadeOut,
         }}
       >
-        {["your", "writing", "stays", "private", "until", "the", "reveal"].map(
-          (word, wi) => {
-            const wIn = rangeProgress(
-              time,
-              scene.start + 3.2 + wi * 0.14,
-              scene.start + 3.2 + wi * 0.14 + 0.18,
-              Ease.out
-            );
-            return (
-              <span
-                key={wi}
-                style={{
-                  display: "inline-block",
-                  opacity: wIn,
-                  transform: `translateY(${(1 - wIn) * 5}px)`,
-                  marginRight: wi < 6 ? "0.25em" : 0,
-                }}
-              >
-                {word}
-              </span>
-            );
-          }
-        )}
+        {note1Words.map((word, wi) => {
+          const wIn = rangeProgress(
+            time,
+            scene.start + 2.2 + wi * 0.14,
+            scene.start + 2.2 + wi * 0.14 + 0.18,
+            Ease.out
+          );
+          return (
+            <span
+              key={wi}
+              style={{
+                display: "inline-block",
+                opacity: wIn,
+                transform: `translateY(${(1 - wIn) * 5}px)`,
+                marginRight: wi < note1Words.length - 1 ? "0.25em" : 0,
+              }}
+            >
+              {word}
+            </span>
+          );
+        })}
+      </div>
+
+      {/* Note 2 — phase B, appears after write page lands */}
+      <div style={{ ...noteBase, transform: "rotate(-1.0deg)" }}>
+        {note2Words.map((word, wi) => {
+          const wIn = rangeProgress(
+            time,
+            note2Start + wi * 0.14,
+            note2Start + wi * 0.14 + 0.18,
+            Ease.out
+          );
+          return (
+            <span
+              key={wi}
+              style={{
+                display: "inline-block",
+                opacity: wIn,
+                transform: `translateY(${(1 - wIn) * 5}px)`,
+                marginRight: wi < note2Words.length - 1 ? "0.25em" : 0,
+              }}
+            >
+              {word}
+            </span>
+          );
+        })}
       </div>
     </div>
   );
@@ -853,7 +1031,7 @@ function MobileRevealScene({
     cW = cH * coverRatio;
   }
   const coverX = (CANVAS_W - cW) / 2;
-  const coverY = 200;
+  const coverY = 240;
 
   // Reveal page: 720×456 ratio. Fit in maxW=358, maxH=260
   const pageRatio = 720 / 456;
@@ -864,7 +1042,7 @@ function MobileRevealScene({
     pW = pH * pageRatio;
   }
   const pageX = (CANVAS_W - pW) / 2;
-  const pageY = 215;
+  const pageY = 240;
 
   const env = sceneRise(time, scene.start, 0.5);
   const headlineStart = scene.start + 0.3;
@@ -898,7 +1076,7 @@ function MobileRevealScene({
         style={{
           position: "absolute",
           left: 24,
-          top: 68,
+          top: 75,
           maxWidth: CANVAS_W - 48,
           opacity: env,
           transform: `translateY(${(1 - env) * 10}px)`,
@@ -1008,7 +1186,7 @@ function MobileRevealScene({
             style={{
               position: "absolute",
               left: 24,
-              top: coverY + 310 + 20,
+              top: 550,
               maxWidth: CANVAS_W - 48,
               fontFamily: "var(--font-over-the-rainbow), cursive",
               fontSize: 26,
@@ -1124,7 +1302,7 @@ function MobileReadScene({
     dispW = dispH * ratio;
   }
   const screenX = (CANVAS_W - dispW) / 2;
-  const screenY = 215;
+  const screenY = 240;
 
   const env = sceneRise(time, scene.start, 0.5);
   const headlineStart = scene.start + 0.3;
@@ -1146,7 +1324,7 @@ function MobileReadScene({
         style={{
           position: "absolute",
           left: 24,
-          top: 68,
+          top: 75,
           maxWidth: CANVAS_W - 48,
           opacity: env,
           transform: `translateY(${(1 - env) * 10}px)`,
@@ -1311,7 +1489,7 @@ function MobileReadScene({
         style={{
           position: "absolute",
           left: 24,
-          top: screenY + dispH + 24,
+          top: 570,
           maxWidth: CANVAS_W - 48,
           fontFamily: "var(--font-over-the-rainbow), cursive",
           fontSize: 26,
@@ -1358,7 +1536,6 @@ const MOBILE_SCENE_COMPONENTS: Record<
   intro: MobileIntroScene,
   club: MobileClubScene,
   riff: MobileRiffScene,
-  "write-a": MobileWritePhaseAScene,
   write: MobileWriteScene,
   reveal: MobileRevealScene,
   read: MobileReadScene,

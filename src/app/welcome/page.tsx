@@ -1,5 +1,5 @@
 import { requireAuth } from "@/lib/auth-utils";
-import WelcomeTutorial from "@/components/welcome/WelcomeTutorial";
+import WelcomeClient from "@/components/welcome/WelcomeClient";
 
 export const metadata = {
   title: "Welcome",
@@ -7,5 +7,5 @@ export const metadata = {
 
 export default async function WelcomePage() {
   await requireAuth();
-  return <WelcomeTutorial />;
+  return <WelcomeClient />;
 }
