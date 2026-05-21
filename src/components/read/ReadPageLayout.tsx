@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState, useCallback, useMemo } from "react";
+import { formatSubmittedDate } from "@/lib/timeAgo";
 import { useRouter } from "next/navigation";
 import Avatar from "@/components/shared/Avatar";
 import ReadToggle from "./ReadToggle";
@@ -41,15 +42,6 @@ interface PendingSelection {
   start: number;
   end: number;
   rect: DOMRect;
-}
-
-function formatSubmittedDate(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
 }
 
 interface ReadPageLayoutProps {

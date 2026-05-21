@@ -5,15 +5,7 @@ import { getSharedExtensions } from "@/components/editor/extensions/sharedExtens
 import "@/app/write/[pieceId]/editor.css";
 import Image from "next/image";
 import Link from "next/link";
-
-function formatSubmittedDate(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+import { formatSubmittedDate } from "@/lib/timeAgo";
 
 interface PublicReadLayoutProps {
   piece: {
