@@ -257,7 +257,7 @@ export default function ClubPageLayout({
         />
       </div>
 
-      {/* Banner — full width, 320px desktop / 200px mobile */}
+      {/* Banner — full width, 320px desktop / 200px mobile — KEEP IN SYNC WITH: JoinClubClient.tsx (banner header layout, avatar sizes, maxWidth) */}
       {clubBannerImage && (
         <div
           className="club-banner"
@@ -284,14 +284,27 @@ export default function ClubPageLayout({
                 }}
               />
               <div
-                style={{
-                  position: "relative",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "16px",
-                  alignItems: "flex-start",
-                  maxWidth: "360px",
-                }}
+                style={
+                  club.members.length > 9
+                    ? {
+                        position: "relative",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "16px",
+                        alignItems: "flex-start",
+                        width: "100%",
+                        maxWidth: "1000px",
+                        padding: "0 24px",
+                      }
+                    : {
+                        position: "relative",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "16px",
+                        alignItems: "flex-start",
+                        maxWidth: "396px",
+                      }
+                }
               >
                 <div
                   style={{ display: "flex", alignItems: "center", gap: "12px" }}
@@ -382,6 +395,7 @@ export default function ClubPageLayout({
                       color: "#FFFFFF",
                       margin: 0,
                       lineHeight: "1.4",
+                      maxWidth: "600px",
                       display: "-webkit-box",
                       WebkitLineClamp: 4,
                       WebkitBoxOrient: "vertical",
@@ -411,7 +425,7 @@ export default function ClubPageLayout({
             <h1
               style={{
                 fontFamily: "var(--font-dm-serif-text)",
-                fontSize: "28px",
+                fontSize: "32px",
                 fontWeight: 400,
                 color: "#000000",
                 margin: 0,
@@ -439,7 +453,7 @@ export default function ClubPageLayout({
             <p
               style={{
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
+                fontSize: "16px",
                 fontWeight: 300,
                 color: "#000000",
                 margin: 0,
@@ -450,7 +464,7 @@ export default function ClubPageLayout({
             <p
               style={{
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
+                fontSize: "16px",
                 fontWeight: 300,
                 color: "#000000",
                 margin: 0,
@@ -461,7 +475,7 @@ export default function ClubPageLayout({
             <p
               style={{
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
+                fontSize: "16px",
                 fontWeight: 300,
                 color: "#000000",
                 margin: 0,
@@ -481,13 +495,14 @@ export default function ClubPageLayout({
             borderColor="#000000"
             borderWidth={2}
             onAvatarClick={handleAvatarClick}
+            style={{ overflowX: "auto" }}
           />
 
           {clubDescription && (
             <p
               style={{
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: "15px",
+                fontSize: "16px",
                 fontWeight: 300,
                 color: "#000000",
                 margin: 0,
@@ -588,11 +603,12 @@ export default function ClubPageLayout({
 
             <AvatarStack
               users={club.members.map((m) => m.user)}
-              size={48}
+              size={isMobile ? 40 : 48}
               showBorder={true}
               borderColor="#000000"
               borderWidth={2}
               onAvatarClick={handleAvatarClick}
+              style={isMobile ? { overflowX: "auto" } : undefined}
             />
 
             {clubDescription && (
@@ -604,6 +620,7 @@ export default function ClubPageLayout({
                   color: "#000000",
                   margin: 0,
                   lineHeight: "normal",
+                  maxWidth: "600px",
                 }}
               >
                 {clubDescription}
