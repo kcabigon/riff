@@ -22,11 +22,19 @@ async function getPiece(pieceId: string) {
         select: { id: true },
         take: 1,
       },
+      riffs: {
+        where: { submittedAt: { not: null } },
+        select: { submittedAt: true },
+        orderBy: { submittedAt: "desc" },
+        take: 1,
+      },
     },
   });
 
   if (!piece || piece.newShares.length === 0) return null;
-  return piece;
+
+  const submittedAt = piece.riffs[0]?.submittedAt?.toISOString() ?? null;
+  return { ...piece, submittedAt };
 }
 
 export async function generateMetadata({

@@ -218,16 +218,18 @@ export default function ProfilePage({
               onClick={
                 !featured.isRevealed && isOwnProfile
                   ? () => router.push(`/write/${featured.id}`)
-                  : !featured.isRevealed
-                    ? () => {}
-                    : isOwnProfile || featured.viewerHasClubAccess
-                      ? () =>
-                          router.push(
-                            `/read/${featured.id}?from=profile&userId=${user.id}`
-                          )
-                      : featured.isPublic
-                        ? () => router.push(`/p/${featured.id}`)
-                        : () => {}
+                  : !featured.isRevealed && featured.isPublic
+                    ? () => router.push(`/p/${featured.id}`)
+                    : !featured.isRevealed
+                      ? () => {}
+                      : isOwnProfile || featured.viewerHasClubAccess
+                        ? () =>
+                            router.push(
+                              `/read/${featured.id}?from=profile&userId=${user.id}`
+                            )
+                        : featured.isPublic
+                          ? () => router.push(`/p/${featured.id}`)
+                          : () => {}
               }
               isOwnProfile={isOwnProfile}
               onDelete={() =>
