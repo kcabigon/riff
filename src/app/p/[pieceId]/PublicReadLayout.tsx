@@ -5,6 +5,7 @@ import { getSharedExtensions } from "@/components/editor/extensions/sharedExtens
 import "@/app/write/[pieceId]/editor.css";
 import Image from "next/image";
 import Link from "next/link";
+import { formatSubmittedDate } from "@/lib/timeAgo";
 
 interface PublicReadLayoutProps {
   piece: {
@@ -14,6 +15,7 @@ interface PublicReadLayoutProps {
     currentContent: string;
     wordCount: number;
     readLengthMin: number;
+    submittedAt: string | null;
     author: {
       id: string;
       name: string | null;
@@ -167,6 +169,8 @@ export default function PublicReadLayout({ piece }: PublicReadLayoutProps) {
               {piece.readLengthMin} min read
               {piece.wordCount > 0 &&
                 ` · ${piece.wordCount.toLocaleString()} words`}
+              {piece.submittedAt &&
+                ` · ${formatSubmittedDate(piece.submittedAt)}`}
             </p>
           </div>
         </div>

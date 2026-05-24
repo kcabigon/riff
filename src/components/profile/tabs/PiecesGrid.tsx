@@ -164,10 +164,13 @@ export function FeaturedPiece({
           width: "100%",
           height: "480px",
           border: "2px solid #000000",
-          cursor: !piece.isRevealed && !isOwnProfile ? "default" : "pointer",
+          cursor:
+            !piece.isRevealed && !isOwnProfile && !piece.isPublic
+              ? "default"
+              : "pointer",
           overflow: "hidden",
           boxShadow:
-            isHovered && (piece.isRevealed || isOwnProfile)
+            isHovered && (piece.isRevealed || isOwnProfile || piece.isPublic)
               ? "8px 8px 0px 0px #000000"
               : "none",
           transition: "none",
@@ -192,7 +195,7 @@ export function FeaturedPiece({
           }}
         />
 
-        {!piece.isRevealed && <LockOverlay />}
+        {!piece.isRevealed && !piece.isPublic && <LockOverlay />}
 
         {piece.isPublic && <PublicBadge top="12px" left="12px" />}
 
@@ -325,11 +328,13 @@ export default function PiecesGrid({
       `}</style>
       <div className="pieces-grid">
         {pieces.map((piece) => {
-          const isLocked = !piece.isRevealed;
+          const isLocked = !piece.isRevealed && !piece.isPublic;
           const handleClick = !piece.isRevealed
             ? isOwnProfile
               ? () => router.push(`/write/${piece.id}`)
-              : undefined
+              : piece.isPublic
+                ? () => router.push(`/p/${piece.id}`)
+                : undefined
             : isOwnProfile || piece.viewerHasClubAccess
               ? () =>
                   router.push(
@@ -359,9 +364,7 @@ export default function PiecesGrid({
                 </div>
               )}
               {piece.isPublic && <PublicBadge />}
-              {isLocked && !isOwnProfile && !piece.viewerHasClubAccess && (
-                <LockOverlay />
-              )}
+              {isLocked && <LockOverlay />}
               <PieceCard
                 piece={{
                   id: piece.id,

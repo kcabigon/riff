@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState, useCallback, useMemo } from "react";
+import { formatSubmittedDate } from "@/lib/timeAgo";
 import { useRouter } from "next/navigation";
 import Avatar from "@/components/shared/Avatar";
 import ReadToggle from "./ReadToggle";
@@ -52,6 +53,7 @@ interface ReadPageLayoutProps {
     coverImage: string | null;
     wordCount: number;
     readLengthMin: number;
+    submittedAt: string | null;
     author: CommentAuthor;
   };
   riffId: string;
@@ -437,12 +439,15 @@ export default function ReadPageLayout({
                 textAlign: "center",
               }}
             >
-              <span style={{ fontWeight: "bold" }}>{readMinutes}</span> min read
+              {readMinutes} min read
               {" \u2022 "}
-              <span style={{ fontWeight: "bold" }}>
-                {piece.wordCount.toLocaleString()}
-              </span>{" "}
-              words
+              {piece.wordCount.toLocaleString()} words
+              {piece.submittedAt && (
+                <>
+                  {" \u2022 "}
+                  {formatSubmittedDate(piece.submittedAt)}
+                </>
+              )}
             </p>
 
             {/* Author */}
