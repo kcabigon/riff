@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { notifyClubMembers } from "@/lib/notifications";
 import { sendMemberJoinedEmail, batchNotificationsEnabled } from "@/lib/resend";
 import { NotificationType } from "@prisma/client";
+import { getBaseUrl } from "@/lib/env";
 
 // POST /api/clubs/[id]/join — Join a club via the public join link
 export async function POST(
@@ -47,7 +48,7 @@ export async function POST(
     });
 
     // Notify existing members and send emails (non-blocking)
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const appUrl = getBaseUrl();
     const clubUrl = `${appUrl}/clubs/${clubId}`;
     notifyClubMembers(
       clubId,
