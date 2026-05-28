@@ -15,7 +15,12 @@ export async function generateMetadata({
     where: { id },
     select: { title: true, volumeNumber: true },
   });
-  const label = riff ? (riff.title ?? `Vol. ${riff.volumeNumber}`) : "Riff";
+  const label = riff
+    ? (riff.title ??
+      (riff.volumeNumber != null
+        ? `Vol. ${riff.volumeNumber}`
+        : "Untitled Riff"))
+    : "Untitled Riff";
   return {
     title: label,
     description: `Read the pieces from this riff on Riff.`,
