@@ -13,16 +13,10 @@ export async function generateMetadata({
   const { id } = await params;
   const riff = await prisma.riff.findUnique({
     where: { id },
-    select: { title: true, volumeNumber: true },
+    select: { club: { select: { name: true } } },
   });
-  const label = riff
-    ? (riff.title ??
-      (riff.volumeNumber != null
-        ? `Vol. ${riff.volumeNumber}`
-        : "Untitled Riff"))
-    : "Untitled Riff";
   return {
-    title: label,
+    title: riff?.club?.name ?? "Riff",
     description: `Read the pieces from this riff on Riff.`,
   };
 }

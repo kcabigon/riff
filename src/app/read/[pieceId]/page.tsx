@@ -12,13 +12,17 @@ export async function generateMetadata({
   const { pieceId } = await params;
   const piece = await prisma.piece.findUnique({
     where: { id: pieceId },
-    select: { title: true, author: { select: { name: true } } },
+    select: {
+      riffs: {
+        where: { submittedAt: { not: null } },
+        select: { riff: { select: { club: { select: { name: true } } } } },
+        take: 1,
+      },
+    },
   });
   return {
-    title: piece?.title ?? "Read",
-    description: piece?.author?.name
-      ? `A piece by ${piece.author.name} on Riff.`
-      : "Read this piece on Riff.",
+    title: piece?.riffs[0]?.riff?.club?.name ?? "Riff",
+    description: "Read this piece on Riff.",
   };
 }
 
