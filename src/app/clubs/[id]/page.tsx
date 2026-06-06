@@ -6,13 +6,10 @@ import { getSubmittedPieces, getTotalWordCount } from "@/lib/riff-utils";
 
 export default async function ClubPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ welcome?: string }>;
 }) {
   const { id } = await params;
-  const { welcome } = await searchParams;
   const session = await getSession();
 
   if (!session?.user) {
@@ -190,9 +187,6 @@ export default async function ClubPage({
       readCounts={readCounts}
       completedRiffs={completedRiffs}
       stats={{ riffCount, pieceCount, wordCount }}
-      initialWelcome={
-        welcome === "host" || welcome === "member" ? welcome : undefined
-      }
     />
   );
 }

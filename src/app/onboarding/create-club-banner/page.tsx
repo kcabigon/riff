@@ -97,8 +97,7 @@ export default function OnboardingCreateClubBannerPage() {
       // Clear pending club data
       sessionStorage.removeItem("pendingClub");
 
-      // Redirect to club page — What's Next modal fires via ?welcome=host
-      router.push(`/clubs/${clubId}?welcome=host`);
+      router.push(`/clubs/${clubId}`);
     } catch (err: any) {
       console.error("Error creating club:", err);
       setError(err.message || "Something went wrong. Please try again.");
