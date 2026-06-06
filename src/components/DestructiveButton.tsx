@@ -34,13 +34,19 @@ export default function DestructiveButton({
         ...style,
       }}
       onMouseEnter={(e) => {
-        if (!isDisabled)
+        if (!isDisabled) {
+          e.currentTarget.style.backgroundColor = "#FFFFFF";
+          e.currentTarget.style.color = "#DC2626";
           e.currentTarget.style.boxShadow = "4px 4px 0px 0px #DC2626";
+        }
         props.onMouseEnter?.(e);
       }}
       onMouseLeave={(e) => {
-        if (!isDisabled)
+        if (!isDisabled) {
+          e.currentTarget.style.backgroundColor = "#DC2626";
+          e.currentTarget.style.color = "#FFFFFF";
           e.currentTarget.style.boxShadow = "4px 4px 0px 0px #000000";
+        }
         props.onMouseLeave?.(e);
       }}
       onPointerDown={(e) => {
@@ -52,7 +58,10 @@ export default function DestructiveButton({
       }}
       onPointerUp={(e) => {
         if (!isDisabled) {
-          e.currentTarget.style.boxShadow = "4px 4px 0px 0px #000000";
+          e.currentTarget.style.boxShadow =
+            e.pointerType === "touch"
+              ? "4px 4px 0px 0px #000000"
+              : "4px 4px 0px 0px #DC2626";
           e.currentTarget.style.transform = "translate(0, 0)";
         }
         props.onPointerUp?.(e);

@@ -4,6 +4,19 @@ import { useState } from "react";
 import Modal from "@/components/shared/Modal";
 import PieceCard from "@/components/riffs/PieceCard";
 import PrimaryButton from "@/components/PrimaryButton";
+import DestructiveButton from "@/components/DestructiveButton";
+
+const badgeStyle: React.CSSProperties = {
+  position: "absolute",
+  bottom: "12px",
+  left: "50%",
+  transform: "translateX(-50%)",
+  height: "auto",
+  padding: "2px 6px",
+  fontSize: "11px",
+  fontWeight: 700,
+  zIndex: 10,
+};
 
 interface SubmitConfirmModalProps {
   isOpen: boolean;
@@ -80,32 +93,25 @@ export default function SubmitConfirmModal({
           isRead={true}
           onClick={() => {}}
         />
-        {piece.coverImage && (
-          <button
+        {piece.coverImage ? (
+          <DestructiveButton
             onClick={onCoverAction}
             disabled={isSubmitting}
             aria-label="Remove cover image"
-            style={{
-              position: "absolute",
-              bottom: "12px",
-              left: "50%",
-              transform: "translateX(-50%)",
-              backgroundColor: "#DC2626",
-              color: "#FFFFFF",
-              border: "2px solid #000000",
-              cursor: "pointer",
-              padding: "2px 6px",
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "11px",
-              fontWeight: 700,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              whiteSpace: "nowrap",
-              zIndex: 10,
-            }}
+            style={badgeStyle}
           >
             Remove
-          </button>
+          </DestructiveButton>
+        ) : (
+          <PrimaryButton
+            size="sm"
+            onClick={onCoverAction}
+            disabled={isSubmitting}
+            aria-label="Add cover image"
+            style={badgeStyle}
+          >
+            Add cover
+          </PrimaryButton>
         )}
       </div>
 

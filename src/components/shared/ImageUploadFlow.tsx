@@ -4,6 +4,7 @@ import {
   useState,
   useCallback,
   useEffect,
+  useRef,
   useImperativeHandle,
   forwardRef,
   type ComponentType,
@@ -91,6 +92,16 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
     const [zoom, setZoom] = useState(1);
     const [croppedArea, setCroppedArea] = useState<Area | null>(null);
     const [isUploading, setIsUploading] = useState(false);
+    const mountedRef = useRef(true);
+    useEffect(
+      () => () => {
+        mountedRef.current = false;
+      },
+      []
+    );
+    const onCropStateChangeRef = useRef(onCropStateChange);
+    onCropStateChangeRef.current = onCropStateChange;
+
     const onCropComplete = useCallback((_: Area, croppedPixels: Area) => {
       setCroppedArea(croppedPixels);
     }, []);
@@ -175,7 +186,7 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
         alert("Failed to save image. Please try again.");
         return null;
       } finally {
-        setIsUploading(false);
+        if (mountedRef.current) setIsUploading(false);
       }
     };
 
@@ -184,9 +195,11 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
       hasPendingCrop: () => cropSrc !== null,
     }));
 
+    // Use a ref so callers don't need useCallback — an inline function won't
+    // cause re-fires or an infinite update loop.
     useEffect(() => {
-      onCropStateChange?.(!!cropSrc);
-    }, [cropSrc, onCropStateChange]);
+      onCropStateChangeRef.current?.(!!cropSrc);
+    }, [cropSrc]);
 
     const handleExistingImageClick = (imageUrl: string) => {
       if (isGif(imageUrl)) {
@@ -389,7 +402,7 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
                   }}
                 >
                   <PrimaryButton onClick={handleSaveCrop} loading={isUploading}>
-                    {isUploading ? "Uploading..." : "Use this image"}
+                    Use this image
                   </PrimaryButton>
                 </div>
               )}

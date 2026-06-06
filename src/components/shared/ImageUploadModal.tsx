@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import Modal from "@/components/shared/Modal";
 import ImageUploadFlow, {
   type ImageUploadFlowHandle,
@@ -40,6 +40,13 @@ export default function ImageUploadModal({
   const [cropActive, setCropActive] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  useEffect(() => {
+    if (!isOpen) {
+      setCropActive(false);
+      setIsSaving(false);
+    }
+  }, [isOpen]);
+
   const footer = cropActive ? (
     <PrimaryButton
       loading={isSaving}
@@ -52,7 +59,7 @@ export default function ImageUploadModal({
         }
       }}
     >
-      {isSaving ? "Uploading..." : "Use this image"}
+      Use this image
     </PrimaryButton>
   ) : undefined;
 
