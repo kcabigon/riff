@@ -79,11 +79,11 @@ export default function SubmitConfirmModal({
       isOpen={isOpen}
       onClose={onClose}
       title="Submit your piece"
-      size="sm"
+      size="md"
       footer={footer}
     >
       {/* PieceCard preview */}
-      <div style={{ width: "180px", margin: "0 auto 24px" }}>
+      <div style={{ width: "260px", margin: "0 auto 24px" }}>
         <PieceCard
           piece={{
             id: piece.id,

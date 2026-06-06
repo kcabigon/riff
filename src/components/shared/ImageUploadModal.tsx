@@ -1,7 +1,11 @@
 "use client";
 
+import { useRef, useState } from "react";
 import Modal from "@/components/shared/Modal";
-import ImageUploadFlow from "@/components/shared/ImageUploadFlow";
+import ImageUploadFlow, {
+  type ImageUploadFlowHandle,
+} from "@/components/shared/ImageUploadFlow";
+import PrimaryButton from "@/components/PrimaryButton";
 
 interface ImageUploadModalProps {
   isOpen: boolean;
@@ -32,10 +36,34 @@ export default function ImageUploadModal({
   inlinePreview = false,
   onSkip,
 }: ImageUploadModalProps) {
+  const flowRef = useRef<ImageUploadFlowHandle>(null);
+  const [cropActive, setCropActive] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const footer = cropActive ? (
+    <PrimaryButton
+      loading={isSaving}
+      onClick={async () => {
+        setIsSaving(true);
+        await flowRef.current?.saveCrop();
+        setIsSaving(false);
+      }}
+    >
+      {isSaving ? "Uploading..." : "Use this image"}
+    </PrimaryButton>
+  ) : undefined;
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title} size="md">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={title}
+      size="md"
+      footer={footer}
+    >
       <div style={{ marginTop: "16px" }}>
         <ImageUploadFlow
+          ref={flowRef}
           onSelect={(url) => {
             onSelect(url);
             if (url) onClose();
@@ -49,6 +77,8 @@ export default function ImageUploadModal({
           existingImagesLabel={existingImagesLabel}
           inlinePreview={inlinePreview}
           onSkip={onSkip}
+          hideSaveButton={true}
+          onCropStateChange={setCropActive}
         />
       </div>
     </Modal>
