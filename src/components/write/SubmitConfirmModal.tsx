@@ -6,16 +6,18 @@ import PieceCard from "@/components/riffs/PieceCard";
 import PrimaryButton from "@/components/PrimaryButton";
 import DestructiveButton from "@/components/DestructiveButton";
 
-const badgeStyle: React.CSSProperties = {
+const badgeWrapperStyle: React.CSSProperties = {
   position: "absolute",
   bottom: "12px",
   left: "50%",
   transform: "translateX(-50%)",
+  zIndex: 10,
+};
+
+const badgeButtonStyle: React.CSSProperties = {
   height: "auto",
   padding: "2px 6px",
   fontSize: "11px",
-  fontWeight: 700,
-  zIndex: 10,
 };
 
 interface SubmitConfirmModalProps {
@@ -93,26 +95,28 @@ export default function SubmitConfirmModal({
           isRead={true}
           onClick={() => {}}
         />
-        {piece.coverImage ? (
-          <DestructiveButton
-            onClick={onCoverAction}
-            disabled={isSubmitting}
-            aria-label="Remove cover image"
-            style={badgeStyle}
-          >
-            Remove
-          </DestructiveButton>
-        ) : (
-          <PrimaryButton
-            size="sm"
-            onClick={onCoverAction}
-            disabled={isSubmitting}
-            aria-label="Add cover image"
-            style={badgeStyle}
-          >
-            Add cover
-          </PrimaryButton>
-        )}
+        <div style={badgeWrapperStyle}>
+          {piece.coverImage ? (
+            <DestructiveButton
+              onClick={onCoverAction}
+              disabled={isSubmitting}
+              aria-label="Remove cover image"
+              style={badgeButtonStyle}
+            >
+              Remove
+            </DestructiveButton>
+          ) : (
+            <PrimaryButton
+              size="sm"
+              onClick={onCoverAction}
+              disabled={isSubmitting}
+              aria-label="Add cover image"
+              style={badgeButtonStyle}
+            >
+              Add cover
+            </PrimaryButton>
+          )}
+        </div>
       </div>
 
       {/* Riff context + reveal note */}

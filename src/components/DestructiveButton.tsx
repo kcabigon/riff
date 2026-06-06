@@ -35,6 +35,11 @@ export default function DestructiveButton({
       }}
       onMouseEnter={(e) => {
         if (!isDisabled) {
+          // Store base bg/color so mouseLeave restores correctly even if caller
+          // overrides backgroundColor via the style prop.
+          e.currentTarget.dataset.baseBg =
+            e.currentTarget.style.backgroundColor;
+          e.currentTarget.dataset.baseColor = e.currentTarget.style.color;
           e.currentTarget.style.backgroundColor = "#FFFFFF";
           e.currentTarget.style.color = "#DC2626";
           e.currentTarget.style.boxShadow = "4px 4px 0px 0px #DC2626";
@@ -43,33 +48,50 @@ export default function DestructiveButton({
       }}
       onMouseLeave={(e) => {
         if (!isDisabled) {
-          e.currentTarget.style.backgroundColor = "#DC2626";
-          e.currentTarget.style.color = "#FFFFFF";
+          e.currentTarget.style.backgroundColor =
+            e.currentTarget.dataset.baseBg || "#DC2626";
+          e.currentTarget.style.color =
+            e.currentTarget.dataset.baseColor || "#FFFFFF";
           e.currentTarget.style.boxShadow = "4px 4px 0px 0px #000000";
         }
         props.onMouseLeave?.(e);
       }}
       onPointerDown={(e) => {
         if (!isDisabled) {
+          const base = e.currentTarget.style.transform;
+          e.currentTarget.dataset.baseTransform = base;
           e.currentTarget.style.boxShadow = "2px 2px 0px 0px #DC2626";
-          e.currentTarget.style.transform = "translate(2px, 2px)";
+          e.currentTarget.style.transform = base
+            ? `${base} translate(2px, 2px)`
+            : "translate(2px, 2px)";
         }
         props.onPointerDown?.(e);
       }}
       onPointerUp={(e) => {
         if (!isDisabled) {
-          e.currentTarget.style.boxShadow =
-            e.pointerType === "touch"
-              ? "4px 4px 0px 0px #000000"
-              : "4px 4px 0px 0px #DC2626";
-          e.currentTarget.style.transform = "translate(0, 0)";
+          if (e.pointerType === "touch") {
+            e.currentTarget.style.backgroundColor =
+              e.currentTarget.dataset.baseBg || "#DC2626";
+            e.currentTarget.style.color =
+              e.currentTarget.dataset.baseColor || "#FFFFFF";
+            e.currentTarget.style.boxShadow = "4px 4px 0px 0px #000000";
+          } else {
+            e.currentTarget.style.boxShadow = "4px 4px 0px 0px #DC2626";
+          }
+          e.currentTarget.style.transform =
+            e.currentTarget.dataset.baseTransform ?? "";
         }
         props.onPointerUp?.(e);
       }}
       onPointerCancel={(e) => {
         if (!isDisabled) {
+          e.currentTarget.style.backgroundColor =
+            e.currentTarget.dataset.baseBg || "#DC2626";
+          e.currentTarget.style.color =
+            e.currentTarget.dataset.baseColor || "#FFFFFF";
           e.currentTarget.style.boxShadow = "4px 4px 0px 0px #000000";
-          e.currentTarget.style.transform = "translate(0, 0)";
+          e.currentTarget.style.transform =
+            e.currentTarget.dataset.baseTransform ?? "";
         }
         props.onPointerCancel?.(e);
       }}
