@@ -20,7 +20,7 @@ export default function ImageDropZone({
   currentImage,
   onRemove,
   uploadText = "Drop an image here or click to upload",
-  subtitleText = "JPEG, PNG, WebP, GIF, or HEIC (max 5MB)",
+  subtitleText = "JPEG, PNG, WebP, GIF, or HEIC (max 10MB)",
   height = "200px",
   disabled = false,
   isUploading = false,

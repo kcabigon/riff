@@ -128,8 +128,8 @@ export default function WritePage({
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      showImageError("File too large — max 5MB");
+    if (file.size > 10 * 1024 * 1024) {
+      showImageError("File too large — max 10MB");
       return;
     }
 
@@ -459,8 +459,8 @@ export default function WritePage({
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      showImageError("File too large — max 5MB");
+    if (file.size > 10 * 1024 * 1024) {
+      showImageError("File too large — max 10MB");
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
@@ -805,7 +805,7 @@ export default function WritePage({
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            paddingBottom: isMobile ? "48px" : "100px",
+            paddingBottom: isMobile ? "48px" : "400px",
           }}
         >
           {/* Title */}
