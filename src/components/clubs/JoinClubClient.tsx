@@ -137,7 +137,7 @@ export default function JoinClubClient({
         method: "POST",
       });
       if (joinRes.ok) {
-        router.push(`/clubs/${club.id}`);
+        router.push(`/clubs/${club.id}?welcome=member`);
       } else {
         const data = await joinRes.json();
         throw new Error(data.error || "Failed to join club");
@@ -168,7 +168,7 @@ export default function JoinClubClient({
 
       const res = await fetch(`/api/clubs/${club.id}/join`, { method: "POST" });
       if (res.ok) {
-        router.push(`/clubs/${club.id}`);
+        router.push(`/clubs/${club.id}?welcome=member`);
       } else {
         const data = await res.json();
         setError(data.error || "Something went wrong. Try again.");

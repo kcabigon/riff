@@ -100,6 +100,7 @@ interface ClubPageLayoutProps {
     pieceCount: number;
     wordCount: number;
   };
+  initialWelcome?: "host" | "member";
 }
 
 export default function ClubPageLayout({
@@ -113,6 +114,7 @@ export default function ClubPageLayout({
   readCounts,
   completedRiffs,
   stats,
+  initialWelcome,
 }: ClubPageLayoutProps) {
   const router = useRouter();
   const [clubName, setClubName] = useState(club.name);
@@ -128,7 +130,13 @@ export default function ClubPageLayout({
     activeRiff
   );
   const [whatsNextTrigger, setWhatsNextTrigger] =
-    useState<WhatsNextTrigger | null>(null);
+    useState<WhatsNextTrigger | null>(() => {
+      if (initialWelcome === "host" && canShowWhatsNext("host_created_club"))
+        return "host_created_club";
+      if (initialWelcome === "member" && canShowWhatsNext("member_joined_club"))
+        return "member_joined_club";
+      return null;
+    });
   const [newRiffId, setNewRiffId] = useState<string | null>(null);
   const handleAvatarClick = useProfileNavigation();
   const isMobile = useIsMobile();
