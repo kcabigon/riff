@@ -129,7 +129,7 @@ export default function SubmitConfirmModal({
               margin: "0 0 4px",
             }}
           >
-            {riff.title ? `"${riff.title}"` : "Active Riff"} · {riff.clubName}
+            {riff.clubName}
           </p>
           <p
             style={{
