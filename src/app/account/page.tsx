@@ -1,13 +1,13 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
-import SettingsPage from "@/components/settings/SettingsPage";
+import AccountPage from "@/components/account/AccountPage";
 
 export const metadata = {
-  title: "Settings",
+  title: "Account",
 };
 
-export default async function Settings() {
+export default async function Account() {
   const session = await getSession();
   if (!session?.user) {
     redirect("/login");
@@ -43,7 +43,5 @@ export default async function Settings() {
   const currentClub =
     clubList.find((c) => c.id === user.lastActiveClubId) ?? clubList[0] ?? null;
 
-  return (
-    <SettingsPage user={user} clubs={clubList} currentClub={currentClub} />
-  );
+  return <AccountPage user={user} clubs={clubList} currentClub={currentClub} />;
 }

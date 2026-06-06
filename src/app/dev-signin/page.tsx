@@ -55,7 +55,8 @@ export default async function DevSignInPage() {
     return <p>Not available in production.</p>;
   }
 
-  const { clubId, soloClubId, writerId, pastDeadlineRiffId } = await getSeedData();
+  const { clubId, soloClubId, writerId, pastDeadlineRiffId } =
+    await getSeedData();
   const hasSeeded = clubId !== null;
 
   const scenarios: Scenario[] = hasSeeded
@@ -102,8 +103,7 @@ export default async function DevSignInPage() {
         },
         {
           label: "Scenario 6: Not joined to riff",
-          description:
-            "Club member but hasn't joined the active riff.",
+          description: "Club member but hasn't joined the active riff.",
           email: "carol@test.local",
           userName: "Carol Kim",
           redirect: `/clubs/${clubId}`,
@@ -153,12 +153,12 @@ export default async function DevSignInPage() {
           redirect: `/clubs/${clubId}`,
         },
         {
-          label: "Scenario 11: Settings",
+          label: "Scenario 11: Account",
           description:
             "Edit profile (name, bio), export writing as JSON, or delete account.",
           email: "writer@test.local",
-          userName: "Writer (settings)",
-          redirect: "/settings",
+          userName: "Writer (account)",
+          redirect: "/account",
         },
       ]
     : [];
@@ -232,7 +232,9 @@ export default async function DevSignInPage() {
               >
                 {s.email}
               </span>
-              <div style={{ color: "#666", fontSize: "12px", marginTop: "4px" }}>
+              <div
+                style={{ color: "#666", fontSize: "12px", marginTop: "4px" }}
+              >
                 {s.description}
               </div>
             </a>
