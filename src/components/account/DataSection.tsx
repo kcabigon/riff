@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import DeleteAccountConfirmModal from "@/components/settings/DeleteAccountConfirmModal";
+import DeleteAccountConfirmModal from "@/components/account/DeleteAccountConfirmModal";
 
 export default function DataSection() {
   const [isExporting, setIsExporting] = useState(false);

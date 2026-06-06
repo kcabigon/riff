@@ -1,8 +1,8 @@
 "use client";
 
-import ProfileSection from "@/components/settings/ProfileSection";
-import EmailSection from "@/components/settings/EmailSection";
-import DataSection from "@/components/settings/DataSection";
+import ProfileSection from "@/components/account/ProfileSection";
+import EmailSection from "@/components/account/EmailSection";
+import DataSection from "@/components/account/DataSection";
 import NavBar from "@/components/clubs/NavBar";
 
 interface AccountPageProps {
