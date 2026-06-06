@@ -46,32 +46,13 @@ export default function SubmitConfirmModal({
   };
 
   const footer = (
-    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-      <PrimaryButton
-        onClick={handleConfirm}
-        loading={isSubmitting}
-        disabled={submitDisabled}
-      >
-        {submitDisabled ? "Submitted" : "Submit"}
-      </PrimaryButton>
-      <button
-        onClick={onCoverAction}
-        disabled={isSubmitting}
-        style={{
-          background: "none",
-          border: "none",
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "12px",
-          fontWeight: 300,
-          color: "#808080",
-          cursor: "pointer",
-          padding: "4px",
-          textDecoration: "underline",
-        }}
-      >
-        {piece.coverImage ? "Remove cover image" : "Add cover image"}
-      </button>
-    </div>
+    <PrimaryButton
+      onClick={handleConfirm}
+      loading={isSubmitting}
+      disabled={submitDisabled}
+    >
+      {submitDisabled ? "Submitted" : "Submit"}
+    </PrimaryButton>
   );
 
   return (
@@ -82,8 +63,14 @@ export default function SubmitConfirmModal({
       size="md"
       footer={footer}
     >
-      {/* PieceCard preview */}
-      <div style={{ width: "260px", margin: "0 auto 24px" }}>
+      {/* PieceCard preview with remove-cover X overlay */}
+      <div
+        style={{
+          position: "relative",
+          width: "260px",
+          margin: "0 auto 24px",
+        }}
+      >
         <PieceCard
           piece={{
             id: piece.id,
@@ -94,21 +81,43 @@ export default function SubmitConfirmModal({
           isRead={true}
           onClick={() => {}}
         />
+        {piece.coverImage && (
+          <button
+            onClick={onCoverAction}
+            disabled={isSubmitting}
+            aria-label="Remove cover image"
+            style={{
+              position: "absolute",
+              bottom: "12px",
+              left: "50%",
+              transform: "translateX(-50%)",
+              backgroundColor: "#DC2626",
+              color: "#FFFFFF",
+              border: "2px solid #000000",
+              cursor: "pointer",
+              padding: "2px 6px",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "11px",
+              fontWeight: 700,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              whiteSpace: "nowrap",
+              zIndex: 10,
+            }}
+          >
+            Remove
+          </button>
+        )}
       </div>
 
-      {/* Riff context */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          marginBottom: "8px",
-        }}
-      >
+      {/* Riff context + reveal note */}
+      <div style={{ display: "flex", justifyContent: "center" }}>
         <div
           style={{
             display: "inline-block",
             backgroundColor: "#FFFFFF",
-            padding: "2px 8px",
+            padding: "4px 8px",
+            textAlign: "center",
           }}
         >
           <p
@@ -117,24 +126,11 @@ export default function SubmitConfirmModal({
               fontSize: "12px",
               fontWeight: 700,
               color: "#000000",
-              margin: 0,
-              textAlign: "center",
+              margin: "0 0 4px",
             }}
           >
             {riff.title ? `"${riff.title}"` : "Active Riff"} · {riff.clubName}
           </p>
-        </div>
-      </div>
-
-      {/* Reveal note */}
-      <div style={{ display: "flex", justifyContent: "center" }}>
-        <div
-          style={{
-            display: "inline-block",
-            backgroundColor: "#FFFFFF",
-            padding: "2px 8px",
-          }}
-        >
           <p
             style={{
               fontFamily: "var(--font-dm-sans)",
@@ -142,11 +138,10 @@ export default function SubmitConfirmModal({
               fontWeight: 300,
               color: "#808080",
               margin: 0,
-              textAlign: "center",
             }}
           >
-            Club members won&apos;t see your piece until the host reveals the
-            riff.
+            Club members can&apos;t read your piece until the riff reveal. You
+            can edit your piece or cover image anytime.
           </p>
         </div>
       </div>

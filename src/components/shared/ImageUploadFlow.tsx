@@ -212,6 +212,8 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
             fontSize: "12px",
             fontWeight: 300,
             color: "#808080",
+            backgroundColor: "#FFFFFF",
+            padding: "2px 6px",
           }}
         >
           Cover image recommended
@@ -219,14 +221,14 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
         <button
           onClick={onSkip}
           style={{
-            background: "none",
+            background: "#FFFFFF",
             border: "none",
             fontFamily: "var(--font-dm-sans)",
             fontSize: "12px",
             fontWeight: 300,
             color: "#808080",
             cursor: "pointer",
-            padding: 0,
+            padding: "2px 6px",
             textDecoration: "underline",
           }}
         >
