@@ -9,6 +9,7 @@ import {
   batchNotificationsEnabled,
 } from "@/lib/resend";
 import { NotificationType } from "@prisma/client";
+import { getBaseUrl } from "@/lib/env";
 
 // GET /api/riffs/[id] - Get riff details
 export async function GET(
@@ -302,8 +303,7 @@ export async function PATCH(
         }).catch(() => {});
 
         // Send riff created emails to all club members except the creator
-        const appUrl =
-          process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+        const appUrl = getBaseUrl();
         const clubUrl = `${appUrl}/clubs/${riff.clubId}`;
         prisma.clubMember
           .findMany({
@@ -339,8 +339,7 @@ export async function PATCH(
           { riffId }
         ).catch(() => {});
 
-        const appUrl =
-          process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+        const appUrl = getBaseUrl();
         const riffUrl = `${appUrl}/riffs/${riffId}`;
         prisma.clubMember
           .findMany({
@@ -390,8 +389,7 @@ export async function PATCH(
           include: { user: { select: { email: true } } },
         })
         .then(async (members) => {
-          const appUrl =
-            process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+          const appUrl = getBaseUrl();
           const riffUrl = `${appUrl}/riffs/${riffId}`;
           const enabled = await batchNotificationsEnabled(
             members.map((m) => m.user.email)
