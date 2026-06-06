@@ -1,7 +1,24 @@
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import ProfilePage from "@/components/profile/ProfilePage";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ userId: string }>;
+}): Promise<Metadata> {
+  const { userId } = await params;
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { name: true },
+  });
+  return {
+    title: user?.name ?? "Profile",
+    description: `View ${user?.name ?? "this writer"}'s profile on Riff.`,
+  };
+}
 
 export default async function ProfilePageRoute({
   params,
@@ -65,7 +82,10 @@ export default async function ProfilePageRoute({
       wordCount: true,
       riffs: {
         where: { submittedAt: { not: null } },
-        select: { riff: { select: { status: true, clubId: true } } },
+        select: {
+          submittedAt: true,
+          riff: { select: { status: true, clubId: true } },
+        },
       },
       newShares: {
         where: { shareType: "PUBLIC" },
@@ -73,7 +93,12 @@ export default async function ProfilePageRoute({
         take: 1,
       },
     },
-    orderBy: { createdAt: "desc" },
+  });
+
+  rawPieces.sort((a, b) => {
+    const latestA = Math.max(...a.riffs.map((r) => r.submittedAt!.getTime()));
+    const latestB = Math.max(...b.riffs.map((r) => r.submittedAt!.getTime()));
+    return latestB - latestA;
   });
 
   const pieces = rawPieces.map((p) => ({

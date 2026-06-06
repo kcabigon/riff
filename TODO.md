@@ -115,15 +115,15 @@ Last updated: May 16, 2026
 - [x] Deprecated schema cleanup — remove Circle models, password field
 
 ### Friends
-- [ ] @derek — Fix localhost URL fallbacks: change all `http://localhost:3000` fallbacks to `https://letsriff.app` in API routes (`src/app/api/riffs/[id]/route.ts`, `src/app/api/clubs/[id]/join/route.ts`, `src/lib/env.ts`)
+- [x] @derek — Fix localhost URL fallbacks: change all `http://localhost:3000` fallbacks to `https://letsriff.app` in API routes (`src/app/api/riffs/[id]/route.ts`, `src/app/api/clubs/[id]/join/route.ts`, `src/lib/env.ts`)
 - [ ] @jarric — Error & 404 pages: create branded `src/app/error.tsx` and `src/app/not-found.tsx` matching the app's design system
-- [ ] @derek — Security headers: add `headers()` function to `next.config.ts` with `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Strict-Transport-Security`, `Referrer-Policy`
+- [x] @derek — Security headers: add `headers()` function to `next.config.ts` with `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Strict-Transport-Security`, `Referrer-Policy`
 - [ ] @chris — Remove test pages: delete or gate `/test-*` pages behind `NODE_ENV !== "production"` check
 - [x] Email unsubscribe: add unsubscribe link to notification emails + email preferences toggle in settings
 - [ ] @chris — Loading states: add `loading.tsx` with loading skeletons for clubs, clubs/[id], riffs/[id], read/[pieceId], profile/[userId], settings
-- [ ] @derek — Page metadata: add `metadata` exports to login, clubs/[id], riffs/[id], profile/[userId], read/[pieceId] pages
+- [x] @derek — Page metadata: add `metadata` exports to login, clubs/[id], riffs/[id], profile/[userId], read/[pieceId] pages
 - [ ] @chris — Database indexes: add `@@index` to Piece(authorId), Comment(pieceId), Notification(recipientId), Riff(clubId) — coordinate with Kyle before migrating
-- [ ] @derek — Move `prisma` CLI from dependencies to devDependencies in package.json
+- [x] @derek — Move `prisma` CLI from dependencies to devDependencies in package.json
 
 ### Done
 - [x] Favicon, apple touch icon, web manifest
@@ -136,6 +136,7 @@ Last updated: May 16, 2026
 
 ## Soon (post-launch)
 
+- [x] Welcome tutorial: mobile-optimized version (portrait layout, swipe navigation)
 - [ ] Notification emails via Resend — deadline approaching, new comment
 - [ ] Deadline reminder cron job (Vercel Cron, 24h before deadline)
 - [ ] Toast notifications replacing `console.error` catches

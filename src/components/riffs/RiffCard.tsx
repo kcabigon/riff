@@ -65,7 +65,6 @@ export default function RiffCard({
   const [isCardHovered, setIsCardHovered] = useState(false);
   const router = useRouter();
   const handleAvatarClick = useProfileNavigation();
-
   const deadlinePassed = isPastDeadline(riff.deadline ?? null);
   const piecesAllSubmitted = allPiecesSubmitted(
     riff.pieces,
@@ -81,6 +80,9 @@ export default function RiffCard({
   const handleCardClick = () => {
     router.push(`/riffs/${riff.id}`);
   };
+
+  const MAX_AVATARS = 10;
+  const overflowCount = Math.max(0, riff.participants.length - MAX_AVATARS);
 
   const existingPieceId =
     riff.pieces.find((p) => p.piece.authorId === currentUserId)?.piece.id ??
@@ -150,7 +152,7 @@ export default function RiffCard({
               fontSize: "16px",
               fontWeight: 300,
               lineHeight: "normal",
-              color: deadlinePassed ? "#FF4444" : "#808080",
+              color: deadlinePassed ? "#DC2626" : "#808080",
               margin: 0,
             }}
           >
@@ -175,6 +177,11 @@ export default function RiffCard({
             }}
           >
             <p
+              className={
+                riff.participants.length > 5
+                  ? "riff-joined-by-mobile-hidden"
+                  : ""
+              }
               style={{
                 fontFamily: "var(--font-dm-sans)",
                 fontSize: "16px",
@@ -186,11 +193,45 @@ export default function RiffCard({
             >
               Joined by
             </p>
-            <AvatarStack
-              users={riff.participants.slice(0, 5).map((p) => p.user)}
-              size={32}
-              onAvatarClick={handleAvatarClick}
-            />
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <AvatarStack
+                users={riff.participants
+                  .slice(0, MAX_AVATARS)
+                  .map((p) => p.user)}
+                size={32}
+                onAvatarClick={handleAvatarClick}
+                style={overflowCount > 0 ? { paddingRight: 0 } : undefined}
+              />
+              {overflowCount > 0 && (
+                <div
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 64,
+                    backgroundColor: "#E6E6E6",
+                    border: "2px solid #000000",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginLeft: "-4px",
+                    zIndex: MAX_AVATARS,
+                    flexShrink: 0,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      color: "#000000",
+                      lineHeight: 1,
+                    }}
+                  >
+                    +{overflowCount}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -240,9 +281,9 @@ export default function RiffCard({
           <p
             style={{
               fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
+              fontSize: "16px",
               fontWeight: 700,
-              color: "#FF4444",
+              color: "#DC2626",
               margin: 0,
             }}
           >
@@ -264,6 +305,9 @@ export default function RiffCard({
           }
           .riff-card-cta button {
             width: 100% !important;
+          }
+          .riff-joined-by-mobile-hidden {
+            display: none !important;
           }
         }
       `}</style>

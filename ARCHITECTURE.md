@@ -52,6 +52,8 @@ A private essay-sharing platform for creative communities. Users create **clubs*
 - Terms of Service page
 - Landing page detects logged-in users (avatar + dropdown navigation)
 - Deprecated Circle architecture fully removed (schema + routes)
+- Welcome tutorial (animated walkthrough with swipe navigation, mobile + desktop)
+- Admin analytics dashboard (`/admin`, Kyle-only)
 
 ---
 
@@ -73,6 +75,8 @@ src/app/
 ├── profile/[userId]/page.tsx  # User profile
 ├── no-club/page.tsx           # Holding page for users without a club
 ├── terms/page.tsx             # Terms of Service
+├── welcome/page.tsx           # Welcome tutorial (animated walkthrough)
+├── admin/page.tsx             # Admin analytics dashboard (Kyle-only)
 └── onboarding/                # Onboarding flow (name, club-choice, create-club, banner)
 ```
 
@@ -90,7 +94,8 @@ src/app/api/
 ├── cron/daily-comment-notifications/  # Vercel Cron — daily comment digest emails
 ├── users/me/                  # Current user, update, delete, export (docx/zip), email preferences
 ├── users/[id]/                # User profile data
-└── upload/image/              # Image upload (auth required, 5MB max)
+├── upload/image/              # Image upload (auth required, 5MB max)
+└── admin/stats/               # Admin engagement stats (Kyle-only)
 ```
 
 ### Components
@@ -113,6 +118,9 @@ src/components/
 │                  # MyStatsModal, ShareModal
 ├── notifications/ # NotificationBell, NotificationPanel, NotificationItem
 ├── settings/      # SettingsPage, ProfileSection, EmailSection, DataSection, DeleteAccountConfirmModal
+├── admin/         # AdminDashboard, StatCard, RiffStatusBar
+├── welcome/       # WelcomeTutorial, MobileWelcomeTutorial, WelcomeClient, TutorialStage,
+│                  # tutorial-shared (BrushHighlight, IntroOrbit, LockBadge, CommentCard, WordNote)
 ├── about/         # FoundersNotePage, FakeCommentHighlight
 ├── write/         # WritePage, CoverImageModal, SubmitConfirmModal, EmbedModal, MediaEmbedModal,
 │                  # LinkPopover, ResizableImageView, toolbar/StickyToolbar, toolbar/ToolbarButton,

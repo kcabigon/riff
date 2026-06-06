@@ -1,7 +1,30 @@
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import ReadPageLayout from "@/components/read/ReadPageLayout";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ pieceId: string }>;
+}): Promise<Metadata> {
+  const { pieceId } = await params;
+  const piece = await prisma.piece.findUnique({
+    where: { id: pieceId },
+    select: {
+      riffs: {
+        where: { submittedAt: { not: null } },
+        select: { riff: { select: { club: { select: { name: true } } } } },
+        take: 1,
+      },
+    },
+  });
+  return {
+    title: piece?.riffs[0]?.riff?.club?.name ?? "Riff",
+    description: "Read this piece on Riff.",
+  };
+}
 
 export default async function ReadPage({
   params,
@@ -55,6 +78,8 @@ export default async function ReadPage({
   let validRiffId: string | null = null;
   let clubId: string | null = null;
 
+  let submittedAt: string | null = null;
+
   if (riffId) {
     const pieceRiff = await prisma.pieceRiff.findFirst({
       where: {
@@ -69,6 +94,7 @@ export default async function ReadPage({
       },
       select: {
         riffId: true,
+        submittedAt: true,
         riff: { select: { clubId: true } },
       },
     });
@@ -76,6 +102,7 @@ export default async function ReadPage({
     if (pieceRiff) {
       validRiffId = pieceRiff.riffId;
       clubId = pieceRiff.riff.clubId;
+      submittedAt = pieceRiff.submittedAt?.toISOString() ?? null;
     }
   }
 
@@ -92,6 +119,7 @@ export default async function ReadPage({
       },
       select: {
         riffId: true,
+        submittedAt: true,
         riff: { select: { clubId: true } },
       },
     });
@@ -102,6 +130,7 @@ export default async function ReadPage({
 
     validRiffId = pieceRiff.riffId;
     clubId = pieceRiff.riff.clubId;
+    submittedAt = pieceRiff.submittedAt?.toISOString() ?? null;
   }
 
   // Check if already read
@@ -185,6 +214,7 @@ export default async function ReadPage({
         coverImage: piece.coverImage,
         wordCount: piece.wordCount,
         readLengthMin: piece.readLengthMin,
+        submittedAt,
         author: piece.author,
       }}
       riffId={validRiffId}

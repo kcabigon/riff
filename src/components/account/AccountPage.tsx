@@ -1,11 +1,11 @@
 "use client";
 
-import ProfileSection from "./ProfileSection";
-import EmailSection from "./EmailSection";
-import DataSection from "./DataSection";
+import ProfileSection from "@/components/account/ProfileSection";
+import EmailSection from "@/components/account/EmailSection";
+import DataSection from "@/components/account/DataSection";
 import NavBar from "@/components/clubs/NavBar";
 
-interface SettingsPageProps {
+interface AccountPageProps {
   user: {
     id: string;
     name: string | null;
@@ -19,11 +19,11 @@ interface SettingsPageProps {
   currentClub: { id: string; name: string } | null;
 }
 
-export default function SettingsPage({
+export default function AccountPage({
   user,
   clubs,
   currentClub,
-}: SettingsPageProps) {
+}: AccountPageProps) {
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
       <NavBar

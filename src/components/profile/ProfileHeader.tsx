@@ -48,8 +48,8 @@ export default function ProfileHeader({
       ? [
           {
             type: "action" as const,
-            label: "Settings",
-            onClick: () => router.push("/settings"),
+            label: "Account",
+            onClick: () => router.push("/account"),
           },
           {
             type: "action" as const,

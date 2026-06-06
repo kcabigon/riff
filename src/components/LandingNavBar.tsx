@@ -118,8 +118,8 @@ export default function LandingNavBar({
                   },
                   {
                     type: "action",
-                    label: "Settings",
-                    onClick: () => router.push("/settings"),
+                    label: "Account",
+                    onClick: () => router.push("/account"),
                   },
                   {
                     type: "action",
@@ -262,11 +262,11 @@ export default function LandingNavBar({
             <button
               onClick={() => {
                 closeDrawer();
-                router.push("/settings");
+                router.push("/account");
               }}
               style={drawerLinkStyle}
             >
-              Settings
+              Account
             </button>
             <a href="/about" onClick={closeDrawer} style={drawerAnchorStyle}>
               About

@@ -7,7 +7,7 @@ const protectedPrefixes = [
   "/write",
   "/read",
   "/profile",
-  "/settings",
+  "/account",
   "/onboarding",
   "/auth/post-login",
   "/no-club",

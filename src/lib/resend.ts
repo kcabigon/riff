@@ -49,7 +49,7 @@ function emailShell({
 }): string {
   const baseUrl = process.env.NEXTAUTH_URL || "https://letsriff.app";
   const fullFooterText = unsubscribe
-    ? `${footerText} · <a href="${baseUrl}/settings" style="color:#bbbbbb;">Unsubscribe</a>`
+    ? `${footerText} · <a href="${baseUrl}/account" style="color:#bbbbbb;">Unsubscribe</a>`
     : footerText;
   const topSection = clubName
     ? `<!-- Club name header -->
