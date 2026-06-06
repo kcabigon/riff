@@ -3,6 +3,8 @@
 import {
   useState,
   useCallback,
+  useEffect,
+  useRef,
   useImperativeHandle,
   forwardRef,
   type ComponentType,
@@ -55,6 +57,7 @@ interface ImageUploadFlowProps {
   onSkip?: () => void;
   cropperHeight?: string;
   hideSaveButton?: boolean;
+  onCropStateChange?: (active: boolean) => void;
 }
 
 function isGif(url: string): boolean {
@@ -76,6 +79,7 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
       onSkip,
       cropperHeight,
       hideSaveButton = false,
+      onCropStateChange,
     },
     ref
   ) {
@@ -88,6 +92,16 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
     const [zoom, setZoom] = useState(1);
     const [croppedArea, setCroppedArea] = useState<Area | null>(null);
     const [isUploading, setIsUploading] = useState(false);
+    const mountedRef = useRef(true);
+    useEffect(
+      () => () => {
+        mountedRef.current = false;
+      },
+      []
+    );
+    const onCropStateChangeRef = useRef(onCropStateChange);
+    onCropStateChangeRef.current = onCropStateChange;
+
     const onCropComplete = useCallback((_: Area, croppedPixels: Area) => {
       setCroppedArea(croppedPixels);
     }, []);
@@ -115,8 +129,8 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
     };
 
     const handleFileSelected = async (file: File) => {
-      if (file.size > 5 * 1024 * 1024) {
-        alert("Image must be under 5MB");
+      if (file.size > 10 * 1024 * 1024) {
+        alert("Image must be under 10MB");
         return;
       }
 
@@ -172,7 +186,7 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
         alert("Failed to save image. Please try again.");
         return null;
       } finally {
-        setIsUploading(false);
+        if (mountedRef.current) setIsUploading(false);
       }
     };
 
@@ -180,6 +194,12 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
       saveCrop: handleSaveCrop,
       hasPendingCrop: () => cropSrc !== null,
     }));
+
+    // Use a ref so callers don't need useCallback — an inline function won't
+    // cause re-fires or an infinite update loop.
+    useEffect(() => {
+      onCropStateChangeRef.current?.(!!cropSrc);
+    }, [cropSrc]);
 
     const handleExistingImageClick = (imageUrl: string) => {
       if (isGif(imageUrl)) {
@@ -205,6 +225,8 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
             fontSize: "12px",
             fontWeight: 300,
             color: "#808080",
+            backgroundColor: "#FFFFFF",
+            padding: "2px 6px",
           }}
         >
           Cover image recommended
@@ -212,14 +234,14 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
         <button
           onClick={onSkip}
           style={{
-            background: "none",
+            background: "#FFFFFF",
             border: "none",
             fontFamily: "var(--font-dm-sans)",
             fontSize: "12px",
             fontWeight: 300,
             color: "#808080",
             cursor: "pointer",
-            padding: 0,
+            padding: "2px 6px",
             textDecoration: "underline",
           }}
         >
@@ -380,7 +402,7 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
                   }}
                 >
                   <PrimaryButton onClick={handleSaveCrop} loading={isUploading}>
-                    {isUploading ? "Saving..." : "Save"}
+                    Use this image
                   </PrimaryButton>
                 </div>
               )}

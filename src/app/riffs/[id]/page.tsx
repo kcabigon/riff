@@ -1,8 +1,25 @@
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import RiffPageLayout from "@/components/riffs/RiffPageLayout";
 import { getSubmittedPieces } from "@/lib/riff-utils";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const riff = await prisma.riff.findUnique({
+    where: { id },
+    select: { club: { select: { name: true } } },
+  });
+  return {
+    title: riff?.club?.name ?? "Riff",
+    description: `Read the pieces from this riff on Riff.`,
+  };
+}
 
 export default async function RiffPage({
   params,
