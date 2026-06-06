@@ -19,7 +19,6 @@ interface SubmitConfirmModalProps {
   };
   riff: {
     id: string;
-    title: string | null;
     clubName: string;
   };
 }

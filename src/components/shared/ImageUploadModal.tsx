@@ -45,8 +45,11 @@ export default function ImageUploadModal({
       loading={isSaving}
       onClick={async () => {
         setIsSaving(true);
-        await flowRef.current?.saveCrop();
-        setIsSaving(false);
+        try {
+          await flowRef.current?.saveCrop();
+        } finally {
+          setIsSaving(false);
+        }
       }}
     >
       {isSaving ? "Uploading..." : "Use this image"}
