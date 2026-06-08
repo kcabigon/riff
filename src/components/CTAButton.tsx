@@ -45,10 +45,7 @@ export default function CTAButton({
           ? accentColor
           : (style?.backgroundColor ?? "#FFFFFF"),
         boxShadow: isHovered
-          ? (style?.boxShadow ?? `8px 8px 0px 0px ${accentColor}`).replace(
-              accentColor,
-              "#000000"
-            )
+          ? "8px 8px 0px 0px #000000"
           : (style?.boxShadow ?? `8px 8px 0px 0px ${accentColor}`),
       }}
     >
