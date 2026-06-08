@@ -92,7 +92,7 @@ export default function TutorialWritePage({ clubId }: TutorialWritePageProps) {
                 onClick={() => router.push(`/tutorial/riff?clubId=${clubId}`)}
               />
               <div
-                style={{ display: "flex", alignItems: "center", gap: "6px" }}
+                style={{ display: "flex", alignItems: "center", gap: "8px" }}
               >
                 <div
                   style={{
@@ -187,7 +187,7 @@ export default function TutorialWritePage({ clubId }: TutorialWritePageProps) {
             style={{
               fontFamily: "var(--font-dm-sans)",
               fontSize: "14px",
-              color: "#999999",
+              color: "#9C9C9C",
               margin: "12px 0 0",
             }}
           >

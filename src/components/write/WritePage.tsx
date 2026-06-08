@@ -56,15 +56,9 @@ interface WritePageProps {
     coverImage: string | null;
     riffs: RiffConnection[];
   };
-  isAdmin?: boolean;
-  hostFirstName?: string | null;
 }
 
-export default function WritePage({
-  piece,
-  isAdmin = false,
-  hostFirstName,
-}: WritePageProps) {
+export default function WritePage({ piece }: WritePageProps) {
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "unsaved">(
     "saved"
   );
