@@ -22,6 +22,7 @@ interface ReadyToRevealCardProps {
       };
     }>;
     pieces: Array<{
+      submittedAt: string | Date | null;
       piece: {
         id: string;
         title: string;
@@ -79,10 +80,12 @@ export default function ReadyToRevealCard({
         }}
       >
         <MosaicCollage
-          pieces={riff.pieces.map((p) => ({
-            id: p.piece.id,
-            coverImage: p.piece.coverImage,
-          }))}
+          pieces={riff.pieces
+            .filter((p) => p.submittedAt !== null)
+            .map((p) => ({
+              id: p.piece.id,
+              coverImage: p.piece.coverImage,
+            }))}
           width={cardWidth}
           height={cardHeight}
         />
