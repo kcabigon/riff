@@ -24,10 +24,6 @@ import {
   getWaitingParticipants,
   getSubmittedParticipants,
 } from "@/lib/riff-utils";
-import WhatsNextModal, {
-  type WhatsNextTrigger,
-} from "@/components/shared/WhatsNextModal";
-import { canShowWhatsNext } from "@/lib/whatsNextGuard";
 import DeleteClubConfirmModal from "@/components/clubs/DeleteClubConfirmModal";
 import GettingStartedSection from "@/components/tutorial/GettingStartedSection";
 
@@ -135,15 +131,6 @@ export default function ClubPageLayout({
   const [currentActiveRiff, setCurrentActiveRiff] = useState<Riff | null>(
     activeRiff
   );
-  const [whatsNextTrigger, setWhatsNextTrigger] =
-    useState<WhatsNextTrigger | null>(() => {
-      if (initialWelcome === "host" && canShowWhatsNext("host_created_club"))
-        return "host_created_club";
-      if (initialWelcome === "member" && canShowWhatsNext("member_joined_club"))
-        return "member_joined_club";
-      return null;
-    });
-  const [newRiffId, setNewRiffId] = useState<string | null>(null);
   const handleAvatarClick = useProfileNavigation();
   const isMobile = useIsMobile();
 
@@ -189,21 +176,12 @@ export default function ClubPageLayout({
 
   // After joining a riff, refresh the page to get updated state
   const handleJoinRiff = useCallback(() => {
-    if (canShowWhatsNext("member_joined_riff")) {
-      setWhatsNextTrigger("member_joined_riff");
-    }
     router.refresh();
   }, []);
 
-  // After creating a riff, refresh so the new riff + host participation are reflected,
-  // then show the "what's next" modal if applicable
-  const handleRiffCreated = useCallback((riffId: string) => {
+  const handleRiffCreated = useCallback((_riffId: string) => {
     setIsCreateRiffModalOpen(false);
-    setNewRiffId(riffId);
     router.refresh();
-    if (canShowWhatsNext("host_started_riff")) {
-      setWhatsNextTrigger("host_started_riff");
-    }
   }, []);
 
   // Handle reveal confirmation
@@ -962,39 +940,6 @@ export default function ClubPageLayout({
               .length
           }
           totalParticipants={activeRiff.participants.length}
-        />
-      )}
-
-      {/* What's Next Modal */}
-      {whatsNextTrigger && (
-        <WhatsNextModal
-          isOpen={true}
-          onClose={() => {
-            setWhatsNextTrigger(null);
-            router.replace(`/clubs/${club.id}`);
-          }}
-          trigger={whatsNextTrigger}
-          onCTAClick={
-            whatsNextTrigger === "host_created_club"
-              ? () => {
-                  setWhatsNextTrigger(null);
-                  setIsInviteModalOpen(true);
-                }
-              : whatsNextTrigger === "host_started_riff" && newRiffId
-                ? () => {
-                    setWhatsNextTrigger(null);
-                    router.push(`/riffs/${newRiffId}`);
-                  }
-                : whatsNextTrigger === "member_joined_riff" && activeRiff
-                  ? () => {
-                      setWhatsNextTrigger(null);
-                      router.push(`/riffs/${activeRiff.id}`);
-                    }
-                  : () => {
-                      setWhatsNextTrigger(null);
-                      router.refresh();
-                    }
-          }
         />
       )}
     </div>
