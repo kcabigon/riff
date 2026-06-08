@@ -96,6 +96,7 @@ export default function OnboardingCreateClubBannerPage() {
 
       // Clear pending club data
       sessionStorage.removeItem("pendingClub");
+      sessionStorage.removeItem("pendingClubFrom");
 
       // Redirect to club page — What's Next modal fires via ?welcome=host
       router.push(`/clubs/${clubId}?welcome=host`);
@@ -161,6 +162,19 @@ export default function OnboardingCreateClubBannerPage() {
               removeLabel="Remove photo"
               hideSaveButton
             />
+            <span
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "13px",
+                fontWeight: 300,
+                color: "#9C9C9C",
+                backgroundColor: "#FFFFFF",
+                padding: "4px 8px",
+                alignSelf: "flex-start",
+              }}
+            >
+              Club banner is optional, you can add or change this later.
+            </span>
           </div>
 
           {error && (
@@ -179,13 +193,8 @@ export default function OnboardingCreateClubBannerPage() {
           )}
 
           {/* Submit Button */}
-          <PrimaryButton
-            type="submit"
-            loading={loading}
-            disabled={loading}
-            style={{ backgroundColor: "#EECF01" }}
-          >
-            Cool. What's next?
+          <PrimaryButton type="submit" loading={loading} disabled={loading}>
+            Create your club
           </PrimaryButton>
         </form>
       </div>
