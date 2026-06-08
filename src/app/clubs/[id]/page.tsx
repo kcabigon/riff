@@ -1,25 +1,8 @@
 import { redirect } from "next/navigation";
-import type { Metadata } from "next";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import ClubPageLayout from "@/components/clubs/ClubPageLayout";
 import { getSubmittedPieces, getTotalWordCount } from "@/lib/riff-utils";
-
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}): Promise<Metadata> {
-  const { id } = await params;
-  const club = await prisma.club.findUnique({
-    where: { id },
-    select: { name: true },
-  });
-  return {
-    title: club?.name ?? "Club",
-    description: `Read and write with your club on Riff.`,
-  };
-}
 
 export default async function ClubPage({
   params,
@@ -187,6 +170,36 @@ export default async function ClubPage({
 
   const isAdmin = club.adminId === userId;
 
+  // avatarDone is free — avatarUrl is already in the members select
+  const avatarDone = !!club.members.find((m) => m.userId === userId)?.user
+    .avatarUrl;
+
+  // Onboarding completion — admin and member queries are mutually exclusive
+  const currentClubGraduated = riffCount > 0 && club.members.length > 1;
+  let userOnboardingComplete = !isAdmin || currentClubGraduated;
+  let userMemberOnboardingComplete = isAdmin; // admins never see member section
+
+  if (isAdmin && !currentClubGraduated) {
+    // Short-circuit failed — check if user has graduated on any other admin club
+    const graduated = await prisma.club.findFirst({
+      where: {
+        adminId: userId,
+        isArchived: false,
+        riffs: { some: {} },
+        members: { some: { userId: { not: userId } } },
+      },
+      select: { id: true },
+    });
+    userOnboardingComplete = graduated !== null;
+  } else if (!isAdmin) {
+    // Member: graduated once they've created any piece
+    const anyPiece = await prisma.piece.findFirst({
+      where: { authorId: userId },
+      select: { id: true },
+    });
+    userMemberOnboardingComplete = anyPiece !== null;
+  }
+
   // Update lastActiveClubId (fire-and-forget, non-blocking)
   prisma.user
     .update({
@@ -207,6 +220,9 @@ export default async function ClubPage({
       readCounts={readCounts}
       completedRiffs={completedRiffs}
       stats={{ riffCount, pieceCount, wordCount }}
+      userOnboardingComplete={userOnboardingComplete}
+      userMemberOnboardingComplete={userMemberOnboardingComplete}
+      avatarDone={avatarDone}
       initialWelcome={
         welcome === "host" || welcome === "member" ? welcome : undefined
       }

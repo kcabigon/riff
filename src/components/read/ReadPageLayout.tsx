@@ -65,6 +65,7 @@ interface ReadPageLayoutProps {
   previousPiece?: { id: string; title: string } | null;
   nextPiece?: { id: string; title: string } | null;
   fromProfileUserId?: string;
+  backHref?: string;
 }
 
 export default function ReadPageLayout({
@@ -76,6 +77,7 @@ export default function ReadPageLayout({
   isAlreadyRead,
   startInRiffMode,
   fromProfileUserId,
+  backHref,
 }: ReadPageLayoutProps) {
   const router = useRouter();
   const endRef = useRef<HTMLDivElement>(null);
@@ -313,7 +315,9 @@ export default function ReadPageLayout({
           >
             <BackButton
               onClick={() => {
-                if (fromProfileUserId) {
+                if (backHref) {
+                  router.push(backHref);
+                } else if (fromProfileUserId) {
                   router.push(`/profile/${fromProfileUserId}`);
                 } else {
                   router.push(`/riffs/${riffId}`);

@@ -13,7 +13,6 @@ import ReadyToRevealCard from "@/components/riffs/ReadyToRevealCard";
 import ClubSettingsModal from "@/components/clubs/ClubSettingsModal";
 import InviteOptions from "@/components/clubs/InviteOptions";
 import CloseButton from "@/components/CloseButton";
-import PrimaryButton from "@/components/PrimaryButton";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
 import { useIsMobile } from "@/hooks/useMediaQuery";
@@ -30,6 +29,7 @@ import WhatsNextModal, {
 } from "@/components/shared/WhatsNextModal";
 import { canShowWhatsNext } from "@/lib/whatsNextGuard";
 import DeleteClubConfirmModal from "@/components/clubs/DeleteClubConfirmModal";
+import GettingStartedSection from "@/components/tutorial/GettingStartedSection";
 
 interface ClubMember {
   user: {
@@ -100,6 +100,9 @@ interface ClubPageLayoutProps {
     pieceCount: number;
     wordCount: number;
   };
+  userOnboardingComplete: boolean;
+  userMemberOnboardingComplete: boolean;
+  avatarDone: boolean;
   initialWelcome?: "host" | "member";
 }
 
@@ -114,6 +117,9 @@ export default function ClubPageLayout({
   readCounts,
   completedRiffs,
   stats,
+  userOnboardingComplete,
+  userMemberOnboardingComplete,
+  avatarDone,
   initialWelcome,
 }: ClubPageLayoutProps) {
   const router = useRouter();
@@ -238,6 +244,13 @@ export default function ClubPageLayout({
   const formatNumber = (n: number): string => {
     return n.toLocaleString();
   };
+
+  // Getting Started — host: shown until graduated on any admin club
+  //                 — member: shown until they've submitted a piece anywhere
+  const step1Done = stats.riffCount > 0 || activeRiff !== null;
+  const step2Done = club.members.length > 1;
+  const showGettingStarted = isAdmin && !userOnboardingComplete;
+  const showMemberGettingStarted = !isAdmin && !userMemberOnboardingComplete;
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
@@ -629,22 +642,29 @@ export default function ClubPageLayout({
           </div>
         )}
 
-        {/* Invite CTA — shown to host until at least one other member joins */}
-        {isAdmin && club.members.length <= 1 && (
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              marginBottom: "48px",
-            }}
-          >
-            <PrimaryButton
-              onClick={() => setIsInviteModalOpen(true)}
-              style={{ width: "auto" }}
-            >
-              Invite your crew
-            </PrimaryButton>
-          </div>
+        {/* Getting Started — host onboarding checklist, shown until both steps complete */}
+        {showGettingStarted && (
+          <GettingStartedSection
+            variant="host"
+            clubId={club.id}
+            userId={currentUserId}
+            clubName={clubName}
+            step1Done={step1Done}
+            step2Done={step2Done}
+            onStartRiff={() => setIsCreateRiffModalOpen(true)}
+            onInvite={() => setIsInviteModalOpen(true)}
+          />
+        )}
+
+        {showMemberGettingStarted && (
+          <GettingStartedSection
+            variant="member"
+            clubId={club.id}
+            userId={currentUserId}
+            clubName={clubName}
+            activeRiffId={activeRiff?.id ?? null}
+            avatarDone={avatarDone}
+          />
         )}
 
         {/* Current Read section — shown above Current Riff when there are unread revealed riffs */}
@@ -685,9 +705,11 @@ export default function ClubPageLayout({
           );
         })()}
 
-        {/* Current Riff section — hidden for members when there's a current read and no active riff */}
+        {/* Current Riff section — hidden for members when there's a current read and no active riff;
+            also hidden for admin when Getting Started is active and there's no real riff to show */}
         {(() => {
           const hasCurrentRead = revealedRiffs.some(hasUnreadForUser);
+          if (showGettingStarted && !activeRiff) return null;
           const showSection = activeRiff || isAdmin || !hasCurrentRead;
           if (!showSection) return null;
 
@@ -697,19 +719,17 @@ export default function ClubPageLayout({
 
           return (
             <div style={{ marginBottom: "48px" }}>
-              {(activeRiff || isAdmin) && (
-                <h2
-                  style={{
-                    fontFamily: "var(--font-dm-serif-text)",
-                    fontSize: "24px",
-                    fontWeight: 400,
-                    color: "#000000",
-                    margin: "0 0 16px 0",
-                  }}
-                >
-                  Current Riff
-                </h2>
-              )}
+              <h2
+                style={{
+                  fontFamily: "var(--font-dm-serif-text)",
+                  fontSize: "24px",
+                  fontWeight: 400,
+                  color: "#000000",
+                  margin: "0 0 16px 0",
+                }}
+              >
+                Current Riff
+              </h2>
 
               {activeRiff ? (
                 <RiffCard
