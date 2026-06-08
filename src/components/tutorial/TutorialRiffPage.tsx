@@ -75,7 +75,7 @@ export default function TutorialRiffPage({
 
   const handleReadyToRiff = () => {
     localStorage.setItem(`tutorial-complete-user-${userId}`, "1");
-    router.push(clubId ? `/clubs/${clubId}` : "/");
+    router.push(clubId ? `/clubs/${clubId}` : "/no-club");
   };
 
   const handleReveal = () => {
