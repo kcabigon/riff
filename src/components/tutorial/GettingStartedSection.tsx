@@ -240,7 +240,7 @@ export default function GettingStartedSection(
                     <DoneButton>Upload avatar</DoneButton>
                   ) : (
                     <CTAButton
-                      onClick={() => router.push("/settings")}
+                      onClick={() => router.push("/account")}
                       accentColor="#01EFFC"
                       style={{ width: "100%" }}
                     >
@@ -271,7 +271,7 @@ export default function GettingStartedSection(
                     <DoneButton>Upload avatar</DoneButton>
                   ) : (
                     <CTAButton
-                      onClick={() => router.push("/settings")}
+                      onClick={() => router.push("/account")}
                       accentColor="#01EFFC"
                       style={{ width: "100%" }}
                     >
