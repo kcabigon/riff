@@ -56,6 +56,7 @@ export default async function TutorialReadPage({
       initialComments={getTutorialComments()}
       isAlreadyRead={true}
       startInRiffMode={true}
+      disableCommentCompose={true}
       backHref={`/tutorial/riff?step=read&clubId=${clubId}`}
     />
   );

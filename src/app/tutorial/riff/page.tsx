@@ -13,6 +13,10 @@ export default async function TutorialRiff({
   const user = await requireAuth();
   const { step, clubId } = await searchParams;
 
+  if (!clubId) {
+    redirect("/no-club");
+  }
+
   const dbUser = await prisma.user.findUnique({
     where: { id: user.id },
     select: { avatarUrl: true },

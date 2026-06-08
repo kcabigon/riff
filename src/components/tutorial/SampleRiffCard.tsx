@@ -17,8 +17,9 @@ export default function SampleRiffCard({
 }: SampleRiffCardProps) {
   const router = useRouter();
   const [isHovered, setIsHovered] = useState(false);
+  const effectiveClubId = clubId ?? "no-club";
   const [tutorialUrl, setTutorialUrl] = useState(
-    clubId ? `/tutorial/riff?clubId=${clubId}` : "/tutorial/riff"
+    `/tutorial/riff?clubId=${effectiveClubId}`
   );
   const { deadline } = getTutorialDates();
 
@@ -26,12 +27,10 @@ export default function SampleRiffCard({
     const savedStep = sessionStorage.getItem("tutorial-step");
     if (savedStep) {
       setTutorialUrl(
-        clubId
-          ? `/tutorial/riff?step=${savedStep}&clubId=${clubId}`
-          : `/tutorial/riff?step=${savedStep}`
+        `/tutorial/riff?step=${savedStep}&clubId=${effectiveClubId}`
       );
     }
-  }, [clubId]);
+  }, [effectiveClubId]);
 
   const handleStart = (e: React.MouseEvent) => {
     e.stopPropagation();

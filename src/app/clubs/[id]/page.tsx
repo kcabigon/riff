@@ -1,8 +1,25 @@
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import ClubPageLayout from "@/components/clubs/ClubPageLayout";
 import { getSubmittedPieces, getTotalWordCount } from "@/lib/riff-utils";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const club = await prisma.club.findUnique({
+    where: { id },
+    select: { name: true },
+  });
+  return {
+    title: club?.name ?? "Club",
+    description: `Read and write with your club on Riff.`,
+  };
+}
 
 export default async function ClubPage({
   params,

@@ -17,7 +17,9 @@ export default function TutorialExitButton({
     if (step !== undefined) {
       sessionStorage.setItem("tutorial-step", step);
     }
-    router.push(clubId ? `/clubs/${clubId}` : "/no-club");
+    router.push(
+      clubId && clubId !== "no-club" ? `/clubs/${clubId}` : "/no-club"
+    );
   };
 
   return (

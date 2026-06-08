@@ -26,7 +26,8 @@ function DoneButton({
 }) {
   const [hovered, setHovered] = useState(false);
   return (
-    <div
+    <button
+      type="button"
       onClick={onClick}
       onMouseEnter={() => onClick && setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -51,7 +52,7 @@ function DoneButton({
       }}
     >
       ✓ {children}
-    </div>
+    </button>
   );
 }
 
