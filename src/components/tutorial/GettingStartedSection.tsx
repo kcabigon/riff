@@ -28,6 +28,7 @@ function DoneButton({
   return (
     <button
       type="button"
+      disabled={!onClick}
       onClick={onClick}
       onMouseEnter={() => onClick && setHovered(true)}
       onMouseLeave={() => setHovered(false)}
