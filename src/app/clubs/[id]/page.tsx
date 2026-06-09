@@ -123,11 +123,6 @@ export default async function ClubPage({
     (m) => m.userId === userId
   )!.joinedAt;
 
-  // Predicted volume number for the active riff (if unnamed) — same count used at reveal time
-  const predictedVolumeNumber =
-    riffs.filter((r) => r.status === "REVEALED" || r.status === "COMPLETED")
-      .length + 1;
-
   // Compute stats
   const riffCount = riffs.length;
   const pieceCount = riffs.reduce(
@@ -153,6 +148,12 @@ export default async function ClubPage({
   const activeRiff = riffs.find((r) => r.status === "ACTIVE")
     ? serializeRiff(riffs.find((r) => r.status === "ACTIVE")!)
     : null;
+
+  // Only meaningful when there's an active riff — same count used at reveal time
+  const predictedVolumeNumber = activeRiff
+    ? riffs.filter((r) => r.status === "REVEALED" || r.status === "COMPLETED")
+        .length + 1
+    : undefined;
   const revealedRiffs = riffs
     .filter((r) => r.status === "REVEALED" && r.updatedAt > memberJoinedAt)
     .map(serializeRiff);

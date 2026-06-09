@@ -104,13 +104,22 @@ export default async function RiffPage({
     redirect("/");
   }
 
-  // Verify user is a club member
-  const member = await prisma.clubMember.findFirst({
-    where: {
-      clubId: riff.clubId,
-      userId,
-    },
-  });
+  // Verify user is a club member + predicted volume number in parallel (both need only riff.clubId)
+  const [member, predictedVolumeNumber] = await Promise.all([
+    prisma.clubMember.findFirst({
+      where: { clubId: riff.clubId, userId },
+    }),
+    riff.status === "ACTIVE"
+      ? prisma.riff
+          .count({
+            where: {
+              clubId: riff.clubId,
+              status: { in: ["REVEALED", "COMPLETED"] },
+            },
+          })
+          .then((n) => n + 1)
+      : Promise.resolve(undefined),
+  ]);
 
   if (!member) {
     redirect("/");
@@ -122,17 +131,6 @@ export default async function RiffPage({
     (p) => p.piece.authorId === userId && p.submittedAt !== null
   );
   const isAdmin = riff.club.adminId === userId;
-
-  // Predicted volume number for display on unnamed active riffs (read-only, not saved until reveal)
-  const predictedVolumeNumber =
-    riff.status === "ACTIVE"
-      ? (await prisma.riff.count({
-          where: {
-            clubId: riff.clubId,
-            status: { in: ["REVEALED", "COMPLETED"] },
-          },
-        })) + 1
-      : undefined;
 
   // ID of the user's unsubmitted piece — needed for late submission on revealed riffs
   const draftPieceId =
