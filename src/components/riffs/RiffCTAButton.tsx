@@ -27,7 +27,7 @@ export default function RiffCTAButton({
   const { createDraft } = useDraftCreation();
 
   const label = !isJoined
-    ? "Join riff"
+    ? "Let's riff"
     : hasSubmitted
       ? "View submission"
       : hasDraft
