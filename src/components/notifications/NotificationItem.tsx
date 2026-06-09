@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import Avatar from "@/components/shared/Avatar";
+import { getRiffDisplayTitle } from "@/lib/riff-utils";
 
 interface NotificationItemProps {
   notification: {
@@ -37,12 +38,7 @@ function getMessage(n: NotificationItemProps["notification"]): string {
       return `${actor} submitted a piece to ${n.club ? n.club.name : "your club"}`;
     case "RIFF_COMPLETED": {
       if (n.riff) {
-        const display =
-          n.riff.volumeNumber && n.riff.title
-            ? `Volume ${n.riff.volumeNumber}: ${n.riff.title}`
-            : n.riff.volumeNumber
-              ? `Volume ${n.riff.volumeNumber}`
-              : n.riff.title || "The riff";
+        const display = getRiffDisplayTitle({ ...n.riff, status: "REVEALED" });
         return `${display} has been revealed`;
       }
       return "A riff has been revealed";
