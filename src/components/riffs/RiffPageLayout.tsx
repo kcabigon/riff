@@ -15,6 +15,7 @@ import {
   allPiecesSubmitted,
   isPastDeadline,
   formatDateShort,
+  formatDateLong,
   getSubmittedParticipants,
   getWaitingParticipants,
 } from "@/lib/riff-utils";
@@ -260,9 +261,11 @@ export default function RiffPageLayout({
                 >
                   {deadlinePassed && riff.status !== "REVEALED"
                     ? "Deadline passed"
-                    : riff.deadline
-                      ? `${formatDateShort(riff.createdAt)} - ${formatDateShort(riff.deadline)}`
-                      : formatDateShort(riff.createdAt)}
+                    : riff.status === "REVEALED" && riff.deadline
+                      ? `${formatDateLong(riff.createdAt)} - ${formatDateLong(riff.deadline)}`
+                      : riff.deadline
+                        ? `Deadline: ${formatDateLong(riff.deadline)}`
+                        : "No deadline"}
                 </p>
                 {isAdmin &&
                   riff.status !== "REVEALED" &&

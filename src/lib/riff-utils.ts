@@ -51,6 +51,13 @@ export function formatDateShort(date: string | Date): string {
   });
 }
 
+export function formatDateLong(date: string | Date): string {
+  return new Date(date).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+  });
+}
+
 // Returns participants who have submitted a piece.
 export function getSubmittedParticipants<T extends { user: { id: string } }>(
   participants: T[],
