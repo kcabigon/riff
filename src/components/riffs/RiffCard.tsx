@@ -50,6 +50,7 @@ interface RiffCardProps {
   isAdmin: boolean;
   onJoin?: () => void;
   onReveal?: () => void;
+  predictedVolumeNumber?: number;
 }
 
 export default function RiffCard({
@@ -61,6 +62,7 @@ export default function RiffCard({
   isAdmin,
   onJoin,
   onReveal,
+  predictedVolumeNumber,
 }: RiffCardProps) {
   const [isCardHovered, setIsCardHovered] = useState(false);
   const router = useRouter();
@@ -136,7 +138,7 @@ export default function RiffCard({
               margin: 0,
             }}
           >
-            {getRiffDisplayTitle(riff)}
+            {getRiffDisplayTitle(riff, predictedVolumeNumber)}
           </h3>
 
           {/* Date/Deadline */}

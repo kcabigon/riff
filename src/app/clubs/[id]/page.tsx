@@ -123,6 +123,11 @@ export default async function ClubPage({
     (m) => m.userId === userId
   )!.joinedAt;
 
+  // Predicted volume number for the active riff (if unnamed) — same count used at reveal time
+  const predictedVolumeNumber =
+    riffs.filter((r) => r.status === "REVEALED" || r.status === "COMPLETED")
+      .length + 1;
+
   // Compute stats
   const riffCount = riffs.length;
   const pieceCount = riffs.reduce(
@@ -207,6 +212,7 @@ export default async function ClubPage({
       readCounts={readCounts}
       completedRiffs={completedRiffs}
       stats={{ riffCount, pieceCount, wordCount }}
+      predictedVolumeNumber={predictedVolumeNumber}
       initialWelcome={
         welcome === "host" || welcome === "member" ? welcome : undefined
       }

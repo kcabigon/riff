@@ -122,6 +122,18 @@ export default async function RiffPage({
     (p) => p.piece.authorId === userId && p.submittedAt !== null
   );
   const isAdmin = riff.club.adminId === userId;
+
+  // Predicted volume number for display on unnamed active riffs (read-only, not saved until reveal)
+  const predictedVolumeNumber =
+    riff.status === "ACTIVE"
+      ? (await prisma.riff.count({
+          where: {
+            clubId: riff.clubId,
+            status: { in: ["REVEALED", "COMPLETED"] },
+          },
+        })) + 1
+      : undefined;
+
   // ID of the user's unsubmitted piece — needed for late submission on revealed riffs
   const draftPieceId =
     riff.pieces.find(
@@ -254,6 +266,7 @@ export default async function RiffPage({
       userClubs={userClubs}
       hostFirstName={riff.club.admin?.firstName ?? null}
       isFirstReveal={isFirstReveal}
+      predictedVolumeNumber={predictedVolumeNumber}
     />
   );
 }

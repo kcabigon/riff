@@ -103,6 +103,7 @@ interface RiffPageLayoutProps {
   onReveal?: () => void;
   hostFirstName?: string | null;
   isFirstReveal?: boolean;
+  predictedVolumeNumber?: number;
 }
 
 export default function RiffPageLayout({
@@ -122,6 +123,7 @@ export default function RiffPageLayout({
   onReveal,
   hostFirstName,
   isFirstReveal = false,
+  predictedVolumeNumber,
 }: RiffPageLayoutProps) {
   const [isJoined, setIsJoined] = useState(initialIsJoined);
   const [isRevealModalOpen, setIsRevealModalOpen] = useState(false);
@@ -242,7 +244,7 @@ export default function RiffPageLayout({
                   margin: 0,
                 }}
               >
-                {getRiffDisplayTitle(riff)}
+                {getRiffDisplayTitle(riff, predictedVolumeNumber)}
               </h1>
               <div
                 style={{ display: "flex", alignItems: "center", gap: "8px" }}
@@ -621,7 +623,7 @@ export default function RiffPageLayout({
         onClose={() => setIsRevealModalOpen(false)}
         onConfirm={handleRevealConfirm}
         isRevealing={isRevealing}
-        riffTitle={getRiffDisplayTitle(riff)}
+        riffTitle={getRiffDisplayTitle(riff, predictedVolumeNumber)}
         waitingUsers={riff.participants
           .filter(
             (p) =>
@@ -689,7 +691,7 @@ export default function RiffPageLayout({
             router.push(`/clubs/${riff.clubId}`);
           }}
           riffId={riff.id}
-          riffTitle={getRiffDisplayTitle(riff)}
+          riffTitle={getRiffDisplayTitle(riff, predictedVolumeNumber)}
         />
       )}
 
