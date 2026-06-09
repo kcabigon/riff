@@ -21,7 +21,7 @@ export default function CreateRiffModal({
 }: CreateRiffModalProps) {
   const getDefaultDeadline = () => {
     const d = new Date();
-    d.setDate(d.getDate() + 30);
+    d.setDate(d.getDate() + 14);
     return d.toISOString().split("T")[0];
   };
 
