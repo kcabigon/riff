@@ -4,6 +4,8 @@ import TextAlign from "@tiptap/extension-text-align";
 import Underline from "@tiptap/extension-underline";
 import Image from "@tiptap/extension-image";
 import Youtube from "@tiptap/extension-youtube";
+import { TextStyle } from "@tiptap/extension-text-style";
+import { FontFamily } from "@tiptap/extension-font-family";
 import { Spotify } from "@/components/editor/extensions/Spotify";
 import { Indent } from "@/components/editor/extensions/Indent";
 
@@ -37,6 +39,11 @@ export function getSharedExtensions() {
     }).configure({ openOnClick: true }),
     TextAlign.configure({ types: ["heading", "paragraph"] }),
     Underline,
+    // Font picker: TextStyle stores the chosen typeface as an inline
+    // <span style="font-family: …"> mark, so it persists in the saved HTML
+    // and renders identically on the read page (which uses these same extensions).
+    TextStyle,
+    FontFamily.configure({ types: ["textStyle"] }),
     Image.extend({
       addAttributes() {
         return {

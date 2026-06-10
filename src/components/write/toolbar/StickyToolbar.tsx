@@ -3,6 +3,7 @@
 import { Editor } from "@tiptap/react";
 import ToolbarButton from "./ToolbarButton";
 import { allButtons } from "./toolbarButtons";
+import FontControl from "./FontControl";
 
 interface StickyToolbarProps {
   editor: Editor;
@@ -22,8 +23,24 @@ export default function StickyToolbar({
   onOpenSpotifyModal,
 }: StickyToolbarProps) {
   return (
-    <div className={inline ? "write-inline-toolbar" : "write-sticky-toolbar"}>
-      <div className="write-sticky-toolbar-inner">
+    <div
+      className={inline ? "write-inline-toolbar" : "write-sticky-toolbar"}
+      style={{ display: "flex", alignItems: "center", gap: "8px" }}
+    >
+      {/* Font picker — kept outside the scrolling row so its menu isn't clipped */}
+      <FontControl editor={editor} openUp={!inline} />
+      <div
+        style={{
+          width: "1px",
+          height: "20px",
+          background: "#E6E6E6",
+          flexShrink: 0,
+        }}
+      />
+      <div
+        className="write-sticky-toolbar-inner"
+        style={{ flex: 1, minWidth: 0 }}
+      >
         {allButtons.map((btn) => (
           <ToolbarButton
             key={btn.key}
