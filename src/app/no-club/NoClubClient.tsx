@@ -1,9 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import NavBar from "@/components/clubs/NavBar";
-import NoiseBackground from "@/components/NoiseBackground";
-import PrimaryButton from "@/components/PrimaryButton";
+import GettingStartedSection from "@/components/tutorial/GettingStartedSection";
 
 interface NoClubClientProps {
   user: {
@@ -15,22 +13,9 @@ interface NoClubClientProps {
 }
 
 export default function NoClubClient({ user }: NoClubClientProps) {
-  const router = useRouter();
-
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "#FFFFFF",
-        display: "flex",
-        flexDirection: "column",
-        position: "relative",
-      }}
-    >
-      <NoiseBackground fillMode="cover" />
-      <div
-        style={{ position: "sticky", top: 0, zIndex: 50, isolation: "isolate" }}
-      >
+    <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
+      <div style={{ position: "sticky", top: 0, zIndex: 50 }}>
         <NavBar
           user={user}
           clubs={[]}
@@ -41,75 +26,16 @@ export default function NoClubClient({ user }: NoClubClientProps) {
 
       <div
         style={{
-          flex: 1,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "48px 24px",
-          position: "relative",
-          zIndex: 1,
+          maxWidth: "1000px",
+          margin: "0 auto",
+          padding: "32px 24px 64px",
         }}
       >
-        <div
-          style={{
-            width: "100%",
-            maxWidth: "480px",
-            backgroundColor: "#FFFFFF",
-            border: "2px solid #000000",
-            boxShadow: "8px 8px 0px 0px #000000",
-            padding: "40px 32px",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "24px",
-          }}
-        >
-          <p
-            style={{
-              fontFamily: "var(--font-dm-serif-text)",
-              fontSize: "32px",
-              fontWeight: 400,
-              color: "#000000",
-              margin: 0,
-              textAlign: "center",
-            }}
-          >
-            Clubless?
-          </p>
-
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              color: "#000000",
-              margin: 0,
-              lineHeight: "1.6",
-              textAlign: "center",
-            }}
-          >
-            Ugh, as if!
-          </p>
-
-          <PrimaryButton onClick={() => router.push("/onboarding/create-club")}>
-            Start a write club
-          </PrimaryButton>
-
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              fontWeight: 300,
-              color: "#808080",
-              margin: 0,
-              lineHeight: "1.5",
-              textAlign: "center",
-            }}
-          >
-            Want to join an existing write club? Have the club host send you an
-            invite link to join.
-          </p>
-        </div>
+        <GettingStartedSection
+          variant="no-club"
+          userId={user.id}
+          avatarDone={!!user.avatarUrl}
+        />
       </div>
     </div>
   );

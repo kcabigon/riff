@@ -1,10 +1,16 @@
-export function getRiffDisplayTitle(riff: {
-  volumeNumber?: number | null;
-  title?: string | null;
-  status: string;
-}): string {
+export function getRiffDisplayTitle(
+  riff: {
+    volumeNumber?: number | null;
+    title?: string | null;
+    status: string;
+  },
+  predictedVolumeNumber?: number
+): string {
   if (riff.status === "ACTIVE" || riff.status === "DRAFT") {
-    return riff.title || "Active Riff";
+    return (
+      riff.title ||
+      (predictedVolumeNumber ? `Volume ${predictedVolumeNumber}` : "")
+    );
   }
   // REVEALED / COMPLETED
   if (!riff.volumeNumber) return riff.title || "Untitled Riff"; // fallback for old data without volumeNumber
@@ -47,6 +53,14 @@ export function toEndOfDay(dateString: string): string {
 export function formatDateShort(date: string | Date): string {
   return new Date(date).toLocaleDateString("en-US", {
     month: "short",
+    day: "numeric",
+  });
+}
+
+// Formats a date as "January 15" (full month + day, no year).
+export function formatDateLong(date: string | Date): string {
+  return new Date(date).toLocaleDateString("en-US", {
+    month: "long",
     day: "numeric",
   });
 }

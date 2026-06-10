@@ -57,11 +57,6 @@ export default async function WritePageRoute({
     redirect("/");
   }
 
-  // Determine if user is admin of the club this piece is in (for post-submit modal)
-  const firstRiff = piece.riffs[0]?.riff;
-  const isAdmin = firstRiff ? firstRiff.club.adminId === userId : false;
-  const hostFirstName = firstRiff?.club.admin?.firstName ?? null;
-
   const serializedPiece = {
     id: piece.id,
     title: piece.title,
@@ -79,11 +74,5 @@ export default async function WritePageRoute({
     })),
   };
 
-  return (
-    <WritePage
-      piece={serializedPiece}
-      isAdmin={isAdmin}
-      hostFirstName={hostFirstName}
-    />
-  );
+  return <WritePage piece={serializedPiece} />;
 }

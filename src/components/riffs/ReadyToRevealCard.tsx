@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import MosaicCollage from "./MosaicCollage";
 import Badge from "@/components/shared/Badge";
-import { getRiffDisplayTitle } from "@/lib/riff-utils";
+import { getRiffDisplayTitle, getSubmittedPieces } from "@/lib/riff-utils";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 
 interface ReadyToRevealCardProps {
@@ -22,6 +22,7 @@ interface ReadyToRevealCardProps {
       };
     }>;
     pieces: Array<{
+      submittedAt: string | Date | null;
       piece: {
         id: string;
         title: string;
@@ -79,7 +80,7 @@ export default function ReadyToRevealCard({
         }}
       >
         <MosaicCollage
-          pieces={riff.pieces.map((p) => ({
+          pieces={getSubmittedPieces(riff.pieces).map((p) => ({
             id: p.piece.id,
             coverImage: p.piece.coverImage,
           }))}

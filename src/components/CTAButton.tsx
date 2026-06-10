@@ -12,8 +12,9 @@ export default function CTAButton({
   children,
   disabled,
   style,
+  accentColor = "#00FF66",
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement>) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & { accentColor?: string }) {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -41,14 +42,11 @@ export default function CTAButton({
         whiteSpace: "nowrap" as const,
         ...style,
         backgroundColor: isHovered
-          ? "#00FF66"
+          ? accentColor
           : (style?.backgroundColor ?? "#FFFFFF"),
         boxShadow: isHovered
-          ? (style?.boxShadow ?? "8px 8px 0px 0px #00FF66").replace(
-              "#00FF66",
-              "#000000"
-            )
-          : (style?.boxShadow ?? "8px 8px 0px 0px #00FF66"),
+          ? "8px 8px 0px 0px #000000"
+          : (style?.boxShadow ?? `8px 8px 0px 0px ${accentColor}`),
       }}
     >
       {children}

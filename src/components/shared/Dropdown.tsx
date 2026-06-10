@@ -11,6 +11,8 @@ interface DropdownActionItem {
   active?: boolean;
   color?: string;
   backgroundColor?: string;
+  /** Render the label in a specific typeface (e.g. a font picker). Defaults to DM Sans. */
+  labelFontFamily?: string;
   onClick: () => void;
 }
 
@@ -28,6 +30,8 @@ interface DropdownProps {
   align?: "left" | "right";
   minWidth?: number;
   size?: "sm";
+  /** Open the menu above the trigger instead of below (e.g. for a bottom-anchored toolbar). */
+  openUp?: boolean;
   isOpen?: boolean;
   onToggle?: () => void;
   onClose?: () => void;
@@ -39,6 +43,7 @@ export default function Dropdown({
   align = "right",
   minWidth = 160,
   size,
+  openUp = false,
   isOpen: controlledIsOpen,
   onToggle: controlledOnToggle,
   onClose: controlledOnClose,
@@ -102,7 +107,7 @@ export default function Dropdown({
         <div
           style={{
             position: "absolute",
-            top: "calc(100% + 8px)",
+            [openUp ? "bottom" : "top"]: "calc(100% + 8px)",
             [align === "right" ? "right" : "left"]: 0,
             backgroundColor: "#FFFFFF",
             border: "2px solid #000000",
@@ -141,7 +146,7 @@ export default function Dropdown({
                   background: item.backgroundColor || "none",
                   border: "none",
                   padding: size === "sm" ? "8px 12px" : "12px 16px",
-                  fontFamily: "var(--font-dm-sans)",
+                  fontFamily: item.labelFontFamily || "var(--font-dm-sans)",
                   fontSize: "14px",
                   fontWeight: item.active ? 700 : 300,
                   color: item.color || "#000000",

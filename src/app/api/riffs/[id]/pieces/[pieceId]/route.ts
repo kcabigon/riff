@@ -59,7 +59,7 @@ export async function PATCH(
     const riff = submission.riff;
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const riffUrl = `${appUrl}/riffs/${riffId}`;
-    const riffDisplayTitle = riff.title || "Active Riff";
+    const riffDisplayTitle = riff.title || riff.club.name;
 
     // Notify all club members + send emails
     notifyClubMembers(
