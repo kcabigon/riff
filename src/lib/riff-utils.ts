@@ -57,6 +57,7 @@ export function formatDateShort(date: string | Date): string {
   });
 }
 
+// Formats a date as "January 15" (full month + day, no year).
 export function formatDateLong(date: string | Date): string {
   return new Date(date).toLocaleDateString("en-US", {
     month: "long",

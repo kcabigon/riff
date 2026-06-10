@@ -17,6 +17,7 @@ interface ProgressCardProps {
     updatedAt: string;
     submittedAt: string | null;
     coverImage?: string | null;
+    activityLabel?: string;
   } | null;
 }
 
@@ -326,7 +327,7 @@ export default function ProgressCard({ user, piece }: ProgressCardProps) {
             margin: 0,
           }}
         >
-          {relativeTime(piece.updatedAt)}
+          {piece.activityLabel ?? relativeTime(piece.updatedAt)}
         </p>
       </div>
 
