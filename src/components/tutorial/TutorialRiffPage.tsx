@@ -94,10 +94,7 @@ export default function TutorialRiffPage({
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
       {showCelebration && (
-        <RevealCelebration
-          pieceCount={3}
-          onDismiss={handleCelebrationDismiss}
-        />
+        <RevealCelebration onDismiss={handleCelebrationDismiss} />
       )}
 
       {/* NavBar — mirrors real app navbar */}
@@ -207,7 +204,7 @@ export default function TutorialRiffPage({
                   margin: 0,
                 }}
               >
-                {createdAt} - {deadline}
+                Deadline: {deadline}
               </p>
             </div>
 

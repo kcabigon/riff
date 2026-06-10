@@ -208,13 +208,13 @@ export default function GettingStartedSection(
               <>
                 <div style={{ flex: 1 }}>
                   {props.step1Done ? (
-                    <DoneButton>Start new riff</DoneButton>
+                    <DoneButton>Let&apos;s riff</DoneButton>
                   ) : (
                     <CTAButton
                       onClick={props.onStartRiff}
                       style={{ width: "100%" }}
                     >
-                      Start new riff
+                      Let&apos;s riff
                     </CTAButton>
                   )}
                 </div>

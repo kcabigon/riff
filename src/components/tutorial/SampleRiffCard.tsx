@@ -122,7 +122,7 @@ export default function SampleRiffCard({
             lineHeight: "1.4",
           }}
         >
-          Click Join riff to start this tutorial
+          Click Let&apos;s riff to start this tutorial
         </p>
       </div>
 
@@ -139,7 +139,7 @@ export default function SampleRiffCard({
         }}
       >
         <CTAButton onClick={handleStart} accentColor="#955CB5">
-          Join riff
+          Let&apos;s riff
         </CTAButton>
       </div>
 

@@ -1,6 +1,6 @@
-import { formatDateShort } from "@/lib/riff-utils";
+import { formatDateShort, formatDateLong } from "@/lib/riff-utils";
 
-const TUTORIAL_DEADLINE_DAYS = 30;
+const TUTORIAL_DEADLINE_DAYS = 14;
 
 export function getTutorialDates(): {
   createdAt: string;
@@ -15,7 +15,7 @@ export function getTutorialDates(): {
   );
   return {
     createdAt: formatDateShort(now),
-    deadline: formatDateShort(deadlineDate),
+    deadline: formatDateLong(deadlineDate),
     deadlineDate,
     pieceSubmittedAt: now.toISOString(),
     friendPieceUpdatedAt: new Date(

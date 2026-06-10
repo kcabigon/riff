@@ -625,7 +625,6 @@ export default function RiffPageLayout({
       {/* Reveal Celebration */}
       {showCelebration && (
         <RevealCelebration
-          pieceCount={riff.pieces.length}
           onDismiss={() => {
             setShowCelebration(false);
             router.refresh();
