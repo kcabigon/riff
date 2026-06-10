@@ -103,9 +103,8 @@ export default function FontControl({
       >
         {active.name}
       </span>
-      <span style={{ fontSize: "10px", fontFamily: "var(--font-dm-sans)" }}>
-        {"▾"}
-      </span>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/icons/arrow_down.svg" alt="" width={12} height={12} />
     </button>
   );
 
