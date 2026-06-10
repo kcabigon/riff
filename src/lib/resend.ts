@@ -394,7 +394,7 @@ function getRiffCreatedEmailTemplate({
             </td>
           </tr>
 
-          ${emailButton("Join riff", clubUrl)}`,
+          ${emailButton("Let's riff", clubUrl)}`,
   });
 }
 

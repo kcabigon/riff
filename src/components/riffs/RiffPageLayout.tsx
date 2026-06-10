@@ -15,6 +15,7 @@ import {
   allPiecesSubmitted,
   isPastDeadline,
   formatDateShort,
+  formatDateLong,
   getSubmittedParticipants,
   getWaitingParticipants,
 } from "@/lib/riff-utils";
@@ -98,6 +99,7 @@ interface RiffPageLayoutProps {
   onReveal?: () => void;
   hostFirstName?: string | null;
   isFirstReveal?: boolean;
+  predictedVolumeNumber?: number;
 }
 
 export default function RiffPageLayout({
@@ -117,6 +119,7 @@ export default function RiffPageLayout({
   onReveal,
   hostFirstName,
   isFirstReveal = false,
+  predictedVolumeNumber,
 }: RiffPageLayoutProps) {
   const [isJoined, setIsJoined] = useState(initialIsJoined);
   const [isRevealModalOpen, setIsRevealModalOpen] = useState(false);
@@ -222,7 +225,7 @@ export default function RiffPageLayout({
                   margin: 0,
                 }}
               >
-                {getRiffDisplayTitle(riff)}
+                {getRiffDisplayTitle(riff, predictedVolumeNumber)}
               </h1>
               <div
                 style={{ display: "flex", alignItems: "center", gap: "8px" }}
@@ -241,9 +244,11 @@ export default function RiffPageLayout({
                 >
                   {deadlinePassed && riff.status !== "REVEALED"
                     ? "Deadline passed"
-                    : riff.deadline
-                      ? `${formatDateShort(riff.createdAt)} - ${formatDateShort(riff.deadline)}`
-                      : formatDateShort(riff.createdAt)}
+                    : riff.status === "REVEALED" && riff.deadline
+                      ? `${formatDateLong(riff.createdAt)} - ${formatDateLong(riff.deadline)}`
+                      : riff.deadline
+                        ? `Deadline: ${formatDateLong(riff.deadline)}`
+                        : "No deadline"}
                 </p>
                 {isAdmin &&
                   riff.status !== "REVEALED" &&
@@ -596,7 +601,7 @@ export default function RiffPageLayout({
         onClose={() => setIsRevealModalOpen(false)}
         onConfirm={handleRevealConfirm}
         isRevealing={isRevealing}
-        riffTitle={getRiffDisplayTitle(riff)}
+        riffTitle={getRiffDisplayTitle(riff, predictedVolumeNumber)}
         waitingUsers={riff.participants
           .filter(
             (p) =>
@@ -660,7 +665,7 @@ export default function RiffPageLayout({
             router.push(`/clubs/${riff.clubId}`);
           }}
           riffId={riff.id}
-          riffTitle={getRiffDisplayTitle(riff)}
+          riffTitle={getRiffDisplayTitle(riff, predictedVolumeNumber)}
         />
       )}
 

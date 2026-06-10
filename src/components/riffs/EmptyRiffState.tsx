@@ -47,7 +47,7 @@ export default function EmptyRiffState({
         width: "100%",
       }}
     >
-      <CTAButton onClick={onStartNewRiff}>Start new riff</CTAButton>
+      <CTAButton onClick={onStartNewRiff}>Let&apos;s riff</CTAButton>
     </div>
   );
 }

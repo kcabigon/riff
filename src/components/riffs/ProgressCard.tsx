@@ -2,6 +2,7 @@
 
 import Avatar from "@/components/shared/Avatar";
 import NoiseBackground from "@/components/NoiseBackground";
+import { relativeTime } from "@/lib/timeAgo";
 
 interface ProgressCardProps {
   user: {
@@ -28,18 +29,6 @@ const PLACEHOLDER_COLORS = [
   "#D5E8E0",
   "#E0D5E8",
 ];
-
-function relativeTime(isoString: string): string {
-  const diff = Date.now() - new Date(isoString).getTime();
-  const minutes = Math.floor(diff / 60_000);
-  if (minutes < 1) return "Just now";
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days === 1) return "Yesterday";
-  return `${days} days ago`;
-}
 
 export default function ProgressCard({ user, piece }: ProgressCardProps) {
   const cardBase: React.CSSProperties = {
@@ -198,6 +187,31 @@ export default function ProgressCard({ user, piece }: ProgressCardProps) {
           >
             {piece.title}
           </h4>
+        </div>
+
+        {/* Submitted label — fixed position above avatar */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: "56px",
+            left: 0,
+            right: 0,
+            display: "flex",
+            justifyContent: "center",
+            zIndex: 2,
+          }}
+        >
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "16px",
+              fontWeight: 300,
+              color: "rgba(255, 255, 255, 0.7)",
+              margin: 0,
+            }}
+          >
+            {relativeTime(piece.submittedAt)}
+          </p>
         </div>
 
         {/* Author avatar — bottom center */}

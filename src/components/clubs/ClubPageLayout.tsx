@@ -100,6 +100,7 @@ interface ClubPageLayoutProps {
   userMemberOnboardingComplete: boolean;
   avatarDone: boolean;
   initialWelcome?: "host" | "member";
+  predictedVolumeNumber?: number;
 }
 
 export default function ClubPageLayout({
@@ -117,6 +118,7 @@ export default function ClubPageLayout({
   userMemberOnboardingComplete,
   avatarDone,
   initialWelcome,
+  predictedVolumeNumber,
 }: ClubPageLayoutProps) {
   const router = useRouter();
   const [clubName, setClubName] = useState(club.name);
@@ -731,6 +733,7 @@ export default function ClubPageLayout({
                   isAdmin={isAdmin}
                   onJoin={handleJoinRiff}
                   onReveal={() => setIsRevealModalOpen(true)}
+                  predictedVolumeNumber={predictedVolumeNumber}
                 />
               ) : (
                 <EmptyRiffState
@@ -926,7 +929,7 @@ export default function ClubPageLayout({
           onClose={() => setIsRevealModalOpen(false)}
           onConfirm={handleRevealConfirm}
           isRevealing={isRevealing}
-          riffTitle={getRiffDisplayTitle(activeRiff)}
+          riffTitle={getRiffDisplayTitle(activeRiff, predictedVolumeNumber)}
           waitingUsers={getWaitingParticipants(
             activeRiff.participants,
             activeRiff.pieces
