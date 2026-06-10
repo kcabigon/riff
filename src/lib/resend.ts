@@ -357,7 +357,7 @@ function getOnboardingEmailTemplate(magicLink: string): string {
             </td>
           </tr>
 
-          ${emailButton("Let's do this shit", magicLink)}
+          ${emailButton("Let's do this", magicLink)}
 
           <tr>
             <td style="padding:0 40px 40px;">

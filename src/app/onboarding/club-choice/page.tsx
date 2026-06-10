@@ -4,131 +4,122 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import OnboardingCard from "@/components/onboarding/OnboardingCard";
 import PrimaryButton from "@/components/PrimaryButton";
-import ConversionModal from "@/components/clubs/ConversionModal";
+import CTAButton from "@/components/CTAButton";
+import Tagline from "@/components/Tagline";
 
 export default function OnboardingClubChoicePage() {
   const router = useRouter();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [joinClicked, setJoinClicked] = useState(false);
+  const [writeClubAnswered, setWriteClubAnswered] = useState(false);
 
   return (
-    <OnboardingCard>
+    <OnboardingCard
+      headerContent={
+        <Tagline text="Every write club needs a host" width={320} />
+      }
+    >
+      {/* CTAs */}
       <div
         style={{
           width: "100%",
-          backgroundColor: "#FFFFFF",
-          padding: "32px",
           display: "flex",
           flexDirection: "column",
-          alignItems: "center",
-          gap: "24px",
+          gap: "16px",
         }}
       >
-        {/* Heading */}
-        <p
-          style={{
-            fontFamily: "var(--font-dm-serif-text)",
-            fontSize: "28px",
-            fontWeight: 400,
-            color: "#000000",
-            margin: 0,
-            textAlign: "center",
+        <PrimaryButton
+          onClick={() => {
+            sessionStorage.setItem(
+              "pendingClubFrom",
+              "/onboarding/club-choice"
+            );
+            router.push("/onboarding/create-club");
           }}
         >
-          Every write club needs a host
-        </p>
-
-        {/* Body */}
-        <p
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
-            fontWeight: 300,
-            color: "#000000",
-            margin: 0,
-            lineHeight: "1.6",
-            textAlign: "center",
-          }}
-        >
-          Be the one to rally the crew and get the party started. Riff will
-          organize and automate the logistics so you can be the hostess with the
-          mostest.
-        </p>
-
-        <PrimaryButton onClick={() => router.push("/onboarding/create-club")}>
           Start a write club
         </PrimaryButton>
 
-        {/* Join note + skip link */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "8px",
-          }}
-        >
-          <p
+        {joinClicked ? (
+          <div
             style={{
+              width: "100%",
+              border: "2px solid #9C9C9C",
+              padding: "12px 48px",
               fontFamily: "var(--font-dm-sans)",
               fontSize: "14px",
               fontWeight: 300,
-              color: "#666666",
-              margin: 0,
-              lineHeight: "1.5",
+              color: "#9C9C9C",
+              backgroundColor: "#FFFFFF",
+              boxSizing: "border-box",
               textAlign: "center",
+              lineHeight: "1.5",
             }}
           >
-            Want to join an existing write club? Have the club host send you an
-            invite link to join.
-          </p>
-          <button
-            onClick={() => router.push("/no-club")}
+            Have the host send you an invitation link.{" "}
+            <button
+              onClick={() => router.push("/no-club")}
+              style={{
+                background: "none",
+                border: "none",
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "14px",
+                fontWeight: 300,
+                color: "#9C9C9C",
+                cursor: "pointer",
+                padding: 0,
+                textDecoration: "underline",
+                textDecorationColor: "#9C9C9C",
+              }}
+            >
+              Get started with no club.
+            </button>
+          </div>
+        ) : (
+          <CTAButton
+            onClick={() => setJoinClicked(true)}
+            accentColor="#01EFFC"
+            style={{ width: "100%" }}
+          >
+            Join a friend&apos;s club
+          </CTAButton>
+        )}
+      </div>
+
+      {/* Soft toggle */}
+      <div style={{ textAlign: "center" }}>
+        {writeClubAnswered ? (
+          <span
             style={{
-              background: "none",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "13px",
+              fontWeight: 300,
+              color: "#808080",
+              backgroundColor: "#FFFFFF",
+              padding: "4px 8px",
+            }}
+          >
+            Like a book club but for writing.
+          </span>
+        ) : (
+          <button
+            onClick={() => setWriteClubAnswered(true)}
+            style={{
+              backgroundColor: "#FFFFFF",
               border: "none",
               fontFamily: "var(--font-dm-sans)",
               fontSize: "13px",
               fontWeight: 300,
-              color: "#666666",
+              color: "#808080",
               cursor: "pointer",
-              padding: 0,
+              padding: "4px 8px",
               textDecoration: "underline",
-              textDecorationColor: "#666666",
-              textAlign: "center",
+              textDecorationColor: "#808080",
             }}
           >
-            I&apos;ll wait for an invite link
+            Wait, what&apos;s a write club?
           </button>
-        </div>
-
-        {/* Quiet link — separate afterthought */}
-        <button
-          onClick={() => setIsModalOpen(true)}
-          style={{
-            background: "none",
-            border: "none",
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "13px",
-            fontWeight: 300,
-            color: "#666666",
-            cursor: "pointer",
-            padding: 0,
-            textDecoration: "underline",
-            textDecorationColor: "#666666",
-            textAlign: "center",
-          }}
-        >
-          Wait, what&apos;s a write club?
-        </button>
+        )}
       </div>
-
-      <ConversionModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        ctaLabel="Start a write club"
-        onJoin={() => router.push("/onboarding/create-club")}
-        isJoining={false}
-      />
     </OnboardingCard>
   );
 }
