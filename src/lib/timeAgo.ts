@@ -7,7 +7,11 @@ export function relativeTime(iso: string): string {
   if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
   if (days === 1) return "Yesterday";
-  return `${days} days ago`;
+  if (days < 7) return `${days} days ago`;
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
 }
 
 export function formatSubmittedDate(iso: string): string {
