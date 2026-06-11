@@ -414,7 +414,6 @@ function CommentCard({
       {/* Collapsed state: reply count always visible when replies exist */}
       {!isExpanded && replyAuthors.length > 0 && (
         <div
-          onClick={(e) => e.stopPropagation()}
           style={{
             marginTop: "8px",
             display: "flex",
