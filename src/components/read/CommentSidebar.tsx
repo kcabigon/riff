@@ -159,7 +159,7 @@ function CommentCard({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={() => {
-        if (isExpanded) onToggleReplies();
+        if (!isEditing && !confirmingDelete) onToggleReplies();
       }}
       style={{
         position: "relative",
@@ -169,7 +169,7 @@ function CommentCard({
         padding: "12px",
         transition:
           "border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease",
-        cursor: isExpanded ? "pointer" : "default",
+        cursor: isEditing || confirmingDelete ? "default" : "pointer",
       }}
     >
       {/* Header row */}
@@ -389,16 +389,16 @@ function CommentCard({
         </>
       )}
 
-      {/* Reply footer — divider + thread or collapsed AvatarStack */}
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          marginTop: "10px",
-          borderTop: "1px solid #E6E6E6",
-          paddingTop: "10px",
-        }}
-      >
-        {isExpanded ? (
+      {/* Expanded reply thread */}
+      {isExpanded && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            marginTop: "10px",
+            borderTop: "1px solid #E6E6E6",
+            paddingTop: "10px",
+          }}
+        >
           <ReplyThread
             replies={comment.replies}
             parentId={comment.id}
@@ -408,52 +408,56 @@ function CommentCard({
             onReplyAdded={onReplyAdded}
             onCancel={onToggleReplies}
           />
-        ) : (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleReplies();
-            }}
+        </div>
+      )}
+
+      {/* Collapsed state: reply count always visible when replies exist */}
+      {!isExpanded && replyAuthors.length > 0 && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            marginTop: "8px",
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+          }}
+        >
+          <AvatarStack users={replyAuthors} size={24} />
+          <span
             style={{
-              background: "none",
-              border: "none",
-              padding: 0,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "11px",
+              fontWeight: 300,
+              color: "#808080",
             }}
           >
-            {replyAuthors.length > 0 ? (
-              <>
-                <AvatarStack users={replyAuthors} size={24} />
-                <span
-                  style={{
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "11px",
-                    fontWeight: 300,
-                    color: "#808080",
-                  }}
-                >
-                  {comment.replies.length}{" "}
-                  {comment.replies.length === 1 ? "reply" : "replies"}
-                </span>
-              </>
-            ) : (
-              <span
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "11px",
-                  fontWeight: 300,
-                  color: "#808080",
-                }}
-              >
-                Reply
-              </span>
-            )}
-          </button>
-        )}
-      </div>
+            {comment.replies.length}{" "}
+            {comment.replies.length === 1 ? "reply" : "replies"}
+          </span>
+        </div>
+      )}
+
+      {/* Hover reply icon — no replies, no thread open */}
+      {!isExpanded && replyAuthors.length === 0 && hovered && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: "8px",
+            right: "10px",
+            pointerEvents: "none",
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path
+              d="M2 7.5L5 4.5M2 7.5L5 10.5M2 7.5H8.5C10.4 7.5 12 9.1 12 11V11.5"
+              stroke="#AFAFAF"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </div>
+      )}
     </div>
   );
 }
