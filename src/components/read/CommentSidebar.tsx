@@ -663,6 +663,19 @@ export default function CommentSidebar({
     return () => clearTimeout(timer);
   }, [editingId, expandedId, updatePositions]);
 
+  // Collapse reply thread when clicking outside the expanded card
+  useEffect(() => {
+    if (!expandedId) return;
+    function handleClickOutside(e: MouseEvent) {
+      const el = cardRefs.current[expandedId!];
+      if (el && !el.contains(e.target as Node)) {
+        setExpandedId(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [expandedId]);
+
   // Recalculate whenever any card changes height (e.g. textarea expanding)
   useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout>;
