@@ -143,7 +143,7 @@ export default function ReplyThread({
                   display: "flex",
                   alignItems: "center",
                   gap: "6px",
-                  marginBottom: "6px",
+                  marginBottom: "8px",
                 }}
               >
                 <span
