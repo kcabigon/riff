@@ -24,7 +24,7 @@ A private essay-sharing platform for creative communities. Users create **clubs*
 - Riff lifecycle: DRAFT → ACTIVE → REVEALED → COMPLETED (with confetti)
 - Read page with Tiptap read-only rendering, comment toggle, hide-on-scroll mobile nav
 - Comment system with text selection anchoring, bidirectional sidebar positioning, inline compose
-- Rich text editor (Tiptap: resizable images, YouTube, Spotify embeds)
+- Rich text editor (Tiptap: resizable images, YouTube, Spotify embeds, font picker — Playfair/Roboto Slab/Montserrat/Inter/Source Code Pro)
 - Write page with white canvas, floating toolbar, subtitle, keyboard-aware mobile toolbar
 - Draft editor with autosave (content, title, subtitle, cover image) and HEIC support
 - Profile page redesign (featured piece hero, piece grid, My Stats modal, piece management)
@@ -119,12 +119,10 @@ src/components/
 ├── notifications/ # NotificationBell, NotificationPanel, NotificationItem
 ├── settings/      # SettingsPage, ProfileSection, EmailSection, DataSection, DeleteAccountConfirmModal
 ├── admin/         # AdminDashboard, StatCard, RiffStatusBar
-├── welcome/       # WelcomeTutorial, MobileWelcomeTutorial, WelcomeClient, TutorialStage,
-│                  # tutorial-shared (BrushHighlight, IntroOrbit, LockBadge, CommentCard, WordNote)
 ├── about/         # FoundersNotePage, FakeCommentHighlight
 ├── write/         # WritePage, CoverImageModal, SubmitConfirmModal, EmbedModal, MediaEmbedModal,
 │                  # LinkPopover, ResizableImageView, toolbar/StickyToolbar, toolbar/ToolbarButton,
-│                  # toolbar/toolbarButtons
+│                  # toolbar/toolbarButtons, toolbar/FontControl
 ├── editor/        # TiptapEditor, EditorToolbar, extensions/Spotify, extensions/sharedExtensions
 ├── PrimaryButton.tsx, SecondaryButton.tsx, CTAButton.tsx, DestructiveButton.tsx
 └── TextInput.tsx, BackButton.tsx, CloseButton.tsx, NoiseBackground.tsx, Tagline.tsx
