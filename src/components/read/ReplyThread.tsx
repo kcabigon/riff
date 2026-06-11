@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Avatar from "@/components/shared/Avatar";
+import CommentButton from "./CommentButton";
 import { timeAgo } from "@/lib/timeAgo";
 import { CommentAuthor } from "@/types";
 
@@ -169,58 +170,41 @@ export default function ReplyThread({
         style={{
           display: "flex",
           justifyContent: "flex-end",
+          alignItems: "center",
+          gap: "8px",
           marginTop: "6px",
-          visibility: text.trim() ? "visible" : "hidden",
         }}
       >
         <button
           onClick={(e) => {
             e.stopPropagation();
-            handleSubmit();
+            setText("");
+            if (textareaRef.current) {
+              textareaRef.current.style.height = "auto";
+            }
           }}
-          disabled={submitting}
-          title="Send reply"
           style={{
-            backgroundColor: submitting ? "#E6E6E6" : "#00FF66",
-            border: `2px solid ${submitting ? "#9C9C9C" : "#000000"}`,
-            borderRadius: 0,
-            cursor: submitting ? "not-allowed" : "pointer",
-            padding: "6px 8px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "13px",
+            fontWeight: 300,
+            color: "#808080",
           }}
         >
-          {submitting ? (
-            <span
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "12px",
-                color: "#9C9C9C",
-                lineHeight: 1,
-              }}
-            >
-              …
-            </span>
-          ) : (
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path
-                d="M12.5 1.5L1 6L6 8L8 13L12.5 1.5Z"
-                stroke="#000000"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M6 8L9.5 4.5"
-                stroke="#000000"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          )}
+          Cancel
         </button>
+        <CommentButton
+          onClick={(e) => {
+            e.stopPropagation();
+            handleSubmit();
+          }}
+          disabled={submitting || !text.trim()}
+          loading={submitting}
+        >
+          Post
+        </CommentButton>
       </div>
     </div>
   );

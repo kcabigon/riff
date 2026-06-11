@@ -659,11 +659,18 @@ export default function CommentSidebar({
 
   // Recalculate whenever any card changes height (e.g. textarea expanding)
   useEffect(() => {
-    const observer = new ResizeObserver(() => updatePositions());
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const observer = new ResizeObserver(() => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(updatePositions, 50);
+    });
     for (const el of Object.values(cardRefs.current)) {
       if (el) observer.observe(el);
     }
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      clearTimeout(timeoutId);
+    };
   }, [comments, updatePositions]);
 
   return (
