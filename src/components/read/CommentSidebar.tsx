@@ -415,7 +415,9 @@ function CommentCard({
       {!isExpanded && replyAuthors.length > 0 && (
         <div
           style={{
-            marginTop: "8px",
+            marginTop: "10px",
+            borderTop: "1px solid #E6E6E6",
+            paddingTop: "10px",
             display: "flex",
             alignItems: "center",
             gap: "6px",
