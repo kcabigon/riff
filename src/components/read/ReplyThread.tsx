@@ -22,6 +22,7 @@ interface ReplyThreadProps {
   riffId: string;
   clubId: string;
   onReplyAdded: (reply: ReplyData) => void;
+  onCancel?: () => void;
 }
 
 export default function ReplyThread({
@@ -31,6 +32,7 @@ export default function ReplyThread({
   riffId,
   clubId,
   onReplyAdded,
+  onCancel,
 }: ReplyThreadProps) {
   const [text, setText] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -178,10 +180,7 @@ export default function ReplyThread({
         <button
           onClick={(e) => {
             e.stopPropagation();
-            setText("");
-            if (textareaRef.current) {
-              textareaRef.current.style.height = "auto";
-            }
+            onCancel?.();
           }}
           style={{
             background: "none",

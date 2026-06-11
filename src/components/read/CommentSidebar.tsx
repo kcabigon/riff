@@ -406,6 +406,7 @@ function CommentCard({
             riffId={riffId}
             clubId={clubId}
             onReplyAdded={onReplyAdded}
+            onCancel={onToggleReplies}
           />
         ) : (
           <button
