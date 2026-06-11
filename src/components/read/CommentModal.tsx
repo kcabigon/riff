@@ -25,6 +25,7 @@ interface CommentData {
 interface CommentModalProps {
   comments: CommentData[];
   currentUserId: string;
+  currentUser: CommentAuthor;
   pieceId: string;
   riffId: string;
   clubId: string;
@@ -38,6 +39,7 @@ interface CommentModalProps {
 export default function CommentModal({
   comments,
   currentUserId,
+  currentUser,
   pieceId,
   riffId,
   clubId,
@@ -338,6 +340,7 @@ export default function CommentModal({
                     pieceId={pieceId}
                     riffId={riffId}
                     clubId={clubId}
+                    currentUser={currentUser}
                     onReplyAdded={(reply) => onReplyAdded(comment.id, reply)}
                   />
                 </div>

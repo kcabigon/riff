@@ -21,6 +21,7 @@ interface ReplyThreadProps {
   pieceId: string;
   riffId: string;
   clubId: string;
+  currentUser: CommentAuthor;
   onReplyAdded: (reply: ReplyData) => void;
   onCancel?: () => void;
 }
@@ -31,6 +32,7 @@ export default function ReplyThread({
   pieceId,
   riffId,
   clubId,
+  currentUser,
   onReplyAdded,
   onCancel,
 }: ReplyThreadProps) {
@@ -141,69 +143,76 @@ export default function ReplyThread({
         </div>
       ))}
 
-      <textarea
-        ref={textareaRef}
-        value={text}
-        onClick={(e) => e.stopPropagation()}
-        onChange={(e) => {
-          setText(e.target.value);
-          e.target.style.height = "auto";
-          e.target.style.height = `${e.target.scrollHeight}px`;
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSubmit();
-        }}
-        placeholder="Reply..."
-        rows={2}
-        style={{
-          width: "100%",
-          resize: "none",
-          overflow: "hidden",
-          border: "1px solid #E6E6E6",
-          padding: "6px 8px",
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "13px",
-          lineHeight: 1.5,
-          outline: "none",
-          boxSizing: "border-box",
-        }}
-      />
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          alignItems: "center",
-          gap: "8px",
-          marginTop: "6px",
-        }}
-      >
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onCancel?.();
-          }}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "13px",
-            fontWeight: 300,
-            color: "#808080",
-          }}
-        >
-          Cancel
-        </button>
-        <CommentButton
-          onClick={(e) => {
-            e.stopPropagation();
-            handleSubmit();
-          }}
-          disabled={submitting || !text.trim()}
-          loading={submitting}
-        >
-          Post
-        </CommentButton>
+      <div style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
+        <Avatar user={currentUser} size={24} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <textarea
+            ref={textareaRef}
+            value={text}
+            onClick={(e) => e.stopPropagation()}
+            onChange={(e) => {
+              setText(e.target.value);
+              e.target.style.height = "auto";
+              e.target.style.height = `${e.target.scrollHeight}px`;
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSubmit();
+            }}
+            placeholder="Reply..."
+            rows={1}
+            style={{
+              width: "100%",
+              resize: "none",
+              overflow: "hidden",
+              border: "1px solid #E6E6E6",
+              padding: "6px 8px",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "13px",
+              lineHeight: 1.5,
+              outline: "none",
+              boxSizing: "border-box",
+            }}
+          />
+          {text.trim() && (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                alignItems: "center",
+                gap: "8px",
+                marginTop: "6px",
+              }}
+            >
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCancel?.();
+                }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "13px",
+                  fontWeight: 300,
+                  color: "#808080",
+                }}
+              >
+                Cancel
+              </button>
+              <CommentButton
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSubmit();
+                }}
+                disabled={submitting}
+                loading={submitting}
+              >
+                Post
+              </CommentButton>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -524,6 +524,7 @@ export default function ReadPageLayout({
             comments={comments}
             activeHighlightIds={activeHighlightIds}
             currentUserId={currentUser.id}
+            currentUser={currentUser}
             pieceId={piece.id}
             riffId={riffId}
             clubId={clubId}
@@ -569,6 +570,7 @@ export default function ReadPageLayout({
         <CommentModal
           comments={activeComments}
           currentUserId={currentUser.id}
+          currentUser={currentUser}
           pieceId={piece.id}
           riffId={riffId}
           clubId={clubId}

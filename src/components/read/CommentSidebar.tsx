@@ -46,6 +46,7 @@ interface CommentSidebarProps {
   comments: CommentData[];
   activeHighlightIds: string[];
   currentUserId: string;
+  currentUser: CommentAuthor;
   pieceId: string;
   riffId: string;
   clubId: string;
@@ -77,6 +78,7 @@ function CommentCard({
   onActivate,
   onToggleReplies,
   onReplyAdded,
+  currentUser,
   pieceId,
   riffId,
   clubId,
@@ -94,6 +96,7 @@ function CommentCard({
   onActivate: () => void;
   onToggleReplies: () => void;
   onReplyAdded: (reply: ReplyData) => void;
+  currentUser: CommentAuthor;
   pieceId: string;
   riffId: string;
   clubId: string;
@@ -405,6 +408,7 @@ function CommentCard({
             pieceId={pieceId}
             riffId={riffId}
             clubId={clubId}
+            currentUser={currentUser}
             onReplyAdded={onReplyAdded}
             onCancel={onToggleReplies}
           />
@@ -467,6 +471,7 @@ export default function CommentSidebar({
   comments,
   activeHighlightIds,
   currentUserId,
+  currentUser,
   pieceId,
   riffId,
   clubId,
@@ -764,6 +769,7 @@ export default function CommentSidebar({
                 setExpandedId(expandedId === comment.id ? null : comment.id)
               }
               onReplyAdded={(reply) => onReplyAdded(comment.id, reply)}
+              currentUser={currentUser}
               pieceId={pieceId}
               riffId={riffId}
               clubId={clubId}
