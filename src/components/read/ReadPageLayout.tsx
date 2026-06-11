@@ -17,13 +17,8 @@ import { useIsMobile } from "@/hooks/useMediaQuery";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { useScrollDirection } from "@/hooks/useScrollDirection";
 import BackButton from "@/components/BackButton";
-
-interface CommentAuthor {
-  id: string;
-  name: string | null;
-  username: string | null;
-  avatarUrl: string | null;
-}
+import { CommentAuthor } from "@/types";
+import { ReplyData } from "./ReplyThread";
 
 interface CommentData {
   id: string;
@@ -35,6 +30,7 @@ interface CommentData {
   createdAt: string;
   updatedAt: string;
   author: CommentAuthor;
+  replies: ReplyData[];
 }
 
 interface PendingSelection {
@@ -148,14 +144,18 @@ export default function ReadPageLayout({
     return () => observer.disconnect();
   }, [markAsRead, markedRead]);
 
-  const handleNewComment = useCallback((comment: CommentData) => {
-    setComments((prev) => {
-      const updated = [...prev, comment];
-      return updated.sort((a, b) => a.selectionStart - b.selectionStart);
-    });
-    setActiveHighlightIds([comment.id]);
-    setPendingSelection(null);
-  }, []);
+  const handleNewComment = useCallback(
+    (comment: Omit<CommentData, "replies"> & { replies?: ReplyData[] }) => {
+      const full: CommentData = { ...comment, replies: comment.replies ?? [] };
+      setComments((prev) => {
+        const updated = [...prev, full];
+        return updated.sort((a, b) => a.selectionStart - b.selectionStart);
+      });
+      setActiveHighlightIds([full.id]);
+      setPendingSelection(null);
+    },
+    []
+  );
 
   const handleEditorReady = useCallback(() => {
     if (startInRiffMode) setIsRiffMode(true);
@@ -181,6 +181,17 @@ export default function ReadPageLayout({
           c.id === commentId
             ? { ...c, content: newContent, updatedAt: new Date().toISOString() }
             : c
+        )
+      );
+    },
+    []
+  );
+
+  const handleReplyAdded = useCallback(
+    (commentId: string, reply: ReplyData) => {
+      setComments((prev) =>
+        prev.map((c) =>
+          c.id === commentId ? { ...c, replies: [...c.replies, reply] } : c
         )
       );
     },
@@ -513,8 +524,12 @@ export default function ReadPageLayout({
             comments={comments}
             activeHighlightIds={activeHighlightIds}
             currentUserId={currentUser.id}
+            pieceId={piece.id}
+            riffId={riffId}
+            clubId={clubId}
             onDelete={handleDeleteComment}
             onUpdate={handleUpdateComment}
+            onReplyAdded={handleReplyAdded}
             onCommentClick={handleSidebarCommentClick}
             contentColumnRef={contentColumnRef}
             pendingSelection={pendingSelection}
@@ -554,10 +569,14 @@ export default function ReadPageLayout({
         <CommentModal
           comments={activeComments}
           currentUserId={currentUser.id}
+          pieceId={piece.id}
+          riffId={riffId}
+          clubId={clubId}
           authorColorMap={authorColorMap}
           onClose={() => setActiveHighlightIds([])}
           onDelete={handleDeleteComment}
           onUpdate={handleUpdateComment}
+          onReplyAdded={handleReplyAdded}
         />
       )}
     </div>

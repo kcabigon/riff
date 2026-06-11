@@ -121,17 +121,20 @@ export default async function ReadPage({
     },
   });
 
-  // Fetch comments server-side
+  // Fetch comments server-side (top-level only; replies included nested)
   const rawComments = await prisma.comment.findMany({
-    where: { pieceId, riffId: validRiffId },
+    where: { pieceId, riffId: validRiffId, parentId: null },
     include: {
       author: {
-        select: {
-          id: true,
-          name: true,
-          username: true,
-          avatarUrl: true,
+        select: { id: true, name: true, username: true, avatarUrl: true },
+      },
+      replies: {
+        include: {
+          author: {
+            select: { id: true, name: true, username: true, avatarUrl: true },
+          },
         },
+        orderBy: { createdAt: "asc" },
       },
     },
     orderBy: { selectionStart: "asc" },
@@ -148,6 +151,14 @@ export default async function ReadPage({
     createdAt: c.createdAt.toISOString(),
     updatedAt: c.updatedAt.toISOString(),
     author: c.author,
+    replies: c.replies.map((r) => ({
+      id: r.id,
+      content: r.content,
+      authorId: r.authorId,
+      createdAt: r.createdAt.toISOString(),
+      updatedAt: r.updatedAt.toISOString(),
+      author: r.author,
+    })),
   }));
 
   // Fetch sibling pieces in same riff for navigation

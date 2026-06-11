@@ -2,17 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import Avatar from "@/components/shared/Avatar";
+import ReplyThread, { ReplyData } from "./ReplyThread";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import CommentButton from "./CommentButton";
 import DestructiveButton from "@/components/DestructiveButton";
 import { timeAgo } from "@/lib/timeAgo";
-
-interface CommentAuthor {
-  id: string;
-  name: string | null;
-  username: string | null;
-  avatarUrl: string | null;
-}
+import { CommentAuthor } from "@/types";
 
 interface CommentData {
   id: string;
@@ -24,24 +19,33 @@ interface CommentData {
   createdAt: string;
   updatedAt: string;
   author: CommentAuthor;
+  replies: ReplyData[];
 }
 
 interface CommentModalProps {
   comments: CommentData[];
   currentUserId: string;
+  pieceId: string;
+  riffId: string;
+  clubId: string;
   authorColorMap: Record<string, string>;
   onClose: () => void;
   onDelete: (commentId: string) => void;
   onUpdate: (commentId: string, newContent: string) => Promise<void>;
+  onReplyAdded: (commentId: string, reply: ReplyData) => void;
 }
 
 export default function CommentModal({
   comments,
   currentUserId,
+  pieceId,
+  riffId,
+  clubId,
   authorColorMap,
   onClose,
   onDelete,
   onUpdate,
+  onReplyAdded,
 }: CommentModalProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
@@ -317,6 +321,26 @@ export default function CommentModal({
                 >
                   {comment.content}
                 </p>
+              )}
+
+              {/* Replies — always visible in modal */}
+              {comment && (
+                <div
+                  style={{
+                    marginTop: "12px",
+                    borderTop: "1px solid #E6E6E6",
+                    paddingTop: "12px",
+                  }}
+                >
+                  <ReplyThread
+                    replies={comment.replies}
+                    parentId={comment.id}
+                    pieceId={pieceId}
+                    riffId={riffId}
+                    clubId={clubId}
+                    onReplyAdded={(reply) => onReplyAdded(comment.id, reply)}
+                  />
+                </div>
               )}
             </>
           )}
