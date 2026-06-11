@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import Avatar from "@/components/shared/Avatar";
 import CommentPopover from "./CommentPopover";
 import ReplyThread, { ReplyData } from "./ReplyThread";
 import AvatarStack from "@/components/shared/AvatarStack";
@@ -62,12 +63,6 @@ interface CommentSidebarProps {
   contentColumnRef: React.RefObject<HTMLDivElement | null>;
   pendingSelection?: PendingSelection | null;
   pendingCommentProps?: PendingCommentProps | null;
-}
-
-function initials(author: CommentAuthor): string {
-  if (author.name) return author.name[0].toUpperCase();
-  if (author.username) return author.username[0].toUpperCase();
-  return "?";
 }
 
 function CommentCard({
@@ -191,34 +186,7 @@ function CommentCard({
           marginBottom: "8px",
         }}
       >
-        <div
-          style={{
-            width: "28px",
-            height: "28px",
-            borderRadius: "50%",
-            backgroundColor: "#01EFFC",
-            border: "1px solid #000",
-            flexShrink: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "12px",
-            fontWeight: 700,
-            color: "#000000",
-            overflow: "hidden",
-          }}
-        >
-          {comment.author.avatarUrl ? (
-            <img
-              src={comment.author.avatarUrl}
-              alt=""
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-            />
-          ) : (
-            initials(comment.author)
-          )}
-        </div>
+        <Avatar user={comment.author} size={32} />
 
         <div style={{ flex: 1, minWidth: 0 }}>
           <span
