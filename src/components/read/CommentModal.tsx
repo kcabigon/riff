@@ -34,6 +34,11 @@ interface CommentModalProps {
   onDelete: (commentId: string) => void;
   onUpdate: (commentId: string, newContent: string) => Promise<void>;
   onReplyAdded: (commentId: string, reply: ReplyData) => void;
+  onReplyUpdated: (
+    commentId: string,
+    replyId: string,
+    newContent: string
+  ) => void;
 }
 
 export default function CommentModal({
@@ -48,6 +53,7 @@ export default function CommentModal({
   onDelete,
   onUpdate,
   onReplyAdded,
+  onReplyUpdated,
 }: CommentModalProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
@@ -342,6 +348,9 @@ export default function CommentModal({
                     clubId={clubId}
                     currentUser={currentUser}
                     onReplyAdded={(reply) => onReplyAdded(comment.id, reply)}
+                    onReplyUpdated={(replyId, newContent) =>
+                      onReplyUpdated(comment.id, replyId, newContent)
+                    }
                   />
                 </div>
               )}

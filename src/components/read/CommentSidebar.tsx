@@ -53,6 +53,11 @@ interface CommentSidebarProps {
   onDelete: (commentId: string) => void;
   onUpdate: (commentId: string, newContent: string) => Promise<void>;
   onReplyAdded: (commentId: string, reply: ReplyData) => void;
+  onReplyUpdated: (
+    commentId: string,
+    replyId: string,
+    newContent: string
+  ) => void;
   onCommentClick?: (commentId: string) => void;
   contentColumnRef: React.RefObject<HTMLDivElement | null>;
   pendingSelection?: PendingSelection | null;
@@ -78,6 +83,7 @@ function CommentCard({
   onActivate,
   onToggleReplies,
   onReplyAdded,
+  onReplyUpdated,
   currentUser,
   pieceId,
   riffId,
@@ -96,6 +102,7 @@ function CommentCard({
   onActivate: () => void;
   onToggleReplies: () => void;
   onReplyAdded: (reply: ReplyData) => void;
+  onReplyUpdated: (replyId: string, newContent: string) => void;
   currentUser: CommentAuthor;
   pieceId: string;
   riffId: string;
@@ -410,6 +417,7 @@ function CommentCard({
             clubId={clubId}
             currentUser={currentUser}
             onReplyAdded={onReplyAdded}
+            onReplyUpdated={onReplyUpdated}
             onCancel={onToggleReplies}
           />
         </div>
@@ -456,6 +464,7 @@ export default function CommentSidebar({
   onDelete,
   onUpdate,
   onReplyAdded,
+  onReplyUpdated,
   onCommentClick,
   contentColumnRef,
   pendingSelection,
@@ -747,6 +756,9 @@ export default function CommentSidebar({
                 setExpandedId(expandedId === comment.id ? null : comment.id)
               }
               onReplyAdded={(reply) => onReplyAdded(comment.id, reply)}
+              onReplyUpdated={(replyId, newContent) =>
+                onReplyUpdated(comment.id, replyId, newContent)
+              }
               currentUser={currentUser}
               pieceId={pieceId}
               riffId={riffId}

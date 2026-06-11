@@ -198,6 +198,30 @@ export default function ReadPageLayout({
     []
   );
 
+  const handleReplyUpdated = useCallback(
+    (commentId: string, replyId: string, newContent: string) => {
+      setComments((prev) =>
+        prev.map((c) =>
+          c.id === commentId
+            ? {
+                ...c,
+                replies: c.replies.map((r) =>
+                  r.id === replyId
+                    ? {
+                        ...r,
+                        content: newContent,
+                        updatedAt: new Date().toISOString(),
+                      }
+                    : r
+                ),
+              }
+            : c
+        )
+      );
+    },
+    []
+  );
+
   // Click sidebar comment → scroll to highlight in content (single activation)
   const handleSidebarCommentClick = useCallback((commentId: string) => {
     setActiveHighlightIds([commentId]);
@@ -531,6 +555,7 @@ export default function ReadPageLayout({
             onDelete={handleDeleteComment}
             onUpdate={handleUpdateComment}
             onReplyAdded={handleReplyAdded}
+            onReplyUpdated={handleReplyUpdated}
             onCommentClick={handleSidebarCommentClick}
             contentColumnRef={contentColumnRef}
             pendingSelection={pendingSelection}
@@ -579,6 +604,7 @@ export default function ReadPageLayout({
           onDelete={handleDeleteComment}
           onUpdate={handleUpdateComment}
           onReplyAdded={handleReplyAdded}
+          onReplyUpdated={handleReplyUpdated}
         />
       )}
     </div>
