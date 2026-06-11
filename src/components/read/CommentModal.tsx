@@ -351,6 +351,7 @@ export default function CommentModal({
                     onReplyUpdated={(replyId, newContent) =>
                       onReplyUpdated(comment.id, replyId, newContent)
                     }
+                    onCancel={onClose}
                   />
                 </div>
               )}
