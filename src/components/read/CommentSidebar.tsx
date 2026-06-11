@@ -441,28 +441,6 @@ function CommentCard({
           </span>
         </div>
       )}
-
-      {/* Hover reply icon — no replies, no thread open */}
-      {!isExpanded && replyAuthors.length === 0 && hovered && (
-        <div
-          style={{
-            position: "absolute",
-            bottom: "8px",
-            right: "10px",
-            pointerEvents: "none",
-          }}
-        >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path
-              d="M2 7.5L5 4.5M2 7.5L5 10.5M2 7.5H8.5C10.4 7.5 12 9.1 12 11V11.5"
-              stroke="#AFAFAF"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </div>
-      )}
     </div>
   );
 }

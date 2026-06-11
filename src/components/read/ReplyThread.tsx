@@ -38,6 +38,7 @@ export default function ReplyThread({
 }: ReplyThreadProps) {
   const [text, setText] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [focused, setFocused] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -94,7 +95,7 @@ export default function ReplyThread({
           key={reply.id}
           style={{ display: "flex", gap: "8px", marginBottom: "10px" }}
         >
-          <Avatar user={reply.author} size={24} />
+          <Avatar user={reply.author} size={32} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div
               style={{
@@ -144,12 +145,14 @@ export default function ReplyThread({
       ))}
 
       <div style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
-        <Avatar user={currentUser} size={24} />
+        <Avatar user={currentUser} size={32} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <textarea
             ref={textareaRef}
             value={text}
             onClick={(e) => e.stopPropagation()}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
             onChange={(e) => {
               setText(e.target.value);
               e.target.style.height = "auto";
@@ -164,13 +167,14 @@ export default function ReplyThread({
               width: "100%",
               resize: "none",
               overflow: "hidden",
-              border: "1px solid #E6E6E6",
+              border: focused ? "2px solid #000000" : "2px solid #E6E6E6",
               padding: "6px 8px",
               fontFamily: "var(--font-dm-sans)",
               fontSize: "13px",
               lineHeight: 1.5,
               outline: "none",
               boxSizing: "border-box",
+              transition: "border-color 0.15s ease",
             }}
           />
           {text.trim() && (
