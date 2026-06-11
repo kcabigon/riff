@@ -41,7 +41,6 @@ export default function ReplyThread({
 }: ReplyThreadProps) {
   const [text, setText] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [focused, setFocused] = useState(false);
   const [hoveredReplyId, setHoveredReplyId] = useState<string | null>(null);
   const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
@@ -144,13 +143,13 @@ export default function ReplyThread({
                   display: "flex",
                   alignItems: "center",
                   gap: "6px",
-                  marginBottom: "3px",
+                  marginBottom: "6px",
                 }}
               >
                 <span
                   style={{
                     fontFamily: "var(--font-dm-sans)",
-                    fontSize: "12px",
+                    fontSize: "13px",
                     fontWeight: 500,
                     color: "#000000",
                   }}
@@ -277,8 +276,6 @@ export default function ReplyThread({
             ref={textareaRef}
             value={text}
             onClick={(e) => e.stopPropagation()}
-            onFocus={() => setFocused(true)}
-            onBlur={() => setFocused(false)}
             onChange={(e) => {
               setText(e.target.value);
               e.target.style.height = "auto";
@@ -293,14 +290,13 @@ export default function ReplyThread({
               width: "100%",
               resize: "none",
               overflow: "hidden",
-              border: focused ? "2px solid #000000" : "2px solid #E6E6E6",
+              border: "2px solid #E6E6E6",
               padding: "6px 8px",
               fontFamily: "var(--font-dm-sans)",
               fontSize: "13px",
               lineHeight: 1.5,
               outline: "none",
               boxSizing: "border-box",
-              transition: "border-color 0.15s ease",
             }}
           />
           {text.trim() && (
