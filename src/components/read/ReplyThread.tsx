@@ -34,6 +34,7 @@ export default function ReplyThread({
   const [text, setText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     return () => abortRef.current?.abort();
@@ -68,6 +69,9 @@ export default function ReplyThread({
           author: comment.author,
         });
         setText("");
+        if (textareaRef.current) {
+          textareaRef.current.style.height = "auto";
+        }
       }
     } catch (err) {
       if (err instanceof Error && err.name !== "AbortError") {
@@ -135,9 +139,14 @@ export default function ReplyThread({
       ))}
 
       <textarea
+        ref={textareaRef}
         value={text}
         onClick={(e) => e.stopPropagation()}
-        onChange={(e) => setText(e.target.value)}
+        onChange={(e) => {
+          setText(e.target.value);
+          e.target.style.height = "auto";
+          e.target.style.height = `${e.target.scrollHeight}px`;
+        }}
         onKeyDown={(e) => {
           if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSubmit();
         }}
@@ -146,6 +155,7 @@ export default function ReplyThread({
         style={{
           width: "100%",
           resize: "none",
+          overflow: "hidden",
           border: "1px solid #E6E6E6",
           padding: "6px 8px",
           fontFamily: "var(--font-dm-sans)",

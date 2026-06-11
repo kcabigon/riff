@@ -651,11 +651,11 @@ export default function CommentSidebar({
     return () => clearTimeout(timer);
   }, [activeHighlightIds, pendingSelection, updatePositions]);
 
-  // Recalculate when a card enters/exits edit mode (height changes)
+  // Recalculate when a card enters/exits edit mode or reply thread (height changes)
   useEffect(() => {
     const timer = setTimeout(updatePositions, 50);
     return () => clearTimeout(timer);
-  }, [editingId, updatePositions]);
+  }, [editingId, expandedId, updatePositions]);
 
   // Recalculate whenever any card changes height (e.g. textarea expanding)
   useEffect(() => {
