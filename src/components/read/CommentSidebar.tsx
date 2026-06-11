@@ -111,6 +111,8 @@ function CommentCard({
   const [saving, setSaving] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  const MAX_REPLY_AVATARS = 3;
+
   const replyAuthors = useMemo(() => {
     const seen = new Set<string>();
     return comment.replies
@@ -121,6 +123,9 @@ function CommentCard({
       })
       .map((r) => r.author);
   }, [comment.replies]);
+
+  const visibleReplyAuthors = replyAuthors.slice(0, MAX_REPLY_AVATARS);
+  const overflowCount = replyAuthors.length - MAX_REPLY_AVATARS;
 
   // Expand textarea to full content height when edit mode opens
   useEffect(() => {
@@ -403,7 +408,19 @@ function CommentCard({
             gap: "6px",
           }}
         >
-          <AvatarStack users={replyAuthors} size={24} />
+          <AvatarStack users={visibleReplyAuthors} size={24} />
+          {overflowCount > 0 && (
+            <span
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "11px",
+                fontWeight: 300,
+                color: "#808080",
+              }}
+            >
+              +{overflowCount}
+            </span>
+          )}
           <span
             style={{
               fontFamily: "var(--font-dm-sans)",
