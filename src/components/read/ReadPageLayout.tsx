@@ -63,6 +63,7 @@ interface ReadPageLayoutProps {
   fromProfileUserId?: string;
   backHref?: string;
   disableCommentCompose?: boolean;
+  disableReplies?: boolean;
 }
 
 export default function ReadPageLayout({
@@ -76,6 +77,7 @@ export default function ReadPageLayout({
   fromProfileUserId,
   backHref,
   disableCommentCompose,
+  disableReplies,
 }: ReadPageLayoutProps) {
   const router = useRouter();
   const endRef = useRef<HTMLDivElement>(null);
@@ -563,6 +565,7 @@ export default function ReadPageLayout({
             onUpdate={handleUpdateComment}
             onReplyAdded={handleReplyAdded}
             onReplyUpdated={handleReplyUpdated}
+            disableReplies={disableReplies}
             onCommentClick={handleSidebarCommentClick}
             contentColumnRef={contentColumnRef}
             pendingSelection={pendingSelection}

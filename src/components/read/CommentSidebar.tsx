@@ -60,6 +60,7 @@ interface CommentSidebarProps {
     replyId: string,
     newContent: string
   ) => void;
+  disableReplies?: boolean;
   onCommentClick?: (commentId: string) => void;
   contentColumnRef: React.RefObject<HTMLDivElement | null>;
   pendingSelection?: PendingSelection | null;
@@ -84,6 +85,7 @@ function CommentCard({
   pieceId,
   riffId,
   clubId,
+  disableReplies = false,
   color,
 }: {
   comment: CommentData;
@@ -103,6 +105,7 @@ function CommentCard({
   pieceId: string;
   riffId: string;
   clubId: string;
+  disableReplies?: boolean;
   color: string;
 }) {
   const [hovered, setHovered] = useState(false);
@@ -170,7 +173,8 @@ function CommentCard({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={() => {
-        if (!isEditing && !confirmingDelete) onToggleReplies();
+        if (!disableReplies && !isEditing && !confirmingDelete)
+          onToggleReplies();
       }}
       style={{
         position: "relative",
@@ -374,7 +378,7 @@ function CommentCard({
       )}
 
       {/* Expanded reply thread */}
-      {isExpanded && (
+      {!disableReplies && isExpanded && (
         <div
           onClick={(e) => e.stopPropagation()}
           style={{
@@ -398,7 +402,7 @@ function CommentCard({
       )}
 
       {/* Collapsed state: reply count always visible when replies exist */}
-      {!isExpanded && replyAuthors.length > 0 && (
+      {!disableReplies && !isExpanded && replyAuthors.length > 0 && (
         <div
           style={{
             marginTop: "10px",
@@ -451,6 +455,7 @@ export default function CommentSidebar({
   onUpdate,
   onReplyAdded,
   onReplyUpdated,
+  disableReplies,
   onCommentClick,
   contentColumnRef,
   pendingSelection,
@@ -749,6 +754,7 @@ export default function CommentSidebar({
               pieceId={pieceId}
               riffId={riffId}
               clubId={clubId}
+              disableReplies={disableReplies}
               color={authorColors[comment.authorId] || AUTHOR_COLORS[0]}
             />
           </div>

@@ -6,6 +6,7 @@ import CommentButton from "./CommentButton";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import { timeAgo } from "@/lib/timeAgo";
 import { CommentAuthor } from "@/types";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 
 export interface ReplyData {
   id: string;
@@ -48,6 +49,8 @@ export default function ReplyThread({
   const abortRef = useRef<AbortController | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const editTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const isMobile = useIsMobile();
+  const textareaFontSize = isMobile ? "16px" : "13px";
 
   useEffect(() => {
     return () => abortRef.current?.abort();
@@ -210,7 +213,7 @@ export default function ReplyThread({
                       border: "2px solid #000000",
                       padding: "6px 8px",
                       fontFamily: "var(--font-dm-sans)",
-                      fontSize: "16px",
+                      fontSize: textareaFontSize,
                       lineHeight: 1.5,
                       outline: "none",
                       boxSizing: "border-box",
@@ -293,7 +296,7 @@ export default function ReplyThread({
               border: "2px solid #E6E6E6",
               padding: "6px 8px",
               fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
+              fontSize: textareaFontSize,
               lineHeight: 1.5,
               outline: "none",
               boxSizing: "border-box",
