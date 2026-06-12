@@ -63,9 +63,16 @@ export default function CommentModal({
   const [replyText, setReplyText] = useState("");
   const [replySubmitting, setReplySubmitting] = useState(false);
   const [replyFocused, setReplyFocused] = useState(false);
-  const [position, setPosition] = useState({
+  const [position, setPosition] = useState<{
+    top?: string;
+    bottom?: string;
+    left: string;
+    transform: string;
+    maxHeight: string;
+  }>({
     top: "50%",
     left: "50%",
+    transform: "translate(-50%, -50%)",
     maxHeight: "70vh",
   });
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -75,21 +82,37 @@ export default function CommentModal({
   const replyAbortRef = useRef<AbortController | null>(null);
   const trimmedReplyText = replyText.trim();
 
-  // Reposition above the iOS keyboard whenever any textarea is active
+  // Reposition above the iOS keyboard whenever any textarea is active.
+  // When keyboard is active, anchor to the bottom of the visual viewport
+  // (just above the keyboard) rather than centering, so there's no gap.
   useEffect(() => {
     if (!isEditing && !replyFocused) {
-      setPosition({ top: "50%", left: "50%", maxHeight: "70vh" });
+      setPosition({
+        top: "50%",
+        bottom: undefined,
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+        maxHeight: "70vh",
+      });
       return;
     }
 
     function updatePosition() {
       const vv = window.visualViewport;
       if (!vv) return;
+      // Distance from bottom of visible area to bottom of screen (= keyboard height)
+      const bottomGap = window.innerHeight - (vv.offsetTop + vv.height);
       setPosition({
-        top: `${vv.offsetTop + vv.height / 2}px`,
+        top: undefined,
+        bottom: `${bottomGap + 8}px`,
         left: `${vv.offsetLeft + vv.width / 2}px`,
-        maxHeight: `${vv.height * 0.85}px`,
+        transform: "translateX(-50%)",
+        maxHeight: `${vv.height - 16}px`,
       });
+      // Reset scroll after position settles so comment is visible from top
+      if (replyFocused && scrollRef.current) {
+        scrollRef.current.scrollTop = 0;
+      }
     }
 
     updatePosition();
@@ -100,13 +123,6 @@ export default function CommentModal({
       window.visualViewport?.removeEventListener("scroll", updatePosition);
     };
   }, [isEditing, replyFocused]);
-
-  // Scroll to top when reply is focused so the comment is visible for context
-  useEffect(() => {
-    if (replyFocused && scrollRef.current) {
-      scrollRef.current.scrollTop = 0;
-    }
-  }, [replyFocused]);
 
   // Expand textarea to full content height when edit mode opens, then
   // transfer focus from the hidden keyboard trigger input to the textarea
@@ -240,8 +256,9 @@ export default function CommentModal({
         style={{
           position: "fixed",
           top: position.top,
+          bottom: position.bottom,
           left: position.left,
-          transform: "translate(-50%, -50%)",
+          transform: position.transform,
           width: "calc(100vw - 48px)",
           maxHeight: position.maxHeight,
           backgroundColor: "#FFFFFF",
