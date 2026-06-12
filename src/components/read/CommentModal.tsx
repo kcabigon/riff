@@ -60,6 +60,9 @@ export default function CommentModal({
   const [editContent, setEditContent] = useState("");
   const [saving, setSaving] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [replyText, setReplyText] = useState("");
+  const [replySubmitting, setReplySubmitting] = useState(false);
+  const [replyFocused, setReplyFocused] = useState(false);
   const [position, setPosition] = useState({
     top: "50%",
     left: "50%",
@@ -68,10 +71,13 @@ export default function CommentModal({
   const scrollRef = useRef<HTMLDivElement>(null);
   const keyboardTriggerRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const replyTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const replyAbortRef = useRef<AbortController | null>(null);
+  const trimmedReplyText = replyText.trim();
 
-  // When editing, reposition to stay above the iOS keyboard
+  // Reposition above the iOS keyboard whenever any textarea is active
   useEffect(() => {
-    if (!isEditing) {
+    if (!isEditing && !replyFocused) {
       setPosition({ top: "50%", left: "50%", maxHeight: "70vh" });
       return;
     }
@@ -93,7 +99,14 @@ export default function CommentModal({
       window.visualViewport?.removeEventListener("resize", updatePosition);
       window.visualViewport?.removeEventListener("scroll", updatePosition);
     };
-  }, [isEditing]);
+  }, [isEditing, replyFocused]);
+
+  // Scroll to top when reply is focused so the comment is visible for context
+  useEffect(() => {
+    if (replyFocused && scrollRef.current) {
+      scrollRef.current.scrollTop = 0;
+    }
+  }, [replyFocused]);
 
   // Expand textarea to full content height when edit mode opens, then
   // transfer focus from the hidden keyboard trigger input to the textarea
@@ -116,6 +129,9 @@ export default function CommentModal({
     setIsEditing(false);
     setEditContent(comment?.content ?? "");
     setConfirmingDelete(false);
+    setReplyText("");
+    if (replyTextareaRef.current)
+      replyTextareaRef.current.style.height = "auto";
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
   }, [currentIndex, comment?.id]);
 
@@ -132,6 +148,46 @@ export default function CommentModal({
     document.addEventListener("keydown", handleKey);
     return () => document.removeEventListener("keydown", handleKey);
   }, [onClose]);
+
+  const handleReplySubmit = async () => {
+    if (!comment || !trimmedReplyText || replySubmitting) return;
+    setReplySubmitting(true);
+    replyAbortRef.current = new AbortController();
+    try {
+      const res = await fetch("/api/comments/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: trimmedReplyText,
+          pieceId,
+          riffId,
+          clubId,
+          parentId: comment.id,
+        }),
+        signal: replyAbortRef.current.signal,
+      });
+      if (res.ok) {
+        const { comment: created } = await res.json();
+        onReplyAdded(comment.id, {
+          id: created.id,
+          content: created.content,
+          authorId: created.authorId,
+          createdAt: created.createdAt,
+          updatedAt: created.updatedAt,
+          author: created.author,
+        });
+        setReplyText("");
+        if (replyTextareaRef.current)
+          replyTextareaRef.current.style.height = "auto";
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name !== "AbortError") {
+        console.error("Error submitting reply:", err);
+      }
+    } finally {
+      setReplySubmitting(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!comment) return;
@@ -197,167 +253,279 @@ export default function CommentModal({
         }}
       >
         <div
-          ref={scrollRef}
           style={{
-            overflowY: "auto",
-            padding: "16px 16px 16px",
+            position: "relative",
             flex: 1,
             minHeight: 0,
+            display: "flex",
+            flexDirection: "column",
           }}
         >
-          {comment && (
-            <>
-              {/* Header */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  marginBottom: "12px",
-                }}
-              >
-                <Avatar user={comment.author} size={32} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <span
-                    style={{
-                      fontFamily: "var(--font-dm-sans)",
-                      fontSize: "14px",
-                      fontWeight: 500,
-                      color: "#000000",
-                    }}
-                  >
-                    {comment.author.name ||
-                      comment.author.username ||
-                      "Unknown"}
-                  </span>
-                  <span
-                    style={{
-                      fontFamily: "var(--font-dm-sans)",
-                      fontSize: "12px",
-                      fontWeight: 300,
-                      color: "#808080",
-                      marginLeft: "8px",
-                    }}
-                  >
-                    {timeAgo(comment.createdAt)}
-                  </span>
-                </div>
-                {comment.authorId === currentUserId && !isEditing && (
-                  <ThreeDotButton
-                    variant="light"
-                    align="right"
-                    size="sm"
-                    items={[
-                      {
-                        type: "action",
-                        label: "Edit",
-                        onClick: () => {
-                          keyboardTriggerRef.current?.focus();
-                          setEditContent(comment.content);
-                          setIsEditing(true);
+          <div
+            ref={scrollRef}
+            style={{
+              overflowY: "auto",
+              padding: "16px 16px 64px",
+              flex: 1,
+              minHeight: 0,
+            }}
+          >
+            {comment && (
+              <>
+                {/* Header */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    marginBottom: "12px",
+                  }}
+                >
+                  <Avatar user={comment.author} size={32} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <span
+                      style={{
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "14px",
+                        fontWeight: 500,
+                        color: "#000000",
+                      }}
+                    >
+                      {comment.author.name ||
+                        comment.author.username ||
+                        "Unknown"}
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "12px",
+                        fontWeight: 300,
+                        color: "#808080",
+                        marginLeft: "8px",
+                      }}
+                    >
+                      {timeAgo(comment.createdAt)}
+                    </span>
+                  </div>
+                  {comment.authorId === currentUserId && !isEditing && (
+                    <ThreeDotButton
+                      variant="light"
+                      align="right"
+                      size="sm"
+                      items={[
+                        {
+                          type: "action",
+                          label: "Edit",
+                          onClick: () => {
+                            keyboardTriggerRef.current?.focus();
+                            setEditContent(comment.content);
+                            setIsEditing(true);
+                          },
                         },
-                      },
-                      {
-                        type: "action",
-                        label: "Delete",
-                        color: "#DC2626",
-                        onClick: () => setConfirmingDelete(true),
-                      },
-                    ]}
+                        {
+                          type: "action",
+                          label: "Delete",
+                          color: "#DC2626",
+                          onClick: () => setConfirmingDelete(true),
+                        },
+                      ]}
+                    />
+                  )}
+                </div>
+
+                <p
+                  style={{
+                    fontFamily: "var(--font-playfair)",
+                    fontSize: "13px",
+                    color: "#808080",
+                    margin: "0 0 8px 0",
+                    fontStyle: "italic",
+                    borderLeft: `2px solid ${authorColorMap[comment.authorId] ?? "#01EFFC"}`,
+                    paddingLeft: "8px",
+                    overflowWrap: "break-word",
+                  }}
+                >
+                  {comment.selectedText}
+                </p>
+
+                {isEditing ? (
+                  <textarea
+                    value={editContent}
+                    onChange={(e) => {
+                      setEditContent(e.target.value);
+                      e.target.style.height = "auto";
+                      e.target.style.height = `${e.target.scrollHeight}px`;
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && (e.metaKey || e.ctrlKey))
+                        handleSave();
+                      if (e.key === "Escape") {
+                        setEditContent(comment.content);
+                        setIsEditing(false);
+                      }
+                    }}
+                    ref={textareaRef}
+                    rows={3}
+                    style={{
+                      width: "100%",
+                      resize: "none",
+                      overflow: "hidden",
+                      border: "1px solid #E6E6E6",
+                      padding: "6px 8px",
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "16px",
+                      lineHeight: 1.6,
+                      outline: "none",
+                      boxSizing: "border-box",
+                    }}
                   />
+                ) : (
+                  <p
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "16px",
+                      fontWeight: 300,
+                      color: "#000000",
+                      margin: 0,
+                      lineHeight: 1.6,
+                      whiteSpace: "pre-wrap",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    {comment.content}
+                  </p>
                 )}
-              </div>
 
-              <p
-                style={{
-                  fontFamily: "var(--font-playfair)",
-                  fontSize: "13px",
-                  color: "#808080",
-                  margin: "0 0 8px 0",
-                  fontStyle: "italic",
-                  borderLeft: `2px solid ${authorColorMap[comment.authorId] ?? "#01EFFC"}`,
-                  paddingLeft: "8px",
-                  overflowWrap: "break-word",
-                }}
-              >
-                {comment.selectedText}
-              </p>
+                {/* Replies list — compose input is pinned below the scroll area */}
+                {comment.replies.length > 0 && (
+                  <div
+                    style={{
+                      marginTop: "12px",
+                      borderTop: "1px solid #E6E6E6",
+                      paddingTop: "12px",
+                    }}
+                  >
+                    <ReplyThread
+                      replies={comment.replies}
+                      parentId={comment.id}
+                      pieceId={pieceId}
+                      riffId={riffId}
+                      clubId={clubId}
+                      currentUser={currentUser}
+                      onReplyAdded={(reply) => onReplyAdded(comment.id, reply)}
+                      onReplyUpdated={(replyId, newContent) =>
+                        onReplyUpdated(comment.id, replyId, newContent)
+                      }
+                      hideCompose
+                    />
+                  </div>
+                )}
+              </>
+            )}
+          </div>
 
-              {isEditing ? (
+          {/* Fade gradient — absolutely positioned at bottom of scroll area */}
+          {comment && comment.replies.length > 0 && (
+            <div
+              style={{
+                position: "absolute",
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: "64px",
+                background:
+                  "linear-gradient(to bottom, rgba(255,255,255,0), #FFFFFF)",
+                pointerEvents: "none",
+              }}
+            />
+          )}
+        </div>
+
+        {/* Sticky compose — always visible above keyboard */}
+        {comment && (
+          <div
+            style={{
+              padding: "12px 16px",
+              borderTop: "1px solid #E6E6E6",
+              flexShrink: 0,
+              backgroundColor: "#FFFFFF",
+            }}
+          >
+            <div
+              style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}
+            >
+              <Avatar user={currentUser} size={32} />
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <textarea
-                  value={editContent}
+                  ref={replyTextareaRef}
+                  value={replyText}
+                  onFocus={() => setReplyFocused(true)}
+                  onBlur={() => setReplyFocused(false)}
                   onChange={(e) => {
-                    setEditContent(e.target.value);
+                    setReplyText(e.target.value);
                     e.target.style.height = "auto";
                     e.target.style.height = `${e.target.scrollHeight}px`;
                   }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && (e.metaKey || e.ctrlKey))
-                      handleSave();
-                    if (e.key === "Escape") {
-                      setEditContent(comment.content);
-                      setIsEditing(false);
-                    }
+                      handleReplySubmit();
                   }}
-                  ref={textareaRef}
-                  rows={3}
+                  placeholder="Reply..."
+                  rows={1}
                   style={{
                     width: "100%",
                     resize: "none",
                     overflow: "hidden",
-                    border: "1px solid #E6E6E6",
+                    border: "2px solid #E6E6E6",
                     padding: "6px 8px",
                     fontFamily: "var(--font-dm-sans)",
                     fontSize: "16px",
-                    lineHeight: 1.6,
+                    lineHeight: 1.5,
                     outline: "none",
                     boxSizing: "border-box",
                   }}
                 />
-              ) : (
-                <p
-                  style={{
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "16px",
-                    fontWeight: 300,
-                    color: "#000000",
-                    margin: 0,
-                    lineHeight: 1.6,
-                    whiteSpace: "pre-wrap",
-                    overflowWrap: "break-word",
-                  }}
-                >
-                  {comment.content}
-                </p>
-              )}
-
-              {/* Replies — always visible in modal */}
-              {comment && (
-                <div
-                  style={{
-                    marginTop: "12px",
-                    borderTop: "1px solid #E6E6E6",
-                    paddingTop: "12px",
-                  }}
-                >
-                  <ReplyThread
-                    replies={comment.replies}
-                    parentId={comment.id}
-                    pieceId={pieceId}
-                    riffId={riffId}
-                    clubId={clubId}
-                    currentUser={currentUser}
-                    onReplyAdded={(reply) => onReplyAdded(comment.id, reply)}
-                    onReplyUpdated={(replyId, newContent) =>
-                      onReplyUpdated(comment.id, replyId, newContent)
-                    }
-                    onCancel={onClose}
-                  />
-                </div>
-              )}
-            </>
-          )}
-        </div>
+                {trimmedReplyText && (
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "flex-end",
+                      alignItems: "center",
+                      gap: "8px",
+                      marginTop: "6px",
+                    }}
+                  >
+                    <button
+                      onClick={() => {
+                        setReplyText("");
+                        if (replyTextareaRef.current)
+                          replyTextareaRef.current.style.height = "auto";
+                      }}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "13px",
+                        fontWeight: 300,
+                        color: "#808080",
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <CommentButton
+                      onClick={handleReplySubmit}
+                      disabled={replySubmitting}
+                      loading={replySubmitting}
+                    >
+                      Post
+                    </CommentButton>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Delete confirmation overlay — covers entire modal, same pattern as CommentSidebar */}
         {confirmingDelete && comment && (

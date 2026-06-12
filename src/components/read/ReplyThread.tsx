@@ -27,6 +27,7 @@ interface ReplyThreadProps {
   onReplyAdded: (reply: ReplyData) => void;
   onReplyUpdated?: (replyId: string, newContent: string) => void;
   onCancel?: () => void;
+  hideCompose?: boolean;
 }
 
 export default function ReplyThread({
@@ -39,6 +40,7 @@ export default function ReplyThread({
   onReplyAdded,
   onReplyUpdated,
   onCancel,
+  hideCompose = false,
 }: ReplyThreadProps) {
   const [text, setText] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -273,77 +275,80 @@ export default function ReplyThread({
         );
       })}
 
-      <div style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
-        <Avatar user={currentUser} size={32} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <textarea
-            ref={textareaRef}
-            value={text}
-            onClick={(e) => e.stopPropagation()}
-            onChange={(e) => {
-              setText(e.target.value);
-              e.target.style.height = "auto";
-              e.target.style.height = `${e.target.scrollHeight}px`;
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSubmit();
-            }}
-            placeholder="Reply..."
-            rows={1}
-            style={{
-              width: "100%",
-              resize: "none",
-              overflow: "hidden",
-              border: "2px solid #E6E6E6",
-              padding: "6px 8px",
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: textareaFontSize,
-              lineHeight: 1.5,
-              outline: "none",
-              boxSizing: "border-box",
-            }}
-          />
-          {trimmedText && (
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "flex-end",
-                alignItems: "center",
-                gap: "8px",
-                marginTop: "6px",
+      {!hideCompose && (
+        <div style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
+          <Avatar user={currentUser} size={32} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <textarea
+              ref={textareaRef}
+              value={text}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => {
+                setText(e.target.value);
+                e.target.style.height = "auto";
+                e.target.style.height = `${e.target.scrollHeight}px`;
               }}
-            >
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onCancel?.();
-                }}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "13px",
-                  fontWeight: 300,
-                  color: "#808080",
-                }}
-              >
-                Cancel
-              </button>
-              <CommentButton
-                onClick={(e) => {
-                  e.stopPropagation();
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && (e.metaKey || e.ctrlKey))
                   handleSubmit();
+              }}
+              placeholder="Reply..."
+              rows={1}
+              style={{
+                width: "100%",
+                resize: "none",
+                overflow: "hidden",
+                border: "2px solid #E6E6E6",
+                padding: "6px 8px",
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: textareaFontSize,
+                lineHeight: 1.5,
+                outline: "none",
+                boxSizing: "border-box",
+              }}
+            />
+            {trimmedText && (
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  alignItems: "center",
+                  gap: "8px",
+                  marginTop: "6px",
                 }}
-                disabled={submitting}
-                loading={submitting}
               >
-                Post
-              </CommentButton>
-            </div>
-          )}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCancel?.();
+                  }}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "13px",
+                    fontWeight: 300,
+                    color: "#808080",
+                  }}
+                >
+                  Cancel
+                </button>
+                <CommentButton
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSubmit();
+                  }}
+                  disabled={submitting}
+                  loading={submitting}
+                >
+                  Post
+                </CommentButton>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
