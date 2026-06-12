@@ -216,7 +216,7 @@ export default function CommentModal({
                   marginBottom: "12px",
                 }}
               >
-                <Avatar user={comment.author} size={32} borderWidth={1} />
+                <Avatar user={comment.author} size={32} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <span
                     style={{

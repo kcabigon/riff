@@ -145,7 +145,6 @@ export default function NotificationItem({
             avatarUrl: notification.actor.avatarUrl,
           }}
           size={32}
-          showBorder={false}
         />
       ) : (
         <div
