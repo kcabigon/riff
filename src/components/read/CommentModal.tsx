@@ -517,6 +517,7 @@ export default function CommentModal({
                         setReplyText("");
                         if (replyTextareaRef.current)
                           replyTextareaRef.current.style.height = "auto";
+                        onClose();
                       }}
                       style={{
                         background: "none",
