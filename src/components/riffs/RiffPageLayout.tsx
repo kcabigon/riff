@@ -15,6 +15,7 @@ import {
   allPiecesSubmitted,
   isPastDeadline,
   formatDateShort,
+  formatDateLong,
   getSubmittedParticipants,
   getWaitingParticipants,
 } from "@/lib/riff-utils";
@@ -27,10 +28,6 @@ import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import type { DropdownItem } from "@/components/shared/Dropdown";
 import ContributionStrip from "@/components/riffs/ContributionStrip";
 import NoiseBackground from "@/components/NoiseBackground";
-import WhatsNextModal, {
-  type WhatsNextTrigger,
-} from "@/components/shared/WhatsNextModal";
-import { canShowWhatsNext } from "@/lib/whatsNextGuard";
 import PrimaryButton from "@/components/PrimaryButton";
 
 interface RiffPageLayoutProps {
@@ -102,6 +99,7 @@ interface RiffPageLayoutProps {
   onReveal?: () => void;
   hostFirstName?: string | null;
   isFirstReveal?: boolean;
+  predictedVolumeNumber?: number;
 }
 
 export default function RiffPageLayout({
@@ -121,6 +119,7 @@ export default function RiffPageLayout({
   onReveal,
   hostFirstName,
   isFirstReveal = false,
+  predictedVolumeNumber,
 }: RiffPageLayoutProps) {
   const [isJoined, setIsJoined] = useState(initialIsJoined);
   const [isRevealModalOpen, setIsRevealModalOpen] = useState(false);
@@ -128,22 +127,7 @@ export default function RiffPageLayout({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
-  const [whatsNextTrigger, setWhatsNextTrigger] =
-    useState<WhatsNextTrigger | null>(null);
   const router = useRouter();
-
-  // Detect member's first visit to a revealed riff and show the "what's next" modal once
-  useEffect(() => {
-    if (!isFirstReveal) return;
-    const key = `riff-first-reveal-${riff.id}`;
-    if (typeof window === "undefined") return;
-    if (localStorage.getItem(key)) return;
-    // Double guard: per-riff key (above) prevents re-show on the same riff;
-    // global guard prevents re-show across all riffs after the first reveal.
-    if (!canShowWhatsNext("member_first_reveal")) return;
-    localStorage.setItem(key, "1");
-    setWhatsNextTrigger("member_first_reveal");
-  }, [riff.id, isFirstReveal]);
   const deadlinePassed = isPastDeadline(riff.deadline);
   const piecesAllSubmitted = allPiecesSubmitted(
     riff.pieces,
@@ -241,7 +225,7 @@ export default function RiffPageLayout({
                   margin: 0,
                 }}
               >
-                {getRiffDisplayTitle(riff)}
+                {getRiffDisplayTitle(riff, predictedVolumeNumber)}
               </h1>
               <div
                 style={{ display: "flex", alignItems: "center", gap: "8px" }}
@@ -260,9 +244,11 @@ export default function RiffPageLayout({
                 >
                   {deadlinePassed && riff.status !== "REVEALED"
                     ? "Deadline passed"
-                    : riff.deadline
-                      ? `${formatDateShort(riff.createdAt)} - ${formatDateShort(riff.deadline)}`
-                      : formatDateShort(riff.createdAt)}
+                    : riff.status === "REVEALED" && riff.deadline
+                      ? `${formatDateLong(riff.createdAt)} - ${formatDateLong(riff.deadline)}`
+                      : riff.deadline
+                        ? `Deadline: ${formatDateLong(riff.deadline)}`
+                        : "No deadline"}
                 </p>
                 {isAdmin &&
                   riff.status !== "REVEALED" &&
@@ -468,9 +454,6 @@ export default function RiffPageLayout({
                 existingPieceId={existingPieceId}
                 onJoin={() => {
                   setIsJoined(true);
-                  if (canShowWhatsNext("member_joined_riff")) {
-                    setWhatsNextTrigger("member_joined_riff");
-                  }
                 }}
               />
             ) : null}
@@ -618,7 +601,7 @@ export default function RiffPageLayout({
         onClose={() => setIsRevealModalOpen(false)}
         onConfirm={handleRevealConfirm}
         isRevealing={isRevealing}
-        riffTitle={getRiffDisplayTitle(riff)}
+        riffTitle={getRiffDisplayTitle(riff, predictedVolumeNumber)}
         waitingUsers={riff.participants
           .filter(
             (p) =>
@@ -647,14 +630,9 @@ export default function RiffPageLayout({
       {/* Reveal Celebration */}
       {showCelebration && (
         <RevealCelebration
-          pieceCount={riff.pieces.length}
           onDismiss={() => {
             setShowCelebration(false);
-            if (canShowWhatsNext("host_revealed")) {
-              setWhatsNextTrigger("host_revealed");
-            } else {
-              router.refresh();
-            }
+            router.refresh();
           }}
         />
       )}
@@ -687,24 +665,7 @@ export default function RiffPageLayout({
             router.push(`/clubs/${riff.clubId}`);
           }}
           riffId={riff.id}
-          riffTitle={getRiffDisplayTitle(riff)}
-        />
-      )}
-
-      {/* What's Next Modal */}
-      {whatsNextTrigger && (
-        <WhatsNextModal
-          isOpen={true}
-          onClose={() => {
-            setWhatsNextTrigger(null);
-            router.refresh();
-          }}
-          trigger={whatsNextTrigger}
-          hostFirstName={hostFirstName}
-          onCTAClick={() => {
-            setWhatsNextTrigger(null);
-            router.refresh();
-          }}
+          riffTitle={getRiffDisplayTitle(riff, predictedVolumeNumber)}
         />
       )}
 

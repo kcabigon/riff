@@ -6,7 +6,7 @@ import { signIn } from "next-auth/react";
 import AvatarStack from "@/components/shared/AvatarStack";
 import LandingNavBar from "@/components/LandingNavBar";
 import NavBar from "@/components/clubs/NavBar";
-import ConversionModal from "@/components/clubs/ConversionModal";
+
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import TextInput from "@/components/TextInput";
 import SecondaryButton from "@/components/SecondaryButton";
@@ -72,7 +72,7 @@ export default function JoinClubClient({
   const [lastName, setLastName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [writeClubAnswered, setWriteClubAnswered] = useState(false);
   const isMobile = useIsMobile();
 
   const formatNumber = (n: number) => n.toLocaleString();
@@ -500,12 +500,24 @@ export default function JoinClubClient({
                   Join club
                 </SecondaryButton>
               </form>
-              <button
-                onClick={() => setIsModalOpen(true)}
-                style={whatIsItStyle}
-              >
-                Wait, what&apos;s a write club?
-              </button>
+              {writeClubAnswered ? (
+                <span
+                  style={{
+                    ...whatIsItStyle,
+                    cursor: "default",
+                    textDecoration: "none",
+                  }}
+                >
+                  Like a book club but for writing.
+                </span>
+              ) : (
+                <button
+                  onClick={() => setWriteClubAnswered(true)}
+                  style={whatIsItStyle}
+                >
+                  Wait, what&apos;s a write club?
+                </button>
+              )}
             </>
           )}
 
@@ -596,24 +608,28 @@ export default function JoinClubClient({
               <SecondaryButton loading={loading} onClick={handleJoin}>
                 Join club
               </SecondaryButton>
-              <button
-                onClick={() => setIsModalOpen(true)}
-                style={whatIsItStyle}
-              >
-                Wait, what&apos;s a write club?
-              </button>
+              {writeClubAnswered ? (
+                <span
+                  style={{
+                    ...whatIsItStyle,
+                    cursor: "default",
+                    textDecoration: "none",
+                  }}
+                >
+                  Like a book club but for writing.
+                </span>
+              ) : (
+                <button
+                  onClick={() => setWriteClubAnswered(true)}
+                  style={whatIsItStyle}
+                >
+                  Wait, what&apos;s a write club?
+                </button>
+              )}
             </div>
           )}
         </div>
       </div>
-
-      <ConversionModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        clubName={club.name}
-        onJoin={handleJoin}
-        isJoining={loading}
-      />
 
       <style>{`
         @media (max-width: 767px) {

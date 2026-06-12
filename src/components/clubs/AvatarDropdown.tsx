@@ -28,8 +28,8 @@ export default function AvatarDropdown({ user }: AvatarDropdownProps) {
     },
     {
       type: "action",
-      label: "Settings",
-      onClick: () => router.push("/settings"),
+      label: "Account",
+      onClick: () => router.push("/account"),
     },
     {
       type: "action",

@@ -27,10 +27,6 @@ import { useScrollDirection } from "@/hooks/useScrollDirection";
 import EmbedModal from "@/components/write/EmbedModal";
 import MediaEmbedModal from "@/components/write/MediaEmbedModal";
 import LinkPopover from "@/components/write/LinkPopover";
-import WhatsNextModal, {
-  type WhatsNextTrigger,
-} from "@/components/shared/WhatsNextModal";
-import { canShowWhatsNext } from "@/lib/whatsNextGuard";
 import CTAButton from "@/components/CTAButton";
 
 const ALLOWED_IMAGE_TYPES = [
@@ -60,15 +56,9 @@ interface WritePageProps {
     coverImage: string | null;
     riffs: RiffConnection[];
   };
-  isAdmin?: boolean;
-  hostFirstName?: string | null;
 }
 
-export default function WritePage({
-  piece,
-  isAdmin = false,
-  hostFirstName,
-}: WritePageProps) {
+export default function WritePage({ piece }: WritePageProps) {
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "unsaved">(
     "saved"
   );
@@ -92,8 +82,6 @@ export default function WritePage({
     imageErrorTimerRef.current = setTimeout(() => setImageError(null), 4000);
   }, []);
   const editorRef = useRef<Editor | null>(null);
-  const [whatsNextTrigger, setWhatsNextTrigger] =
-    useState<WhatsNextTrigger | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(
     piece.riffs.some((r) => r.submittedAt !== null)
   );
@@ -128,8 +116,8 @@ export default function WritePage({
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      showImageError("File too large — max 5MB");
+    if (file.size > 10 * 1024 * 1024) {
+      showImageError("File too large — max 10MB");
       return;
     }
 
@@ -459,8 +447,8 @@ export default function WritePage({
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      showImageError("File too large — max 5MB");
+    if (file.size > 10 * 1024 * 1024) {
+      showImageError("File too large — max 10MB");
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
@@ -805,7 +793,7 @@ export default function WritePage({
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            paddingBottom: isMobile ? "48px" : "100px",
+            paddingBottom: isMobile ? "48px" : "400px",
           }}
         >
           {/* Title */}
@@ -989,14 +977,7 @@ export default function WritePage({
             });
             setIsSubmitted(true);
             setShowSubmitModal(false);
-            const submitTrigger = isAdmin
-              ? "host_submitted"
-              : "member_submitted";
-            if (canShowWhatsNext(submitTrigger)) {
-              setWhatsNextTrigger(submitTrigger);
-            } else {
-              router.push(`/riffs/${riff.id}`);
-            }
+            router.push(`/riffs/${riff.id}`);
           }}
           submitDisabled={isSubmitted}
           onCoverAction={() => {
@@ -1018,21 +999,6 @@ export default function WritePage({
       )}
 
       {/* What's Next Modal */}
-      {whatsNextTrigger && (
-        <WhatsNextModal
-          isOpen={true}
-          onClose={() => {
-            setWhatsNextTrigger(null);
-            router.push(`/riffs/${piece.riffs[0]?.id ?? ""}`);
-          }}
-          trigger={whatsNextTrigger}
-          hostFirstName={hostFirstName}
-          onCTAClick={() => {
-            setWhatsNextTrigger(null);
-            router.push(`/riffs/${piece.riffs[0]?.id ?? ""}`);
-          }}
-        />
-      )}
     </div>
   );
 }

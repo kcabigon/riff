@@ -46,7 +46,10 @@ export default function ClubDropdown({
         // eslint-disable-next-line @next/next/no-img-element
         <img src="/icons/add.svg" alt="" width={16} height={16} />
       ),
-      onClick: () => router.push("/onboarding/create-club"),
+      onClick: () => {
+        sessionStorage.setItem("pendingClubFrom", `/clubs/${currentClub.id}`);
+        router.push("/onboarding/create-club");
+      },
     },
   ];
 

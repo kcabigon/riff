@@ -61,6 +61,8 @@ interface ReadPageLayoutProps {
   previousPiece?: { id: string; title: string } | null;
   nextPiece?: { id: string; title: string } | null;
   fromProfileUserId?: string;
+  backHref?: string;
+  disableCommentCompose?: boolean;
 }
 
 export default function ReadPageLayout({
@@ -72,12 +74,14 @@ export default function ReadPageLayout({
   isAlreadyRead,
   startInRiffMode,
   fromProfileUserId,
+  backHref,
+  disableCommentCompose,
 }: ReadPageLayoutProps) {
   const router = useRouter();
   const endRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const contentColumnRef = useRef<HTMLDivElement>(null);
-  const [markedRead, setMarkedRead] = useState(false);
+  const [markedRead, setMarkedRead] = useState(isAlreadyRead);
   // Always start in read mode — activate riff mode only after the editor is
   // ready so marks are in the DOM before the sidebar mounts (prevents all
   // comment cards stacking at top:0 on notification deep-link nav).
@@ -348,7 +352,9 @@ export default function ReadPageLayout({
           >
             <BackButton
               onClick={() => {
-                if (fromProfileUserId) {
+                if (backHref) {
+                  router.push(backHref);
+                } else if (fromProfileUserId) {
                   router.push(`/profile/${fromProfileUserId}`);
                 } else {
                   router.push(`/riffs/${riffId}`);
@@ -527,6 +533,7 @@ export default function ReadPageLayout({
             pendingSelection={pendingSelection}
             currentUserId={currentUser.id}
             onSelection={(sel) => {
+              if (disableCommentCompose) return;
               // Focus hidden input synchronously within the touchend gesture
               // so iOS opens the keyboard before the compose modal mounts
               if (isMobile) keyboardTriggerRef.current?.focus();

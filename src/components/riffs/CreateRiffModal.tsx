@@ -21,7 +21,7 @@ export default function CreateRiffModal({
 }: CreateRiffModalProps) {
   const getDefaultDeadline = () => {
     const d = new Date();
-    d.setDate(d.getDate() + 30);
+    d.setDate(d.getDate() + 14);
     return d.toISOString().split("T")[0];
   };
 
@@ -90,7 +90,7 @@ export default function CreateRiffModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Start a new riff">
+    <Modal isOpen={isOpen} onClose={onClose} title="Let's riff">
       <form onSubmit={handleSubmit}>
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           <RiffFormFields

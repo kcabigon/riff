@@ -1,7 +1,30 @@
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import ReadPageLayout from "@/components/read/ReadPageLayout";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ pieceId: string }>;
+}): Promise<Metadata> {
+  const { pieceId } = await params;
+  const piece = await prisma.piece.findUnique({
+    where: { id: pieceId },
+    select: {
+      riffs: {
+        where: { submittedAt: { not: null } },
+        select: { riff: { select: { club: { select: { name: true } } } } },
+        take: 1,
+      },
+    },
+  });
+  return {
+    title: piece?.riffs[0]?.riff?.club?.name ?? "Riff",
+    description: "Read this piece on Riff.",
+  };
+}
 
 export default async function ReadPage({
   params,

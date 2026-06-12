@@ -72,7 +72,7 @@ export default function LoginPage() {
         />
 
         <PrimaryButton type="submit" loading={loading} disabled={loading}>
-          Let&apos;s do this shit
+          Let&apos;s do this
         </PrimaryButton>
       </form>
 

@@ -6,6 +6,7 @@ import OnboardingCard from "@/components/onboarding/OnboardingCard";
 import TextInput from "@/components/TextInput";
 import Tagline from "@/components/Tagline";
 import BackButton from "@/components/BackButton";
+import PrimaryButton from "@/components/PrimaryButton";
 
 import { CLUB_NAME_MAX, DESCRIPTION_MAX } from "@/lib/constants";
 
@@ -23,7 +24,7 @@ export default function OnboardingCreateClubPage() {
     setLoading(true);
     setError("");
 
-    const finalClubName = clubName.trim() || "My Write Club";
+    const finalClubName = clubName.trim() || "Write Club";
 
     // Store club data in sessionStorage for next step
     sessionStorage.setItem(
@@ -54,14 +55,11 @@ export default function OnboardingCreateClubPage() {
         >
           <BackButton
             onClick={() => {
-              const fromSameApp =
-                document.referrer &&
-                new URL(document.referrer).origin === window.location.origin;
-              if (fromSameApp) {
-                router.back();
-              } else {
-                router.push("/onboarding/club-choice");
-              }
+              const from =
+                sessionStorage.getItem("pendingClubFrom") ??
+                "/onboarding/club-choice";
+              sessionStorage.removeItem("pendingClubFrom");
+              router.push(from);
             }}
           />
         </div>
@@ -130,19 +128,20 @@ export default function OnboardingCreateClubPage() {
               maxLength={DESCRIPTION_MAX}
               error={description.length >= DESCRIPTION_MAX ? " " : undefined}
             />
-            <div style={{ backgroundColor: "#FFFFFF", padding: "4px 8px" }}>
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "13px",
-                  fontWeight: 300,
-                  color: "#959595",
-                  margin: 0,
-                }}
-              >
-                Chill out, you can change both of these later if you want.
-              </p>
-            </div>
+            <span
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "13px",
+                fontWeight: 300,
+                color: "#9C9C9C",
+                backgroundColor: "#FFFFFF",
+                padding: "4px 8px",
+                alignSelf: "flex-start",
+              }}
+            >
+              Congrats, your club&apos;s first creative act. Don&apos;t worry,
+              you can change these later if you want.
+            </span>
           </div>
 
           {error && (
@@ -161,31 +160,9 @@ export default function OnboardingCreateClubPage() {
           )}
 
           {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: "100%",
-              height: "45px",
-              backgroundColor: loading ? "#FFFFFF" : "#EECF01",
-              border: loading ? "2px solid #9C9C9C" : "2px solid #000000",
-              boxShadow: loading ? "none" : "8px 8px 0px 0px #000000",
-              padding: "12px 48px",
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              lineHeight: "normal",
-              color: loading ? "#9C9C9C" : "#000000",
-              cursor: loading ? "not-allowed" : "pointer",
-              transition: "all 0.2s",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxSizing: "border-box",
-            }}
-          >
-            {loading ? "Loading..." : "Now what?"}
-          </button>
+          <PrimaryButton type="submit" loading={loading} disabled={loading}>
+            Cool, what&apos;s next?
+          </PrimaryButton>
         </form>
       </div>
     </OnboardingCard>

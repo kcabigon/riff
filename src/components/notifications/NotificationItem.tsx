@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import Avatar from "@/components/shared/Avatar";
+import { getRiffDisplayTitle } from "@/lib/riff-utils";
+import { relativeTime } from "@/lib/timeAgo";
 
 interface NotificationItemProps {
   notification: {
@@ -37,12 +39,7 @@ function getMessage(n: NotificationItemProps["notification"]): string {
       return `${actor} submitted a piece to ${n.club ? n.club.name : "your club"}`;
     case "RIFF_COMPLETED": {
       if (n.riff) {
-        const display =
-          n.riff.volumeNumber && n.riff.title
-            ? `Volume ${n.riff.volumeNumber}: ${n.riff.title}`
-            : n.riff.volumeNumber
-              ? `Volume ${n.riff.volumeNumber}`
-              : n.riff.title || "The riff";
+        const display = getRiffDisplayTitle({ ...n.riff, status: "REVEALED" });
         return `${display} has been revealed`;
       }
       return "A riff has been revealed";
@@ -110,7 +107,7 @@ export default function NotificationItem({
     router.push(getLink(notification));
   };
 
-  const timeAgo = getTimeAgo(new Date(notification.createdAt));
+  const timeAgo = relativeTime(notification.createdAt);
 
   return (
     <button
@@ -198,18 +195,4 @@ export default function NotificationItem({
       )}
     </button>
   );
-}
-
-function getTimeAgo(date: Date): string {
-  const now = Date.now();
-  const diff = now - date.getTime();
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
-
-  if (minutes < 1) return "Just now";
-  if (minutes < 60) return `${minutes}m ago`;
-  if (hours < 24) return `${hours}h ago`;
-  if (days < 7) return `${days}d ago`;
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }

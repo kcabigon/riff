@@ -1,7 +1,24 @@
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import ProfilePage from "@/components/profile/ProfilePage";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ userId: string }>;
+}): Promise<Metadata> {
+  const { userId } = await params;
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { name: true },
+  });
+  return {
+    title: user?.name ?? "Profile",
+    description: `View ${user?.name ?? "this writer"}'s profile on Riff.`,
+  };
+}
 
 export default async function ProfilePageRoute({
   params,

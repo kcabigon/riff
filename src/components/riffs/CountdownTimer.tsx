@@ -43,6 +43,13 @@ export default function CountdownTimer({ deadline }: CountdownTimerProps) {
     return () => clearInterval(timer);
   }, [deadline]);
 
+  const underOneDay = timeLeft.days === 0;
+  const RED = "#DC2626";
+  const BLACK = "#000000";
+
+  const numberColor = (alwaysRed: boolean) =>
+    alwaysRed || underOneDay ? RED : BLACK;
+
   return (
     <div
       style={{
@@ -50,7 +57,7 @@ export default function CountdownTimer({ deadline }: CountdownTimerProps) {
         alignItems: "center",
         gap: "12px",
         lineHeight: "normal",
-        color: "#000000",
+        color: BLACK,
       }}
     >
       {/* Days */}
@@ -68,7 +75,7 @@ export default function CountdownTimer({ deadline }: CountdownTimerProps) {
             fontSize: "16px",
             fontWeight: 700,
             lineHeight: "normal",
-            color: "#000000",
+            color: numberColor(false),
             margin: 0,
           }}
         >
@@ -80,7 +87,7 @@ export default function CountdownTimer({ deadline }: CountdownTimerProps) {
             fontSize: "12px",
             fontWeight: 300,
             lineHeight: "normal",
-            color: "#000000",
+            color: BLACK,
             margin: 0,
           }}
         >
@@ -103,7 +110,7 @@ export default function CountdownTimer({ deadline }: CountdownTimerProps) {
             fontSize: "16px",
             fontWeight: 700,
             lineHeight: "normal",
-            color: "#000000",
+            color: numberColor(false),
             margin: 0,
           }}
         >
@@ -115,7 +122,7 @@ export default function CountdownTimer({ deadline }: CountdownTimerProps) {
             fontSize: "12px",
             fontWeight: 300,
             lineHeight: "normal",
-            color: "#000000",
+            color: BLACK,
             margin: 0,
           }}
         >
@@ -138,7 +145,7 @@ export default function CountdownTimer({ deadline }: CountdownTimerProps) {
             fontSize: "16px",
             fontWeight: 700,
             lineHeight: "normal",
-            color: "#000000",
+            color: numberColor(false),
             margin: 0,
           }}
         >
@@ -150,7 +157,7 @@ export default function CountdownTimer({ deadline }: CountdownTimerProps) {
             fontSize: "12px",
             fontWeight: 300,
             lineHeight: "normal",
-            color: "#000000",
+            color: BLACK,
             margin: 0,
           }}
         >
@@ -173,7 +180,7 @@ export default function CountdownTimer({ deadline }: CountdownTimerProps) {
             fontSize: "16px",
             fontWeight: 700,
             lineHeight: "normal",
-            color: "#000000",
+            color: numberColor(true),
             margin: 0,
           }}
         >
@@ -185,7 +192,7 @@ export default function CountdownTimer({ deadline }: CountdownTimerProps) {
             fontSize: "12px",
             fontWeight: 300,
             lineHeight: "normal",
-            color: "#000000",
+            color: BLACK,
             margin: 0,
           }}
         >

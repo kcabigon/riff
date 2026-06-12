@@ -9,7 +9,7 @@ import {
   getRiffDisplayTitle,
   allPiecesSubmitted,
   isPastDeadline,
-  formatDateShort,
+  formatDateLong,
 } from "@/lib/riff-utils";
 import RiffCTAButton from "@/components/riffs/RiffCTAButton";
 import RevealRiffButton, {
@@ -50,6 +50,7 @@ interface RiffCardProps {
   isAdmin: boolean;
   onJoin?: () => void;
   onReveal?: () => void;
+  predictedVolumeNumber?: number;
 }
 
 export default function RiffCard({
@@ -61,6 +62,7 @@ export default function RiffCard({
   isAdmin,
   onJoin,
   onReveal,
+  predictedVolumeNumber,
 }: RiffCardProps) {
   const [isCardHovered, setIsCardHovered] = useState(false);
   const router = useRouter();
@@ -70,12 +72,6 @@ export default function RiffCard({
     riff.pieces,
     riff.participants.length
   );
-
-  // Get date range for joined riff
-  const getDateRange = () => {
-    if (!riff.deadline) return null;
-    return `${formatDateShort(riff.createdAt)} - ${formatDateShort(riff.deadline)}`;
-  };
 
   const handleCardClick = () => {
     router.push(`/riffs/${riff.id}`);
@@ -142,7 +138,7 @@ export default function RiffCard({
               margin: 0,
             }}
           >
-            {getRiffDisplayTitle(riff)}
+            {getRiffDisplayTitle(riff, predictedVolumeNumber)}
           </h3>
 
           {/* Date/Deadline */}
@@ -158,11 +154,9 @@ export default function RiffCard({
           >
             {deadlinePassed
               ? "Deadline passed"
-              : isJoined && riff.deadline
-                ? getDateRange()
-                : riff.deadline
-                  ? `Deadline: ${formatDateShort(riff.deadline)}`
-                  : "No deadline"}
+              : riff.deadline
+                ? `Deadline: ${formatDateLong(riff.deadline)}`
+                : "No deadline"}
           </p>
         </div>
 
