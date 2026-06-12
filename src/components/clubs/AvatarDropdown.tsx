@@ -40,15 +40,7 @@ export default function AvatarDropdown({ user }: AvatarDropdownProps) {
 
   return (
     <Dropdown
-      trigger={
-        <Avatar
-          user={user}
-          size={40}
-          showBorder={true}
-          borderColor="#FFFFFF"
-          borderWidth={2}
-        />
-      }
+      trigger={<Avatar user={user} size={40} borderColor="#FFFFFF" />}
       items={items}
       align="right"
     />

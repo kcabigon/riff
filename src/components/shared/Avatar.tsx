@@ -7,9 +7,7 @@ import AdminBadge from "./AdminBadge";
 interface AvatarProps {
   user: AvatarUser;
   size?: 24 | 32 | 40 | 48; // Default: 32
-  showBorder?: boolean; // Default: true
   borderColor?: string; // Default: '#000000' (black)
-  borderWidth?: number; // Default: 2 (in pixels)
   tag?: string | null; // Optional label (e.g., "H" for host)
   badge?: "admin" | "moderator" | null; // Optional role badge
   onClick?: (userId: string) => void;
@@ -31,9 +29,7 @@ interface AvatarProps {
 export default function Avatar({
   user,
   size = 32,
-  showBorder = true,
   borderColor = "#000000",
-  borderWidth = 2,
   tag = null,
   badge = null,
   onClick,
@@ -83,7 +79,7 @@ export default function Avatar({
     width: `${size}px`,
     height: `${size}px`,
     borderRadius: "64px", // Full circle
-    border: showBorder ? `${borderWidth}px solid ${borderColor}` : "none",
+    border: `${getBorderWidth(size)}px solid ${borderColor}`,
     cursor: onClick ? "pointer" : "default",
     position: "relative",
     flexShrink: 0,
@@ -176,6 +172,10 @@ export default function Avatar({
 }
 
 // Helper functions for scaled sizes
+
+function getBorderWidth(avatarSize: number): number {
+  return avatarSize <= 32 ? 1 : 2;
+}
 
 function getTextSize(avatarSize: number): number {
   const sizeMap: { [key: number]: number } = {

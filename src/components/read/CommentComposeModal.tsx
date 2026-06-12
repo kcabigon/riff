@@ -169,7 +169,7 @@ export default function CommentComposeModal({
               marginBottom: "12px",
             }}
           >
-            <Avatar user={currentUser} size={32} borderWidth={1} />
+            <Avatar user={currentUser} size={32} />
             <span
               style={{
                 fontFamily: "var(--font-dm-sans)",

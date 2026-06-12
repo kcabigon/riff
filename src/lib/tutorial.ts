@@ -39,6 +39,7 @@ export function getTutorialComments() {
       createdAt: comment1At,
       updatedAt: comment1At,
       author: TUTORIAL_FRIEND,
+      replies: [],
     },
     {
       id: "tutorial-comment-2",
@@ -50,6 +51,7 @@ export function getTutorialComments() {
       createdAt: comment2At,
       updatedAt: comment2At,
       author: TUTORIAL_FRIEND,
+      replies: [],
     },
     {
       id: "tutorial-comment-3",
@@ -61,6 +63,7 @@ export function getTutorialComments() {
       createdAt: comment3At,
       updatedAt: comment3At,
       author: TUTORIAL_FRIEND,
+      replies: [],
     },
   ];
 }
