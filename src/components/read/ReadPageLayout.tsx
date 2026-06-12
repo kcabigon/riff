@@ -86,6 +86,7 @@ export default function ReadPageLayout({
   const contentRef = useRef<HTMLDivElement>(null);
   const contentColumnRef = useRef<HTMLDivElement>(null);
   const [markedRead, setMarkedRead] = useState(isAlreadyRead);
+  const hasCalledReadApi = useRef(false);
   // Always start in read mode — activate riff mode only after the editor is
   // ready so marks are in the DOM before the sidebar mounts (prevents all
   // comment cards stacking at top:0 on notification deep-link nav).
@@ -117,7 +118,8 @@ export default function ReadPageLayout({
   }, [isMobile]);
 
   const markAsRead = useCallback(async () => {
-    if (markedRead) return;
+    if (hasCalledReadApi.current) return;
+    hasCalledReadApi.current = true;
     setMarkedRead(true);
     try {
       await fetch(`/api/riffs/${riffId}/read`, {
@@ -128,11 +130,9 @@ export default function ReadPageLayout({
     } catch (err) {
       console.error("Error marking piece as read:", err);
     }
-  }, [markedRead, riffId, piece.id]);
+  }, [riffId, piece.id]);
 
   useEffect(() => {
-    if (markedRead) return;
-
     const content = contentRef.current;
     const end = endRef.current;
     if (!content || !end) return;
@@ -150,7 +150,7 @@ export default function ReadPageLayout({
     );
     observer.observe(end);
     return () => observer.disconnect();
-  }, [markAsRead, markedRead]);
+  }, [markAsRead]);
 
   const handleNewComment = useCallback((comment: CommentData) => {
     setComments((prev) => {
