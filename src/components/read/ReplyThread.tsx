@@ -51,6 +51,7 @@ export default function ReplyThread({
   const editTextareaRef = useRef<HTMLTextAreaElement>(null);
   const isMobile = useIsMobile();
   const textareaFontSize = isMobile ? "16px" : "13px";
+  const trimmedText = text.trim();
 
   useEffect(() => {
     return () => abortRef.current?.abort();
@@ -86,8 +87,8 @@ export default function ReplyThread({
   };
 
   const handleSubmit = async () => {
-    const trimmed = text.trim();
-    if (!trimmed || submitting) return;
+    if (!trimmedText || submitting) return;
+    const trimmed = trimmedText;
     setSubmitting(true);
     abortRef.current = new AbortController();
     try {
@@ -302,7 +303,7 @@ export default function ReplyThread({
               boxSizing: "border-box",
             }}
           />
-          {text.trim() && (
+          {trimmedText && (
             <div
               style={{
                 display: "flex",

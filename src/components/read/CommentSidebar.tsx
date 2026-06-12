@@ -184,7 +184,10 @@ function CommentCard({
         padding: "12px",
         transition:
           "border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease",
-        cursor: isEditing || confirmingDelete ? "default" : "pointer",
+        cursor:
+          isEditing || confirmingDelete || disableReplies
+            ? "default"
+            : "pointer",
       }}
     >
       {/* Header row */}
