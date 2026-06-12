@@ -109,9 +109,9 @@ export default function CommentModal({
         transform: "translateX(-50%)",
         maxHeight: `${vv.height - 16}px`,
       });
-      // Reset scroll after position settles so comment is visible from top
+      // Scroll to bottom after position settles so latest replies are in view
       if (replyFocused && scrollRef.current) {
-        scrollRef.current.scrollTop = 0;
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
       }
     }
 
