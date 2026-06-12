@@ -121,7 +121,6 @@ export default function ReadPageLayout({
 
   const markAsRead = useCallback(async () => {
     if (disableReadTracking || hasCalledReadApi.current) return;
-    hasCalledReadApi.current = true;
     setMarkedRead(true);
     try {
       await fetch(`/api/riffs/${riffId}/read`, {
@@ -129,6 +128,7 @@ export default function ReadPageLayout({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pieceId: piece.id }),
       });
+      hasCalledReadApi.current = true;
     } catch (err) {
       console.error("Error marking piece as read:", err);
     }

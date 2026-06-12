@@ -217,7 +217,7 @@ export default async function ClubPage({
   } else if (!isAdmin) {
     // Member: graduated once they've submitted a piece to a riff
     const anySubmission = await prisma.pieceRiff.findFirst({
-      where: { piece: { authorId: userId } },
+      where: { piece: { authorId: userId }, submittedAt: { not: null } },
       select: { pieceId: true },
     });
     userMemberOnboardingComplete = anySubmission !== null;
