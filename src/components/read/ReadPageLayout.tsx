@@ -67,6 +67,7 @@ interface ReadPageLayoutProps {
   fromProfileUserId?: string;
   backHref?: string;
   disableCommentCompose?: boolean;
+  disableReadTracking?: boolean;
 }
 
 export default function ReadPageLayout({
@@ -80,6 +81,7 @@ export default function ReadPageLayout({
   fromProfileUserId,
   backHref,
   disableCommentCompose,
+  disableReadTracking,
 }: ReadPageLayoutProps) {
   const router = useRouter();
   const endRef = useRef<HTMLDivElement>(null);
@@ -118,7 +120,7 @@ export default function ReadPageLayout({
   }, [isMobile]);
 
   const markAsRead = useCallback(async () => {
-    if (hasCalledReadApi.current) return;
+    if (disableReadTracking || hasCalledReadApi.current) return;
     hasCalledReadApi.current = true;
     setMarkedRead(true);
     try {
@@ -130,7 +132,7 @@ export default function ReadPageLayout({
     } catch (err) {
       console.error("Error marking piece as read:", err);
     }
-  }, [riffId, piece.id]);
+  }, [riffId, piece.id, disableReadTracking]);
 
   useEffect(() => {
     const content = contentRef.current;
