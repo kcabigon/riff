@@ -38,8 +38,9 @@ interface PendingCommentProps {
   pieceId: string;
   riffId: string;
   clubId: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onSubmit: (comment: any) => void;
+  onSubmit: (
+    comment: Omit<CommentData, "replies"> & { replies?: ReplyData[] }
+  ) => void;
   onClose: () => void;
 }
 
