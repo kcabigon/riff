@@ -215,12 +215,12 @@ export default async function ClubPage({
     });
     userOnboardingComplete = graduated !== null;
   } else if (!isAdmin) {
-    // Member: graduated once they've created any piece
-    const anyPiece = await prisma.piece.findFirst({
-      where: { authorId: userId },
-      select: { id: true },
+    // Member: graduated once they've submitted a piece to a riff
+    const anySubmission = await prisma.pieceRiff.findFirst({
+      where: { piece: { authorId: userId } },
+      select: { pieceId: true },
     });
-    userMemberOnboardingComplete = anyPiece !== null;
+    userMemberOnboardingComplete = anySubmission !== null;
   }
 
   // Update lastActiveClubId (fire-and-forget, non-blocking)
