@@ -67,6 +67,7 @@ interface ReadPageLayoutProps {
   fromProfileUserId?: string;
   backHref?: string;
   disableCommentCompose?: boolean;
+  disableReadTracking?: boolean;
 }
 
 export default function ReadPageLayout({
@@ -80,12 +81,14 @@ export default function ReadPageLayout({
   fromProfileUserId,
   backHref,
   disableCommentCompose,
+  disableReadTracking,
 }: ReadPageLayoutProps) {
   const router = useRouter();
   const endRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const contentColumnRef = useRef<HTMLDivElement>(null);
   const [markedRead, setMarkedRead] = useState(isAlreadyRead);
+  const hasCalledReadApi = useRef(false);
   // Always start in read mode — activate riff mode only after the editor is
   // ready so marks are in the DOM before the sidebar mounts (prevents all
   // comment cards stacking at top:0 on notification deep-link nav).
@@ -117,7 +120,7 @@ export default function ReadPageLayout({
   }, [isMobile]);
 
   const markAsRead = useCallback(async () => {
-    if (markedRead) return;
+    if (disableReadTracking || hasCalledReadApi.current) return;
     setMarkedRead(true);
     try {
       await fetch(`/api/riffs/${riffId}/read`, {
@@ -125,14 +128,13 @@ export default function ReadPageLayout({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pieceId: piece.id }),
       });
+      hasCalledReadApi.current = true;
     } catch (err) {
       console.error("Error marking piece as read:", err);
     }
-  }, [markedRead, riffId, piece.id]);
+  }, [riffId, piece.id, disableReadTracking]);
 
   useEffect(() => {
-    if (markedRead) return;
-
     const content = contentRef.current;
     const end = endRef.current;
     if (!content || !end) return;
@@ -150,7 +152,7 @@ export default function ReadPageLayout({
     );
     observer.observe(end);
     return () => observer.disconnect();
-  }, [markAsRead, markedRead]);
+  }, [markAsRead]);
 
   const handleNewComment = useCallback((comment: CommentData) => {
     setComments((prev) => {
