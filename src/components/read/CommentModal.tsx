@@ -82,6 +82,10 @@ export default function CommentModal({
   const replyAbortRef = useRef<AbortController | null>(null);
   const trimmedReplyText = replyText.trim();
 
+  useEffect(() => {
+    return () => replyAbortRef.current?.abort();
+  }, []);
+
   // Reposition above the iOS keyboard whenever any textarea is active.
   // When keyboard is active, anchor to the bottom of the visual viewport
   // (just above the keyboard) rather than centering, so there's no gap.
