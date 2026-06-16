@@ -55,6 +55,7 @@ export default async function TutorialReadPage({
       currentUser={currentUser}
       initialComments={getTutorialComments()}
       isAlreadyRead={true}
+      disableReadTracking={true}
       startInRiffMode={true}
       disableCommentCompose={true}
       disableReplies={true}
