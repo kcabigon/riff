@@ -303,7 +303,7 @@ export default function CommentModal({
                     <span
                       style={{
                         fontFamily: "var(--font-dm-sans)",
-                        fontSize: "14px",
+                        fontSize: "13px",
                         fontWeight: 500,
                         color: "#000000",
                       }}
@@ -315,7 +315,7 @@ export default function CommentModal({
                     <span
                       style={{
                         fontFamily: "var(--font-dm-sans)",
-                        fontSize: "12px",
+                        fontSize: "11px",
                         fontWeight: 300,
                         color: "#808080",
                         marginLeft: "8px",
@@ -390,7 +390,7 @@ export default function CommentModal({
                       border: "1px solid #E6E6E6",
                       padding: "6px 8px",
                       fontFamily: "var(--font-dm-sans)",
-                      fontSize: "16px",
+                      fontSize: "16px", // must stay 16px — iOS zooms on inputs < 16px
                       lineHeight: 1.6,
                       outline: "none",
                       boxSizing: "border-box",
@@ -400,7 +400,7 @@ export default function CommentModal({
                   <p
                     style={{
                       fontFamily: "var(--font-dm-sans)",
-                      fontSize: "16px",
+                      fontSize: "13px",
                       fontWeight: 300,
                       color: "#000000",
                       margin: 0,
