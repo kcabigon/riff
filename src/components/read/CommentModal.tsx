@@ -91,6 +91,27 @@ export default function CommentModal({
     return () => replyAbortRef.current?.abort();
   }, []);
 
+  // When the reply textarea is focused, iOS fires a scroll-to-focus on the
+  // page even though the textarea is inside a position:fixed modal. This
+  // shifts which essay content is visible through the backdrop below the card,
+  // making bright/white content appear nearly white at 40% opacity.
+  // Snap back to the pre-focus scroll position to keep the backdrop uniform.
+  useEffect(() => {
+    if (!replyFocused) return;
+    const savedY = window.scrollY;
+    let snapping = false;
+    const onScroll = () => {
+      if (snapping || Math.abs(window.scrollY - savedY) < 2) return;
+      snapping = true;
+      window.scrollTo(0, savedY);
+      setTimeout(() => {
+        snapping = false;
+      }, 100);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [replyFocused]);
+
   // Reposition above the iOS keyboard whenever any textarea is active.
   // When keyboard is active, anchor to the bottom of the visual viewport
   // (just above the keyboard) rather than centering, so there's no gap.
