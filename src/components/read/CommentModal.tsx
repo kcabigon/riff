@@ -169,7 +169,6 @@ export default function CommentModal({
   const commentIds = comments.map((c) => c.id).join(",");
   useEffect(() => {
     setCurrentIndex(0);
-     
   }, [commentIds]);
 
   // Escape to close
@@ -298,7 +297,7 @@ export default function CommentModal({
             ref={scrollRef}
             style={{
               overflowY: "auto",
-              padding: "16px 16px 64px",
+              padding: replyFocused ? "16px" : "16px 16px 64px",
               flex: 1,
               minHeight: 0,
             }}
@@ -468,20 +467,23 @@ export default function CommentModal({
           </div>
 
           {/* Fade gradient — hidden during reply editing (edit textarea needs the space) */}
-          {comment && comment.replies.length > 0 && !isEditingReply && (
-            <div
-              style={{
-                position: "absolute",
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: "64px",
-                background:
-                  "linear-gradient(to bottom, rgba(255,255,255,0), #FFFFFF)",
-                pointerEvents: "none",
-              }}
-            />
-          )}
+          {comment &&
+            comment.replies.length > 0 &&
+            !isEditingReply &&
+            !replyFocused && (
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: "64px",
+                  background:
+                    "linear-gradient(to bottom, rgba(255,255,255,0), #FFFFFF)",
+                  pointerEvents: "none",
+                }}
+              />
+            )}
         </div>
 
         {/* Sticky compose — hidden during reply editing or delete confirmation */}
