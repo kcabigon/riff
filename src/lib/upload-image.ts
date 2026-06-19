@@ -14,7 +14,7 @@ export async function uploadImage(
   file: File | Blob,
   contentType?: string
 ): Promise<string> {
-  const type = contentType ?? (file as File).type;
+  const type = contentType ?? file.type;
   const size = file.size;
 
   if (!ALLOWED_TYPES.has(type)) {
