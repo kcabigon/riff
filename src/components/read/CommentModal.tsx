@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Avatar from "@/components/shared/Avatar";
-import ReplyThread, { ReplyData } from "./ReplyThread";
+import ReplyThread, { ReplyData, ReplyThreadHandle } from "./ReplyThread";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import CommentButton from "./CommentButton";
 import DestructiveButton from "@/components/DestructiveButton";
@@ -39,6 +39,7 @@ interface CommentModalProps {
     replyId: string,
     newContent: string
   ) => void;
+  onReplyDeleted: (commentId: string, replyId: string) => void;
 }
 
 export default function CommentModal({
@@ -54,6 +55,7 @@ export default function CommentModal({
   onUpdate,
   onReplyAdded,
   onReplyUpdated,
+  onReplyDeleted,
 }: CommentModalProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
@@ -63,6 +65,8 @@ export default function CommentModal({
   const [replyText, setReplyText] = useState("");
   const [replySubmitting, setReplySubmitting] = useState(false);
   const [replyFocused, setReplyFocused] = useState(false);
+  const [isEditingReply, setIsEditingReply] = useState(false);
+  const [isConfirmingReplyDelete, setIsConfirmingReplyDelete] = useState(false);
   const [position, setPosition] = useState<{
     top?: string;
     bottom?: string;
@@ -80,6 +84,7 @@ export default function CommentModal({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const replyTextareaRef = useRef<HTMLTextAreaElement>(null);
   const replyAbortRef = useRef<AbortController | null>(null);
+  const replyThreadRef = useRef<ReplyThreadHandle>(null);
   const trimmedReplyText = replyText.trim();
 
   useEffect(() => {
@@ -90,7 +95,7 @@ export default function CommentModal({
   // When keyboard is active, anchor to the bottom of the visual viewport
   // (just above the keyboard) rather than centering, so there's no gap.
   useEffect(() => {
-    if (!isEditing && !replyFocused) {
+    if (!isEditing && !replyFocused && !isEditingReply) {
       setPosition({
         top: "50%",
         bottom: undefined,
@@ -104,7 +109,6 @@ export default function CommentModal({
     function updatePosition() {
       const vv = window.visualViewport;
       if (!vv) return;
-      // Distance from bottom of visible area to bottom of screen (= keyboard height)
       const bottomGap = window.innerHeight - (vv.offsetTop + vv.height);
       setPosition({
         top: undefined,
@@ -113,9 +117,12 @@ export default function CommentModal({
         transform: "translateX(-50%)",
         maxHeight: `${vv.height - 16}px`,
       });
-      // Scroll to bottom after position settles so latest replies are in view
-      if (replyFocused && scrollRef.current) {
-        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      if (scrollRef.current) {
+        if (isEditingReply) {
+          replyThreadRef.current?.scrollEditIntoView();
+        } else if (replyFocused) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
       }
     }
 
@@ -126,7 +133,7 @@ export default function CommentModal({
       window.visualViewport?.removeEventListener("resize", updatePosition);
       window.visualViewport?.removeEventListener("scroll", updatePosition);
     };
-  }, [isEditing, replyFocused]);
+  }, [isEditing, replyFocused, isEditingReply]);
 
   // Expand textarea to full content height when edit mode opens, then
   // transfer focus from the hidden keyboard trigger input to the textarea
@@ -149,16 +156,21 @@ export default function CommentModal({
     setIsEditing(false);
     setEditContent(comment?.content ?? "");
     setConfirmingDelete(false);
+    setIsEditingReply(false);
+    setIsConfirmingReplyDelete(false);
     setReplyText("");
     if (replyTextareaRef.current)
       replyTextareaRef.current.style.height = "auto";
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
   }, [currentIndex, comment?.id]);
 
-  // Reset index when a new set of comments is opened
+  // Fix 3: only reset index when which parent comments are shown changes,
+  // not when reply data within them changes (e.g. reply added/edited/deleted)
+  const commentIds = comments.map((c) => c.id).join(",");
   useEffect(() => {
     setCurrentIndex(0);
-  }, [comments]);
+     
+  }, [commentIds]);
 
   // Escape to close
   useEffect(() => {
@@ -427,6 +439,7 @@ export default function CommentModal({
                     }}
                   >
                     <ReplyThread
+                      ref={replyThreadRef}
                       replies={comment.replies}
                       parentId={comment.id}
                       pieceId={pieceId}
@@ -437,6 +450,15 @@ export default function CommentModal({
                       onReplyUpdated={(replyId, newContent) =>
                         onReplyUpdated(comment.id, replyId, newContent)
                       }
+                      onReplyDeleted={(replyId) =>
+                        onReplyDeleted(comment.id, replyId)
+                      }
+                      onReplyEditStart={() => setIsEditingReply(true)}
+                      onReplyEditEnd={() => setIsEditingReply(false)}
+                      onReplyDeleteStart={() =>
+                        setIsConfirmingReplyDelete(true)
+                      }
+                      onReplyDeleteEnd={() => setIsConfirmingReplyDelete(false)}
                       hideCompose
                     />
                   </div>
@@ -445,8 +467,8 @@ export default function CommentModal({
             )}
           </div>
 
-          {/* Fade gradient — absolutely positioned at bottom of scroll area */}
-          {comment && comment.replies.length > 0 && (
+          {/* Fade gradient — hidden during reply editing (edit textarea needs the space) */}
+          {comment && comment.replies.length > 0 && !isEditingReply && (
             <div
               style={{
                 position: "absolute",
@@ -462,8 +484,8 @@ export default function CommentModal({
           )}
         </div>
 
-        {/* Sticky compose — always visible above keyboard */}
-        {comment && (
+        {/* Sticky compose — hidden during reply editing or delete confirmation */}
+        {comment && !isEditingReply && !isConfirmingReplyDelete && (
           <div
             style={{
               padding: "12px 16px",
@@ -611,8 +633,41 @@ export default function CommentModal({
           </div>
         )}
 
-        {/* Bottom strip — Save/Cancel when editing, or pager */}
-        {(isEditing || hasMultiple) && (
+        {/* Reply edit strip — replaces compose + pager when editing a reply */}
+        {isEditingReply && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "flex-end",
+              gap: "8px",
+              padding: "12px 16px",
+              borderTop: "1px solid #E6E6E6",
+              flexShrink: 0,
+            }}
+          >
+            <button
+              onClick={() => replyThreadRef.current?.cancelEdit()}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "13px",
+                fontWeight: 300,
+                color: "#808080",
+              }}
+            >
+              Cancel
+            </button>
+            <CommentButton onClick={() => replyThreadRef.current?.saveEdit()}>
+              Save
+            </CommentButton>
+          </div>
+        )}
+
+        {/* Bottom strip — Save/Cancel when editing parent, or pager (hidden during reply editing) */}
+        {(isEditing || hasMultiple) && !isEditingReply && (
           <div
             style={{
               display: "flex",

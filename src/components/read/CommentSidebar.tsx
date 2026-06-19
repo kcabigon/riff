@@ -60,6 +60,7 @@ interface CommentSidebarProps {
     replyId: string,
     newContent: string
   ) => void;
+  onReplyDeleted: (commentId: string, replyId: string) => void;
   disableReplies?: boolean;
   onCommentClick?: (commentId: string) => void;
   contentColumnRef: React.RefObject<HTMLDivElement | null>;
@@ -81,6 +82,7 @@ function CommentCard({
   onToggleReplies,
   onReplyAdded,
   onReplyUpdated,
+  onReplyDeleted,
   currentUser,
   pieceId,
   riffId,
@@ -101,6 +103,7 @@ function CommentCard({
   onToggleReplies: () => void;
   onReplyAdded: (reply: ReplyData) => void;
   onReplyUpdated: (replyId: string, newContent: string) => void;
+  onReplyDeleted: (replyId: string) => void;
   currentUser: CommentAuthor;
   pieceId: string;
   riffId: string;
@@ -132,11 +135,14 @@ function CommentCard({
   const overflowCount = replyAuthors.length - MAX_REPLY_AVATARS;
 
   // Expand textarea to full content height when edit mode opens
+  // Fix 8: wrap in requestAnimationFrame so layout is complete before measuring
   useEffect(() => {
     if (!isEditing || !textareaRef.current) return;
     const el = textareaRef.current;
-    el.style.height = "auto";
-    el.style.height = `${el.scrollHeight}px`;
+    requestAnimationFrame(() => {
+      el.style.height = "auto";
+      el.style.height = `${el.scrollHeight}px`;
+    });
   }, [isEditing]);
 
   const handleDelete = async () => {
@@ -399,6 +405,7 @@ function CommentCard({
             currentUser={currentUser}
             onReplyAdded={onReplyAdded}
             onReplyUpdated={onReplyUpdated}
+            onReplyDeleted={onReplyDeleted}
             onCancel={onToggleReplies}
           />
         </div>
@@ -458,6 +465,7 @@ export default function CommentSidebar({
   onUpdate,
   onReplyAdded,
   onReplyUpdated,
+  onReplyDeleted,
   disableReplies,
   onCommentClick,
   contentColumnRef,
@@ -753,6 +761,7 @@ export default function CommentSidebar({
               onReplyUpdated={(replyId, newContent) =>
                 onReplyUpdated(comment.id, replyId, newContent)
               }
+              onReplyDeleted={(replyId) => onReplyDeleted(comment.id, replyId)}
               currentUser={currentUser}
               pieceId={pieceId}
               riffId={riffId}

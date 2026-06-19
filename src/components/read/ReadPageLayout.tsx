@@ -230,6 +230,19 @@ export default function ReadPageLayout({
     []
   );
 
+  const handleReplyDeleted = useCallback(
+    (commentId: string, replyId: string) => {
+      setComments((prev) =>
+        prev.map((c) =>
+          c.id === commentId
+            ? { ...c, replies: c.replies.filter((r) => r.id !== replyId) }
+            : c
+        )
+      );
+    },
+    []
+  );
+
   // Click sidebar comment → scroll to highlight in content (single activation)
   const handleSidebarCommentClick = useCallback((commentId: string) => {
     setActiveHighlightIds([commentId]);
@@ -567,6 +580,7 @@ export default function ReadPageLayout({
             onUpdate={handleUpdateComment}
             onReplyAdded={handleReplyAdded}
             onReplyUpdated={handleReplyUpdated}
+            onReplyDeleted={handleReplyDeleted}
             disableReplies={disableReplies}
             onCommentClick={handleSidebarCommentClick}
             contentColumnRef={contentColumnRef}
@@ -617,6 +631,7 @@ export default function ReadPageLayout({
           onUpdate={handleUpdateComment}
           onReplyAdded={handleReplyAdded}
           onReplyUpdated={handleReplyUpdated}
+          onReplyDeleted={handleReplyDeleted}
         />
       )}
     </div>
