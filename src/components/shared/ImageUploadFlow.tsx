@@ -38,6 +38,7 @@ import Image from "next/image";
 import { getCroppedImg } from "@/lib/crop-image";
 import { convertHeicToJpeg, isHeicFile } from "@/lib/convert-heic";
 import ImageDropZone from "@/components/shared/ImageDropZone";
+import { uploadImage } from "@/lib/upload-image";
 
 export interface ImageUploadFlowHandle {
   saveCrop: () => Promise<string | null>;
@@ -114,18 +115,15 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
     };
 
     const uploadBlob = async (blob: Blob): Promise<string | null> => {
-      const formData = new FormData();
-      formData.append("file", blob, "upload.jpg");
-      const res = await fetch("/api/upload/image", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        alert("Failed to upload image: " + (data.error || "Unknown error"));
+      try {
+        return await uploadImage(blob, "image/jpeg");
+      } catch (err) {
+        alert(
+          "Failed to upload image: " +
+            (err instanceof Error ? err.message : "Unknown error")
+        );
         return null;
       }
-      return data.url;
     };
 
     const handleFileSelected = async (file: File) => {
@@ -137,17 +135,17 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
       // GIFs skip crop to preserve animation
       if (file.type === "image/gif") {
         setIsUploading(true);
-        const formData = new FormData();
-        formData.append("file", file);
-        const res = await fetch("/api/upload/image", {
-          method: "POST",
-          body: formData,
-        });
-        const data = await res.json();
-        setIsUploading(false);
-        if (data.success) {
-          onSelect(data.url);
+        try {
+          const url = await uploadImage(file);
+          onSelect(url);
           resetCropper();
+        } catch (err) {
+          alert(
+            "Failed to upload image: " +
+              (err instanceof Error ? err.message : "Unknown error")
+          );
+        } finally {
+          setIsUploading(false);
         }
         return;
       }
