@@ -1,7 +1,8 @@
-'use client';
+"use client";
 
-import { Editor } from '@tiptap/react';
-import { useRef } from 'react';
+import { Editor } from "@tiptap/react";
+import { useRef } from "react";
+import { uploadImage } from "@/lib/upload-image";
 
 interface EditorToolbarProps {
   editor: Editor;
@@ -10,34 +11,23 @@ interface EditorToolbarProps {
 export default function EditorToolbar({ editor }: EditorToolbarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const formData = new FormData();
-    formData.append('file', file);
-
     try {
-      const response = await fetch('/api/upload/image', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await response.json();
-
-      if (data.success && data.url) {
-        editor.chain().focus().setImage({ src: data.url }).run();
-      } else {
-        alert('Failed to upload image: ' + (data.error || 'Unknown error'));
-      }
+      const url = await uploadImage(file);
+      editor.chain().focus().setImage({ src: url }).run();
     } catch (error) {
-      console.error('Error uploading image:', error);
-      alert('Failed to upload image');
+      console.error("Error uploading image:", error);
+      alert("Failed to upload image");
     }
 
     // Reset file input
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
@@ -46,33 +36,33 @@ export default function EditorToolbar({ editor }: EditorToolbarProps) {
   };
 
   const addYouTube = () => {
-    const url = window.prompt('Enter YouTube URL:');
+    const url = window.prompt("Enter YouTube URL:");
     if (url) {
       editor.commands.setYoutubeVideo({ src: url });
     }
   };
 
   const addSpotify = () => {
-    const url = window.prompt('Enter Spotify URL (track, album, or playlist):');
+    const url = window.prompt("Enter Spotify URL (track, album, or playlist):");
     if (url) {
       editor.commands.setSpotifyEmbed({ src: url });
     }
   };
 
   const setLink = () => {
-    const previousUrl = editor.getAttributes('link').href;
-    const url = window.prompt('Enter URL:', previousUrl);
+    const previousUrl = editor.getAttributes("link").href;
+    const url = window.prompt("Enter URL:", previousUrl);
 
     if (url === null) {
       return;
     }
 
-    if (url === '') {
-      editor.chain().focus().extendMarkRange('link').unsetLink().run();
+    if (url === "") {
+      editor.chain().focus().extendMarkRange("link").unsetLink().run();
       return;
     }
 
-    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+    editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
   };
 
   return (
@@ -92,7 +82,7 @@ export default function EditorToolbar({ editor }: EditorToolbarProps) {
           onClick={() => editor.chain().focus().toggleBold().run()}
           disabled={!editor.can().chain().focus().toggleBold().run()}
           className={`px-3 py-1 rounded hover:bg-gray-200 ${
-            editor.isActive('bold') ? 'bg-gray-300 font-bold' : ''
+            editor.isActive("bold") ? "bg-gray-300 font-bold" : ""
           }`}
           title="Bold"
         >
@@ -102,7 +92,7 @@ export default function EditorToolbar({ editor }: EditorToolbarProps) {
           onClick={() => editor.chain().focus().toggleItalic().run()}
           disabled={!editor.can().chain().focus().toggleItalic().run()}
           className={`px-3 py-1 rounded hover:bg-gray-200 italic ${
-            editor.isActive('italic') ? 'bg-gray-300' : ''
+            editor.isActive("italic") ? "bg-gray-300" : ""
           }`}
           title="Italic"
         >
@@ -112,7 +102,7 @@ export default function EditorToolbar({ editor }: EditorToolbarProps) {
           onClick={() => editor.chain().focus().toggleStrike().run()}
           disabled={!editor.can().chain().focus().toggleStrike().run()}
           className={`px-3 py-1 rounded hover:bg-gray-200 line-through ${
-            editor.isActive('strike') ? 'bg-gray-300' : ''
+            editor.isActive("strike") ? "bg-gray-300" : ""
           }`}
           title="Strikethrough"
         >
@@ -123,27 +113,33 @@ export default function EditorToolbar({ editor }: EditorToolbarProps) {
       {/* Headings */}
       <div className="flex gap-1 border-r pr-2">
         <button
-          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+          onClick={() =>
+            editor.chain().focus().toggleHeading({ level: 1 }).run()
+          }
           className={`px-3 py-1 rounded hover:bg-gray-200 font-bold ${
-            editor.isActive('heading', { level: 1 }) ? 'bg-gray-300' : ''
+            editor.isActive("heading", { level: 1 }) ? "bg-gray-300" : ""
           }`}
           title="Heading 1"
         >
           H1
         </button>
         <button
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+          onClick={() =>
+            editor.chain().focus().toggleHeading({ level: 2 }).run()
+          }
           className={`px-3 py-1 rounded hover:bg-gray-200 font-bold ${
-            editor.isActive('heading', { level: 2 }) ? 'bg-gray-300' : ''
+            editor.isActive("heading", { level: 2 }) ? "bg-gray-300" : ""
           }`}
           title="Heading 2"
         >
           H2
         </button>
         <button
-          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+          onClick={() =>
+            editor.chain().focus().toggleHeading({ level: 3 }).run()
+          }
           className={`px-3 py-1 rounded hover:bg-gray-200 font-bold ${
-            editor.isActive('heading', { level: 3 }) ? 'bg-gray-300' : ''
+            editor.isActive("heading", { level: 3 }) ? "bg-gray-300" : ""
           }`}
           title="Heading 3"
         >
@@ -156,7 +152,7 @@ export default function EditorToolbar({ editor }: EditorToolbarProps) {
         <button
           onClick={() => editor.chain().focus().toggleBulletList().run()}
           className={`px-3 py-1 rounded hover:bg-gray-200 ${
-            editor.isActive('bulletList') ? 'bg-gray-300' : ''
+            editor.isActive("bulletList") ? "bg-gray-300" : ""
           }`}
           title="Bullet List"
         >
@@ -165,7 +161,7 @@ export default function EditorToolbar({ editor }: EditorToolbarProps) {
         <button
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
           className={`px-3 py-1 rounded hover:bg-gray-200 ${
-            editor.isActive('orderedList') ? 'bg-gray-300' : ''
+            editor.isActive("orderedList") ? "bg-gray-300" : ""
           }`}
           title="Numbered List"
         >
@@ -176,27 +172,27 @@ export default function EditorToolbar({ editor }: EditorToolbarProps) {
       {/* Alignment */}
       <div className="flex gap-1 border-r pr-2">
         <button
-          onClick={() => editor.chain().focus().setTextAlign('left').run()}
+          onClick={() => editor.chain().focus().setTextAlign("left").run()}
           className={`px-3 py-1 rounded hover:bg-gray-200 ${
-            editor.isActive({ textAlign: 'left' }) ? 'bg-gray-300' : ''
+            editor.isActive({ textAlign: "left" }) ? "bg-gray-300" : ""
           }`}
           title="Align Left"
         >
           ⇤
         </button>
         <button
-          onClick={() => editor.chain().focus().setTextAlign('center').run()}
+          onClick={() => editor.chain().focus().setTextAlign("center").run()}
           className={`px-3 py-1 rounded hover:bg-gray-200 ${
-            editor.isActive({ textAlign: 'center' }) ? 'bg-gray-300' : ''
+            editor.isActive({ textAlign: "center" }) ? "bg-gray-300" : ""
           }`}
           title="Align Center"
         >
           ⇥
         </button>
         <button
-          onClick={() => editor.chain().focus().setTextAlign('right').run()}
+          onClick={() => editor.chain().focus().setTextAlign("right").run()}
           className={`px-3 py-1 rounded hover:bg-gray-200 ${
-            editor.isActive({ textAlign: 'right' }) ? 'bg-gray-300' : ''
+            editor.isActive({ textAlign: "right" }) ? "bg-gray-300" : ""
           }`}
           title="Align Right"
         >
@@ -209,7 +205,7 @@ export default function EditorToolbar({ editor }: EditorToolbarProps) {
         <button
           onClick={setLink}
           className={`px-3 py-1 rounded hover:bg-gray-200 ${
-            editor.isActive('link') ? 'bg-gray-300' : ''
+            editor.isActive("link") ? "bg-gray-300" : ""
           }`}
           title="Add Link"
         >
@@ -243,7 +239,9 @@ export default function EditorToolbar({ editor }: EditorToolbarProps) {
       </div>
 
       {/* Delete selected media */}
-      {(editor.isActive('image') || editor.isActive('youtube') || editor.isActive('spotify')) && (
+      {(editor.isActive("image") ||
+        editor.isActive("youtube") ||
+        editor.isActive("spotify")) && (
         <div className="flex gap-1 border-r pr-2">
           <button
             onClick={() => editor.chain().focus().deleteSelection().run()}

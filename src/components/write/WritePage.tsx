@@ -28,6 +28,7 @@ import EmbedModal from "@/components/write/EmbedModal";
 import MediaEmbedModal from "@/components/write/MediaEmbedModal";
 import LinkPopover from "@/components/write/LinkPopover";
 import CTAButton from "@/components/CTAButton";
+import { uploadImage } from "@/lib/upload-image";
 
 const ALLOWED_IMAGE_TYPES = [
   "image/jpeg",
@@ -122,20 +123,9 @@ export default function WritePage({ piece }: WritePageProps) {
     }
 
     setIsUploadingImage(true);
-    const formData = new FormData();
-    formData.append("file", file);
-
     try {
-      const response = await fetch("/api/upload/image", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await response.json();
-      if (!response.ok || !data.success || !data.url) {
-        showImageError("Upload failed — try again");
-        return;
-      }
-      editorRef.current?.chain().focus().setImage({ src: data.url }).run();
+      const url = await uploadImage(file);
+      editorRef.current?.chain().focus().setImage({ src: url }).run();
     } catch {
       showImageError("Upload failed — try again");
     } finally {
@@ -453,21 +443,10 @@ export default function WritePage({ piece }: WritePageProps) {
       return;
     }
 
-    const formData = new FormData();
-    formData.append("file", file);
-
     setIsUploadingImage(true);
     try {
-      const response = await fetch("/api/upload/image", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await response.json();
-      if (!response.ok || !data.success || !data.url) {
-        showImageError("Upload failed — " + (data.error || "try again"));
-        return;
-      }
-      editor.chain().focus().setImage({ src: data.url }).run();
+      const url = await uploadImage(file);
+      editor.chain().focus().setImage({ src: url }).run();
     } catch {
       showImageError("Upload failed — try again");
     } finally {

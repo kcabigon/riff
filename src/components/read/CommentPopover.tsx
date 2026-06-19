@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import CommentButton from "./CommentButton";
 
 interface PendingSelection {
@@ -83,35 +83,6 @@ export default function CommentPopover({
     document.addEventListener("pointerdown", handlePointerDown);
     return () => document.removeEventListener("pointerdown", handlePointerDown);
   }, [onClose]);
-
-  const handlePaste = useCallback(
-    async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
-      const items = Array.from(e.clipboardData.items);
-      const imageItem = items.find((item) => item.type.startsWith("image/"));
-      if (!imageItem) return;
-
-      e.preventDefault();
-      const file = imageItem.getAsFile();
-      if (!file) return;
-
-      const formData = new FormData();
-      formData.append("file", file);
-
-      try {
-        const res = await fetch("/api/upload/image", {
-          method: "POST",
-          body: formData,
-        });
-        if (res.ok) {
-          const { url } = await res.json();
-          setText((prev) => prev + `\n![image](${url})\n`);
-        }
-      } catch (err) {
-        console.error("Image upload failed:", err);
-      }
-    },
-    []
-  );
 
   const handleSubmit = async () => {
     if (!text.trim() || submitting) return;
@@ -207,7 +178,6 @@ export default function CommentPopover({
             e.target.style.height = "auto";
             e.target.style.height = `${e.target.scrollHeight}px`;
           }}
-          onPaste={handlePaste}
           placeholder="Write a comment..."
           rows={3}
           style={{
