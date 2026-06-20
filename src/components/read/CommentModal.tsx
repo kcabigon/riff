@@ -91,13 +91,14 @@ export default function CommentModal({
     return () => replyAbortRef.current?.abort();
   }, []);
 
-  // When the reply textarea is focused, iOS fires a scroll-to-focus on the
-  // page even though the textarea is inside a position:fixed modal. This
-  // shifts which essay content is visible through the backdrop below the card,
-  // making bright/white content appear nearly white at 40% opacity.
-  // Snap back to the pre-focus scroll position to keep the backdrop uniform.
+  // When a reply textarea is focused or a reply is being edited, iOS fires a
+  // scroll-to-focus on the page even though the textarea is inside a
+  // position:fixed modal. This shifts which essay content is visible through
+  // the backdrop below the card, making bright/white content appear nearly
+  // white at 40% opacity. Snap back to the pre-focus scroll position to keep
+  // the backdrop uniform.
   useEffect(() => {
-    if (!replyFocused) return;
+    if (!replyFocused && !isEditingReply) return;
     const savedY = window.scrollY;
     let snapping = false;
     const onScroll = () => {
@@ -110,7 +111,7 @@ export default function CommentModal({
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, [replyFocused]);
+  }, [replyFocused, isEditingReply]);
 
   // Reposition above the iOS keyboard whenever any textarea is active.
   // When keyboard is active, anchor to the bottom of the visual viewport
@@ -487,9 +488,10 @@ export default function CommentModal({
             )}
           </div>
 
-          {/* Fade gradient — hidden during reply editing (edit textarea needs the space) */}
+          {/* Fade gradient — hidden during parent/reply editing (edit textarea needs the space) */}
           {comment &&
             comment.replies.length > 0 &&
+            !isEditing &&
             !isEditingReply &&
             !replyFocused && (
               <div
@@ -507,92 +509,99 @@ export default function CommentModal({
             )}
         </div>
 
-        {/* Sticky compose — hidden during reply editing or delete confirmation */}
-        {comment && !isEditingReply && !isConfirmingReplyDelete && (
-          <div
-            style={{
-              padding: "12px 16px",
-              borderTop: "1px solid #E6E6E6",
-              flexShrink: 0,
-              backgroundColor: "#FFFFFF",
-            }}
-          >
+        {/* Sticky compose — hidden during parent/reply editing or delete confirmation */}
+        {comment &&
+          !isEditing &&
+          !isEditingReply &&
+          !isConfirmingReplyDelete && (
             <div
-              style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}
+              style={{
+                padding: "12px 16px",
+                borderTop: "1px solid #E6E6E6",
+                flexShrink: 0,
+                backgroundColor: "#FFFFFF",
+              }}
             >
-              <Avatar user={currentUser} size={32} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <textarea
-                  ref={replyTextareaRef}
-                  value={replyText}
-                  onFocus={() => setReplyFocused(true)}
-                  onBlur={() => setReplyFocused(false)}
-                  onChange={(e) => {
-                    setReplyText(e.target.value);
-                    e.target.style.height = "auto";
-                    e.target.style.height = `${e.target.scrollHeight}px`;
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey))
-                      handleReplySubmit();
-                  }}
-                  placeholder="Reply..."
-                  rows={1}
-                  style={{
-                    width: "100%",
-                    resize: "none",
-                    overflow: "hidden",
-                    border: "2px solid #E6E6E6",
-                    padding: "6px 8px",
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "16px",
-                    lineHeight: 1.5,
-                    outline: "none",
-                    boxSizing: "border-box",
-                  }}
-                />
-                {trimmedReplyText && (
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "flex-end",
-                      alignItems: "center",
-                      gap: "8px",
-                      marginTop: "6px",
+              <div
+                style={{
+                  display: "flex",
+                  gap: "8px",
+                  alignItems: "flex-start",
+                }}
+              >
+                <Avatar user={currentUser} size={32} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <textarea
+                    ref={replyTextareaRef}
+                    value={replyText}
+                    onFocus={() => setReplyFocused(true)}
+                    onBlur={() => setReplyFocused(false)}
+                    onChange={(e) => {
+                      setReplyText(e.target.value);
+                      e.target.style.height = "auto";
+                      e.target.style.height = `${e.target.scrollHeight}px`;
                     }}
-                  >
-                    <button
-                      onClick={() => {
-                        setReplyText("");
-                        if (replyTextareaRef.current)
-                          replyTextareaRef.current.style.height = "auto";
-                        onClose();
-                      }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && (e.metaKey || e.ctrlKey))
+                        handleReplySubmit();
+                    }}
+                    placeholder="Reply..."
+                    rows={1}
+                    style={{
+                      width: "100%",
+                      resize: "none",
+                      overflow: "hidden",
+                      border: "2px solid #E6E6E6",
+                      padding: "6px 8px",
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "16px",
+                      lineHeight: 1.5,
+                      outline: "none",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                  {trimmedReplyText && (
+                    <div
                       style={{
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
-                        fontFamily: "var(--font-dm-sans)",
-                        fontSize: "13px",
-                        fontWeight: 300,
-                        color: "#808080",
+                        display: "flex",
+                        justifyContent: "flex-end",
+                        alignItems: "center",
+                        gap: "8px",
+                        marginTop: "6px",
                       }}
                     >
-                      Cancel
-                    </button>
-                    <CommentButton
-                      onClick={handleReplySubmit}
-                      disabled={replySubmitting}
-                      loading={replySubmitting}
-                    >
-                      Post
-                    </CommentButton>
-                  </div>
-                )}
+                      <button
+                        onClick={() => {
+                          setReplyText("");
+                          if (replyTextareaRef.current)
+                            replyTextareaRef.current.style.height = "auto";
+                          onClose();
+                        }}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          fontFamily: "var(--font-dm-sans)",
+                          fontSize: "13px",
+                          fontWeight: 300,
+                          color: "#808080",
+                        }}
+                      >
+                        Cancel
+                      </button>
+                      <CommentButton
+                        onClick={handleReplySubmit}
+                        disabled={replySubmitting}
+                        loading={replySubmitting}
+                      >
+                        Post
+                      </CommentButton>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
         {/* Delete confirmation overlay — covers entire modal, same pattern as CommentSidebar */}
         {confirmingDelete && comment && (
