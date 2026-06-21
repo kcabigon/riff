@@ -49,8 +49,9 @@ export default function DeleteRiffConfirmModal({
     <Modal isOpen={isOpen} onClose={onClose} title="Delete riff?" size="sm">
       <div
         style={{
+          // eslint-disable-next-line riff/no-non-palette-colors -- destructive warning bg tint; pairs with the #DC2626 border below
           backgroundColor: "#FFF5F5",
-          border: "2px solid #FF4444",
+          border: "2px solid #DC2626",
           padding: "16px",
           marginBottom: "24px",
         }}
@@ -73,7 +74,7 @@ export default function DeleteRiffConfirmModal({
             fontFamily: "var(--font-dm-sans)",
             fontSize: "14px",
             fontWeight: 300,
-            color: "#FF4444",
+            color: "#DC2626",
             margin: "0 0 4px",
             lineHeight: 1.5,
           }}
@@ -108,7 +109,7 @@ export default function DeleteRiffConfirmModal({
               fontFamily: "var(--font-dm-sans)",
               fontSize: "14px",
               fontWeight: 300,
-              color: "#FF4444",
+              color: "#DC2626",
               margin: 0,
             }}
           >
@@ -121,7 +122,7 @@ export default function DeleteRiffConfirmModal({
         onClick={handleDelete}
         disabled={isDeleting}
         style={{
-          backgroundColor: isDeleting ? "#E6E6E6" : "#FF4444",
+          backgroundColor: isDeleting ? "#E6E6E6" : "#DC2626",
           border: "2px solid #000000",
           boxShadow: isDeleting ? "none" : "8px 8px 0px 0px #000000",
           padding: "12px 48px",

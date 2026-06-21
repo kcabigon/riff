@@ -821,7 +821,7 @@ export default function WritePage({ piece }: WritePageProps) {
               fontFamily: "var(--font-dm-sans)",
               fontSize: "16px",
               fontWeight: 300,
-              color: "#666666",
+              color: "#808080",
               margin: 0,
               marginTop: "8px",
               border: "none",
@@ -847,7 +847,7 @@ export default function WritePage({ piece }: WritePageProps) {
             style={{
               fontFamily: "var(--font-dm-sans)",
               fontSize: "14px",
-              color: "#999999",
+              color: "#9C9C9C",
               margin: "12px 0 0",
             }}
           >

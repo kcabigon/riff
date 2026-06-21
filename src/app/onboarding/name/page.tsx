@@ -102,7 +102,7 @@ export default function OnboardingNamePage() {
               fontFamily: "var(--font-dm-sans)",
               fontSize: "14px",
               fontWeight: 300,
-              color: "#FF0000",
+              color: "#DC2626",
               margin: 0,
               textAlign: "center",
             }}

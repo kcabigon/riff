@@ -25,7 +25,7 @@ export default function TextInput({
     width: "100%",
     backgroundColor: isDisabled ? "#E6E6E6" : "#FFFFFF",
     border: error
-      ? "2px solid #FF0000"
+      ? "2px solid #DC2626"
       : isDisabled
         ? "2px solid #9C9C9C"
         : "2px solid #000000",
@@ -34,7 +34,7 @@ export default function TextInput({
     fontSize: "16px",
     fontWeight: 300,
     lineHeight: multiline ? "1.5" : "normal",
-    color: error ? "#FF0000" : isDisabled ? "#9C9C9C" : "#000000",
+    color: error ? "#DC2626" : isDisabled ? "#9C9C9C" : "#000000",
     outline: "none",
     transition: "border-color 0.2s",
     boxSizing: "border-box" as const,
@@ -102,7 +102,7 @@ export default function TextInput({
             fontSize: "14px",
             fontFamily: "var(--font-dm-sans)",
             fontWeight: 300,
-            color: "#FF0000",
+            color: "#DC2626",
             lineHeight: "normal",
           }}
         >

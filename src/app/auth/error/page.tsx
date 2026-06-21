@@ -40,7 +40,7 @@ function ErrorContent() {
             width: "64px",
             height: "64px",
             borderRadius: "50%",
-            backgroundColor: "#FF0000",
+            backgroundColor: "#DC2626",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -100,7 +100,7 @@ function ErrorContent() {
                 fontFamily: "var(--font-dm-sans)",
                 fontSize: "12px",
                 fontWeight: 300,
-                color: "#959595",
+                color: "#9C9C9C",
                 margin: 0,
               }}
             >
@@ -123,7 +123,7 @@ function ErrorContent() {
             fontSize: "14px",
             fontWeight: 300,
             lineHeight: 1.6,
-            color: "#959595",
+            color: "#9C9C9C",
             margin: 0,
             marginTop: "16px",
           }}
@@ -146,7 +146,7 @@ export default function AuthErrorPage() {
                 fontFamily: "var(--font-dm-sans)",
                 fontSize: "16px",
                 fontWeight: 300,
-                color: "#959595",
+                color: "#9C9C9C",
               }}
             >
               Loading...
