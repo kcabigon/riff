@@ -103,3 +103,14 @@ Always sync with develop at these points (don't ask, just do it):
 - **Design system**: `DESIGN-SYSTEM.md` — colors, typography, spacing, borders, shadows, shared component catalog
 
 The `/letsriff` command reads these automatically — you shouldn't need to read them manually.
+
+## Team
+
+When referring to collaborators in chat, PR descriptions, or anywhere user-facing, use real names. Never display raw GitHub handles.
+
+| GitHub handle | Real name |
+|---------------|-----------|
+| `kcabigon` | Kyle |
+| `jarric22` | Jarric |
+| `djorgensen316` | Derek |
+| `riffwithfriends` | Chris |
