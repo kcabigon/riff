@@ -373,9 +373,7 @@ export default function ClubPageLayout({
                 <AvatarStack
                   users={club.members.map((m) => m.user)}
                   size={48}
-                  showBorder={true}
                   borderColor="#FFFFFF"
-                  borderWidth={2}
                   onAvatarClick={handleAvatarClick}
                 />
 
@@ -484,9 +482,6 @@ export default function ClubPageLayout({
           <AvatarStack
             users={club.members.map((m) => m.user)}
             size={40}
-            showBorder={true}
-            borderColor="#000000"
-            borderWidth={2}
             onAvatarClick={handleAvatarClick}
             style={{ overflowX: "auto" }}
           />
@@ -597,9 +592,6 @@ export default function ClubPageLayout({
             <AvatarStack
               users={club.members.map((m) => m.user)}
               size={isMobile ? 40 : 48}
-              showBorder={true}
-              borderColor="#000000"
-              borderWidth={2}
               onAvatarClick={handleAvatarClick}
               style={isMobile ? { overflowX: "auto" } : undefined}
             />

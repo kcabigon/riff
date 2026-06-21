@@ -7,9 +7,7 @@ import Avatar from "./Avatar";
 interface AvatarStackProps {
   users: AvatarUserWithTag[]; // Array supports per-user tags
   size?: 24 | 32 | 40 | 48; // Default: 32
-  showBorder?: boolean; // Default: true
   borderColor?: string; // Default: '#000000'
-  borderWidth?: number; // Default: 2
   onAvatarClick?: (userId: string) => void;
   className?: string;
   style?: CSSProperties;
@@ -34,9 +32,7 @@ interface AvatarStackProps {
 export default function AvatarStack({
   users,
   size = 32,
-  showBorder = true,
   borderColor = "#000000",
-  borderWidth = 2,
   onAvatarClick,
   className = "",
   style = {},
@@ -67,9 +63,7 @@ export default function AvatarStack({
           key={user.id}
           user={user}
           size={size}
-          showBorder={showBorder}
           borderColor={borderColor}
-          borderWidth={borderWidth}
           tag={user.tag}
           badge={user.badge}
           onClick={onAvatarClick}

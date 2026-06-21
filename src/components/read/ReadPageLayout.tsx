@@ -17,13 +17,8 @@ import { useIsMobile } from "@/hooks/useMediaQuery";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { useScrollDirection } from "@/hooks/useScrollDirection";
 import BackButton from "@/components/BackButton";
-
-interface CommentAuthor {
-  id: string;
-  name: string | null;
-  username: string | null;
-  avatarUrl: string | null;
-}
+import { CommentAuthor } from "@/types";
+import { ReplyData } from "./ReplyThread";
 
 interface CommentData {
   id: string;
@@ -35,6 +30,7 @@ interface CommentData {
   createdAt: string;
   updatedAt: string;
   author: CommentAuthor;
+  replies: ReplyData[];
 }
 
 interface PendingSelection {
@@ -67,6 +63,7 @@ interface ReadPageLayoutProps {
   fromProfileUserId?: string;
   backHref?: string;
   disableCommentCompose?: boolean;
+  disableReplies?: boolean;
   disableReadTracking?: boolean;
 }
 
@@ -81,6 +78,7 @@ export default function ReadPageLayout({
   fromProfileUserId,
   backHref,
   disableCommentCompose,
+  disableReplies,
   disableReadTracking,
 }: ReadPageLayoutProps) {
   const router = useRouter();
@@ -154,14 +152,18 @@ export default function ReadPageLayout({
     return () => observer.disconnect();
   }, [markAsRead]);
 
-  const handleNewComment = useCallback((comment: CommentData) => {
-    setComments((prev) => {
-      const updated = [...prev, comment];
-      return updated.sort((a, b) => a.selectionStart - b.selectionStart);
-    });
-    setActiveHighlightIds([comment.id]);
-    setPendingSelection(null);
-  }, []);
+  const handleNewComment = useCallback(
+    (comment: Omit<CommentData, "replies"> & { replies?: ReplyData[] }) => {
+      const full: CommentData = { ...comment, replies: comment.replies ?? [] };
+      setComments((prev) => {
+        const updated = [...prev, full];
+        return updated.sort((a, b) => a.selectionStart - b.selectionStart);
+      });
+      setActiveHighlightIds([full.id]);
+      setPendingSelection(null);
+    },
+    []
+  );
 
   const handleEditorReady = useCallback(() => {
     if (startInRiffMode) setIsRiffMode(true);
@@ -186,6 +188,54 @@ export default function ReadPageLayout({
         prev.map((c) =>
           c.id === commentId
             ? { ...c, content: newContent, updatedAt: new Date().toISOString() }
+            : c
+        )
+      );
+    },
+    []
+  );
+
+  const handleReplyAdded = useCallback(
+    (commentId: string, reply: ReplyData) => {
+      setComments((prev) =>
+        prev.map((c) =>
+          c.id === commentId ? { ...c, replies: [...c.replies, reply] } : c
+        )
+      );
+    },
+    []
+  );
+
+  const handleReplyUpdated = useCallback(
+    (commentId: string, replyId: string, newContent: string) => {
+      setComments((prev) =>
+        prev.map((c) =>
+          c.id === commentId
+            ? {
+                ...c,
+                replies: c.replies.map((r) =>
+                  r.id === replyId
+                    ? {
+                        ...r,
+                        content: newContent,
+                        updatedAt: new Date().toISOString(),
+                      }
+                    : r
+                ),
+              }
+            : c
+        )
+      );
+    },
+    []
+  );
+
+  const handleReplyDeleted = useCallback(
+    (commentId: string, replyId: string) => {
+      setComments((prev) =>
+        prev.map((c) =>
+          c.id === commentId
+            ? { ...c, replies: c.replies.filter((r) => r.id !== replyId) }
             : c
         )
       );
@@ -522,8 +572,16 @@ export default function ReadPageLayout({
             comments={comments}
             activeHighlightIds={activeHighlightIds}
             currentUserId={currentUser.id}
+            currentUser={currentUser}
+            pieceId={piece.id}
+            riffId={riffId}
+            clubId={clubId}
             onDelete={handleDeleteComment}
             onUpdate={handleUpdateComment}
+            onReplyAdded={handleReplyAdded}
+            onReplyUpdated={handleReplyUpdated}
+            onReplyDeleted={handleReplyDeleted}
+            disableReplies={disableReplies}
             onCommentClick={handleSidebarCommentClick}
             contentColumnRef={contentColumnRef}
             pendingSelection={pendingSelection}
@@ -563,10 +621,17 @@ export default function ReadPageLayout({
         <CommentModal
           comments={activeComments}
           currentUserId={currentUser.id}
+          currentUser={currentUser}
+          pieceId={piece.id}
+          riffId={riffId}
+          clubId={clubId}
           authorColorMap={authorColorMap}
           onClose={() => setActiveHighlightIds([])}
           onDelete={handleDeleteComment}
           onUpdate={handleUpdateComment}
+          onReplyAdded={handleReplyAdded}
+          onReplyUpdated={handleReplyUpdated}
+          onReplyDeleted={handleReplyDeleted}
         />
       )}
     </div>

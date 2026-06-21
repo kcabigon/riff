@@ -46,15 +46,18 @@ export async function GET(req: Request) {
     }
 
     const comments = await prisma.comment.findMany({
-      where: { pieceId, riffId },
+      where: { pieceId, riffId, parentId: null },
       include: {
         author: {
-          select: {
-            id: true,
-            name: true,
-            username: true,
-            avatarUrl: true,
+          select: { id: true, name: true, username: true, avatarUrl: true },
+        },
+        replies: {
+          include: {
+            author: {
+              select: { id: true, name: true, username: true, avatarUrl: true },
+            },
           },
+          orderBy: { createdAt: "asc" },
         },
       },
       orderBy: { selectionStart: "asc" },

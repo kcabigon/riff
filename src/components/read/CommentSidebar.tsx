@@ -1,19 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import Avatar from "@/components/shared/Avatar";
 import CommentPopover from "./CommentPopover";
+import ReplyThread, { ReplyData } from "./ReplyThread";
+import AvatarStack from "@/components/shared/AvatarStack";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import CommentButton from "./CommentButton";
 import DestructiveButton from "@/components/DestructiveButton";
 import { AUTHOR_COLORS, buildAuthorColorMap } from "./ReadOnlyEditor";
 import { timeAgo } from "@/lib/timeAgo";
-
-interface CommentAuthor {
-  id: string;
-  name: string | null;
-  username: string | null;
-  avatarUrl: string | null;
-}
+import { CommentAuthor } from "@/types";
 
 interface CommentData {
   id: string;
@@ -25,6 +22,7 @@ interface CommentData {
   createdAt: string;
   updatedAt: string;
   author: CommentAuthor;
+  replies: ReplyData[];
 }
 
 interface PendingSelection {
@@ -40,7 +38,9 @@ interface PendingCommentProps {
   pieceId: string;
   riffId: string;
   clubId: string;
-  onSubmit: (comment: CommentData) => void;
+  onSubmit: (
+    comment: Omit<CommentData, "replies"> & { replies?: ReplyData[] }
+  ) => void;
   onClose: () => void;
 }
 
@@ -48,18 +48,24 @@ interface CommentSidebarProps {
   comments: CommentData[];
   activeHighlightIds: string[];
   currentUserId: string;
+  currentUser: CommentAuthor;
+  pieceId: string;
+  riffId: string;
+  clubId: string;
   onDelete: (commentId: string) => void;
   onUpdate: (commentId: string, newContent: string) => Promise<void>;
+  onReplyAdded: (commentId: string, reply: ReplyData) => void;
+  onReplyUpdated: (
+    commentId: string,
+    replyId: string,
+    newContent: string
+  ) => void;
+  onReplyDeleted: (commentId: string, replyId: string) => void;
+  disableReplies?: boolean;
   onCommentClick?: (commentId: string) => void;
   contentColumnRef: React.RefObject<HTMLDivElement | null>;
   pendingSelection?: PendingSelection | null;
   pendingCommentProps?: PendingCommentProps | null;
-}
-
-function initials(author: CommentAuthor): string {
-  if (author.name) return author.name[0].toUpperCase();
-  if (author.username) return author.username[0].toUpperCase();
-  return "?";
 }
 
 function CommentCard({
@@ -67,22 +73,42 @@ function CommentCard({
   isActive,
   isOwn,
   isEditing,
+  isExpanded,
   onDelete,
   onEdit,
   onSave,
   onCancelEdit,
   onActivate,
+  onToggleReplies,
+  onReplyAdded,
+  onReplyUpdated,
+  onReplyDeleted,
+  currentUser,
+  pieceId,
+  riffId,
+  clubId,
+  disableReplies = false,
   color,
 }: {
   comment: CommentData;
   isActive: boolean;
   isOwn: boolean;
   isEditing: boolean;
+  isExpanded: boolean;
   onDelete: () => void;
   onEdit: () => void;
   onSave: (newContent: string) => Promise<void>;
   onCancelEdit: () => void;
   onActivate: () => void;
+  onToggleReplies: () => void;
+  onReplyAdded: (reply: ReplyData) => void;
+  onReplyUpdated: (replyId: string, newContent: string) => void;
+  onReplyDeleted: (replyId: string) => void;
+  currentUser: CommentAuthor;
+  pieceId: string;
+  riffId: string;
+  clubId: string;
+  disableReplies?: boolean;
   color: string;
 }) {
   const [hovered, setHovered] = useState(false);
@@ -92,12 +118,31 @@ function CommentCard({
   const [saving, setSaving] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  const MAX_REPLY_AVATARS = 3;
+
+  const replyAuthors = useMemo(() => {
+    const seen = new Set<string>();
+    return comment.replies
+      .filter((r) => {
+        if (seen.has(r.authorId)) return false;
+        seen.add(r.authorId);
+        return true;
+      })
+      .map((r) => r.author);
+  }, [comment.replies]);
+
+  const visibleReplyAuthors = replyAuthors.slice(0, MAX_REPLY_AVATARS);
+  const overflowCount = replyAuthors.length - MAX_REPLY_AVATARS;
+
   // Expand textarea to full content height when edit mode opens
+  // Fix 8: wrap in requestAnimationFrame so layout is complete before measuring
   useEffect(() => {
     if (!isEditing || !textareaRef.current) return;
     const el = textareaRef.current;
-    el.style.height = "auto";
-    el.style.height = `${el.scrollHeight}px`;
+    requestAnimationFrame(() => {
+      el.style.height = "auto";
+      el.style.height = `${el.scrollHeight}px`;
+    });
   }, [isEditing]);
 
   const handleDelete = async () => {
@@ -133,6 +178,10 @@ function CommentCard({
     <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      onClick={() => {
+        if (!disableReplies && !isEditing && !confirmingDelete)
+          onToggleReplies();
+      }}
       style={{
         position: "relative",
         border: isActive || hovered ? "2px solid #000000" : "2px solid #E6E6E6",
@@ -141,6 +190,10 @@ function CommentCard({
         padding: "12px",
         transition:
           "border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease",
+        cursor:
+          isEditing || confirmingDelete || disableReplies
+            ? "default"
+            : "pointer",
       }}
     >
       {/* Header row */}
@@ -152,34 +205,7 @@ function CommentCard({
           marginBottom: "8px",
         }}
       >
-        <div
-          style={{
-            width: "28px",
-            height: "28px",
-            borderRadius: "50%",
-            backgroundColor: "#01EFFC",
-            border: "1px solid #000",
-            flexShrink: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "12px",
-            fontWeight: 700,
-            color: "#000000",
-            overflow: "hidden",
-          }}
-        >
-          {comment.author.avatarUrl ? (
-            <img
-              src={comment.author.avatarUrl}
-              alt=""
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-            />
-          ) : (
-            initials(comment.author)
-          )}
-        </div>
+        <Avatar user={comment.author} size={32} />
 
         <div style={{ flex: 1, minWidth: 0 }}>
           <span
@@ -359,6 +385,70 @@ function CommentCard({
           )}
         </>
       )}
+
+      {/* Expanded reply thread */}
+      {!disableReplies && isExpanded && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            marginTop: "10px",
+            borderTop: "1px solid #E6E6E6",
+            paddingTop: "10px",
+          }}
+        >
+          <ReplyThread
+            replies={comment.replies}
+            parentId={comment.id}
+            pieceId={pieceId}
+            riffId={riffId}
+            clubId={clubId}
+            currentUser={currentUser}
+            onReplyAdded={onReplyAdded}
+            onReplyUpdated={onReplyUpdated}
+            onReplyDeleted={onReplyDeleted}
+            onCancel={onToggleReplies}
+          />
+        </div>
+      )}
+
+      {/* Collapsed state: reply count always visible when replies exist */}
+      {!disableReplies && !isExpanded && replyAuthors.length > 0 && (
+        <div
+          style={{
+            marginTop: "10px",
+            borderTop: "1px solid #E6E6E6",
+            paddingTop: "10px",
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+          }}
+        >
+          <AvatarStack users={visibleReplyAuthors} size={24} />
+          {overflowCount > 0 && (
+            <span
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "11px",
+                fontWeight: 300,
+                color: "#808080",
+              }}
+            >
+              +{overflowCount}
+            </span>
+          )}
+          <span
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "11px",
+              fontWeight: 300,
+              color: "#808080",
+            }}
+          >
+            {comment.replies.length}{" "}
+            {comment.replies.length === 1 ? "reply" : "replies"}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
@@ -367,8 +457,16 @@ export default function CommentSidebar({
   comments,
   activeHighlightIds,
   currentUserId,
+  currentUser,
+  pieceId,
+  riffId,
+  clubId,
   onDelete,
   onUpdate,
+  onReplyAdded,
+  onReplyUpdated,
+  onReplyDeleted,
+  disableReplies,
   onCommentClick,
   contentColumnRef,
   pendingSelection,
@@ -380,6 +478,7 @@ export default function CommentSidebar({
   const [positions, setPositions] = useState<Record<string, number>>({});
   const [minHeight, setMinHeight] = useState(0);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   // Measure actual rendered height of a comment card
   const getCardHeight = (id: string) => {
@@ -552,19 +651,39 @@ export default function CommentSidebar({
     return () => clearTimeout(timer);
   }, [activeHighlightIds, pendingSelection, updatePositions]);
 
-  // Recalculate when a card enters/exits edit mode (height changes)
+  // Recalculate when a card enters/exits edit mode or reply thread (height changes)
   useEffect(() => {
     const timer = setTimeout(updatePositions, 50);
     return () => clearTimeout(timer);
-  }, [editingId, updatePositions]);
+  }, [editingId, expandedId, updatePositions]);
+
+  // Collapse reply thread when clicking outside the expanded card
+  useEffect(() => {
+    if (!expandedId) return;
+    function handleClickOutside(e: MouseEvent) {
+      const el = cardRefs.current[expandedId!];
+      if (el && !el.contains(e.target as Node)) {
+        setExpandedId(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [expandedId]);
 
   // Recalculate whenever any card changes height (e.g. textarea expanding)
   useEffect(() => {
-    const observer = new ResizeObserver(() => updatePositions());
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const observer = new ResizeObserver(() => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(updatePositions, 50);
+    });
     for (const el of Object.values(cardRefs.current)) {
       if (el) observer.observe(el);
     }
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      clearTimeout(timeoutId);
+    };
   }, [comments, updatePositions]);
 
   return (
@@ -626,6 +745,7 @@ export default function CommentSidebar({
               isActive={isActive}
               isOwn={comment.authorId === currentUserId}
               isEditing={editingId === comment.id}
+              isExpanded={expandedId === comment.id}
               onDelete={() => onDelete(comment.id)}
               onEdit={() => setEditingId(comment.id)}
               onSave={async (newContent) => {
@@ -634,6 +754,19 @@ export default function CommentSidebar({
               }}
               onCancelEdit={() => setEditingId(null)}
               onActivate={() => onCommentClick?.(comment.id)}
+              onToggleReplies={() =>
+                setExpandedId(expandedId === comment.id ? null : comment.id)
+              }
+              onReplyAdded={(reply) => onReplyAdded(comment.id, reply)}
+              onReplyUpdated={(replyId, newContent) =>
+                onReplyUpdated(comment.id, replyId, newContent)
+              }
+              onReplyDeleted={(replyId) => onReplyDeleted(comment.id, replyId)}
+              currentUser={currentUser}
+              pieceId={pieceId}
+              riffId={riffId}
+              clubId={clubId}
+              disableReplies={disableReplies}
               color={authorColors[comment.authorId] || AUTHOR_COLORS[0]}
             />
           </div>
