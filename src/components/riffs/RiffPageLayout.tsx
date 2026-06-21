@@ -398,6 +398,7 @@ export default function RiffPageLayout({
                   >
                     {revealStats.map((stat, i) => (
                       <div
+                        // eslint-disable-next-line react/no-array-index-key -- static stat tiles; length and order are stable
                         key={i}
                         style={{
                           display: "flex",

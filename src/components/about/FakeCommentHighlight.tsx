@@ -116,6 +116,7 @@ export default function FakeCommentHighlight({
           >
             {comments.map((comment, i) => (
               <div
+                // eslint-disable-next-line react/no-array-index-key -- static seeded data on the About page
                 key={i}
                 style={{ marginBottom: i < comments.length - 1 ? "12px" : 0 }}
               >
@@ -128,6 +129,7 @@ export default function FakeCommentHighlight({
                 />
                 {comment.replies?.map((reply, j) => (
                   <div
+                    // eslint-disable-next-line react/no-array-index-key -- static seeded data
                     key={j}
                     style={{ marginTop: "10px", marginLeft: "36px" }}
                   >

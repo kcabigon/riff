@@ -488,9 +488,9 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
                     gap: "8px",
                   }}
                 >
-                  {existingImages?.map((url, i) => (
+                  {existingImages?.map((url) => (
                     <button
-                      key={i}
+                      key={url}
                       onClick={() => handleExistingImageClick(url)}
                       style={{
                         position: "relative",
