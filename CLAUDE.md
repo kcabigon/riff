@@ -20,7 +20,8 @@ If the user asks you to "regain context" or "catch up", run `/letsriff`.
 | `/pr-check` | Pre-PR validation — lint, type-check, build, commit format |
 | `/review` | Review a PR for design system, component reuse, code quality, and merge readiness |
 | `/finish-feature` | Push branch and create a PR targeting develop |
-| `/promote` | Kyle only — promote develop → staging or staging → main |
+| `/promote` | Kyle only — promote develop → staging or staging → main (stops between steps) |
+| `/release` | Kyle only — fast-path: `develop → staging → main` chained with a single confirmation |
 | `/setup` | First-time setup — walks through environment, deps, database |
 
 ## Rules
