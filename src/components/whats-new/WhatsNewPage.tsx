@@ -20,6 +20,7 @@ interface Release {
   credit?: string;
   creditEmoji?: string; // emoji before the shoutout (🎉 feedback, 🛠️ built, etc.)
   image?: { src: string; alt: string; maxWidth?: number };
+  pinned?: boolean; // overrides the image-first sort so a release stays at the top
 }
 
 // Shipped to production since mid-May 2026. End-user-facing only.
@@ -30,6 +31,7 @@ const RELEASES: Release[] = [
     body: "Comments used to be one-shots. Now you can reply right back — desktop expands a thread inline on the card, mobile keeps it inside the existing comment sheet. Read a piece, leave a thought, get a response, keep it going.",
     credit: "Nice one, Derek!",
     creditEmoji: "🛠️",
+    pinned: true,
   },
   {
     date: "June 2026",
@@ -127,11 +129,12 @@ export default function WhatsNewPage() {
     []
   );
 
-  // Within each month, show features with images first; text-only ones sink to the bottom.
+  // Within each month: pinned first, then features with images, then text-only at the bottom.
   for (const g of months) {
     g.items = [
-      ...g.items.filter((r) => r.image),
-      ...g.items.filter((r) => !r.image),
+      ...g.items.filter((r) => r.pinned),
+      ...g.items.filter((r) => !r.pinned && r.image),
+      ...g.items.filter((r) => !r.pinned && !r.image),
     ];
   }
 
