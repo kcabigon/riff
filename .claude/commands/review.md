@@ -175,18 +175,9 @@ gh pr view <number> --json reviews --jq '[.reviews[] | select(.state == "APPROVE
 
 ---
 
-## GitHub Username → Real Name Mapping
+## Team handle → real name mapping
 
-Always use real names when displaying PR authors. Never display raw GitHub handles.
-
-| GitHub handle | Real name |
-|---------------|-----------|
-| `kcabigon` | Kyle |
-| `jarric22` | Jarric |
-| `djorgensen316` | Derek |
-| `riffwithfriends` | Chris |
-
-Example: `riffwithfriends` → display as `Chris`, not `riffwithfriends`.
+See the table in `CLAUDE.md` under "## Team". Always display real names (e.g. `Chris`), never raw GitHub handles (e.g. `riffwithfriends`).
 
 ---
 
