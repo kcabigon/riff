@@ -83,7 +83,6 @@ export default function RevealConfirmModal({
             <AvatarStack
               users={waitingUsers.map((u) => ({ ...u, username: null }))}
               size={32}
-              showBorder={false}
             />
             <div
               style={{
