@@ -246,7 +246,7 @@ function CommentRow({
                   style={{
                     width: "40px",
                     height: "40px",
-                    backgroundColor: "#FF0000",
+                    backgroundColor: "#DC2626",
                     borderRadius: "8px",
                     display: "flex",
                     alignItems: "center",

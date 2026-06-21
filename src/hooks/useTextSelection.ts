@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useEffect, RefObject } from 'react';
+import { useState, useEffect, RefObject } from "react";
 
 export interface TextSelection {
   text: string;
@@ -56,10 +56,10 @@ export function useTextSelection(containerRef: RefObject<HTMLElement | null>) {
     };
 
     // Listen to selection changes
-    document.addEventListener('selectionchange', handleSelectionChange);
+    document.addEventListener("selectionchange", handleSelectionChange);
 
     return () => {
-      document.removeEventListener('selectionchange', handleSelectionChange);
+      document.removeEventListener("selectionchange", handleSelectionChange);
     };
   }, [containerRef]);
 
@@ -141,21 +141,24 @@ export function useTextHighlight(
       clearHighlights();
 
       // Sort highlights by start position (reverse order for correct nesting)
-      const sortedHighlights = [...highlights].sort((a, b) => b.start - a.start);
+      const sortedHighlights = [...highlights].sort(
+        (a, b) => b.start - a.start
+      );
 
-      const text = container.textContent || '';
+      const text = container.textContent || "";
 
       sortedHighlights.forEach((highlight) => {
-        const { start, end, id, color = '#fef3c7' } = highlight;
+        // eslint-disable-next-line riff/no-non-palette-colors -- default highlight tint; callers can override with a palette color
+        const { start, end, id, color = "#fef3c7" } = highlight;
 
         if (start >= 0 && end <= text.length) {
           // Create mark element
-          const mark = document.createElement('mark');
+          const mark = document.createElement("mark");
           mark.dataset.highlightId = id;
           mark.style.backgroundColor = color;
-          mark.style.padding = '2px 0';
-          mark.style.borderRadius = '2px';
-          mark.style.cursor = 'pointer';
+          mark.style.padding = "2px 0";
+          mark.style.borderRadius = "2px";
+          mark.style.cursor = "pointer";
 
           // Find and wrap the text range
           wrapTextRange(container, start, end, mark);
@@ -225,7 +228,7 @@ function wrapTextRange(
     } catch (e) {
       // If surroundContents fails (e.g., range spans multiple elements),
       // fallback to a simpler approach
-      console.warn('Failed to wrap text range:', e);
+      console.warn("Failed to wrap text range:", e);
     }
   }
 }

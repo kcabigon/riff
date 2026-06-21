@@ -175,7 +175,7 @@ export default function NotificationPanel({
             <div
               style={{
                 padding: "8px 16px",
-                backgroundColor: "#FAFAFA",
+                backgroundColor: "#F5F5F5",
               }}
             >
               <p

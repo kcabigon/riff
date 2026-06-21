@@ -171,6 +171,7 @@ export default function LinkPopover({ editor }: LinkPopoverProps) {
           />
           <button
             onClick={handleSave}
+            // eslint-disable-next-line riff/no-non-palette-colors -- link-popover Save affordance; palette green (#00FF66) reads as a shadow color, not a text color
             style={{ ...buttonStyle, color: "#00AA44" }}
           >
             Save
@@ -183,6 +184,7 @@ export default function LinkPopover({ editor }: LinkPopoverProps) {
             target="_blank"
             rel="noopener noreferrer"
             style={{
+              // eslint-disable-next-line riff/no-non-palette-colors -- standard browser-blue for the inline link preview
               color: "#0066CC",
               fontSize: "13px",
               fontWeight: 300,
@@ -202,7 +204,7 @@ export default function LinkPopover({ editor }: LinkPopoverProps) {
           </button>
           <button
             onClick={handleRemove}
-            style={{ ...buttonStyle, color: "#CC0000" }}
+            style={{ ...buttonStyle, color: "#DC2626" }}
           >
             Remove
           </button>

@@ -25,7 +25,7 @@ export default function OnboardingProgress({
           fontFamily: "var(--font-dm-sans)",
           fontSize: "14px",
           fontWeight: 300,
-          color: "#959595",
+          color: "#9C9C9C",
           margin: 0,
         }}
       >

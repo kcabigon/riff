@@ -20,6 +20,7 @@ export interface Piece {
   publicShareId: string | null;
 }
 
+/* eslint-disable riff/no-non-palette-colors -- intentional pastel rotation for cover-less pieces, shared across PiecesGrid/MosaicCollage/PieceCard/ProgressCard */
 const PLACEHOLDER_COLORS = [
   "#E8E0D5",
   "#D5E0E8",
@@ -28,6 +29,7 @@ const PLACEHOLDER_COLORS = [
   "#D5E8E0",
   "#E0D5E8",
 ];
+/* eslint-enable riff/no-non-palette-colors */
 
 function extractExcerpt(content: string | null, maxChars = 240): string {
   if (!content) return "";

@@ -334,7 +334,7 @@ function getSignInEmailTemplate(magicLink: string): string {
 
           <tr>
             <td style="padding:0 40px 40px;">
-              <p style="margin:0;font-size:13px;font-weight:300;color:#999999;line-height:1.5;font-family:'DM Sans',-apple-system,sans-serif;">This link expires in 24 hours and can only be used once. If you didn't request this, ignore it.</p>
+              <p style="margin:0;font-size:13px;font-weight:300;color:#9C9C9C;line-height:1.5;font-family:'DM Sans',-apple-system,sans-serif;">This link expires in 24 hours and can only be used once. If you didn't request this, ignore it.</p>
             </td>
           </tr>`,
   });
@@ -361,7 +361,7 @@ function getOnboardingEmailTemplate(magicLink: string): string {
 
           <tr>
             <td style="padding:0 40px 40px;">
-              <p style="margin:0;font-size:13px;font-weight:300;color:#999999;line-height:1.5;font-family:'DM Sans',-apple-system,sans-serif;">This link expires in 24 hours and can only be used once. If you didn't request this, ignore it.</p>
+              <p style="margin:0;font-size:13px;font-weight:300;color:#9C9C9C;line-height:1.5;font-family:'DM Sans',-apple-system,sans-serif;">This link expires in 24 hours and can only be used once. If you didn't request this, ignore it.</p>
             </td>
           </tr>`,
   });
