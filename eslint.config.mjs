@@ -18,6 +18,12 @@ const eslintConfig = [
       "@next/next/no-img-element": "warn",
       "@next/next/no-html-link-for-pages": "warn",
       "react/no-unescaped-entities": "warn",
+      // Block stray debug logs but keep audit/warning channels usable.
+      // `info` is allowed for our existing email/audit logs in resend.ts.
+      "no-console": ["error", { allow: ["warn", "error", "info"] }],
+      // Catches dynamic-list `key={index}` bugs (re-ordering / deletion
+      // breaks React reconciliation). Static lists can opt out per-line.
+      "react/no-array-index-key": "error",
     },
   },
 ];

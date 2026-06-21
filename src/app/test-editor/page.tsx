@@ -1,13 +1,16 @@
-'use client';
+/* eslint-disable no-console -- dev sandbox page; not shipped to users */
+"use client";
 
-import { useState } from 'react';
-import TiptapEditor from '@/components/editor/TiptapEditor';
+import { useState } from "react";
+import TiptapEditor from "@/components/editor/TiptapEditor";
 
 export default function TestEditorPage() {
-  const [content, setContent] = useState('<p>Start writing your piece here...</p>');
+  const [content, setContent] = useState(
+    "<p>Start writing your piece here...</p>"
+  );
 
   const handleUpdate = async (html: string) => {
-    console.log('Content updated:', html);
+    console.log("Content updated:", html);
     setContent(html);
 
     // Simulate auto-save to API
@@ -23,7 +26,8 @@ export default function TestEditorPage() {
             Tiptap Editor Test
           </h1>
           <p className="text-gray-600">
-            Test the rich text editor with auto-save, formatting, and media embeds
+            Test the rich text editor with auto-save, formatting, and media
+            embeds
           </p>
         </div>
 
@@ -55,10 +59,18 @@ export default function TestEditorPage() {
             <li>Links (select text, click link button)</li>
             <li>Image upload (click image button)</li>
             <li>YouTube embeds (click YouTube button, paste URL)</li>
-            <li>Spotify embeds (click Spotify button, paste track/album/playlist URL)</li>
-            <li>Delete media (click on image/video/embed, then click trash icon)</li>
+            <li>
+              Spotify embeds (click Spotify button, paste track/album/playlist
+              URL)
+            </li>
+            <li>
+              Delete media (click on image/video/embed, then click trash icon)
+            </li>
             <li>Horizontal rules</li>
-            <li>Auto-save (watch the status indicator - it will show "Saving..." then "Saved")</li>
+            <li>
+              Auto-save (watch the status indicator - it will show "Saving..."
+              then "Saved")
+            </li>
           </ul>
         </div>
       </div>

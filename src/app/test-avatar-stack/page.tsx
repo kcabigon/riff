@@ -1,3 +1,4 @@
+/* eslint-disable no-console -- dev sandbox page; not shipped to users */
 "use client";
 
 import { useState } from "react";

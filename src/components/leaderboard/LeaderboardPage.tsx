@@ -142,9 +142,9 @@ function Heatmap({ commitsByDay, color, days }: HeatmapProps) {
         paddingBottom: "4px",
       }}
     >
-      {weeks.map((week, wi) => (
+      {weeks.map((week) => (
         <div
-          key={wi}
+          key={week[0]}
           style={{ display: "flex", flexDirection: "column", gap: "3px" }}
         >
           {week.map((day) => {

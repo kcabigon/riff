@@ -176,7 +176,7 @@ export async function sendSignInEmail(
       throw new Error(`Failed to send email: ${error.message}`);
     }
 
-    console.log("Sign-in email sent successfully:", data);
+    console.info("Sign-in email sent successfully:", data);
   } catch (error) {
     console.error("Error sending sign-in email:", error);
     throw error;
@@ -203,7 +203,7 @@ export async function sendOnboardingEmail(
       throw new Error(`Failed to send email: ${error.message}`);
     }
 
-    console.log("Onboarding email sent successfully:", data);
+    console.info("Onboarding email sent successfully:", data);
   } catch (error) {
     console.error("Error sending onboarding email:", error);
     throw error;
@@ -250,7 +250,7 @@ export async function sendRiffCreatedEmail({
       throw new Error(`Failed to send email: ${error.message}`);
     }
 
-    console.log("Riff created email sent successfully:", data);
+    console.info("Riff created email sent successfully:", data);
   } catch (error) {
     console.error("Error sending riff created email:", error);
     throw error;
@@ -294,7 +294,7 @@ export async function sendRiffRevealedEmail({
       throw new Error(`Failed to send email: ${error.message}`);
     }
 
-    console.log("Riff revealed email sent successfully:", data);
+    console.info("Riff revealed email sent successfully:", data);
   } catch (error) {
     console.error("Error sending riff revealed email:", error);
     throw error;
