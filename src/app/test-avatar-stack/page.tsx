@@ -153,19 +153,37 @@ export default function TestAvatarStackPage() {
         >
           <div>
             <p style={{ marginBottom: "8px", fontSize: "14px" }}>24px</p>
-            <Avatar user={userWithPhoto} size={24} onClick={handleAvatarClick} />
+            <Avatar
+              user={userWithPhoto}
+              size={24}
+              onClick={handleAvatarClick}
+            />
           </div>
           <div>
-            <p style={{ marginBottom: "8px", fontSize: "14px" }}>32px (default)</p>
-            <Avatar user={userWithPhoto} size={32} onClick={handleAvatarClick} />
+            <p style={{ marginBottom: "8px", fontSize: "14px" }}>
+              32px (default)
+            </p>
+            <Avatar
+              user={userWithPhoto}
+              size={32}
+              onClick={handleAvatarClick}
+            />
           </div>
           <div>
             <p style={{ marginBottom: "8px", fontSize: "14px" }}>40px</p>
-            <Avatar user={userWithPhoto} size={40} onClick={handleAvatarClick} />
+            <Avatar
+              user={userWithPhoto}
+              size={40}
+              onClick={handleAvatarClick}
+            />
           </div>
           <div>
             <p style={{ marginBottom: "8px", fontSize: "14px" }}>48px</p>
-            <Avatar user={userWithPhoto} size={48} onClick={handleAvatarClick} />
+            <Avatar
+              user={userWithPhoto}
+              size={48}
+              onClick={handleAvatarClick}
+            />
           </div>
         </div>
       </section>
@@ -199,7 +217,6 @@ export default function TestAvatarStackPage() {
               user={usersWithInitials[0]}
               size={48}
               borderColor="#000000"
-              borderWidth={2}
               onClick={handleAvatarClick}
             />
           </div>
@@ -211,7 +228,6 @@ export default function TestAvatarStackPage() {
               user={usersWithInitials[1]}
               size={40}
               borderColor="#FFFFFF"
-              borderWidth={1}
               onClick={handleAvatarClick}
             />
           </div>
@@ -220,7 +236,6 @@ export default function TestAvatarStackPage() {
             <Avatar
               user={usersWithInitials[2]}
               size={32}
-              showBorder={false}
               onClick={handleAvatarClick}
             />
           </div>
@@ -232,7 +247,6 @@ export default function TestAvatarStackPage() {
               user={usersWithInitials[3]}
               size={48}
               borderColor="#00FF66"
-              borderWidth={2}
               onClick={handleAvatarClick}
             />
           </div>
@@ -244,7 +258,6 @@ export default function TestAvatarStackPage() {
               user={usersWithInitials[4]}
               size={48}
               borderColor="#01EFFC"
-              borderWidth={3}
               onClick={handleAvatarClick}
             />
           </div>
@@ -282,7 +295,9 @@ export default function TestAvatarStackPage() {
             />
           </div>
           <div>
-            <p style={{ marginBottom: "8px", fontSize: "14px" }}>Moderator (M)</p>
+            <p style={{ marginBottom: "8px", fontSize: "14px" }}>
+              Moderator (M)
+            </p>
             <Avatar
               user={usersWithInitials[0]}
               size={48}
@@ -340,9 +355,7 @@ export default function TestAvatarStackPage() {
         <AvatarStack
           users={clubMembers}
           size={48}
-          showBorder={true}
           borderColor="#000000"
-          borderWidth={2}
           onAvatarClick={handleAvatarClick}
         />
       </section>
@@ -373,7 +386,6 @@ export default function TestAvatarStackPage() {
         <AvatarStack
           users={riffParticipants}
           size={32}
-          showBorder={false}
           onAvatarClick={handleAvatarClick}
         />
       </section>
@@ -398,8 +410,8 @@ export default function TestAvatarStackPage() {
             marginBottom: "24px",
           }}
         >
-          The rightmost avatar should appear on top (highest z-index). Try hovering
-          to see stacking order.
+          The rightmost avatar should appear on top (highest z-index). Try
+          hovering to see stacking order.
         </p>
 
         <AvatarStack
@@ -411,9 +423,7 @@ export default function TestAvatarStackPage() {
             { ...usersWithInitials[4], tag: "5" },
           ]}
           size={48}
-          showBorder={true}
           borderColor="#000000"
-          borderWidth={2}
           onAvatarClick={handleAvatarClick}
         />
       </section>
@@ -444,9 +454,7 @@ export default function TestAvatarStackPage() {
         <AvatarStack
           users={clubMembers.slice(0, 6)}
           size={40}
-          showBorder={true}
           borderColor="#000000"
-          borderWidth={2}
           onAvatarClick={handleAvatarClick}
         />
       </section>
@@ -470,7 +478,12 @@ export default function TestAvatarStackPage() {
               Username only (no name)
             </p>
             <Avatar
-              user={{ id: "edge1", name: null, username: "user123", avatarUrl: null }}
+              user={{
+                id: "edge1",
+                name: null,
+                username: "user123",
+                avatarUrl: null,
+              }}
               size={48}
               onClick={handleAvatarClick}
             />
@@ -495,7 +508,12 @@ export default function TestAvatarStackPage() {
               Single name (no space)
             </p>
             <Avatar
-              user={{ id: "edge3", name: "Madonna", username: null, avatarUrl: null }}
+              user={{
+                id: "edge3",
+                name: "Madonna",
+                username: null,
+                avatarUrl: null,
+              }}
               size={48}
               onClick={handleAvatarClick}
             />
@@ -505,7 +523,12 @@ export default function TestAvatarStackPage() {
               Empty strings fallback
             </p>
             <Avatar
-              user={{ id: "edge4", name: null, username: null, avatarUrl: null }}
+              user={{
+                id: "edge4",
+                name: null,
+                username: null,
+                avatarUrl: null,
+              }}
               size={48}
               onClick={handleAvatarClick}
             />
@@ -540,7 +563,9 @@ export default function TestAvatarStackPage() {
           }}
         >
           <li>Hover over any avatar to see the tooltip with the user's name</li>
-          <li>Click on any avatar to see the clicked user ID displayed at the top</li>
+          <li>
+            Click on any avatar to see the clicked user ID displayed at the top
+          </li>
           <li>
             Verify z-index stacking: rightmost avatars should appear on top when
             overlapping

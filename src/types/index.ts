@@ -31,6 +31,14 @@ export interface User {
 
 // ==================== AVATAR TYPES ====================
 
+// Minimal user data for comment author display
+export type CommentAuthor = {
+  id: string;
+  name: string | null;
+  username: string | null;
+  avatarUrl: string | null;
+};
+
 // Minimal user data for avatar display
 export interface AvatarUser {
   id: string;
