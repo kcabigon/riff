@@ -20,7 +20,8 @@ If the user asks you to "regain context" or "catch up", run `/letsriff`.
 | `/pr-check` | Pre-PR validation — lint, type-check, build, commit format |
 | `/review` | Review a PR for design system, component reuse, code quality, and merge readiness |
 | `/finish-feature` | Push branch and create a PR targeting develop |
-| `/promote` | Kyle only — promote develop → staging or staging → main |
+| `/promote` | Kyle only — promote develop → staging or staging → main (stops between steps) |
+| `/release` | Kyle only — fast-path: `develop → staging → main` chained with a single confirmation |
 | `/setup` | First-time setup — walks through environment, deps, database |
 
 ## Rules
@@ -102,3 +103,14 @@ Always sync with develop at these points (don't ask, just do it):
 - **Design system**: `DESIGN-SYSTEM.md` — colors, typography, spacing, borders, shadows, shared component catalog
 
 The `/letsriff` command reads these automatically — you shouldn't need to read them manually.
+
+## Team
+
+When referring to collaborators in chat, PR descriptions, or anywhere user-facing, use real names. Never display raw GitHub handles.
+
+| GitHub handle | Real name |
+|---------------|-----------|
+| `kcabigon` | Kyle |
+| `jarric22` | Jarric |
+| `djorgensen316` | Derek |
+| `riffwithfriends` | Chris |

@@ -157,6 +157,7 @@ export default function Dropdown({
             if (item.type === "divider") {
               return (
                 <div
+                  // eslint-disable-next-line react/no-array-index-key -- dropdown items are stable during their visible lifetime
                   key={`divider-${i}`}
                   style={{
                     height: 0,
@@ -169,6 +170,7 @@ export default function Dropdown({
 
             return (
               <button
+                // eslint-disable-next-line react/no-array-index-key -- dropdown items are stable during their visible lifetime
                 key={`item-${i}`}
                 onClick={() => {
                   item.onClick();

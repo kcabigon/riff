@@ -109,7 +109,7 @@ export default function CreateRiffModal({
                 fontFamily: "var(--font-dm-sans)",
                 fontSize: "14px",
                 fontWeight: 300,
-                color: "#FF4444",
+                color: "#DC2626",
                 margin: 0,
               }}
             >

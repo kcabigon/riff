@@ -1,6 +1,8 @@
 "use client";
 
-// Placeholder color palette for pieces without a cover image
+// Placeholder color palette for pieces without a cover image. Intentional
+// pastel rotation, shared across multiple placeholder surfaces.
+/* eslint-disable riff/no-non-palette-colors */
 const PLACEHOLDER_COLORS = [
   "#E8E0D5",
   "#D5E0E8",
@@ -9,6 +11,7 @@ const PLACEHOLDER_COLORS = [
   "#D5E8E0",
   "#E0D5E8",
 ];
+/* eslint-enable riff/no-non-palette-colors */
 
 interface MosaicPiece {
   id: string;

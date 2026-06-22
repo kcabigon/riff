@@ -46,7 +46,7 @@ const optionalSpan = (
       fontFamily: "var(--font-dm-sans)",
       fontSize: "14px",
       fontWeight: 300,
-      color: "#959595",
+      color: "#9C9C9C",
     }}
   >
     (optional)
@@ -106,7 +106,7 @@ export default function RiffFormFields({
               fontFamily: "var(--font-dm-sans)",
               fontSize: "14px",
               fontWeight: 300,
-              color: "#959595",
+              color: "#9C9C9C",
               alignSelf: "flex-start",
             }}
           >

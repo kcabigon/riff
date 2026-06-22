@@ -538,7 +538,7 @@ export default function JoinClubClient({
                   fontFamily: "var(--font-dm-sans)",
                   fontSize: "14px",
                   fontWeight: 300,
-                  color: "#666666",
+                  color: "#808080",
                   margin: 0,
                 }}
               >
@@ -668,7 +668,7 @@ const errorStyle: React.CSSProperties = {
   fontFamily: "var(--font-dm-sans)",
   fontSize: "14px",
   fontWeight: 300,
-  color: "#FF0000",
+  color: "#DC2626",
   margin: 0,
   textAlign: "center",
 };
@@ -679,10 +679,10 @@ const whatIsItStyle: React.CSSProperties = {
   fontFamily: "var(--font-dm-sans)",
   fontSize: "14px",
   fontWeight: 300,
-  color: "#666666",
+  color: "#808080",
   cursor: "pointer",
   padding: 0,
   textDecoration: "underline",
-  textDecorationColor: "#666666",
+  textDecorationColor: "#808080",
   marginTop: "16px",
 };

@@ -58,3 +58,6 @@ next-env.d.ts
 
 # claude personal memory (project-level commands and settings ARE committed)
 .claude/memory
+
+# claude plan files — created by /new-feature complex flow, ephemeral session artifacts
+.claude/plans/*.md

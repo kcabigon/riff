@@ -82,6 +82,7 @@ export default function TutorialProgressBanner({
 
           return (
             <div
+              // eslint-disable-next-line react/no-array-index-key -- 5-step progress banner; length and order are stable
               key={i}
               style={{
                 flex: 1,
