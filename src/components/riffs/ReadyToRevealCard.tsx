@@ -63,6 +63,20 @@ export default function ReadyToRevealCard({
         gap: "12px",
       }}
     >
+      {clubName && (
+        <p
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "12px",
+            fontWeight: 300,
+            color: "#808080",
+            margin: 0,
+            textAlign: "center",
+          }}
+        >
+          {clubName}
+        </p>
+      )}
       <div
         onClick={handleClick}
         onMouseEnter={() => setIsHovered(true)}
@@ -125,20 +139,6 @@ export default function ReadyToRevealCard({
           </p>
         </div>
       </div>
-      {clubName && (
-        <p
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "12px",
-            fontWeight: 300,
-            color: "#808080",
-            margin: 0,
-            textAlign: "center",
-          }}
-        >
-          {clubName}
-        </p>
-      )}
     </div>
   );
 }
