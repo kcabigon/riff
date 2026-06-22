@@ -112,8 +112,8 @@ export default function MyRiffsClient({
   }
 
   const tabs = [
-    { key: "current" as const, label: "Current Riffs" },
-    { key: "past" as const, label: "Past Riffs" },
+    { key: "current" as const, label: "Current" },
+    { key: "past" as const, label: "Past" },
   ];
 
   return (
@@ -125,41 +125,6 @@ export default function MyRiffsClient({
         showClubDropdown={false}
       />
 
-      {/* Full-width toggle */}
-      <div
-        style={{
-          display: "flex",
-          width: "100%",
-          borderBottom: "2px solid #000000",
-        }}
-      >
-        {tabs.map((tab, i) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            style={{
-              flex: 1,
-              padding: "12px 24px",
-              fontFamily: "var(--font-dm-serif-text)",
-              fontSize: "20px",
-              fontWeight: 400,
-              color: activeTab === tab.key ? "#000000" : "#808080",
-              backgroundColor: "#FFFFFF",
-              borderTop: "none",
-              borderLeft: "none",
-              borderBottom: "none",
-              borderRight: i < tabs.length - 1 ? "2px solid #000000" : "none",
-              boxShadow:
-                activeTab === tab.key ? "inset 0 4px 0 #00FF66" : "none",
-              cursor: "pointer",
-              textAlign: "center",
-            }}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
       <div
         style={{
           maxWidth: "1000px",
@@ -167,6 +132,50 @@ export default function MyRiffsClient({
           padding: "32px 24px 64px",
         }}
       >
+        {/* Header + tabs on same line */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: "32px",
+          }}
+        >
+          <h1
+            style={{
+              fontFamily: "var(--font-dm-serif-text)",
+              fontSize: "32px",
+              fontWeight: 400,
+              color: "#000000",
+              margin: 0,
+            }}
+          >
+            My Riffs
+          </h1>
+
+          <div style={{ display: "flex", gap: "12px" }}>
+            {tabs.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                style={{
+                  padding: activeTab === tab.key ? "6px 16px" : "8px 18px",
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "14px",
+                  fontWeight: 400,
+                  color: "#000000",
+                  backgroundColor: "#FFFFFF",
+                  border: activeTab === tab.key ? "2px solid #000000" : "none",
+                  boxShadow:
+                    activeTab === tab.key ? "3px 3px 0px #000000" : "none",
+                  cursor: "pointer",
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
         {/* Current Tab */}
         {activeTab === "current" && (
           <div
