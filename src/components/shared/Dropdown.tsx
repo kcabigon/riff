@@ -30,11 +30,24 @@ interface DropdownProps {
   align?: "left" | "right";
   minWidth?: number;
   size?: "sm";
-  /** Open the menu above the trigger instead of below (e.g. for a bottom-anchored toolbar). */
+  /** Preferred direction hint. Auto-flips based on available space inside the nearest scroll container. */
   openUp?: boolean;
   isOpen?: boolean;
   onToggle?: () => void;
   onClose?: () => void;
+}
+
+const MENU_HEIGHT = 100; // 2 items × ~36px + 4px borders + 4px shadow + 8px gap + buffer
+
+/** Walk up the DOM to find the nearest scrollable ancestor. */
+function findScrollContainer(el: HTMLElement): HTMLElement | null {
+  let parent = el.parentElement;
+  while (parent) {
+    const { overflowY } = getComputedStyle(parent);
+    if (overflowY === "auto" || overflowY === "scroll") return parent;
+    parent = parent.parentElement;
+  }
+  return null;
 }
 
 export default function Dropdown({
@@ -49,12 +62,32 @@ export default function Dropdown({
   onClose: controlledOnClose,
 }: DropdownProps) {
   const [localIsOpen, setLocalIsOpen] = useState(false);
+  const [effectiveOpenUp, setEffectiveOpenUp] = useState(openUp);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
 
   const isControlled = controlledIsOpen !== undefined;
   const isOpen = isControlled ? controlledIsOpen : localIsOpen;
 
+  const computeDirection = () => {
+    const el = triggerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const container = findScrollContainer(el);
+    const containerRect = container?.getBoundingClientRect();
+    const spaceBelow =
+      (containerRect?.bottom ?? window.innerHeight) - rect.bottom;
+    const spaceAbove = rect.top - (containerRect?.top ?? 0);
+    // Respect the openUp hint but flip if there isn't enough room in that direction
+    if (openUp) {
+      setEffectiveOpenUp(spaceAbove >= MENU_HEIGHT || spaceBelow < MENU_HEIGHT);
+    } else {
+      setEffectiveOpenUp(spaceBelow < MENU_HEIGHT);
+    }
+  };
+
   const handleToggle = () => {
+    if (!isOpen) computeDirection();
     if (isControlled) {
       controlledOnToggle?.();
     } else {
@@ -98,7 +131,11 @@ export default function Dropdown({
   return (
     <div ref={dropdownRef} style={{ position: "relative" }}>
       {/* Trigger */}
-      <div onClick={handleToggle} style={{ cursor: "pointer" }}>
+      <div
+        ref={triggerRef}
+        onClick={handleToggle}
+        style={{ cursor: "pointer" }}
+      >
         {trigger}
       </div>
 
@@ -107,7 +144,7 @@ export default function Dropdown({
         <div
           style={{
             position: "absolute",
-            [openUp ? "bottom" : "top"]: "calc(100% + 8px)",
+            [effectiveOpenUp ? "bottom" : "top"]: "calc(100% + 8px)",
             [align === "right" ? "right" : "left"]: 0,
             backgroundColor: "#FFFFFF",
             border: "2px solid #000000",

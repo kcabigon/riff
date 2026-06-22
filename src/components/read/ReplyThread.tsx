@@ -291,7 +291,6 @@ const ReplyThread = forwardRef<ReplyThreadHandle, ReplyThreadProps>(
                             variant="light"
                             align="right"
                             size="sm"
-                            openUp
                             items={[
                               {
                                 type: "action",
