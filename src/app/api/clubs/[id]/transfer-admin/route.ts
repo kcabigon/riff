@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
 import { sendHostTransferredEmail } from "@/lib/resend";
+import { getBaseUrl } from "@/lib/env";
 
 // POST /api/clubs/[id]/transfer-admin - Transfer club admin to another member
 export async function POST(
@@ -103,8 +104,7 @@ export async function POST(
       });
     });
 
-    const baseUrl = process.env.NEXTAUTH_URL || "https://letsriff.app";
-    const clubUrl = `${baseUrl}/clubs/${clubId}`;
+    const clubUrl = `${getBaseUrl()}/clubs/${clubId}`;
     const oldAdminUser = club.members.find((m) => m.userId === user.id)?.user;
     const newAdminUser = club.members.find(
       (m) => m.userId === targetUserId

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
 import { sendCoHostAssignedEmail } from "@/lib/resend";
+import { getBaseUrl } from "@/lib/env";
 
 // POST /api/clubs/[id]/assign-cohost - Assign, re-assign, or remove co-host
 // Pass targetUserId: string to assign, null to remove
@@ -106,13 +107,12 @@ export async function POST(
       const adminUser = club.members.find((m) => m.userId === user.id)?.user;
 
       if (newCoHost?.email && newCoHost.emailNotifications) {
-        const baseUrl = process.env.NEXTAUTH_URL || "https://letsriff.app";
         await sendCoHostAssignedEmail({
           email: newCoHost.email,
           coHostName: newCoHost.name || "there",
           adminName: adminUser?.name || "The host",
           clubName: club.name,
-          clubUrl: `${baseUrl}/clubs/${clubId}`,
+          clubUrl: `${getBaseUrl()}/clubs/${clubId}`,
         }).catch((err) =>
           console.error("Error sending co-host assigned email:", err)
         );
