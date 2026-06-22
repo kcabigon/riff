@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Modal from "@/components/shared/Modal";
-import CTAButton from "@/components/CTAButton";
 
 interface TransferHostModalProps {
   isOpen: boolean;
@@ -132,14 +131,24 @@ export default function TransferHostModal({
         </select>
 
         {selectedMemberId && !showConfirm && (
-          <CTAButton
+          <button
             type="button"
             onClick={() => setShowConfirm(true)}
-            accentColor="#DC2626"
-            style={{ width: "100%" }}
+            style={{
+              backgroundColor: "#DC2626",
+              border: "2px solid #000000",
+              boxShadow: "8px 8px 0px 0px #000000",
+              padding: "12px 48px",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "16px",
+              fontWeight: 300,
+              color: "#FFFFFF",
+              cursor: "pointer",
+              width: "100%",
+            }}
           >
             Transfer host
-          </CTAButton>
+          </button>
         )}
 
         {showConfirm && (
