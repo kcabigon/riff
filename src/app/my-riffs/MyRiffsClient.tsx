@@ -228,6 +228,7 @@ export default function MyRiffsClient({
                         hasSubmitted={hasSubmitted}
                         currentUserId={currentUserId}
                         isAdmin={false}
+                        predictedVolumeNumber={riff.volumeNumber ?? undefined}
                         clubName={riff.club.name}
                       />
                     );
