@@ -34,12 +34,14 @@ interface ReadyToRevealCardProps {
   };
   readCount: number;
   totalPieces: number;
+  clubName?: string;
 }
 
 export default function ReadyToRevealCard({
   riff,
   readCount,
   totalPieces,
+  clubName,
 }: ReadyToRevealCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const router = useRouter();
@@ -58,7 +60,7 @@ export default function ReadyToRevealCard({
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        gap: "20px",
+        gap: "12px",
       }}
     >
       <div
@@ -123,6 +125,20 @@ export default function ReadyToRevealCard({
           </p>
         </div>
       </div>
+      {clubName && (
+        <p
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "12px",
+            fontWeight: 300,
+            color: "#808080",
+            margin: 0,
+            textAlign: "center",
+          }}
+        >
+          {clubName}
+        </p>
+      )}
     </div>
   );
 }

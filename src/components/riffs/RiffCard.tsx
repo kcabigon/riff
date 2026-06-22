@@ -51,6 +51,7 @@ interface RiffCardProps {
   onJoin?: () => void;
   onReveal?: () => void;
   predictedVolumeNumber?: number;
+  clubName?: string;
 }
 
 export default function RiffCard({
@@ -63,6 +64,7 @@ export default function RiffCard({
   onJoin,
   onReveal,
   predictedVolumeNumber,
+  clubName,
 }: RiffCardProps) {
   const [isCardHovered, setIsCardHovered] = useState(false);
   const router = useRouter();
@@ -127,6 +129,28 @@ export default function RiffCard({
             gap: "4px",
           }}
         >
+          {/* Club badge */}
+          {clubName && (
+            <span
+              style={{
+                display: "inline-block",
+                alignSelf: "flex-start",
+                backgroundColor: "#EECF01",
+                color: "#000000",
+                border: "2px solid #000000",
+                padding: "2px 6px",
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "11px",
+                fontWeight: 700,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                whiteSpace: "nowrap",
+                marginBottom: "4px",
+              }}
+            >
+              {clubName}
+            </span>
+          )}
           {/* Title */}
           <h3
             style={{
