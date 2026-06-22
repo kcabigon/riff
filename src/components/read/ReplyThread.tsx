@@ -160,7 +160,7 @@ const ReplyThread = forwardRef<ReplyThreadHandle, ReplyThreadProps>(
           });
         },
       }),
-      []  
+      []
       // Empty deps intentional — closures use refs which are always current
     );
 
@@ -359,7 +359,7 @@ const ReplyThread = forwardRef<ReplyThreadHandle, ReplyThreadProps>(
                           loading={deleting}
                           onClick={() => handleDeleteReply(reply.id)}
                         >
-                          Delete
+                          {deleting ? "Deleting..." : "Delete"}
                         </DestructiveButton>
                       </div>
                     </div>

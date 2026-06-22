@@ -105,12 +105,9 @@ export default async function RiffPage({
   }
 
   // Verify user is a club member OR a riff participant + predicted volume number in parallel
-  const [member, participant, predictedVolumeNumber] = await Promise.all([
+  const [member, predictedVolumeNumber] = await Promise.all([
     prisma.clubMember.findFirst({
       where: { clubId: riff.clubId, userId },
-    }),
-    prisma.riffParticipant.findFirst({
-      where: { riffId: id, userId },
     }),
     riff.status === "ACTIVE"
       ? prisma.riff
@@ -124,11 +121,11 @@ export default async function RiffPage({
       : Promise.resolve(undefined),
   ]);
 
-  if (!member && !participant) {
+  const isJoined = riff.participants.some((p) => p.user.id === userId);
+
+  if (!member && !isJoined) {
     redirect("/");
   }
-
-  const isJoined = riff.participants.some((p) => p.user.id === userId);
   const hasDraft = riff.pieces.some((p) => p.piece.authorId === userId);
   const hasSubmitted = riff.pieces.some(
     (p) => p.piece.authorId === userId && p.submittedAt !== null

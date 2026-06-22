@@ -378,7 +378,7 @@ function CommentCard({
                   Cancel
                 </button>
                 <DestructiveButton onClick={handleDelete} loading={deleting}>
-                  Delete
+                  {deleting ? "Deleting..." : "Delete"}
                 </DestructiveButton>
               </div>
             </div>
