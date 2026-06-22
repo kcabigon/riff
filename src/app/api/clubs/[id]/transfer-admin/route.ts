@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
+import { sendHostTransferredEmail } from "@/lib/resend";
 
 // POST /api/clubs/[id]/transfer-admin - Transfer club admin to another member
 export async function POST(
@@ -21,7 +22,20 @@ export async function POST(
 
     const club = await prisma.club.findUnique({
       where: { id: clubId },
-      include: { members: true },
+      include: {
+        members: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                emailNotifications: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!club) {
@@ -76,6 +90,29 @@ export async function POST(
         data: { role: "ADMIN" },
       });
     });
+
+    const baseUrl = process.env.NEXTAUTH_URL || "https://letsriff.app";
+    const clubUrl = `${baseUrl}/clubs/${clubId}`;
+    const oldAdminUser = club.members.find((m) => m.userId === user.id)?.user;
+    const newAdminUser = club.members.find(
+      (m) => m.userId === targetUserId
+    )?.user;
+
+    const emailRecipients = [oldAdminUser, newAdminUser].filter(
+      (u) => u?.email && u.emailNotifications
+    ) as { name: string | null; email: string }[];
+
+    await Promise.allSettled(
+      emailRecipients.map((recipient) =>
+        sendHostTransferredEmail({
+          email: recipient.email,
+          oldHostName: oldAdminUser?.name || "Someone",
+          newHostName: newAdminUser?.name || "Someone",
+          clubName: club.name,
+          clubUrl,
+        })
+      )
+    );
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
