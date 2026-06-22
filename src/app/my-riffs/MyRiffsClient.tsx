@@ -137,14 +137,18 @@ export default function MyRiffsClient({
             onClick={() => setActiveTab(tab.key)}
             style={{
               flex: 1,
-              padding: "20px 24px",
+              padding: "12px 24px",
               fontFamily: "var(--font-dm-serif-text)",
               fontSize: "20px",
               fontWeight: 400,
-              color: "#000000",
-              backgroundColor: activeTab === tab.key ? "#FFFFFF" : "#00FF66",
-              border: "none",
+              color: activeTab === tab.key ? "#000000" : "#808080",
+              backgroundColor: "#FFFFFF",
+              borderTop: "none",
+              borderLeft: "none",
+              borderBottom: "none",
               borderRight: i < tabs.length - 1 ? "2px solid #000000" : "none",
+              boxShadow:
+                activeTab === tab.key ? "inset 0 4px 0 #00FF66" : "none",
               cursor: "pointer",
               textAlign: "center",
             }}
@@ -168,17 +172,6 @@ export default function MyRiffsClient({
           >
             {/* Writing */}
             <div>
-              <h2
-                style={{
-                  fontFamily: "var(--font-dm-serif-text)",
-                  fontSize: "24px",
-                  fontWeight: 400,
-                  color: "#000000",
-                  margin: "0 0 16px 0",
-                }}
-              >
-                Writing
-              </h2>
               {writingRiffs.length > 0 ? (
                 <div
                   style={{
@@ -254,17 +247,6 @@ export default function MyRiffsClient({
             {/* Reading — only rendered when there are unread revealed riffs */}
             {readingRiffs.length > 0 && (
               <div>
-                <h2
-                  style={{
-                    fontFamily: "var(--font-dm-serif-text)",
-                    fontSize: "24px",
-                    fontWeight: 400,
-                    color: "#000000",
-                    margin: "0 0 16px 0",
-                  }}
-                >
-                  Reading
-                </h2>
                 <div
                   style={{
                     display: "flex",
