@@ -25,6 +25,7 @@ import {
   getSubmittedParticipants,
 } from "@/lib/riff-utils";
 import DeleteClubConfirmModal from "@/components/clubs/DeleteClubConfirmModal";
+import LeaveClubConfirmModal from "@/components/clubs/LeaveClubConfirmModal";
 import GettingStartedSection from "@/components/tutorial/GettingStartedSection";
 
 interface ClubMember {
@@ -130,6 +131,7 @@ export default function ClubPageLayout({
   const [isClubDetailsModalOpen, setIsClubDetailsModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isDeleteClubModalOpen, setIsDeleteClubModalOpen] = useState(false);
+  const [isLeaveClubModalOpen, setIsLeaveClubModalOpen] = useState(false);
   const [currentActiveRiff, setCurrentActiveRiff] = useState<Riff | null>(
     activeRiff
   );
@@ -153,6 +155,15 @@ export default function ClubPageLayout({
       label: "Delete club",
       color: "#DC2626",
       onClick: () => setIsDeleteClubModalOpen(true),
+    },
+  ];
+
+  const memberMenuItems = [
+    {
+      type: "action" as const,
+      label: "Leave club",
+      color: "#DC2626",
+      onClick: () => setIsLeaveClubModalOpen(true),
     },
   ];
 
@@ -313,13 +324,11 @@ export default function ClubPageLayout({
                   >
                     {clubName}
                   </h1>
-                  {isAdmin && (
-                    <ThreeDotButton
-                      variant="dark"
-                      items={adminMenuItems}
-                      align="right"
-                    />
-                  )}
+                  <ThreeDotButton
+                    variant="dark"
+                    items={isAdmin ? adminMenuItems : memberMenuItems}
+                    align="right"
+                  />
                 </div>
 
                 <div
@@ -424,13 +433,11 @@ export default function ClubPageLayout({
             >
               {clubName}
             </h1>
-            {isAdmin && (
-              <ThreeDotButton
-                variant="light"
-                items={adminMenuItems}
-                align="right"
-              />
-            )}
+            <ThreeDotButton
+              variant="light"
+              items={isAdmin ? adminMenuItems : memberMenuItems}
+              align="right"
+            />
           </div>
 
           <div
@@ -533,13 +540,11 @@ export default function ClubPageLayout({
               >
                 {clubName}
               </h1>
-              {isAdmin && (
-                <ThreeDotButton
-                  variant="light"
-                  items={adminMenuItems}
-                  align="right"
-                />
-              )}
+              <ThreeDotButton
+                variant="light"
+                items={isAdmin ? adminMenuItems : memberMenuItems}
+                align="right"
+              />
             </div>
 
             <div
@@ -826,12 +831,20 @@ export default function ClubPageLayout({
           setClubDescription(updated.description);
           setClubBannerImage(updated.bannerImage);
         }}
+        onTransferred={() => router.refresh()}
         club={{
           id: club.id,
           name: clubName,
           description: clubDescription,
           bannerImage: clubBannerImage,
         }}
+        members={club.members
+          .filter((m) => m.user.id !== currentUserId)
+          .map((m) => ({
+            id: m.user.id,
+            name: m.user.name,
+            avatarUrl: m.user.avatarUrl,
+          }))}
       />
 
       <DeleteClubConfirmModal
@@ -847,6 +860,22 @@ export default function ClubPageLayout({
         }}
         clubId={club.id}
         clubName={clubName}
+      />
+
+      <LeaveClubConfirmModal
+        isOpen={isLeaveClubModalOpen}
+        onClose={() => setIsLeaveClubModalOpen(false)}
+        onLeft={() => {
+          const otherClub = userClubs.find((c) => c.id !== club.id);
+          if (otherClub) {
+            router.push(`/clubs/${otherClub.id}`);
+          } else {
+            router.push("/no-club");
+          }
+        }}
+        clubId={club.id}
+        clubName={clubName}
+        userId={currentUserId}
       />
 
       {/* Invite Friends Modal */}
