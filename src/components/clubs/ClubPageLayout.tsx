@@ -743,7 +743,8 @@ export default function ClubPageLayout({
         {(() => {
           const hasCurrentRead = revealedRiffs.some(hasUnreadForUser);
           if (showGettingStarted && !activeRiff) return null;
-          const showSection = activeRiff || isAdmin || !hasCurrentRead;
+          const showSection =
+            activeRiff || isAdmin || isCoHost || !hasCurrentRead;
           if (!showSection) return null;
 
           const hostName =

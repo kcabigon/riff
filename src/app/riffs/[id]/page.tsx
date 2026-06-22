@@ -133,6 +133,8 @@ export default async function RiffPage({
   );
   const isAdmin =
     riff.club.adminId === userId || riff.club.moderatorId === userId;
+  const canDeleteRiff =
+    riff.club.adminId === userId || riff.creatorId === userId;
 
   // ID of the user's unsubmitted piece — needed for late submission on revealed riffs
   const draftPieceId =
@@ -254,6 +256,7 @@ export default async function RiffPage({
       riff={serializedRiff}
       currentUserId={userId}
       isAdmin={isAdmin}
+      canDeleteRiff={canDeleteRiff}
       isJoined={isJoined}
       hasDraft={hasDraft}
       hasSubmitted={hasSubmitted}
