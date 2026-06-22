@@ -81,7 +81,8 @@ export default function TransferHostModal({
             lineHeight: 1.6,
           }}
         >
-          You will become a regular member.
+          You&apos;re handing over the keys to a new club host. Only they can
+          start riffs, reveal pieces, and edit/delete the club.
         </p>
         <p
           style={{
@@ -94,6 +95,7 @@ export default function TransferHostModal({
           }}
         >
           This can&apos;t be undone without the new host&apos;s help.
+          You&apos;ll remain as a club member.
         </p>
       </div>
 
