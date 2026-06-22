@@ -54,6 +54,7 @@ interface MyRiffsClientProps {
   riffs: Riff[];
   currentUserId: string;
   readCounts: Record<string, number>;
+  predictedVolumeByClub: Record<string, number>;
 }
 
 export default function MyRiffsClient({
@@ -63,6 +64,7 @@ export default function MyRiffsClient({
   riffs,
   currentUserId,
   readCounts,
+  predictedVolumeByClub,
 }: MyRiffsClientProps) {
   const [activeTab, setActiveTab] = useState<"current" | "past">("current");
 
@@ -228,7 +230,9 @@ export default function MyRiffsClient({
                         hasSubmitted={hasSubmitted}
                         currentUserId={currentUserId}
                         isAdmin={false}
-                        predictedVolumeNumber={riff.volumeNumber ?? undefined}
+                        predictedVolumeNumber={
+                          predictedVolumeByClub[riff.club.id]
+                        }
                         clubName={riff.club.name}
                       />
                     );

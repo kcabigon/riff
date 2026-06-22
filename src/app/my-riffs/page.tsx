@@ -74,17 +74,38 @@ export default async function MyRiffsPage() {
   const riffs = participations.map((p) => p.riff);
   const riffIds = riffs.map((r) => r.id);
 
-  const pieceReads =
+  // For active riffs, compute predictedVolumeNumber per club (count of REVEALED+COMPLETED riffs + 1)
+  const activeClubIds = [
+    ...new Set(riffs.filter((r) => r.status === "ACTIVE").map((r) => r.clubId)),
+  ];
+
+  const [pieceReads, volumeCounts] = await Promise.all([
     riffIds.length > 0
-      ? await prisma.pieceRead.findMany({
+      ? prisma.pieceRead.findMany({
           where: { userId, riffId: { in: riffIds } },
           select: { riffId: true },
         })
-      : [];
+      : Promise.resolve([]),
+    activeClubIds.length > 0
+      ? prisma.riff.groupBy({
+          by: ["clubId"],
+          where: {
+            clubId: { in: activeClubIds },
+            status: { in: ["REVEALED", "COMPLETED"] },
+          },
+          _count: { id: true },
+        })
+      : Promise.resolve([]),
+  ]);
 
   const readCounts: Record<string, number> = {};
   for (const read of pieceReads) {
     readCounts[read.riffId] = (readCounts[read.riffId] || 0) + 1;
+  }
+
+  const predictedVolumeByClub: Record<string, number> = {};
+  for (const row of volumeCounts) {
+    predictedVolumeByClub[row.clubId] = row._count.id + 1;
   }
 
   const currentClub =
@@ -116,6 +137,7 @@ export default async function MyRiffsPage() {
       riffs={serializedRiffs}
       currentUserId={userId}
       readCounts={readCounts}
+      predictedVolumeByClub={predictedVolumeByClub}
     />
   );
 }
