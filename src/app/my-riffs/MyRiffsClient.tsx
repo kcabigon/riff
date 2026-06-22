@@ -132,49 +132,39 @@ export default function MyRiffsClient({
           padding: "32px 24px 64px",
         }}
       >
-        {/* Header + tabs on same line */}
-        <div
+        <h1
           style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: "32px",
+            fontFamily: "var(--font-dm-serif-text)",
+            fontSize: "32px",
+            fontWeight: 400,
+            color: "#000000",
+            margin: "0 0 24px 0",
           }}
         >
-          <h1
-            style={{
-              fontFamily: "var(--font-dm-serif-text)",
-              fontSize: "32px",
-              fontWeight: 400,
-              color: "#000000",
-              margin: 0,
-            }}
-          >
-            My Riffs
-          </h1>
+          My Riffs
+        </h1>
 
-          <div style={{ display: "flex", gap: "12px" }}>
-            {tabs.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                style={{
-                  padding: activeTab === tab.key ? "6px 16px" : "8px 18px",
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "14px",
-                  fontWeight: 400,
-                  color: "#000000",
-                  backgroundColor: "#FFFFFF",
-                  border: activeTab === tab.key ? "2px solid #000000" : "none",
-                  boxShadow:
-                    activeTab === tab.key ? "3px 3px 0px #000000" : "none",
-                  cursor: "pointer",
-                }}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+        <div style={{ display: "flex", gap: "12px", marginBottom: "32px" }}>
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              style={{
+                padding: activeTab === tab.key ? "6px 16px" : "8px 18px",
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "14px",
+                fontWeight: 400,
+                color: "#000000",
+                backgroundColor: "#FFFFFF",
+                border: activeTab === tab.key ? "2px solid #000000" : "none",
+                boxShadow:
+                  activeTab === tab.key ? "3px 3px 0px #000000" : "none",
+                cursor: "pointer",
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
         {/* Current Tab */}
         {activeTab === "current" && (
