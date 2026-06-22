@@ -10,8 +10,6 @@ export type Environment = "development" | "staging" | "production";
  * @returns The current environment (development, staging, or production)
  */
 export function getEnvironment(): Environment {
-  const env: string = process.env.NODE_ENV || "development";
-
   // Check if we're in Vercel preview deployment (staging)
   if (process.env.VERCEL_ENV === "preview") {
     return "staging";
@@ -23,12 +21,8 @@ export function getEnvironment(): Environment {
   }
 
   // Default based on NODE_ENV
-  if (env === "production") {
+  if (process.env.NODE_ENV === "production") {
     return "production";
-  }
-
-  if (env === "staging") {
-    return "staging";
   }
 
   return "development";
@@ -63,7 +57,7 @@ export function getBaseUrl(): string {
   // Canonical URL takes priority — this is the custom domain (e.g. letsriff.app)
   // and is set manually in Vercel env vars for both staging and production.
   if (process.env.NEXTAUTH_URL) {
-    return process.env.NEXTAUTH_URL;
+    return process.env.NEXTAUTH_URL.replace(/\/$/, "");
   }
 
   // VERCEL_URL is auto-injected by Vercel but resolves to the internal deployment
@@ -71,6 +65,12 @@ export function getBaseUrl(): string {
   // fallback for preview deployments where NEXTAUTH_URL isn't set.
   if (process.env.VERCEL_URL) {
     return `https://${process.env.VERCEL_URL}`;
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    console.error(
+      "getBaseUrl: neither NEXTAUTH_URL nor VERCEL_URL is set — falling back to localhost. Email links will be broken."
+    );
   }
 
   return "http://localhost:3000";
@@ -82,29 +82,4 @@ export function getBaseUrl(): string {
 export function getEnvironmentLabel(): string {
   const env = getEnvironment();
   return env.toUpperCase();
-}
-
-/**
- * Get environment-specific configuration
- */
-export function getConfig() {
-  const env = getEnvironment();
-
-  return {
-    environment: env,
-    isDevelopment: isDevelopment(),
-    isStaging: isStaging(),
-    isProduction: isProduction(),
-    baseUrl: getBaseUrl(),
-    apiUrl: `${getBaseUrl()}/api`,
-    // Log level based on environment
-    logLevel:
-      env === "development" ? "debug" : env === "staging" ? "info" : "error",
-    // Feature flags
-    features: {
-      showEnvironmentBadge: !isProduction(),
-      enableDebugTools: isDevelopment(),
-      enableAnalytics: isProduction(),
-    },
-  };
 }
