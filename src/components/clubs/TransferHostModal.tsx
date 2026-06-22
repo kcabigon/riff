@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Modal from "@/components/shared/Modal";
+import DestructiveButton from "@/components/DestructiveButton";
 
 interface TransferHostModalProps {
   isOpen: boolean;
@@ -131,24 +132,14 @@ export default function TransferHostModal({
         </select>
 
         {selectedMemberId && !showConfirm && (
-          <button
+          <DestructiveButton
+            size="lg"
             type="button"
             onClick={() => setShowConfirm(true)}
-            style={{
-              backgroundColor: "#DC2626",
-              border: "2px solid #000000",
-              boxShadow: "8px 8px 0px 0px #000000",
-              padding: "12px 48px",
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              color: "#FFFFFF",
-              cursor: "pointer",
-              width: "100%",
-            }}
+            style={{ width: "100%" }}
           >
             Transfer host
-          </button>
+          </DestructiveButton>
         )}
 
         {showConfirm && (
@@ -167,27 +158,14 @@ export default function TransferHostModal({
               <strong>{selectedMember?.name || "this member"}</strong>?
             </p>
             <div style={{ display: "flex", gap: "8px" }}>
-              <button
+              <DestructiveButton
                 type="button"
                 onClick={handleTransfer}
                 disabled={isTransferring}
-                style={{
-                  flex: 1,
-                  backgroundColor: isTransferring ? "#E6E6E6" : "#DC2626",
-                  border: "2px solid #000000",
-                  boxShadow: isTransferring
-                    ? "none"
-                    : "4px 4px 0px 0px #000000",
-                  padding: "10px 16px",
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "14px",
-                  fontWeight: 300,
-                  color: isTransferring ? "#9C9C9C" : "#FFFFFF",
-                  cursor: isTransferring ? "not-allowed" : "pointer",
-                }}
+                style={{ flex: 1 }}
               >
                 {isTransferring ? "Transferring..." : "Confirm"}
-              </button>
+              </DestructiveButton>
               <button
                 type="button"
                 onClick={() => setShowConfirm(false)}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Modal from "@/components/shared/Modal";
+import DestructiveButton from "@/components/DestructiveButton";
 
 interface LeaveClubConfirmModalProps {
   isOpen: boolean;
@@ -103,25 +104,14 @@ export default function LeaveClubConfirmModal({
         </p>
       )}
 
-      <button
+      <DestructiveButton
+        size="lg"
         onClick={handleLeave}
         disabled={isLeaving}
-        style={{
-          backgroundColor: isLeaving ? "#E6E6E6" : "#DC2626",
-          border: "2px solid #000000",
-          boxShadow: isLeaving ? "none" : "8px 8px 0px 0px #000000",
-          padding: "12px 48px",
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "16px",
-          fontWeight: 300,
-          color: isLeaving ? "#9C9C9C" : "#FFFFFF",
-          cursor: isLeaving ? "not-allowed" : "pointer",
-          width: "100%",
-          marginBottom: "16px",
-        }}
+        style={{ width: "100%", marginBottom: "16px" }}
       >
         {isLeaving ? "Leaving..." : "Leave club"}
-      </button>
+      </DestructiveButton>
 
       <div style={{ textAlign: "center" }}>
         <button
