@@ -20,14 +20,12 @@ export default function TransferHostModal({
   members,
 }: TransferHostModalProps) {
   const [selectedMemberId, setSelectedMemberId] = useState("");
-  const [showConfirm, setShowConfirm] = useState(false);
   const [isTransferring, setIsTransferring] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isOpen) {
       setSelectedMemberId("");
-      setShowConfirm(false);
       setIsTransferring(false);
       setError(null);
     }
@@ -59,8 +57,6 @@ export default function TransferHostModal({
       setIsTransferring(false);
     }
   };
-
-  const selectedMember = members.find((m) => m.id === selectedMemberId);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Transfer host" size="sm">
@@ -105,7 +101,6 @@ export default function TransferHostModal({
           value={selectedMemberId}
           onChange={(e) => {
             setSelectedMemberId(e.target.value);
-            setShowConfirm(false);
             setError(null);
           }}
           style={{
@@ -131,60 +126,16 @@ export default function TransferHostModal({
           ))}
         </select>
 
-        {selectedMemberId && !showConfirm && (
+        {selectedMemberId && (
           <DestructiveButton
             size="lg"
             type="button"
-            onClick={() => setShowConfirm(true)}
+            onClick={handleTransfer}
+            disabled={isTransferring}
             style={{ width: "100%" }}
           >
-            Transfer host
+            {isTransferring ? "Transferring..." : "Transfer host"}
           </DestructiveButton>
-        )}
-
-        {showConfirm && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "13px",
-                fontWeight: 300,
-                color: "#DC2626",
-                margin: 0,
-                lineHeight: 1.5,
-              }}
-            >
-              Transfer host to{" "}
-              <strong>{selectedMember?.name || "this member"}</strong>?
-            </p>
-            <div style={{ display: "flex", gap: "8px" }}>
-              <DestructiveButton
-                type="button"
-                onClick={handleTransfer}
-                disabled={isTransferring}
-                style={{ flex: 1 }}
-              >
-                {isTransferring ? "Transferring..." : "Confirm"}
-              </DestructiveButton>
-              <button
-                type="button"
-                onClick={() => setShowConfirm(false)}
-                style={{
-                  flex: 1,
-                  backgroundColor: "#FFFFFF",
-                  border: "2px solid #000000",
-                  padding: "10px 16px",
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "14px",
-                  fontWeight: 300,
-                  color: "#000000",
-                  cursor: "pointer",
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
         )}
 
         {error && (
