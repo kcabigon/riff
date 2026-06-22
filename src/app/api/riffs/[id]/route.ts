@@ -303,8 +303,7 @@ export async function PATCH(
         }).catch(() => {});
 
         // Send riff created emails to all club members except the creator
-        const appUrl = getBaseUrl();
-        const clubUrl = `${appUrl}/clubs/${riff.clubId}`;
+        const riffCreatedUrl = `${getBaseUrl()}/riffs/${riffId}`;
         prisma.clubMember
           .findMany({
             where: { clubId: riff.clubId, userId: { not: actorId } },
@@ -322,7 +321,7 @@ export async function PATCH(
                     email: m.user.email,
                     actorName: updatedRiff.creator.name || "Your host",
                     clubName: updatedRiff.club.name,
-                    clubUrl,
+                    riffUrl: riffCreatedUrl,
                     riffTitle: riff.title,
                     prompt: riff.prompt,
                     deadline: riff.deadline ?? null,

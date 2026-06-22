@@ -218,7 +218,7 @@ export async function sendRiffCreatedEmail({
   email,
   actorName,
   clubName,
-  clubUrl,
+  riffUrl,
   riffTitle,
   prompt,
   deadline,
@@ -226,7 +226,7 @@ export async function sendRiffCreatedEmail({
   email: string;
   actorName: string;
   clubName: string;
-  clubUrl: string;
+  riffUrl: string;
   riffTitle?: string | null;
   prompt?: string | null;
   deadline?: Date | null;
@@ -239,7 +239,7 @@ export async function sendRiffCreatedEmail({
       html: getRiffCreatedEmailTemplate({
         actorName,
         clubName,
-        clubUrl,
+        riffUrl,
         riffTitle,
         prompt,
         deadline,
@@ -374,11 +374,11 @@ function getOnboardingEmailTemplate(magicLink: string): string {
 function getRiffCreatedEmailTemplate({
   actorName,
   clubName,
-  clubUrl,
+  riffUrl,
 }: {
   actorName: string;
   clubName: string;
-  clubUrl: string;
+  riffUrl: string;
   riffTitle?: string | null;
   prompt?: string | null;
   deadline?: Date | null;
@@ -395,7 +395,7 @@ function getRiffCreatedEmailTemplate({
             </td>
           </tr>
 
-          ${emailButton("Let's riff", clubUrl)}`,
+          ${emailButton("Let's riff", riffUrl)}`,
   });
 }
 
