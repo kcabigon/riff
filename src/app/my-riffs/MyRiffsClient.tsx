@@ -10,6 +10,7 @@ import {
   hasUnreadPieces,
   isRiffFullyRead,
 } from "@/lib/riff-utils";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 
 interface RiffPiece {
   submittedAt: string | null;
@@ -67,6 +68,7 @@ export default function MyRiffsClient({
   predictedVolumeByClub,
 }: MyRiffsClientProps) {
   const [activeTab, setActiveTab] = useState<"current" | "past">("current");
+  const isMobile = useIsMobile();
 
   const otherSubmittedCount = (riff: Riff) =>
     getSubmittedPieces(riff.pieces).filter(
@@ -250,8 +252,10 @@ export default function MyRiffsClient({
                 <div
                   style={{
                     display: "flex",
-                    flexDirection: "column",
-                    gap: "32px",
+                    flexDirection: isMobile ? "column" : "row",
+                    gap: isMobile ? "32px" : "40px",
+                    overflowX: isMobile ? "visible" : "auto",
+                    paddingBottom: isMobile ? "0" : "16px",
                   }}
                 >
                   {readingRiffs.map((riff) => (

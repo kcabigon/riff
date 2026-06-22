@@ -59,7 +59,7 @@ export default function ReadyToRevealCard({
       style={{
         display: "flex",
         flexDirection: "column",
-        alignItems: "center",
+        alignItems: "flex-start",
         gap: "12px",
       }}
     >
@@ -71,7 +71,6 @@ export default function ReadyToRevealCard({
             fontWeight: 300,
             color: "#808080",
             margin: 0,
-            textAlign: "center",
           }}
         >
           {clubName}
