@@ -112,7 +112,8 @@ export default function AssignCoHostModal({
               lineHeight: 1.6,
             }}
           >
-            The co-host can start riffs, reveal pieces, and edit club details.
+            Host with a friend. Your co-host can start and reveal riffs, and
+            edit club details.
           </p>
           <p
             style={{
@@ -124,7 +125,8 @@ export default function AssignCoHostModal({
               lineHeight: 1.6,
             }}
           >
-            Only one co-host per club. You remain the host.
+            You stay in control — they can&apos;t delete the club or transfer
+            admin. You can remove them anytime.
           </p>
         </div>
 
