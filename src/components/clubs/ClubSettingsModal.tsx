@@ -16,33 +16,23 @@ interface ClubUpdatedData {
   bannerImage: string | null;
 }
 
-interface ClubMember {
-  id: string;
-  name: string | null;
-  avatarUrl: string | null;
-}
-
 interface ClubSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onUpdated: (updated: ClubUpdatedData) => void;
-  onTransferred: () => void;
   club: {
     id: string;
     name: string;
     description: string | null;
     bannerImage: string | null;
   };
-  members: ClubMember[];
 }
 
 export default function ClubSettingsModal({
   isOpen,
   onClose,
   onUpdated,
-  onTransferred,
   club,
-  members,
 }: ClubSettingsModalProps) {
   const [name, setName] = useState(club.name);
   const [description, setDescription] = useState(club.description || "");
@@ -54,12 +44,6 @@ export default function ClubSettingsModal({
   const [error, setError] = useState<string | null>(null);
   const uploadFlowRef = useRef<ImageUploadFlowHandle>(null);
 
-  // Transfer host state
-  const [selectedMemberId, setSelectedMemberId] = useState("");
-  const [showTransferConfirm, setShowTransferConfirm] = useState(false);
-  const [isTransferring, setIsTransferring] = useState(false);
-  const [transferError, setTransferError] = useState<string | null>(null);
-
   // Reset form to current saved values each time the modal opens
   useEffect(() => {
     if (isOpen) {
@@ -68,9 +52,6 @@ export default function ClubSettingsModal({
       setBannerImage(club.bannerImage);
       setShowBannerChange(false);
       setError(null);
-      setSelectedMemberId("");
-      setShowTransferConfirm(false);
-      setTransferError(null);
     }
   }, [isOpen]);
 
@@ -122,35 +103,6 @@ export default function ClubSettingsModal({
       setIsSubmitting(false);
     }
   };
-
-  const handleTransfer = async () => {
-    if (!selectedMemberId) return;
-    setIsTransferring(true);
-    setTransferError(null);
-
-    try {
-      const res = await fetch(`/api/clubs/${club.id}/transfer-admin`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ targetUserId: selectedMemberId }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        setTransferError(data.error || "Failed to transfer host");
-        setIsTransferring(false);
-        return;
-      }
-
-      onClose();
-      onTransferred();
-    } catch {
-      setTransferError("Something went wrong. Please try again.");
-      setIsTransferring(false);
-    }
-  };
-
-  const selectedMember = members.find((m) => m.id === selectedMemberId);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Club details" size="md">
@@ -292,168 +244,6 @@ export default function ClubSettingsModal({
           </PrimaryButton>
         </div>
       </form>
-
-      {/* Transfer host — only show if there are other members */}
-      {members.length > 0 && (
-        <div
-          style={{
-            marginTop: "32px",
-            paddingTop: "24px",
-            borderTop: "1px solid #E6E6E6",
-          }}
-        >
-          <Tagline
-            text="Transfer host"
-            color="#DC2626"
-            textColor="#000000"
-            fontSize={16}
-            width={148}
-            align="left"
-          />
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              fontWeight: 300,
-              color: "#808080",
-              margin: "8px 0 16px",
-              lineHeight: 1.5,
-            }}
-          >
-            Hand off host access to another member. This can&apos;t be undone
-            without their help.
-          </p>
-
-          <select
-            value={selectedMemberId}
-            onChange={(e) => {
-              setSelectedMemberId(e.target.value);
-              setShowTransferConfirm(false);
-              setTransferError(null);
-            }}
-            style={{
-              width: "100%",
-              padding: "10px 12px",
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              fontWeight: 300,
-              color: selectedMemberId ? "#000000" : "#9C9C9C",
-              backgroundColor: "#FFFFFF",
-              border: "2px solid #000000",
-              borderRadius: 0,
-              appearance: "none",
-              cursor: "pointer",
-              marginBottom: "12px",
-            }}
-          >
-            <option value="">Choose a member...</option>
-            {members.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name || "Unknown"}
-              </option>
-            ))}
-          </select>
-
-          {selectedMemberId && !showTransferConfirm && (
-            <button
-              type="button"
-              onClick={() => setShowTransferConfirm(true)}
-              style={{
-                backgroundColor: "#FFFFFF",
-                border: "2px solid #DC2626",
-                padding: "10px 24px",
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: 300,
-                color: "#DC2626",
-                cursor: "pointer",
-                width: "100%",
-              }}
-            >
-              Transfer host to {selectedMember?.name || "this member"}
-            </button>
-          )}
-
-          {showTransferConfirm && (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "8px",
-              }}
-            >
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "13px",
-                  fontWeight: 300,
-                  color: "#DC2626",
-                  margin: 0,
-                  lineHeight: 1.5,
-                }}
-              >
-                Transfer host to{" "}
-                <strong>{selectedMember?.name || "this member"}</strong>? You
-                will become a regular member.
-              </p>
-              <div style={{ display: "flex", gap: "8px" }}>
-                <button
-                  type="button"
-                  onClick={handleTransfer}
-                  disabled={isTransferring}
-                  style={{
-                    flex: 1,
-                    backgroundColor: isTransferring ? "#E6E6E6" : "#DC2626",
-                    border: "2px solid #000000",
-                    boxShadow: isTransferring
-                      ? "none"
-                      : "4px 4px 0px 0px #000000",
-                    padding: "10px 16px",
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "14px",
-                    fontWeight: 300,
-                    color: isTransferring ? "#9C9C9C" : "#FFFFFF",
-                    cursor: isTransferring ? "not-allowed" : "pointer",
-                  }}
-                >
-                  {isTransferring ? "Transferring..." : "Confirm"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowTransferConfirm(false)}
-                  style={{
-                    flex: 1,
-                    backgroundColor: "#FFFFFF",
-                    border: "2px solid #000000",
-                    padding: "10px 16px",
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "14px",
-                    fontWeight: 300,
-                    color: "#000000",
-                    cursor: "pointer",
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
-
-          {transferError && (
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "12px",
-                fontWeight: 300,
-                color: "#DC2626",
-                margin: "8px 0 0",
-              }}
-            >
-              {transferError}
-            </p>
-          )}
-        </div>
-      )}
     </Modal>
   );
 }

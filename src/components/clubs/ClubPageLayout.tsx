@@ -26,6 +26,7 @@ import {
 } from "@/lib/riff-utils";
 import DeleteClubConfirmModal from "@/components/clubs/DeleteClubConfirmModal";
 import LeaveClubConfirmModal from "@/components/clubs/LeaveClubConfirmModal";
+import TransferHostModal from "@/components/clubs/TransferHostModal";
 import GettingStartedSection from "@/components/tutorial/GettingStartedSection";
 
 interface ClubMember {
@@ -132,6 +133,7 @@ export default function ClubPageLayout({
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isDeleteClubModalOpen, setIsDeleteClubModalOpen] = useState(false);
   const [isLeaveClubModalOpen, setIsLeaveClubModalOpen] = useState(false);
+  const [isTransferHostModalOpen, setIsTransferHostModalOpen] = useState(false);
   const [currentActiveRiff, setCurrentActiveRiff] = useState<Riff | null>(
     activeRiff
   );
@@ -150,6 +152,12 @@ export default function ClubPageLayout({
       onClick: () => setIsInviteModalOpen(true),
     },
     { type: "divider" as const },
+    {
+      type: "action" as const,
+      label: "Transfer host",
+      color: "#DC2626",
+      onClick: () => setIsTransferHostModalOpen(true),
+    },
     {
       type: "action" as const,
       label: "Delete club",
@@ -831,20 +839,12 @@ export default function ClubPageLayout({
           setClubDescription(updated.description);
           setClubBannerImage(updated.bannerImage);
         }}
-        onTransferred={() => router.refresh()}
         club={{
           id: club.id,
           name: clubName,
           description: clubDescription,
           bannerImage: clubBannerImage,
         }}
-        members={club.members
-          .filter((m) => m.user.id !== currentUserId)
-          .map((m) => ({
-            id: m.user.id,
-            name: m.user.name,
-            avatarUrl: m.user.avatarUrl,
-          }))}
       />
 
       <DeleteClubConfirmModal
@@ -860,6 +860,16 @@ export default function ClubPageLayout({
         }}
         clubId={club.id}
         clubName={clubName}
+      />
+
+      <TransferHostModal
+        isOpen={isTransferHostModalOpen}
+        onClose={() => setIsTransferHostModalOpen(false)}
+        onTransferred={() => router.refresh()}
+        clubId={club.id}
+        members={club.members
+          .filter((m) => m.user.id !== currentUserId)
+          .map((m) => ({ id: m.user.id, name: m.user.name }))}
       />
 
       <LeaveClubConfirmModal
