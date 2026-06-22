@@ -160,7 +160,7 @@ const ReplyThread = forwardRef<ReplyThreadHandle, ReplyThreadProps>(
           });
         },
       }),
-      []  
+      []
       // Empty deps intentional — closures use refs which are always current
     );
 
@@ -287,6 +287,7 @@ const ReplyThread = forwardRef<ReplyThreadHandle, ReplyThreadProps>(
                             variant="light"
                             align="right"
                             size="sm"
+                            openUp
                             items={[
                               {
                                 type: "action",

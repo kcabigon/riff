@@ -319,7 +319,10 @@ export default function CommentModal({
             ref={scrollRef}
             style={{
               overflowY: "auto",
-              padding: replyFocused ? "16px" : "16px 16px 64px",
+              padding:
+                replyFocused || !comment?.replies.length
+                  ? "16px"
+                  : "16px 16px 32px",
               flex: 1,
               minHeight: 0,
             }}
