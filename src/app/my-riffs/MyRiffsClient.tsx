@@ -210,31 +210,42 @@ export default function MyRiffsClient({
                       (p) => p.piece.authorId === currentUserId
                     );
                     return (
-                      <RiffCard
-                        key={riff.id}
-                        riff={{
-                          id: riff.id,
-                          title: riff.title,
-                          volumeNumber: riff.volumeNumber,
-                          status: riff.status,
-                          prompt: riff.prompt,
-                          deadline: riff.deadline
-                            ? new Date(riff.deadline)
-                            : null,
-                          createdAt: new Date(riff.createdAt),
-                          participants: riff.participants,
-                          pieces: riff.pieces,
-                        }}
-                        isJoined={true}
-                        hasDraft={hasDraft}
-                        hasSubmitted={hasSubmitted}
-                        currentUserId={currentUserId}
-                        isAdmin={false}
-                        predictedVolumeNumber={
-                          predictedVolumeByClub[riff.club.id]
-                        }
-                        clubName={riff.club.name}
-                      />
+                      <div key={riff.id}>
+                        <RiffCard
+                          riff={{
+                            id: riff.id,
+                            title: riff.title,
+                            volumeNumber: riff.volumeNumber,
+                            status: riff.status,
+                            prompt: riff.prompt,
+                            deadline: riff.deadline
+                              ? new Date(riff.deadline)
+                              : null,
+                            createdAt: new Date(riff.createdAt),
+                            participants: riff.participants,
+                            pieces: riff.pieces,
+                          }}
+                          isJoined={true}
+                          hasDraft={hasDraft}
+                          hasSubmitted={hasSubmitted}
+                          currentUserId={currentUserId}
+                          isAdmin={false}
+                          predictedVolumeNumber={
+                            predictedVolumeByClub[riff.club.id]
+                          }
+                        />
+                        <p
+                          style={{
+                            fontFamily: "var(--font-dm-sans)",
+                            fontSize: "12px",
+                            fontWeight: 300,
+                            color: "#808080",
+                            margin: "8px 0 0 0",
+                          }}
+                        >
+                          {riff.club.name}
+                        </p>
+                      </div>
                     );
                   })}
                 </div>

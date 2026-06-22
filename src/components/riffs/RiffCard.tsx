@@ -51,7 +51,6 @@ interface RiffCardProps {
   onJoin?: () => void;
   onReveal?: () => void;
   predictedVolumeNumber?: number;
-  clubName?: string;
 }
 
 export default function RiffCard({
@@ -64,7 +63,6 @@ export default function RiffCard({
   onJoin,
   onReveal,
   predictedVolumeNumber,
-  clubName,
 }: RiffCardProps) {
   const [isCardHovered, setIsCardHovered] = useState(false);
   const router = useRouter();
@@ -140,9 +138,7 @@ export default function RiffCard({
               margin: 0,
             }}
           >
-            {[clubName, getRiffDisplayTitle(riff, predictedVolumeNumber)]
-              .filter(Boolean)
-              .join(" · ")}
+            {getRiffDisplayTitle(riff, predictedVolumeNumber)}
           </h3>
 
           {/* Date/Deadline */}
