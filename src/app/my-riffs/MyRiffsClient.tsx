@@ -145,27 +145,25 @@ export default function MyRiffsClient({
         {/* Tabs */}
         <div
           style={{
-            display: "flex",
-            borderBottom: "1px solid #E6E6E6",
+            display: "inline-flex",
+            border: "2px solid #000000",
+            boxShadow: "4px 4px 0px 0px #000000",
             marginBottom: "32px",
           }}
         >
-          {tabs.map((tab) => (
+          {tabs.map((tab, i) => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               style={{
-                padding: "8px 16px",
+                padding: "10px 24px",
                 fontFamily: "var(--font-dm-sans)",
                 fontSize: "16px",
-                fontWeight: activeTab === tab.key ? 500 : 300,
-                color: activeTab === tab.key ? "#000000" : "#808080",
-                background: "none",
+                fontWeight: activeTab === tab.key ? 700 : 300,
+                color: activeTab === tab.key ? "#FFFFFF" : "#000000",
+                backgroundColor: activeTab === tab.key ? "#000000" : "#FFFFFF",
                 border: "none",
-                borderBottom:
-                  activeTab === tab.key
-                    ? "2px solid #000000"
-                    : "2px solid transparent",
+                borderLeft: i > 0 ? "2px solid #000000" : "none",
                 cursor: "pointer",
               }}
             >
