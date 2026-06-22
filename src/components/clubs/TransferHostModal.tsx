@@ -135,7 +135,7 @@ export default function TransferHostModal({
           <CTAButton
             type="button"
             onClick={() => setShowConfirm(true)}
-            accentColor="#EECF01"
+            accentColor="#DC2626"
             style={{ width: "100%" }}
           >
             Transfer host
