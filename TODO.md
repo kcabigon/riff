@@ -147,6 +147,7 @@ Last updated: May 16, 2026
 ## Backlog (nice to have)
 
 - [ ] Collections system (personal, group, circle)
+- [ ] 🔨 @jarric — My Riffs page (`/my-riffs`): aggregate all club riffs cross-club, tabs for Current (Writing/Reading) and Past (by club), club badge on cards, avatar dropdown nav entry
 - [ ] 🔨 @jarric — Multi-level sharing UI (CLUB, RIFF, INDIVIDUAL, PUBLIC)
 - [ ] Permission helpers / reusable middleware
 - [ ] Refactor editor: extract shared tiptap logic into `useRiffEditor` hook + unified `EditorToolbar`
