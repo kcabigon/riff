@@ -78,8 +78,9 @@ export default function TransferHostModal({
             lineHeight: 1.6,
           }}
         >
-          You&apos;re handing over the keys to a new club host. Only they can
-          start riffs, reveal pieces, and edit/delete the club.
+          You&apos;re handing over admin privileges to a new host. They can
+          start riffs, reveal pieces, edit and delete the club, and assign a
+          co-host.
         </p>
         <p
           style={{

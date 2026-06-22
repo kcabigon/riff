@@ -125,8 +125,8 @@ export default function AssignCoHostModal({
               lineHeight: 1.6,
             }}
           >
-            You stay in control — they can&apos;t delete the club or transfer
-            admin. You can remove them anytime.
+            You stay in control — they can&apos;t transfer admin privileges or
+            delete the club. You can remove them anytime.
           </p>
         </div>
 
