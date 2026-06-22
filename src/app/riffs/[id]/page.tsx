@@ -57,6 +57,7 @@ export default async function RiffPage({
           id: true,
           name: true,
           adminId: true,
+          moderatorId: true,
           admin: { select: { firstName: true } },
         },
       },
@@ -130,7 +131,8 @@ export default async function RiffPage({
   const hasSubmitted = riff.pieces.some(
     (p) => p.piece.authorId === userId && p.submittedAt !== null
   );
-  const isAdmin = riff.club.adminId === userId;
+  const isAdmin =
+    riff.club.adminId === userId || riff.club.moderatorId === userId;
 
   // ID of the user's unsubmitted piece — needed for late submission on revealed riffs
   const draftPieceId =

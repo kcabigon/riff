@@ -783,7 +783,7 @@ export default function ClubPageLayout({
                   hasDraft={hasDraft}
                   hasSubmitted={hasSubmitted}
                   currentUserId={currentUserId}
-                  isAdmin={isAdmin}
+                  isAdmin={isAdmin || isCoHost}
                   onJoin={handleJoinRiff}
                   onReveal={() => setIsRevealModalOpen(true)}
                   predictedVolumeNumber={predictedVolumeNumber}
@@ -791,7 +791,7 @@ export default function ClubPageLayout({
               ) : (
                 <EmptyRiffState
                   onStartNewRiff={() => setIsCreateRiffModalOpen(true)}
-                  isAdmin={isAdmin}
+                  isAdmin={isAdmin || isCoHost}
                   hostName={hostName}
                 />
               )}
