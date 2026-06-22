@@ -47,6 +47,7 @@ interface ReplyThreadProps {
   onReplyDeleteEnd?: () => void;
   onCancel?: () => void;
   hideCompose?: boolean;
+  isComposing?: boolean;
 }
 
 const ReplyThread = forwardRef<ReplyThreadHandle, ReplyThreadProps>(
@@ -67,6 +68,7 @@ const ReplyThread = forwardRef<ReplyThreadHandle, ReplyThreadProps>(
       onReplyDeleteEnd,
       onCancel,
       hideCompose = false,
+      isComposing = false,
     },
     ref
   ) {
@@ -280,6 +282,8 @@ const ReplyThread = forwardRef<ReplyThreadHandle, ReplyThreadProps>(
                     </span>
                     {isOwn &&
                       !isEditing &&
+                      !trimmedText &&
+                      !isComposing &&
                       confirmingDeleteId !== reply.id &&
                       (hoveredReplyId === reply.id || isMobile) && (
                         <div style={{ marginLeft: "auto" }}>
@@ -371,7 +375,6 @@ const ReplyThread = forwardRef<ReplyThreadHandle, ReplyThreadProps>(
                         value={editContent}
                         onChange={(e) => {
                           setEditContent(e.target.value);
-                          e.target.style.height = "auto";
                           e.target.style.height = `${e.target.scrollHeight}px`;
                         }}
                         onKeyDown={(e) => {

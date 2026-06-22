@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Avatar from "@/components/shared/Avatar";
 import ReplyThread, { ReplyData, ReplyThreadHandle } from "./ReplyThread";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
@@ -67,6 +67,8 @@ export default function CommentModal({
   const [replyFocused, setReplyFocused] = useState(false);
   const [isEditingReply, setIsEditingReply] = useState(false);
   const [isConfirmingReplyDelete, setIsConfirmingReplyDelete] = useState(false);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+  const [isAtBottom, setIsAtBottom] = useState(false);
   const [position, setPosition] = useState<{
     top?: string;
     bottom?: string;
@@ -90,6 +92,34 @@ export default function CommentModal({
   useEffect(() => {
     return () => replyAbortRef.current?.abort();
   }, []);
+
+  // Detect whether scroll content overflows the container and whether the user
+  // has scrolled to the bottom. Used to show/hide the fade gradient and size
+  // the bottom padding so it only appears when there's content to scroll past.
+  const checkOverflow = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    // Subtract bottom padding so it doesn't inflate scrollHeight and falsely
+    // trigger overflow when content actually fits within the container.
+    const paddingBottom = parseFloat(getComputedStyle(el).paddingBottom) || 0;
+    const contentOverflows = el.scrollHeight - paddingBottom > el.clientHeight;
+    setIsOverflowing(contentOverflows);
+    setIsAtBottom(el.scrollHeight - el.scrollTop - el.clientHeight < 4);
+  }, []);
+
+  // Re-check when container size changes (viewport resize, keyboard open/close)
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(checkOverflow);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [checkOverflow]);
+
+  // Re-check when content changes (replies added/deleted, navigation)
+  useEffect(() => {
+    requestAnimationFrame(checkOverflow);
+  }, [comments[currentIndex]?.replies, currentIndex, checkOverflow]);
 
   // When a reply textarea is focused or a reply is being edited, iOS fires a
   // scroll-to-focus on the page even though the textarea is inside a
@@ -317,12 +347,13 @@ export default function CommentModal({
         >
           <div
             ref={scrollRef}
+            onScroll={checkOverflow}
             style={{
               overflowY: "auto",
               padding:
-                replyFocused || !comment?.replies.length
+                replyFocused || isEditingReply || !isOverflowing
                   ? "16px"
-                  : "16px 16px 32px",
+                  : "16px 16px 64px",
               flex: 1,
               minHeight: 0,
             }}
@@ -484,6 +515,7 @@ export default function CommentModal({
                       }
                       onReplyDeleteEnd={() => setIsConfirmingReplyDelete(false)}
                       hideCompose
+                      isComposing={!!trimmedReplyText}
                     />
                   </div>
                 )}
@@ -491,12 +523,14 @@ export default function CommentModal({
             )}
           </div>
 
-          {/* Fade gradient — hidden during parent/reply editing (edit textarea needs the space) */}
+          {/* Fade gradient — only when content overflows and user hasn't scrolled to bottom */}
           {comment &&
             comment.replies.length > 0 &&
             !isEditing &&
             !isEditingReply &&
-            !replyFocused && (
+            !replyFocused &&
+            isOverflowing &&
+            !isAtBottom && (
               <div
                 style={{
                   position: "absolute",
@@ -541,8 +575,15 @@ export default function CommentModal({
                     onBlur={() => setReplyFocused(false)}
                     onChange={(e) => {
                       setReplyText(e.target.value);
-                      e.target.style.height = "auto";
-                      e.target.style.height = `${e.target.scrollHeight}px`;
+                      const MAX_H = 156; // 6 lines × 16px × 1.5 + 12px padding
+                      e.target.style.overflow =
+                        e.target.scrollHeight > MAX_H ? "auto" : "hidden";
+                      e.target.style.height = `${Math.min(e.target.scrollHeight, MAX_H)}px`;
+                      requestAnimationFrame(() => {
+                        if (scrollRef.current)
+                          scrollRef.current.scrollTop =
+                            scrollRef.current.scrollHeight;
+                      });
                     }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && (e.metaKey || e.ctrlKey))
