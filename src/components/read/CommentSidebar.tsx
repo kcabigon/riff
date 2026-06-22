@@ -703,7 +703,7 @@ export default function CommentSidebar({
             fontFamily: "var(--font-dm-sans)",
             fontSize: "14px",
             fontWeight: 300,
-            color: "#AFAFAF",
+            color: "#9C9C9C",
             margin: 0,
             paddingTop: "32px",
             textAlign: "center",

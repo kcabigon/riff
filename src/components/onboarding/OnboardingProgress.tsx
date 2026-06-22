@@ -25,7 +25,7 @@ export default function OnboardingProgress({
           fontFamily: "var(--font-dm-sans)",
           fontSize: "14px",
           fontWeight: 300,
-          color: "#959595",
+          color: "#9C9C9C",
           margin: 0,
         }}
       >
@@ -36,6 +36,7 @@ export default function OnboardingProgress({
       <div style={{ display: "flex", gap: "12px" }}>
         {Array.from({ length: totalSteps }).map((_, index) => (
           <div
+            // eslint-disable-next-line react/no-array-index-key -- static list; length and order are stable
             key={index}
             style={{
               width: "12px",

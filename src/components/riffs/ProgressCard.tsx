@@ -21,6 +21,7 @@ interface ProgressCardProps {
   } | null;
 }
 
+/* eslint-disable riff/no-non-palette-colors -- intentional pastel rotation */
 const PLACEHOLDER_COLORS = [
   "#E8E0D5",
   "#D5E0E8",
@@ -29,6 +30,7 @@ const PLACEHOLDER_COLORS = [
   "#D5E8E0",
   "#E0D5E8",
 ];
+/* eslint-enable riff/no-non-palette-colors */
 
 export default function ProgressCard({ user, piece }: ProgressCardProps) {
   const cardBase: React.CSSProperties = {

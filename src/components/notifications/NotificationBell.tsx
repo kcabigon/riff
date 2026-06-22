@@ -71,7 +71,7 @@ export default function NotificationBell() {
               minWidth: "16px",
               height: "16px",
               borderRadius: "50%",
-              backgroundColor: "#FF4444",
+              backgroundColor: "#DC2626",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",

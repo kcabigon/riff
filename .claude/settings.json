@@ -1,13 +1,66 @@
 {
   "permissions": {
     "allow": [
-      "Bash(gh pr list*)",
-      "Bash(gh pr view*)",
-      "Bash(gh pr diff*)"
+      "Bash(git *)",
+      "Bash(npm run *)",
+      "Bash(npm install*)",
+      "Bash(npm ci*)",
+      "Bash(npx tsc*)",
+      "Bash(npx prisma generate*)",
+      "Bash(npx prettier*)",
+      "Bash(gh pr *)",
+      "Bash(gh run *)",
+      "Bash(gh issue list*)",
+      "Bash(gh issue view*)",
+      "Bash(gh repo view*)",
+      "Bash(gh release list*)",
+      "Bash(gh release view*)",
+      "Bash(kill *)",
+      "Bash(cp *)",
+      "Bash(mv *)",
+      "Bash(mkdir *)",
+      "Bash(touch *)",
+      "mcp__github__pull_request_read",
+      "mcp__github__list_pull_requests",
+      "mcp__github__search_pull_requests",
+      "mcp__github__list_issues",
+      "mcp__github__list_commits",
+      "mcp__github__get_commit",
+      "mcp__github__actions_list",
+      "mcp__github__get_file_contents",
+      "mcp__github__list_branches",
+      "mcp__github__search_code",
+      "mcp__github__search_commits",
+      "mcp__github__search_issues",
+      "mcp__github__issue_read",
+      "mcp__github__list_tags",
+      "mcp__github__list_releases",
+      "mcp__github__create_pull_request",
+      "mcp__github__update_pull_request",
+      "mcp__github__add_issue_comment",
+      "mcp__github__add_reply_to_pull_request_comment",
+      "mcp__github__add_comment_to_pending_review",
+      "mcp__github__create_branch",
+      "mcp__github__update_pull_request_branch",
+      "mcp__github__pull_request_review_write",
+      "mcp__github__resolve_review_thread",
+      "mcp__github__unresolve_review_thread"
+    ],
+    "ask": [
+      "Bash(gh pr merge*)",
+      "Bash(git clean*)",
+      "Bash(git filter-branch*)",
+      "mcp__github__merge_pull_request",
+      "mcp__github__delete_file"
     ],
     "deny": [
       "Bash(git push --force*)",
       "Bash(git push origin --force*)",
+      "Bash(git push --force-with-lease*)",
+      "Bash(git push -f*)",
+      "Bash(git push --no-verify*)",
+      "Bash(git commit --no-verify*)",
+      "Bash(git commit --no-gpg-sign*)",
       "Bash(git reset --hard* main*)",
       "Bash(git reset --hard* develop*)",
       "Bash(git reset --hard* staging*)",
@@ -19,6 +72,63 @@
       "Bash(prisma db push --accept-data-loss*)",
       "Bash(*--force-reset*)",
       "Bash(*--accept-data-loss*)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/session-start.sh",
+            "timeout": 60
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/commit-guard.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/prisma-gate.sh",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/schema-edit-guard.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/lint-sweep.sh",
+            "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/api-auth-check.sh",
+            "timeout": 5
+          }
+        ]
+      }
     ]
   }
 }

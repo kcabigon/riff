@@ -176,7 +176,7 @@ export async function sendSignInEmail(
       throw new Error(`Failed to send email: ${error.message}`);
     }
 
-    console.log("Sign-in email sent successfully:", data);
+    console.info("Sign-in email sent successfully:", data);
   } catch (error) {
     console.error("Error sending sign-in email:", error);
     throw error;
@@ -203,7 +203,7 @@ export async function sendOnboardingEmail(
       throw new Error(`Failed to send email: ${error.message}`);
     }
 
-    console.log("Onboarding email sent successfully:", data);
+    console.info("Onboarding email sent successfully:", data);
   } catch (error) {
     console.error("Error sending onboarding email:", error);
     throw error;
@@ -250,7 +250,7 @@ export async function sendRiffCreatedEmail({
       throw new Error(`Failed to send email: ${error.message}`);
     }
 
-    console.log("Riff created email sent successfully:", data);
+    console.info("Riff created email sent successfully:", data);
   } catch (error) {
     console.error("Error sending riff created email:", error);
     throw error;
@@ -294,7 +294,7 @@ export async function sendRiffRevealedEmail({
       throw new Error(`Failed to send email: ${error.message}`);
     }
 
-    console.log("Riff revealed email sent successfully:", data);
+    console.info("Riff revealed email sent successfully:", data);
   } catch (error) {
     console.error("Error sending riff revealed email:", error);
     throw error;
@@ -334,7 +334,7 @@ function getSignInEmailTemplate(magicLink: string): string {
 
           <tr>
             <td style="padding:0 40px 40px;">
-              <p style="margin:0;font-size:13px;font-weight:300;color:#999999;line-height:1.5;font-family:'DM Sans',-apple-system,sans-serif;">This link expires in 24 hours and can only be used once. If you didn't request this, ignore it.</p>
+              <p style="margin:0;font-size:13px;font-weight:300;color:#9C9C9C;line-height:1.5;font-family:'DM Sans',-apple-system,sans-serif;">This link expires in 24 hours and can only be used once. If you didn't request this, ignore it.</p>
             </td>
           </tr>`,
   });
@@ -361,7 +361,7 @@ function getOnboardingEmailTemplate(magicLink: string): string {
 
           <tr>
             <td style="padding:0 40px 40px;">
-              <p style="margin:0;font-size:13px;font-weight:300;color:#999999;line-height:1.5;font-family:'DM Sans',-apple-system,sans-serif;">This link expires in 24 hours and can only be used once. If you didn't request this, ignore it.</p>
+              <p style="margin:0;font-size:13px;font-weight:300;color:#9C9C9C;line-height:1.5;font-family:'DM Sans',-apple-system,sans-serif;">This link expires in 24 hours and can only be used once. If you didn't request this, ignore it.</p>
             </td>
           </tr>`,
   });

@@ -236,6 +236,7 @@ export default function CommentAnchor({
         fontFamily: "var(--font-playfair)",
         fontSize: "18px",
         lineHeight: 1.8,
+        // eslint-disable-next-line riff/no-non-palette-colors -- editor body text shade; intentionally slightly softer than palette black
         color: "#1a1a1a",
         userSelect: isRiffMode ? "text" : "text",
       }}

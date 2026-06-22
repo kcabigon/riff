@@ -119,6 +119,7 @@ export default function NotificationItem({
         padding: "12px 16px",
         width: "100%",
         textAlign: "left",
+        // eslint-disable-next-line riff/no-non-palette-colors -- unread indicator tint; no palette equivalent
         background: notification.isRead ? "transparent" : "#F9FFF9",
         border: "none",
         borderBottom: "1px solid #F5F5F5",
@@ -130,7 +131,8 @@ export default function NotificationItem({
       onMouseLeave={(e) => {
         e.currentTarget.style.backgroundColor = notification.isRead
           ? "transparent"
-          : "#F9FFF9";
+          : // eslint-disable-next-line riff/no-non-palette-colors -- unread indicator tint
+            "#F9FFF9";
       }}
     >
       {notification.actor ? (

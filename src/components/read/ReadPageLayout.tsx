@@ -477,7 +477,7 @@ export default function ReadPageLayout({
                   fontFamily: "var(--font-dm-sans)",
                   fontSize: "16px",
                   fontWeight: 300,
-                  color: "#666666",
+                  color: "#808080",
                   margin: "8px 0 0",
                   textAlign: "center",
                   lineHeight: "1.4",
@@ -492,7 +492,7 @@ export default function ReadPageLayout({
               style={{
                 fontFamily: "var(--font-dm-sans)",
                 fontSize: "14px",
-                color: "#999999",
+                color: "#9C9C9C",
                 margin: "12px 0 0",
                 textAlign: "center",
               }}
