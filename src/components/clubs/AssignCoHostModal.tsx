@@ -132,64 +132,41 @@ export default function AssignCoHostModal({
 
         {/* Current co-host display */}
         {currentCoHost && !isReassigning && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "12px 16px",
-              border: "2px solid #000000",
-              backgroundColor: "#FFFFFF",
-            }}
-          >
-            <div>
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "12px",
-                  fontWeight: 300,
-                  color: "#808080",
-                  margin: "0 0 2px",
-                }}
-              >
-                Current co-host
-              </p>
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 400,
-                  color: "#000000",
-                  margin: 0,
-                }}
-              >
-                {currentCoHost.name || "Unknown"}
-              </p>
-            </div>
-            <div style={{ display: "flex", gap: "8px" }}>
-              <button
-                onClick={() => setIsReassigning(true)}
-                style={{
-                  backgroundColor: "#FFFFFF",
-                  border: "2px solid #000000",
-                  boxShadow: "4px 4px 0px 0px #000000",
-                  cursor: "pointer",
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "12px",
-                  fontWeight: 300,
-                  color: "#000000",
-                  padding: "4px 12px",
-                  whiteSpace: "nowrap",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.boxShadow = "4px 4px 0px 0px #01EFFC";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow = "4px 4px 0px 0px #000000";
-                }}
-              >
-                Re-assign
-              </button>
+          <>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "12px 16px",
+                border: "2px solid #000000",
+                backgroundColor: "#FFFFFF",
+              }}
+            >
+              <div>
+                <p
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "12px",
+                    fontWeight: 300,
+                    color: "#808080",
+                    margin: "0 0 2px",
+                  }}
+                >
+                  Current co-host
+                </p>
+                <p
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "16px",
+                    fontWeight: 400,
+                    color: "#000000",
+                    margin: 0,
+                  }}
+                >
+                  {currentCoHost.name || "Unknown"}
+                </p>
+              </div>
               <button
                 onClick={handleRemove}
                 disabled={isRemoving}
@@ -210,7 +187,14 @@ export default function AssignCoHostModal({
                 {isRemoving ? "Removing..." : "Remove"}
               </button>
             </div>
-          </div>
+            <PrimaryButton
+              type="button"
+              onClick={() => setIsReassigning(true)}
+              style={{ width: "100%" }}
+            >
+              Re-assign co-host
+            </PrimaryButton>
+          </>
         )}
 
         {/* Member picker */}
