@@ -151,6 +151,25 @@ export default function TransferHostModal({
             {error}
           </p>
         )}
+
+        <div style={{ textAlign: "center" }}>
+          <button
+            onClick={onClose}
+            style={{
+              backgroundColor: "#FFFFFF",
+              border: "none",
+              cursor: "pointer",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "12px",
+              fontWeight: 300,
+              color: "#808080",
+              padding: "4px 12px",
+              textDecoration: "underline",
+            }}
+          >
+            Cancel
+          </button>
+        </div>
       </div>
     </Modal>
   );

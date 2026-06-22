@@ -153,14 +153,14 @@ export default function DeleteAccountConfirmModal({
         <button
           onClick={onClose}
           style={{
-            background: "none",
+            backgroundColor: "#FFFFFF",
             border: "none",
             cursor: "pointer",
             fontFamily: "var(--font-dm-sans)",
             fontSize: "12px",
             fontWeight: 300,
             color: "#808080",
-            padding: "4px",
+            padding: "4px 12px",
             textDecoration: "underline",
           }}
         >
