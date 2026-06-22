@@ -110,8 +110,8 @@ export default function MyRiffsClient({
   }
 
   const tabs = [
-    { key: "current" as const, label: "Current" },
-    { key: "past" as const, label: "Past" },
+    { key: "current" as const, label: "Current Riffs" },
+    { key: "past" as const, label: "Past Riffs" },
   ];
 
   return (
@@ -123,6 +123,37 @@ export default function MyRiffsClient({
         showClubDropdown={false}
       />
 
+      {/* Full-width toggle */}
+      <div
+        style={{
+          display: "flex",
+          width: "100%",
+          borderBottom: "2px solid #000000",
+        }}
+      >
+        {tabs.map((tab, i) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            style={{
+              flex: 1,
+              padding: "20px 24px",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "16px",
+              fontWeight: 700,
+              color: activeTab === tab.key ? "#FFFFFF" : "#000000",
+              backgroundColor: activeTab === tab.key ? "#000000" : "#00FF66",
+              border: "none",
+              borderRight: i < tabs.length - 1 ? "2px solid #000000" : "none",
+              cursor: "pointer",
+              textAlign: "center",
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       <div
         style={{
           maxWidth: "1000px",
@@ -130,48 +161,6 @@ export default function MyRiffsClient({
           padding: "32px 24px 64px",
         }}
       >
-        <h1
-          style={{
-            fontFamily: "var(--font-dm-serif-text)",
-            fontSize: "32px",
-            fontWeight: 400,
-            color: "#000000",
-            margin: "0 0 24px 0",
-          }}
-        >
-          My Riffs
-        </h1>
-
-        {/* Tabs */}
-        <div
-          style={{
-            display: "inline-flex",
-            gap: "8px",
-            marginBottom: "32px",
-          }}
-        >
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              style={{
-                padding: "10px 24px",
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: activeTab === tab.key ? 700 : 300,
-                color: "#000000",
-                backgroundColor: activeTab === tab.key ? "#00FF66" : "#FFFFFF",
-                border: "2px solid #000000",
-                boxShadow:
-                  activeTab === tab.key ? "4px 4px 0px 0px #000000" : "none",
-                cursor: "pointer",
-              }}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
         {/* Current Tab */}
         {activeTab === "current" && (
           <div
