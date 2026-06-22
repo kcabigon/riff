@@ -60,17 +60,19 @@ export function isProduction(): boolean {
  * @returns The base URL (without trailing slash)
  */
 export function getBaseUrl(): string {
-  // Vercel provides this automatically
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
-  }
-
-  // Use NEXTAUTH_URL if available
+  // Canonical URL takes priority — this is the custom domain (e.g. letsriff.app)
+  // and is set manually in Vercel env vars for both staging and production.
   if (process.env.NEXTAUTH_URL) {
     return process.env.NEXTAUTH_URL;
   }
 
-  // Fallback for local development
+  // VERCEL_URL is auto-injected by Vercel but resolves to the internal deployment
+  // URL (e.g. riff-abc123.vercel.app), not the custom domain. Use it only as a
+  // fallback for preview deployments where NEXTAUTH_URL isn't set.
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+
   return "http://localhost:3000";
 }
 
@@ -96,7 +98,8 @@ export function getConfig() {
     baseUrl: getBaseUrl(),
     apiUrl: `${getBaseUrl()}/api`,
     // Log level based on environment
-    logLevel: env === "development" ? "debug" : env === "staging" ? "info" : "error",
+    logLevel:
+      env === "development" ? "debug" : env === "staging" ? "info" : "error",
     // Feature flags
     features: {
       showEnvironmentBadge: !isProduction(),

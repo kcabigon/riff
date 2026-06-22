@@ -5,6 +5,7 @@
 
 import { Resend } from "resend";
 import { prisma } from "@/lib/prisma";
+import { getBaseUrl } from "@/lib/env";
 
 function getResend() {
   return new Resend(process.env.RESEND_API_KEY);
@@ -47,7 +48,7 @@ function emailShell({
   clubName?: string;
   unsubscribe?: boolean;
 }): string {
-  const baseUrl = process.env.NEXTAUTH_URL || "https://letsriff.app";
+  const baseUrl = getBaseUrl();
   const fullFooterText = unsubscribe
     ? `${footerText} · <a href="${baseUrl}/account" style="color:#bbbbbb;">Unsubscribe</a>`
     : footerText;
