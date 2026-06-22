@@ -55,6 +55,7 @@ const club = {
     "A small group of friends who write together every week. No pressure, just words on a page.",
   bannerImage: null as string | null,
   adminId: ME.id,
+  moderatorId: null as string | null,
   members: [
     { user: ME },
     { user: ALICE },

@@ -70,10 +70,22 @@ export async function POST(
         where: { id: clubId },
         data: {
           adminId: targetUserId,
-          // Clear moderatorId if the new admin was the moderator
-          ...(club.moderatorId === targetUserId && { moderatorId: null }),
+          moderatorId: null,
         },
       });
+
+      // Demote old co-host to member (if any) — moderatorId is cleared above
+      if (club.moderatorId && club.moderatorId !== targetUserId) {
+        const oldCoHostMember = club.members.find(
+          (m) => m.userId === club.moderatorId
+        );
+        if (oldCoHostMember) {
+          await tx.clubMember.update({
+            where: { id: oldCoHostMember.id },
+            data: { role: "MEMBER" },
+          });
+        }
+      }
 
       // Demote old admin to member
       const oldAdminMember = club.members.find((m) => m.userId === user.id);

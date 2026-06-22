@@ -27,6 +27,7 @@ import {
 import DeleteClubConfirmModal from "@/components/clubs/DeleteClubConfirmModal";
 import LeaveClubConfirmModal from "@/components/clubs/LeaveClubConfirmModal";
 import TransferHostModal from "@/components/clubs/TransferHostModal";
+import AssignCoHostModal from "@/components/clubs/AssignCoHostModal";
 import GettingStartedSection from "@/components/tutorial/GettingStartedSection";
 
 interface ClubMember {
@@ -83,6 +84,7 @@ interface ClubPageLayoutProps {
     description: string | null;
     bannerImage: string | null;
     adminId: string;
+    moderatorId: string | null;
     members: ClubMember[];
   };
   userClubs: Array<{ id: string; name: string }>;
@@ -134,11 +136,14 @@ export default function ClubPageLayout({
   const [isDeleteClubModalOpen, setIsDeleteClubModalOpen] = useState(false);
   const [isLeaveClubModalOpen, setIsLeaveClubModalOpen] = useState(false);
   const [isTransferHostModalOpen, setIsTransferHostModalOpen] = useState(false);
+  const [isAssignCoHostModalOpen, setIsAssignCoHostModalOpen] = useState(false);
   const [currentActiveRiff, setCurrentActiveRiff] = useState<Riff | null>(
     activeRiff
   );
   const handleAvatarClick = useProfileNavigation();
   const isMobile = useIsMobile();
+
+  const isCoHost = club.moderatorId === currentUserId;
 
   const adminMenuItems = [
     {
@@ -150,6 +155,11 @@ export default function ClubPageLayout({
       type: "action" as const,
       label: "Invite friends",
       onClick: () => setIsInviteModalOpen(true),
+    },
+    {
+      type: "action" as const,
+      label: "Assign co-host",
+      onClick: () => setIsAssignCoHostModalOpen(true),
     },
     { type: "divider" as const },
     {
@@ -163,6 +173,26 @@ export default function ClubPageLayout({
       label: "Delete club",
       color: "#DC2626",
       onClick: () => setIsDeleteClubModalOpen(true),
+    },
+  ];
+
+  const coHostMenuItems = [
+    {
+      type: "action" as const,
+      label: "Club details",
+      onClick: () => setIsClubDetailsModalOpen(true),
+    },
+    {
+      type: "action" as const,
+      label: "Invite friends",
+      onClick: () => setIsInviteModalOpen(true),
+    },
+    { type: "divider" as const },
+    {
+      type: "action" as const,
+      label: "Leave club",
+      color: "#DC2626",
+      onClick: () => setIsLeaveClubModalOpen(true),
     },
   ];
 
@@ -334,7 +364,13 @@ export default function ClubPageLayout({
                   </h1>
                   <ThreeDotButton
                     variant="dark"
-                    items={isAdmin ? adminMenuItems : memberMenuItems}
+                    items={
+                      isAdmin
+                        ? adminMenuItems
+                        : isCoHost
+                          ? coHostMenuItems
+                          : memberMenuItems
+                    }
                     align="right"
                   />
                 </div>
@@ -443,7 +479,13 @@ export default function ClubPageLayout({
             </h1>
             <ThreeDotButton
               variant="light"
-              items={isAdmin ? adminMenuItems : memberMenuItems}
+              items={
+                isAdmin
+                  ? adminMenuItems
+                  : isCoHost
+                    ? coHostMenuItems
+                    : memberMenuItems
+              }
               align="right"
             />
           </div>
@@ -550,7 +592,13 @@ export default function ClubPageLayout({
               </h1>
               <ThreeDotButton
                 variant="light"
-                items={isAdmin ? adminMenuItems : memberMenuItems}
+                items={
+                  isAdmin
+                    ? adminMenuItems
+                    : isCoHost
+                      ? coHostMenuItems
+                      : memberMenuItems
+                }
                 align="right"
               />
             </div>
@@ -886,6 +934,24 @@ export default function ClubPageLayout({
         clubId={club.id}
         clubName={clubName}
         userId={currentUserId}
+      />
+
+      <AssignCoHostModal
+        isOpen={isAssignCoHostModalOpen}
+        onClose={() => setIsAssignCoHostModalOpen(false)}
+        onUpdated={() => router.refresh()}
+        clubId={club.id}
+        currentCoHost={
+          club.moderatorId
+            ? (club.members.find((m) => m.user.id === club.moderatorId)?.user ??
+              null)
+            : null
+        }
+        members={club.members
+          .filter(
+            (m) => m.user.id !== currentUserId && m.user.id !== club.moderatorId
+          )
+          .map((m) => ({ id: m.user.id, name: m.user.name }))}
       />
 
       {/* Invite Friends Modal */}

@@ -167,13 +167,27 @@ export async function PATCH(
       );
     }
 
-    // Only creator can update title, prompt, deadline
+    // Fetch club for permission checks
+    const club = await prisma.club.findUnique({
+      where: { id: riff.clubId },
+      select: { adminId: true, moderatorId: true },
+    });
+
+    const isClubAdmin = club?.adminId === user.id;
+    const isClubCoHost = club?.moderatorId === user.id;
+    const isClubAdminOrCoHost = isClubAdmin || isClubCoHost;
+
+    // Creator, admin, or co-host can update title, prompt, deadline
     if (
       (title || prompt || deadline !== undefined) &&
-      riff.creatorId !== user.id
+      riff.creatorId !== user.id &&
+      !isClubAdminOrCoHost
     ) {
       return NextResponse.json(
-        { error: "Only the riff creator can update riff details" },
+        {
+          error:
+            "Only the riff creator, admin, or co-host can update riff details",
+        },
         { status: 403 }
       );
     }
@@ -187,14 +201,6 @@ export async function PATCH(
         );
       }
 
-      // Fetch club to check admin
-      const club = await prisma.club.findUnique({
-        where: { id: riff.clubId },
-        select: { adminId: true },
-      });
-
-      const isClubAdmin = club?.adminId === user.id;
-
       if (status === "ACTIVE" && riff.status === "DRAFT") {
         // Only creator can activate from DRAFT
         if (riff.creatorId !== user.id) {
@@ -204,10 +210,10 @@ export async function PATCH(
           );
         }
       } else if (status === "REVEALED") {
-        // Only club admin can reveal, and riff must be ACTIVE
-        if (!isClubAdmin) {
+        // Admin or co-host can reveal, and riff must be ACTIVE
+        if (!isClubAdminOrCoHost) {
           return NextResponse.json(
-            { error: "Only the club admin can reveal pieces" },
+            { error: "Only the club admin or co-host can reveal pieces" },
             { status: 403 }
           );
         }
@@ -218,10 +224,10 @@ export async function PATCH(
           );
         }
       } else if (status === "COMPLETED") {
-        // Only club admin can complete
-        if (!isClubAdmin) {
+        // Admin or co-host can complete
+        if (!isClubAdminOrCoHost) {
           return NextResponse.json(
-            { error: "Only the club admin can complete a riff" },
+            { error: "Only the club admin or co-host can complete a riff" },
             { status: 403 }
           );
         }

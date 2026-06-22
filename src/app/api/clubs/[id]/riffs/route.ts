@@ -125,12 +125,12 @@ export async function POST(
     // Check if user is the club admin
     const club = await prisma.club.findUnique({
       where: { id: clubId },
-      select: { adminId: true },
+      select: { adminId: true, moderatorId: true },
     });
 
-    if (!club || club.adminId !== user.id) {
+    if (!club || (club.adminId !== user.id && club.moderatorId !== user.id)) {
       return NextResponse.json(
-        { error: "Only the club admin can create a riff" },
+        { error: "Only the club admin or co-host can create a riff" },
         { status: 403 }
       );
     }
