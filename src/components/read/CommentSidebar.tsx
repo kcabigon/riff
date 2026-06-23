@@ -15,8 +15,8 @@ import { CommentAuthor } from "@/types";
 interface CommentData {
   id: string;
   content: string;
-  selectionStart: number;
-  selectionEnd: number;
+  selectionStart: number | null;
+  selectionEnd: number | null;
   selectedText: string;
   authorId: string;
   createdAt: string;
@@ -89,6 +89,7 @@ function CommentCard({
   clubId,
   disableReplies = false,
   color,
+  showQuote,
 }: {
   comment: CommentData;
   isActive: boolean;
@@ -110,6 +111,7 @@ function CommentCard({
   clubId: string;
   disableReplies?: boolean;
   color: string;
+  showQuote?: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -320,6 +322,22 @@ function CommentCard({
         </div>
       ) : (
         <>
+          {showQuote && comment.selectedText && (
+            <p
+              style={{
+                fontFamily: "var(--font-playfair)",
+                fontSize: "13px",
+                color: "#808080",
+                margin: "0 0 8px 0",
+                fontStyle: "italic",
+                borderLeft: `2px solid ${color}`,
+                paddingLeft: "8px",
+                overflowWrap: "break-word",
+              }}
+            >
+              {comment.selectedText}
+            </p>
+          )}
           <p
             style={{
               fontFamily: "var(--font-dm-sans)",
@@ -527,7 +545,7 @@ export default function CommentSidebar({
           const otherComment = comments.find((c) => c.id === otherCommentId);
           if (otherComment) {
             const dist = Math.abs(
-              otherComment.selectionStart - comment.selectionStart
+              (otherComment.selectionStart ?? 0) - (comment.selectionStart ?? 0)
             );
             if (dist < bestDist) {
               bestDist = dist;
@@ -686,6 +704,9 @@ export default function CommentSidebar({
     };
   }, [comments, updatePositions]);
 
+  const anchoredComments = comments.filter((c) => c.selectionStart !== null);
+  const unanchoredComments = comments.filter((c) => c.selectionStart === null);
+
   return (
     <div
       ref={sidebarRef}
@@ -715,7 +736,7 @@ export default function CommentSidebar({
         </p>
       )}
 
-      {comments.map((comment) => {
+      {anchoredComments.map((comment) => {
         const isActive = activeHighlightIds.includes(comment.id);
         const top = positions[comment.id];
 
@@ -796,6 +817,83 @@ export default function CommentSidebar({
             onSubmit={pendingCommentProps.onSubmit}
             onClose={pendingCommentProps.onClose}
           />
+        </div>
+      )}
+
+      {/* Unanchored comments — stacked below anchored cards after a labeled divider */}
+      {unanchoredComments.length > 0 && (
+        <div style={{ marginTop: `${minHeight - 8}px` }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              marginBottom: "32px",
+            }}
+          >
+            <div
+              style={{ flex: 1, height: "1px", backgroundColor: "#E6E6E6" }}
+            />
+            <span
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "11px",
+                fontWeight: 300,
+                color: "#808080",
+                whiteSpace: "nowrap",
+              }}
+            >
+              +{unanchoredComments.length} Comment
+              {unanchoredComments.length !== 1 ? "s" : ""}
+            </span>
+            <div
+              style={{ flex: 1, height: "1px", backgroundColor: "#E6E6E6" }}
+            />
+          </div>
+          {unanchoredComments.map((comment) => (
+            <div
+              key={comment.id}
+              ref={(el) => {
+                cardRefs.current[comment.id] = el;
+              }}
+              data-sidebar-comment-id={comment.id}
+              onClick={() => onCommentClick?.(comment.id)}
+              style={{ marginBottom: "8px", cursor: "pointer" }}
+            >
+              <CommentCard
+                comment={comment}
+                isActive={activeHighlightIds.includes(comment.id)}
+                isOwn={comment.authorId === currentUserId}
+                isEditing={editingId === comment.id}
+                isExpanded={expandedId === comment.id}
+                onDelete={() => onDelete(comment.id)}
+                onEdit={() => setEditingId(comment.id)}
+                onSave={async (newContent) => {
+                  await onUpdate(comment.id, newContent);
+                  setEditingId(null);
+                }}
+                onCancelEdit={() => setEditingId(null)}
+                onActivate={() => onCommentClick?.(comment.id)}
+                onToggleReplies={() =>
+                  setExpandedId(expandedId === comment.id ? null : comment.id)
+                }
+                onReplyAdded={(reply) => onReplyAdded(comment.id, reply)}
+                onReplyUpdated={(replyId, newContent) =>
+                  onReplyUpdated(comment.id, replyId, newContent)
+                }
+                onReplyDeleted={(replyId) =>
+                  onReplyDeleted(comment.id, replyId)
+                }
+                currentUser={currentUser}
+                pieceId={pieceId}
+                riffId={riffId}
+                clubId={clubId}
+                disableReplies={disableReplies}
+                color={authorColors[comment.authorId] || AUTHOR_COLORS[0]}
+                showQuote
+              />
+            </div>
+          ))}
         </div>
       )}
     </div>

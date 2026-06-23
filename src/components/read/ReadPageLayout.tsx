@@ -23,8 +23,8 @@ import { ReplyData } from "./ReplyThread";
 interface CommentData {
   id: string;
   content: string;
-  selectionStart: number;
-  selectionEnd: number;
+  selectionStart: number | null;
+  selectionEnd: number | null;
   selectedText: string;
   authorId: string;
   createdAt: string;
@@ -95,6 +95,7 @@ export default function ReadPageLayout({
   const [activeHighlightIds, setActiveHighlightIds] = useState<string[]>([]);
   const [pendingSelection, setPendingSelection] =
     useState<PendingSelection | null>(null);
+  const [pastLastComment, setPastLastComment] = useState(false);
 
   const isMobile = useIsMobile();
   const keyboardTriggerRef = useRef<HTMLInputElement>(null);
@@ -157,7 +158,9 @@ export default function ReadPageLayout({
       const full: CommentData = { ...comment, replies: comment.replies ?? [] };
       setComments((prev) => {
         const updated = [...prev, full];
-        return updated.sort((a, b) => a.selectionStart - b.selectionStart);
+        return updated.sort(
+          (a, b) => (a.selectionStart ?? 0) - (b.selectionStart ?? 0)
+        );
       });
       setActiveHighlightIds([full.id]);
       setPendingSelection(null);
@@ -304,6 +307,30 @@ export default function ReadPageLayout({
         .filter((c): c is CommentData => c !== undefined),
     [activeHighlightIds, comments]
   );
+
+  const unanchoredComments = useMemo(
+    () => comments.filter((c) => c.selectionStart === null),
+    [comments]
+  );
+
+  // Track whether the user has scrolled past the last anchored comment mark.
+  // When true (and there are unanchored comments), we surface the ghost badge.
+  useEffect(() => {
+    if (!isMobile || unanchoredComments.length === 0) return;
+    function handleScroll() {
+      const marks = document.querySelectorAll("mark[data-comment-id]");
+      if (marks.length === 0) {
+        // No anchored comments — show badge once user has scrolled at all
+        setPastLastComment(window.scrollY > 80);
+        return;
+      }
+      const lastMark = marks[marks.length - 1];
+      setPastLastComment(lastMark.getBoundingClientRect().bottom < 0);
+    }
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [isMobile, unanchoredComments.length]);
 
   return (
     <div
@@ -634,6 +661,36 @@ export default function ReadPageLayout({
           onReplyDeleted={handleReplyDeleted}
         />
       )}
+
+      {/* Ghost badge — surfaces unanchored comments after reader scrolls past last highlight */}
+      {isMobile &&
+        unanchoredComments.length > 0 &&
+        pastLastComment &&
+        activeComments.length === 0 && (
+          <button
+            onClick={() =>
+              setActiveHighlightIds(unanchoredComments.map((c) => c.id))
+            }
+            style={{
+              position: "fixed",
+              right: 0,
+              bottom: "120px",
+              border: "1px solid #CCCCCC",
+              borderRight: "none",
+              backgroundColor: "rgba(255,255,255,0.92)",
+              color: "#808080",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "12px",
+              fontWeight: 300,
+              padding: "8px 10px",
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+              zIndex: 40,
+            }}
+          >
+            +{unanchoredComments.length} Comments
+          </button>
+        )}
     </div>
   );
 }
