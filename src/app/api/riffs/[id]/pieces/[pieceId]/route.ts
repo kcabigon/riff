@@ -8,6 +8,7 @@ import {
   batchNotificationsEnabled,
 } from "@/lib/resend";
 import { NotificationType } from "@prisma/client";
+import { getBaseUrl } from "@/lib/env";
 
 // PATCH /api/riffs/[id]/pieces/[pieceId] - Submit piece to riff (set submittedAt)
 export async function PATCH(
@@ -55,71 +56,69 @@ export async function PATCH(
       data: { submittedAt: new Date() },
     });
 
-    // Fire notifications (non-blocking)
+    // Fire notifications
     const riff = submission.riff;
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const riffUrl = `${appUrl}/riffs/${riffId}`;
+    const riffUrl = `${getBaseUrl()}/riffs/${riffId}`;
     const riffDisplayTitle = riff.title || riff.club.name;
 
     // Notify all club members + send emails
-    notifyClubMembers(
+    await notifyClubMembers(
       riff.clubId,
       NotificationType.PIECE_SUBMITTED_TO_RIFF,
       user.id,
       { riffId }
-    ).catch(() => {});
-    prisma.clubMember
-      .findMany({
-        where: { clubId: riff.clubId, userId: { not: user.id } },
-        include: { user: { select: { email: true, name: true } } },
-      })
-      .then(async (members) => {
-        const enabled = await batchNotificationsEnabled(
-          members.map((m) => m.user.email)
-        );
-        return Promise.allSettled(
-          members
-            .filter((m) => enabled.has(m.user.email))
-            .map((m) =>
-              sendPieceSubmittedEmail({
-                email: m.user.email,
-                actorName: user.name || "Someone",
-                riffTitle: riffDisplayTitle,
-                clubName: riff.club.name,
-                riffUrl,
-              })
-            )
-        );
-      })
-      .catch(() => {});
+    ).catch((err) =>
+      console.error("[notification error] piece submitted:", err)
+    );
+
+    const pieceMembers = await prisma.clubMember.findMany({
+      where: { clubId: riff.clubId, userId: { not: user.id } },
+      include: { user: { select: { email: true, name: true } } },
+    });
+    const pieceEnabled = await batchNotificationsEnabled(
+      pieceMembers.map((m) => m.user.email)
+    );
+    await Promise.allSettled(
+      pieceMembers
+        .filter((m) => pieceEnabled.has(m.user.email))
+        .map((m) =>
+          sendPieceSubmittedEmail({
+            email: m.user.email,
+            actorName: user.name || "Someone",
+            riffTitle: riffDisplayTitle,
+            clubName: riff.club.name,
+            riffUrl,
+          })
+        )
+    );
 
     // Check if all participants have now submitted — notify host
     const submittedCount = riff.pieces.length + 1; // +1 for this submission
     const participantCount = riff.participants.length;
     if (participantCount > 0 && submittedCount >= participantCount) {
-      createNotification({
+      await createNotification({
         type: NotificationType.ALL_PIECES_SUBMITTED,
         recipientId: riff.creatorId,
         riffId,
         clubId: riff.clubId,
-      }).catch(() => {});
+      }).catch((err) =>
+        console.error("[notification error] all pieces submitted:", err)
+      );
 
-      prisma.user
-        .findUnique({
-          where: { id: riff.creatorId },
-          select: { email: true, emailNotifications: true },
-        })
-        .then((host) => {
-          if (host && host.emailNotifications) {
-            return sendAllPiecesSubmittedEmail({
-              email: host.email,
-              riffTitle: riffDisplayTitle,
-              clubName: riff.club.name,
-              riffUrl,
-            });
-          }
-        })
-        .catch(() => {});
+      const host = await prisma.user.findUnique({
+        where: { id: riff.creatorId },
+        select: { email: true, emailNotifications: true },
+      });
+      if (host && host.emailNotifications) {
+        await sendAllPiecesSubmittedEmail({
+          email: host.email,
+          riffTitle: riffDisplayTitle,
+          clubName: riff.club.name,
+          riffUrl,
+        }).catch((err) =>
+          console.error("[notification error] all pieces submitted email:", err)
+        );
+      }
     }
 
     return NextResponse.json({ success: true, submission: updated });

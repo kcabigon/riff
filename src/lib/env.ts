@@ -60,14 +60,14 @@ export function isProduction(): boolean {
  * @returns The base URL (without trailing slash)
  */
 export function getBaseUrl(): string {
-  // Vercel provides this automatically
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
-  }
-
-  // Use NEXTAUTH_URL if available
+  // Prefer the canonical app URL (e.g. https://letsriff.app)
   if (process.env.NEXTAUTH_URL) {
     return process.env.NEXTAUTH_URL;
+  }
+
+  // Vercel auto-generated deployment URL (preview/staging fallback)
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
   }
 
   // Fallback for local development
@@ -96,7 +96,8 @@ export function getConfig() {
     baseUrl: getBaseUrl(),
     apiUrl: `${getBaseUrl()}/api`,
     // Log level based on environment
-    logLevel: env === "development" ? "debug" : env === "staging" ? "info" : "error",
+    logLevel:
+      env === "development" ? "debug" : env === "staging" ? "info" : "error",
     // Feature flags
     features: {
       showEnvironmentBadge: !isProduction(),

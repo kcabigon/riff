@@ -294,82 +294,78 @@ export async function PATCH(
       });
     });
 
-    // Fire notifications for status changes (non-blocking)
+    // Fire notifications for status changes
     if (status && status !== riff.status) {
       const actorId = user.id;
       if (status === "ACTIVE") {
-        notifyClubMembers(riff.clubId, NotificationType.RIFF_CREATED, actorId, {
-          riffId,
-        }).catch(() => {});
+        await notifyClubMembers(
+          riff.clubId,
+          NotificationType.RIFF_CREATED,
+          actorId,
+          { riffId }
+        ).catch((err) =>
+          console.error("[notification error] riff created:", err)
+        );
 
-        // Send riff created emails to all club members except the creator
-        const appUrl = getBaseUrl();
-        const clubUrl = `${appUrl}/clubs/${riff.clubId}`;
-        prisma.clubMember
-          .findMany({
-            where: { clubId: riff.clubId, userId: { not: actorId } },
-            include: { user: { select: { email: true, name: true } } },
-          })
-          .then(async (members) => {
-            const enabled = await batchNotificationsEnabled(
-              members.map((m) => m.user.email)
-            );
-            return Promise.allSettled(
-              members
-                .filter((m) => enabled.has(m.user.email))
-                .map((m) =>
-                  sendRiffCreatedEmail({
-                    email: m.user.email,
-                    actorName: updatedRiff.creator.name || "Your host",
-                    clubName: updatedRiff.club.name,
-                    clubUrl,
-                    riffTitle: riff.title,
-                    prompt: riff.prompt,
-                    deadline: riff.deadline ?? null,
-                  })
-                )
-            );
-          })
-          .catch(() => {});
+        const clubUrl = `${getBaseUrl()}/clubs/${riff.clubId}`;
+        const riffCreatedMembers = await prisma.clubMember.findMany({
+          where: { clubId: riff.clubId, userId: { not: actorId } },
+          include: { user: { select: { email: true, name: true } } },
+        });
+        const riffCreatedEnabled = await batchNotificationsEnabled(
+          riffCreatedMembers.map((m) => m.user.email)
+        );
+        await Promise.allSettled(
+          riffCreatedMembers
+            .filter((m) => riffCreatedEnabled.has(m.user.email))
+            .map((m) =>
+              sendRiffCreatedEmail({
+                email: m.user.email,
+                actorName: updatedRiff.creator.name || "Your host",
+                clubName: updatedRiff.club.name,
+                clubUrl,
+                riffTitle: riff.title,
+                prompt: riff.prompt,
+                deadline: riff.deadline ?? null,
+              })
+            )
+        );
       } else if (status === "REVEALED") {
-        notifyClubMembers(
+        await notifyClubMembers(
           riff.clubId,
           NotificationType.RIFF_COMPLETED,
           actorId,
           { riffId }
-        ).catch(() => {});
+        ).catch((err) =>
+          console.error("[notification error] riff revealed:", err)
+        );
 
-        const appUrl = getBaseUrl();
-        const riffUrl = `${appUrl}/riffs/${riffId}`;
-        prisma.clubMember
-          .findMany({
-            where: { clubId: riff.clubId, userId: { not: actorId } },
-            include: { user: { select: { email: true, name: true } } },
-          })
-          .then(async (members) => {
-            const enabled = await batchNotificationsEnabled(
-              members.map((m) => m.user.email)
-            );
-            return Promise.allSettled(
-              members
-                .filter((m) => enabled.has(m.user.email))
-                .map((m) =>
-                  sendRiffRevealedEmail({
-                    email: m.user.email,
-                    clubName: updatedRiff.club.name,
-                    riffUrl,
-                    riffTitle: updatedRiff.title,
-                    volumeNumber: updatedRiff.volumeNumber,
-                    pieceCount: updatedRiff._count.pieces,
-                  })
-                )
-            );
-          })
-          .catch(() => {});
+        const riffUrl = `${getBaseUrl()}/riffs/${riffId}`;
+        const revealedMembers = await prisma.clubMember.findMany({
+          where: { clubId: riff.clubId, userId: { not: actorId } },
+          include: { user: { select: { email: true, name: true } } },
+        });
+        const revealedEnabled = await batchNotificationsEnabled(
+          revealedMembers.map((m) => m.user.email)
+        );
+        await Promise.allSettled(
+          revealedMembers
+            .filter((m) => revealedEnabled.has(m.user.email))
+            .map((m) =>
+              sendRiffRevealedEmail({
+                email: m.user.email,
+                clubName: updatedRiff.club.name,
+                riffUrl,
+                riffTitle: updatedRiff.title,
+                volumeNumber: updatedRiff.volumeNumber,
+                pieceCount: updatedRiff._count.pieces,
+              })
+            )
+        );
       }
     }
 
-    // Fire deadline change notification if deadline actually changed (non-blocking)
+    // Fire deadline change notification if deadline actually changed
     const deadlineChanged =
       deadline !== undefined &&
       deadline !== null &&
@@ -377,38 +373,36 @@ export async function PATCH(
       new Date(deadline).getTime() !== (riff.deadline?.getTime() ?? null);
     if (deadlineChanged) {
       const newDeadline = new Date(deadline);
-      notifyClubMembers(
+      await notifyClubMembers(
         riff.clubId,
         NotificationType.RIFF_DEADLINE_CHANGED,
         user.id,
         { riffId }
-      ).catch(() => {});
-      prisma.clubMember
-        .findMany({
-          where: { clubId: riff.clubId, userId: { not: user.id } },
-          include: { user: { select: { email: true } } },
-        })
-        .then(async (members) => {
-          const appUrl = getBaseUrl();
-          const riffUrl = `${appUrl}/riffs/${riffId}`;
-          const enabled = await batchNotificationsEnabled(
-            members.map((m) => m.user.email)
-          );
-          return Promise.allSettled(
-            members
-              .filter((m) => enabled.has(m.user.email))
-              .map((m) =>
-                sendDeadlineChangedEmail({
-                  email: m.user.email,
-                  hostName: updatedRiff.creator.name || "Your host",
-                  newDeadline,
-                  riffUrl,
-                  clubName: updatedRiff.club.name,
-                })
-              )
-          );
-        })
-        .catch(() => {});
+      ).catch((err) =>
+        console.error("[notification error] deadline changed:", err)
+      );
+
+      const riffUrl = `${getBaseUrl()}/riffs/${riffId}`;
+      const deadlineMembers = await prisma.clubMember.findMany({
+        where: { clubId: riff.clubId, userId: { not: user.id } },
+        include: { user: { select: { email: true } } },
+      });
+      const deadlineEnabled = await batchNotificationsEnabled(
+        deadlineMembers.map((m) => m.user.email)
+      );
+      await Promise.allSettled(
+        deadlineMembers
+          .filter((m) => deadlineEnabled.has(m.user.email))
+          .map((m) =>
+            sendDeadlineChangedEmail({
+              email: m.user.email,
+              hostName: updatedRiff.creator.name || "Your host",
+              newDeadline,
+              riffUrl,
+              clubName: updatedRiff.club.name,
+            })
+          )
+      );
     }
 
     return NextResponse.json({
