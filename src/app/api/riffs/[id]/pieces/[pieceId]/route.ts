@@ -78,18 +78,25 @@ export async function PATCH(
     const pieceEnabled = await batchNotificationsEnabled(
       pieceMembers.map((m) => m.user.email)
     );
-    await Promise.allSettled(
-      pieceMembers
-        .filter((m) => pieceEnabled.has(m.user.email))
-        .map((m) =>
-          sendPieceSubmittedEmail({
-            email: m.user.email,
-            actorName: user.name || "Someone",
-            riffTitle: riffDisplayTitle,
-            clubName: riff.club.name,
-            riffUrl,
-          })
-        )
+    const eligiblePieceMembers = pieceMembers.filter((m) =>
+      pieceEnabled.has(m.user.email)
+    );
+    console.info(
+      `[notify] piece submitted ${riffId}: ${pieceMembers.length} members, ${eligiblePieceMembers.length} email-enabled`
+    );
+    const pieceResults = await Promise.allSettled(
+      eligiblePieceMembers.map((m) =>
+        sendPieceSubmittedEmail({
+          email: m.user.email,
+          actorName: user.name || "Someone",
+          riffTitle: riffDisplayTitle,
+          clubName: riff.club.name,
+          riffUrl,
+        })
+      )
+    );
+    console.info(
+      `[notify] piece submitted ${riffId}: ${pieceResults.filter((r) => r.status === "fulfilled").length} sent, ${pieceResults.filter((r) => r.status === "rejected").length} failed`
     );
 
     // Check if all participants have now submitted — notify host
@@ -109,7 +116,10 @@ export async function PATCH(
         where: { id: riff.creatorId },
         select: { email: true, emailNotifications: true },
       });
-      if (host && host.emailNotifications) {
+      if (host?.emailNotifications) {
+        console.info(
+          `[notify] all pieces submitted ${riffId}: sending host email to ${host.email}`
+        );
         await sendAllPiecesSubmittedEmail({
           email: host.email,
           riffTitle: riffDisplayTitle,
@@ -117,6 +127,10 @@ export async function PATCH(
           riffUrl,
         }).catch((err) =>
           console.error("[notification error] all pieces submitted email:", err)
+        );
+      } else {
+        console.info(
+          `[notify] all pieces submitted ${riffId}: host email skipped (emailNotifications=false)`
         );
       }
     }

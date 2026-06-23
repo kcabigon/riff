@@ -315,20 +315,27 @@ export async function PATCH(
         const riffCreatedEnabled = await batchNotificationsEnabled(
           riffCreatedMembers.map((m) => m.user.email)
         );
-        await Promise.allSettled(
-          riffCreatedMembers
-            .filter((m) => riffCreatedEnabled.has(m.user.email))
-            .map((m) =>
-              sendRiffCreatedEmail({
-                email: m.user.email,
-                actorName: updatedRiff.creator.name || "Your host",
-                clubName: updatedRiff.club.name,
-                clubUrl,
-                riffTitle: riff.title,
-                prompt: riff.prompt,
-                deadline: riff.deadline ?? null,
-              })
-            )
+        const eligibleRiffCreated = riffCreatedMembers.filter((m) =>
+          riffCreatedEnabled.has(m.user.email)
+        );
+        console.info(
+          `[notify] riff created ${riffId}: ${riffCreatedMembers.length} members, ${eligibleRiffCreated.length} email-enabled`
+        );
+        const riffCreatedResults = await Promise.allSettled(
+          eligibleRiffCreated.map((m) =>
+            sendRiffCreatedEmail({
+              email: m.user.email,
+              actorName: updatedRiff.creator.name || "Your host",
+              clubName: updatedRiff.club.name,
+              clubUrl,
+              riffTitle: riff.title,
+              prompt: riff.prompt,
+              deadline: riff.deadline ?? null,
+            })
+          )
+        );
+        console.info(
+          `[notify] riff created ${riffId}: ${riffCreatedResults.filter((r) => r.status === "fulfilled").length} sent, ${riffCreatedResults.filter((r) => r.status === "rejected").length} failed`
         );
       } else if (status === "REVEALED") {
         await notifyClubMembers(
@@ -348,19 +355,26 @@ export async function PATCH(
         const revealedEnabled = await batchNotificationsEnabled(
           revealedMembers.map((m) => m.user.email)
         );
-        await Promise.allSettled(
-          revealedMembers
-            .filter((m) => revealedEnabled.has(m.user.email))
-            .map((m) =>
-              sendRiffRevealedEmail({
-                email: m.user.email,
-                clubName: updatedRiff.club.name,
-                riffUrl,
-                riffTitle: updatedRiff.title,
-                volumeNumber: updatedRiff.volumeNumber,
-                pieceCount: updatedRiff._count.pieces,
-              })
-            )
+        const eligibleRevealed = revealedMembers.filter((m) =>
+          revealedEnabled.has(m.user.email)
+        );
+        console.info(
+          `[notify] riff revealed ${riffId}: ${revealedMembers.length} members, ${eligibleRevealed.length} email-enabled`
+        );
+        const revealedResults = await Promise.allSettled(
+          eligibleRevealed.map((m) =>
+            sendRiffRevealedEmail({
+              email: m.user.email,
+              clubName: updatedRiff.club.name,
+              riffUrl,
+              riffTitle: updatedRiff.title,
+              volumeNumber: updatedRiff.volumeNumber,
+              pieceCount: updatedRiff._count.pieces,
+            })
+          )
+        );
+        console.info(
+          `[notify] riff revealed ${riffId}: ${revealedResults.filter((r) => r.status === "fulfilled").length} sent, ${revealedResults.filter((r) => r.status === "rejected").length} failed`
         );
       }
     }
@@ -390,18 +404,25 @@ export async function PATCH(
       const deadlineEnabled = await batchNotificationsEnabled(
         deadlineMembers.map((m) => m.user.email)
       );
-      await Promise.allSettled(
-        deadlineMembers
-          .filter((m) => deadlineEnabled.has(m.user.email))
-          .map((m) =>
-            sendDeadlineChangedEmail({
-              email: m.user.email,
-              hostName: updatedRiff.creator.name || "Your host",
-              newDeadline,
-              riffUrl,
-              clubName: updatedRiff.club.name,
-            })
-          )
+      const eligibleDeadline = deadlineMembers.filter((m) =>
+        deadlineEnabled.has(m.user.email)
+      );
+      console.info(
+        `[notify] deadline changed ${riffId}: ${deadlineMembers.length} members, ${eligibleDeadline.length} email-enabled`
+      );
+      const deadlineResults = await Promise.allSettled(
+        eligibleDeadline.map((m) =>
+          sendDeadlineChangedEmail({
+            email: m.user.email,
+            hostName: updatedRiff.creator.name || "Your host",
+            newDeadline,
+            riffUrl,
+            clubName: updatedRiff.club.name,
+          })
+        )
+      );
+      console.info(
+        `[notify] deadline changed ${riffId}: ${deadlineResults.filter((r) => r.status === "fulfilled").length} sent, ${deadlineResults.filter((r) => r.status === "rejected").length} failed`
       );
     }
 

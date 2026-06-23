@@ -64,19 +64,26 @@ export async function POST(
     const enabled = await batchNotificationsEnabled(
       members.map((m) => m.user.email)
     );
-    await Promise.allSettled(
-      members
-        .filter((m) => enabled.has(m.user.email))
-        .map((m) =>
-          sendMemberJoinedEmail({
-            email: m.user.email,
-            newMemberFullName: newMember.name || "A new member",
-            newMemberFirstName:
-              newMember.firstName || newMember.name?.split(" ")[0] || "them",
-            clubName: club!.name,
-            clubUrl,
-          })
-        )
+    const eligibleMembers = members.filter((m) => enabled.has(m.user.email));
+    console.info(
+      `[notify] member joined club ${clubId}: ${members.length} members, ${eligibleMembers.length} email-enabled`
+    );
+    const emailResults = await Promise.allSettled(
+      eligibleMembers.map((m) =>
+        sendMemberJoinedEmail({
+          email: m.user.email,
+          newMemberFullName: newMember.name || "A new member",
+          newMemberFirstName:
+            newMember.firstName || newMember.name?.split(" ")[0] || "them",
+          clubName: club!.name,
+          clubUrl,
+        })
+      )
+    );
+    const sent = emailResults.filter((r) => r.status === "fulfilled").length;
+    const failed = emailResults.filter((r) => r.status === "rejected").length;
+    console.info(
+      `[notify] member joined club ${clubId}: ${sent} sent, ${failed} failed`
     );
 
     return NextResponse.json({ success: true });
