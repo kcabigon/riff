@@ -47,6 +47,7 @@ interface ReplyThreadProps {
   onReplyDeleteEnd?: () => void;
   onCancel?: () => void;
   hideCompose?: boolean;
+  isComposing?: boolean;
 }
 
 const ReplyThread = forwardRef<ReplyThreadHandle, ReplyThreadProps>(
@@ -67,6 +68,7 @@ const ReplyThread = forwardRef<ReplyThreadHandle, ReplyThreadProps>(
       onReplyDeleteEnd,
       onCancel,
       hideCompose = false,
+      isComposing = false,
     },
     ref
   ) {
@@ -80,6 +82,7 @@ const ReplyThread = forwardRef<ReplyThreadHandle, ReplyThreadProps>(
       null
     );
     const [deleting, setDeleting] = useState(false);
+    const [replyThreeDotOpenUp, setReplyThreeDotOpenUp] = useState(false);
     const abortRef = useRef<AbortController | null>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const editTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -160,7 +163,7 @@ const ReplyThread = forwardRef<ReplyThreadHandle, ReplyThreadProps>(
           });
         },
       }),
-      []  
+      []
       // Empty deps intentional — closures use refs which are always current
     );
 
@@ -280,13 +283,38 @@ const ReplyThread = forwardRef<ReplyThreadHandle, ReplyThreadProps>(
                     </span>
                     {isOwn &&
                       !isEditing &&
+                      !trimmedText &&
+                      !isComposing &&
                       confirmingDeleteId !== reply.id &&
                       (hoveredReplyId === reply.id || isMobile) && (
-                        <div style={{ marginLeft: "auto" }}>
+                        <div
+                          style={{ marginLeft: "auto" }}
+                          onPointerDown={(e) => {
+                            const el = e.currentTarget;
+                            const rect = el.getBoundingClientRect();
+                            let parent = el.parentElement;
+                            while (parent) {
+                              const { overflowY } = getComputedStyle(parent);
+                              if (
+                                overflowY === "auto" ||
+                                overflowY === "scroll"
+                              )
+                                break;
+                              parent = parent.parentElement;
+                            }
+                            const containerBottom =
+                              parent?.getBoundingClientRect().bottom ??
+                              window.innerHeight;
+                            setReplyThreeDotOpenUp(
+                              containerBottom - rect.bottom < 100
+                            );
+                          }}
+                        >
                           <ThreeDotButton
                             variant="light"
                             align="right"
                             size="sm"
+                            openUp={replyThreeDotOpenUp}
                             items={[
                               {
                                 type: "action",
@@ -370,7 +398,6 @@ const ReplyThread = forwardRef<ReplyThreadHandle, ReplyThreadProps>(
                         value={editContent}
                         onChange={(e) => {
                           setEditContent(e.target.value);
-                          e.target.style.height = "auto";
                           e.target.style.height = `${e.target.scrollHeight}px`;
                         }}
                         onKeyDown={(e) => {
