@@ -167,8 +167,8 @@ export default async function ReadPage({
   const initialComments = rawComments.map((c) => ({
     id: c.id,
     content: c.content,
-    selectionStart: c.selectionStart ?? 0,
-    selectionEnd: c.selectionEnd ?? 0,
+    selectionStart: c.selectionStart,
+    selectionEnd: c.selectionEnd,
     selectedText: c.selectedText ?? "",
     authorId: c.authorId,
     createdAt: c.createdAt.toISOString(),
