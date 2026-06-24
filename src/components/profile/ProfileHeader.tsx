@@ -131,9 +131,9 @@ export default function ProfileHeader({
           margin: "0 auto",
           padding: "32px 24px 32px",
           display: "flex",
-          flexDirection: "column",
           alignItems: "center",
-          gap: "16px",
+          gap: "24px",
+          flexWrap: "wrap",
         }}
       >
         {/* Avatar */}
@@ -172,63 +172,51 @@ export default function ProfileHeader({
           )}
         </div>
 
-        {/* Name */}
-        <h1
-          style={{
-            fontFamily: "var(--font-dm-serif-text)",
-            fontSize: "32px",
-            fontWeight: 400,
-            color: "#FFFFFF",
-            margin: 0,
-            lineHeight: 1.2,
-            textAlign: "center",
-          }}
-        >
-          {displayName || "Anonymous"}
-        </h1>
+        {/* Name + Stats */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          <h1
+            style={{
+              fontFamily: "var(--font-dm-serif-text)",
+              fontSize: "32px",
+              fontWeight: 400,
+              color: "#FFFFFF",
+              margin: 0,
+              lineHeight: 1.2,
+            }}
+          >
+            {displayName || "Anonymous"}
+          </h1>
 
-        {/* Stats */}
-        <div
-          style={{
-            display: "flex",
-            gap: "32px",
-            flexWrap: "wrap",
-            justifyContent: "center",
-          }}
-        >
-          {statItems.map((item) => (
-            <div
-              key={item.label}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: "2px",
-              }}
-            >
-              <span
-                style={{
-                  fontFamily: "var(--font-dm-serif-text)",
-                  fontSize: "24px",
-                  fontWeight: 400,
-                  color: "#FFFFFF",
-                  lineHeight: 1,
-                }}
+          <div style={{ display: "flex", gap: "32px", flexWrap: "wrap" }}>
+            {statItems.map((item) => (
+              <div
+                key={item.label}
+                style={{ display: "flex", flexDirection: "column", gap: "2px" }}
               >
-                {item.value}
-              </span>
-              <span
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "12px",
-                  fontWeight: 300,
-                  color: "#808080",
-                }}
-              >
-                {item.label}
-              </span>
-            </div>
-          ))}
+                <span
+                  style={{
+                    fontFamily: "var(--font-dm-serif-text)",
+                    fontSize: "24px",
+                    fontWeight: 400,
+                    color: "#FFFFFF",
+                    lineHeight: 1,
+                  }}
+                >
+                  {item.value}
+                </span>
+                <span
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "12px",
+                    fontWeight: 300,
+                    color: "#808080",
+                  }}
+                >
+                  {item.label}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
