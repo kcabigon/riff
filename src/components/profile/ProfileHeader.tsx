@@ -188,12 +188,12 @@ export default function ProfileHeader({
 
           <p
             style={{
-              fontFamily: "var(--font-playfair)",
+              fontFamily: "var(--font-dm-sans)",
               fontSize: "16px",
-              fontWeight: 400,
+              fontWeight: 300,
               color: "#FFFFFF",
               margin: 0,
-              lineHeight: 1.6,
+              lineHeight: 1.4,
               maxWidth: "400px",
             }}
           >
