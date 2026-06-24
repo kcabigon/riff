@@ -29,7 +29,6 @@ interface ProfileHeaderProps {
     name: string | null;
     avatarUrl: string | null;
   } | null;
-  isOwnProfile?: boolean;
   lastActiveClubId?: string | null;
   stats: {
     pieceCount: number;
@@ -42,7 +41,6 @@ interface ProfileHeaderProps {
 export default function ProfileHeader({
   profileUser,
   currentUser,
-  isOwnProfile,
   lastActiveClubId,
   stats,
   activeTab,
@@ -171,31 +169,6 @@ export default function ProfileHeader({
               </span>
             )}
           </div>
-          {isOwnProfile && (
-            <Link
-              href="/account"
-              style={{
-                position: "absolute",
-                bottom: "4px",
-                left: "4px",
-                display: "flex",
-                color: "#00FF66",
-              }}
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-              </svg>
-            </Link>
-          )}
         </div>
 
         {/* Name + Stats */}

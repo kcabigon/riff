@@ -167,7 +167,6 @@ export default function ProfilePage({
       <ProfileHeader
         profileUser={user}
         currentUser={currentUser}
-        isOwnProfile={isOwnProfile}
         lastActiveClubId={lastActiveClubId}
         stats={stats}
         activeTab={activeTab}
