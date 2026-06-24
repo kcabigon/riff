@@ -104,6 +104,9 @@ export default async function MyRiffsPage() {
   }
 
   const predictedVolumeByClub: Record<string, number> = {};
+  for (const clubId of activeClubIds) {
+    predictedVolumeByClub[clubId] = 1;
+  }
   for (const row of volumeCounts) {
     predictedVolumeByClub[row.clubId] = row._count.id + 1;
   }
