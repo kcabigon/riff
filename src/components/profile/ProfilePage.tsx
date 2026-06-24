@@ -26,8 +26,8 @@ interface ProfilePageProps {
   stats: {
     pieceCount: number;
     totalWordCount: number;
-    riffCount: number;
     piecesRead: number;
+    commentsGiven: number;
   };
   pieces: Piece[];
   isOwnProfile: boolean;

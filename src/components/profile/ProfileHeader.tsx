@@ -35,8 +35,8 @@ interface ProfileHeaderProps {
   stats: {
     pieceCount: number;
     totalWordCount: number;
-    riffCount: number;
     piecesRead: number;
+    commentsGiven: number;
   };
 }
 
@@ -71,10 +71,10 @@ export default function ProfileHeader({
     : "?";
 
   const statItems = [
-    { value: stats.riffCount, label: "riffs" },
     { value: stats.pieceCount, label: "pieces" },
     { value: stats.totalWordCount.toLocaleString(), label: "words" },
     { value: stats.piecesRead, label: "reads" },
+    { value: stats.commentsGiven, label: "comments given" },
   ];
 
   return (
