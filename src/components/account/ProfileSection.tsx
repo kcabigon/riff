@@ -201,14 +201,14 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
               color: "#000000",
             }}
           >
-            Bio
+            Profile bio
           </label>
           <TextInput
             multiline
             rows={3}
             value={bio}
             onChange={(e) => setBio(e.target.value)}
-            placeholder="Tell your friends a little about yourself"
+            placeholder="Not your boring LinkedIn bio - have fun with it."
             maxLength={160}
           />
         </div>
