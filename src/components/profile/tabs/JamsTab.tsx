@@ -192,7 +192,7 @@ export default function JamsTab() {
           padding: "32px 24px 64px",
         }}
       >
-        <div style={{ maxWidth: "640px" }}>
+        <div style={{ maxWidth: "720px" }}>
           <h2
             style={{
               fontFamily: "var(--font-dm-serif-text)",
