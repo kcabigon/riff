@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import NavBar from "@/components/clubs/NavBar";
 import RiffCard from "@/components/riffs/RiffCard";
 import ReadyToRevealCard from "@/components/riffs/ReadyToRevealCard";
@@ -69,6 +69,14 @@ export default function MyRiffsClient({
 }: MyRiffsClientProps) {
   const [activeTab, setActiveTab] = useState<"current" | "past">("current");
   const isMobile = useIsMobile();
+
+  const clubLabelStyle: React.CSSProperties = {
+    fontFamily: "var(--font-dm-sans)",
+    fontSize: "12px",
+    fontWeight: 300,
+    color: "#808080",
+    margin: "0 0 8px 0",
+  };
 
   const otherSubmittedCount = (riff: Riff) =>
     getSubmittedPieces(riff.pieces).filter(
@@ -152,21 +160,23 @@ export default function MyRiffsClient({
             Riffs
           </h1>
 
-          <div style={{ display: "flex", gap: "12px" }}>
+          <div style={{ display: "flex", gap: "24px" }}>
             {tabs.map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
                 style={{
-                  padding: activeTab === tab.key ? "6px 16px" : "8px 18px",
+                  padding: "8px 0",
                   fontFamily: "var(--font-dm-sans)",
-                  fontSize: "14px",
-                  fontWeight: 400,
-                  color: "#000000",
-                  backgroundColor: "#FFFFFF",
-                  border: activeTab === tab.key ? "2px solid #000000" : "none",
-                  boxShadow:
-                    activeTab === tab.key ? "3px 3px 0px #000000" : "none",
+                  fontSize: "16px",
+                  fontWeight: activeTab === tab.key ? 500 : 300,
+                  color: activeTab === tab.key ? "#000000" : "#808080",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  borderBottom:
+                    activeTab === tab.key
+                      ? "2px solid #000000"
+                      : "2px solid transparent",
                   cursor: "pointer",
                 }}
               >
@@ -201,17 +211,7 @@ export default function MyRiffsClient({
                     );
                     return (
                       <div key={riff.id}>
-                        <p
-                          style={{
-                            fontFamily: "var(--font-dm-sans)",
-                            fontSize: "12px",
-                            fontWeight: 300,
-                            color: "#808080",
-                            margin: "0 0 8px 0",
-                          }}
-                        >
-                          {riff.club.name}
-                        </p>
+                        <p style={clubLabelStyle}>{riff.club.name}</p>
                         <RiffCard
                           riff={{
                             id: riff.id,
@@ -268,17 +268,7 @@ export default function MyRiffsClient({
                 >
                   {readingRiffs.map((riff) => (
                     <div key={riff.id}>
-                      <p
-                        style={{
-                          fontFamily: "var(--font-dm-sans)",
-                          fontSize: "12px",
-                          fontWeight: 300,
-                          color: "#808080",
-                          margin: "0 0 8px 0",
-                        }}
-                      >
-                        {riff.club.name}
-                      </p>
+                      <p style={clubLabelStyle}>{riff.club.name}</p>
                       <ReadyToRevealCard
                         riff={riff}
                         readCount={readCounts[riff.id] || 0}
