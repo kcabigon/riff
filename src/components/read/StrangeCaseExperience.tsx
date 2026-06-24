@@ -1205,9 +1205,9 @@ export default function StrangeCaseExperience() {
         <span className="sce-cursor-ring" />
       </div>
 
-      <style jsx global>{`
-        ${STYLES}
-      `}</style>
+      {/* Plain global <style> (not styled-jsx) — the interpolated STYLES blob
+          didn't inject reliably through styled-jsx in the production build. */}
+      <style dangerouslySetInnerHTML={{ __html: STYLES }} />
     </div>
   );
 }
