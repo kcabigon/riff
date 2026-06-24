@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import MosaicCollage from "./MosaicCollage";
 import Badge from "@/components/shared/Badge";
@@ -42,10 +42,17 @@ export default function ReadyToRevealCard({
   totalPieces,
 }: ReadyToRevealCardProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [mobileWidth, setMobileWidth] = useState(375);
+  const cardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const isMobile = useIsMobile();
 
-  const cardWidth = isMobile ? 320 : 400;
+  useEffect(() => {
+    if (!isMobile || !cardRef.current) return;
+    setMobileWidth(cardRef.current.offsetWidth);
+  }, [isMobile]);
+
+  const cardWidth = isMobile ? mobileWidth : 400;
   const cardHeight = isMobile ? 352 : 440;
 
   const handleClick = () => {
@@ -62,15 +69,15 @@ export default function ReadyToRevealCard({
       }}
     >
       <div
+        ref={cardRef}
         onClick={handleClick}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         style={{
           position: "relative",
           cursor: "pointer",
-          width: `${cardWidth}px`,
+          width: isMobile ? "100%" : `${cardWidth}px`,
           height: `${cardHeight}px`,
-          margin: "0 auto",
           border: "1px solid #000000",
           boxShadow: isHovered
             ? "8px 8px 0px 0px #01EFFC"
