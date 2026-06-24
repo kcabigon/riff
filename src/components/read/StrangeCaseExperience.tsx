@@ -860,6 +860,7 @@ export default function StrangeCaseExperience({
   const lastStep = useRef(0);
   const moodRef = useRef<Mood>("title");
   const audioRef = useRef<Audio | null>(null);
+  const silentRef = useRef<HTMLAudioElement>(null);
 
   const total = BEATS.length;
   const beat = BEATS[cur];
@@ -904,29 +905,44 @@ export default function StrangeCaseExperience({
   }, [router, clubId]);
 
   // Build + resume the AudioContext synchronously INSIDE the tap handler — mobile
-  // browsers (iOS especially) only unlock audio from within the user gesture, so
-  // this can't live in a useEffect that fires a tick later.
+  // browsers (iOS especially) only unlock audio from within the user gesture.
+  // Plus the standard iOS "play through the silent switch" fix: declare a
+  // "playback" audio session AND prime a silent <audio> element so the Web Audio
+  // output rides the media channel instead of the (mutable) ringer channel.
   const toggleSound = useCallback(() => {
+    const next = !soundOn;
+    if (next) {
+      // W3C Audio Session API (Safari 16.4+): audio is a core feature → not
+      // muted by the hardware silent switch.
+      try {
+        const nav = navigator as unknown as {
+          audioSession?: { type: string };
+        };
+        if (nav.audioSession) nav.audioSession.type = "playback";
+      } catch {
+        /* noop */
+      }
+      // Older-iOS fallback: a silent looping media element routes page audio to
+      // the media channel, which plays through the silent switch.
+      silentRef.current?.play().catch(() => {});
+    } else {
+      silentRef.current?.pause();
+      try {
+        const nav = navigator as unknown as {
+          audioSession?: { type: string };
+        };
+        if (nav.audioSession) nav.audioSession.type = "auto";
+      } catch {
+        /* noop */
+      }
+    }
     if (!audioRef.current) {
       audioRef.current = buildAudio();
       audioRef.current?.setMood(moodRef.current);
     }
     const a = audioRef.current;
-    const next = !soundOn;
     if (a) {
       if (a.ctx.state === "suspended") void a.ctx.resume();
-      if (next) {
-        // iOS unlock: play a 1-frame silent buffer inside the gesture
-        try {
-          const buf = a.ctx.createBuffer(1, 1, 22050);
-          const src = a.ctx.createBufferSource();
-          src.buffer = buf;
-          src.connect(a.ctx.destination);
-          src.start(0);
-        } catch {
-          /* noop */
-        }
-      }
       a.master.gain.setTargetAtTime(
         next ? 0.18 : 0.0001,
         a.ctx.currentTime,
@@ -1153,6 +1169,14 @@ export default function StrangeCaseExperience({
       role="presentation"
     >
       <canvas ref={canvasRef} className="sce-canvas" aria-hidden="true" />
+      {/* silent primer — lets the Web Audio score play through the iOS silent switch */}
+      <audio
+        ref={silentRef}
+        src={`${IMG}silence.wav`}
+        loop
+        preload="auto"
+        aria-hidden="true"
+      />
       <div className="sce-scrim" />
       <div className="sce-scan" />
 
