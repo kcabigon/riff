@@ -62,7 +62,7 @@ export default function ProfileHeader({
     { value: stats.riffCount, label: "riffs" },
     { value: stats.pieceCount, label: "pieces" },
     { value: stats.totalWordCount.toLocaleString(), label: "words" },
-    { value: stats.commentsGiven, label: "comments" },
+    { value: stats.commentsGiven, label: "comments given" },
   ];
 
   return (
@@ -127,8 +127,8 @@ export default function ProfileHeader({
         {/* Avatar */}
         <div
           style={{
-            width: "80px",
-            height: "80px",
+            width: "120px",
+            height: "120px",
             borderRadius: "64px",
             border: "2px solid #FFFFFF",
             overflow: "hidden",
