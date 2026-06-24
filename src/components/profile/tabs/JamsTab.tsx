@@ -26,7 +26,8 @@ const MOCK_JAMS: MockJam[] = [
     type: "spotify_album",
     title: "If Bangs Could Kill",
     artist: "Ella Langley",
-    thumbnailUrl: null,
+    thumbnailUrl:
+      "https://image-cdn-ak.spotifycdn.com/image/ab67616d00001e028606848da949bbaddf447d87",
     embedUrl:
       "https://open.spotify.com/embed/album/6nrtxtgaD9zSYBl9APvOCH?utm_source=generator",
     heading: "If Bangs Could Kill",
@@ -143,6 +144,7 @@ export default function JamsTab() {
             padding: "16px 24px",
             display: "flex",
             gap: "8px",
+            justifyContent: "center",
           }}
         >
           {MOCK_JAMS.map((jam) => {
