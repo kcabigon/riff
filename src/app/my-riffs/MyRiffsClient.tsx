@@ -149,7 +149,7 @@ export default function MyRiffsClient({
               margin: 0,
             }}
           >
-            My Riffs
+            Riffs
           </h1>
 
           <div style={{ display: "flex", gap: "12px" }}>

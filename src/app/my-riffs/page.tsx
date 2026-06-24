@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import MyRiffsClient from "./MyRiffsClient";
 
 export const metadata: Metadata = {
-  title: "My Riffs",
+  title: "Riffs",
 };
 
 export default async function MyRiffsPage() {
