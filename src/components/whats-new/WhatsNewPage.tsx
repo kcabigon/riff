@@ -26,6 +26,18 @@ interface Release {
 const RELEASES: Release[] = [
   {
     date: "June 2026",
+    title: "Comments, now in stereo.",
+    body: "Comments used to be one-shots. Now you can reply right back — desktop expands a thread inline on the card, mobile keeps it inside the existing comment sheet. Read a piece, leave a thought, get a response, keep it going.",
+    credit: "Nice one, Derek!",
+    creditEmoji: "🛠️",
+    image: {
+      src: "/whats-new/replies.jpeg",
+      alt: "Comment thread with multiple replies on a piece",
+      maxWidth: 360,
+    },
+  },
+  {
+    date: "June 2026",
     title: "New font, who dis?",
     body: "Not everyone loves Playfair Display as much as we do. So we added some more options: another serif, 2 sans serifs, and a mono (for you weirdos). Unfortunately, Wingdings didn't make the cut.",
     credit: "Shoutout Cass for the feedback!",
@@ -95,10 +107,6 @@ const RELEASES: Release[] = [
 ];
 
 const COMING_SOON: { title: string; body: string }[] = [
-  {
-    title: "Replying to comments",
-    body: "Turn feedback into a conversation — reply directly to comments on a piece.",
-  },
   {
     title: "Captions for images",
     body: "Add a caption beneath the images in your writing.",

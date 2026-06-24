@@ -1,3 +1,4 @@
+/* eslint-disable no-console -- dev sandbox page; not shipped to users */
 "use client";
 
 import { useState } from "react";
@@ -111,7 +112,9 @@ export default function TestClubsAPI() {
         body: JSON.stringify({
           title: "Test Riff",
           prompt: "Write about your favorite memory",
-          deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          deadline: new Date(
+            Date.now() + 7 * 24 * 60 * 60 * 1000
+          ).toISOString(),
         }),
       });
       const data = await response.json();
@@ -214,27 +217,27 @@ export default function TestClubsAPI() {
     log("=== RUNNING ALL TESTS IN SEQUENCE ===\n");
 
     await testCreateClub();
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     await testGetClubs();
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     if (clubId) {
       await testGetClubDetails();
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       await testCreateRiff();
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       await testGetRiffs();
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       if (riffId) {
         await testActivateRiff();
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 500));
 
         await testJoinRiff();
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 500));
       }
     }
 
@@ -245,7 +248,9 @@ export default function TestClubsAPI() {
     <div style={{ padding: "20px", fontFamily: "monospace" }}>
       <h1>Clubs & Riffs API Tester</h1>
 
-      <div style={{ marginBottom: "20px", padding: "10px", background: "#f0f0f0" }}>
+      <div
+        style={{ marginBottom: "20px", padding: "10px", background: "#f0f0f0" }}
+      >
         <div style={{ marginBottom: "10px" }}>
           <label>Club ID: </label>
           <input
@@ -299,9 +304,7 @@ export default function TestClubsAPI() {
         <button onClick={testGetClubDetails} style={{ marginRight: "10px" }}>
           3. Get Club Details
         </button>
-        <button onClick={testUpdateClub}>
-          4. Update Club
-        </button>
+        <button onClick={testUpdateClub}>4. Update Club</button>
       </div>
 
       <div style={{ marginBottom: "20px" }}>
@@ -318,31 +321,32 @@ export default function TestClubsAPI() {
         <button onClick={testJoinRiff} style={{ marginRight: "10px" }}>
           8. Join Riff
         </button>
-        <button onClick={testCompleteRiff}>
-          9. Complete Riff
-        </button>
+        <button onClick={testCompleteRiff}>9. Complete Riff</button>
       </div>
 
       <div style={{ marginBottom: "20px" }}>
         <h3>Batch Tests</h3>
-        <button onClick={runAllTests} style={{ marginRight: "10px", fontWeight: "bold" }}>
+        <button
+          onClick={runAllTests}
+          style={{ marginRight: "10px", fontWeight: "bold" }}
+        >
           ▶ Run All Tests
         </button>
-        <button onClick={clearOutput}>
-          Clear Output
-        </button>
+        <button onClick={clearOutput}>Clear Output</button>
       </div>
 
       <div>
         <h3>Output:</h3>
-        <pre style={{
-          background: "#1e1e1e",
-          color: "#d4d4d4",
-          padding: "20px",
-          borderRadius: "5px",
-          maxHeight: "600px",
-          overflow: "auto"
-        }}>
+        <pre
+          style={{
+            background: "#1e1e1e",
+            color: "#d4d4d4",
+            padding: "20px",
+            borderRadius: "5px",
+            maxHeight: "600px",
+            overflow: "auto",
+          }}
+        >
           {output || "No output yet. Click a test button to start."}
         </pre>
       </div>

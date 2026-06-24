@@ -25,7 +25,8 @@ interface PieceCardProps {
   onClick: () => void;
 }
 
-// Placeholder colors for pieces without images
+// Placeholder colors for pieces without images. Intentional pastel rotation.
+/* eslint-disable riff/no-non-palette-colors */
 const PLACEHOLDER_COLORS = [
   "#E8E0D5",
   "#D5E0E8",
@@ -34,6 +35,7 @@ const PLACEHOLDER_COLORS = [
   "#D5E8E0",
   "#E0D5E8",
 ];
+/* eslint-enable riff/no-non-palette-colors */
 
 export default function PieceCard({
   piece,

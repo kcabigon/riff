@@ -19,7 +19,7 @@ export default function EmptyRiffState({
       <div
         style={{
           padding: "40px",
-          backgroundColor: "#F9F9F9",
+          backgroundColor: "#F5F5F5",
           border: "2px dashed #E6E6E6",
           textAlign: "center",
         }}
@@ -29,7 +29,7 @@ export default function EmptyRiffState({
             fontFamily: "var(--font-dm-sans)",
             fontSize: "16px",
             fontWeight: 300,
-            color: "#959595",
+            color: "#9C9C9C",
             margin: 0,
           }}
         >

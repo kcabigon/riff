@@ -11,7 +11,14 @@ export default function OnboardingInput({
   ...props
 }: OnboardingInputProps) {
   return (
-    <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "8px" }}>
+    <div
+      style={{
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        gap: "8px",
+      }}
+    >
       <input
         {...props}
         style={{
@@ -36,7 +43,7 @@ export default function OnboardingInput({
             fontFamily: "var(--font-dm-sans)",
             fontSize: "14px",
             fontWeight: 300,
-            color: "#FF0000",
+            color: "#DC2626",
             margin: 0,
           }}
         >

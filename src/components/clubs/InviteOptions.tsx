@@ -240,7 +240,7 @@ export default function InviteOptions({
         <div
           style={{
             padding: "12px",
-            background: "#F9F9F9",
+            background: "#F5F5F5",
             border: "2px solid #000000",
             fontFamily: "var(--font-dm-sans)",
             fontSize: "14px",

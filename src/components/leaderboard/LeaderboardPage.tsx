@@ -142,9 +142,9 @@ function Heatmap({ commitsByDay, color, days }: HeatmapProps) {
         paddingBottom: "4px",
       }}
     >
-      {weeks.map((week, wi) => (
+      {weeks.map((week) => (
         <div
-          key={wi}
+          key={week[0]}
           style={{ display: "flex", flexDirection: "column", gap: "3px" }}
         >
           {week.map((day) => {
@@ -245,7 +245,7 @@ function WeeklyChart({
               style={{
                 width: `${barWidth}px`,
                 height: `${deletions > 0 ? delHeight : 0}px`,
-                backgroundColor: deletions > 0 ? "#FF4444" : "transparent",
+                backgroundColor: deletions > 0 ? "#DC2626" : "transparent",
                 borderRadius: "0 0 2px 2px",
                 opacity: deletions > 0 ? 0.8 : 0,
               }}
@@ -413,7 +413,7 @@ export default function LeaderboardPage({ users }: LeaderboardPageProps) {
           <StatBox
             label="Lines Removed"
             value={formatNumber(totals.deletions)}
-            color="#FF4444"
+            color="#DC2626"
           />
           <StatBox
             label="Net Lines"
@@ -606,7 +606,7 @@ export default function LeaderboardPage({ users }: LeaderboardPageProps) {
                   <span style={{ color: "#555" }}> added</span>
                 </div>
                 <div>
-                  <span style={{ color: "#FF4444" }}>
+                  <span style={{ color: "#DC2626" }}>
                     -{user.filteredTotalDeletions.toLocaleString()}
                   </span>
                   <span style={{ color: "#555" }}> removed</span>

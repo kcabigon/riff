@@ -237,7 +237,7 @@ export default function RiffPageLayout({
                     fontWeight: 300,
                     color:
                       deadlinePassed && riff.status !== "REVEALED"
-                        ? "#FF4444"
+                        ? "#DC2626"
                         : "#808080",
                     margin: 0,
                   }}
@@ -398,6 +398,7 @@ export default function RiffPageLayout({
                   >
                     {revealStats.map((stat, i) => (
                       <div
+                        // eslint-disable-next-line react/no-array-index-key -- static stat tiles; length and order are stable
                         key={i}
                         style={{
                           display: "flex",
@@ -470,7 +471,7 @@ export default function RiffPageLayout({
                   fontFamily: "var(--font-dm-sans)",
                   fontSize: "14px",
                   fontWeight: 700,
-                  color: "#FF4444",
+                  color: "#DC2626",
                   margin: 0,
                 }}
               >
