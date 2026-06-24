@@ -824,7 +824,11 @@ function buildAudio(): Audio | null {
   }
 }
 
-export default function StrangeCaseExperience() {
+export default function StrangeCaseExperience({
+  clubId,
+}: {
+  clubId?: string | null;
+}) {
   const router = useRouter();
   const [cur, setCur] = useState(0);
   const [prev, setPrev] = useState<number | null>(null);
@@ -878,7 +882,32 @@ export default function StrangeCaseExperience() {
     [total, armHint]
   );
 
-  const exit = useCallback(() => router.back(), [router]);
+  // Navigate to the club (a real destination) — router.back() is a no-op on
+  // mobile when the piece was opened from a fresh link with no in-app history.
+  const exit = useCallback(() => {
+    router.push(clubId ? `/clubs/${clubId}` : "/");
+  }, [router, clubId]);
+
+  // Build + resume the AudioContext synchronously INSIDE the tap handler — mobile
+  // browsers (iOS especially) only unlock audio from within the user gesture, so
+  // this can't live in a useEffect that fires a tick later.
+  const toggleSound = useCallback(() => {
+    if (!audioRef.current) {
+      audioRef.current = buildAudio();
+      audioRef.current?.setMood(moodRef.current);
+    }
+    const a = audioRef.current;
+    const next = !soundOn;
+    if (a) {
+      if (a.ctx.state === "suspended") void a.ctx.resume();
+      a.master.gain.setTargetAtTime(
+        next ? 0.18 : 0.0001,
+        a.ctx.currentTime,
+        next ? 1.2 : 0.4
+      );
+    }
+    setSoundOn(next);
+  }, [soundOn]);
 
   // touch device? drives the hint copy + cuts superfluous animation to stay light
   useEffect(() => {
@@ -891,24 +920,6 @@ export default function StrangeCaseExperience() {
   useEffect(() => {
     if (audioRef.current) audioRef.current.setMood(mood);
   }, [mood]);
-
-  // sound toggle
-  useEffect(() => {
-    if (soundOn) {
-      if (!audioRef.current) {
-        audioRef.current = buildAudio();
-        if (audioRef.current) audioRef.current.setMood(moodRef.current);
-      }
-      const a = audioRef.current;
-      if (a) {
-        if (a.ctx.state === "suspended") a.ctx.resume();
-        a.master.gain.setTargetAtTime(0.18, a.ctx.currentTime, 1.2);
-      }
-    } else if (audioRef.current) {
-      const a = audioRef.current;
-      a.master.gain.setTargetAtTime(0.0001, a.ctx.currentTime, 0.4);
-    }
-  }, [soundOn]);
 
   // hint lifecycle
   useEffect(() => {
@@ -1144,7 +1155,7 @@ export default function StrangeCaseExperience() {
         className="sce-icon sce-sound"
         onClick={(e) => {
           e.stopPropagation();
-          setSoundOn((v) => !v);
+          toggleSound();
         }}
         aria-label={soundOn ? "Mute score" : "Play score"}
       >
