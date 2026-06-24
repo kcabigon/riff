@@ -475,7 +475,7 @@ export async function sendMemberJoinedEmail({
           <tr>
             <td style="padding:40px 40px 16px;">
               <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${newMemberFullName} joined ${clubName}.</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">More voices, more angles. More riffing.</p>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">Riff on, baby.</p>
             </td>
           </tr>
 

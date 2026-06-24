@@ -89,7 +89,8 @@ export async function PATCH(
         eligiblePieceMembers.map((m) =>
           sendPieceSubmittedEmail({
             email: m.user.email,
-            actorName: user.name || "Someone",
+            actorName:
+              user.name || user.firstName || user.username || "Someone",
             riffTitle: riffDisplayTitle,
             clubName: riff.club.name,
             riffUrl,
