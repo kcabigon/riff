@@ -21,7 +21,6 @@ interface ProfileHeaderProps {
     lastName: string | null;
     username: string | null;
     avatarUrl: string | null;
-    createdAt: Date;
   };
   currentUser: {
     id: string;
@@ -29,7 +28,6 @@ interface ProfileHeaderProps {
     name: string | null;
     avatarUrl: string | null;
   } | null;
-  isOwnProfile?: boolean;
   lastActiveClubId?: string | null;
   stats: {
     pieceCount: number;

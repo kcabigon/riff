@@ -56,7 +56,6 @@ export default async function ProfilePageRoute({
       lastName: true,
       username: true,
       avatarUrl: true,
-      createdAt: true,
     },
   });
 
