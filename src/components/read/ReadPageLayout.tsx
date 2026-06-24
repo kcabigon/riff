@@ -19,6 +19,7 @@ import { useScrollDirection } from "@/hooks/useScrollDirection";
 import BackButton from "@/components/BackButton";
 import { CommentAuthor } from "@/types";
 import { ReplyData } from "./ReplyThread";
+import NoiseBackground from "@/components/NoiseBackground";
 
 interface CommentData {
   id: string;
@@ -96,6 +97,7 @@ export default function ReadPageLayout({
   const [pendingSelection, setPendingSelection] =
     useState<PendingSelection | null>(null);
   const [pastLastComment, setPastLastComment] = useState(false);
+  const [badgePressed, setBadgePressed] = useState(false);
 
   const isMobile = useIsMobile();
   const keyboardTriggerRef = useRef<HTMLInputElement>(null);
@@ -325,7 +327,9 @@ export default function ReadPageLayout({
         return;
       }
       const lastMark = marks[marks.length - 1];
-      setPastLastComment(lastMark.getBoundingClientRect().bottom < 0);
+      setPastLastComment(
+        lastMark.getBoundingClientRect().top < window.innerHeight
+      );
     }
     window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
@@ -664,6 +668,7 @@ export default function ReadPageLayout({
 
       {/* Ghost badge — surfaces unanchored comments after reader scrolls past last highlight */}
       {isMobile &&
+        isRiffMode &&
         unanchoredComments.length > 0 &&
         pastLastComment &&
         activeComments.length === 0 && (
@@ -671,24 +676,42 @@ export default function ReadPageLayout({
             onClick={() =>
               setActiveHighlightIds(unanchoredComments.map((c) => c.id))
             }
+            onPointerDown={() => setBadgePressed(true)}
+            onPointerUp={() => setBadgePressed(false)}
+            onPointerLeave={() => setBadgePressed(false)}
             style={{
               position: "fixed",
+              overflow: "hidden",
               right: 0,
-              bottom: "120px",
-              border: "1px solid #CCCCCC",
+              bottom: "72px",
+
+              borderTop: badgePressed
+                ? "2px solid #000000"
+                : "2px solid #E6E6E6",
+              borderLeft: badgePressed
+                ? "2px solid #000000"
+                : "2px solid #E6E6E6",
+              borderBottom: badgePressed
+                ? "2px solid #000000"
+                : "2px solid #E6E6E6",
               borderRight: "none",
-              backgroundColor: "rgba(255,255,255,0.92)",
-              color: "#808080",
+              boxShadow: badgePressed ? "-4px 4px 0 #000" : "none",
+              backgroundColor: "#FFFFFF",
+              color: "#000000",
               fontFamily: "var(--font-dm-sans)",
-              fontSize: "12px",
-              fontWeight: 300,
-              padding: "8px 10px",
+              fontSize: "16px",
+              fontWeight: 700,
+              padding: "12px 20px 12px 24px",
               cursor: "pointer",
               whiteSpace: "nowrap",
               zIndex: 40,
+              transition: "box-shadow 0.1s ease, border-color 0.1s ease",
             }}
           >
-            +{unanchoredComments.length} Comments
+            <NoiseBackground />
+            <span style={{ position: "relative", zIndex: 1 }}>
+              +{unanchoredComments.length} Comments
+            </span>
           </button>
         )}
     </div>
