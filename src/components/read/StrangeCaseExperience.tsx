@@ -824,6 +824,21 @@ function buildAudio(): Audio | null {
   }
 }
 
+// Reliable tap for mouse + touch. On touch, `touchend` (a real user gesture) runs
+// the action and preventDefault suppresses the synthetic click — so tapping a
+// button never also triggers the root's tap-to-advance.
+const tapProps = (action: () => void) => ({
+  onClick: (e: React.MouseEvent) => {
+    e.stopPropagation();
+    action();
+  },
+  onTouchEnd: (e: React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    action();
+  },
+});
+
 export default function StrangeCaseExperience({
   clubId,
 }: {
@@ -900,6 +915,18 @@ export default function StrangeCaseExperience({
     const next = !soundOn;
     if (a) {
       if (a.ctx.state === "suspended") void a.ctx.resume();
+      if (next) {
+        // iOS unlock: play a 1-frame silent buffer inside the gesture
+        try {
+          const buf = a.ctx.createBuffer(1, 1, 22050);
+          const src = a.ctx.createBufferSource();
+          src.buffer = buf;
+          src.connect(a.ctx.destination);
+          src.start(0);
+        } catch {
+          /* noop */
+        }
+      }
       a.master.gain.setTargetAtTime(
         next ? 0.18 : 0.0001,
         a.ctx.currentTime,
@@ -1132,10 +1159,7 @@ export default function StrangeCaseExperience({
       {/* exit */}
       <button
         className="sce-icon sce-back"
-        onClick={(e) => {
-          e.stopPropagation();
-          exit();
-        }}
+        {...tapProps(exit)}
         aria-label="Exit reading experience"
       >
         <svg
@@ -1153,10 +1177,7 @@ export default function StrangeCaseExperience({
       {/* sound */}
       <button
         className="sce-icon sce-sound"
-        onClick={(e) => {
-          e.stopPropagation();
-          toggleSound();
-        }}
+        {...tapProps(toggleSound)}
         aria-label={soundOn ? "Mute score" : "Play score"}
       >
         {soundOn ? (
@@ -1205,7 +1226,7 @@ export default function StrangeCaseExperience({
 
       {/* affordances */}
       <div className={`sce-hint ${showHint ? "show" : ""}`}>
-        {isMobile ? "swipe to continue" : "tap or use arrows"}
+        {isMobile ? "tap to continue" : "tap or use arrows"}
       </div>
       <div
         className="sce-progress"
@@ -1297,22 +1318,10 @@ function BeatView({
             <div className="sce-fin">fin.</div>
             <h2 className="sce-endtitle">tHe StRaNgE cAsE</h2>
             <div className="sce-endactions">
-              <button
-                className="sce-btn"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onReplay?.();
-                }}
-              >
+              <button className="sce-btn" {...tapProps(() => onReplay?.())}>
                 read again
               </button>
-              <button
-                className="sce-btn"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onExit?.();
-                }}
-              >
+              <button className="sce-btn" {...tapProps(() => onExit?.())}>
                 leave
               </button>
             </div>
@@ -1622,6 +1631,11 @@ const STYLES = `
 /* mobile: strip GPU-heavy continuous motion + per-char blur to stay smooth */
 .is-mobile .sce-bullet-bg,.is-mobile .sce-photo-img,.is-mobile .sce-stage-bg{animation:none !important;}
 .is-mobile .sce-collage,.is-mobile .sce-stage-bg{transform:none !important;}
+/* flatten the parallax 3D on touch devices — it does nothing without a mouse and
+   Safari mis-hit-tests buttons inside a preserve-3d/perspective container */
+.is-mobile .sce-perspective{perspective:none;}
+.is-mobile .sce-stage{transform-style:flat;}
+.is-mobile .sce-beat{transform:none !important;}
 .is-mobile .enter .sce-char{animation-name:charFadeM !important;animation-duration:.5s !important;}
 @keyframes charFadeM{from{opacity:0;transform:translateY(0.3em);}to{opacity:1;transform:none;}}
 
