@@ -145,7 +145,7 @@ export default async function ReadPage({
   // Access confirmed (revealed riff + club member). For the one experiment piece,
   // render the immersive experience in place of the normal read layout.
   if (EXPERIMENT_ENABLED && pieceId === EXPERIMENT_PIECE_ID) {
-    return <StrangeCaseExperience />;
+    return <StrangeCaseExperience clubId={clubId} />;
   }
 
   // Check if already read
