@@ -3,6 +3,15 @@ import type { Metadata } from "next";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import ReadPageLayout from "@/components/read/ReadPageLayout";
+import StrangeCaseExperience from "@/components/read/StrangeCaseExperience";
+
+// ── Immersive read experience (single piece) ─────────────────────────────────
+// Renders the bespoke StrangeCaseExperience in place of the normal read view for
+// ONE piece, AFTER the normal access check (so who-can-view rules are unchanged).
+// Flip EXPERIMENT_ENABLED to false to instantly restore the default read view.
+// No DB writes, no schema changes; no other piece is affected.
+const EXPERIMENT_ENABLED = true;
+const EXPERIMENT_PIECE_ID = "cmpbuo77j0001le04v4apbyyd";
 
 export async function generateMetadata({
   params,
@@ -131,6 +140,12 @@ export default async function ReadPage({
     validRiffId = pieceRiff.riffId;
     clubId = pieceRiff.riff.clubId;
     submittedAt = pieceRiff.submittedAt?.toISOString() ?? null;
+  }
+
+  // Access confirmed (revealed riff + club member). For the one experiment piece,
+  // render the immersive experience in place of the normal read layout.
+  if (EXPERIMENT_ENABLED && pieceId === EXPERIMENT_PIECE_ID) {
+    return <StrangeCaseExperience />;
   }
 
   // Check if already read
