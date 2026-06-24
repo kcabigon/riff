@@ -2,8 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import AvatarDropdown from "@/components/clubs/AvatarDropdown";
+import ThreeDotButton from "@/components/shared/ThreeDotButton";
 
 export type ProfileTab = "pieces" | "jams" | "quotes";
 
@@ -29,6 +31,7 @@ interface ProfileHeaderProps {
     name: string | null;
     avatarUrl: string | null;
   } | null;
+  isOwnProfile?: boolean;
   lastActiveClubId?: string | null;
   stats: {
     pieceCount: number;
@@ -41,11 +44,13 @@ interface ProfileHeaderProps {
 export default function ProfileHeader({
   profileUser,
   currentUser,
+  isOwnProfile,
   lastActiveClubId,
   stats,
   activeTab,
   onTabChange,
 }: ProfileHeaderProps) {
+  const router = useRouter();
   const logoHref = lastActiveClubId ? `/clubs/${lastActiveClubId}` : "/";
 
   const firstName =
@@ -173,18 +178,33 @@ export default function ProfileHeader({
 
         {/* Name + Stats */}
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          <h1
-            style={{
-              fontFamily: "var(--font-dm-serif-text)",
-              fontSize: "32px",
-              fontWeight: 400,
-              color: "#FFFFFF",
-              margin: 0,
-              lineHeight: 1.2,
-            }}
-          >
-            {displayName || "Anonymous"}
-          </h1>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <h1
+              style={{
+                fontFamily: "var(--font-dm-serif-text)",
+                fontSize: "32px",
+                fontWeight: 400,
+                color: "#FFFFFF",
+                margin: 0,
+                lineHeight: 1.2,
+              }}
+            >
+              {displayName || "Anonymous"}
+            </h1>
+            {isOwnProfile && (
+              <ThreeDotButton
+                variant="dark"
+                align="right"
+                items={[
+                  {
+                    type: "action",
+                    label: "Edit info",
+                    onClick: () => router.push("/account"),
+                  },
+                ]}
+              />
+            )}
+          </div>
 
           <p
             style={{
