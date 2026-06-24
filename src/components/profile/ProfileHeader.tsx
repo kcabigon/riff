@@ -7,14 +7,6 @@ import NotificationBell from "@/components/notifications/NotificationBell";
 import AvatarDropdown from "@/components/clubs/AvatarDropdown";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
 
-export type ProfileTab = "pieces" | "jams" | "quotes";
-
-const TABS: { id: ProfileTab; label: string }[] = [
-  { id: "pieces", label: "Pieces" },
-  { id: "jams", label: "Jams" },
-  { id: "quotes", label: "Quotes" },
-];
-
 interface ProfileHeaderProps {
   profileUser: {
     id: string;
@@ -38,8 +30,6 @@ interface ProfileHeaderProps {
     pieceCount: number;
     totalWordCount: number;
   };
-  activeTab: ProfileTab;
-  onTabChange: (tab: ProfileTab) => void;
 }
 
 export default function ProfileHeader({
@@ -48,8 +38,6 @@ export default function ProfileHeader({
   isOwnProfile,
   lastActiveClubId,
   stats,
-  activeTab,
-  onTabChange,
 }: ProfileHeaderProps) {
   const router = useRouter();
   const logoHref = lastActiveClubId ? `/clubs/${lastActiveClubId}` : "/";
@@ -133,7 +121,7 @@ export default function ProfileHeader({
         style={{
           maxWidth: "1000px",
           margin: "0 auto",
-          padding: "32px 24px 32px",
+          padding: "32px 24px 40px",
           display: "flex",
           alignItems: "center",
           gap: "24px",
@@ -177,7 +165,7 @@ export default function ProfileHeader({
           </div>
         </div>
 
-        {/* Name + Stats */}
+        {/* Name + Bio + Stats */}
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <h1
@@ -232,45 +220,6 @@ export default function ProfileHeader({
             {statsLine}
           </span>
         </div>
-      </div>
-
-      {/* Tabs */}
-      <div
-        style={{
-          maxWidth: "1000px",
-          margin: "0 auto",
-          padding: "0 24px",
-          display: "flex",
-          justifyContent: "center",
-          gap: "32px",
-        }}
-      >
-        {TABS.map((tab) => {
-          const isActive = tab.id === activeTab;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => onTabChange(tab.id)}
-              style={{
-                background: "none",
-                border: "none",
-                borderBottom: isActive
-                  ? "2px solid #00FF66"
-                  : "2px solid transparent",
-                padding: "12px 0",
-                cursor: "pointer",
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: isActive ? 500 : 300,
-                color: isActive ? "#FFFFFF" : "#808080",
-                lineHeight: 1,
-                transition: "none",
-              }}
-            >
-              {tab.label}
-            </button>
-          );
-        })}
       </div>
     </div>
   );
