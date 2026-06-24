@@ -8,6 +8,7 @@ import {
   batchNotificationsEnabled,
 } from "@/lib/resend";
 import { NotificationType } from "@prisma/client";
+import { getBaseUrl } from "@/lib/env";
 
 // PATCH /api/riffs/[id]/pieces/[pieceId] - Submit piece to riff (set submittedAt)
 export async function PATCH(
@@ -57,7 +58,7 @@ export async function PATCH(
 
     // Fire notifications (non-blocking)
     const riff = submission.riff;
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const appUrl = getBaseUrl();
     const riffUrl = `${appUrl}/riffs/${riffId}`;
     const riffDisplayTitle = riff.title || riff.club.name;
 

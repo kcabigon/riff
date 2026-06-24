@@ -5,6 +5,7 @@
 
 import { Resend } from "resend";
 import { prisma } from "@/lib/prisma";
+import { getBaseUrl } from "@/lib/env";
 
 function getResend() {
   return new Resend(process.env.RESEND_API_KEY);
@@ -47,7 +48,7 @@ function emailShell({
   clubName?: string;
   unsubscribe?: boolean;
 }): string {
-  const baseUrl = process.env.NEXTAUTH_URL || "https://letsriff.app";
+  const baseUrl = getBaseUrl();
   const fullFooterText = unsubscribe
     ? `${footerText} · <a href="${baseUrl}/account" style="color:#bbbbbb;">Unsubscribe</a>`
     : footerText;
@@ -217,7 +218,7 @@ export async function sendRiffCreatedEmail({
   email,
   actorName,
   clubName,
-  clubUrl,
+  riffUrl,
   riffTitle,
   prompt,
   deadline,
@@ -225,7 +226,7 @@ export async function sendRiffCreatedEmail({
   email: string;
   actorName: string;
   clubName: string;
-  clubUrl: string;
+  riffUrl: string;
   riffTitle?: string | null;
   prompt?: string | null;
   deadline?: Date | null;
@@ -238,7 +239,7 @@ export async function sendRiffCreatedEmail({
       html: getRiffCreatedEmailTemplate({
         actorName,
         clubName,
-        clubUrl,
+        riffUrl,
         riffTitle,
         prompt,
         deadline,
@@ -373,11 +374,11 @@ function getOnboardingEmailTemplate(magicLink: string): string {
 function getRiffCreatedEmailTemplate({
   actorName,
   clubName,
-  clubUrl,
+  riffUrl,
 }: {
   actorName: string;
   clubName: string;
-  clubUrl: string;
+  riffUrl: string;
   riffTitle?: string | null;
   prompt?: string | null;
   deadline?: Date | null;
@@ -394,7 +395,7 @@ function getRiffCreatedEmailTemplate({
             </td>
           </tr>
 
-          ${emailButton("Let's riff", clubUrl)}`,
+          ${emailButton("Let's riff", riffUrl)}`,
   });
 }
 
@@ -474,8 +475,8 @@ export async function sendMemberJoinedEmail({
         content: `
           <tr>
             <td style="padding:40px 40px 16px;">
-              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${newMemberFullName} joined ${clubName}.</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">More voices, more angles. More riffing.</p>
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">Your club has a new member.</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">Welcome ${newMemberFullName} to the club.</p>
             </td>
           </tr>
 
@@ -634,7 +635,7 @@ export async function sendCommentNotificationEmail({
           <tr>
             <td style="padding:40px 40px 16px;">
               <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">New comments on "${pieceTitle}".</h1>
-              <p style="margin:0 0 16px 0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${commentLabel} just came in.</p>
+              <p style="margin:0 0 16px 0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${commentLabel} in the past 24 hours.</p>
             </td>
           </tr>
 
