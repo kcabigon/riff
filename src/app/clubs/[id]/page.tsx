@@ -49,6 +49,7 @@ export default async function ClubPage({
         description: true,
         bannerImage: true,
         adminId: true,
+        moderatorId: true,
         members: {
           include: {
             user: {

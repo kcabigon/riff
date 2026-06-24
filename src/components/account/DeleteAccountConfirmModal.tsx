@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { signOut } from "next-auth/react";
 import Modal from "@/components/shared/Modal";
 import TextInput from "@/components/TextInput";
+import DestructiveButton from "@/components/DestructiveButton";
 
 interface DeleteAccountConfirmModalProps {
   isOpen: boolean;
@@ -139,38 +140,27 @@ export default function DeleteAccountConfirmModal({
         </p>
       )}
 
-      <button
+      <DestructiveButton
+        size="lg"
         onClick={handleDelete}
         disabled={buttonDisabled}
-        style={{
-          backgroundColor: buttonDisabled ? "#E6E6E6" : "#DC2626",
-          border: "2px solid #000000",
-          boxShadow: buttonDisabled ? "none" : "8px 8px 0px 0px #000000",
-          padding: "12px 48px",
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "16px",
-          fontWeight: 300,
-          color: buttonDisabled ? "#9C9C9C" : "#FFFFFF",
-          cursor: buttonDisabled ? "not-allowed" : "pointer",
-          width: "100%",
-          marginBottom: "16px",
-        }}
+        style={{ width: "100%", marginBottom: "16px" }}
       >
         {isDeleting ? "Deleting..." : "Delete my account"}
-      </button>
+      </DestructiveButton>
 
       <div style={{ textAlign: "center" }}>
         <button
           onClick={onClose}
           style={{
-            background: "none",
+            backgroundColor: "#FFFFFF",
             border: "none",
             cursor: "pointer",
             fontFamily: "var(--font-dm-sans)",
             fontSize: "12px",
             fontWeight: 300,
             color: "#808080",
-            padding: "4px",
+            padding: "4px 12px",
             textDecoration: "underline",
           }}
         >

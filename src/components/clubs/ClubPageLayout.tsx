@@ -25,6 +25,9 @@ import {
   getSubmittedParticipants,
 } from "@/lib/riff-utils";
 import DeleteClubConfirmModal from "@/components/clubs/DeleteClubConfirmModal";
+import LeaveClubConfirmModal from "@/components/clubs/LeaveClubConfirmModal";
+import TransferHostModal from "@/components/clubs/TransferHostModal";
+import AssignCoHostModal from "@/components/clubs/AssignCoHostModal";
 import GettingStartedSection from "@/components/tutorial/GettingStartedSection";
 
 interface ClubMember {
@@ -81,6 +84,7 @@ interface ClubPageLayoutProps {
     description: string | null;
     bannerImage: string | null;
     adminId: string;
+    moderatorId: string | null;
     members: ClubMember[];
   };
   userClubs: Array<{ id: string; name: string }>;
@@ -130,13 +134,49 @@ export default function ClubPageLayout({
   const [isClubDetailsModalOpen, setIsClubDetailsModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isDeleteClubModalOpen, setIsDeleteClubModalOpen] = useState(false);
+  const [isLeaveClubModalOpen, setIsLeaveClubModalOpen] = useState(false);
+  const [isTransferHostModalOpen, setIsTransferHostModalOpen] = useState(false);
+  const [isAssignCoHostModalOpen, setIsAssignCoHostModalOpen] = useState(false);
   const [currentActiveRiff, setCurrentActiveRiff] = useState<Riff | null>(
     activeRiff
   );
   const handleAvatarClick = useProfileNavigation();
   const isMobile = useIsMobile();
 
+  const isCoHost = club.moderatorId === currentUserId;
+
   const adminMenuItems = [
+    {
+      type: "action" as const,
+      label: "Club details",
+      onClick: () => setIsClubDetailsModalOpen(true),
+    },
+    {
+      type: "action" as const,
+      label: "Invite friends",
+      onClick: () => setIsInviteModalOpen(true),
+    },
+    {
+      type: "action" as const,
+      label: "Assign co-host",
+      onClick: () => setIsAssignCoHostModalOpen(true),
+    },
+    { type: "divider" as const },
+    {
+      type: "action" as const,
+      label: "Transfer host",
+      color: "#DC2626",
+      onClick: () => setIsTransferHostModalOpen(true),
+    },
+    {
+      type: "action" as const,
+      label: "Delete club",
+      color: "#DC2626",
+      onClick: () => setIsDeleteClubModalOpen(true),
+    },
+  ];
+
+  const coHostMenuItems = [
     {
       type: "action" as const,
       label: "Club details",
@@ -150,9 +190,18 @@ export default function ClubPageLayout({
     { type: "divider" as const },
     {
       type: "action" as const,
-      label: "Delete club",
+      label: "Leave club",
       color: "#DC2626",
-      onClick: () => setIsDeleteClubModalOpen(true),
+      onClick: () => setIsLeaveClubModalOpen(true),
+    },
+  ];
+
+  const memberMenuItems = [
+    {
+      type: "action" as const,
+      label: "Leave club",
+      color: "#DC2626",
+      onClick: () => setIsLeaveClubModalOpen(true),
     },
   ];
 
@@ -313,13 +362,17 @@ export default function ClubPageLayout({
                   >
                     {clubName}
                   </h1>
-                  {isAdmin && (
-                    <ThreeDotButton
-                      variant="dark"
-                      items={adminMenuItems}
-                      align="right"
-                    />
-                  )}
+                  <ThreeDotButton
+                    variant="dark"
+                    items={
+                      isAdmin
+                        ? adminMenuItems
+                        : isCoHost
+                          ? coHostMenuItems
+                          : memberMenuItems
+                    }
+                    align="right"
+                  />
                 </div>
 
                 <div
@@ -424,13 +477,17 @@ export default function ClubPageLayout({
             >
               {clubName}
             </h1>
-            {isAdmin && (
-              <ThreeDotButton
-                variant="light"
-                items={adminMenuItems}
-                align="right"
-              />
-            )}
+            <ThreeDotButton
+              variant="light"
+              items={
+                isAdmin
+                  ? adminMenuItems
+                  : isCoHost
+                    ? coHostMenuItems
+                    : memberMenuItems
+              }
+              align="right"
+            />
           </div>
 
           <div
@@ -533,13 +590,17 @@ export default function ClubPageLayout({
               >
                 {clubName}
               </h1>
-              {isAdmin && (
-                <ThreeDotButton
-                  variant="light"
-                  items={adminMenuItems}
-                  align="right"
-                />
-              )}
+              <ThreeDotButton
+                variant="light"
+                items={
+                  isAdmin
+                    ? adminMenuItems
+                    : isCoHost
+                      ? coHostMenuItems
+                      : memberMenuItems
+                }
+                align="right"
+              />
             </div>
 
             <div
@@ -682,7 +743,8 @@ export default function ClubPageLayout({
         {(() => {
           const hasCurrentRead = revealedRiffs.some(hasUnreadForUser);
           if (showGettingStarted && !activeRiff) return null;
-          const showSection = activeRiff || isAdmin || !hasCurrentRead;
+          const showSection =
+            activeRiff || isAdmin || isCoHost || !hasCurrentRead;
           if (!showSection) return null;
 
           const hostName =
@@ -722,7 +784,7 @@ export default function ClubPageLayout({
                   hasDraft={hasDraft}
                   hasSubmitted={hasSubmitted}
                   currentUserId={currentUserId}
-                  isAdmin={isAdmin}
+                  isAdmin={isAdmin || isCoHost}
                   onJoin={handleJoinRiff}
                   onReveal={() => setIsRevealModalOpen(true)}
                   predictedVolumeNumber={predictedVolumeNumber}
@@ -730,7 +792,7 @@ export default function ClubPageLayout({
               ) : (
                 <EmptyRiffState
                   onStartNewRiff={() => setIsCreateRiffModalOpen(true)}
-                  isAdmin={isAdmin}
+                  isAdmin={isAdmin || isCoHost}
                   hostName={hostName}
                 />
               )}
@@ -847,6 +909,50 @@ export default function ClubPageLayout({
         }}
         clubId={club.id}
         clubName={clubName}
+      />
+
+      <TransferHostModal
+        isOpen={isTransferHostModalOpen}
+        onClose={() => setIsTransferHostModalOpen(false)}
+        onTransferred={() => router.refresh()}
+        clubId={club.id}
+        members={club.members
+          .filter((m) => m.user.id !== currentUserId)
+          .map((m) => ({ id: m.user.id, name: m.user.name }))}
+      />
+
+      <LeaveClubConfirmModal
+        isOpen={isLeaveClubModalOpen}
+        onClose={() => setIsLeaveClubModalOpen(false)}
+        onLeft={() => {
+          const otherClub = userClubs.find((c) => c.id !== club.id);
+          if (otherClub) {
+            router.push(`/clubs/${otherClub.id}`);
+          } else {
+            router.push("/no-club");
+          }
+        }}
+        clubId={club.id}
+        clubName={clubName}
+        userId={currentUserId}
+      />
+
+      <AssignCoHostModal
+        isOpen={isAssignCoHostModalOpen}
+        onClose={() => setIsAssignCoHostModalOpen(false)}
+        onUpdated={() => router.refresh()}
+        clubId={club.id}
+        currentCoHost={
+          club.moderatorId
+            ? (club.members.find((m) => m.user.id === club.moderatorId)?.user ??
+              null)
+            : null
+        }
+        members={club.members
+          .filter(
+            (m) => m.user.id !== currentUserId && m.user.id !== club.moderatorId
+          )
+          .map((m) => ({ id: m.user.id, name: m.user.name }))}
       />
 
       {/* Invite Friends Modal */}

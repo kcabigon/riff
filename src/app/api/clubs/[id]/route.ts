@@ -117,9 +117,20 @@ export async function PATCH(
       return NextResponse.json({ error: "Club not found" }, { status: 404 });
     }
 
-    if (club.adminId !== user.id) {
+    const isAdminOrCoHost =
+      club.adminId === user.id || club.moderatorId === user.id;
+
+    if (!isAdminOrCoHost) {
       return NextResponse.json(
-        { error: "Only the club admin can update club details" },
+        { error: "Only the club admin or co-host can update club details" },
+        { status: 403 }
+      );
+    }
+
+    // Only the admin can assign/change the moderator
+    if (moderatorId !== undefined && club.adminId !== user.id) {
+      return NextResponse.json(
+        { error: "Only the club admin can assign a co-host" },
         { status: 403 }
       );
     }
