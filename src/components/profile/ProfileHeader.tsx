@@ -31,7 +31,10 @@ interface ProfileHeaderProps {
   } | null;
   isOwnProfile?: boolean;
   lastActiveClubId?: string | null;
-  totalWordCount: number;
+  stats: {
+    pieceCount: number;
+    totalWordCount: number;
+  };
   activeTab: ProfileTab;
   onTabChange: (tab: ProfileTab) => void;
 }
@@ -40,7 +43,7 @@ export default function ProfileHeader({
   profileUser,
   currentUser,
   lastActiveClubId,
-  totalWordCount,
+  stats,
   activeTab,
   onTabChange,
 }: ProfileHeaderProps) {
@@ -66,10 +69,7 @@ export default function ProfileHeader({
         .toUpperCase()
     : "?";
 
-  const joinedDate = profileUser.createdAt.toLocaleDateString("en-US", {
-    month: "long",
-    year: "numeric",
-  });
+  const statsLine = `${stats.pieceCount} pieces · ${stats.totalWordCount.toLocaleString()} words`;
 
   return (
     <div style={{ backgroundColor: "#000000" }}>
@@ -167,7 +167,7 @@ export default function ProfileHeader({
         </div>
 
         {/* Name + Stats */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           <h1
             style={{
               fontFamily: "var(--font-dm-serif-text)",
@@ -181,21 +181,31 @@ export default function ProfileHeader({
             {displayName || "Anonymous"}
           </h1>
 
-          <div
+          <p
+            style={{
+              fontFamily: "var(--font-playfair)",
+              fontSize: "16px",
+              fontWeight: 400,
+              color: "#FFFFFF",
+              margin: 0,
+              lineHeight: 1.6,
+              maxWidth: "400px",
+            }}
+          >
+            Love letters to baseball, and other random musings on music, travel,
+            parenting, and life.
+          </p>
+          <span
             style={{
               fontFamily: "var(--font-dm-sans)",
               fontSize: "12px",
               fontWeight: 300,
               color: "#808080",
               lineHeight: 1.4,
-              display: "flex",
-              flexDirection: "column",
-              gap: "2px",
             }}
           >
-            <span>Riffing since {joinedDate}</span>
-            <span>{totalWordCount.toLocaleString()} words written</span>
-          </div>
+            {statsLine}
+          </span>
         </div>
       </div>
 

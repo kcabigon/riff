@@ -144,7 +144,7 @@ export default async function ProfilePageRoute({
             }
           : null
       }
-      totalWordCount={totalWordCount}
+      stats={{ pieceCount, totalWordCount }}
       pieces={pieces}
       isOwnProfile={isOwnProfile}
       lastActiveClubId={currentUser?.lastActiveClubId ?? null}
