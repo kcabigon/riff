@@ -1,12 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { signOut } from "next-auth/react";
-import Dropdown from "@/components/shared/Dropdown";
-import MyStatsModal from "./MyStatsModal";
+import NotificationBell from "@/components/notifications/NotificationBell";
+import AvatarDropdown from "@/components/clubs/AvatarDropdown";
 
 interface ProfileHeaderProps {
   profileUser: {
@@ -15,50 +12,31 @@ interface ProfileHeaderProps {
     firstName: string | null;
     lastName: string | null;
     username: string | null;
+    avatarUrl: string | null;
   };
+  currentUser: {
+    id: string;
+    username: string | null;
+    name: string | null;
+    avatarUrl: string | null;
+  } | null;
   isOwnProfile?: boolean;
   lastActiveClubId?: string | null;
-  stats?: {
+  stats: {
     pieceCount: number;
     totalWordCount: number;
+    riffCount: number;
+    commentsGiven: number;
   };
 }
 
 export default function ProfileHeader({
   profileUser,
-  isOwnProfile,
+  currentUser,
   lastActiveClubId,
   stats,
 }: ProfileHeaderProps) {
-  const router = useRouter();
-  const [isStatsOpen, setIsStatsOpen] = useState(false);
   const logoHref = lastActiveClubId ? `/clubs/${lastActiveClubId}` : "/";
-
-  const dropdownItems = [
-    ...(isOwnProfile && stats
-      ? [
-          {
-            type: "action" as const,
-            label: "My stats",
-            onClick: () => setIsStatsOpen(true),
-          },
-        ]
-      : []),
-    ...(isOwnProfile
-      ? [
-          {
-            type: "action" as const,
-            label: "Account",
-            onClick: () => router.push("/account"),
-          },
-          {
-            type: "action" as const,
-            label: "Log out",
-            onClick: () => signOut({ callbackUrl: "/" }),
-          },
-        ]
-      : []),
-  ];
 
   const firstName =
     profileUser.firstName ||
@@ -71,30 +49,25 @@ export default function ProfileHeader({
     "";
   const displayName = [firstName, lastName].filter(Boolean).join(" ");
 
-  const nameEl = (
-    <span
-      style={{
-        fontFamily: "var(--font-dm-serif-text)",
-        fontSize: "20px",
-        fontWeight: 400,
-        color: "#FFFFFF",
-        cursor: isOwnProfile ? "pointer" : "default",
-        transition: "color 120ms ease",
-      }}
-      onMouseEnter={(e) => {
-        if (isOwnProfile)
-          (e.currentTarget as HTMLElement).style.color = "#C01582";
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.color = "#FFFFFF";
-      }}
-    >
-      {displayName}
-    </span>
-  );
+  const initials = displayName
+    ? displayName
+        .split(" ")
+        .slice(0, 2)
+        .map((w) => w[0])
+        .join("")
+        .toUpperCase()
+    : "?";
+
+  const statItems = [
+    { value: stats.riffCount, label: "riffs" },
+    { value: stats.pieceCount, label: "pieces" },
+    { value: stats.totalWordCount.toLocaleString(), label: "words" },
+    { value: stats.commentsGiven, label: "comments" },
+  ];
 
   return (
-    <>
+    <div style={{ backgroundColor: "#000000" }}>
+      {/* Nav */}
       <nav
         style={{
           position: "sticky",
@@ -117,7 +90,6 @@ export default function ProfileHeader({
             justifyContent: "space-between",
           }}
         >
-          {/* Left: Logo */}
           <Link
             href={logoHref}
             style={{ display: "flex", alignItems: "center" }}
@@ -131,27 +103,110 @@ export default function ProfileHeader({
             />
           </Link>
 
-          {/* Right: name (dropdown for own profile, plain text for others) */}
-          {isOwnProfile ? (
-            <Dropdown
-              trigger={nameEl}
-              align="right"
-              minWidth={140}
-              items={dropdownItems}
-            />
-          ) : (
-            nameEl
+          {currentUser && (
+            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+              <NotificationBell />
+              <AvatarDropdown user={currentUser} />
+            </div>
           )}
         </div>
       </nav>
 
-      {isOwnProfile && stats && (
-        <MyStatsModal
-          isOpen={isStatsOpen}
-          onClose={() => setIsStatsOpen(false)}
-          stats={stats}
-        />
-      )}
-    </>
+      {/* Hero */}
+      <div
+        style={{
+          maxWidth: "1000px",
+          margin: "0 auto",
+          padding: "32px 24px 40px",
+          display: "flex",
+          alignItems: "center",
+          gap: "24px",
+          flexWrap: "wrap",
+        }}
+      >
+        {/* Avatar */}
+        <div
+          style={{
+            width: "80px",
+            height: "80px",
+            borderRadius: "64px",
+            border: "2px solid #FFFFFF",
+            overflow: "hidden",
+            flexShrink: 0,
+            backgroundColor: "#E6E6E6",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {profileUser.avatarUrl ? (
+            <img
+              src={profileUser.avatarUrl}
+              alt={displayName}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+          ) : (
+            <span
+              style={{
+                fontFamily: "var(--font-dm-serif-text)",
+                fontSize: "28px",
+                fontWeight: 400,
+                color: "#000000",
+                lineHeight: "normal",
+              }}
+            >
+              {initials}
+            </span>
+          )}
+        </div>
+
+        {/* Name + Stats */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          <h1
+            style={{
+              fontFamily: "var(--font-dm-serif-text)",
+              fontSize: "32px",
+              fontWeight: 400,
+              color: "#FFFFFF",
+              margin: 0,
+              lineHeight: 1.2,
+            }}
+          >
+            {displayName || "Anonymous"}
+          </h1>
+
+          <div style={{ display: "flex", gap: "32px", flexWrap: "wrap" }}>
+            {statItems.map((item) => (
+              <div
+                key={item.label}
+                style={{ display: "flex", flexDirection: "column", gap: "2px" }}
+              >
+                <span
+                  style={{
+                    fontFamily: "var(--font-dm-serif-text)",
+                    fontSize: "32px",
+                    fontWeight: 400,
+                    color: "#FFFFFF",
+                    lineHeight: 1,
+                  }}
+                >
+                  {item.value}
+                </span>
+                <span
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "12px",
+                    fontWeight: 300,
+                    color: "#808080",
+                  }}
+                >
+                  {item.label}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -34,10 +34,16 @@ export default async function ProfilePageRoute({
 
   const currentUserId = session.user.id;
 
-  // Get the current user's last active club for back navigation
+  // Get the current user's last active club for back navigation + nav display
   const currentUser = await prisma.user.findUnique({
     where: { id: currentUserId },
-    select: { lastActiveClubId: true },
+    select: {
+      id: true,
+      username: true,
+      name: true,
+      avatarUrl: true,
+      lastActiveClubId: true,
+    },
   });
 
   // Fetch the target user
@@ -49,6 +55,7 @@ export default async function ProfilePageRoute({
       firstName: true,
       lastName: true,
       username: true,
+      avatarUrl: true,
     },
   });
 
@@ -123,10 +130,25 @@ export default async function ProfilePageRoute({
   const pieceCount = pieces.length;
   const totalWordCount = pieces.reduce((sum, p) => sum + (p.wordCount ?? 0), 0);
 
+  const [riffCount, commentsGiven] = await Promise.all([
+    prisma.riffParticipant.count({ where: { userId } }),
+    prisma.comment.count({ where: { authorId: userId } }),
+  ]);
+
   return (
     <ProfilePage
       user={user}
-      stats={{ pieceCount, totalWordCount }}
+      currentUser={
+        currentUser
+          ? {
+              id: currentUser.id,
+              username: currentUser.username,
+              name: currentUser.name,
+              avatarUrl: currentUser.avatarUrl,
+            }
+          : null
+      }
+      stats={{ pieceCount, totalWordCount, riffCount, commentsGiven }}
       pieces={pieces}
       isOwnProfile={isOwnProfile}
       lastActiveClubId={currentUser?.lastActiveClubId ?? null}
