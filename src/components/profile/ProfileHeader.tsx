@@ -36,7 +36,7 @@ interface ProfileHeaderProps {
     pieceCount: number;
     totalWordCount: number;
     riffCount: number;
-    commentsGiven: number;
+    piecesRead: number;
   };
 }
 
@@ -74,7 +74,7 @@ export default function ProfileHeader({
     { value: stats.riffCount, label: "riffs" },
     { value: stats.pieceCount, label: "pieces" },
     { value: stats.totalWordCount.toLocaleString(), label: "words" },
-    { value: stats.commentsGiven, label: "comments given" },
+    { value: stats.piecesRead, label: "reads" },
   ];
 
   return (
@@ -196,7 +196,7 @@ export default function ProfileHeader({
                 <span
                   style={{
                     fontFamily: "var(--font-dm-serif-text)",
-                    fontSize: "24px",
+                    fontSize: "18px",
                     fontWeight: 400,
                     color: "#FFFFFF",
                     lineHeight: 1,
