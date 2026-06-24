@@ -23,6 +23,7 @@ interface ProfileHeaderProps {
     lastName: string | null;
     username: string | null;
     avatarUrl: string | null;
+    bio: string | null;
     createdAt: Date;
   };
   currentUser: {
@@ -77,7 +78,7 @@ export default function ProfileHeader({
     month: "long",
     year: "numeric",
   });
-  const bioFallback = `Riffing since ${joinedDate}`;
+  const bioText = profileUser.bio || `Riffing since ${joinedDate}`;
   const statsLine = `${stats.pieceCount} pieces · ${stats.totalWordCount.toLocaleString()} words`;
 
   return (
@@ -217,7 +218,7 @@ export default function ProfileHeader({
               maxWidth: "400px",
             }}
           >
-            {bioFallback}
+            {bioText}
           </p>
           <span
             style={{

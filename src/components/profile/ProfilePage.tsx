@@ -16,6 +16,7 @@ interface ProfilePageProps {
     lastName: string | null;
     username: string | null;
     avatarUrl: string | null;
+    bio: string | null;
     createdAt: Date;
   };
   currentUser: {
