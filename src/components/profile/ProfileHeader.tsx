@@ -1,52 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import AvatarDropdown from "@/components/clubs/AvatarDropdown";
-
-function NewJamButton({
-  onClick,
-  disabled,
-}: {
-  onClick: () => void;
-  disabled: boolean;
-}) {
-  const [hovered, setHovered] = useState(false);
-  return (
-    <button
-      onClick={disabled ? undefined : onClick}
-      onMouseEnter={() => !disabled && setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      disabled={disabled}
-      style={{
-        backgroundColor: "#000000",
-        border: disabled ? "2px solid #9C9C9C" : "2px solid #FFFFFF",
-        boxShadow: disabled
-          ? "none"
-          : hovered
-            ? "4px 4px 0px 0px #01EFFC"
-            : "4px 4px 0px 0px #00FF66",
-        padding: "8px 12px",
-        cursor: disabled ? "not-allowed" : "pointer",
-        transition: "none",
-        flexShrink: 0,
-      }}
-    >
-      <span
-        style={{
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "14px",
-          fontWeight: 300,
-          color: disabled ? "#9C9C9C" : "#FFFFFF",
-        }}
-      >
-        New jam
-      </span>
-    </button>
-  );
-}
 
 interface ProfileHeaderProps {
   profileUser: {
@@ -65,8 +22,6 @@ interface ProfileHeaderProps {
   } | null;
   isOwnProfile?: boolean;
   lastActiveClubId?: string | null;
-  onNewJam?: () => void;
-  isComposing?: boolean;
   stats: {
     pieceCount: number;
     totalWordCount: number;
@@ -78,10 +33,7 @@ interface ProfileHeaderProps {
 export default function ProfileHeader({
   profileUser,
   currentUser,
-  isOwnProfile,
   lastActiveClubId,
-  onNewJam,
-  isComposing,
   stats,
 }: ProfileHeaderProps) {
   const logoHref = lastActiveClubId ? `/clubs/${lastActiveClubId}` : "/";
@@ -223,52 +175,35 @@ export default function ProfileHeader({
             {displayName || "Anonymous"}
           </h1>
 
-          <div
-            style={{
-              display: "flex",
-              alignItems: "flex-end",
-              gap: "32px",
-              flexWrap: "wrap",
-            }}
-          >
-            <div style={{ display: "flex", gap: "32px", flexWrap: "wrap" }}>
-              {statItems.map((item) => (
-                <div
-                  key={item.label}
+          <div style={{ display: "flex", gap: "32px", flexWrap: "wrap" }}>
+            {statItems.map((item) => (
+              <div
+                key={item.label}
+                style={{ display: "flex", flexDirection: "column", gap: "2px" }}
+              >
+                <span
                   style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "2px",
+                    fontFamily: "var(--font-dm-serif-text)",
+                    fontSize: "32px",
+                    fontWeight: 400,
+                    color: "#FFFFFF",
+                    lineHeight: 1,
                   }}
                 >
-                  <span
-                    style={{
-                      fontFamily: "var(--font-dm-serif-text)",
-                      fontSize: "24px",
-                      fontWeight: 400,
-                      color: "#FFFFFF",
-                      lineHeight: 1,
-                    }}
-                  >
-                    {item.value}
-                  </span>
-                  <span
-                    style={{
-                      fontFamily: "var(--font-dm-sans)",
-                      fontSize: "12px",
-                      fontWeight: 300,
-                      color: "#808080",
-                    }}
-                  >
-                    {item.label}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            {isOwnProfile && onNewJam && (
-              <NewJamButton onClick={onNewJam} disabled={!!isComposing} />
-            )}
+                  {item.value}
+                </span>
+                <span
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "12px",
+                    fontWeight: 300,
+                    color: "#808080",
+                  }}
+                >
+                  {item.label}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       </div>

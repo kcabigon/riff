@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
-import ProfilePage, { type Jam } from "@/components/profile/ProfilePage";
+import ProfilePage from "@/components/profile/ProfilePage";
 
 export async function generateMetadata({
   params,
@@ -135,15 +135,6 @@ export default async function ProfilePageRoute({
     prisma.comment.count({ where: { authorId: userId } }),
   ]);
 
-  const mockJams: Jam[] = [
-    {
-      content: "Kendrick Lamar — GNX",
-      timestamp: "2 days ago",
-      url: "https://open.spotify.com/album/4xMBLWTJJWCsKXkYc2fCQB",
-      note: "Been on repeat since it dropped. There's something about the way he structures an album that feels more like a novel than a playlist — every track earns its place, nothing is filler, and the sequencing does real narrative work.\n\nThe production on this one is more stripped back than DAMN. which I think suits him right now. Less flash, more weight. The standout for me is still Squabble Up — it has this loose, almost throwaway energy that makes it feel like he made it in an afternoon, which is exactly the kind of thing only someone with total control of their craft can pull off.",
-    },
-  ];
-
   return (
     <ProfilePage
       user={user}
@@ -159,7 +150,6 @@ export default async function ProfilePageRoute({
       }
       stats={{ pieceCount, totalWordCount, riffCount, commentsGiven }}
       pieces={pieces}
-      jams={mockJams}
       isOwnProfile={isOwnProfile}
       lastActiveClubId={currentUser?.lastActiveClubId ?? null}
     />
