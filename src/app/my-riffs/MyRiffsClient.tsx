@@ -303,9 +303,9 @@ export default function MyRiffsClient({
                   gap: "48px",
                 }}
               >
-                {Object.values(pastByClub).map(
-                  ({ clubName, riffs: clubRiffs }) => (
-                    <div key={clubName}>
+                {Object.entries(pastByClub).map(
+                  ([clubId, { clubName, riffs: clubRiffs }]) => (
+                    <div key={clubId}>
                       <h2
                         style={{
                           fontFamily: "var(--font-dm-serif-text)",
