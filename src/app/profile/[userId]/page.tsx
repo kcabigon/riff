@@ -56,6 +56,7 @@ export default async function ProfilePageRoute({
       lastName: true,
       username: true,
       avatarUrl: true,
+      createdAt: true,
     },
   });
 
@@ -130,11 +131,6 @@ export default async function ProfilePageRoute({
   const pieceCount = pieces.length;
   const totalWordCount = pieces.reduce((sum, p) => sum + (p.wordCount ?? 0), 0);
 
-  const [piecesRead, commentsGiven] = await Promise.all([
-    prisma.pieceRead.count({ where: { userId } }),
-    prisma.comment.count({ where: { authorId: userId } }),
-  ]);
-
   return (
     <ProfilePage
       user={user}
@@ -148,7 +144,7 @@ export default async function ProfilePageRoute({
             }
           : null
       }
-      stats={{ pieceCount, totalWordCount, piecesRead, commentsGiven }}
+      totalWordCount={totalWordCount}
       pieces={pieces}
       isOwnProfile={isOwnProfile}
       lastActiveClubId={currentUser?.lastActiveClubId ?? null}

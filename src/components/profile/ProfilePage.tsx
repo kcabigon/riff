@@ -16,6 +16,7 @@ interface ProfilePageProps {
     lastName: string | null;
     username: string | null;
     avatarUrl: string | null;
+    createdAt: Date;
   };
   currentUser: {
     id: string;
@@ -23,12 +24,7 @@ interface ProfilePageProps {
     name: string | null;
     avatarUrl: string | null;
   } | null;
-  stats: {
-    pieceCount: number;
-    totalWordCount: number;
-    piecesRead: number;
-    commentsGiven: number;
-  };
+  totalWordCount: number;
   pieces: Piece[];
   isOwnProfile: boolean;
   lastActiveClubId: string | null;
@@ -37,7 +33,7 @@ interface ProfilePageProps {
 export default function ProfilePage({
   user,
   currentUser,
-  stats,
+  totalWordCount,
   lastActiveClubId,
   pieces: initialPieces,
   isOwnProfile,
@@ -170,7 +166,7 @@ export default function ProfilePage({
         currentUser={currentUser}
         isOwnProfile={isOwnProfile}
         lastActiveClubId={lastActiveClubId}
-        stats={stats}
+        totalWordCount={totalWordCount}
         activeTab={activeTab}
         onTabChange={setActiveTab}
       />
