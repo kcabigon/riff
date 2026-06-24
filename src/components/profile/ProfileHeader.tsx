@@ -70,7 +70,6 @@ export default function ProfileHeader({
     month: "long",
     year: "numeric",
   });
-  const fallbackLine = `Riffing since ${joinedDate} · ${totalWordCount.toLocaleString()} words written`;
 
   return (
     <div style={{ backgroundColor: "#000000" }}>
@@ -182,18 +181,21 @@ export default function ProfileHeader({
             {displayName || "Anonymous"}
           </h1>
 
-          <p
+          <div
             style={{
               fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
+              fontSize: "12px",
               fontWeight: 300,
               color: "#808080",
-              margin: 0,
               lineHeight: 1.4,
+              display: "flex",
+              flexDirection: "column",
+              gap: "2px",
             }}
           >
-            {fallbackLine}
-          </p>
+            <span>Riffing since {joinedDate}</span>
+            <span>{totalWordCount.toLocaleString()} words written</span>
+          </div>
         </div>
       </div>
 
