@@ -56,83 +56,93 @@ export async function PATCH(
       data: { submittedAt: new Date() },
     });
 
-    // Fire notifications
+    // Fire notifications — isolated so failures don't affect the submission response
     const riff = submission.riff;
-    const riffUrl = `${getBaseUrl()}/riffs/${riffId}`;
     const riffDisplayTitle = riff.title || riff.club.name;
 
-    // Notify all club members + send emails
-    await notifyClubMembers(
-      riff.clubId,
-      NotificationType.PIECE_SUBMITTED_TO_RIFF,
-      user.id,
-      { riffId }
-    ).catch((err) =>
-      console.error("[notification error] piece submitted:", err)
-    );
+    try {
+      const riffUrl = `${getBaseUrl()}/riffs/${riffId}`;
 
-    const pieceMembers = await prisma.clubMember.findMany({
-      where: { clubId: riff.clubId, userId: { not: user.id } },
-      include: { user: { select: { email: true, name: true } } },
-    });
-    const pieceEnabled = await batchNotificationsEnabled(
-      pieceMembers.map((m) => m.user.email)
-    );
-    const eligiblePieceMembers = pieceMembers.filter((m) =>
-      pieceEnabled.has(m.user.email)
-    );
-    console.info(
-      `[notify] piece submitted ${riffId}: ${pieceMembers.length} members, ${eligiblePieceMembers.length} email-enabled`
-    );
-    const pieceResults = await Promise.allSettled(
-      eligiblePieceMembers.map((m) =>
-        sendPieceSubmittedEmail({
-          email: m.user.email,
-          actorName: user.name || "Someone",
-          riffTitle: riffDisplayTitle,
-          clubName: riff.club.name,
-          riffUrl,
-        })
-      )
-    );
-    console.info(
-      `[notify] piece submitted ${riffId}: ${pieceResults.filter((r) => r.status === "fulfilled").length} sent, ${pieceResults.filter((r) => r.status === "rejected").length} failed`
-    );
-
-    // Check if all participants have now submitted — notify host
-    const submittedCount = riff.pieces.length + 1; // +1 for this submission
-    const participantCount = riff.participants.length;
-    if (participantCount > 0 && submittedCount >= participantCount) {
-      await createNotification({
-        type: NotificationType.ALL_PIECES_SUBMITTED,
-        recipientId: riff.creatorId,
-        riffId,
-        clubId: riff.clubId,
-      }).catch((err) =>
-        console.error("[notification error] all pieces submitted:", err)
+      await notifyClubMembers(
+        riff.clubId,
+        NotificationType.PIECE_SUBMITTED_TO_RIFF,
+        user.id,
+        { riffId }
+      ).catch((err) =>
+        console.error("[notification error] piece submitted:", err)
       );
 
-      const host = await prisma.user.findUnique({
-        where: { id: riff.creatorId },
-        select: { email: true, emailNotifications: true },
+      const pieceMembers = await prisma.clubMember.findMany({
+        where: { clubId: riff.clubId, userId: { not: user.id } },
+        include: { user: { select: { email: true, name: true } } },
       });
-      if (host?.emailNotifications) {
-        console.info(
-          `[notify] all pieces submitted ${riffId}: sending host email to ${host.email}`
-        );
-        await sendAllPiecesSubmittedEmail({
-          email: host.email,
-          riffTitle: riffDisplayTitle,
-          clubName: riff.club.name,
-          riffUrl,
+      const pieceEnabled = await batchNotificationsEnabled(
+        pieceMembers.map((m) => m.user.email)
+      );
+      const eligiblePieceMembers = pieceMembers.filter((m) =>
+        pieceEnabled.has(m.user.email)
+      );
+      console.info(
+        `[notify] piece submitted ${riffId}: ${pieceMembers.length} members, ${eligiblePieceMembers.length} email-enabled`
+      );
+      const pieceResults = await Promise.allSettled(
+        eligiblePieceMembers.map((m) =>
+          sendPieceSubmittedEmail({
+            email: m.user.email,
+            actorName: user.name || "Someone",
+            riffTitle: riffDisplayTitle,
+            clubName: riff.club.name,
+            riffUrl,
+          })
+        )
+      );
+      console.info(
+        `[notify] piece submitted ${riffId}: ${pieceResults.filter((r) => r.status === "fulfilled").length} sent, ${pieceResults.filter((r) => r.status === "rejected").length} failed`
+      );
+
+      // Check if all participants have now submitted — notify host
+      const submittedCount = riff.pieces.length + 1; // +1 for this submission
+      const participantCount = riff.participants.length;
+      if (participantCount > 0 && submittedCount >= participantCount) {
+        await createNotification({
+          type: NotificationType.ALL_PIECES_SUBMITTED,
+          recipientId: riff.creatorId,
+          riffId,
+          clubId: riff.clubId,
         }).catch((err) =>
-          console.error("[notification error] all pieces submitted email:", err)
+          console.error("[notification error] all pieces submitted:", err)
         );
-      } else {
-        console.info(
-          `[notify] all pieces submitted ${riffId}: host email skipped (emailNotifications=false)`
-        );
+
+        const host = await prisma.user.findUnique({
+          where: { id: riff.creatorId },
+          select: { email: true, emailNotifications: true },
+        });
+        if (host?.emailNotifications) {
+          console.info(
+            `[notify] all pieces submitted ${riffId}: sending host email to ${host.email}`
+          );
+          await sendAllPiecesSubmittedEmail({
+            email: host.email,
+            riffTitle: riffDisplayTitle,
+            clubName: riff.club.name,
+            riffUrl,
+          }).catch((err) =>
+            console.error(
+              "[notification error] all pieces submitted email:",
+              err
+            )
+          );
+        } else {
+          console.info(
+            `[notify] all pieces submitted ${riffId}: host email skipped (emailNotifications=false)`
+          );
+        }
       }
+    } catch (err) {
+      console.error(
+        "[notification error] piece submitted pipeline failed:",
+        err
+      );
     }
 
     return NextResponse.json({ success: true, submission: updated });
