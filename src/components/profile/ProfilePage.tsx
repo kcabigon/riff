@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import ProfileHeader from "./ProfileHeader";
+import ProfileHeader, { type ProfileTab } from "./ProfileHeader";
 import PiecesGrid from "./tabs/PiecesGrid";
 import type { Piece } from "./tabs/PiecesGrid";
 import DeletePieceModal from "@/components/profile/DeletePieceModal";
@@ -43,6 +43,7 @@ export default function ProfilePage({
   isOwnProfile,
 }: ProfilePageProps) {
   const [pieces, setPieces] = useState(initialPieces);
+  const [activeTab, setActiveTab] = useState<ProfileTab>("pieces");
   const [deleteTarget, setDeleteTarget] = useState<{
     id: string;
     title: string | null;
@@ -170,10 +171,12 @@ export default function ProfilePage({
         isOwnProfile={isOwnProfile}
         lastActiveClubId={lastActiveClubId}
         stats={stats}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
       />
 
       {/* Empty state — bouncing box */}
-      {isEmpty && (
+      {isEmpty && activeTab === "pieces" && (
         <div
           ref={containerRef}
           style={{
@@ -218,9 +221,7 @@ export default function ProfilePage({
       )}
 
       <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
-        {/* Jams — coming soon */}
-
-        {pieces.length > 0 && (
+        {activeTab === "pieces" && pieces.length > 0 && (
           <PiecesGrid
             pieces={pieces}
             isOwnProfile={isOwnProfile}
@@ -231,6 +232,10 @@ export default function ProfilePage({
             onShare={(pieceId) => setShareTarget(pieceId)}
           />
         )}
+
+        {activeTab === "jams" && <div style={{ minHeight: "240px" }} />}
+
+        {activeTab === "quotes" && <div style={{ minHeight: "240px" }} />}
       </div>
     </div>
   );
