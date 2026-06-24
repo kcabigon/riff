@@ -21,6 +21,7 @@ interface ProfileHeaderProps {
     lastName: string | null;
     username: string | null;
     avatarUrl: string | null;
+    createdAt: Date;
   };
   currentUser: {
     id: string;
@@ -28,6 +29,7 @@ interface ProfileHeaderProps {
     name: string | null;
     avatarUrl: string | null;
   } | null;
+  isOwnProfile?: boolean;
   lastActiveClubId?: string | null;
   stats: {
     pieceCount: number;
@@ -40,6 +42,7 @@ interface ProfileHeaderProps {
 export default function ProfileHeader({
   profileUser,
   currentUser,
+  isOwnProfile,
   lastActiveClubId,
   stats,
   activeTab,
@@ -67,6 +70,11 @@ export default function ProfileHeader({
         .toUpperCase()
     : "?";
 
+  const joinedDate = profileUser.createdAt.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+  const bioFallback = `Riffing since ${joinedDate} · ${stats.totalWordCount.toLocaleString()} words written`;
   const statsLine = `${stats.pieceCount} pieces · ${stats.totalWordCount.toLocaleString()} words`;
 
   return (
@@ -166,18 +174,45 @@ export default function ProfileHeader({
 
         {/* Name + Stats */}
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          <h1
-            style={{
-              fontFamily: "var(--font-dm-serif-text)",
-              fontSize: "32px",
-              fontWeight: 400,
-              color: "#FFFFFF",
-              margin: 0,
-              lineHeight: 1.2,
-            }}
-          >
-            {displayName || "Anonymous"}
-          </h1>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <h1
+              style={{
+                fontFamily: "var(--font-dm-serif-text)",
+                fontSize: "32px",
+                fontWeight: 400,
+                color: "#FFFFFF",
+                margin: 0,
+                lineHeight: 1.2,
+              }}
+            >
+              {displayName || "Anonymous"}
+            </h1>
+            {isOwnProfile && (
+              <Link
+                href="/account"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  color: "#808080",
+                  flexShrink: 0,
+                }}
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+              </Link>
+            )}
+          </div>
 
           <p
             style={{
@@ -190,8 +225,7 @@ export default function ProfileHeader({
               maxWidth: "400px",
             }}
           >
-            Love letters to baseball, and other random musings on music, travel,
-            parenting, and life.
+            {bioFallback}
           </p>
           <span
             style={{

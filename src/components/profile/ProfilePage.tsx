@@ -16,6 +16,7 @@ interface ProfilePageProps {
     lastName: string | null;
     username: string | null;
     avatarUrl: string | null;
+    createdAt: Date;
   };
   currentUser: {
     id: string;
@@ -166,6 +167,7 @@ export default function ProfilePage({
       <ProfileHeader
         profileUser={user}
         currentUser={currentUser}
+        isOwnProfile={isOwnProfile}
         lastActiveClubId={lastActiveClubId}
         stats={stats}
         activeTab={activeTab}
