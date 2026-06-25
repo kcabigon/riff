@@ -150,7 +150,7 @@ export default function PiecesGrid({
           : undefined;
 
   return (
-    <div style={{ padding: "24px 0" }}>
+    <div>
       <style>{`
         .pieces-grid {
           display: grid;
@@ -164,8 +164,30 @@ export default function PiecesGrid({
         @media (max-width: 639px) {
           .pieces-grid { grid-template-columns: 1fr; padding: 0 24px; }
         }
-        .feed-item { display: flex; flex-direction: column; gap: 12px; padding: 24px; border-bottom: 1px solid #E6E6E6; cursor: pointer; }
+        .feed-item {
+          display: grid;
+          grid-template-columns: 140px 1fr;
+          grid-template-areas: "thumb header" "thumb preview";
+          column-gap: 24px;
+          row-gap: 8px;
+          padding: 24px;
+          border-bottom: 1px solid #E6E6E6;
+          cursor: pointer;
+          align-items: start;
+        }
         .feed-item:hover { background-color: #F5F5F5; }
+        .feed-thumb { grid-area: thumb; width: 140px; height: 175px; }
+        .feed-header { grid-area: header; }
+        .feed-preview { grid-area: preview; }
+        @media (max-width: 639px) {
+          .feed-item {
+            grid-template-columns: 64px 1fr;
+            grid-template-areas: "thumb header" "preview preview";
+            column-gap: 12px;
+            row-gap: 12px;
+          }
+          .feed-thumb { width: 64px; height: 80px; }
+        }
       `}</style>
 
       {/* View toggle */}
@@ -174,30 +196,31 @@ export default function PiecesGrid({
           style={{
             display: "flex",
             justifyContent: "flex-end",
-            alignItems: "center",
-            gap: "16px",
-            padding: "0 24px 16px",
+            padding: "16px 24px",
           }}
         >
-          {(["grid", "feed"] as ViewMode[]).map((mode) => (
-            <button
-              key={mode}
-              onClick={() => switchView(mode)}
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "12px",
-                fontWeight: viewMode === mode ? 700 : 300,
-                color: viewMode === mode ? "#000000" : "#808080",
-                padding: 0,
-                textTransform: "capitalize",
-              }}
-            >
-              {mode}
-            </button>
-          ))}
+          <div style={{ display: "inline-flex", border: "1px solid #000000" }}>
+            {(["grid", "feed"] as ViewMode[]).map((mode, i) => (
+              <button
+                key={mode}
+                onClick={() => switchView(mode)}
+                style={{
+                  background: viewMode === mode ? "#000000" : "transparent",
+                  border: "none",
+                  borderLeft: i > 0 ? "1px solid #000000" : "none",
+                  cursor: "pointer",
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "12px",
+                  fontWeight: 300,
+                  color: viewMode === mode ? "#FFFFFF" : "#808080",
+                  padding: "4px 12px",
+                  textTransform: "capitalize",
+                }}
+              >
+                {mode}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
@@ -272,105 +295,94 @@ export default function PiecesGrid({
                 className="feed-item"
                 onClick={onClick ?? undefined}
               >
-                {/* Top row: thumbnail + title + metadata + menu */}
+                {/* Thumbnail — grid-area: thumb */}
                 <div
+                  className="feed-thumb"
                   style={{
-                    display: "flex",
-                    gap: "16px",
-                    alignItems: "flex-start",
+                    position: "relative",
+                    border: "1px solid #000000",
+                    overflow: "hidden",
+                    backgroundColor: piece.coverImage
+                      ? undefined
+                      : placeholderColor,
                   }}
                 >
-                  {/* Thumbnail */}
-                  <div
-                    style={{
-                      width: "64px",
-                      flexShrink: 0,
-                      aspectRatio: "4 / 5",
-                      position: "relative",
-                      border: "1px solid #000000",
-                      overflow: "hidden",
-                      backgroundColor: piece.coverImage
-                        ? undefined
-                        : placeholderColor,
-                    }}
-                  >
-                    {piece.coverImage && (
-                      <img
-                        src={piece.coverImage}
-                        alt=""
-                        style={{
-                          position: "absolute",
-                          inset: 0,
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                        }}
-                      />
-                    )}
-                  </div>
-
-                  {/* Title + metadata */}
-                  <div
-                    style={{
-                      flex: 1,
-                      minWidth: 0,
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "4px",
-                    }}
-                  >
-                    <div
+                  {piece.coverImage && (
+                    <img
+                      src={piece.coverImage}
+                      alt=""
                       style={{
-                        display: "flex",
-                        alignItems: "flex-start",
-                        justifyContent: "space-between",
-                        gap: "8px",
+                        position: "absolute",
+                        inset: 0,
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
                       }}
-                    >
-                      <h3
-                        style={{
-                          fontFamily: "var(--font-dm-serif-text)",
-                          fontSize: "24px",
-                          fontWeight: 400,
-                          color: "#000000",
-                          margin: 0,
-                          lineHeight: 1.25,
-                        }}
-                      >
-                        {piece.title || "Untitled"}
-                      </h3>
-                      {isOwnProfile && (
-                        <div
-                          style={{ flexShrink: 0 }}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <ThreeDotButton
-                            variant="light"
-                            items={menuItems(piece)}
-                            align="right"
-                          />
-                        </div>
-                      )}
-                    </div>
-                    {meta && (
-                      <p
-                        style={{
-                          fontFamily: "var(--font-dm-sans)",
-                          fontSize: "12px",
-                          fontWeight: 300,
-                          color: "#808080",
-                          margin: 0,
-                        }}
-                      >
-                        {meta}
-                      </p>
-                    )}
-                  </div>
+                    />
+                  )}
                 </div>
 
-                {/* Preview — full width below */}
+                {/* Header: title + metadata — grid-area: header */}
+                <div
+                  className="feed-header"
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "4px",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      justifyContent: "space-between",
+                      gap: "8px",
+                    }}
+                  >
+                    <h3
+                      style={{
+                        fontFamily: "var(--font-dm-serif-text)",
+                        fontSize: "24px",
+                        fontWeight: 400,
+                        color: "#000000",
+                        margin: 0,
+                        lineHeight: 1.25,
+                      }}
+                    >
+                      {piece.title || "Untitled"}
+                    </h3>
+                    {isOwnProfile && (
+                      <div
+                        style={{ flexShrink: 0 }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <ThreeDotButton
+                          variant="light"
+                          items={menuItems(piece)}
+                          align="right"
+                        />
+                      </div>
+                    )}
+                  </div>
+                  {meta && (
+                    <p
+                      style={{
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "12px",
+                        fontWeight: 300,
+                        color: "#808080",
+                        margin: 0,
+                      }}
+                    >
+                      {meta}
+                    </p>
+                  )}
+                </div>
+
+                {/* Preview — grid-area: preview */}
                 {piece.preview && (
                   <p
+                    className="feed-preview"
                     style={{
                       fontFamily: "var(--font-dm-sans)",
                       fontSize: "16px",
