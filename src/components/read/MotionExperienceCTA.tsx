@@ -1,14 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import dynamic from "next/dynamic";
-
-// Lazy-load the heavy WebGL + Web Audio experience so its bundle only downloads
-// when the overlay is actually opened — not on every read-page load.
-const StrangeCaseExperience = dynamic(
-  () => import("@/components/read/StrangeCaseExperience"),
-  { ssr: false }
-);
+import StrangeCaseExperience from "@/components/read/StrangeCaseExperience";
 
 /**
  * Entry point for the immersive "riff in motion" experience. Lives under the

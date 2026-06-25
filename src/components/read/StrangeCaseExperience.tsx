@@ -536,14 +536,9 @@ void main(){
 }`;
 
 function compile(gl: WebGLRenderingContext, type: number, src: string) {
-  const sh = gl.createShader(type);
-  if (!sh) return null;
+  const sh = gl.createShader(type)!;
   gl.shaderSource(sh, src);
   gl.compileShader(sh);
-  if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
-    gl.deleteShader(sh);
-    return null;
-  }
   return sh;
 }
 
@@ -998,22 +993,10 @@ export default function StrangeCaseExperience({
       return;
     }
 
-    // Compile + link with status checks — on a GPU/driver that rejects the
-    // shader, fall back to a flat backdrop instead of a silent black screen.
-    const vs = compile(gl, gl.VERTEX_SHADER, VERT);
-    const fs = compile(gl, gl.FRAGMENT_SHADER, FRAG);
-    const prog = gl.createProgram();
-    if (!vs || !fs || !prog) {
-      root.style.background = "#070707";
-      return;
-    }
-    gl.attachShader(prog, vs);
-    gl.attachShader(prog, fs);
+    const prog = gl.createProgram()!;
+    gl.attachShader(prog, compile(gl, gl.VERTEX_SHADER, VERT));
+    gl.attachShader(prog, compile(gl, gl.FRAGMENT_SHADER, FRAG));
     gl.linkProgram(prog);
-    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
-      root.style.background = "#070707";
-      return;
-    }
     gl.useProgram(prog);
 
     const buf = gl.createBuffer();
@@ -1135,8 +1118,11 @@ export default function StrangeCaseExperience({
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", resize);
       window.removeEventListener("pointermove", onMove);
-      const ext = gl.getExtension("WEBGL_lose_context");
-      if (ext) ext.loseContext();
+      // NB: don't call WEBGL_lose_context.loseContext() here. On a remount that
+      // reuses the same <canvas> (React StrictMode in dev, or a re-render), the
+      // context would already be lost and gl.createShader() returns null →
+      // "shaderSource must be an instance of WebGLShader". On real unmount the
+      // canvas is destroyed and the context is GC'd anyway.
     };
   }, []);
 
