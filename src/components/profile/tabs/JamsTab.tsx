@@ -2,11 +2,9 @@
 
 import { useState, useEffect } from "react";
 import PrimaryButton from "@/components/PrimaryButton";
-import type { OEmbedData } from "@/app/api/oembed/route";
 import { detectJamEmbed } from "@/lib/jam-embed";
 import type { JamEmbedType } from "@/lib/jam-embed";
 import { relativeTime } from "@/lib/timeAgo";
-import { useNowPlaying } from "@/contexts/NowPlayingContext";
 
 export type JamData = {
   id: string;
@@ -17,7 +15,7 @@ export type JamData = {
   thumbnailUrl: string | null;
 };
 
-const COVER_SIZE = 160;
+const COVER_SIZE = 200;
 
 // ─── Cover placeholder ────────────────────────────────────────────────────────
 
@@ -240,13 +238,13 @@ function InlineEmbed({ info }: { info: EmbedInfo }) {
 // ─── New jam form ─────────────────────────────────────────────────────────────
 
 function NewJamForm({
+  initialUrl,
   onCreated,
-  onThumbnailChange,
 }: {
+  initialUrl?: string;
   onCreated: (jam: JamData) => void;
-  onThumbnailChange: (url: string | null) => void;
 }) {
-  const [url, setUrl] = useState("");
+  const [url, setUrl] = useState(initialUrl ?? "");
   const [heading, setHeading] = useState("");
   const [note, setNote] = useState("");
   const [embedInfo, setEmbedInfo] = useState<EmbedInfo | null>(null);
@@ -262,43 +260,11 @@ function NewJamForm({
     const trimmed = url.trim();
     if (!trimmed) {
       setEmbedInfo(null);
-      onThumbnailChange(null);
       return;
     }
-
     const base = detectJamEmbed(trimmed);
-    if (!base) {
-      setEmbedInfo(null);
-      onThumbnailChange(null);
-      return;
-    }
-
-    let cancelled = false;
-
-    if (base.type === "youtube") {
-      setEmbedInfo(base as EmbedInfo);
-      const videoId = base.embedUrl.split("/embed/")[1] ?? null;
-      onThumbnailChange(
-        videoId ? `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg` : null
-      );
-      return;
-    }
-
-    // Spotify
-    setEmbedInfo(base);
-    onThumbnailChange(null);
-    fetch(`/api/oembed?url=${encodeURIComponent(trimmed)}`)
-      .then((r) => r.json())
-      .then((data: OEmbedData) => {
-        if (!cancelled) onThumbnailChange(data.thumbnail_url ?? null);
-      })
-      .catch(() => {
-        if (!cancelled) onThumbnailChange(null);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [url, onThumbnailChange]);
+    setEmbedInfo(base ? { type: base.type, embedUrl: base.embedUrl } : null);
+  }, [url]);
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -644,20 +610,6 @@ function EditJamForm({
 // ─── Jam content panel ────────────────────────────────────────────────────────
 
 function JamContent({ jam }: { jam: JamData }) {
-  const { nowPlaying, play } = useNowPlaying();
-  const embed = jam.url ? detectJamEmbed(jam.url) : null;
-  const isPlaying = !!embed && nowPlaying?.embedUrl === embed.embedUrl;
-
-  const handlePlay = () => {
-    if (!embed) return;
-    play({
-      embedUrl: embed.embedUrl,
-      embedType: embed.type,
-      title: jam.content,
-      thumbnailUrl: jam.thumbnailUrl,
-    });
-  };
-
   return (
     <div style={{ maxWidth: "720px", margin: "0 auto" }}>
       <h2
@@ -699,84 +651,6 @@ function JamContent({ jam }: { jam: JamData }) {
       >
         {jam.note}
       </p>
-
-      {embed && (
-        <button
-          onClick={isPlaying ? undefined : handlePlay}
-          style={{
-            display: "block",
-            width: "100%",
-            padding: 0,
-            border: "none",
-            background: "none",
-            cursor: isPlaying ? "default" : "pointer",
-            position: "relative",
-          }}
-        >
-          {jam.thumbnailUrl ? (
-            <img
-              src={jam.thumbnailUrl}
-              alt={jam.content}
-              style={{
-                width: "100%",
-                display: "block",
-                objectFit: "cover",
-                maxHeight: "360px",
-              }}
-            />
-          ) : (
-            <div
-              style={{
-                width: "100%",
-                aspectRatio: "16/9",
-                backgroundColor: "#000000",
-              }}
-            />
-          )}
-
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              backgroundColor: isPlaying
-                ? "rgba(0,0,0,0.5)"
-                : "rgba(0,0,0,0.25)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              transition: "background-color 150ms ease",
-            }}
-          >
-            {isPlaying ? (
-              <span
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "13px",
-                  fontWeight: 500,
-                  color: "#00FF66",
-                  letterSpacing: "0.05em",
-                }}
-              >
-                ▶ NOW PLAYING
-              </span>
-            ) : (
-              <div
-                style={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: "50%",
-                  backgroundColor: "#00FF66",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <span style={{ fontSize: "20px", marginLeft: "3px" }}>▶</span>
-              </div>
-            )}
-          </div>
-        </button>
-      )}
     </div>
   );
 }
@@ -795,9 +669,26 @@ export default function JamsTab({
     initialJams.length > 0 ? initialJams[0].id : isOwnProfile ? "new" : ""
   );
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [draftThumbnailUrl, setDraftThumbnailUrl] = useState<string | null>(
-    null
+  const [linkUrl, setLinkUrl] = useState("");
+  const [mountedIds, setMountedIds] = useState<Set<string>>(
+    () => new Set(initialJams.length > 0 ? [initialJams[0].id] : [])
   );
+
+  useEffect(() => {
+    if (linkUrl.trim() && detectJamEmbed(linkUrl.trim())) {
+      setSelectedId("new");
+      setEditingId(null);
+    }
+  }, [linkUrl]);
+
+  useEffect(() => {
+    if (selectedId && selectedId !== "new") {
+      setMountedIds((prev) => {
+        if (prev.has(selectedId)) return prev;
+        return new Set([...prev, selectedId]);
+      });
+    }
+  }, [selectedId]);
 
   const isNew = selectedId === "new";
   const selected = isNew
@@ -805,7 +696,7 @@ export default function JamsTab({
     : (jams.find((j) => j.id === selectedId) ?? null);
 
   const handleCreated = (jam: JamData) => {
-    setDraftThumbnailUrl(null);
+    setLinkUrl("");
     setJams((prev) => [jam, ...prev]);
     setSelectedId(jam.id);
   };
@@ -834,157 +725,135 @@ export default function JamsTab({
 
   return (
     <div>
-      {/* Cover strip */}
+      {/* Persistent link input — own profile only */}
+      {isOwnProfile && (
+        <div
+          style={{
+            maxWidth: "720px",
+            margin: "0 auto",
+            padding: "20px 24px",
+            borderBottom: "1px solid #E6E6E6",
+          }}
+        >
+          <input
+            type="url"
+            value={linkUrl}
+            onChange={(e) => setLinkUrl(e.target.value)}
+            placeholder="Paste a Spotify or YouTube link to start a new jam..."
+            className="jam-editor-input"
+            style={{
+              display: "block",
+              width: "100%",
+              boxSizing: "border-box",
+              border: "none",
+              outline: "none",
+              padding: 0,
+              background: "transparent",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "16px",
+              fontWeight: 300,
+              color: "#000000",
+              lineHeight: 1.4,
+            }}
+          />
+        </div>
+      )}
+
+      {/* Cover strip — cascading carousel */}
       <div
         style={{
+          maxWidth: "720px",
+          margin: "0 auto",
+          padding: "0 24px",
           borderBottom: "1px solid #E6E6E6",
-          overflowX: "auto",
-          scrollbarWidth: "none",
         }}
       >
-        <div style={{ padding: "16px 24px", display: "flex", gap: "8px" }}>
-          {/* + New jam square */}
-          {isOwnProfile && (
-            <button
-              onClick={() => {
-                setSelectedId("new");
-                setEditingId(null);
-              }}
-              title="Add a jam"
-              style={{
-                padding: 0,
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                flexShrink: 0,
-                boxShadow: isNew ? "4px 4px 0px 0px #00FF66" : "none",
-                transition: "box-shadow 150ms ease",
-              }}
-            >
-              {draftThumbnailUrl && isNew ? (
-                <img
-                  src={draftThumbnailUrl}
-                  alt="Draft"
-                  style={{
-                    width: COVER_SIZE,
-                    height: COVER_SIZE,
-                    objectFit: "cover",
-                    display: "block",
-                  }}
-                />
-              ) : (
+        <div style={{ overflowX: "auto", scrollbarWidth: "none" }}>
+          <div style={{ padding: "16px 0", display: "flex", gap: "8px" }}>
+            {jams.map((jam) => {
+              const isSelected = jam.id === selectedId;
+              return (
                 <div
+                  key={jam.id}
                   style={{
-                    width: COVER_SIZE,
-                    height: COVER_SIZE,
-                    backgroundColor: "#E6E6E6",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    border: "2px dashed #CCCCCC",
+                    position: "relative",
+                    flexShrink: 0,
+                    boxShadow: isSelected ? "4px 4px 0px 0px #00FF66" : "none",
+                    transition: "box-shadow 150ms ease",
                   }}
                 >
-                  <span
+                  <button
+                    onClick={() => {
+                      setSelectedId(jam.id);
+                      setEditingId(null);
+                    }}
+                    title={jam.content}
                     style={{
-                      fontFamily: "var(--font-dm-sans)",
-                      fontSize: "32px",
-                      fontWeight: 300,
-                      color: "#CCCCCC",
-                      lineHeight: 1,
+                      padding: 0,
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      display: "block",
                     }}
                   >
-                    +
-                  </span>
+                    {jam.thumbnailUrl ? (
+                      <img
+                        src={jam.thumbnailUrl}
+                        alt={jam.content}
+                        style={{
+                          width: COVER_SIZE,
+                          height: COVER_SIZE,
+                          objectFit: "cover",
+                          display: "block",
+                        }}
+                      />
+                    ) : (
+                      <CoverPlaceholder label={jam.content} />
+                    )}
+                  </button>
+                  {isOwnProfile && (
+                    <CoverActions
+                      onEdit={() => {
+                        setSelectedId(jam.id);
+                        setEditingId(jam.id);
+                      }}
+                      onDelete={() => handleDelete(jam.id)}
+                    />
+                  )}
                 </div>
-              )}
-            </button>
-          )}
-
-          {jams.map((jam) => {
-            const isSelected = jam.id === selectedId;
-            return (
-              <div
-                key={jam.id}
-                style={{
-                  position: "relative",
-                  flexShrink: 0,
-                  boxShadow: isSelected ? "4px 4px 0px 0px #00FF66" : "none",
-                  transition: "box-shadow 150ms ease",
-                }}
-              >
-                <button
-                  onClick={() => {
-                    setSelectedId(jam.id);
-                    setEditingId(null);
-                  }}
-                  title={jam.content}
+              );
+            })}
+            {!isOwnProfile && jams.length === 0 && (
+              <div style={{ padding: "48px 0" }}>
+                <p
                   style={{
-                    padding: 0,
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    display: "block",
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "16px",
+                    fontWeight: 300,
+                    color: "#808080",
+                    margin: 0,
                   }}
                 >
-                  {jam.thumbnailUrl ? (
-                    <img
-                      src={jam.thumbnailUrl}
-                      alt={jam.content}
-                      style={{
-                        width: COVER_SIZE,
-                        height: COVER_SIZE,
-                        objectFit: "cover",
-                        display: "block",
-                      }}
-                    />
-                  ) : (
-                    <CoverPlaceholder label={jam.content} />
-                  )}
-                </button>
-
-                {isOwnProfile && (
-                  <CoverActions
-                    onEdit={() => {
-                      setSelectedId(jam.id);
-                      setEditingId(jam.id);
-                    }}
-                    onDelete={() => handleDelete(jam.id)}
-                  />
-                )}
+                  No jams yet.
+                </p>
               </div>
-            );
-          })}
-
-          {!isOwnProfile && jams.length === 0 && (
-            <div style={{ padding: "48px 0" }}>
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#808080",
-                  margin: 0,
-                }}
-              >
-                No jams yet.
-              </p>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
       {/* Content panel */}
       <div
         style={{
-          maxWidth: "1000px",
+          maxWidth: "720px",
           margin: "0 auto",
-          padding: "32px 24px 64px",
+          padding: "32px 24px 48px",
         }}
       >
         {isNew ? (
           <NewJamForm
+            initialUrl={linkUrl || undefined}
             onCreated={handleCreated}
-            onThumbnailChange={setDraftThumbnailUrl}
           />
         ) : selected && editingId === selected.id ? (
           <EditJamForm
@@ -993,7 +862,25 @@ export default function JamsTab({
             onCancel={() => setEditingId(null)}
           />
         ) : selected ? (
-          <JamContent jam={selected} />
+          <>
+            <JamContent jam={selected} />
+            {/* Persistent iframes — lazily mounted, never removed so audio survives jam switches */}
+            {jams.map((jam) => {
+              if (!mountedIds.has(jam.id)) return null;
+              const embed = jam.url ? detectJamEmbed(jam.url) : null;
+              if (!embed) return null;
+              return (
+                <div
+                  key={jam.id}
+                  style={{ display: jam.id === selectedId ? "block" : "none" }}
+                >
+                  <InlineEmbed
+                    info={{ type: embed.type, embedUrl: embed.embedUrl }}
+                  />
+                </div>
+              );
+            })}
+          </>
         ) : null}
       </div>
     </div>

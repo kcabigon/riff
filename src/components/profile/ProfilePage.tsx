@@ -224,9 +224,10 @@ export default function ProfilePage({
       )}
 
       <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
-        {activeTab === "jams" && (
+        {/* JamsTab stays mounted so iframes keep playing when switching tabs */}
+        <div style={{ display: activeTab === "jams" ? "block" : "none" }}>
           <JamsTab jams={initialJams} isOwnProfile={isOwnProfile} />
-        )}
+        </div>
 
         {activeTab === "pieces" && pieces.length > 0 && (
           <PiecesGrid
