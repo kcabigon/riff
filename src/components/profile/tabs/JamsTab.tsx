@@ -12,7 +12,6 @@ export type JamData = {
   content: string;
   note: string;
   createdAt: Date;
-  thumbnailUrl: string | null;
 };
 
 // ─── Shared embed preview ─────────────────────────────────────────────────────

@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
-import { detectJamEmbed, fetchJamThumbnail } from "@/lib/jam-embed";
-
 // POST /api/jams
 export async function POST(req: Request) {
   try {
@@ -20,14 +18,12 @@ export async function POST(req: Request) {
       );
     }
 
-    const trimmedUrl = url?.trim() || null;
-
     const jam = await prisma.jam.create({
       data: {
         userId: user.id,
         content: content.trim(),
         note: note.trim(),
-        url: trimmedUrl,
+        url: url?.trim() || null,
       },
       select: {
         id: true,
@@ -38,14 +34,7 @@ export async function POST(req: Request) {
       },
     });
 
-    // Fetch thumbnail for the response (thumbnailUrl not yet in schema — ask Kyle to add it)
-    let thumbnailUrl: string | null = null;
-    if (trimmedUrl) {
-      const embed = detectJamEmbed(trimmedUrl);
-      if (embed) thumbnailUrl = await fetchJamThumbnail(trimmedUrl, embed.type);
-    }
-
-    return NextResponse.json({ ...jam, thumbnailUrl }, { status: 201 });
+    return NextResponse.json(jam, { status: 201 });
   } catch {
     return NextResponse.json(
       { error: "Failed to create jam" },

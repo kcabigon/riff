@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
-import { detectJamEmbed, fetchJamThumbnail } from "@/lib/jam-embed";
 
 // PATCH /api/jams/[id]
 export async function PATCH(
@@ -29,11 +28,13 @@ export async function PATCH(
     if (jam.userId !== user.id)
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-    const trimmedUrl = url?.trim() || null;
-
     const updated = await prisma.jam.update({
       where: { id },
-      data: { content: content.trim(), note: note.trim(), url: trimmedUrl },
+      data: {
+        content: content.trim(),
+        note: note.trim(),
+        url: url?.trim() || null,
+      },
       select: {
         id: true,
         url: true,
@@ -43,13 +44,7 @@ export async function PATCH(
       },
     });
 
-    let thumbnailUrl: string | null = null;
-    if (trimmedUrl) {
-      const embed = detectJamEmbed(trimmedUrl);
-      if (embed) thumbnailUrl = await fetchJamThumbnail(trimmedUrl, embed.type);
-    }
-
-    return NextResponse.json({ ...updated, thumbnailUrl });
+    return NextResponse.json(updated);
   } catch {
     return NextResponse.json(
       { error: "Failed to update jam" },
