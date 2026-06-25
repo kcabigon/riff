@@ -10,7 +10,6 @@ import {
   Source_Code_Pro,
 } from "next/font/google";
 import EnvironmentBadge from "@/components/shared/EnvironmentBadge";
-import NowPlayingWrapper from "@/components/NowPlayingWrapper";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -143,10 +142,8 @@ export default function RootLayout({
       <body
         className={`antialiased ${playfair.variable} ${dmSans.variable} ${dmSerifText.variable} ${overTheRainbow.variable} ${robotoSlab.variable} ${montserrat.variable} ${inter.variable} ${sourceCodePro.variable}`}
       >
-        <NowPlayingWrapper>
-          {children}
-          <EnvironmentBadge />
-        </NowPlayingWrapper>
+        {children}
+        <EnvironmentBadge />
       </body>
     </html>
   );
