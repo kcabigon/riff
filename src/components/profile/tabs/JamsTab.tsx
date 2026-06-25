@@ -354,7 +354,7 @@ function NewJamForm({
       setEmbedInfo(base as EmbedInfo);
       const videoId = base.embedUrl.split("/embed/")[1] ?? null;
       onThumbnailChange(
-        videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : null
+        videoId ? `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg` : null
       );
       return;
     }

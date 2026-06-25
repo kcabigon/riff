@@ -67,7 +67,7 @@ export async function fetchJamThumbnail(
       else if (u.pathname.startsWith("/shorts/"))
         videoId = u.pathname.split("/shorts/")[1] ?? null;
       else videoId = u.searchParams.get("v");
-      if (videoId) return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+      if (videoId) return `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`;
     }
 
     if (type.startsWith("spotify_")) {
