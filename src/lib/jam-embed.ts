@@ -2,8 +2,7 @@ export type JamEmbedType =
   | "spotify_album"
   | "spotify_track"
   | "spotify_playlist"
-  | "youtube"
-  | "link";
+  | "youtube";
 
 export type JamEmbed = {
   type: JamEmbedType;
@@ -48,7 +47,7 @@ export function detectJamEmbed(url: string): JamEmbed | null {
         };
     }
 
-    return { type: "link", embedUrl: url.trim() };
+    return null;
   } catch {
     return null;
   }
@@ -81,24 +80,6 @@ export async function fetchJamThumbnail(
       if (res.ok) {
         const data = (await res.json()) as { thumbnail_url?: string };
         return data.thumbnail_url ?? null;
-      }
-    }
-
-    if (type === "link") {
-      const res = await fetch(url, {
-        headers: { "User-Agent": "Mozilla/5.0 (compatible; RiffBot/1.0)" },
-        signal: AbortSignal.timeout(5000),
-      });
-      if (res.ok) {
-        const html = await res.text();
-        const match =
-          /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i.exec(
-            html
-          ) ??
-          /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i.exec(
-            html
-          );
-        return match?.[1] ?? null;
       }
     }
   } catch {

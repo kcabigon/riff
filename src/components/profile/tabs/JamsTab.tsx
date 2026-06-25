@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from "react";
 import PrimaryButton from "@/components/PrimaryButton";
-import type { OGData } from "@/app/api/og/route";
 import type { OEmbedData } from "@/app/api/oembed/route";
 import { detectJamEmbed } from "@/lib/jam-embed";
 import type { JamEmbedType } from "@/lib/jam-embed";
 import { relativeTime } from "@/lib/timeAgo";
+import { useNowPlaying } from "@/contexts/NowPlayingContext";
 
 export type JamData = {
   id: string;
@@ -54,130 +54,9 @@ function CoverPlaceholder({ label }: { label: string }) {
   );
 }
 
-// ─── Link jam content (fetches OG data lazily) ────────────────────────────────
-
-function LinkJamContent({ url }: { url: string }) {
-  const [og, setOg] = useState<OGData | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setOg(null);
-    fetch(`/api/og?url=${encodeURIComponent(url)}`)
-      .then((r) => r.json())
-      .then((data: OGData) => {
-        if (!cancelled) {
-          setOg(data);
-          setLoading(false);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [url]);
-
-  if (loading) {
-    return (
-      <div
-        style={{
-          border: "2px solid #E6E6E6",
-          height: "80px",
-          display: "flex",
-          alignItems: "center",
-          padding: "0 16px",
-        }}
-      >
-        <span
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
-            fontWeight: 300,
-            color: "#808080",
-          }}
-        >
-          Loading preview...
-        </span>
-      </div>
-    );
-  }
-
-  return (
-    <a
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      style={{
-        display: "block",
-        border: "2px solid #000000",
-        textDecoration: "none",
-        color: "inherit",
-      }}
-    >
-      {og?.image && (
-        <img
-          src={og.image}
-          alt={og.title ?? ""}
-          style={{
-            width: "100%",
-            display: "block",
-            objectFit: "cover",
-            maxHeight: "360px",
-          }}
-        />
-      )}
-      <div style={{ padding: "16px" }}>
-        {og?.title && (
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 500,
-              color: "#000000",
-              margin: "0 0 4px",
-            }}
-          >
-            {og.title}
-          </p>
-        )}
-        {og?.description && (
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              fontWeight: 300,
-              color: "#000000",
-              margin: "0 0 8px",
-              lineHeight: 1.4,
-            }}
-          >
-            {og.description}
-          </p>
-        )}
-        <p
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "12px",
-            fontWeight: 300,
-            color: "#808080",
-            margin: 0,
-          }}
-        >
-          {og?.domain ?? new URL(url).hostname.replace(/^www\./, "")}
-        </p>
-      </div>
-    </a>
-  );
-}
-
 // ─── New jam form ─────────────────────────────────────────────────────────────
 
-type EmbedInfo =
-  | { type: Exclude<JamEmbedType, "link">; embedUrl: string }
-  | { type: "link"; embedUrl: string; og: OGData | null; loading: boolean };
+type EmbedInfo = { type: JamEmbedType; embedUrl: string };
 
 function InlineEmbed({ info }: { info: EmbedInfo }) {
   const spotifyHeight =
@@ -204,101 +83,6 @@ function InlineEmbed({ info }: { info: EmbedInfo }) {
           allowFullScreen
         />
       </div>
-    );
-  }
-
-  if (info.type === "link") {
-    if (info.loading) {
-      return (
-        <div
-          style={{
-            border: "2px solid #E6E6E6",
-            height: "80px",
-            display: "flex",
-            alignItems: "center",
-            padding: "0 16px",
-          }}
-        >
-          <span
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              fontWeight: 300,
-              color: "#808080",
-            }}
-          >
-            Loading preview...
-          </span>
-        </div>
-      );
-    }
-    const og = info.og;
-    return (
-      <a
-        href={info.embedUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{
-          display: "block",
-          border: "2px solid #000000",
-          textDecoration: "none",
-          color: "inherit",
-        }}
-      >
-        {og?.image && (
-          <img
-            src={og.image}
-            alt={og.title ?? ""}
-            style={{
-              width: "100%",
-              display: "block",
-              objectFit: "cover",
-              maxHeight: "360px",
-            }}
-          />
-        )}
-        <div style={{ padding: "16px" }}>
-          {og?.title && (
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 500,
-                color: "#000000",
-                margin: "0 0 4px",
-              }}
-            >
-              {og.title}
-            </p>
-          )}
-          {og?.description && (
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: 300,
-                color: "#000000",
-                margin: "0 0 8px",
-                lineHeight: 1.4,
-              }}
-            >
-              {og.description}
-            </p>
-          )}
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "12px",
-              fontWeight: 300,
-              color: "#808080",
-              margin: 0,
-            }}
-          >
-            {og?.domain ??
-              new URL(info.embedUrl).hostname.replace(/^www\./, "")}
-          </p>
-        </div>
-      </a>
     );
   }
 
@@ -359,43 +143,16 @@ function NewJamForm({
       return;
     }
 
-    if (base.type.startsWith("spotify")) {
-      setEmbedInfo(base as EmbedInfo);
-      onThumbnailChange(null);
-      fetch(`/api/oembed?url=${encodeURIComponent(trimmed)}`)
-        .then((r) => r.json())
-        .then((data: OEmbedData) => {
-          if (!cancelled) onThumbnailChange(data.thumbnail_url ?? null);
-        })
-        .catch(() => {
-          if (!cancelled) onThumbnailChange(null);
-        });
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    // Generic link
-    setEmbedInfo({ type: "link", embedUrl: trimmed, og: null, loading: true });
+    // Spotify
+    setEmbedInfo(base);
     onThumbnailChange(null);
-    fetch(`/api/og?url=${encodeURIComponent(trimmed)}`)
+    fetch(`/api/oembed?url=${encodeURIComponent(trimmed)}`)
       .then((r) => r.json())
-      .then((og: OGData) => {
-        if (!cancelled) {
-          setEmbedInfo({ type: "link", embedUrl: trimmed, og, loading: false });
-          onThumbnailChange(og.image ?? null);
-        }
+      .then((data: OEmbedData) => {
+        if (!cancelled) onThumbnailChange(data.thumbnail_url ?? null);
       })
       .catch(() => {
-        if (!cancelled) {
-          setEmbedInfo({
-            type: "link",
-            embedUrl: trimmed,
-            og: null,
-            loading: false,
-          });
-          onThumbnailChange(null);
-        }
+        if (!cancelled) onThumbnailChange(null);
       });
     return () => {
       cancelled = true;
@@ -500,7 +257,7 @@ function NewJamForm({
         type="url"
         value={url}
         onChange={(e) => setUrl(e.target.value)}
-        placeholder="Paste a Spotify, YouTube, or any link"
+        placeholder="Paste a Spotify or YouTube link"
         className="jam-editor-input"
         style={{
           display: "block",
@@ -549,13 +306,19 @@ function NewJamForm({
 // ─── Jam content panel ────────────────────────────────────────────────────────
 
 function JamContent({ jam }: { jam: JamData }) {
+  const { nowPlaying, play } = useNowPlaying();
   const embed = jam.url ? detectJamEmbed(jam.url) : null;
-  const spotifyHeight =
-    embed?.type === "spotify_track"
-      ? "152px"
-      : embed?.type === "spotify_playlist"
-        ? "450px"
-        : "352px";
+  const isPlaying = !!embed && nowPlaying?.embedUrl === embed.embedUrl;
+
+  const handlePlay = () => {
+    if (!embed) return;
+    play({
+      embedUrl: embed.embedUrl,
+      embedType: embed.type,
+      title: jam.content,
+      thumbnailUrl: jam.thumbnailUrl,
+    });
+  };
 
   return (
     <div style={{ maxWidth: "720px", margin: "0 auto" }}>
@@ -599,37 +362,85 @@ function JamContent({ jam }: { jam: JamData }) {
         {jam.note}
       </p>
 
-      {embed &&
-        (embed.type === "link" ? (
-          <LinkJamContent url={embed.embedUrl} />
-        ) : embed.type === "youtube" ? (
-          <div
-            style={{ position: "relative", paddingBottom: "56.25%", height: 0 }}
-          >
-            <iframe
-              src={embed.embedUrl}
+      {embed && (
+        <button
+          onClick={isPlaying ? undefined : handlePlay}
+          style={{
+            display: "block",
+            width: "100%",
+            padding: 0,
+            border: "none",
+            background: "none",
+            cursor: isPlaying ? "default" : "pointer",
+            position: "relative",
+          }}
+        >
+          {/* Thumbnail */}
+          {jam.thumbnailUrl ? (
+            <img
+              src={jam.thumbnailUrl}
+              alt={jam.content}
               style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
                 width: "100%",
-                height: "100%",
-                border: "none",
+                display: "block",
+                objectFit: "cover",
+                maxHeight: "360px",
               }}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
             />
+          ) : (
+            <div
+              style={{
+                width: "100%",
+                aspectRatio: "16/9",
+                backgroundColor: "#000000",
+              }}
+            />
+          )}
+
+          {/* Overlay */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              backgroundColor: isPlaying
+                ? "rgba(0,0,0,0.5)"
+                : "rgba(0,0,0,0.25)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              transition: "background-color 150ms ease",
+            }}
+          >
+            {isPlaying ? (
+              <span
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "13px",
+                  fontWeight: 500,
+                  color: "#00FF66",
+                  letterSpacing: "0.05em",
+                }}
+              >
+                ▶ NOW PLAYING
+              </span>
+            ) : (
+              <div
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: "50%",
+                  backgroundColor: "#00FF66",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <span style={{ fontSize: "20px", marginLeft: "3px" }}>▶</span>
+              </div>
+            )}
           </div>
-        ) : (
-          <iframe
-            src={embed.embedUrl}
-            width="100%"
-            height={spotifyHeight}
-            style={{ border: "none", display: "block" }}
-            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-            allowFullScreen
-          />
-        ))}
+        </button>
+      )}
     </div>
   );
 }
