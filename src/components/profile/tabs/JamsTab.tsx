@@ -418,16 +418,17 @@ function JamCard({
   const embed = jam.url ? detectJamEmbed(jam.url) : null;
 
   const handleShare = async () => {
+    const noteSpaced = jam.note.split(/\n+/).join("\n\n");
     const plainText = [
       jam.content,
       "",
-      jam.note,
+      noteSpaced,
       ...(jam.url ? ["", jam.url] : []),
     ].join("\n");
 
     const htmlBody = jam.note
-      .split(/\n\n+/)
-      .map((p) => `<p style="margin:0 0 1em">${p.replace(/\n/g, "<br>")}</p>`)
+      .split(/\n+/)
+      .map((p) => `<p style="margin:0 0 1em">${p}</p>`)
       .join("");
     const htmlText = `<strong>${jam.content}</strong><br><br>${htmlBody}${jam.url ? `<br><a href="${jam.url}">${jam.url}</a>` : ""}`;
 
