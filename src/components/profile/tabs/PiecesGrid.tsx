@@ -191,38 +191,36 @@ export default function PiecesGrid({
       `}</style>
 
       {/* View toggle */}
-      {isOwnProfile && (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            padding: "16px 24px",
-          }}
-        >
-          <div style={{ display: "inline-flex", border: "1px solid #000000" }}>
-            {(["grid", "feed"] as ViewMode[]).map((mode, i) => (
-              <button
-                key={mode}
-                onClick={() => switchView(mode)}
-                style={{
-                  background: viewMode === mode ? "#000000" : "transparent",
-                  border: "none",
-                  borderLeft: i > 0 ? "1px solid #000000" : "none",
-                  cursor: "pointer",
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "12px",
-                  fontWeight: 300,
-                  color: viewMode === mode ? "#FFFFFF" : "#808080",
-                  padding: "4px 12px",
-                  textTransform: "capitalize",
-                }}
-              >
-                {mode}
-              </button>
-            ))}
-          </div>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          padding: "16px 24px",
+        }}
+      >
+        <div style={{ display: "inline-flex", border: "1px solid #000000" }}>
+          {(["grid", "feed"] as ViewMode[]).map((mode, i) => (
+            <button
+              key={mode}
+              onClick={() => switchView(mode)}
+              style={{
+                background: viewMode === mode ? "#000000" : "transparent",
+                border: "none",
+                borderLeft: i > 0 ? "1px solid #000000" : "none",
+                cursor: "pointer",
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "12px",
+                fontWeight: 300,
+                color: viewMode === mode ? "#FFFFFF" : "#808080",
+                padding: "4px 12px",
+                textTransform: "capitalize",
+              }}
+            >
+              {mode}
+            </button>
+          ))}
         </div>
-      )}
+      </div>
 
       {/* Grid layout */}
       {viewMode === "grid" && (
