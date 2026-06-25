@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import ProfilePage from "@/components/profile/ProfilePage";
-import { extractPreview } from "@/lib/piece-preview";
 
 export async function generateMetadata({
   params,
@@ -90,7 +89,7 @@ export default async function ProfilePageRoute({
       coverImage: true,
       wordCount: true,
       readLengthMin: true,
-      currentContent: true,
+      currentExcerpt: true,
       riffs: {
         where: { submittedAt: { not: null } },
         select: {
@@ -118,7 +117,7 @@ export default async function ProfilePageRoute({
     coverImage: p.coverImage,
     wordCount: p.wordCount,
     readLengthMin: p.readLengthMin,
-    preview: extractPreview(p.currentContent),
+    preview: p.currentExcerpt ?? undefined,
     submittedAt: new Date(
       Math.max(...p.riffs.map((r) => r.submittedAt!.getTime()))
     ),
