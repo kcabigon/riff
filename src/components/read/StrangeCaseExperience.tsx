@@ -840,9 +840,9 @@ const tapProps = (action: () => void) => ({
 });
 
 export default function StrangeCaseExperience({
-  clubId,
+  onClose,
 }: {
-  clubId?: string | null;
+  onClose?: () => void;
 }) {
   const router = useRouter();
   const [cur, setCur] = useState(0);
@@ -898,11 +898,12 @@ export default function StrangeCaseExperience({
     [total, armHint]
   );
 
-  // Navigate to the club (a real destination) — router.back() is a no-op on
-  // mobile when the piece was opened from a fresh link with no in-app history.
+  // Close the overlay back to the default read view. (Falls back to browser
+  // history if ever rendered standalone without an onClose.)
   const exit = useCallback(() => {
-    router.push(clubId ? `/clubs/${clubId}` : "/");
-  }, [router, clubId]);
+    if (onClose) onClose();
+    else router.back();
+  }, [onClose, router]);
 
   // Build + resume the AudioContext synchronously INSIDE the tap handler — mobile
   // browsers (iOS especially) only unlock audio from within the user gesture.
