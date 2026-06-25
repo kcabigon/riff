@@ -3,13 +3,12 @@ import type { Metadata } from "next";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import ReadPageLayout from "@/components/read/ReadPageLayout";
-import StrangeCaseExperience from "@/components/read/StrangeCaseExperience";
 
 // ── Immersive read experience (single piece) ─────────────────────────────────
-// Renders the bespoke StrangeCaseExperience in place of the normal read view for
-// ONE piece, AFTER the normal access check (so who-can-view rules are unchanged).
-// Flip EXPERIMENT_ENABLED to false to instantly restore the default read view.
-// No DB writes, no schema changes; no other piece is affected.
+// The default read view renders normally; for ONE opted-in piece we surface an
+// "Experience in motion (Beta)" CTA under the author metadata that opens the
+// bespoke immersive experience as an overlay. Flip EXPERIMENT_ENABLED to false to
+// remove the CTA. No DB writes, no schema changes; no other piece is affected.
 const EXPERIMENT_ENABLED = true;
 const EXPERIMENT_PIECE_ID = "cmpbuo77j0001le04v4apbyyd";
 
@@ -142,12 +141,6 @@ export default async function ReadPage({
     submittedAt = pieceRiff.submittedAt?.toISOString() ?? null;
   }
 
-  // Access confirmed (revealed riff + club member). For the one experiment piece,
-  // render the immersive experience in place of the normal read layout.
-  if (EXPERIMENT_ENABLED && pieceId === EXPERIMENT_PIECE_ID) {
-    return <StrangeCaseExperience clubId={clubId} />;
-  }
-
   // Check if already read
   const existingRead = await prisma.pieceRead.findUnique({
     where: {
@@ -230,6 +223,14 @@ export default async function ReadPage({
     },
   });
 
+  // The CTA shows on the opted-in piece everywhere, and on ANY piece only in
+  // local dev (for testing). NODE_ENV is "production" on every Vercel deploy
+  // (staging + prod), so in production this is provably gated to the one piece —
+  // no dependency on any runtime env var.
+  const showMotion =
+    EXPERIMENT_ENABLED &&
+    (pieceId === EXPERIMENT_PIECE_ID || process.env.NODE_ENV !== "production");
+
   return (
     <ReadPageLayout
       piece={{
@@ -259,6 +260,7 @@ export default async function ReadPage({
       previousPiece={previousPiece}
       nextPiece={nextPiece}
       fromProfileUserId={from === "profile" ? fromUserId : undefined}
+      showMotion={showMotion}
     />
   );
 }
