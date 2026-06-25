@@ -274,15 +274,15 @@ export default function PiecesGrid({
                 piece.id.charCodeAt(0) % PLACEHOLDER_COLORS.length
               ];
             const meta = [
+              piece.readLengthMin ? `${piece.readLengthMin} min read` : null,
+              piece.wordCount
+                ? `${piece.wordCount.toLocaleString()} words`
+                : null,
               piece.submittedAt?.toLocaleDateString("en-US", {
                 month: "short",
                 day: "numeric",
                 year: "numeric",
               }),
-              piece.readLengthMin ? `${piece.readLengthMin} min read` : null,
-              piece.wordCount
-                ? `${piece.wordCount.toLocaleString()} words`
-                : null,
             ]
               .filter(Boolean)
               .join(" · ");
@@ -366,9 +366,8 @@ export default function PiecesGrid({
                     <p
                       style={{
                         fontFamily: "var(--font-dm-sans)",
-                        fontSize: "12px",
-                        fontWeight: 300,
-                        color: "#808080",
+                        fontSize: "14px",
+                        color: "#9C9C9C",
                         margin: 0,
                       }}
                     >
