@@ -26,22 +26,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-// ── Photo slots ──────────────────────────────────────────────────────────────
-const PHOTOS: Record<string, { src: string; alt: string } | null> = {
-  opening: null, // a sun-drenched "ideal life" frame
-  turn: null, // the rupture
-  abyss: null, // the 3am screen-glow stare
-  kids: null, // the kids (gut-punch)
-  exhilaration1: {
-    src: "https://wtfudrzuqbrebbsvapsy.supabase.co/storage/v1/object/public/images/06899973-e7ba-4c65-9b45-6c2634aad742.jpg",
-    alt: "",
-  },
-  exhilaration2: {
-    src: "https://wtfudrzuqbrebbsvapsy.supabase.co/storage/v1/object/public/images/3121fb66-ac20-4fb1-9eb3-1141ed6128d6.jpg",
-    alt: "",
-  },
-};
-
 type Mood =
   | "title"
   | "past"
@@ -62,12 +46,9 @@ type Beat =
       mood: Mood;
       lines: string[];
       long?: boolean;
-      listNum?: string;
-      bg?: string;
       collage?: string[];
     }
   | { id: string; kind: "title" }
-  | { id: string; kind: "photo"; slot: string }
   | {
       id: string;
       kind: "bullet";
@@ -342,11 +323,9 @@ const moodOf = (b: Beat): Mood =>
     ? b.mood
     : b.kind === "title"
       ? "title"
-      : b.kind === "end"
-        ? "end"
-        : b.kind === "bullet"
-          ? "list"
-          : "present";
+      : b.kind === "bullet"
+        ? "list"
+        : "end"; // end card
 
 // ── Shader mood palettes (normalized rgb + scalar grades) ────────────────────
 type Vis = {
@@ -847,7 +826,6 @@ export default function StrangeCaseExperience({
   const router = useRouter();
   const [cur, setCur] = useState(0);
   const [prev, setPrev] = useState<number | null>(null);
-  const [dir, setDir] = useState<1 | -1>(1);
   const [showHint, setShowHint] = useState(false);
   const [soundOn, setSoundOn] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -882,7 +860,6 @@ export default function StrangeCaseExperience({
       setCur((i) => {
         const next = Math.min(Math.max(i + delta, 0), total - 1);
         if (next !== i) {
-          setDir(delta);
           if (prevTimer.current) clearTimeout(prevTimer.current);
           if (fast) {
             setPrev(null); // drop any outgoing layer immediately
@@ -1234,13 +1211,10 @@ export default function StrangeCaseExperience({
 
       {/* beat stack (exit + enter layers) */}
       <div className="sce-perspective">
-        {prev !== null && (
-          <BeatView beat={BEATS[prev]} phase="exit" dir={dir} />
-        )}
+        {prev !== null && <BeatView beat={BEATS[prev]} phase="exit" />}
         <BeatView
           beat={beat}
           phase="enter"
-          dir={dir}
           onReplay={() => {
             setCur(0);
             armHint();
@@ -1273,19 +1247,14 @@ export default function StrangeCaseExperience({
 function BeatView({
   beat,
   phase,
-  dir,
   onReplay,
   onExit,
 }: {
   beat: Beat;
   phase: "enter" | "exit";
-  dir: 1 | -1;
   onReplay?: () => void;
   onExit?: () => void;
 }) {
-  if (beat.kind === "photo") {
-    return <PhotoBeat slot={beat.slot} phase={phase} />;
-  }
   if (beat.kind === "bullet") {
     return (
       <BulletBeat
@@ -1298,14 +1267,13 @@ function BeatView({
     );
   }
   const beatMood = moodOf(beat);
-  const bg = beat.kind === "text" ? beat.bg : undefined;
   const collage = beat.kind === "text" ? beat.collage : undefined;
-  const hasBg = !!(bg || collage);
+  const hasBg = !!collage;
   return (
     <div
-      className={`sce-stage m-${beatMood} ${phase} dir-${dir} ${hasBg ? "has-bg" : ""}`}
+      className={`sce-stage m-${beatMood} ${phase} ${hasBg ? "has-bg" : ""}`}
     >
-      {collage ? (
+      {collage && (
         <div className="sce-collage">
           {collage.map((src) => (
             <div
@@ -1315,12 +1283,7 @@ function BeatView({
             />
           ))}
         </div>
-      ) : bg ? (
-        <div
-          className="sce-stage-bg"
-          style={{ backgroundImage: `url(${bg})` }}
-        />
-      ) : null}
+      )}
       {hasBg && <div className="sce-stage-bg-scrim" />}
       <div className="sce-beat">
         {beat.kind === "title" && (
@@ -1332,10 +1295,7 @@ function BeatView({
         )}
 
         {beat.kind === "text" && (
-          <>
-            {beat.listNum && <div className="sce-listnum">{beat.listNum}</div>}
-            <Reveal lines={beat.lines} long={!!beat.long} phase={phase} />
-          </>
+          <Reveal lines={beat.lines} long={!!beat.long} />
         )}
 
         {beat.kind === "end" && (
@@ -1358,15 +1318,7 @@ function BeatView({
 }
 
 // ── Per-character kinetic typography ─────────────────────────────────────────
-function Reveal({
-  lines,
-  long,
-  phase,
-}: {
-  lines: string[];
-  long: boolean;
-  phase: "enter" | "exit";
-}) {
+function Reveal({ lines, long }: { lines: string[]; long: boolean }) {
   const lgap = long ? "90ms" : "150ms";
   const cgap = long ? "7ms" : "16ms";
   return (
@@ -1410,8 +1362,6 @@ function Reveal({
           )}
         </span>
       ))}
-      {/* phase is encoded on the parent stage (.enter/.exit) for animation routing */}
-      <span hidden>{phase}</span>
     </div>
   );
 }
@@ -1478,33 +1428,9 @@ function BulletBeat({
           <span className="sub">/ {String(BULLET_TOTAL).padStart(2, "0")}</span>
         </div>
         <div className={`sce-bullet-text ${long ? "is-long" : ""}`}>
-          <Reveal lines={lines} long={long} phase={phase} />
+          <Reveal lines={lines} long={long} />
         </div>
       </div>
-    </div>
-  );
-}
-
-// ── Full-bleed cinematic photo beat ──────────────────────────────────────────
-function PhotoBeat({ slot, phase }: { slot: string; phase: "enter" | "exit" }) {
-  const photo = PHOTOS[slot];
-  return (
-    <div className={`sce-photo ${phase}`}>
-      <div className="sce-bar sce-bar-top" />
-      <div className="sce-bar sce-bar-bottom" />
-      {photo ? (
-        <img className="sce-photo-img" src={photo.src} alt={photo.alt} />
-      ) : (
-        <div className="sce-photo-slot">
-          <div className="sce-photo-slot-inner">
-            <div className="sce-photo-slot-tag">photo slot</div>
-            <div className="sce-photo-slot-name">{slot}</div>
-            <div className="sce-photo-slot-hint">
-              drop an image here · tap to continue
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -1528,20 +1454,14 @@ const STYLES = `
 .sce-back:hover{transform:translateX(-3px);}
 .sce-sound{right:clamp(14px,3vw,26px);}
 
-.sce-act{position:absolute;left:clamp(16px,3vw,30px);bottom:clamp(60px,12vh,110px);z-index:7;writing-mode:vertical-rl;font-family:var(--font-source-code-pro),ui-monospace,monospace;font-size:11px;letter-spacing:0.34em;text-transform:lowercase;color:#fff;mix-blend-mode:difference;opacity:0.5;animation:sceActIn 1400ms ease both;}
-@keyframes sceActIn{from{opacity:0;transform:translateY(14px);}to{opacity:0.5;transform:none;}}
-
 .sce-perspective{position:absolute;inset:0;perspective:1400px;perspective-origin:50% 50%;z-index:4;}
 .sce-stage{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:clamp(30px,6vw,110px);box-sizing:border-box;transform-style:preserve-3d;}
-.sce-stage.enter,.sce-photo.enter{z-index:2;}
-.sce-stage.exit,.sce-photo.exit{z-index:1;pointer-events:none;}
+.sce-stage.enter{z-index:2;}
+.sce-stage.exit{z-index:1;pointer-events:none;}
 .sce-beat{position:relative;z-index:2;width:100%;max-width:880px;text-align:center;transform:rotateX(calc(var(--my)*-3.5deg)) rotateY(calc(var(--mx)*3.5deg)) translateX(calc(var(--mx)*14px)) translateY(calc(var(--my)*-14px));transition:transform .25s ease-out;}
 
-/* in-text background photo (the two "exhilarating" beats): full-bleed cover on
-   mobile (portrait), fully-contained on desktop so the whole photo is visible. */
-.sce-stage-bg{position:absolute;inset:0;z-index:0;background-position:center;background-repeat:no-repeat;background-size:cover;transform:scale(1.05) translate(calc(var(--mx)*-12px),calc(var(--my)*12px));animation:kenburns 18s ease-out both;}
+/* dark scrim behind the in-text collage beats, for legibility */
 .sce-stage-bg-scrim{position:absolute;inset:0;z-index:1;background:radial-gradient(64% 64% at 50% 50%,rgba(0,0,0,0.40),rgba(0,0,0,0.76));}
-@media (min-width:768px){.sce-stage-bg{background-size:contain;transform:none;animation:none;}}
 /* responsive photo collage (the two "exhilarating" beats): the portrait 2x3
    grid the photo was made in on mobile, reflowed to a 3x2 landscape on desktop. */
 .sce-collage{position:absolute;inset:0;z-index:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr 1fr;gap:2px;background:#000;transform:scale(1.05) translate(calc(var(--mx)*-14px),calc(var(--my)*14px));transition:transform .3s ease-out;}
@@ -1582,7 +1502,6 @@ const STYLES = `
 /* past / list / lux */
 .m-past .sce-text,.m-list .sce-text,.m-lux .sce-text{font-family:var(--font-playfair),Georgia,serif;color:#211c14;font-weight:400;font-size:clamp(24px,4.6vw,46px);line-height:1.34;letter-spacing:-0.01em;}
 .m-past .sce-text.is-long,.m-list .sce-text.is-long,.m-lux .sce-text.is-long{font-size:clamp(18px,3.2vw,31px);line-height:1.5;}
-.sce-listnum{font-family:var(--font-source-code-pro),ui-monospace,monospace;font-size:13px;letter-spacing:0.34em;color:rgba(33,28,20,0.45);margin-bottom:clamp(20px,4vh,34px);animation:fadeUp .7s both;}
 
 /* turn */
 .m-turn .sce-text{font-family:var(--font-source-code-pro),ui-monospace,monospace;color:#fff;font-weight:500;font-size:clamp(25px,5vw,52px);line-height:1.24;letter-spacing:0.01em;text-shadow:0 0 34px rgba(220,38,38,0.4);}
@@ -1611,21 +1530,10 @@ const STYLES = `
 .sce-progress{position:absolute;left:0;bottom:0;height:2px;background:#fff;mix-blend-mode:difference;z-index:6;transition:width .52s cubic-bezier(.2,.7,.2,1);}
 
 /* photo */
-.sce-photo{position:absolute;inset:0;z-index:4;overflow:hidden;animation:photoIn 1.1s ease both;}
-.sce-photo.exit{animation:photoOut .6s ease both;}
+/* keyframes shared by the bullet beats */
 @keyframes photoIn{from{opacity:0;}to{opacity:1;}}
 @keyframes photoOut{from{opacity:1;}to{opacity:0;}}
-.sce-photo-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scale(1.05) translate(calc(var(--mx)*-18px),calc(var(--my)*18px));animation:kenburns 16s ease-out both;}
 @keyframes kenburns{from{transform:scale(1.05);}to{transform:scale(1.16);}}
-.sce-bar{position:absolute;left:0;right:0;height:11vh;background:#000;z-index:5;animation:barIn 1.1s cubic-bezier(.2,.7,.2,1) both;}
-.sce-bar-top{top:0;transform-origin:top;}
-.sce-bar-bottom{bottom:0;transform-origin:bottom;}
-@keyframes barIn{from{transform:scaleY(0);}to{transform:scaleY(1);}}
-.sce-photo-slot{position:absolute;inset:11vh clamp(20px,5vw,56px);display:flex;align-items:center;justify-content:center;border:2px dashed rgba(255,255,255,0.22);}
-.sce-photo-slot-inner{text-align:center;}
-.sce-photo-slot-tag{font-family:var(--font-source-code-pro),ui-monospace,monospace;font-size:11px;letter-spacing:0.34em;text-transform:uppercase;color:rgba(255,255,255,0.42);}
-.sce-photo-slot-name{font-family:var(--font-playfair),Georgia,serif;font-style:italic;font-size:clamp(28px,7vw,56px);color:rgba(255,255,255,0.85);margin:14px 0 16px;}
-.sce-photo-slot-hint{font-family:var(--font-source-code-pro),ui-monospace,monospace;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:rgba(255,255,255,0.32);}
 
 /* bullets — enumerated "specifics" over imagery */
 .sce-bullet{position:absolute;inset:0;z-index:4;overflow:hidden;animation:photoIn 1s ease both;}
@@ -1654,8 +1562,8 @@ const STYLES = `
 @keyframes ringBreath{0%,100%{width:30px;height:30px;opacity:.7;}50%{width:40px;height:40px;opacity:.35;}}
 
 /* mobile: strip GPU-heavy continuous motion + per-char blur to stay smooth */
-.is-mobile .sce-bullet-bg,.is-mobile .sce-photo-img,.is-mobile .sce-stage-bg{animation:none !important;}
-.is-mobile .sce-collage,.is-mobile .sce-stage-bg{transform:none !important;}
+.is-mobile .sce-bullet-bg{animation:none !important;}
+.is-mobile .sce-collage{transform:none !important;}
 /* flatten the parallax 3D on touch devices — it does nothing without a mouse and
    Safari mis-hit-tests buttons inside a preserve-3d/perspective container */
 .is-mobile .sce-perspective{perspective:none;}
@@ -1665,7 +1573,7 @@ const STYLES = `
 @keyframes charFadeM{from{opacity:0;transform:translateY(0.3em);}to{opacity:1;transform:none;}}
 
 @media (prefers-reduced-motion:reduce){
-  .sce-char,.sce-title,.sce-subtitle,.sce-eyebrow,.sce-endtitle,.sce-endactions,.sce-fin,.sce-listnum,.sce-act,.sce-photo,.sce-bar,.sce-photo-img,.sce-cursor-ring{animation:none !important;}
+  .sce-char,.sce-title,.sce-subtitle,.sce-eyebrow,.sce-endtitle,.sce-endactions,.sce-fin,.sce-cursor-ring{animation:none !important;}
   .sce-char{opacity:1 !important;filter:none !important;transform:none !important;}
 }
 `;
