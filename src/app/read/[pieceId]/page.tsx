@@ -223,15 +223,13 @@ export default async function ReadPage({
     },
   });
 
-  // On dev/staging the CTA shows on every piece (for testing); in production it
-  // appears only on the opted-in piece. Production has no NEXT_PUBLIC_ENV_LABEL
-  // (the env badge is hidden there), which is the signal we key off.
-  const envLabel = (process.env.NEXT_PUBLIC_ENV_LABEL ?? "").toLowerCase();
-  const isNonProd =
-    process.env.NODE_ENV !== "production" ||
-    (envLabel !== "" && envLabel !== "production" && envLabel !== "prod");
+  // The CTA shows on the opted-in piece everywhere, and on ANY piece only in
+  // local dev (for testing). NODE_ENV is "production" on every Vercel deploy
+  // (staging + prod), so in production this is provably gated to the one piece —
+  // no dependency on any runtime env var.
   const showMotion =
-    EXPERIMENT_ENABLED && (pieceId === EXPERIMENT_PIECE_ID || isNonProd);
+    EXPERIMENT_ENABLED &&
+    (pieceId === EXPERIMENT_PIECE_ID || process.env.NODE_ENV !== "production");
 
   return (
     <ReadPageLayout
