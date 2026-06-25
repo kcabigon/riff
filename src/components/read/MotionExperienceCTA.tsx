@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import StrangeCaseExperience from "@/components/read/StrangeCaseExperience";
+import dynamic from "next/dynamic";
+
+// Lazy-load the heavy WebGL + Web Audio experience so its bundle only downloads
+// when the overlay is actually opened — not on every read-page load.
+const StrangeCaseExperience = dynamic(
+  () => import("@/components/read/StrangeCaseExperience"),
+  { ssr: false }
+);
 
 /**
  * Entry point for the immersive "riff in motion" experience. Lives under the
@@ -21,6 +28,24 @@ export default function MotionExperienceCTA() {
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = prev;
+    };
+  }, [open]);
+
+  // Close on the hardware/browser back button (push a throwaway history entry so
+  // "back" pops the overlay instead of navigating off the read page). When closed
+  // via the UI instead, consume the entry we pushed so history stays neutral.
+  useEffect(() => {
+    if (!open) return;
+    let poppedByUser = false;
+    window.history.pushState({ sceOverlay: true }, "");
+    const onPop = () => {
+      poppedByUser = true;
+      setOpen(false);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => {
+      window.removeEventListener("popstate", onPop);
+      if (!poppedByUser) window.history.back();
     };
   }, [open]);
 
