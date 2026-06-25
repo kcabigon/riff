@@ -223,6 +223,16 @@ export default async function ReadPage({
     },
   });
 
+  // On dev/staging the CTA shows on every piece (for testing); in production it
+  // appears only on the opted-in piece. Production has no NEXT_PUBLIC_ENV_LABEL
+  // (the env badge is hidden there), which is the signal we key off.
+  const envLabel = (process.env.NEXT_PUBLIC_ENV_LABEL ?? "").toLowerCase();
+  const isNonProd =
+    process.env.NODE_ENV !== "production" ||
+    (envLabel !== "" && envLabel !== "production" && envLabel !== "prod");
+  const showMotion =
+    EXPERIMENT_ENABLED && (pieceId === EXPERIMENT_PIECE_ID || isNonProd);
+
   return (
     <ReadPageLayout
       piece={{
@@ -252,7 +262,7 @@ export default async function ReadPage({
       previousPiece={previousPiece}
       nextPiece={nextPiece}
       fromProfileUserId={from === "profile" ? fromUserId : undefined}
-      showMotion={EXPERIMENT_ENABLED && pieceId === EXPERIMENT_PIECE_ID}
+      showMotion={showMotion}
     />
   );
 }
