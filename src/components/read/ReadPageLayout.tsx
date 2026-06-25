@@ -4,6 +4,7 @@ import { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import { formatSubmittedDate } from "@/lib/timeAgo";
 import { useRouter } from "next/navigation";
 import Avatar from "@/components/shared/Avatar";
+import MotionExperienceCTA from "@/components/read/MotionExperienceCTA";
 import ReadToggle from "./ReadToggle";
 import ReadOnlyEditor, {
   buildAuthorColorMap,
@@ -65,6 +66,7 @@ interface ReadPageLayoutProps {
   disableCommentCompose?: boolean;
   disableReplies?: boolean;
   disableReadTracking?: boolean;
+  showMotion?: boolean;
 }
 
 export default function ReadPageLayout({
@@ -80,6 +82,7 @@ export default function ReadPageLayout({
   disableCommentCompose,
   disableReplies,
   disableReadTracking,
+  showMotion,
 }: ReadPageLayoutProps) {
   const router = useRouter();
   const endRef = useRef<HTMLDivElement>(null);
@@ -539,6 +542,8 @@ export default function ReadPageLayout({
                 {piece.author.name || piece.author.username || "Unknown"}
               </p>
             </div>
+
+            {showMotion && <MotionExperienceCTA />}
           </div>
 
           {/* Content — Tiptap read-only */}
