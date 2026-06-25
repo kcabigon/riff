@@ -87,7 +87,6 @@ export default async function ProfilePageRoute({
       id: true,
       title: true,
       coverImage: true,
-      currentContent: true,
       wordCount: true,
       riffs: {
         where: { submittedAt: { not: null } },
@@ -114,7 +113,6 @@ export default async function ProfilePageRoute({
     id: p.id,
     title: p.title,
     coverImage: p.coverImage,
-    currentContent: p.currentContent,
     wordCount: p.wordCount,
     // Revealed = riff is REVEALED/COMPLETED AND viewer is in that club
     // (own profile skips the club check — always accessible)

@@ -10,7 +10,6 @@ export interface Piece {
   id: string;
   title: string | null;
   coverImage: string | null;
-  currentContent: string | null;
   isRevealed: boolean;
   viewerHasClubAccess: boolean;
   isPublic: boolean;
@@ -164,7 +163,6 @@ export default function PiecesGrid({
                   id: piece.id,
                   title: piece.title || "Untitled",
                   coverImage: piece.coverImage,
-                  currentContent: piece.currentContent || "",
                 }}
                 isRead={true}
                 onClick={handleClick ?? (() => {})}
