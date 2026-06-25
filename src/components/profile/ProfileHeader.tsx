@@ -130,7 +130,7 @@ export default function ProfileHeader({
       {/* Hero */}
       <div
         style={{
-          maxWidth: "1000px",
+          maxWidth: "720px",
           margin: "0 auto",
           padding: "32px 24px 40px",
           display: "flex",

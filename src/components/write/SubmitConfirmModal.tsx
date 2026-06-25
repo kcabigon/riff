@@ -90,7 +90,6 @@ export default function SubmitConfirmModal({
             id: piece.id,
             title: piece.title || "Untitled",
             coverImage: piece.coverImage,
-            currentContent: piece.currentContent,
           }}
           isRead={true}
           onClick={() => {}}
