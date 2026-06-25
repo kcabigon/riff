@@ -418,20 +418,18 @@ function JamCard({
   const embed = jam.url ? detectJamEmbed(jam.url) : null;
 
   const handleShare = async () => {
-    const paragraphs = jam.note.split(/\n\n+/);
     const plainText = [
       jam.content,
       "",
-      ...paragraphs.flatMap((p, i) =>
-        i < paragraphs.length - 1 ? [p, ""] : [p]
-      ),
+      jam.note,
       ...(jam.url ? ["", jam.url] : []),
     ].join("\n");
 
-    const htmlParas = paragraphs
+    const htmlBody = jam.note
+      .split(/\n\n+/)
       .map((p) => `<p style="margin:0 0 1em">${p.replace(/\n/g, "<br>")}</p>`)
       .join("");
-    const htmlText = `<strong>${jam.content}</strong><br><br>${htmlParas}${jam.url ? `<br><a href="${jam.url}">${jam.url}</a>` : ""}`;
+    const htmlText = `<strong>${jam.content}</strong><br><br>${htmlBody}${jam.url ? `<br><a href="${jam.url}">${jam.url}</a>` : ""}`;
 
     try {
       await navigator.clipboard.write([
