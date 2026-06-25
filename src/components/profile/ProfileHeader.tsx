@@ -144,10 +144,12 @@ export default function ProfileHeader({
             }}
           >
             {profileUser.avatarUrl ? (
-              <img
+              <Image
                 src={profileUser.avatarUrl}
                 alt={displayName}
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                width={120}
+                height={120}
+                style={{ objectFit: "cover" }}
               />
             ) : (
               <span
