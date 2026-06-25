@@ -503,16 +503,15 @@ function JamCard({
                 border: "none",
                 cursor: "pointer",
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: copied ? "11px" : "9px",
+                fontSize: "9px",
                 fontWeight: 700,
-                letterSpacing: copied ? "0" : "2px",
-                color: copied ? "#00FF66" : "#808080",
+                letterSpacing: "2px",
+                color: "#808080",
                 padding: "4px",
                 lineHeight: 1,
-                transition: "color 0.15s",
               }}
             >
-              {copied ? "Copied!" : "•••"}
+              •••
             </button>
             {open && (
               <>
