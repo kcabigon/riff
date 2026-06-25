@@ -769,7 +769,7 @@ export default function JamsTab({
     >
       {/* New jam — own profile only */}
       {isOwnProfile && (
-        <div style={{ padding: "28px 0" }}>
+        <div style={{ padding: "20px 0 0" }}>
           {showForm ? (
             <NewJamForm
               initialUrl={linkUrl}
@@ -780,27 +780,34 @@ export default function JamsTab({
               }}
             />
           ) : (
-            <input
-              type="url"
-              value={linkUrl}
-              onChange={(e) => setLinkUrl(e.target.value)}
-              placeholder="Paste a Spotify or YouTube link to start a new jam..."
-              className="jam-editor-input"
+            <div
               style={{
-                display: "block",
-                width: "100%",
-                boxSizing: "border-box",
-                border: "none",
-                outline: "none",
-                padding: 0,
-                background: "transparent",
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: 300,
-                color: "#000000",
-                lineHeight: 1.4,
+                backgroundColor: "#F5F5F5",
+                padding: "10px 14px",
               }}
-            />
+            >
+              <input
+                type="url"
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
+                placeholder="Paste a Spotify or YouTube link to start a new jam..."
+                className="jam-editor-input"
+                style={{
+                  display: "block",
+                  width: "100%",
+                  boxSizing: "border-box",
+                  border: "none",
+                  outline: "none",
+                  padding: 0,
+                  background: "transparent",
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 300,
+                  color: "#000000",
+                  lineHeight: 1.6,
+                }}
+              />
+            </div>
           )}
         </div>
       )}
