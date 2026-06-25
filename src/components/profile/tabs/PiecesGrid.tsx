@@ -187,6 +187,7 @@ export default function PiecesGrid({
             row-gap: 12px;
           }
           .feed-thumb { width: 64px; height: 80px; }
+          .feed-header { align-self: center; }
         }
       `}</style>
 
