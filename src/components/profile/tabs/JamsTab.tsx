@@ -220,7 +220,7 @@ function NewJamForm({
             fontSize: "14px",
             fontWeight: 300,
             color: "#808080",
-            padding: "12px 0 0",
+            padding: "20px 0 0",
             textAlign: "center",
           }}
         >
@@ -242,10 +242,10 @@ function EditJamForm({
   onUpdated: (jam: JamData) => void;
   onCancel: () => void;
 }) {
-  const [url, setUrl] = useState(jam.url ?? "");
+  const url = jam.url ?? "";
   const [heading, setHeading] = useState(jam.content);
   const [note, setNote] = useState(jam.note);
-  const [embedInfo, setEmbedInfo] = useState<EmbedInfo | null>(() => {
+  const [embedInfo] = useState<EmbedInfo | null>(() => {
     if (!jam.url) return null;
     const base = detectJamEmbed(jam.url);
     return base ? { type: base.type, embedUrl: base.embedUrl } : null;
@@ -265,16 +265,6 @@ function EditJamForm({
     el.style.height = "auto";
     el.style.height = `${el.scrollHeight}px`;
   }, [note]);
-
-  useEffect(() => {
-    const trimmed = url.trim();
-    if (!trimmed) {
-      setEmbedInfo(null);
-      return;
-    }
-    const base = detectJamEmbed(trimmed);
-    setEmbedInfo(base ? { type: base.type, embedUrl: base.embedUrl } : null);
-  }, [url]);
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -362,43 +352,13 @@ function EditJamForm({
         {wordCount} / 250 words
       </p>
 
-      <div
-        style={{
-          height: "1px",
-          backgroundColor: "#E6E6E6",
-          margin: "0 0 16px",
-        }}
-      />
-
-      <input
-        type="url"
-        value={url}
-        onChange={(e) => setUrl(e.target.value)}
-        placeholder="Paste a Spotify or YouTube link"
-        className="jam-editor-input"
-        style={{
-          display: "block",
-          width: "100%",
-          boxSizing: "border-box",
-          border: "none",
-          outline: "none",
-          padding: 0,
-          background: "transparent",
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "14px",
-          fontWeight: 300,
-          color: "#000000",
-          lineHeight: 1.4,
-        }}
-      />
-
       {embedInfo && (
-        <div style={{ marginTop: "16px" }}>
+        <div style={{ marginBottom: "28px" }}>
           <InlineEmbed info={embedInfo} />
         </div>
       )}
 
-      <div style={{ marginTop: "4px" }}>
+      <div>
         {error && (
           <p
             style={{
@@ -427,7 +387,7 @@ function EditJamForm({
             fontSize: "14px",
             fontWeight: 300,
             color: "#808080",
-            padding: "12px 0 0",
+            padding: "20px 0 0",
             textAlign: "center",
           }}
         >
@@ -768,7 +728,7 @@ export default function JamsTab({
     >
       {/* New jam — own profile only */}
       {isOwnProfile && (
-        <div style={{ padding: "20px 0 0" }}>
+        <div style={{ padding: showForm ? "40px 0" : "20px 0 0" }}>
           {showForm ? (
             <NewJamForm
               initialUrl={linkUrl}
