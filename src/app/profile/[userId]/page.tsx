@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import ProfilePage from "@/components/profile/ProfilePage";
+import { detectJamEmbed, fetchJamThumbnail } from "@/lib/jam-embed";
 
 export async function generateMetadata({
   params,
@@ -132,6 +133,23 @@ export default async function ProfilePageRoute({
   const pieceCount = pieces.length;
   const totalWordCount = pieces.reduce((sum, p) => sum + (p.wordCount ?? 0), 0);
 
+  const rawJams = await prisma.jam.findMany({
+    where: { userId },
+    select: { id: true, url: true, content: true, note: true, createdAt: true },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const jams = await Promise.all(
+    rawJams.map(async (jam) => {
+      let thumbnailUrl: string | null = null;
+      if (jam.url) {
+        const embed = detectJamEmbed(jam.url);
+        if (embed) thumbnailUrl = await fetchJamThumbnail(jam.url, embed.type);
+      }
+      return { ...jam, thumbnailUrl };
+    })
+  );
+
   return (
     <ProfilePage
       user={user}
@@ -147,6 +165,7 @@ export default async function ProfilePageRoute({
       }
       stats={{ pieceCount, totalWordCount }}
       pieces={pieces}
+      jams={jams}
       isOwnProfile={isOwnProfile}
       lastActiveClubId={currentUser?.lastActiveClubId ?? null}
     />

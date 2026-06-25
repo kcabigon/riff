@@ -7,7 +7,7 @@ import type { Piece } from "./tabs/PiecesGrid";
 import DeletePieceModal from "@/components/profile/DeletePieceModal";
 import ShareModal, { PublicShare } from "@/components/profile/ShareModal";
 import NoiseBackground from "@/components/NoiseBackground";
-import JamsTab from "./tabs/JamsTab";
+import JamsTab, { type JamData } from "./tabs/JamsTab";
 
 interface ProfilePageProps {
   user: {
@@ -31,6 +31,7 @@ interface ProfilePageProps {
     totalWordCount: number;
   };
   pieces: Piece[];
+  jams: JamData[];
   isOwnProfile: boolean;
   lastActiveClubId: string | null;
 }
@@ -41,6 +42,7 @@ export default function ProfilePage({
   stats,
   lastActiveClubId,
   pieces: initialPieces,
+  jams: initialJams,
   isOwnProfile,
 }: ProfilePageProps) {
   const [pieces, setPieces] = useState(initialPieces);
@@ -222,7 +224,9 @@ export default function ProfilePage({
       )}
 
       <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
-        {activeTab === "jams" && <JamsTab />}
+        {activeTab === "jams" && (
+          <JamsTab jams={initialJams} isOwnProfile={isOwnProfile} />
+        )}
 
         {activeTab === "pieces" && pieces.length > 0 && (
           <PiecesGrid

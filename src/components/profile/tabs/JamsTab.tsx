@@ -1,88 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import PrimaryButton from "@/components/PrimaryButton";
+import type { OGData } from "@/app/api/og/route";
+import type { OEmbedData } from "@/app/api/oembed/route";
+import { detectJamEmbed } from "@/lib/jam-embed";
+import type { JamEmbedType } from "@/lib/jam-embed";
+import { relativeTime } from "@/lib/timeAgo";
 
-type JamType =
-  | "spotify_album"
-  | "spotify_track"
-  | "spotify_playlist"
-  | "youtube";
-
-type MockJam = {
+export type JamData = {
   id: string;
-  type: JamType;
-  title: string;
-  artist?: string;
-  thumbnailUrl: string | null;
-  embedUrl: string;
-  heading: string;
-  timestamp: string;
+  url: string | null;
+  content: string;
   note: string;
+  createdAt: Date;
+  thumbnailUrl: string | null;
 };
 
-const MOCK_JAMS: MockJam[] = [
-  {
-    id: "1",
-    type: "spotify_album",
-    title: "If Bangs Could Kill",
-    artist: "Ella Langley",
-    thumbnailUrl:
-      "https://image-cdn-ak.spotifycdn.com/image/ab67616d00001e028606848da949bbaddf447d87",
-    embedUrl:
-      "https://open.spotify.com/embed/album/6nrtxtgaD9zSYBl9APvOCH?utm_source=generator",
-    heading: "If Bangs Could Kill",
-    timestamp: "today",
-    note: "There's something about Ella Langley that feels like a window left open in summer — warm air carrying something you can't quite name. If Bangs Could Kill is the kind of record that makes you want to drive nowhere in particular, just to have a reason to keep it playing. She writes like she means every word, which in Nashville is rarer than it should be. The title track alone has lived rent-free in my head for weeks — equal parts sharp and tender, the way the best country always is.",
-  },
-  {
-    id: "2",
-    type: "spotify_album",
-    title: "SABLE, fABLE",
-    artist: "Bon Iver",
-    thumbnailUrl:
-      "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e0230d93b9cce660d4f56770efb",
-    embedUrl:
-      "https://open.spotify.com/embed/album/3L3UjpXtom6T0Plt1j6l1T?utm_source=generator",
-    heading: "On letting things take their time",
-    timestamp: "2 days ago",
-    note: "There's a particular kind of album that doesn't reveal itself all at once. SABLE, fABLE is one of them. I've been sitting with it for weeks, and every listen feels like discovering a room I hadn't noticed before. Justin Vernon has always built music that sounds like memory — not the clean, narrative kind, but the fragmentary, half-lit kind that arrives uninvited. What gets me about this one is the restraint. He could go bigger; he almost always has. Instead he pulls back, lets the silences do the heavy lifting.",
-  },
-  {
-    id: "3",
-    type: "spotify_track",
-    title: "Starburster",
-    artist: "Fontaines D.C.",
-    thumbnailUrl:
-      "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e02f69e28716be1331924f25f2e",
-    embedUrl:
-      "https://open.spotify.com/embed/track/09ttHg3ZNVgDlYBZa1ZBw0?utm_source=generator",
-    heading: "The escape velocity of a good song",
-    timestamp: "5 days ago",
-    note: "Some songs arrive like they've been running for a while before you hear them. Starburster is that. From the first thirty seconds you're already catching your breath. What I can't stop thinking about is how Grian Chatten delivers the lyrics — not like he wrote them down somewhere first, but like they're escaping him. The way the guitar pushes against the rhythm like it has somewhere to be. The bridge hits and you realize the song has been building toward something you didn't see coming.",
-  },
-  {
-    id: "4",
-    type: "youtube",
-    title: "Sand In My Boots",
-    artist: "Morgan Wallen & Ella Langley",
-    thumbnailUrl: "https://i.ytimg.com/vi/i-WwYJI8mFE/hqdefault.jpg",
-    embedUrl: "https://www.youtube.com/embed/i-WwYJI8mFE",
-    heading: "Why live versions hit different",
-    timestamp: "2 weeks ago",
-    note: "I'm suspicious of live recordings because they so rarely capture what made the original worth hearing. This one is the exception. There's a version of this song I'd heard before and liked fine, and then I stumbled onto this SiriusXM session and it recalibrated everything. What Ella Langley does with the harmony in the chorus — the way she holds certain notes slightly longer than you expect — changes the emotional register of the whole song. It sounds like grief and relief at the same time.",
-  },
-];
+const COVER_SIZE = 160;
 
-const COVER_SIZE = 88;
+// ─── Cover placeholder ────────────────────────────────────────────────────────
 
-function CoverPlaceholder({
-  title,
-  artist,
-}: {
-  title: string;
-  artist?: string;
-}) {
-  const initials = (artist || title)
+function CoverPlaceholder({ label }: { label: string }) {
+  const initials = label
     .split(" ")
     .slice(0, 2)
     .map((w) => w[0])
@@ -114,22 +54,617 @@ function CoverPlaceholder({
   );
 }
 
-export default function JamsTab() {
-  const [selectedId, setSelectedId] = useState(MOCK_JAMS[0].id);
-  const selected = MOCK_JAMS.find((j) => j.id === selectedId)!;
+// ─── Link jam content (fetches OG data lazily) ────────────────────────────────
 
-  const iframeHeight =
-    selected.type === "spotify_track"
+function LinkJamContent({ url }: { url: string }) {
+  const [og, setOg] = useState<OGData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setOg(null);
+    fetch(`/api/og?url=${encodeURIComponent(url)}`)
+      .then((r) => r.json())
+      .then((data: OGData) => {
+        if (!cancelled) {
+          setOg(data);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [url]);
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          border: "2px solid #E6E6E6",
+          height: "80px",
+          display: "flex",
+          alignItems: "center",
+          padding: "0 16px",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "14px",
+            fontWeight: 300,
+            color: "#808080",
+          }}
+        >
+          Loading preview...
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+        display: "block",
+        border: "2px solid #000000",
+        textDecoration: "none",
+        color: "inherit",
+      }}
+    >
+      {og?.image && (
+        <img
+          src={og.image}
+          alt={og.title ?? ""}
+          style={{
+            width: "100%",
+            display: "block",
+            objectFit: "cover",
+            maxHeight: "360px",
+          }}
+        />
+      )}
+      <div style={{ padding: "16px" }}>
+        {og?.title && (
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "16px",
+              fontWeight: 500,
+              color: "#000000",
+              margin: "0 0 4px",
+            }}
+          >
+            {og.title}
+          </p>
+        )}
+        {og?.description && (
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "14px",
+              fontWeight: 300,
+              color: "#000000",
+              margin: "0 0 8px",
+              lineHeight: 1.4,
+            }}
+          >
+            {og.description}
+          </p>
+        )}
+        <p
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "12px",
+            fontWeight: 300,
+            color: "#808080",
+            margin: 0,
+          }}
+        >
+          {og?.domain ?? new URL(url).hostname.replace(/^www\./, "")}
+        </p>
+      </div>
+    </a>
+  );
+}
+
+// ─── New jam form ─────────────────────────────────────────────────────────────
+
+type EmbedInfo =
+  | { type: Exclude<JamEmbedType, "link">; embedUrl: string }
+  | { type: "link"; embedUrl: string; og: OGData | null; loading: boolean };
+
+function InlineEmbed({ info }: { info: EmbedInfo }) {
+  const spotifyHeight =
+    info.type === "spotify_track"
       ? "152px"
-      : selected.type === "spotify_album"
-        ? "352px"
-        : selected.type === "spotify_playlist"
-          ? "450px"
-          : null;
+      : info.type === "spotify_playlist"
+        ? "450px"
+        : "352px";
+
+  if (info.type === "youtube") {
+    return (
+      <div style={{ position: "relative", paddingBottom: "56.25%", height: 0 }}>
+        <iframe
+          src={info.embedUrl}
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            border: "none",
+          }}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      </div>
+    );
+  }
+
+  if (info.type === "link") {
+    if (info.loading) {
+      return (
+        <div
+          style={{
+            border: "2px solid #E6E6E6",
+            height: "80px",
+            display: "flex",
+            alignItems: "center",
+            padding: "0 16px",
+          }}
+        >
+          <span
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "14px",
+              fontWeight: 300,
+              color: "#808080",
+            }}
+          >
+            Loading preview...
+          </span>
+        </div>
+      );
+    }
+    const og = info.og;
+    return (
+      <a
+        href={info.embedUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          display: "block",
+          border: "2px solid #000000",
+          textDecoration: "none",
+          color: "inherit",
+        }}
+      >
+        {og?.image && (
+          <img
+            src={og.image}
+            alt={og.title ?? ""}
+            style={{
+              width: "100%",
+              display: "block",
+              objectFit: "cover",
+              maxHeight: "360px",
+            }}
+          />
+        )}
+        <div style={{ padding: "16px" }}>
+          {og?.title && (
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "16px",
+                fontWeight: 500,
+                color: "#000000",
+                margin: "0 0 4px",
+              }}
+            >
+              {og.title}
+            </p>
+          )}
+          {og?.description && (
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "14px",
+                fontWeight: 300,
+                color: "#000000",
+                margin: "0 0 8px",
+                lineHeight: 1.4,
+              }}
+            >
+              {og.description}
+            </p>
+          )}
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "12px",
+              fontWeight: 300,
+              color: "#808080",
+              margin: 0,
+            }}
+          >
+            {og?.domain ??
+              new URL(info.embedUrl).hostname.replace(/^www\./, "")}
+          </p>
+        </div>
+      </a>
+    );
+  }
+
+  return (
+    <iframe
+      src={info.embedUrl}
+      width="100%"
+      height={spotifyHeight}
+      style={{ border: "none", display: "block" }}
+      allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+      allowFullScreen
+    />
+  );
+}
+
+function NewJamForm({
+  onCreated,
+  onThumbnailChange,
+}: {
+  onCreated: (jam: JamData) => void;
+  onThumbnailChange: (url: string | null) => void;
+}) {
+  const [url, setUrl] = useState("");
+  const [heading, setHeading] = useState("");
+  const [note, setNote] = useState("");
+  const [embedInfo, setEmbedInfo] = useState<EmbedInfo | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const wordCount = note.trim() ? note.trim().split(/\s+/).length : 0;
+  const overLimit = wordCount > 250;
+  const canSubmit =
+    heading.trim() && wordCount > 0 && !overLimit && !isSubmitting;
+
+  useEffect(() => {
+    const trimmed = url.trim();
+    if (!trimmed) {
+      setEmbedInfo(null);
+      onThumbnailChange(null);
+      return;
+    }
+
+    const base = detectJamEmbed(trimmed);
+    if (!base) {
+      setEmbedInfo(null);
+      onThumbnailChange(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    if (base.type === "youtube") {
+      setEmbedInfo(base as EmbedInfo);
+      const videoId = base.embedUrl.split("/embed/")[1] ?? null;
+      onThumbnailChange(
+        videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : null
+      );
+      return;
+    }
+
+    if (base.type.startsWith("spotify")) {
+      setEmbedInfo(base as EmbedInfo);
+      onThumbnailChange(null);
+      fetch(`/api/oembed?url=${encodeURIComponent(trimmed)}`)
+        .then((r) => r.json())
+        .then((data: OEmbedData) => {
+          if (!cancelled) onThumbnailChange(data.thumbnail_url ?? null);
+        })
+        .catch(() => {
+          if (!cancelled) onThumbnailChange(null);
+        });
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    // Generic link
+    setEmbedInfo({ type: "link", embedUrl: trimmed, og: null, loading: true });
+    onThumbnailChange(null);
+    fetch(`/api/og?url=${encodeURIComponent(trimmed)}`)
+      .then((r) => r.json())
+      .then((og: OGData) => {
+        if (!cancelled) {
+          setEmbedInfo({ type: "link", embedUrl: trimmed, og, loading: false });
+          onThumbnailChange(og.image ?? null);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setEmbedInfo({
+            type: "link",
+            embedUrl: trimmed,
+            og: null,
+            loading: false,
+          });
+          onThumbnailChange(null);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [url, onThumbnailChange]);
+
+  const handleSubmit = async () => {
+    if (!canSubmit) return;
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/jams", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url: url.trim() || undefined,
+          content: heading.trim(),
+          note: note.trim(),
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to post jam");
+      const jam = (await res.json()) as JamData;
+      onCreated(jam);
+    } catch {
+      setError("Something went wrong. Try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div style={{ maxWidth: "720px", margin: "0 auto" }}>
+      {/* Heading */}
+      <input
+        type="text"
+        value={heading}
+        onChange={(e) => setHeading(e.target.value)}
+        placeholder="What's your jam?"
+        className="jam-editor-input"
+        style={{
+          display: "block",
+          width: "100%",
+          boxSizing: "border-box",
+          border: "none",
+          outline: "none",
+          padding: 0,
+          background: "transparent",
+          fontFamily: "var(--font-dm-serif-text)",
+          fontSize: "32px",
+          fontWeight: 400,
+          color: "#000000",
+          lineHeight: 1.2,
+          marginBottom: "20px",
+        }}
+      />
+
+      {/* Note */}
+      <textarea
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        placeholder="Share what you're currently into..."
+        rows={8}
+        className="jam-editor-input"
+        style={{
+          display: "block",
+          width: "100%",
+          boxSizing: "border-box",
+          border: "none",
+          outline: "none",
+          resize: "none",
+          padding: 0,
+          background: "transparent",
+          fontFamily: "var(--font-dm-sans)",
+          fontSize: "16px",
+          fontWeight: 300,
+          color: "#000000",
+          lineHeight: 1.6,
+        }}
+      />
+      <p
+        style={{
+          fontFamily: "var(--font-dm-sans)",
+          fontSize: "12px",
+          fontWeight: 300,
+          color: overLimit ? "#DC2626" : "#808080",
+          margin: "4px 0 28px",
+          textAlign: "right",
+        }}
+      >
+        {wordCount} / 250 words
+      </p>
+
+      {/* Link — editor attachment style */}
+      <div
+        style={{
+          height: "1px",
+          backgroundColor: "#E6E6E6",
+          margin: "0 0 16px",
+        }}
+      />
+      <input
+        type="url"
+        value={url}
+        onChange={(e) => setUrl(e.target.value)}
+        placeholder="Paste a Spotify, YouTube, or any link"
+        className="jam-editor-input"
+        style={{
+          display: "block",
+          width: "100%",
+          boxSizing: "border-box",
+          border: "none",
+          outline: "none",
+          padding: 0,
+          background: "transparent",
+          fontFamily: "var(--font-dm-sans)",
+          fontSize: "14px",
+          fontWeight: 300,
+          color: "#000000",
+          lineHeight: 1.4,
+        }}
+      />
+
+      {embedInfo && (
+        <div style={{ marginTop: "16px" }}>
+          <InlineEmbed info={embedInfo} />
+        </div>
+      )}
+
+      <div style={{ marginTop: "28px" }}>
+        {error && (
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "14px",
+              fontWeight: 300,
+              color: "#DC2626",
+              margin: "0 0 12px",
+            }}
+          >
+            {error}
+          </p>
+        )}
+        <PrimaryButton onClick={handleSubmit} disabled={!canSubmit}>
+          {isSubmitting ? "Posting..." : "Post jam"}
+        </PrimaryButton>
+      </div>
+    </div>
+  );
+}
+
+// ─── Jam content panel ────────────────────────────────────────────────────────
+
+function JamContent({ jam }: { jam: JamData }) {
+  const embed = jam.url ? detectJamEmbed(jam.url) : null;
+  const spotifyHeight =
+    embed?.type === "spotify_track"
+      ? "152px"
+      : embed?.type === "spotify_playlist"
+        ? "450px"
+        : "352px";
+
+  return (
+    <div style={{ maxWidth: "720px", margin: "0 auto" }}>
+      <h2
+        style={{
+          fontFamily: "var(--font-dm-serif-text)",
+          fontSize: "32px",
+          fontWeight: 400,
+          color: "#000000",
+          margin: "0 0 6px",
+          lineHeight: 1.2,
+        }}
+      >
+        {jam.content}
+      </h2>
+      <p
+        style={{
+          fontFamily: "var(--font-dm-sans)",
+          fontSize: "12px",
+          fontWeight: 300,
+          color: "#808080",
+          margin: "0 0 20px",
+        }}
+      >
+        {relativeTime(
+          jam.createdAt instanceof Date
+            ? jam.createdAt.toISOString()
+            : jam.createdAt
+        )}
+      </p>
+      <p
+        style={{
+          fontFamily: "var(--font-dm-sans)",
+          fontSize: "16px",
+          fontWeight: 300,
+          color: "#000000",
+          margin: "0 0 28px",
+          lineHeight: 1.6,
+        }}
+      >
+        {jam.note}
+      </p>
+
+      {embed &&
+        (embed.type === "link" ? (
+          <LinkJamContent url={embed.embedUrl} />
+        ) : embed.type === "youtube" ? (
+          <div
+            style={{ position: "relative", paddingBottom: "56.25%", height: 0 }}
+          >
+            <iframe
+              src={embed.embedUrl}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                border: "none",
+              }}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        ) : (
+          <iframe
+            src={embed.embedUrl}
+            width="100%"
+            height={spotifyHeight}
+            style={{ border: "none", display: "block" }}
+            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+            allowFullScreen
+          />
+        ))}
+    </div>
+  );
+}
+
+// ─── Main tab ─────────────────────────────────────────────────────────────────
+
+export default function JamsTab({
+  jams: initialJams,
+  isOwnProfile,
+}: {
+  jams: JamData[];
+  isOwnProfile?: boolean;
+}) {
+  const [jams, setJams] = useState<JamData[]>(initialJams);
+  const [selectedId, setSelectedId] = useState<string>(
+    initialJams.length > 0 ? initialJams[0].id : isOwnProfile ? "new" : ""
+  );
+  const [draftThumbnailUrl, setDraftThumbnailUrl] = useState<string | null>(
+    null
+  );
+
+  const isNew = selectedId === "new";
+  const selected = isNew
+    ? null
+    : (jams.find((j) => j.id === selectedId) ?? null);
+
+  const handleCreated = (jam: JamData) => {
+    setDraftThumbnailUrl(null);
+    setJams((prev) => [jam, ...prev]);
+    setSelectedId(jam.id);
+  };
 
   return (
     <div>
-      {/* Horizontal covers strip */}
+      {/* Cover strip */}
       <div
         style={{
           borderBottom: "1px solid #E6E6E6",
@@ -137,23 +672,68 @@ export default function JamsTab() {
           scrollbarWidth: "none",
         }}
       >
-        <div
-          style={{
-            maxWidth: "1000px",
-            margin: "0 auto",
-            padding: "16px 24px",
-            display: "flex",
-            gap: "8px",
-            justifyContent: "center",
-          }}
-        >
-          {MOCK_JAMS.map((jam) => {
+        <div style={{ padding: "16px 24px", display: "flex", gap: "8px" }}>
+          {/* + New jam square */}
+          {isOwnProfile && (
+            <button
+              onClick={() => setSelectedId("new")}
+              title="Add a jam"
+              style={{
+                padding: 0,
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                flexShrink: 0,
+                boxShadow: isNew ? "4px 4px 0px 0px #00FF66" : "none",
+                transition: "box-shadow 150ms ease",
+              }}
+            >
+              {draftThumbnailUrl && isNew ? (
+                <img
+                  src={draftThumbnailUrl}
+                  alt="Draft"
+                  style={{
+                    width: COVER_SIZE,
+                    height: COVER_SIZE,
+                    objectFit: "cover",
+                    display: "block",
+                  }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: COVER_SIZE,
+                    height: COVER_SIZE,
+                    backgroundColor: "#E6E6E6",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    border: "2px dashed #CCCCCC",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "32px",
+                      fontWeight: 300,
+                      color: "#CCCCCC",
+                      lineHeight: 1,
+                    }}
+                  >
+                    +
+                  </span>
+                </div>
+              )}
+            </button>
+          )}
+
+          {jams.map((jam) => {
             const isSelected = jam.id === selectedId;
             return (
               <button
                 key={jam.id}
                 onClick={() => setSelectedId(jam.id)}
-                title={`${jam.title}${jam.artist ? ` · ${jam.artist}` : ""}`}
+                title={jam.content}
                 style={{
                   padding: 0,
                   background: "none",
@@ -167,7 +747,7 @@ export default function JamsTab() {
                 {jam.thumbnailUrl ? (
                   <img
                     src={jam.thumbnailUrl}
-                    alt={jam.title}
+                    alt={jam.content}
                     style={{
                       width: COVER_SIZE,
                       height: COVER_SIZE,
@@ -176,15 +756,32 @@ export default function JamsTab() {
                     }}
                   />
                 ) : (
-                  <CoverPlaceholder title={jam.title} artist={jam.artist} />
+                  <CoverPlaceholder label={jam.content} />
                 )}
               </button>
             );
           })}
+
+          {/* Empty state for non-owners */}
+          {!isOwnProfile && jams.length === 0 && (
+            <div style={{ padding: "48px 0" }}>
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 300,
+                  color: "#808080",
+                  margin: 0,
+                }}
+              >
+                No jams yet.
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Jam content */}
+      {/* Content panel */}
       <div
         style={{
           maxWidth: "1000px",
@@ -192,76 +789,14 @@ export default function JamsTab() {
           padding: "32px 24px 64px",
         }}
       >
-        <div style={{ maxWidth: "720px", margin: "0 auto" }}>
-          <h2
-            style={{
-              fontFamily: "var(--font-dm-serif-text)",
-              fontSize: "32px",
-              fontWeight: 400,
-              color: "#000000",
-              margin: "0 0 6px",
-              lineHeight: 1.2,
-            }}
-          >
-            {selected.heading}
-          </h2>
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "12px",
-              fontWeight: 300,
-              color: "#808080",
-              margin: "0 0 20px",
-            }}
-          >
-            {selected.timestamp}
-          </p>
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              color: "#000000",
-              margin: "0 0 28px",
-              lineHeight: 1.6,
-            }}
-          >
-            {selected.note}
-          </p>
-
-          {selected.type === "youtube" ? (
-            <div
-              style={{
-                position: "relative",
-                paddingBottom: "56.25%",
-                height: 0,
-              }}
-            >
-              <iframe
-                src={selected.embedUrl}
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  height: "100%",
-                  border: "none",
-                }}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            </div>
-          ) : (
-            <iframe
-              src={selected.embedUrl}
-              width="100%"
-              height={iframeHeight!}
-              style={{ border: "none", display: "block" }}
-              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-              allowFullScreen
-            />
-          )}
-        </div>
+        {isNew ? (
+          <NewJamForm
+            onCreated={handleCreated}
+            onThumbnailChange={setDraftThumbnailUrl}
+          />
+        ) : selected ? (
+          <JamContent jam={selected} />
+        ) : null}
       </div>
     </div>
   );
