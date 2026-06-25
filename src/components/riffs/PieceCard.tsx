@@ -21,6 +21,8 @@ interface PieceCardProps {
   hasNewComments?: boolean;
   isOwnPiece?: boolean;
   label?: string;
+  showPreview?: boolean;
+  preview?: string;
   onClick: () => void;
 }
 
@@ -42,6 +44,8 @@ export default function PieceCard({
   hasNewComments = false,
   isOwnPiece = false,
   label,
+  showPreview = false,
+  preview,
   onClick,
 }: PieceCardProps) {
   const [isHovered, setIsHovered] = useState(false);
@@ -86,7 +90,10 @@ export default function PieceCard({
         style={{
           position: "absolute",
           inset: 0,
-          backgroundColor: "rgba(0, 0, 0, 0.5)",
+          backgroundColor:
+            showPreview && preview
+              ? "rgba(0, 0, 0, 0.72)"
+              : "rgba(0, 0, 0, 0.5)",
         }}
       />
 
@@ -110,38 +117,92 @@ export default function PieceCard({
         </Badge>
       )}
 
-      {/* Title — vertically centered */}
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          right: 0,
-          bottom: 0,
-          left: 0,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          paddingTop: "24px",
-          paddingRight: "24px",
-          paddingBottom: "24px",
-          paddingLeft: "24px",
-          zIndex: 1,
-        }}
-      >
-        <h4
+      {/* Title + preview — layout depends on showPreview */}
+      {showPreview && preview ? (
+        <>
+          <div
+            style={{
+              position: "absolute",
+              top: "16px",
+              left: "16px",
+              right: "16px",
+              zIndex: 1,
+            }}
+          >
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "16px",
+                fontWeight: 700,
+                color: "#FFFFFF",
+                margin: 0,
+                lineHeight: 1.3,
+              }}
+            >
+              {piece.title}
+            </p>
+          </div>
+          <div
+            style={{
+              position: "absolute",
+              top: "52px",
+              left: "16px",
+              right: "16px",
+              bottom: "16px",
+              zIndex: 1,
+              overflow: "hidden",
+              display: "-webkit-box",
+              WebkitLineClamp: 7,
+              WebkitBoxOrient: "vertical",
+            }}
+          >
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "12px",
+                fontWeight: 300,
+                color: "rgba(255, 255, 255, 0.85)",
+                margin: 0,
+                lineHeight: 1.5,
+              }}
+            >
+              {preview}
+            </p>
+          </div>
+        </>
+      ) : (
+        <div
           style={{
-            fontFamily: "var(--font-dm-serif-text)",
-            fontSize: "20px",
-            fontWeight: 400,
-            color: "#FFFFFF",
-            margin: 0,
-            textAlign: "center",
-            lineHeight: 1.3,
+            position: "absolute",
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            paddingTop: "24px",
+            paddingRight: "24px",
+            paddingBottom: "24px",
+            paddingLeft: "24px",
+            zIndex: 1,
           }}
         >
-          {piece.title}
-        </h4>
-      </div>
+          <h4
+            style={{
+              fontFamily: "var(--font-dm-serif-text)",
+              fontSize: "20px",
+              fontWeight: 400,
+              color: "#FFFFFF",
+              margin: 0,
+              textAlign: "center",
+              lineHeight: 1.3,
+            }}
+          >
+            {piece.title}
+          </h4>
+        </div>
+      )}
 
       {/* Optional label — same position as ProgressCard activity text */}
       {label && (

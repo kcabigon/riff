@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Badge from "@/components/shared/Badge";
 import PieceCard from "@/components/riffs/PieceCard";
@@ -14,6 +15,7 @@ export interface Piece {
   viewerHasClubAccess: boolean;
   isPublic: boolean;
   publicShareId: string | null;
+  preview?: string;
 }
 
 function LockIcon({ style }: { style?: React.CSSProperties }) {
@@ -78,6 +80,17 @@ export default function PiecesGrid({
   onShare: (pieceId: string) => void;
 }) {
   const router = useRouter();
+  const [showPreview, setShowPreview] = useState(false);
+
+  useEffect(() => {
+    setShowPreview(localStorage.getItem("riff-piece-preview") === "true");
+  }, []);
+
+  const togglePreview = () => {
+    const next = !showPreview;
+    setShowPreview(next);
+    localStorage.setItem("riff-piece-preview", String(next));
+  };
 
   const menuItems = (piece: Piece): DropdownItem[] => [
     {
@@ -119,6 +132,31 @@ export default function PiecesGrid({
           .pieces-grid { grid-template-columns: 1fr; padding: 0 24px; }
         }
       `}</style>
+      {isOwnProfile && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            padding: "0 24px 16px",
+          }}
+        >
+          <button
+            onClick={togglePreview}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "12px",
+              fontWeight: 300,
+              color: "#808080",
+              padding: 0,
+            }}
+          >
+            {showPreview ? "Hide previews" : "Show previews"}
+          </button>
+        </div>
+      )}
       <div className="pieces-grid">
         {pieces.map((piece) => {
           const isLocked = !piece.isRevealed && !piece.isPublic;
@@ -165,6 +203,8 @@ export default function PiecesGrid({
                   coverImage: piece.coverImage,
                 }}
                 isRead={true}
+                showPreview={showPreview}
+                preview={piece.preview}
                 onClick={handleClick ?? (() => {})}
               />
             </div>

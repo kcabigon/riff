@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import ProfilePage from "@/components/profile/ProfilePage";
+import { extractPreview } from "@/lib/piece-preview";
 
 export async function generateMetadata({
   params,
@@ -88,6 +89,7 @@ export default async function ProfilePageRoute({
       title: true,
       coverImage: true,
       wordCount: true,
+      currentContent: true,
       riffs: {
         where: { submittedAt: { not: null } },
         select: {
@@ -114,6 +116,7 @@ export default async function ProfilePageRoute({
     title: p.title,
     coverImage: p.coverImage,
     wordCount: p.wordCount,
+    preview: extractPreview(p.currentContent),
     // Revealed = riff is REVEALED/COMPLETED AND viewer is in that club
     // (own profile skips the club check — always accessible)
     isRevealed: p.riffs.some(
