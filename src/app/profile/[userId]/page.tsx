@@ -89,6 +89,7 @@ export default async function ProfilePageRoute({
       title: true,
       coverImage: true,
       wordCount: true,
+      readLengthMin: true,
       currentContent: true,
       riffs: {
         where: { submittedAt: { not: null } },
@@ -116,6 +117,7 @@ export default async function ProfilePageRoute({
     title: p.title,
     coverImage: p.coverImage,
     wordCount: p.wordCount,
+    readLengthMin: p.readLengthMin,
     preview: extractPreview(p.currentContent),
     submittedAt: new Date(
       Math.max(...p.riffs.map((r) => r.submittedAt!.getTime()))
