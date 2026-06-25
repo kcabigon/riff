@@ -117,6 +117,9 @@ export default async function ProfilePageRoute({
     coverImage: p.coverImage,
     wordCount: p.wordCount,
     preview: extractPreview(p.currentContent),
+    submittedAt: new Date(
+      Math.max(...p.riffs.map((r) => r.submittedAt!.getTime()))
+    ),
     // Revealed = riff is REVEALED/COMPLETED AND viewer is in that club
     // (own profile skips the club check — always accessible)
     isRevealed: p.riffs.some(

@@ -16,6 +16,7 @@ export interface Piece {
   isPublic: boolean;
   publicShareId: string | null;
   preview?: string;
+  submittedAt?: Date;
 }
 
 function LockIcon({ style }: { style?: React.CSSProperties }) {
@@ -205,6 +206,7 @@ export default function PiecesGrid({
                 isRead={true}
                 showPreview={showPreview}
                 preview={piece.preview}
+                submittedAt={piece.submittedAt}
                 onClick={handleClick ?? (() => {})}
               />
             </div>

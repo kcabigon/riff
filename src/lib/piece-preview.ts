@@ -1,5 +1,5 @@
-export function extractPreview(html: string, maxChars = 160): string {
-  const stripped = html
+export function extractPreview(html: string): string {
+  return html
     .replace(/<[^>]*>/g, " ")
     .replace(/&amp;/g, "&")
     .replace(/&nbsp;/g, " ")
@@ -9,9 +9,4 @@ export function extractPreview(html: string, maxChars = 160): string {
     .replace(/&quot;/g, '"')
     .replace(/\s+/g, " ")
     .trim();
-
-  if (stripped.length <= maxChars) return stripped;
-
-  const cut = stripped.lastIndexOf(" ", maxChars);
-  return stripped.slice(0, cut > 0 ? cut : maxChars) + "…";
 }

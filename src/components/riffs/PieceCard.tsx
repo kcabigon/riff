@@ -23,6 +23,7 @@ interface PieceCardProps {
   label?: string;
   showPreview?: boolean;
   preview?: string;
+  submittedAt?: Date;
   onClick: () => void;
 }
 
@@ -46,6 +47,7 @@ export default function PieceCard({
   label,
   showPreview = false,
   preview,
+  submittedAt,
   onClick,
 }: PieceCardProps) {
   const [isHovered, setIsHovered] = useState(false);
@@ -120,20 +122,24 @@ export default function PieceCard({
       {/* Title + preview — layout depends on showPreview */}
       {showPreview && preview ? (
         <>
+          {/* Title + date — upper zone */}
           <div
             style={{
               position: "absolute",
-              top: "16px",
+              top: "25%",
               left: "16px",
               right: "16px",
               zIndex: 1,
+              display: "flex",
+              flexDirection: "column",
+              gap: "6px",
             }}
           >
             <p
               style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 700,
+                fontFamily: "var(--font-dm-serif-text)",
+                fontSize: "20px",
+                fontWeight: 400,
                 color: "#FFFFFF",
                 margin: 0,
                 lineHeight: 1.3,
@@ -141,25 +147,41 @@ export default function PieceCard({
             >
               {piece.title}
             </p>
+            {submittedAt && (
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "11px",
+                  fontWeight: 300,
+                  color: "rgba(255, 255, 255, 0.5)",
+                  margin: 0,
+                  letterSpacing: "0.05em",
+                }}
+              >
+                {submittedAt.toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </p>
+            )}
           </div>
+          {/* Body — lower zone */}
           <div
             style={{
               position: "absolute",
-              top: "52px",
+              top: "50%",
               left: "16px",
               right: "16px",
               bottom: "16px",
               zIndex: 1,
               overflow: "hidden",
-              display: "-webkit-box",
-              WebkitLineClamp: 7,
-              WebkitBoxOrient: "vertical",
             }}
           >
             <p
               style={{
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: "12px",
+                fontSize: "14px",
                 fontWeight: 300,
                 color: "rgba(255, 255, 255, 0.85)",
                 margin: 0,
@@ -168,6 +190,18 @@ export default function PieceCard({
             >
               {preview}
             </p>
+            <div
+              style={{
+                position: "absolute",
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: "32px",
+                background:
+                  "linear-gradient(to bottom, transparent, rgba(0,0,0,0.72))",
+                pointerEvents: "none",
+              }}
+            />
           </div>
         </>
       ) : (
