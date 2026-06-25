@@ -806,6 +806,17 @@ function buildAudio(): Audio | null {
 // Reliable tap for mouse + touch. On touch, `touchend` (a real user gesture) runs
 // the action and preventDefault suppresses the synthetic click — so tapping a
 // button never also triggers the root's tap-to-advance.
+// Declare the page's audio session type (W3C Audio Session API, iOS 16.4+) so the
+// score plays through the hardware silent switch. No-op where unsupported.
+function setAudioSession(type: "playback" | "auto") {
+  try {
+    const nav = navigator as unknown as { audioSession?: { type: string } };
+    if (nav.audioSession) nav.audioSession.type = type;
+  } catch {
+    /* noop */
+  }
+}
+
 const tapProps = (action: () => void) => ({
   onClick: (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -890,29 +901,13 @@ export default function StrangeCaseExperience({
   const toggleSound = useCallback(() => {
     const next = !soundOn;
     if (next) {
-      // W3C Audio Session API (Safari 16.4+): audio is a core feature → not
-      // muted by the hardware silent switch.
-      try {
-        const nav = navigator as unknown as {
-          audioSession?: { type: string };
-        };
-        if (nav.audioSession) nav.audioSession.type = "playback";
-      } catch {
-        /* noop */
-      }
-      // Older-iOS fallback: a silent looping media element routes page audio to
-      // the media channel, which plays through the silent switch.
+      // audio is a core feature → not muted by the hardware silent switch; the
+      // silent looping <audio> routes page audio onto the media channel.
+      setAudioSession("playback");
       silentRef.current?.play().catch(() => {});
     } else {
       silentRef.current?.pause();
-      try {
-        const nav = navigator as unknown as {
-          audioSession?: { type: string };
-        };
-        if (nav.audioSession) nav.audioSession.type = "auto";
-      } catch {
-        /* noop */
-      }
+      setAudioSession("auto");
     }
     if (!audioRef.current) {
       audioRef.current = buildAudio();
@@ -920,12 +915,16 @@ export default function StrangeCaseExperience({
     }
     const a = audioRef.current;
     if (a) {
-      if (a.ctx.state === "suspended") void a.ctx.resume();
-      a.master.gain.setTargetAtTime(
-        next ? 0.18 : 0.0001,
-        a.ctx.currentTime,
-        next ? 1.2 : 0.4
-      );
+      if (next) {
+        if (a.ctx.state === "suspended") void a.ctx.resume();
+        a.master.gain.setTargetAtTime(0.18, a.ctx.currentTime, 1.2); // fade in
+      } else {
+        // mute: cut gain and suspend the context so the scheduler stops creating
+        // nodes and the drone/LFOs stop processing (no CPU churn while muted).
+        a.master.gain.cancelScheduledValues(a.ctx.currentTime);
+        a.master.gain.setValueAtTime(0.0001, a.ctx.currentTime);
+        void a.ctx.suspend();
+      }
     }
     setSoundOn(next);
   }, [soundOn]);
@@ -945,9 +944,13 @@ export default function StrangeCaseExperience({
   // hint lifecycle
   useEffect(() => {
     armHint();
+    const silent = silentRef.current; // stable <audio> for this component's life
     return () => {
       if (hintTimer.current) clearTimeout(hintTimer.current);
       if (prevTimer.current) clearTimeout(prevTimer.current);
+      // tear down audio even if the user closed without muting first
+      silent?.pause();
+      setAudioSession("auto");
       if (audioRef.current) audioRef.current.dispose();
     };
   }, [armHint]);
@@ -1115,8 +1118,11 @@ export default function StrangeCaseExperience({
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", resize);
       window.removeEventListener("pointermove", onMove);
-      const ext = gl.getExtension("WEBGL_lose_context");
-      if (ext) ext.loseContext();
+      // NB: don't call WEBGL_lose_context.loseContext() here. On a remount that
+      // reuses the same <canvas> (React StrictMode in dev, or a re-render), the
+      // context would already be lost and gl.createShader() returns null →
+      // "shaderSource must be an instance of WebGLShader". On real unmount the
+      // canvas is destroyed and the context is GC'd anyway.
     };
   }, []);
 
@@ -1542,7 +1548,6 @@ const STYLES = `
 .sce-bullet-bg-blank{background:radial-gradient(120% 95% at 50% 0%,#2b2118,#0e0a06 72%);animation:none;transform:none;}
 .sce-bullet-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0.62) 0%,rgba(0,0,0,0.22) 30%,rgba(0,0,0,0.32) 60%,rgba(0,0,0,0.86) 100%);}
 .sce-bullet-head{position:absolute;top:clamp(64px,11vh,108px);left:0;right:0;z-index:2;display:flex;flex-direction:column;align-items:center;gap:13px;animation:fadeUp .8s both;}
-.sce-bullet-label{font-family:var(--font-source-code-pro),ui-monospace,monospace;font-size:12px;letter-spacing:0.44em;text-transform:uppercase;color:rgba(255,255,255,0.72);}
 .sce-bullet-ticks{display:flex;gap:clamp(5px,1.4vw,8px);}
 .sce-tick{width:clamp(15px,4.6vw,26px);height:3px;background:rgba(255,255,255,0.24);transition:background .45s ease,transform .45s ease;transform-origin:center;}
 .sce-tick.on{background:rgba(255,255,255,0.92);}

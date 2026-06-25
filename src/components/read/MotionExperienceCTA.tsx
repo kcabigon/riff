@@ -24,6 +24,24 @@ export default function MotionExperienceCTA() {
     };
   }, [open]);
 
+  // Close on the hardware/browser back button (push a throwaway history entry so
+  // "back" pops the overlay instead of navigating off the read page). When closed
+  // via the UI instead, consume the entry we pushed so history stays neutral.
+  useEffect(() => {
+    if (!open) return;
+    let poppedByUser = false;
+    window.history.pushState({ sceOverlay: true }, "");
+    const onPop = () => {
+      poppedByUser = true;
+      setOpen(false);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => {
+      window.removeEventListener("popstate", onPop);
+      if (!poppedByUser) window.history.back();
+    };
+  }, [open]);
+
   return (
     <>
       <div
