@@ -765,29 +765,15 @@ export default function JamsTab({
       )}
 
       {/* Feed */}
-      {jams.length === 0 ? (
-        <p
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
-            fontWeight: 300,
-            color: "#808080",
-            margin: "48px 0 0",
-          }}
-        >
-          No jams yet.
-        </p>
-      ) : (
-        jams.map((jam) => (
-          <JamCard
-            key={jam.id}
-            jam={jam}
-            isOwnProfile={isOwnProfile}
-            onUpdated={handleUpdated}
-            onDeleted={() => handleDeleted(jam.id)}
-          />
-        ))
-      )}
+      {jams.map((jam) => (
+        <JamCard
+          key={jam.id}
+          jam={jam}
+          isOwnProfile={isOwnProfile}
+          onUpdated={handleUpdated}
+          onDeleted={() => handleDeleted(jam.id)}
+        />
+      ))}
     </div>
   );
 }
