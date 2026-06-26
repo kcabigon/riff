@@ -723,7 +723,6 @@ export default function ClubPageLayout({
                   hasSubmitted={hasSubmitted}
                   currentUserId={currentUserId}
                   isAdmin={isAdmin}
-                  onJoin={handleJoinRiff}
                   onReveal={() => setIsRevealModalOpen(true)}
                   predictedVolumeNumber={predictedVolumeNumber}
                 />

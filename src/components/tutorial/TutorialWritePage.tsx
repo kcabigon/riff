@@ -124,7 +124,7 @@ export default function TutorialWritePage({ clubId }: TutorialWritePageProps) {
                 boxShadow: "4px 4px 0px 0px #955CB5",
               }}
             >
-              Submit
+              Cover + Submit
             </CTAButton>
           </div>
         </div>
