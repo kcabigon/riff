@@ -90,6 +90,7 @@ export default async function ProfilePageRoute({
       wordCount: true,
       readLengthMin: true,
       currentExcerpt: true,
+      currentContent: true,
       riffs: {
         where: { submittedAt: { not: null } },
         select: {
@@ -117,7 +118,21 @@ export default async function ProfilePageRoute({
     coverImage: p.coverImage,
     wordCount: p.wordCount,
     readLengthMin: p.readLengthMin,
-    preview: p.currentExcerpt ?? undefined,
+    preview:
+      p.currentExcerpt ??
+      (p.currentContent
+        ? p.currentContent
+            .replace(/<[^>]*>/g, " ")
+            .replace(/&amp;/g, "&")
+            .replace(/&nbsp;/g, " ")
+            .replace(/&lt;/g, "<")
+            .replace(/&gt;/g, ">")
+            .replace(/&#39;/g, "'")
+            .replace(/&quot;/g, '"')
+            .replace(/\s+/g, " ")
+            .trim()
+            .slice(0, 500) || undefined
+        : undefined),
     submittedAt: new Date(
       Math.max(...p.riffs.map((r) => r.submittedAt!.getTime()))
     ),

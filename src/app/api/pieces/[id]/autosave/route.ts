@@ -53,6 +53,7 @@ export async function PATCH(
     // Build dynamic update data — at least one field will be present
     const data: {
       currentContent?: string;
+      currentExcerpt?: string | null;
       title?: string;
       subtitle?: string | null;
       coverImage?: string | null;
@@ -61,6 +62,18 @@ export async function PATCH(
     } = {};
     if (currentContent) {
       data.currentContent = currentContent;
+      data.currentExcerpt =
+        currentContent
+          .replace(/<[^>]*>/g, " ")
+          .replace(/&amp;/g, "&")
+          .replace(/&nbsp;/g, " ")
+          .replace(/&lt;/g, "<")
+          .replace(/&gt;/g, ">")
+          .replace(/&#39;/g, "'")
+          .replace(/&quot;/g, '"')
+          .replace(/\s+/g, " ")
+          .trim()
+          .slice(0, 500) || null;
     }
     if (title !== undefined) {
       data.title = title.trim() || "Untitled";
