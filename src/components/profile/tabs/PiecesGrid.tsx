@@ -81,7 +81,7 @@ function LockOverlay() {
   );
 }
 
-type ViewMode = "grid" | "feed";
+type ViewMode = "covers" | "previews";
 
 export default function PiecesGrid({
   pieces,
@@ -97,11 +97,11 @@ export default function PiecesGrid({
   onShare: (pieceId: string) => void;
 }) {
   const router = useRouter();
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [viewMode, setViewMode] = useState<ViewMode>("covers");
 
   useEffect(() => {
     const saved = localStorage.getItem("riff-piece-view");
-    if (saved === "feed" || saved === "grid") setViewMode(saved);
+    if (saved === "covers" || saved === "previews") setViewMode(saved);
   }, []);
 
   const switchView = (mode: ViewMode) => {
@@ -206,7 +206,7 @@ export default function PiecesGrid({
             overflow: "hidden",
           }}
         >
-          {(["grid", "feed"] as ViewMode[]).map((mode, i) => (
+          {(["covers", "previews"] as ViewMode[]).map((mode, i) => (
             <button
               key={mode}
               onClick={() => switchView(mode)}
@@ -230,8 +230,8 @@ export default function PiecesGrid({
         </div>
       </div>
 
-      {/* Grid layout */}
-      {viewMode === "grid" && (
+      {/* Covers layout */}
+      {viewMode === "covers" && (
         <div className="pieces-grid">
           {pieces.map((piece) => {
             const isLocked = !piece.isRevealed && !piece.isPublic;
@@ -272,8 +272,8 @@ export default function PiecesGrid({
         </div>
       )}
 
-      {/* Feed layout */}
-      {viewMode === "feed" && (
+      {/* Previews layout */}
+      {viewMode === "previews" && (
         <div>
           {pieces.map((piece) => {
             const onClick = handleClick(piece);
