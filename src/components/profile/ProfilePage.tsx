@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import ProfileHeader from "./ProfileHeader";
+import ProfileHeader, { type ProfileTab } from "./ProfileHeader";
 import PiecesGrid from "./tabs/PiecesGrid";
 import type { Piece } from "./tabs/PiecesGrid";
 import DeletePieceModal from "@/components/profile/DeletePieceModal";
 import ShareModal, { PublicShare } from "@/components/profile/ShareModal";
 import NoiseBackground from "@/components/NoiseBackground";
+import JamsTab, { type JamData } from "./tabs/JamsTab";
 
 interface ProfilePageProps {
   user: {
@@ -30,6 +31,7 @@ interface ProfilePageProps {
     totalWordCount: number;
   };
   pieces: Piece[];
+  jams: JamData[];
   isOwnProfile: boolean;
   lastActiveClubId: string | null;
 }
@@ -40,9 +42,11 @@ export default function ProfilePage({
   stats,
   lastActiveClubId,
   pieces: initialPieces,
+  jams: initialJams,
   isOwnProfile,
 }: ProfilePageProps) {
   const [pieces, setPieces] = useState(initialPieces);
+  const [activeTab, setActiveTab] = useState<ProfileTab>("pieces");
   const [deleteTarget, setDeleteTarget] = useState<{
     id: string;
     title: string | null;
@@ -170,10 +174,12 @@ export default function ProfilePage({
         isOwnProfile={isOwnProfile}
         lastActiveClubId={lastActiveClubId}
         stats={stats}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
       />
 
       {/* Empty state — bouncing box */}
-      {isEmpty && (
+      {isEmpty && activeTab === "pieces" && (
         <div
           ref={containerRef}
           style={{
@@ -218,7 +224,12 @@ export default function ProfilePage({
       )}
 
       <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
-        {pieces.length > 0 && (
+        {/* JamsTab stays mounted so iframes keep playing when switching tabs */}
+        <div style={{ display: activeTab === "jams" ? "block" : "none" }}>
+          <JamsTab jams={initialJams} isOwnProfile={isOwnProfile} />
+        </div>
+
+        {activeTab === "pieces" && pieces.length > 0 && (
           <PiecesGrid
             pieces={pieces}
             isOwnProfile={isOwnProfile}

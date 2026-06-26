@@ -39,3 +39,7 @@
     --foreground: #000000;
   }
 }
+
+.jam-editor-input::placeholder {
+  color: #9C9C9C;
+}

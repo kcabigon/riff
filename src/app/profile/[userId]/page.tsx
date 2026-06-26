@@ -130,6 +130,12 @@ export default async function ProfilePageRoute({
   const pieceCount = pieces.length;
   const totalWordCount = pieces.reduce((sum, p) => sum + (p.wordCount ?? 0), 0);
 
+  const jams = await prisma.jam.findMany({
+    where: { userId },
+    select: { id: true, url: true, content: true, note: true, createdAt: true },
+    orderBy: { createdAt: "desc" },
+  });
+
   return (
     <ProfilePage
       user={user}
@@ -145,6 +151,7 @@ export default async function ProfilePageRoute({
       }
       stats={{ pieceCount, totalWordCount }}
       pieces={pieces}
+      jams={jams}
       isOwnProfile={isOwnProfile}
       lastActiveClubId={currentUser?.lastActiveClubId ?? null}
     />

@@ -13,6 +13,8 @@ interface DropdownActionItem {
   backgroundColor?: string;
   /** Render the label in a specific typeface (e.g. a font picker). Defaults to DM Sans. */
   labelFontFamily?: string;
+  /** If set, clicking first shows this label as a confirmation step. A second click executes onClick. */
+  confirm?: string;
   onClick: () => void;
 }
 
@@ -49,6 +51,7 @@ export default function Dropdown({
   onClose: controlledOnClose,
 }: DropdownProps) {
   const [localIsOpen, setLocalIsOpen] = useState(false);
+  const [confirmingIndex, setConfirmingIndex] = useState<number | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const isControlled = controlledIsOpen !== undefined;
@@ -63,6 +66,7 @@ export default function Dropdown({
   };
 
   const handleClose = () => {
+    setConfirmingIndex(null);
     if (isControlled) {
       controlledOnClose?.();
     } else {
@@ -131,13 +135,26 @@ export default function Dropdown({
               );
             }
 
+            const isConfirming = confirmingIndex === i;
+            const displayLabel =
+              isConfirming && item.confirm ? item.confirm : item.label;
+
             return (
               <button
                 // eslint-disable-next-line react/no-array-index-key -- dropdown items are stable during their visible lifetime
                 key={`item-${i}`}
                 onClick={() => {
-                  item.onClick();
-                  handleClose();
+                  if (item.confirm !== undefined) {
+                    if (isConfirming) {
+                      item.onClick();
+                      handleClose();
+                    } else {
+                      setConfirmingIndex(i);
+                    }
+                  } else {
+                    item.onClick();
+                    handleClose();
+                  }
                 }}
                 style={{
                   display: "flex",
@@ -150,7 +167,7 @@ export default function Dropdown({
                   padding: size === "sm" ? "8px 12px" : "12px 16px",
                   fontFamily: item.labelFontFamily || "var(--font-dm-sans)",
                   fontSize: "14px",
-                  fontWeight: item.active ? 700 : 300,
+                  fontWeight: isConfirming ? 500 : item.active ? 700 : 300,
                   color: item.color || "#000000",
                   cursor: item.active ? "default" : "pointer",
                 }}
@@ -166,7 +183,7 @@ export default function Dropdown({
                 }}
               >
                 {item.icon && item.icon}
-                {item.label}
+                {displayLabel}
               </button>
             );
           })}
