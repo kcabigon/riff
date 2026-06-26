@@ -24,7 +24,10 @@ function ProgressRingAvatar({
         width: "44px",
         height: "44px",
         borderRadius: "50%",
-        background: `conic-gradient(#00FF66 ${deg}deg, #E6E6E6 ${deg}deg)`,
+        background:
+          progress === 1
+            ? "#000000"
+            : `conic-gradient(#00FF66 ${deg}deg, #E6E6E6 ${deg}deg)`,
         padding: "2px",
         marginRight: "-8px",
         zIndex: index,
