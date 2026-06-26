@@ -160,24 +160,31 @@ export default function MyRiffsClient({
             Riffs
           </h1>
 
-          <div style={{ display: "flex", gap: "24px" }}>
-            {tabs.map((tab) => (
+          <div
+            style={{
+              display: "flex",
+              border: "2px solid #000000",
+              overflow: "hidden",
+            }}
+          >
+            {tabs.map((tab, i) => (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
                 style={{
-                  padding: "8px 0",
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: activeTab === tab.key ? 500 : 300,
-                  color: activeTab === tab.key ? "#000000" : "#808080",
-                  backgroundColor: "transparent",
+                  appearance: "none",
+                  WebkitAppearance: "none",
+                  backgroundColor:
+                    activeTab === tab.key ? "#000000" : "#FFFFFF",
                   border: "none",
-                  borderBottom:
-                    activeTab === tab.key
-                      ? "2px solid #000000"
-                      : "2px solid transparent",
+                  borderLeft: i > 0 ? "2px solid #000000" : "none",
                   cursor: "pointer",
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "14px",
+                  fontWeight: 400,
+                  color: activeTab === tab.key ? "#FFFFFF" : "#000000",
+                  padding: "6px 16px",
+                  transition: "background-color 0.15s ease, color 0.15s ease",
                 }}
               >
                 {tab.label}
