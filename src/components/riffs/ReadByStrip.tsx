@@ -6,6 +6,7 @@ import { useIsMobile } from "@/hooks/useMediaQuery";
 interface ReadByMember {
   user: { id: string; name: string | null; avatarUrl: string | null };
   readCount: number;
+  commentCount: number;
 }
 
 function ProgressRingAvatar({
@@ -16,12 +17,16 @@ function ProgressRingAvatar({
   totalPieces: number;
   index: number;
 }) {
+  const firstName = member.user.name?.split(" ")[0] ?? "Someone";
+  const commentLabel =
+    member.commentCount === 1 ? "1 comment" : `${member.commentCount} comments`;
+  const tooltipText = `${firstName} · ${commentLabel}`;
   const progress = Math.min(member.readCount / totalPieces, 1);
   const deg = progress * 360;
 
   return (
     <div
-      title={member.user.name ?? undefined}
+      title={tooltipText}
       style={{
         width: "44px",
         height: "44px",
