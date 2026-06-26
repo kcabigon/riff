@@ -380,7 +380,6 @@ export default function TutorialRiffPage({
                 id: TUTORIAL_PIECE.id,
                 title: TUTORIAL_PIECE.title,
                 coverImage: TUTORIAL_PIECE.coverImage,
-                currentContent: "",
                 wordCount: TUTORIAL_PIECE.wordCount,
                 commentCount: 3,
                 author: {
@@ -398,7 +397,6 @@ export default function TutorialRiffPage({
                 id: TUTORIAL_PIECE_BASEBALL.id,
                 title: TUTORIAL_PIECE_BASEBALL.title,
                 coverImage: TUTORIAL_PIECE_BASEBALL.coverImage,
-                currentContent: "",
                 author: TUTORIAL_FRIEND,
               }}
               isRead
@@ -410,7 +408,6 @@ export default function TutorialRiffPage({
                 id: TUTORIAL_PIECE_JAPAN.id,
                 title: TUTORIAL_PIECE_JAPAN.title,
                 coverImage: TUTORIAL_PIECE_JAPAN.coverImage,
-                currentContent: "",
                 author: TUTORIAL_FRIEND,
               }}
               isRead

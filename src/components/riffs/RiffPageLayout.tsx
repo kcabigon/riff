@@ -499,7 +499,6 @@ export default function RiffPageLayout({
                     id: pieceRiff.piece.id,
                     title: pieceRiff.piece.title,
                     coverImage: pieceRiff.piece.coverImage,
-                    currentContent: pieceRiff.piece.currentContent || "",
                     wordCount: pieceRiff.piece.wordCount,
                     commentCount: pieceRiff.piece.commentCount,
                     author: pieceRiff.piece.author || {

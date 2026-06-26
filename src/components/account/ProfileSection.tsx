@@ -14,6 +14,7 @@ interface ProfileSectionProps {
     firstName: string | null;
     lastName: string | null;
     avatarUrl: string | null;
+    bio: string | null;
     email: string | null;
   };
 }
@@ -21,6 +22,7 @@ interface ProfileSectionProps {
 export default function ProfileSection({ user }: ProfileSectionProps) {
   const [firstName, setFirstName] = useState(user.firstName || "");
   const [lastName, setLastName] = useState(user.lastName || "");
+  const [bio, setBio] = useState(user.bio || "");
   const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl || "");
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -38,6 +40,7 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
         body: JSON.stringify({
           firstName: firstName.trim(),
           lastName: lastName.trim(),
+          bio: bio.trim() || null,
           avatarUrl: avatarUrl || null,
         }),
       });
@@ -186,6 +189,28 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
               onChange={(e) => setLastName(e.target.value)}
             />
           </div>
+        </div>
+
+        {/* Bio */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          <label
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "12px",
+              fontWeight: 300,
+              color: "#000000",
+            }}
+          >
+            Profile bio
+          </label>
+          <TextInput
+            multiline
+            rows={3}
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
+            placeholder="Not your boring LinkedIn bio - have fun with it."
+            maxLength={160}
+          />
         </div>
 
         {/* Save button */}

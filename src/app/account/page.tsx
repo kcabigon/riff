@@ -25,6 +25,7 @@ export default async function Account() {
         firstName: true,
         lastName: true,
         avatarUrl: true,
+        bio: true,
         email: true,
         lastActiveClubId: true,
       },

@@ -9,7 +9,6 @@ interface PieceCardProps {
     id: string;
     title: string;
     coverImage?: string | null;
-    currentContent: string;
     wordCount?: number;
     commentCount?: number;
     author?: {
