@@ -13,21 +13,45 @@ export default function ContributionStrip({
   members,
   totalPieces,
 }: ContributionStripProps) {
+  const totalReads = members.reduce((sum, m) => sum + m.readCount, 0);
+  const totalComments = members.reduce((sum, m) => sum + m.commentCount, 0);
+
   return (
     <div>
-      <h2
+      <div
         style={{
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "20px",
-          fontWeight: 300,
-          color: "#000000",
-          margin: "0 0 16px 0",
-          textTransform: "uppercase",
-          letterSpacing: "0.05em",
+          display: "flex",
+          alignItems: "baseline",
+          gap: "16px",
+          marginBottom: "16px",
         }}
       >
-        Making Noise
-      </h2>
+        <h2
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "20px",
+            fontWeight: 300,
+            color: "#000000",
+            margin: 0,
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+          }}
+        >
+          Making Noise
+        </h2>
+        <p
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "13px",
+            fontWeight: 300,
+            color: "#808080",
+            margin: 0,
+          }}
+        >
+          {totalReads} {totalReads === 1 ? "read" : "reads"} &middot;{" "}
+          {totalComments} {totalComments === 1 ? "comment" : "comments"}
+        </p>
+      </div>
 
       <div
         style={{
@@ -89,21 +113,10 @@ export default function ContributionStrip({
                 }}
               >
                 {readCount}/{totalPieces} read
+                {commentCount > 0 && (
+                  <span style={{ color: "#9C9C9C" }}> · {commentCount}💬</span>
+                )}
               </p>
-              {commentCount > 0 && (
-                <p
-                  style={{
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "13px",
-                    fontWeight: 400,
-                    color: "#808080",
-                    margin: 0,
-                    textAlign: "center",
-                  }}
-                >
-                  {commentCount} {commentCount === 1 ? "comment" : "comments"}
-                </p>
-              )}
             </div>
           );
         })}

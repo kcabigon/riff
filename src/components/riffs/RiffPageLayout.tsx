@@ -27,7 +27,7 @@ import ProgressCard from "@/components/riffs/ProgressCard";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import type { DropdownItem } from "@/components/shared/Dropdown";
 import ContributionStrip from "@/components/riffs/ContributionStrip";
-import NoiseBackground from "@/components/NoiseBackground";
+import ActivityFeed from "@/components/riffs/ActivityFeed";
 import PrimaryButton from "@/components/PrimaryButton";
 
 interface RiffPageLayoutProps {
@@ -127,6 +127,7 @@ export default function RiffPageLayout({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [viewMode, setViewMode] = useState<"pieces" | "feed">("pieces");
   const router = useRouter();
   const deadlinePassed = isPastDeadline(riff.deadline);
   const piecesAllSubmitted = allPiecesSubmitted(
@@ -245,7 +246,7 @@ export default function RiffPageLayout({
                   {deadlinePassed && riff.status !== "REVEALED"
                     ? "Deadline passed"
                     : riff.status === "REVEALED" && riff.deadline
-                      ? `${formatDateLong(riff.createdAt)} - ${formatDateLong(riff.deadline)}`
+                      ? `${formatDateLong(riff.createdAt)} - ${formatDateLong(riff.deadline)}${riff.updatedAt ? ` · Revealed ${formatDateShort(riff.updatedAt)}` : ""}`
                       : riff.deadline
                         ? `Deadline: ${formatDateLong(riff.deadline)}`
                         : "No deadline"}
@@ -332,29 +333,30 @@ export default function RiffPageLayout({
                 </PrimaryButton>
               )}
 
-            {riff.status === "REVEALED" && riff.updatedAt && (
+            {riff.status === "REVEALED" && (
               <div
-                style={{
-                  position: "relative",
-                  overflow: "hidden",
-                  border: "2px solid #000000",
-                  padding: "12px 48px",
-                  whiteSpace: "nowrap",
-                }}
+                style={{ display: "inline-flex", border: "1px solid #000000" }}
               >
-                <NoiseBackground fillMode="cover" />
-                <span
-                  style={{
-                    position: "relative",
-                    zIndex: 1,
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "16px",
-                    fontWeight: 300,
-                    color: "#000000",
-                  }}
-                >
-                  Revealed {formatDateShort(riff.updatedAt)}
-                </span>
+                {(["pieces", "feed"] as const).map((mode, i) => (
+                  <button
+                    key={mode}
+                    onClick={() => setViewMode(mode)}
+                    style={{
+                      background: viewMode === mode ? "#000000" : "transparent",
+                      border: "none",
+                      borderLeft: i > 0 ? "1px solid #000000" : "none",
+                      cursor: "pointer",
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "12px",
+                      fontWeight: 300,
+                      color: viewMode === mode ? "#FFFFFF" : "#808080",
+                      padding: "4px 16px",
+                      textTransform: "capitalize",
+                    }}
+                  >
+                    {mode}
+                  </button>
+                ))}
               </div>
             )}
 
@@ -481,44 +483,47 @@ export default function RiffPageLayout({
           </div>
         </div>
 
-        {/* Pieces gallery for REVEALED riffs */}
-        {riff.status === "REVEALED" && riff.pieces.length > 0 && (
+        {/* Revealed riff content — Pieces or Feed */}
+        {riff.status === "REVEALED" && (
           <div style={{ marginTop: "48px" }}>
-            {/* Pieces grid */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-                gap: "24px",
-              }}
-            >
-              {riff.pieces.map((pieceRiff) => (
-                <PieceCard
-                  key={pieceRiff.piece.id}
-                  piece={{
-                    id: pieceRiff.piece.id,
-                    title: pieceRiff.piece.title,
-                    coverImage: pieceRiff.piece.coverImage,
-                    currentContent: pieceRiff.piece.currentContent || "",
-                    wordCount: pieceRiff.piece.wordCount,
-                    commentCount: pieceRiff.piece.commentCount,
-                    author: pieceRiff.piece.author || {
-                      id: pieceRiff.piece.authorId,
-                      name: null,
-                      avatarUrl: null,
-                    },
-                  }}
-                  isRead={readPieceIds.includes(pieceRiff.piece.id)}
-                  hasNewComments={
-                    hasNewCommentsMap[pieceRiff.piece.id] ?? false
-                  }
-                  isOwnPiece={pieceRiff.piece.authorId === currentUserId}
-                  onClick={() =>
-                    router.push(`/read/${pieceRiff.piece.id}?riff=${riff.id}`)
-                  }
-                />
-              ))}
-            </div>
+            {viewMode === "pieces" && riff.pieces.length > 0 && (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                  gap: "24px",
+                }}
+              >
+                {riff.pieces.map((pieceRiff) => (
+                  <PieceCard
+                    key={pieceRiff.piece.id}
+                    piece={{
+                      id: pieceRiff.piece.id,
+                      title: pieceRiff.piece.title,
+                      coverImage: pieceRiff.piece.coverImage,
+                      currentContent: pieceRiff.piece.currentContent || "",
+                      wordCount: pieceRiff.piece.wordCount,
+                      commentCount: pieceRiff.piece.commentCount,
+                      author: pieceRiff.piece.author || {
+                        id: pieceRiff.piece.authorId,
+                        name: null,
+                        avatarUrl: null,
+                      },
+                    }}
+                    isRead={readPieceIds.includes(pieceRiff.piece.id)}
+                    hasNewComments={
+                      hasNewCommentsMap[pieceRiff.piece.id] ?? false
+                    }
+                    isOwnPiece={pieceRiff.piece.authorId === currentUserId}
+                    onClick={() =>
+                      router.push(`/read/${pieceRiff.piece.id}?riff=${riff.id}`)
+                    }
+                  />
+                ))}
+              </div>
+            )}
+
+            {viewMode === "feed" && <ActivityFeed riffId={riff.id} />}
           </div>
         )}
 
