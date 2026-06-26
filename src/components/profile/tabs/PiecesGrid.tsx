@@ -178,10 +178,10 @@ export default function PiecesGrid({
           row-gap: 8px;
           padding: 24px;
           border-bottom: 1px solid #E6E6E6;
-          cursor: pointer;
           align-items: start;
         }
-        .feed-item:hover { background-color: #F5F5F5; }
+        .feed-item.clickable { cursor: pointer; }
+        .feed-item.clickable:hover { background-color: #F5F5F5; }
         .feed-thumb { grid-area: thumb; width: 140px; height: 175px; }
         .feed-header { grid-area: header; }
         .feed-preview { grid-area: preview; }
@@ -307,7 +307,7 @@ export default function PiecesGrid({
             return (
               <div
                 key={piece.id}
-                className="feed-item"
+                className={`feed-item${onClick ? " clickable" : ""}`}
                 onClick={onClick ?? undefined}
               >
                 {/* Thumbnail — grid-area: thumb */}
