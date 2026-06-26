@@ -127,7 +127,7 @@ export default function RiffPageLayout({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
-  const [viewMode, setViewMode] = useState<"pieces" | "comments">("pieces");
+  const [viewMode, setViewMode] = useState<"read" | "comment">("read");
   const router = useRouter();
   const deadlinePassed = isPastDeadline(riff.deadline);
   const piecesAllSubmitted = allPiecesSubmitted(
@@ -347,7 +347,7 @@ export default function RiffPageLayout({
                   overflow: "hidden",
                 }}
               >
-                {(["pieces", "comments"] as const).map((mode, i) => (
+                {(["read", "comment"] as const).map((mode, i) => (
                   <button
                     key={mode}
                     onClick={() => setViewMode(mode)}
@@ -495,7 +495,7 @@ export default function RiffPageLayout({
         {/* Revealed riff content — Pieces or Feed */}
         {riff.status === "REVEALED" && (
           <div style={{ marginTop: "48px" }}>
-            {viewMode === "pieces" && riff.pieces.length > 0 && (
+            {viewMode === "read" && riff.pieces.length > 0 && (
               <div
                 style={{
                   display: "grid",
@@ -532,14 +532,14 @@ export default function RiffPageLayout({
               </div>
             )}
 
-            {viewMode === "pieces" && contributionData.length > 0 && (
+            {viewMode === "read" && contributionData.length > 0 && (
               <ReadByStrip
                 members={contributionData}
                 totalPieces={totalPieces}
               />
             )}
 
-            {viewMode === "comments" && (
+            {viewMode === "comment" && (
               <ActivityFeed
                 riffId={riff.id}
                 clubId={riff.clubId}
