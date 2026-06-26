@@ -27,6 +27,7 @@ import ProgressCard from "@/components/riffs/ProgressCard";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import type { DropdownItem } from "@/components/shared/Dropdown";
 import ActivityFeed from "@/components/riffs/ActivityFeed";
+import ReadByStrip from "@/components/riffs/ReadByStrip";
 import PrimaryButton from "@/components/PrimaryButton";
 
 interface RiffPageLayoutProps {
@@ -522,6 +523,13 @@ export default function RiffPageLayout({
                   />
                 ))}
               </div>
+            )}
+
+            {viewMode === "pieces" && contributionData.length > 0 && (
+              <ReadByStrip
+                members={contributionData}
+                totalPieces={totalPieces}
+              />
             )}
 
             {viewMode === "comments" && (
