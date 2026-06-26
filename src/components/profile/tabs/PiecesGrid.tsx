@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Badge from "@/components/shared/Badge";
 import PieceCard from "@/components/riffs/PieceCard";
@@ -28,7 +28,7 @@ export interface Piece {
   isPublic: boolean;
   publicShareId: string | null;
   preview?: string;
-  submittedAt?: Date;
+  submittedAt: Date;
   wordCount?: number | null;
   readLengthMin?: number | null;
 }
@@ -103,12 +103,11 @@ export default function PiecesGrid({
   onShare: (pieceId: string) => void;
 }) {
   const router = useRouter();
-  const [viewMode, setViewMode] = useState<ViewMode>("covers");
-
-  useEffect(() => {
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    if (typeof window === "undefined") return "covers";
     const saved = localStorage.getItem("riff-piece-view");
-    if (saved === "covers" || saved === "previews") setViewMode(saved);
-  }, []);
+    return saved === "covers" || saved === "previews" ? saved : "covers";
+  });
 
   const switchView = (mode: ViewMode) => {
     setViewMode(mode);
@@ -270,7 +269,7 @@ export default function PiecesGrid({
                     coverImage: piece.coverImage,
                   }}
                   isRead={true}
-                  onClick={onClick ?? (() => {})}
+                  onClick={onClick}
                 />
               </div>
             );
@@ -295,7 +294,7 @@ export default function PiecesGrid({
               piece.wordCount
                 ? `${piece.wordCount.toLocaleString()} words`
                 : null,
-              piece.submittedAt?.toLocaleDateString("en-US", {
+              piece.submittedAt.toLocaleDateString("en-US", {
                 month: "short",
                 day: "numeric",
                 year: "numeric",
@@ -379,18 +378,16 @@ export default function PiecesGrid({
                       </div>
                     )}
                   </div>
-                  {meta && (
-                    <p
-                      style={{
-                        fontFamily: "var(--font-dm-sans)",
-                        fontSize: "14px",
-                        color: "#9C9C9C",
-                        margin: 0,
-                      }}
-                    >
-                      {meta}
-                    </p>
-                  )}
+                  <p
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "14px",
+                      color: "#9C9C9C",
+                      margin: 0,
+                    }}
+                  >
+                    {meta}
+                  </p>
                 </div>
 
                 {/* Preview — grid-area: preview */}

@@ -21,10 +21,7 @@ interface PieceCardProps {
   hasNewComments?: boolean;
   isOwnPiece?: boolean;
   label?: string;
-  showPreview?: boolean;
-  preview?: string;
-  submittedAt?: Date;
-  onClick: () => void;
+  onClick?: () => void;
 }
 
 // Placeholder colors for pieces without images. Intentional pastel rotation.
@@ -45,9 +42,6 @@ export default function PieceCard({
   hasNewComments = false,
   isOwnPiece = false,
   label,
-  showPreview = false,
-  preview,
-  submittedAt,
   onClick,
 }: PieceCardProps) {
   const [isHovered, setIsHovered] = useState(false);
@@ -64,7 +58,7 @@ export default function PieceCard({
       style={{
         position: "relative",
         border: "1px solid #000000",
-        cursor: "pointer",
+        cursor: onClick ? "pointer" : "default",
         overflow: "hidden",
         aspectRatio: "4 / 5",
         boxShadow: isHovered ? "8px 8px 0px 0px #000000" : "none",
@@ -92,10 +86,7 @@ export default function PieceCard({
         style={{
           position: "absolute",
           inset: 0,
-          backgroundColor:
-            showPreview && preview
-              ? "rgba(0, 0, 0, 0.72)"
-              : "rgba(0, 0, 0, 0.5)",
+          backgroundColor: "rgba(0, 0, 0, 0.5)",
         }}
       />
 
@@ -119,124 +110,38 @@ export default function PieceCard({
         </Badge>
       )}
 
-      {/* Title + preview — layout depends on showPreview */}
-      {showPreview && preview ? (
-        <>
-          {/* Title + date — upper zone */}
-          <div
-            style={{
-              position: "absolute",
-              top: "25%",
-              left: "16px",
-              right: "16px",
-              zIndex: 1,
-              display: "flex",
-              flexDirection: "column",
-              gap: "6px",
-            }}
-          >
-            <p
-              style={{
-                fontFamily: "var(--font-dm-serif-text)",
-                fontSize: "20px",
-                fontWeight: 400,
-                color: "#FFFFFF",
-                margin: 0,
-                lineHeight: 1.3,
-              }}
-            >
-              {piece.title}
-            </p>
-            {submittedAt && (
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "11px",
-                  fontWeight: 300,
-                  color: "rgba(255, 255, 255, 0.5)",
-                  margin: 0,
-                  letterSpacing: "0.05em",
-                }}
-              >
-                {submittedAt.toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })}
-              </p>
-            )}
-          </div>
-          {/* Body — lower zone */}
-          <div
-            style={{
-              position: "absolute",
-              top: "50%",
-              left: "16px",
-              right: "16px",
-              bottom: "16px",
-              zIndex: 1,
-              overflow: "hidden",
-            }}
-          >
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: 300,
-                color: "rgba(255, 255, 255, 0.85)",
-                margin: 0,
-                lineHeight: 1.5,
-              }}
-            >
-              {preview}
-            </p>
-            <div
-              style={{
-                position: "absolute",
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: "32px",
-                background:
-                  "linear-gradient(to bottom, transparent, rgba(0,0,0,0.72))",
-                pointerEvents: "none",
-              }}
-            />
-          </div>
-        </>
-      ) : (
-        <div
+      {/* Title — vertically centered */}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          right: 0,
+          bottom: 0,
+          left: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          paddingTop: "24px",
+          paddingRight: "24px",
+          paddingBottom: "24px",
+          paddingLeft: "24px",
+          zIndex: 1,
+        }}
+      >
+        <h4
           style={{
-            position: "absolute",
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            paddingTop: "24px",
-            paddingRight: "24px",
-            paddingBottom: "24px",
-            paddingLeft: "24px",
-            zIndex: 1,
+            fontFamily: "var(--font-dm-serif-text)",
+            fontSize: "20px",
+            fontWeight: 400,
+            color: "#FFFFFF",
+            margin: 0,
+            textAlign: "center",
+            lineHeight: 1.3,
           }}
         >
-          <h4
-            style={{
-              fontFamily: "var(--font-dm-serif-text)",
-              fontSize: "20px",
-              fontWeight: 400,
-              color: "#FFFFFF",
-              margin: 0,
-              textAlign: "center",
-              lineHeight: 1.3,
-            }}
-          >
-            {piece.title}
-          </h4>
-        </div>
-      )}
+          {piece.title}
+        </h4>
+      </div>
 
       {/* Optional label — same position as ProgressCard activity text */}
       {label && (

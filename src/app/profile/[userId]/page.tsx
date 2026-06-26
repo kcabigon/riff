@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import ProfilePage from "@/components/profile/ProfilePage";
+import { extractExcerpt } from "@/lib/excerpt";
 
 export async function generateMetadata({
   params,
@@ -106,48 +107,38 @@ export default async function ProfilePageRoute({
     },
   });
 
-  rawPieces.sort((a, b) => {
-    const latestA = Math.max(...a.riffs.map((r) => r.submittedAt!.getTime()));
-    const latestB = Math.max(...b.riffs.map((r) => r.submittedAt!.getTime()));
-    return latestB - latestA;
-  });
-
-  const pieces = rawPieces.map((p) => ({
-    id: p.id,
-    title: p.title,
-    coverImage: p.coverImage,
-    wordCount: p.wordCount,
-    readLengthMin: p.readLengthMin,
-    preview:
-      p.currentExcerpt ??
-      (p.currentContent
-        ? p.currentContent
-            .replace(/<[^>]*>/g, " ")
-            .replace(/&amp;/g, "&")
-            .replace(/&nbsp;/g, " ")
-            .replace(/&lt;/g, "<")
-            .replace(/&gt;/g, ">")
-            .replace(/&#39;/g, "'")
-            .replace(/&quot;/g, '"')
-            .replace(/\s+/g, " ")
-            .trim()
-            .slice(0, 500) || undefined
-        : undefined),
-    submittedAt: new Date(
-      Math.max(...p.riffs.map((r) => r.submittedAt!.getTime()))
-    ),
-    // Revealed = riff is REVEALED/COMPLETED AND viewer is in that club
-    // (own profile skips the club check — always accessible)
-    isRevealed: p.riffs.some(
-      (r) =>
-        (r.riff.status === "REVEALED" || r.riff.status === "COMPLETED") &&
-        (isOwnProfile || viewerClubIds.has(r.riff.clubId))
-    ),
-    // Viewer has club access if they're a member of any club this piece's riff belongs to
-    viewerHasClubAccess: p.riffs.some((r) => viewerClubIds.has(r.riff.clubId)),
-    isPublic: p.newShares.length > 0,
-    publicShareId: p.newShares[0]?.id ?? null,
-  }));
+  const pieces = rawPieces
+    .map((p) => {
+      const latestMs = p.riffs.reduce(
+        (max, r) => Math.max(max, r.submittedAt!.getTime()),
+        0
+      );
+      return { raw: p, latestMs };
+    })
+    .sort((a, b) => b.latestMs - a.latestMs)
+    .map(({ raw: p, latestMs }) => ({
+      id: p.id,
+      title: p.title,
+      coverImage: p.coverImage,
+      wordCount: p.wordCount,
+      readLengthMin: p.readLengthMin,
+      preview:
+        p.currentExcerpt ??
+        (p.currentContent
+          ? extractExcerpt(p.currentContent) || undefined
+          : undefined),
+      submittedAt: new Date(latestMs),
+      isRevealed: p.riffs.some(
+        (r) =>
+          (r.riff.status === "REVEALED" || r.riff.status === "COMPLETED") &&
+          (isOwnProfile || viewerClubIds.has(r.riff.clubId))
+      ),
+      viewerHasClubAccess: p.riffs.some((r) =>
+        viewerClubIds.has(r.riff.clubId)
+      ),
+      isPublic: p.newShares.length > 0,
+      publicShareId: p.newShares[0]?.id ?? null,
+    }));
 
   const pieceCount = pieces.length;
   const totalWordCount = pieces.reduce((sum, p) => sum + (p.wordCount ?? 0), 0);
