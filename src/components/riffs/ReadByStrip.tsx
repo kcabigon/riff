@@ -21,8 +21,8 @@ function ProgressRingAvatar({
     <div
       title={member.user.name ?? undefined}
       style={{
-        width: "36px",
-        height: "36px",
+        width: "44px",
+        height: "44px",
         borderRadius: "50%",
         background: `conic-gradient(#00FF66 ${deg}deg, #E6E6E6 ${deg}deg)`,
         padding: "2px",
@@ -33,7 +33,7 @@ function ProgressRingAvatar({
     >
       <Avatar
         user={{ ...member.user, username: null }}
-        size={32}
+        size={40}
         borderColor="#FFFFFF"
       />
     </div>
