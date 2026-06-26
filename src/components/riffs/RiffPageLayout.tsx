@@ -249,7 +249,9 @@ export default function RiffPageLayout({
                   {deadlinePassed && riff.status !== "REVEALED"
                     ? "Deadline passed"
                     : riff.status === "REVEALED"
-                      ? `${riff.updatedAt ? `Revealed ${formatDateShort(riff.updatedAt)} · ` : ""}${riff.pieces.length} ${riff.pieces.length === 1 ? "Piece" : "Pieces"} · ${totalWords.toLocaleString()} Words`
+                      ? riff.updatedAt
+                        ? `Revealed ${formatDateShort(riff.updatedAt)}`
+                        : "Revealed"
                       : riff.deadline
                         ? `Deadline: ${formatDateLong(riff.deadline)}`
                         : "No deadline"}
