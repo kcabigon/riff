@@ -126,7 +126,7 @@ export default function RiffPageLayout({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
-  const [viewMode, setViewMode] = useState<"pieces" | "feed">("pieces");
+  const [viewMode, setViewMode] = useState<"pieces" | "comments">("pieces");
   const router = useRouter();
   const deadlinePassed = isPastDeadline(riff.deadline);
   const piecesAllSubmitted = allPiecesSubmitted(
@@ -342,7 +342,7 @@ export default function RiffPageLayout({
               <div
                 style={{ display: "inline-flex", border: "1px solid #000000" }}
               >
-                {(["pieces", "feed"] as const).map((mode, i) => (
+                {(["pieces", "comments"] as const).map((mode, i) => (
                   <button
                     key={mode}
                     onClick={() => setViewMode(mode)}
@@ -355,7 +355,7 @@ export default function RiffPageLayout({
                       fontSize: "12px",
                       fontWeight: 300,
                       color: viewMode === mode ? "#FFFFFF" : "#808080",
-                      padding: "4px 16px",
+                      padding: "4px 12px",
                       textTransform: "capitalize",
                     }}
                   >
@@ -524,7 +524,7 @@ export default function RiffPageLayout({
               </div>
             )}
 
-            {viewMode === "feed" && (
+            {viewMode === "comments" && (
               <ActivityFeed
                 riffId={riff.id}
                 contributionData={contributionData}
