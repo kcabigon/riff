@@ -128,7 +128,17 @@ export default function RiffPageLayout({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [viewMode, setViewMode] = useState<"read" | "comment">("read");
+  const [badgeMap, setBadgeMap] =
+    useState<Record<string, boolean>>(hasNewCommentsMap);
   const router = useRouter();
+
+  const switchToComment = () => {
+    setViewMode("comment");
+    setBadgeMap({});
+    fetch(`/api/riffs/${riff.id}/mark-read`, { method: "POST" }).catch(
+      () => {}
+    );
+  };
   const deadlinePassed = isPastDeadline(riff.deadline);
   const piecesAllSubmitted = allPiecesSubmitted(
     riff.pieces,
@@ -350,7 +360,9 @@ export default function RiffPageLayout({
                 {(["read", "comment"] as const).map((mode, i) => (
                   <button
                     key={mode}
-                    onClick={() => setViewMode(mode)}
+                    onClick={() =>
+                      mode === "comment" ? switchToComment() : setViewMode(mode)
+                    }
                     style={{
                       backgroundColor:
                         viewMode === mode ? "#000000" : "#FFFFFF",
@@ -520,9 +532,7 @@ export default function RiffPageLayout({
                       },
                     }}
                     isRead={readPieceIds.includes(pieceRiff.piece.id)}
-                    hasNewComments={
-                      hasNewCommentsMap[pieceRiff.piece.id] ?? false
-                    }
+                    hasNewComments={badgeMap[pieceRiff.piece.id] ?? false}
                     isOwnPiece={pieceRiff.piece.authorId === currentUserId}
                     onClick={() =>
                       router.push(`/read/${pieceRiff.piece.id}?riff=${riff.id}`)
