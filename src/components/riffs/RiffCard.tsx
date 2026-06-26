@@ -48,7 +48,6 @@ interface RiffCardProps {
   hasSubmitted: boolean;
   currentUserId: string;
   isAdmin: boolean;
-  onJoin?: () => void;
   onReveal?: () => void;
   predictedVolumeNumber?: number;
 }
@@ -60,7 +59,6 @@ export default function RiffCard({
   hasSubmitted,
   currentUserId,
   isAdmin,
-  onJoin,
   onReveal,
   predictedVolumeNumber,
 }: RiffCardProps) {
@@ -259,7 +257,6 @@ export default function RiffCard({
             hasDraft={hasDraft}
             hasSubmitted={hasSubmitted}
             existingPieceId={existingPieceId}
-            onJoin={onJoin}
             stopPropagation
           />
         ) : null}

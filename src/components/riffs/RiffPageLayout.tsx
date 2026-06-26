@@ -453,9 +453,6 @@ export default function RiffPageLayout({
                 hasDraft={hasDraft}
                 hasSubmitted={hasSubmitted}
                 existingPieceId={existingPieceId}
-                onJoin={() => {
-                  setIsJoined(true);
-                }}
               />
             ) : null}
 

@@ -10,7 +10,6 @@ interface RiffCTAButtonProps {
   hasDraft: boolean;
   hasSubmitted: boolean;
   existingPieceId?: string | null;
-  onJoin?: () => void;
   stopPropagation?: boolean;
 }
 
@@ -20,7 +19,6 @@ export default function RiffCTAButton({
   hasDraft,
   hasSubmitted,
   existingPieceId,
-  onJoin,
   stopPropagation = false,
 }: RiffCTAButtonProps) {
   const router = useRouter();
