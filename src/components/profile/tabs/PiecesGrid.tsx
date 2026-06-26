@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Badge from "@/components/shared/Badge";
 import PieceCard from "@/components/riffs/PieceCard";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import type { DropdownItem } from "@/components/shared/Dropdown";
+import { PLACEHOLDER_COLORS } from "@/lib/piece-colors";
 
 export interface Piece {
   id: string;
@@ -14,15 +16,25 @@ export interface Piece {
   viewerHasClubAccess: boolean;
   isPublic: boolean;
   publicShareId: string | null;
+  preview?: string;
+  submittedAt: Date;
+  wordCount?: number | null;
+  readLengthMin?: number | null;
 }
 
-function LockIcon({ style }: { style?: React.CSSProperties }) {
+function LockIcon({
+  style,
+  fill = "white",
+}: {
+  style?: React.CSSProperties;
+  fill?: string;
+}) {
   return (
     <svg
       width="24"
       height="24"
       viewBox="0 0 24 24"
-      fill="white"
+      fill={fill}
       xmlns="http://www.w3.org/2000/svg"
       style={style}
     >
@@ -64,6 +76,8 @@ function LockOverlay() {
   );
 }
 
+type ViewMode = "covers" | "previews";
+
 export default function PiecesGrid({
   pieces,
   isOwnProfile,
@@ -78,6 +92,16 @@ export default function PiecesGrid({
   onShare: (pieceId: string) => void;
 }) {
   const router = useRouter();
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    if (typeof window === "undefined") return "covers";
+    const saved = localStorage.getItem("riff-piece-view");
+    return saved === "covers" || saved === "previews" ? saved : "covers";
+  });
+
+  const switchView = (mode: ViewMode) => {
+    setViewMode(mode);
+    localStorage.setItem("riff-piece-view", mode);
+  };
 
   const menuItems = (piece: Piece): DropdownItem[] => [
     {
@@ -103,8 +127,24 @@ export default function PiecesGrid({
     },
   ];
 
+  const handleClick = (piece: Piece) =>
+    !piece.isRevealed
+      ? isOwnProfile
+        ? () => router.push(`/write/${piece.id}`)
+        : piece.isPublic
+          ? () => router.push(`/p/${piece.id}`)
+          : undefined
+      : isOwnProfile || piece.viewerHasClubAccess
+        ? () =>
+            router.push(
+              `/read/${piece.id}?from=profile&userId=${profileUserId}`
+            )
+        : piece.isPublic
+          ? () => router.push(`/p/${piece.id}`)
+          : undefined;
+
   return (
-    <div style={{ padding: "24px 0" }}>
+    <div>
       <style>{`
         .pieces-grid {
           display: grid;
@@ -118,59 +158,257 @@ export default function PiecesGrid({
         @media (max-width: 639px) {
           .pieces-grid { grid-template-columns: 1fr; padding: 0 24px; }
         }
+        .feed-item {
+          display: grid;
+          grid-template-columns: 140px 1fr;
+          grid-template-areas: "thumb header" "thumb preview";
+          column-gap: 24px;
+          row-gap: 8px;
+          padding: 24px;
+          border-bottom: 1px solid #E6E6E6;
+          align-items: start;
+        }
+        .feed-item.clickable { cursor: pointer; }
+        .feed-item.clickable:hover { background-color: #F5F5F5; }
+        .feed-thumb { grid-area: thumb; width: 140px; height: 175px; }
+        .feed-header { grid-area: header; }
+        .feed-preview { grid-area: preview; }
+        @media (max-width: 639px) {
+          .feed-item {
+            grid-template-columns: 64px 1fr;
+            grid-template-areas: "thumb header" "preview preview";
+            column-gap: 12px;
+            row-gap: 12px;
+          }
+          .feed-thumb { width: 64px; height: 80px; }
+          .feed-header { align-self: center; }
+        }
       `}</style>
-      <div className="pieces-grid">
-        {pieces.map((piece) => {
-          const isLocked = !piece.isRevealed && !piece.isPublic;
-          const handleClick = !piece.isRevealed
-            ? isOwnProfile
-              ? () => router.push(`/write/${piece.id}`)
-              : piece.isPublic
-                ? () => router.push(`/p/${piece.id}`)
-                : undefined
-            : isOwnProfile || piece.viewerHasClubAccess
-              ? () =>
-                  router.push(
-                    `/read/${piece.id}?from=profile&userId=${profileUserId}`
-                  )
-              : piece.isPublic
-                ? () => router.push(`/p/${piece.id}`)
-                : undefined;
 
-          return (
-            <div key={piece.id} style={{ position: "relative" }}>
-              {isOwnProfile && (
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "8px",
-                    right: "8px",
-                    zIndex: 3,
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <ThreeDotButton
-                    variant="dark"
-                    items={menuItems(piece)}
-                    align="right"
-                  />
-                </div>
-              )}
-              {piece.isPublic && <PublicBadge />}
-              {isLocked && <LockOverlay />}
-              <PieceCard
-                piece={{
-                  id: piece.id,
-                  title: piece.title || "Untitled",
-                  coverImage: piece.coverImage,
-                }}
-                isRead={true}
-                onClick={handleClick ?? (() => {})}
-              />
-            </div>
-          );
-        })}
+      {/* View toggle */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          padding: "16px 24px",
+        }}
+      >
+        <div
+          style={{
+            display: "inline-flex",
+            border: "2px solid #000000",
+            overflow: "hidden",
+          }}
+        >
+          {(["covers", "previews"] as ViewMode[]).map((mode, i) => (
+            <button
+              key={mode}
+              onClick={() => switchView(mode)}
+              style={{
+                backgroundColor: viewMode === mode ? "#000000" : "#FFFFFF",
+                border: "none",
+                borderLeft: i > 0 ? "2px solid #000000" : "none",
+                cursor: "pointer",
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "14px",
+                fontWeight: 400,
+                color: viewMode === mode ? "#FFFFFF" : "#000000",
+                padding: "6px 16px",
+                textTransform: "capitalize",
+                transition: "background-color 0.15s ease, color 0.15s ease",
+              }}
+            >
+              {mode}
+            </button>
+          ))}
+        </div>
       </div>
+
+      {/* Covers layout */}
+      {viewMode === "covers" && (
+        <div className="pieces-grid">
+          {pieces.map((piece) => {
+            const isLocked = !piece.isRevealed && !piece.isPublic;
+            const onClick = handleClick(piece);
+            return (
+              <div key={piece.id} style={{ position: "relative" }}>
+                {isOwnProfile && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "8px",
+                      right: "8px",
+                      zIndex: 3,
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <ThreeDotButton
+                      variant="dark"
+                      items={menuItems(piece)}
+                      align="right"
+                    />
+                  </div>
+                )}
+                {piece.isPublic && <PublicBadge />}
+                {isLocked && <LockOverlay />}
+                <PieceCard
+                  piece={{
+                    id: piece.id,
+                    title: piece.title || "Untitled",
+                    coverImage: piece.coverImage,
+                  }}
+                  isRead={true}
+                  onClick={onClick}
+                />
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Previews layout */}
+      {viewMode === "previews" && (
+        <div>
+          {pieces.map((piece) => {
+            const onClick = handleClick(piece);
+            const isPreviewLocked =
+              !piece.isRevealed ||
+              (!isOwnProfile && !piece.viewerHasClubAccess && !piece.isPublic);
+            const placeholderColor =
+              PLACEHOLDER_COLORS[
+                piece.id.charCodeAt(0) % PLACEHOLDER_COLORS.length
+              ];
+            const meta = [
+              piece.readLengthMin ? `${piece.readLengthMin} min read` : null,
+              piece.wordCount
+                ? `${piece.wordCount.toLocaleString()} words`
+                : null,
+              piece.submittedAt.toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              }),
+            ]
+              .filter(Boolean)
+              .join(" · ");
+
+            return (
+              <div
+                key={piece.id}
+                className={`feed-item${onClick ? " clickable" : ""}`}
+                onClick={onClick ?? undefined}
+              >
+                {/* Thumbnail — grid-area: thumb */}
+                <div
+                  className="feed-thumb"
+                  style={{
+                    position: "relative",
+                    border: "1px solid #000000",
+                    overflow: "hidden",
+                    backgroundColor: piece.coverImage
+                      ? undefined
+                      : placeholderColor,
+                  }}
+                >
+                  {piece.coverImage && (
+                    <img
+                      src={piece.coverImage}
+                      alt=""
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                      }}
+                    />
+                  )}
+                </div>
+
+                {/* Header: title + metadata — grid-area: header */}
+                <div
+                  className="feed-header"
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "4px",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      justifyContent: "space-between",
+                      gap: "8px",
+                    }}
+                  >
+                    <h3
+                      style={{
+                        fontFamily: "var(--font-dm-serif-text)",
+                        fontSize: "24px",
+                        fontWeight: 400,
+                        color: "#000000",
+                        margin: 0,
+                        lineHeight: 1.25,
+                      }}
+                    >
+                      {piece.title || "Untitled"}
+                    </h3>
+                    {isOwnProfile && (
+                      <div
+                        style={{ flexShrink: 0 }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <ThreeDotButton
+                          variant="light"
+                          items={menuItems(piece)}
+                          align="right"
+                        />
+                      </div>
+                    )}
+                  </div>
+                  <p
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "14px",
+                      color: "#808080",
+                      margin: 0,
+                    }}
+                  >
+                    {meta}
+                  </p>
+                </div>
+
+                {/* Preview — grid-area: preview */}
+                {piece.preview && (
+                  <p
+                    className="feed-preview"
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "16px",
+                      fontWeight: 300,
+                      color: "#000000",
+                      margin: 0,
+                      lineHeight: 1.6,
+                      display: "-webkit-box",
+                      WebkitLineClamp: 4,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                      ...(isPreviewLocked && {
+                        filter: "blur(4px)",
+                        userSelect: "none",
+                        pointerEvents: "none",
+                      }),
+                    }}
+                  >
+                    {piece.preview}
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

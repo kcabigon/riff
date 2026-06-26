@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Avatar from "@/components/shared/Avatar";
 import Badge from "@/components/shared/Badge";
+import { PLACEHOLDER_COLORS } from "@/lib/piece-colors";
 
 interface PieceCardProps {
   piece: {
@@ -21,20 +22,8 @@ interface PieceCardProps {
   hasNewComments?: boolean;
   isOwnPiece?: boolean;
   label?: string;
-  onClick: () => void;
+  onClick?: () => void;
 }
-
-// Placeholder colors for pieces without images. Intentional pastel rotation.
-/* eslint-disable riff/no-non-palette-colors */
-const PLACEHOLDER_COLORS = [
-  "#E8E0D5",
-  "#D5E0E8",
-  "#E0E8D5",
-  "#E8D5E0",
-  "#D5E8E0",
-  "#E0D5E8",
-];
-/* eslint-enable riff/no-non-palette-colors */
 
 export default function PieceCard({
   piece,
@@ -58,7 +47,7 @@ export default function PieceCard({
       style={{
         position: "relative",
         border: "1px solid #000000",
-        cursor: "pointer",
+        cursor: onClick ? "pointer" : "default",
         overflow: "hidden",
         aspectRatio: "4 / 5",
         boxShadow: isHovered ? "8px 8px 0px 0px #000000" : "none",
