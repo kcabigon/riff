@@ -1,4 +1,7 @@
+"use client";
+
 import Avatar from "@/components/shared/Avatar";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 
 interface ReadByMember {
   user: { id: string; name: string | null; avatarUrl: string | null };
@@ -8,7 +11,6 @@ interface ReadByMember {
 function ProgressRingAvatar({
   member,
   totalPieces,
-  index,
 }: {
   member: ReadByMember;
   totalPieces: number;
@@ -29,8 +31,6 @@ function ProgressRingAvatar({
             ? "#000000"
             : `conic-gradient(#00FF66 ${deg}deg, #E6E6E6 ${deg}deg)`,
         padding: "2px",
-        marginRight: "-8px",
-        zIndex: index,
         flexShrink: 0,
       }}
     >
@@ -50,13 +50,16 @@ export default function ReadByStrip({
   members: ReadByMember[];
   totalPieces: number;
 }) {
+  const isMobile = useIsMobile();
+
   if (members.length === 0 || totalPieces === 0) return null;
 
   return (
     <div
       style={{
         display: "flex",
-        alignItems: "center",
+        flexDirection: isMobile ? "column" : "row",
+        alignItems: isMobile ? "flex-start" : "center",
         gap: "12px",
         marginTop: "40px",
       }}
@@ -76,8 +79,8 @@ export default function ReadByStrip({
       <div
         style={{
           display: "flex",
-          alignItems: "center",
-          paddingRight: "8px",
+          flexWrap: "wrap",
+          gap: "8px",
         }}
       >
         {members.map((member, i) => (
