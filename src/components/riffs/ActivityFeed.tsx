@@ -162,15 +162,38 @@ export default function ActivityFeed({ riffId }: { riffId: string }) {
                   </span>
                 </div>
 
-                {/* Quoted passage */}
-                {comment.selectedText && (
-                  <div
+                {/* Context block — piece title + optional quoted passage */}
+                <div
+                  style={{
+                    borderLeft: "2px solid #E6E6E6",
+                    paddingLeft: "12px",
+                    marginBottom: "10px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "4px",
+                  }}
+                >
+                  <button
+                    onClick={() =>
+                      router.push(`/read/${comment.piece.id}?riff=${riffId}`)
+                    }
                     style={{
-                      borderLeft: "2px solid #E6E6E6",
-                      paddingLeft: "12px",
-                      marginBottom: "8px",
+                      background: "none",
+                      border: "none",
+                      padding: 0,
+                      cursor: "pointer",
+                      textAlign: "left",
+                      fontFamily: "var(--font-dm-serif-text)",
+                      fontSize: "13px",
+                      fontWeight: 400,
+                      color: "#000000",
+                      textDecoration: "underline",
+                      textUnderlineOffset: "2px",
                     }}
                   >
+                    {pieceTitle}
+                  </button>
+                  {comment.selectedText && (
                     <p
                       style={{
                         fontFamily: "var(--font-dm-sans)",
@@ -184,8 +207,8 @@ export default function ActivityFeed({ riffId }: { riffId: string }) {
                     >
                       &ldquo;{comment.selectedText}&rdquo;
                     </p>
-                  </div>
-                )}
+                  )}
+                </div>
 
                 {/* Comment text */}
                 <p
@@ -194,7 +217,7 @@ export default function ActivityFeed({ riffId }: { riffId: string }) {
                     fontSize: "16px",
                     fontWeight: 300,
                     color: "#000000",
-                    margin: "0 0 8px 0",
+                    margin: "0 0 0 0",
                     lineHeight: 1.6,
                     whiteSpace: "pre-wrap",
                     wordBreak: "break-word",
@@ -202,38 +225,6 @@ export default function ActivityFeed({ riffId }: { riffId: string }) {
                 >
                   {comment.content}
                 </p>
-
-                {/* Piece attribution */}
-                <button
-                  onClick={() =>
-                    router.push(`/read/${comment.piece.id}?riff=${riffId}`)
-                  }
-                  style={{
-                    background: "none",
-                    border: "none",
-                    padding: 0,
-                    cursor: "pointer",
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "13px",
-                    fontWeight: 300,
-                    color: "#808080",
-                    display: "inline",
-                  }}
-                >
-                  on{" "}
-                  <span
-                    style={{
-                      fontFamily: "var(--font-dm-serif-text)",
-                      fontSize: "13px",
-                      fontWeight: 400,
-                      color: "#000000",
-                      textDecoration: "underline",
-                      textUnderlineOffset: "2px",
-                    }}
-                  >
-                    {pieceTitle}
-                  </span>
-                </button>
 
                 {/* Threaded replies */}
                 {comment.replies.length > 0 && (
