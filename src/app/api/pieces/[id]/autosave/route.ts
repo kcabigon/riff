@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
-import { extractExcerpt } from "@/lib/excerpt";
 
 // PATCH /api/pieces/[id]/autosave - Auto-save piece content (author only)
 export async function PATCH(
@@ -54,7 +53,6 @@ export async function PATCH(
     // Build dynamic update data — at least one field will be present
     const data: {
       currentContent?: string;
-      currentExcerpt?: string | null;
       title?: string;
       subtitle?: string | null;
       coverImage?: string | null;
@@ -63,8 +61,6 @@ export async function PATCH(
     } = {};
     if (currentContent) {
       data.currentContent = currentContent;
-      const excerpt = extractExcerpt(currentContent);
-      if (excerpt) data.currentExcerpt = excerpt;
     }
     if (title !== undefined) {
       data.title = title.trim() || "Untitled";

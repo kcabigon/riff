@@ -90,7 +90,6 @@ export default async function ProfilePageRoute({
       coverImage: true,
       wordCount: true,
       readLengthMin: true,
-      currentExcerpt: true,
       currentContent: true,
       riffs: {
         where: { submittedAt: { not: null } },
@@ -122,11 +121,9 @@ export default async function ProfilePageRoute({
       coverImage: p.coverImage,
       wordCount: p.wordCount,
       readLengthMin: p.readLengthMin,
-      preview:
-        p.currentExcerpt ??
-        (p.currentContent
-          ? extractExcerpt(p.currentContent) || undefined
-          : undefined),
+      preview: p.currentContent
+        ? extractExcerpt(p.currentContent) || undefined
+        : undefined,
       submittedAt: new Date(latestMs),
       isRevealed: p.riffs.some(
         (r) =>
