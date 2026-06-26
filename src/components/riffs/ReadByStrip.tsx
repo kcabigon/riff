@@ -18,9 +18,10 @@ function ProgressRingAvatar({
   index: number;
 }) {
   const firstName = member.user.name?.split(" ")[0] ?? "Someone";
-  const commentLabel =
-    member.commentCount === 1 ? "1 comment" : `${member.commentCount} comments`;
-  const tooltipText = `${firstName} · ${commentLabel}`;
+  const tooltipText =
+    member.commentCount === 0
+      ? firstName
+      : `${firstName} · ${member.commentCount === 1 ? "1 comment" : `${member.commentCount} comments`}`;
   const progress = Math.min(member.readCount / totalPieces, 1);
   const deg = progress * 360;
 
@@ -86,7 +87,7 @@ export default function ReadByStrip({
         style={{
           display: "flex",
           flexWrap: "wrap",
-          gap: "8px",
+          gap: "4px",
         }}
       >
         {members.map((member, i) => (
