@@ -23,6 +23,11 @@ export default function AvatarDropdown({ user }: AvatarDropdownProps) {
   const items: DropdownItem[] = [
     {
       type: "action",
+      label: "Riffs",
+      onClick: () => router.push("/my-riffs"),
+    },
+    {
+      type: "action",
       label: "Profile",
       onClick: () => handleProfileClick(user.id),
     },
