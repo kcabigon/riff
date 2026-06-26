@@ -341,23 +341,30 @@ export default function RiffPageLayout({
 
             {riff.status === "REVEALED" && (
               <div
-                style={{ display: "inline-flex", border: "1px solid #000000" }}
+                style={{
+                  display: "inline-flex",
+                  border: "2px solid #000000",
+                  overflow: "hidden",
+                }}
               >
                 {(["pieces", "comments"] as const).map((mode, i) => (
                   <button
                     key={mode}
                     onClick={() => setViewMode(mode)}
                     style={{
-                      background: viewMode === mode ? "#000000" : "transparent",
+                      backgroundColor:
+                        viewMode === mode ? "#000000" : "#FFFFFF",
                       border: "none",
-                      borderLeft: i > 0 ? "1px solid #000000" : "none",
+                      borderLeft: i > 0 ? "2px solid #000000" : "none",
                       cursor: "pointer",
                       fontFamily: "var(--font-dm-sans)",
-                      fontSize: "12px",
-                      fontWeight: 300,
-                      color: viewMode === mode ? "#FFFFFF" : "#808080",
-                      padding: "4px 12px",
+                      fontSize: "14px",
+                      fontWeight: 400,
+                      color: viewMode === mode ? "#FFFFFF" : "#000000",
+                      padding: "6px 16px",
                       textTransform: "capitalize",
+                      transition:
+                        "background-color 0.15s ease, color 0.15s ease",
                     }}
                   >
                     {mode}
