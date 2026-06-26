@@ -53,19 +53,32 @@ export default function ActivityFeed({
   const isMobile = useIsMobile();
   const [comments, setComments] = useState<FeedComment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
+  const [replyError, setReplyError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     fetch(`/api/riffs/${riffId}/comments`)
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) {
+          setFetchError(true);
+          setLoading(false);
+          return null;
+        }
+        return r.json();
+      })
       .then((data) => {
+        if (!data) return;
         setComments(data.comments ?? []);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        setFetchError(true);
+        setLoading(false);
+      });
   }, [riffId]);
 
   // Focus textarea when reply box opens
@@ -84,6 +97,7 @@ export default function ActivityFeed({
   const closeReply = () => {
     setReplyingTo(null);
     setReplyText("");
+    setReplyError(null);
   };
 
   const handleSubmitReply = async (comment: FeedComment) => {
@@ -114,14 +128,18 @@ export default function ActivityFeed({
           const updated = prev.map((c) =>
             c.id === comment.id ? { ...c, replies: [...c.replies, reply] } : c
           );
+          // Keep in sync with the server sort in /api/riffs/[id]/comments
           return [...updated].sort(
             (a, b) => latestActivity(b) - latestActivity(a)
           );
         });
         closeReply();
+      } else {
+        setReplyError("Failed to post — please try again.");
       }
     } catch (err) {
       console.error("Error submitting reply:", err);
+      setReplyError("Failed to post — please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -172,8 +190,23 @@ export default function ActivityFeed({
         </div>
       )}
 
+      {/* Error state */}
+      {!loading && fetchError && (
+        <p
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "14px",
+            fontWeight: 300,
+            color: "#808080",
+            margin: 0,
+          }}
+        >
+          Couldn&apos;t load comments — please refresh and try again.
+        </p>
+      )}
+
       {/* Empty state */}
-      {!loading && comments.length === 0 && (
+      {!loading && !fetchError && comments.length === 0 && (
         <p
           style={{
             fontFamily: "var(--font-dm-sans)",
@@ -487,6 +520,19 @@ export default function ActivityFeed({
                           Post
                         </CommentButton>
                       </div>
+                      {replyError && (
+                        <p
+                          style={{
+                            fontFamily: "var(--font-dm-sans)",
+                            fontSize: "12px",
+                            fontWeight: 300,
+                            color: "#DC2626",
+                            margin: "4px 0 0",
+                          }}
+                        >
+                          {replyError}
+                        </p>
+                      )}
                     </div>
                   </div>
                 )}

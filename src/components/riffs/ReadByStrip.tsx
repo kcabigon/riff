@@ -15,7 +15,6 @@ function ProgressRingAvatar({
 }: {
   member: ReadByMember;
   totalPieces: number;
-  index: number;
 }) {
   const firstName = member.user.name?.split(" ")[0] ?? "Someone";
   const tooltipText =
@@ -90,12 +89,11 @@ export default function ReadByStrip({
           gap: "4px",
         }}
       >
-        {members.map((member, i) => (
+        {members.map((member) => (
           <ProgressRingAvatar
             key={member.user.id}
             member={member}
             totalPieces={totalPieces}
-            index={i}
           />
         ))}
       </div>
