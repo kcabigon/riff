@@ -6,18 +6,7 @@ import Badge from "@/components/shared/Badge";
 import PieceCard from "@/components/riffs/PieceCard";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import type { DropdownItem } from "@/components/shared/Dropdown";
-
-// Placeholder colors for pieces without images. Intentional pastel rotation.
-/* eslint-disable riff/no-non-palette-colors */
-const PLACEHOLDER_COLORS = [
-  "#E8E0D5",
-  "#D5E0E8",
-  "#E0E8D5",
-  "#E8D5E0",
-  "#D5E8E0",
-  "#E0D5E8",
-];
-/* eslint-enable riff/no-non-palette-colors */
+import { PLACEHOLDER_COLORS } from "@/lib/piece-colors";
 
 export interface Piece {
   id: string;
@@ -382,7 +371,7 @@ export default function PiecesGrid({
                     style={{
                       fontFamily: "var(--font-dm-sans)",
                       fontSize: "14px",
-                      color: "#9C9C9C",
+                      color: "#808080",
                       margin: 0,
                     }}
                   >
