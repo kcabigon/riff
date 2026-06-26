@@ -59,15 +59,15 @@ export default function ActivityFeed({
 
   return (
     <div>
-      {/* Activity header — reading progress + member stats */}
+      {/* Reading Progress */}
       {contributionData.length > 0 && (
-        <div style={{ marginBottom: "40px" }}>
+        <div style={{ marginBottom: "48px" }}>
           <div
             style={{
               display: "flex",
               alignItems: "baseline",
               gap: "16px",
-              marginBottom: "20px",
+              marginBottom: "16px",
             }}
           >
             <h2
@@ -81,7 +81,7 @@ export default function ActivityFeed({
                 letterSpacing: "0.05em",
               }}
             >
-              Activity
+              Reading Progress
             </h2>
             <p
               style={{
@@ -102,7 +102,7 @@ export default function ActivityFeed({
             style={{
               display: "flex",
               flexDirection: "row",
-              gap: "0",
+              gap: "12px",
               overflowX: "auto",
               paddingBottom: "4px",
             }}
@@ -111,6 +111,7 @@ export default function ActivityFeed({
               const firstName = user.name?.split(" ")[0] ?? "—";
               const readFraction =
                 totalPieces > 0 ? readCount / totalPieces : 0;
+              const isComplete = readCount >= totalPieces;
               return (
                 <div
                   key={user.id}
@@ -118,10 +119,13 @@ export default function ActivityFeed({
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
-                    gap: "8px",
-                    minWidth: "88px",
+                    gap: "10px",
+                    minWidth: "96px",
                     padding: "16px 12px",
-                    borderRight: "1px solid #E6E6E6",
+                    border: "2px solid #000000",
+                    boxShadow: "4px 4px 0px #000000",
+                    backgroundColor: "#FFFFFF",
+                    flexShrink: 0,
                   }}
                 >
                   <Avatar
@@ -138,7 +142,7 @@ export default function ActivityFeed({
                     style={{
                       fontFamily: "var(--font-dm-sans)",
                       fontSize: "13px",
-                      fontWeight: 500,
+                      fontWeight: 700,
                       color: "#000000",
                       margin: 0,
                       textAlign: "center",
@@ -151,31 +155,47 @@ export default function ActivityFeed({
                     {firstName}
                   </p>
 
-                  {/* Read progress bar */}
+                  {/* Progress bar */}
                   <div
                     style={{
                       width: "100%",
                       display: "flex",
                       flexDirection: "column",
-                      gap: "3px",
+                      gap: "4px",
                     }}
                   >
                     <div
                       style={{
                         width: "100%",
-                        height: "3px",
-                        backgroundColor: "#E6E6E6",
+                        height: "8px",
+                        border: "2px solid #000000",
                         overflow: "hidden",
+                        backgroundColor: "#FFFFFF",
                       }}
                     >
                       <div
                         style={{
                           width: `${readFraction * 100}%`,
                           height: "100%",
-                          backgroundColor: "#000000",
+                          backgroundColor: isComplete ? "#00FF66" : "#000000",
                         }}
                       />
                     </div>
+                    <p
+                      style={{
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "11px",
+                        fontWeight: 700,
+                        color: "#000000",
+                        margin: 0,
+                        textAlign: "center",
+                      }}
+                    >
+                      {readCount}/{totalPieces}
+                    </p>
+                  </div>
+
+                  {commentCount > 0 && (
                     <p
                       style={{
                         fontFamily: "var(--font-dm-sans)",
@@ -186,30 +206,13 @@ export default function ActivityFeed({
                         textAlign: "center",
                       }}
                     >
-                      {readCount}/{totalPieces} read
-                    </p>
-                  </div>
-
-                  {commentCount > 0 && (
-                    <p
-                      style={{
-                        fontFamily: "var(--font-dm-sans)",
-                        fontSize: "11px",
-                        fontWeight: 300,
-                        color: "#9C9C9C",
-                        margin: 0,
-                        textAlign: "center",
-                      }}
-                    >
-                      {commentCount}{" "}
-                      {commentCount === 1 ? "comment" : "comments"}
+                      {commentCount} 💬
                     </p>
                   )}
                 </div>
               );
             })}
           </div>
-          <div style={{ borderTop: "1px solid #E6E6E6", marginTop: "0" }} />
         </div>
       )}
 
