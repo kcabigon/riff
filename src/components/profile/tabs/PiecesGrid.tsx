@@ -33,13 +33,19 @@ export interface Piece {
   readLengthMin?: number | null;
 }
 
-function LockIcon({ style }: { style?: React.CSSProperties }) {
+function LockIcon({
+  style,
+  fill = "white",
+}: {
+  style?: React.CSSProperties;
+  fill?: string;
+}) {
   return (
     <svg
       width="24"
       height="24"
       viewBox="0 0 24 24"
-      fill="white"
+      fill={fill}
       xmlns="http://www.w3.org/2000/svg"
       style={style}
     >
@@ -277,6 +283,9 @@ export default function PiecesGrid({
         <div>
           {pieces.map((piece) => {
             const onClick = handleClick(piece);
+            const isPreviewLocked =
+              !piece.isRevealed ||
+              (!isOwnProfile && !piece.viewerHasClubAccess && !piece.isPublic);
             const placeholderColor =
               PLACEHOLDER_COLORS[
                 piece.id.charCodeAt(0) % PLACEHOLDER_COLORS.length
@@ -399,6 +408,11 @@ export default function PiecesGrid({
                       WebkitLineClamp: 4,
                       WebkitBoxOrient: "vertical",
                       overflow: "hidden",
+                      ...(isPreviewLocked && {
+                        filter: "blur(4px)",
+                        userSelect: "none",
+                        pointerEvents: "none",
+                      }),
                     }}
                   >
                     {piece.preview}
