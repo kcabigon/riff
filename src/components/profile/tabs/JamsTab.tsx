@@ -583,7 +583,7 @@ function JamCard({
               color: "#000000",
             }}
           >
-            Copied to clipboard
+            Copied to clipboard — text to your friends
           </span>
         </div>
       )}
