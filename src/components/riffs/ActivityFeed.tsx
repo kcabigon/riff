@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Avatar from "@/components/shared/Avatar";
 import CommentButton from "@/components/read/CommentButton";
 import { relativeTime } from "@/lib/timeAgo";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 
 interface FeedReply {
   id: string;
@@ -49,6 +50,7 @@ export default function ActivityFeed({
   currentUser: CurrentUser | null | undefined;
 }) {
   const router = useRouter();
+  const isMobile = useIsMobile();
   const [comments, setComments] = useState<FeedComment[]>([]);
   const [loading, setLoading] = useState(true);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
@@ -447,7 +449,7 @@ export default function ActivityFeed({
                           border: "2px solid #E6E6E6",
                           padding: "6px 8px",
                           fontFamily: "var(--font-dm-sans)",
-                          fontSize: "14px",
+                          fontSize: isMobile ? "16px" : "14px",
                           fontWeight: 300,
                           lineHeight: 1.5,
                           outline: "none",
