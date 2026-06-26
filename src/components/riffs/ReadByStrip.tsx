@@ -43,6 +43,7 @@ function ProgressRingAvatar({
         user={{ ...member.user, username: null }}
         size={40}
         borderColor="#FFFFFF"
+        style={{ pointerEvents: "none" }}
       />
     </div>
   );
