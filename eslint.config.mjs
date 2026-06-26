@@ -120,14 +120,13 @@ const eslintConfig = [
     },
   },
   // Self-contained immersive read experience for a single piece. Intentionally
-  // uses a bespoke cinematic palette/gradients (not the brand system) plus direct
-  // <img>/array-index keys for the hand-built art — none of which apply here.
+  // uses a bespoke cinematic palette/gradients (not the brand system) plus
+  // array-index keys for the hand-built kinetic typography.
   {
     files: ["src/components/read/StrangeCaseExperience.tsx"],
     rules: {
       "riff/no-non-palette-colors": "off",
       "react/no-array-index-key": "off",
-      "@next/next/no-img-element": "off",
     },
   },
 ];

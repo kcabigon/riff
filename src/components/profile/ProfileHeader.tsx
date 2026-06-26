@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import AvatarDropdown from "@/components/clubs/AvatarDropdown";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
+import Avatar from "@/components/shared/Avatar";
 
 export type ProfileTab = "pieces" | "jams";
 
@@ -63,15 +64,6 @@ export default function ProfileHeader({
     profileUser.name?.split(" ").slice(1).join(" ") ||
     "";
   const displayName = [firstName, lastName].filter(Boolean).join(" ");
-
-  const initials = displayName
-    ? displayName
-        .split(" ")
-        .slice(0, 2)
-        .map((w) => w[0])
-        .join("")
-        .toUpperCase()
-    : "?";
 
   const joinedDate = profileUser.createdAt.toLocaleDateString("en-US", {
     month: "long",
@@ -140,41 +132,16 @@ export default function ProfileHeader({
         }}
       >
         {/* Avatar */}
-        <div style={{ position: "relative", flexShrink: 0 }}>
-          <div
-            style={{
-              width: "120px",
-              height: "120px",
-              borderRadius: "64px",
-              border: "2px solid #FFFFFF",
-              overflow: "hidden",
-              backgroundColor: "#E6E6E6",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            {profileUser.avatarUrl ? (
-              <img
-                src={profileUser.avatarUrl}
-                alt={displayName}
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-              />
-            ) : (
-              <span
-                style={{
-                  fontFamily: "var(--font-dm-serif-text)",
-                  fontSize: "28px",
-                  fontWeight: 400,
-                  color: "#000000",
-                  lineHeight: "normal",
-                }}
-              >
-                {initials}
-              </span>
-            )}
-          </div>
-        </div>
+        <Avatar
+          size={120}
+          borderColor="#FFFFFF"
+          user={{
+            id: profileUser.id,
+            name: displayName || null,
+            username: profileUser.username,
+            avatarUrl: profileUser.avatarUrl,
+          }}
+        />
 
         {/* Name + Bio + Stats */}
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
