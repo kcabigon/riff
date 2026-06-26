@@ -41,7 +41,9 @@ export default function RiffCTAButton({
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
-      if (res.ok && onJoin) onJoin();
+      if (res.ok) {
+        router.push(`/riffs/${riffId}`);
+      }
     } catch (err) {
       console.error("Error joining riff:", err);
     }
