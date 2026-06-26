@@ -152,7 +152,7 @@ function NewJamForm({
         ref={noteRef}
         value={note}
         onChange={(e) => setNote(e.target.value)}
-        placeholder="Share why..."
+        placeholder="Share the story behind it..."
         className="jam-editor-input"
         style={{
           display: "block",
@@ -319,7 +319,7 @@ function EditJamForm({
         ref={noteRef}
         value={note}
         onChange={(e) => setNote(e.target.value)}
-        placeholder="Share why..."
+        placeholder="Share the story behind it..."
         className="jam-editor-input"
         style={{
           display: "block",
