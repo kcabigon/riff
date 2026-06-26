@@ -140,6 +140,7 @@ Last updated: May 16, 2026
 - [ ] Notification emails via Resend — deadline approaching, new comment
 - [ ] Deadline reminder cron job (Vercel Cron, 24h before deadline)
 - [ ] Toast notifications replacing `console.error` catches
+- [ ] Extract shared `<Toast>` component — same UI used inline in `EmailSection`, `WritePage`, and `JamsTab` (success/error/loading variants)
 - [ ] Onboarding page refinements (create-club, join-club pages)
 
 ---
