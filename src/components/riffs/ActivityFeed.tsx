@@ -184,7 +184,7 @@ export default function ActivityFeed({ riffId }: { riffId: string }) {
                       cursor: "pointer",
                       textAlign: "left",
                       fontFamily: "var(--font-dm-serif-text)",
-                      fontSize: "13px",
+                      fontSize: "16px",
                       fontWeight: 400,
                       color: "#000000",
                       textDecoration: "underline",
@@ -214,7 +214,7 @@ export default function ActivityFeed({ riffId }: { riffId: string }) {
                 <p
                   style={{
                     fontFamily: "var(--font-dm-sans)",
-                    fontSize: "16px",
+                    fontSize: "14px",
                     fontWeight: 300,
                     color: "#000000",
                     margin: "0 0 0 0",
@@ -272,7 +272,7 @@ export default function ActivityFeed({ riffId }: { riffId: string }) {
                               <span
                                 style={{
                                   fontFamily: "var(--font-dm-sans)",
-                                  fontSize: "13px",
+                                  fontSize: "14px",
                                   fontWeight: 500,
                                   color: "#000000",
                                 }}
@@ -283,7 +283,7 @@ export default function ActivityFeed({ riffId }: { riffId: string }) {
                             <span
                               style={{
                                 fontFamily: "var(--font-dm-sans)",
-                                fontSize: "11px",
+                                fontSize: "12px",
                                 fontWeight: 300,
                                 color: "#9C9C9C",
                               }}
