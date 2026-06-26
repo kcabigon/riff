@@ -26,7 +26,6 @@ import RevealRiffButton, {
 import ProgressCard from "@/components/riffs/ProgressCard";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import type { DropdownItem } from "@/components/shared/Dropdown";
-import ContributionStrip from "@/components/riffs/ContributionStrip";
 import ActivityFeed from "@/components/riffs/ActivityFeed";
 import PrimaryButton from "@/components/PrimaryButton";
 
@@ -171,6 +170,10 @@ export default function RiffPageLayout({
   const existingPieceId =
     riff.pieces.find((p) => p.piece.authorId === currentUserId)?.piece.id ??
     null;
+  const totalWords = riff.pieces.reduce(
+    (sum, p) => sum + (p.piece.wordCount || 0),
+    0
+  );
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
@@ -245,8 +248,8 @@ export default function RiffPageLayout({
                 >
                   {deadlinePassed && riff.status !== "REVEALED"
                     ? "Deadline passed"
-                    : riff.status === "REVEALED" && riff.deadline
-                      ? `${formatDateLong(riff.createdAt)} - ${formatDateLong(riff.deadline)}${riff.updatedAt ? ` · Revealed ${formatDateShort(riff.updatedAt)}` : ""}`
+                    : riff.status === "REVEALED"
+                      ? `${riff.updatedAt ? `Revealed ${formatDateShort(riff.updatedAt)} · ` : ""}${riff.pieces.length} ${riff.pieces.length === 1 ? "Piece" : "Pieces"} · ${totalWords.toLocaleString()} Words`
                       : riff.deadline
                         ? `Deadline: ${formatDateLong(riff.deadline)}`
                         : "No deadline"}
@@ -360,85 +363,6 @@ export default function RiffPageLayout({
               </div>
             )}
 
-            {riff.status === "REVEALED" &&
-              (() => {
-                const totalReads = contributionData.reduce(
-                  (sum, m) => sum + m.readCount,
-                  0
-                );
-                const totalComments = contributionData.reduce(
-                  (sum, m) => sum + m.commentCount,
-                  0
-                );
-                const totalWords = riff.pieces.reduce(
-                  (sum, p) => sum + (p.piece.wordCount || 0),
-                  0
-                );
-                const revealStats = [
-                  {
-                    value: riff.pieces.length,
-                    label: riff.pieces.length === 1 ? "Piece" : "Pieces",
-                  },
-                  { value: totalWords.toLocaleString(), label: "Words" },
-                  {
-                    value: totalReads,
-                    label: totalReads === 1 ? "Read" : "Reads",
-                  },
-                  {
-                    value: totalComments,
-                    label: totalComments === 1 ? "Comment" : "Comments",
-                  },
-                ];
-                return (
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "12px",
-                      lineHeight: "normal",
-                    }}
-                  >
-                    {revealStats.map((stat, i) => (
-                      <div
-                        // eslint-disable-next-line react/no-array-index-key -- static stat tiles; length and order are stable
-                        key={i}
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <p
-                          style={{
-                            fontFamily: "var(--font-dm-sans)",
-                            fontSize: "16px",
-                            fontWeight: 700,
-                            lineHeight: "normal",
-                            color: "#000000",
-                            margin: 0,
-                          }}
-                        >
-                          {stat.value}
-                        </p>
-                        <p
-                          style={{
-                            fontFamily: "var(--font-dm-sans)",
-                            fontSize: "12px",
-                            fontWeight: 300,
-                            lineHeight: "normal",
-                            color: "#000000",
-                            margin: 0,
-                          }}
-                        >
-                          {stat.label}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })()}
-
             {shouldShowReveal({
               deadlinePassed,
               isJoined,
@@ -523,17 +447,13 @@ export default function RiffPageLayout({
               </div>
             )}
 
-            {viewMode === "feed" && <ActivityFeed riffId={riff.id} />}
-          </div>
-        )}
-
-        {/* Contribution strip for REVEALED riffs — below pieces so readers see the grid first */}
-        {riff.status === "REVEALED" && contributionData.length > 0 && (
-          <div style={{ marginTop: "48px" }}>
-            <ContributionStrip
-              members={contributionData}
-              totalPieces={totalPieces}
-            />
+            {viewMode === "feed" && (
+              <ActivityFeed
+                riffId={riff.id}
+                contributionData={contributionData}
+                totalPieces={totalPieces}
+              />
+            )}
           </div>
         )}
 
