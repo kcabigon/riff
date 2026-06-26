@@ -524,7 +524,13 @@ export default function RiffPageLayout({
               </div>
             )}
 
-            {viewMode === "comments" && <ActivityFeed riffId={riff.id} />}
+            {viewMode === "comments" && (
+              <ActivityFeed
+                riffId={riff.id}
+                clubId={riff.clubId}
+                currentUser={navUser}
+              />
+            )}
           </div>
         )}
 
