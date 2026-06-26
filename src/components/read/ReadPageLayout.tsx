@@ -20,12 +20,13 @@ import { useScrollDirection } from "@/hooks/useScrollDirection";
 import BackButton from "@/components/BackButton";
 import { CommentAuthor } from "@/types";
 import { ReplyData } from "./ReplyThread";
+import NoiseBackground from "@/components/NoiseBackground";
 
 interface CommentData {
   id: string;
   content: string;
-  selectionStart: number;
-  selectionEnd: number;
+  selectionStart: number | null;
+  selectionEnd: number | null;
   selectedText: string;
   authorId: string;
   createdAt: string;
@@ -98,6 +99,8 @@ export default function ReadPageLayout({
   const [activeHighlightIds, setActiveHighlightIds] = useState<string[]>([]);
   const [pendingSelection, setPendingSelection] =
     useState<PendingSelection | null>(null);
+  const [pastLastComment, setPastLastComment] = useState(false);
+  const [badgePressed, setBadgePressed] = useState(false);
 
   const isMobile = useIsMobile();
   const keyboardTriggerRef = useRef<HTMLInputElement>(null);
@@ -160,7 +163,9 @@ export default function ReadPageLayout({
       const full: CommentData = { ...comment, replies: comment.replies ?? [] };
       setComments((prev) => {
         const updated = [...prev, full];
-        return updated.sort((a, b) => a.selectionStart - b.selectionStart);
+        return updated.sort(
+          (a, b) => (a.selectionStart ?? 0) - (b.selectionStart ?? 0)
+        );
       });
       setActiveHighlightIds([full.id]);
       setPendingSelection(null);
@@ -307,6 +312,32 @@ export default function ReadPageLayout({
         .filter((c): c is CommentData => c !== undefined),
     [activeHighlightIds, comments]
   );
+
+  const unanchoredComments = useMemo(
+    () => comments.filter((c) => c.selectionStart === null),
+    [comments]
+  );
+
+  // Track whether the user has scrolled past the last anchored comment mark.
+  // When true (and there are unanchored comments), we surface the ghost badge.
+  useEffect(() => {
+    if (!isMobile || unanchoredComments.length === 0) return;
+    function handleScroll() {
+      const marks = document.querySelectorAll("mark[data-comment-id]");
+      if (marks.length === 0) {
+        // No anchored comments — show badge once user has scrolled at all
+        setPastLastComment(window.scrollY > 80);
+        return;
+      }
+      const lastMark = marks[marks.length - 1];
+      setPastLastComment(
+        lastMark.getBoundingClientRect().top < window.innerHeight
+      );
+    }
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [isMobile, unanchoredComments.length]);
 
   return (
     <div
@@ -639,6 +670,55 @@ export default function ReadPageLayout({
           onReplyDeleted={handleReplyDeleted}
         />
       )}
+
+      {/* Ghost badge — surfaces unanchored comments after reader scrolls past last highlight */}
+      {isMobile &&
+        isRiffMode &&
+        unanchoredComments.length > 0 &&
+        pastLastComment &&
+        activeComments.length === 0 && (
+          <button
+            onClick={() =>
+              setActiveHighlightIds(unanchoredComments.map((c) => c.id))
+            }
+            onPointerDown={() => setBadgePressed(true)}
+            onPointerUp={() => setBadgePressed(false)}
+            onPointerLeave={() => setBadgePressed(false)}
+            style={{
+              position: "fixed",
+              overflow: "hidden",
+              right: 0,
+              bottom: "72px",
+
+              borderTop: badgePressed
+                ? "2px solid #000000"
+                : "2px solid #E6E6E6",
+              borderLeft: badgePressed
+                ? "2px solid #000000"
+                : "2px solid #E6E6E6",
+              borderBottom: badgePressed
+                ? "2px solid #000000"
+                : "2px solid #E6E6E6",
+              borderRight: "none",
+              boxShadow: badgePressed ? "-4px 4px 0 #000" : "none",
+              backgroundColor: "#FFFFFF",
+              color: "#000000",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "16px",
+              fontWeight: 700,
+              padding: "12px 20px 12px 24px",
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+              zIndex: 40,
+              transition: "box-shadow 0.1s ease, border-color 0.1s ease",
+            }}
+          >
+            <NoiseBackground />
+            <span style={{ position: "relative", zIndex: 1 }}>
+              +{unanchoredComments.length} Comments
+            </span>
+          </button>
+        )}
     </div>
   );
 }
