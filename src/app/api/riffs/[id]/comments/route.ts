@@ -37,7 +37,7 @@ export async function GET(
       );
     }
 
-    const comments = await prisma.comment.findMany({
+    const rawComments = await prisma.comment.findMany({
       where: { riffId, parentId: null },
       include: {
         author: { select: { id: true, name: true, avatarUrl: true } },
@@ -49,7 +49,24 @@ export async function GET(
           orderBy: { createdAt: "asc" },
         },
       },
-      orderBy: { createdAt: "desc" },
+    });
+
+    const comments = rawComments.sort((a, b) => {
+      const aLatest =
+        a.replies.length > 0
+          ? Math.max(
+              new Date(a.createdAt).getTime(),
+              new Date(a.replies[a.replies.length - 1].createdAt).getTime()
+            )
+          : new Date(a.createdAt).getTime();
+      const bLatest =
+        b.replies.length > 0
+          ? Math.max(
+              new Date(b.createdAt).getTime(),
+              new Date(b.replies[b.replies.length - 1].createdAt).getTime()
+            )
+          : new Date(b.createdAt).getTime();
+      return bLatest - aLatest;
     });
 
     return NextResponse.json({ comments });
