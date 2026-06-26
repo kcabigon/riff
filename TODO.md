@@ -148,7 +148,7 @@ Last updated: May 16, 2026
 
 - [ ] Collections system (personal, group, circle)
 - [ ] 🔨 @jarric — Multi-level sharing UI (CLUB, RIFF, INDIVIDUAL, PUBLIC)
-- [ ] 🔨 @jarric — Riff activity feed: post-reveal riff page redesign with Pieces/Feed toggle and comment activity feed
+- [x] Riff activity feed: post-reveal riff page redesign with Pieces/Feed toggle and comment activity feed
 - [ ] Permission helpers / reusable middleware
 - [ ] Refactor editor: extract shared tiptap logic into `useRiffEditor` hook + unified `EditorToolbar`
 

@@ -137,8 +137,7 @@ export default function ActivityFeed({
       } else {
         setReplyError("Failed to post — please try again.");
       }
-    } catch (err) {
-      console.error("Error submitting reply:", err);
+    } catch {
       setReplyError("Failed to post — please try again.");
     } finally {
       setSubmitting(false);
@@ -166,7 +165,7 @@ export default function ActivityFeed({
                   width: "120px",
                   height: "12px",
                   backgroundColor: "#E6E6E6",
-                  borderRadius: "2px",
+                  borderRadius: 0,
                 }}
               />
               <div
@@ -174,7 +173,7 @@ export default function ActivityFeed({
                   width: "80%",
                   height: "12px",
                   backgroundColor: "#F5F5F5",
-                  borderRadius: "2px",
+                  borderRadius: 0,
                 }}
               />
               <div
@@ -182,7 +181,7 @@ export default function ActivityFeed({
                   width: "60%",
                   height: "12px",
                   backgroundColor: "#F5F5F5",
-                  borderRadius: "2px",
+                  borderRadius: 0,
                 }}
               />
             </div>
@@ -281,7 +280,7 @@ export default function ActivityFeed({
                       fontFamily: "var(--font-dm-sans)",
                       fontSize: "12px",
                       fontWeight: 300,
-                      color: "#9C9C9C",
+                      color: "#808080",
                     }}
                   >
                     {relativeTime(comment.createdAt)}
@@ -412,7 +411,7 @@ export default function ActivityFeed({
                                 fontFamily: "var(--font-dm-sans)",
                                 fontSize: "12px",
                                 fontWeight: 300,
-                                color: "#9C9C9C",
+                                color: "#808080",
                               }}
                             >
                               {relativeTime(reply.createdAt)}

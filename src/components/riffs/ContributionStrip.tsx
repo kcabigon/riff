@@ -114,7 +114,7 @@ export default function ContributionStrip({
               >
                 {readCount}/{totalPieces} read
                 {commentCount > 0 && (
-                  <span style={{ color: "#9C9C9C" }}> · {commentCount}💬</span>
+                  <span style={{ color: "#808080" }}> · {commentCount}💬</span>
                 )}
               </p>
             </div>
