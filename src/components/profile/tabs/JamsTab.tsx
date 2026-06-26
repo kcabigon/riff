@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import PrimaryButton from "@/components/PrimaryButton";
+import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import { detectJamEmbed } from "@/lib/jam-embed";
 import type { JamEmbedType } from "@/lib/jam-embed";
 import { relativeTime } from "@/lib/timeAgo";
@@ -412,10 +413,15 @@ function JamCard({
   onDeleted: () => void;
 }) {
   const [editing, setEditing] = useState(false);
-  const [open, setOpen] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
   const [copied, setCopied] = useState(false);
+  const copyTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const embed = jam.url ? detectJamEmbed(jam.url) : null;
+
+  useEffect(() => {
+    return () => {
+      if (copyTimeout.current) clearTimeout(copyTimeout.current);
+    };
+  }, []);
 
   const handleShare = async () => {
     const plainText = [
@@ -438,11 +444,9 @@ function JamCard({
       await navigator.clipboard.writeText(plainText);
     }
 
+    if (copyTimeout.current) clearTimeout(copyTimeout.current);
     setCopied(true);
-    setTimeout(() => {
-      setCopied(false);
-      setOpen(false);
-    }, 2500);
+    copyTimeout.current = setTimeout(() => setCopied(false), 2500);
   };
 
   if (editing) {
@@ -486,156 +490,27 @@ function JamCard({
         </h2>
 
         {isOwnProfile && (
-          <div style={{ position: "relative", flexShrink: 0, marginTop: 4 }}>
-            <button
-              onClick={() => {
-                setConfirmDelete(false);
-                setOpen((o) => !o);
-              }}
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "9px",
-                fontWeight: 700,
-                letterSpacing: "2px",
-                color: "#808080",
-                padding: "4px",
-                lineHeight: 1,
-              }}
-            >
-              •••
-            </button>
-            {open && (
-              <>
-                <div
-                  style={{ position: "fixed", inset: 0, zIndex: 10 }}
-                  onClick={() => {
-                    setOpen(false);
-                    setCopied(false);
-                  }}
-                />
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "100%",
-                    right: 0,
-                    zIndex: 11,
-                    backgroundColor: "#FFFFFF",
-                    border: "2px solid #000000",
-                    boxShadow: "4px 4px 0px 0px #000000",
-                    minWidth: 160,
-                    display: "flex",
-                    flexDirection: "column",
-                  }}
-                >
-                  {copied ? (
-                    <div style={{ padding: "10px 14px" }}>
-                      <p
-                        style={{
-                          fontFamily: "var(--font-dm-sans)",
-                          fontSize: "13px",
-                          fontWeight: 500,
-                          color: "#000000",
-                          margin: "0 0 2px",
-                        }}
-                      >
-                        Copied to clipboard.
-                      </p>
-                      <p
-                        style={{
-                          fontFamily: "var(--font-dm-sans)",
-                          fontSize: "13px",
-                          fontWeight: 300,
-                          color: "#808080",
-                          margin: 0,
-                        }}
-                      >
-                        Text to friends.
-                      </p>
-                    </div>
-                  ) : (
-                    <>
-                      <button
-                        onClick={handleShare}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          cursor: "pointer",
-                          padding: "10px 14px",
-                          textAlign: "left",
-                          fontFamily: "var(--font-dm-sans)",
-                          fontSize: "13px",
-                          fontWeight: 400,
-                          color: "#000000",
-                        }}
-                      >
-                        Share
-                      </button>
-                      <button
-                        onClick={() => {
-                          setOpen(false);
-                          setEditing(true);
-                        }}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          borderBottom: "1px solid #E6E6E6",
-                          cursor: "pointer",
-                          padding: "10px 14px",
-                          textAlign: "left",
-                          fontFamily: "var(--font-dm-sans)",
-                          fontSize: "13px",
-                          fontWeight: 400,
-                          color: "#000000",
-                        }}
-                      >
-                        Edit
-                      </button>
-                      {confirmDelete ? (
-                        <button
-                          onClick={() => {
-                            setOpen(false);
-                            onDeleted();
-                          }}
-                          style={{
-                            background: "none",
-                            border: "none",
-                            cursor: "pointer",
-                            padding: "10px 14px",
-                            textAlign: "left",
-                            fontFamily: "var(--font-dm-sans)",
-                            fontSize: "13px",
-                            fontWeight: 500,
-                            color: "#DC2626",
-                          }}
-                        >
-                          Confirm delete
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => setConfirmDelete(true)}
-                          style={{
-                            background: "none",
-                            border: "none",
-                            cursor: "pointer",
-                            padding: "10px 14px",
-                            textAlign: "left",
-                            fontFamily: "var(--font-dm-sans)",
-                            fontSize: "13px",
-                            fontWeight: 400,
-                            color: "#DC2626",
-                          }}
-                        >
-                          Delete
-                        </button>
-                      )}
-                    </>
-                  )}
-                </div>
-              </>
-            )}
+          <div style={{ flexShrink: 0, marginTop: 4 }}>
+            <ThreeDotButton
+              variant="light"
+              align="right"
+              items={[
+                { type: "action", label: "Share", onClick: handleShare },
+                {
+                  type: "action",
+                  label: "Edit",
+                  onClick: () => setEditing(true),
+                },
+                { type: "divider" },
+                {
+                  type: "action",
+                  label: "Delete",
+                  color: "#DC2626",
+                  confirm: "Confirm delete",
+                  onClick: onDeleted,
+                },
+              ]}
+            />
           </div>
         )}
       </div>
@@ -671,6 +546,46 @@ function JamCard({
 
       {embed && (
         <InlineEmbed info={{ type: embed.type, embedUrl: embed.embedUrl }} />
+      )}
+
+      {copied && (
+        <div
+          style={{
+            position: "fixed",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            zIndex: 60,
+            backgroundColor: "#FFFFFF",
+            border: "2px solid #000000",
+            boxShadow: "4px 4px 0px 0px #000000",
+            padding: "10px 14px",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            whiteSpace: "nowrap",
+          }}
+        >
+          <div
+            style={{
+              width: "8px",
+              height: "8px",
+              borderRadius: "50%",
+              flexShrink: 0,
+              background: "#00FF66",
+            }}
+          />
+          <span
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "12px",
+              fontWeight: 300,
+              color: "#000000",
+            }}
+          >
+            Copied to clipboard
+          </span>
+        </div>
       )}
     </div>
   );

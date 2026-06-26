@@ -52,38 +52,3 @@ export function detectJamEmbed(url: string): JamEmbed | null {
     return null;
   }
 }
-
-export async function fetchJamThumbnail(
-  url: string,
-  type: JamEmbedType
-): Promise<string | null> {
-  try {
-    if (type === "youtube") {
-      const u = new URL(url);
-      const host = u.hostname.replace(/^(www\.|m\.)/, "");
-      let videoId: string | null = null;
-      if (host === "youtu.be") videoId = u.pathname.slice(1);
-      else if (u.pathname.startsWith("/shorts/"))
-        videoId = u.pathname.split("/shorts/")[1] ?? null;
-      else videoId = u.searchParams.get("v");
-      if (videoId) return `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`;
-    }
-
-    if (type.startsWith("spotify_")) {
-      const res = await fetch(
-        `https://open.spotify.com/oembed?url=${encodeURIComponent(url)}`,
-        {
-          headers: { "User-Agent": "Mozilla/5.0 (compatible; RiffBot/1.0)" },
-          signal: AbortSignal.timeout(5000),
-        }
-      );
-      if (res.ok) {
-        const data = (await res.json()) as { thumbnail_url?: string };
-        return data.thumbnail_url ?? null;
-      }
-    }
-  } catch {
-    // non-fatal
-  }
-  return null;
-}
