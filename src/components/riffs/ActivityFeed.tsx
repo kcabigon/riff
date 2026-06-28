@@ -7,6 +7,24 @@ import CommentButton from "@/components/read/CommentButton";
 import { relativeTime } from "@/lib/timeAgo";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 
+// Placeholder colors for pieces without cover images. Intentional pastel rotation.
+/* eslint-disable riff/no-non-palette-colors */
+const PLACEHOLDER_COLORS = [
+  "#E8E0D5",
+  "#D5E0E8",
+  "#E0E8D5",
+  "#E8D5E0",
+  "#D5E8E0",
+  "#E0D5E8",
+];
+/* eslint-enable riff/no-non-palette-colors */
+
+interface ReadPiece {
+  id: string;
+  title: string;
+  coverImage: string | null;
+}
+
 interface FeedReply {
   id: string;
   content: string;
@@ -45,10 +63,14 @@ export default function ActivityFeed({
   riffId,
   clubId,
   currentUser,
+  readPieces = [],
+  totalPieceCount = 0,
 }: {
   riffId: string;
   clubId: string;
   currentUser: CurrentUser | null | undefined;
+  readPieces?: ReadPiece[];
+  totalPieceCount?: number;
 }) {
   const router = useRouter();
   const isMobile = useIsMobile();
@@ -150,6 +172,72 @@ export default function ActivityFeed({
 
   return (
     <div>
+      {/* Reading progress header */}
+      {totalPieceCount > 0 && (
+        <div
+          style={{
+            display: "flex",
+            gap: "4px",
+            marginBottom: "24px",
+            overflowX: "auto",
+          }}
+        >
+          {/* Read pieces */}
+          {readPieces.map((piece) => {
+            const color =
+              PLACEHOLDER_COLORS[
+                piece.id.charCodeAt(0) % PLACEHOLDER_COLORS.length
+              ];
+            return (
+              <div
+                key={piece.id}
+                title={piece.title}
+                style={{
+                  width: isMobile ? "48px" : "96px",
+                  height: isMobile ? "60px" : "120px",
+                  flexShrink: 0,
+                  position: "relative",
+                  border: "1px solid #000000",
+                  overflow: "hidden",
+                  backgroundColor: piece.coverImage ? undefined : color,
+                }}
+              >
+                {piece.coverImage && (
+                  <img
+                    src={piece.coverImage}
+                    alt=""
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                  />
+                )}
+              </div>
+            );
+          })}
+          {/* Unread placeholders — index key is stable, slots never reorder */}
+          {/* eslint-disable react/no-array-index-key */}
+          {Array.from({
+            length: totalPieceCount - readPieces.length,
+          }).map((_, i) => (
+            <div
+              key={`unread-${i}`}
+              style={{
+                width: isMobile ? "48px" : "96px",
+                height: isMobile ? "60px" : "120px",
+                flexShrink: 0,
+                border: "2px dashed #CCCCCC",
+                boxSizing: "border-box",
+              }}
+            />
+          ))}
+          {/* eslint-enable react/no-array-index-key */}
+        </div>
+      )}
+
       {/* Loading skeleton */}
       {loading && (
         <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
@@ -219,13 +307,15 @@ export default function ActivityFeed({
             margin: 0,
           }}
         >
-          No comments yet — be the first to read and leave a note.
+          {readPieces.length === totalPieceCount
+            ? "Be the first to get the conversation going."
+            : "Read more pieces and add to the conversation."}
         </p>
       )}
 
       {/* Comment list */}
       {!loading && comments.length > 0 && (
-        <div>
+        <div style={{ borderTop: "1px solid #E6E6E6", paddingTop: "24px" }}>
           {comments.map((comment, i) => {
             const firstName = comment.author.name?.split(" ")[0] ?? "Someone";
             const pieceTitle = comment.piece.title || "Untitled";

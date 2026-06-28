@@ -551,6 +551,25 @@ export default function RiffPageLayout({
                 riffId={riff.id}
                 clubId={riff.clubId}
                 currentUser={navUser}
+                readPieces={
+                  (readPieceIds ?? [])
+                    .map((id) => {
+                      const match = riff.pieces.find((p) => p.piece.id === id);
+                      return match
+                        ? {
+                            id: match.piece.id,
+                            title: match.piece.title,
+                            coverImage: match.piece.coverImage ?? null,
+                          }
+                        : null;
+                    })
+                    .filter(Boolean) as Array<{
+                    id: string;
+                    title: string;
+                    coverImage: string | null;
+                  }>
+                }
+                totalPieceCount={riff.pieces.length}
               />
             )}
           </div>
