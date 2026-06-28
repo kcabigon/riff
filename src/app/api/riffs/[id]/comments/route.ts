@@ -37,37 +37,55 @@ export async function GET(
       );
     }
 
-    const rawComments = await prisma.comment.findMany({
-      where: { riffId, parentId: null },
-      include: {
-        author: { select: { id: true, name: true, avatarUrl: true } },
-        piece: { select: { id: true, title: true } },
-        replies: {
-          include: {
-            author: { select: { id: true, name: true, avatarUrl: true } },
+    const [rawComments, pieceReads] = await Promise.all([
+      prisma.comment.findMany({
+        where: { riffId, parentId: null },
+        include: {
+          author: { select: { id: true, name: true, avatarUrl: true } },
+          piece: { select: { id: true, title: true } },
+          replies: {
+            include: {
+              author: { select: { id: true, name: true, avatarUrl: true } },
+            },
+            orderBy: { createdAt: "asc" },
           },
-          orderBy: { createdAt: "asc" },
         },
-      },
-    });
+      }),
+      prisma.pieceRead.findMany({
+        where: { riffId, userId: user.id },
+        select: { pieceId: true, readAt: true },
+      }),
+    ]);
 
-    const comments = rawComments.sort((a, b) => {
-      const aLatest =
-        a.replies.length > 0
-          ? Math.max(
-              new Date(a.createdAt).getTime(),
-              new Date(a.replies[a.replies.length - 1].createdAt).getTime()
-            )
-          : new Date(a.createdAt).getTime();
-      const bLatest =
-        b.replies.length > 0
-          ? Math.max(
-              new Date(b.createdAt).getTime(),
-              new Date(b.replies[b.replies.length - 1].createdAt).getTime()
-            )
-          : new Date(b.createdAt).getTime();
-      return bLatest - aLatest;
-    });
+    const readMap = new Map(pieceReads.map((r) => [r.pieceId, r.readAt]));
+
+    const comments = rawComments
+      .filter((c) => readMap.has(c.piece.id))
+      .sort((a, b) => {
+        const aLatest =
+          a.replies.length > 0
+            ? Math.max(
+                new Date(a.createdAt).getTime(),
+                new Date(a.replies[a.replies.length - 1].createdAt).getTime()
+              )
+            : new Date(a.createdAt).getTime();
+        const bLatest =
+          b.replies.length > 0
+            ? Math.max(
+                new Date(b.createdAt).getTime(),
+                new Date(b.replies[b.replies.length - 1].createdAt).getTime()
+              )
+            : new Date(b.createdAt).getTime();
+        return bLatest - aLatest;
+      })
+      .map((c) => {
+        const readAt = readMap.get(c.piece.id)!;
+        const commentIsNew = c.author.id !== user.id && c.createdAt > readAt;
+        const replyIsNew = c.replies.some(
+          (r) => r.author.id !== user.id && r.createdAt > readAt
+        );
+        return { ...c, isNew: commentIsNew || replyIsNew };
+      });
 
     return NextResponse.json({ comments });
   } catch (error: unknown) {

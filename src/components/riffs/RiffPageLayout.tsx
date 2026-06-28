@@ -134,11 +134,7 @@ export default function RiffPageLayout({
 
   const switchToComment = () => {
     setViewMode("comment");
-    const prevBadgeMap = badgeMap;
     setBadgeMap({});
-    fetch(`/api/riffs/${riff.id}/mark-read`, { method: "POST" }).catch(() => {
-      setBadgeMap(prevBadgeMap);
-    });
   };
   const deadlinePassed = isPastDeadline(riff.deadline);
   const piecesAllSubmitted = allPiecesSubmitted(

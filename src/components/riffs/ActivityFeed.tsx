@@ -19,6 +19,7 @@ interface FeedComment {
   content: string;
   createdAt: string;
   selectedText: string | null;
+  isNew: boolean;
   author: { id: string; name: string | null; avatarUrl: string | null };
   piece: { id: string; title: string | null };
   replies: FeedReply[];
@@ -74,6 +75,9 @@ export default function ActivityFeed({
         if (!data) return;
         setComments(data.comments ?? []);
         setLoading(false);
+        fetch(`/api/riffs/${riffId}/mark-read`, { method: "POST" }).catch(
+          () => {}
+        );
       })
       .catch(() => {
         setFetchError(true);
@@ -226,6 +230,7 @@ export default function ActivityFeed({
             const firstName = comment.author.name?.split(" ")[0] ?? "Someone";
             const pieceTitle = comment.piece.title || "Untitled";
             const isReplying = replyingTo === comment.id;
+            const { isNew } = comment;
 
             return (
               <div
@@ -274,6 +279,18 @@ export default function ActivityFeed({
                     >
                       {firstName}
                     </span>
+                    {isNew && (
+                      <span
+                        style={{
+                          width: "8px",
+                          height: "8px",
+                          borderRadius: "50%",
+                          backgroundColor: "#00FF66",
+                          display: "inline-block",
+                          flexShrink: 0,
+                        }}
+                      />
+                    )}
                   </div>
                   <span
                     style={{
@@ -290,7 +307,9 @@ export default function ActivityFeed({
                 {/* Context block — piece title + optional quoted passage */}
                 <div
                   style={{
-                    borderLeft: "2px solid #E6E6E6",
+                    borderLeft: isNew
+                      ? "2px solid #00FF66"
+                      : "2px solid #E6E6E6",
                     paddingLeft: "12px",
                     marginBottom: "10px",
                     display: "flex",
@@ -358,7 +377,9 @@ export default function ActivityFeed({
                     style={{
                       marginTop: "12px",
                       marginLeft: "16px",
-                      borderLeft: "2px solid #E6E6E6",
+                      borderLeft: isNew
+                        ? "2px solid #00FF66"
+                        : "2px solid #E6E6E6",
                       paddingLeft: "12px",
                       display: "flex",
                       flexDirection: "column",
