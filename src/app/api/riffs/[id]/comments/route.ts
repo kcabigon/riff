@@ -42,7 +42,7 @@ export async function GET(
         where: { riffId, parentId: null },
         include: {
           author: { select: { id: true, name: true, avatarUrl: true } },
-          piece: { select: { id: true, title: true } },
+          piece: { select: { id: true, title: true, authorId: true } },
           replies: {
             include: {
               author: { select: { id: true, name: true, avatarUrl: true } },
@@ -60,7 +60,7 @@ export async function GET(
     const readMap = new Map(pieceReads.map((r) => [r.pieceId, r.readAt]));
 
     const comments = rawComments
-      .filter((c) => readMap.has(c.piece.id))
+      .filter((c) => readMap.has(c.piece.id) || c.piece.authorId === user.id)
       .sort((a, b) => {
         const aLatest =
           a.replies.length > 0
@@ -79,12 +79,16 @@ export async function GET(
         return bLatest - aLatest;
       })
       .map((c) => {
-        const readAt = readMap.get(c.piece.id)!;
-        const commentIsNew = c.author.id !== user.id && c.createdAt > readAt;
-        const replyIsNew = c.replies.some(
-          (r) => r.author.id !== user.id && r.createdAt > readAt
-        );
-        return { ...c, isNew: commentIsNew || replyIsNew };
+        const isOwnPiece = c.piece.authorId === user.id;
+        const readAt = readMap.get(c.piece.id);
+        const commentIsNew =
+          !!readAt && c.author.id !== user.id && c.createdAt > readAt;
+        const replyIsNew =
+          !!readAt &&
+          c.replies.some(
+            (r) => r.author.id !== user.id && r.createdAt > readAt
+          );
+        return { ...c, isNew: commentIsNew || replyIsNew, isOwnPiece };
       });
 
     return NextResponse.json({ comments });
