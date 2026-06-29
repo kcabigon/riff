@@ -308,9 +308,8 @@ export default function ActivityFeed({
             margin: 0,
           }}
         >
-          {readPieces.length === totalPieceCount
-            ? "Be the first to get the conversation going."
-            : "Read more pieces and add to the conversation."}
+          Read pieces, leave comments, and add to the conversations. Comments on
+          pieces you&apos;ve read will display here for easy replies.
         </p>
       )}
 
