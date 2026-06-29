@@ -308,8 +308,9 @@ export default function ActivityFeed({
             margin: 0,
           }}
         >
-          Read pieces, leave comments, and add to the conversations. Comments on
-          pieces you&apos;ve read will display here for easy replies.
+          {readPieces && readPieces.length === 0
+            ? "Read pieces and add to the conversation."
+            : "No comments on pieces you've read. Add to the conversation."}
         </p>
       )}
 
