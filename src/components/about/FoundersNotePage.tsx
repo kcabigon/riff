@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import FakeCommentHighlight from "./FakeCommentHighlight";
 import AboutCommentSidebar, { SidebarComment } from "./AboutCommentSidebar";
 import { useIsMobile } from "@/hooks/useMediaQuery";
@@ -136,25 +136,6 @@ const bodyStyle: React.CSSProperties = {
 export default function FoundersNotePage() {
   const isMobile = useIsMobile();
   const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
-  const sidebarWrapperRef = useRef<HTMLDivElement>(null);
-  const [sidebarTopOffset, setSidebarTopOffset] = useState(0);
-
-  useEffect(() => {
-    function computeOffset() {
-      const firstMark = document.querySelector(
-        'mark[data-comment-id="highlight-1"]'
-      );
-      const wrapper = sidebarWrapperRef.current;
-      if (!firstMark || !wrapper) return;
-      const offset =
-        firstMark.getBoundingClientRect().top -
-        wrapper.getBoundingClientRect().top;
-      setSidebarTopOffset(Math.max(0, offset));
-    }
-    document.fonts.ready.then(computeOffset);
-    window.addEventListener("resize", computeOffset);
-    return () => window.removeEventListener("resize", computeOffset);
-  }, []);
 
   function handleActivate(id: string) {
     setActiveCommentId((prev) => (prev === id ? null : id));
@@ -355,13 +336,11 @@ export default function FoundersNotePage() {
 
         {/* Sidebar — desktop only, hidden when no comments */}
         {!isMobile && COMMENTS.length > 0 && (
-          <div ref={sidebarWrapperRef} style={{ paddingTop: sidebarTopOffset }}>
-            <AboutCommentSidebar
-              comments={COMMENTS}
-              activeId={activeCommentId}
-              onCardClick={handleActivate}
-            />
-          </div>
+          <AboutCommentSidebar
+            comments={COMMENTS}
+            activeId={activeCommentId}
+            onCardClick={handleActivate}
+          />
         )}
       </div>
 

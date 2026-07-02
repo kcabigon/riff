@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useCallback,
+} from "react";
 import Image from "next/image";
 
 const FOUNDER_COLORS: Record<string, string> = {
@@ -10,6 +16,8 @@ const FOUNDER_COLORS: Record<string, string> = {
   Derek: "#FF6B35",
   Kyla: "#C01582",
 };
+
+const GAP = 8;
 
 interface YoutubeEmbed {
   type: "youtube";
@@ -37,29 +45,127 @@ export default function AboutCommentSidebar({
   activeId,
   onCardClick,
 }: AboutCommentSidebarProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const [positions, setPositions] = useState<Record<string, number>>({});
+  const [containerHeight, setContainerHeight] = useState(0);
 
+  const computePositions = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const containerTop = container.getBoundingClientRect().top;
+
+    // Y of each mark relative to the sidebar container
+    const markYs: Record<string, number> = {};
+    for (const comment of comments) {
+      const mark = document.querySelector(
+        `mark[data-comment-id="${comment.id}"]`
+      );
+      if (mark) {
+        markYs[comment.id] = mark.getBoundingClientRect().top - containerTop;
+      }
+    }
+
+    const cardHeights: Record<string, number> = {};
+    for (const [id, el] of cardRefs.current) {
+      cardHeights[id] = el.offsetHeight;
+    }
+
+    const newPositions: Record<string, number> = {};
+
+    if (!activeId || !(activeId in markYs)) {
+      // Default: first card at first mark, rest packed downward
+      const firstY = markYs[comments[0]?.id] ?? 0;
+      let cursor = Math.max(0, firstY);
+      for (const comment of comments) {
+        newPositions[comment.id] = cursor;
+        cursor += (cardHeights[comment.id] ?? 80) + GAP;
+      }
+    } else {
+      const activeIdx = comments.findIndex((c) => c.id === activeId);
+      const activeMarkY = markYs[activeId];
+
+      // Active card anchored to its mark
+      newPositions[activeId] = activeMarkY;
+
+      // Cards below: pack downward
+      let bottomCursor = activeMarkY + (cardHeights[activeId] ?? 80) + GAP;
+      for (let i = activeIdx + 1; i < comments.length; i++) {
+        newPositions[comments[i].id] = bottomCursor;
+        bottomCursor += (cardHeights[comments[i].id] ?? 80) + GAP;
+      }
+
+      // Cards above: pack upward
+      let topCursor = activeMarkY;
+      for (let i = activeIdx - 1; i >= 0; i--) {
+        const h = cardHeights[comments[i].id] ?? 80;
+        topCursor = Math.max(0, topCursor - h - GAP);
+        newPositions[comments[i].id] = topCursor;
+      }
+    }
+
+    setPositions(newPositions);
+
+    // Keep container tall enough to hold all cards
+    let maxBottom = 0;
+    for (const comment of comments) {
+      const top = newPositions[comment.id] ?? 0;
+      maxBottom = Math.max(maxBottom, top + (cardHeights[comment.id] ?? 80));
+    }
+    setContainerHeight(maxBottom);
+  }, [comments, activeId]);
+
+  // Synchronous initial measurement — prevents flash before first paint
+  useLayoutEffect(() => {
+    computePositions();
+  }, [computePositions]);
+
+  // Recompute after fonts finish loading (affects layout heights)
   useEffect(() => {
-    if (!activeId) return;
-    const card = cardRefs.current.get(activeId);
-    card?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }, [activeId]);
+    document.fonts.ready.then(computePositions);
+  }, [computePositions]);
+
+  // Scroll and resize
+  useEffect(() => {
+    window.addEventListener("scroll", computePositions, { passive: true });
+    window.addEventListener("resize", computePositions);
+    return () => {
+      window.removeEventListener("scroll", computePositions);
+      window.removeEventListener("resize", computePositions);
+    };
+  }, [computePositions]);
+
+  // Card height changes (e.g. expanded replies)
+  useEffect(() => {
+    const ro = new ResizeObserver(computePositions);
+    for (const el of cardRefs.current.values()) ro.observe(el);
+    return () => ro.disconnect();
+  }, [computePositions]);
 
   if (comments.length === 0) return null;
 
+  function handleCardClick(id: string) {
+    onCardClick(id);
+    // Scroll the corresponding highlight into view
+    const mark = document.querySelector(`mark[data-comment-id="${id}"]`);
+    mark?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
   return (
     <div
+      ref={containerRef}
       style={{
         width: "300px",
         flexShrink: 0,
-        display: "flex",
-        flexDirection: "column",
-        gap: "8px",
+        position: "relative",
+        minHeight: containerHeight,
       }}
     >
       {comments.map((comment) => {
         const isActive = comment.id === activeId;
         const color = FOUNDER_COLORS[comment.author] ?? "#01EFFC";
+
         return (
           <div
             key={comment.id}
@@ -67,14 +173,17 @@ export default function AboutCommentSidebar({
               if (el) cardRefs.current.set(comment.id, el);
               else cardRefs.current.delete(comment.id);
             }}
-            onClick={() => onCardClick(comment.id)}
+            onClick={() => handleCardClick(comment.id)}
             style={{
+              position: "absolute",
+              top: positions[comment.id] ?? 0,
+              width: "100%",
               backgroundColor: "#FFFFFF",
               border: `2px solid ${isActive ? "#000000" : "#E6E6E6"}`,
               boxShadow: isActive ? `4px 4px 0 ${color}` : "none",
               padding: "12px",
               cursor: "pointer",
-              transition: "border-color 0.15s, box-shadow 0.15s",
+              transition: "top 0.2s ease, border-color 0.15s, box-shadow 0.15s",
             }}
           >
             <div
@@ -96,7 +205,7 @@ export default function AboutCommentSidebar({
                 <p
                   style={{
                     fontFamily: "var(--font-dm-sans)",
-                    fontSize: "12px",
+                    fontSize: "14px",
                     fontWeight: 700,
                     color: "#000",
                     margin: "0 0 2px 0",
@@ -215,7 +324,7 @@ export default function AboutCommentSidebar({
                       <p
                         style={{
                           fontFamily: "var(--font-dm-sans)",
-                          fontSize: "12px",
+                          fontSize: "14px",
                           fontWeight: 700,
                           color: "#000",
                           margin: "0 0 2px 0",
