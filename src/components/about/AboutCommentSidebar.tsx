@@ -205,7 +205,7 @@ export default function AboutCommentSidebar({
                 <p
                   style={{
                     fontFamily: "var(--font-dm-sans)",
-                    fontSize: "14px",
+                    fontSize: "12px",
                     fontWeight: 700,
                     color: "#000",
                     margin: "0 0 2px 0",
@@ -324,7 +324,7 @@ export default function AboutCommentSidebar({
                       <p
                         style={{
                           fontFamily: "var(--font-dm-sans)",
-                          fontSize: "14px",
+                          fontSize: "12px",
                           fontWeight: 700,
                           color: "#000",
                           margin: "0 0 2px 0",
