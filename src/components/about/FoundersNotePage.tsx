@@ -304,18 +304,16 @@ export default function FoundersNotePage() {
                   margin: 0,
                 }}
               >
-                July 2026 · 2 min read
+                May 2026 · 2 min read
               </p>
             </div>
           </div>
 
           {/* Body */}
-          <p style={bodyStyle}>
-            We built a writing platform but not for writers.
-          </p>
+          <p style={bodyStyle}>We built a writing app but not for writers.</p>
 
           <p style={bodyStyle}>
-            The five of us are not writers in the{" "}
+            We&apos;re not writers in the{" "}
             <FakeCommentHighlight
               comments={commentFor("highlight-1")}
               commentId="highlight-1"
@@ -325,7 +323,7 @@ export default function FoundersNotePage() {
               have a blog
             </FakeCommentHighlight>
             , grow an audience, make money from our writing sense. We&apos;re
-            just five friends with shared{" "}
+            just friends with shared{" "}
             <FakeCommentHighlight
               comments={commentFor("highlight-2")}
               commentId="highlight-2"
@@ -442,14 +440,14 @@ export default function FoundersNotePage() {
               for ourselves
             </FakeCommentHighlight>
             . And if writing, storytelling, and riffing with your friends sounds
-            like your thing, it&apos;s free and{" "}
+            like your thing, then{" "}
             <FakeCommentHighlight
               comments={commentFor("highlight-13")}
               commentId="highlight-13"
               onActivate={handleActivate}
               isActive={activeCommentId === "highlight-13"}
             >
-              it&apos;s for you
+              this is for you
             </FakeCommentHighlight>
             .
           </p>
