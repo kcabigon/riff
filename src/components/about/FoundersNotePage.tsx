@@ -44,7 +44,7 @@ const COMMENTS: SidebarComment[] = [
       {
         author: "Jarric",
         avatarSrc: "/images/about/founderAvatars/jarric-avatar.png",
-        text: "aka, chris needs to spend less time doomscrolling butts on instagram",
+        text: "aka chris wants to spend less time doomscrolling butts on instagram",
       },
     ],
   },
@@ -124,12 +124,6 @@ const COMMENTS: SidebarComment[] = [
     ],
   },
   {
-    id: "highlight-8",
-    author: "Kyla",
-    avatarSrc: "/images/about/founderAvatars/kyla-avatar.jpg",
-    text: "literary mosh pit with friends",
-  },
-  {
     id: "highlight-9",
     author: "Jarric",
     avatarSrc: "/images/about/founderAvatars/jarric-avatar.png",
@@ -137,8 +131,8 @@ const COMMENTS: SidebarComment[] = [
   },
   {
     id: "highlight-10",
-    author: "Jarric",
-    avatarSrc: "/images/about/founderAvatars/jarric-avatar.png",
+    author: "Kyla",
+    avatarSrc: "/images/about/founderAvatars/kyla-avatar.jpg",
     text: "friends should have more clubs",
     replies: [
       {
@@ -161,8 +155,8 @@ const COMMENTS: SidebarComment[] = [
   },
   {
     id: "highlight-12",
-    author: "Jarric",
-    avatarSrc: "/images/about/founderAvatars/jarric-avatar.png",
+    author: "Derek",
+    avatarSrc: "/images/about/founderAvatars/derek-avatar.png",
     text: "since we're the only write club that we know",
   },
   {
@@ -395,16 +389,8 @@ export default function FoundersNotePage() {
             >
               deeper discovery of people we thought we already knew so well
             </FakeCommentHighlight>
-            . &ldquo;Welcome to{" "}
-            <FakeCommentHighlight
-              comments={commentFor("highlight-8")}
-              commentId="highlight-8"
-              onActivate={handleActivate}
-              isActive={activeCommentId === "highlight-8"}
-            >
-              Write Club
-            </FakeCommentHighlight>
-            ,&rdquo; we said when other friends wanted to join in.{" "}
+            . &ldquo;Welcome to Write Club,&rdquo; we said when other friends
+            wanted to join in.{" "}
             <FakeCommentHighlight
               comments={commentFor("highlight-9")}
               commentId="highlight-9"
