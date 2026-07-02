@@ -156,8 +156,11 @@ export default function FoundersNotePage() {
 
           {/* Body */}
           <p style={bodyStyle}>
-            We built a writing platform but not for writers. The five of us are
-            not writers in the{" "}
+            We built a writing platform but not for writers.
+          </p>
+
+          <p style={bodyStyle}>
+            The five of us are not writers in the{" "}
             <FakeCommentHighlight
               comments={[]}
               commentId="highlight-1"
@@ -204,7 +207,10 @@ export default function FoundersNotePage() {
           </p>
 
           <p style={bodyStyle}>
-            Riff is not for writers but for friends. Built by friends, a{" "}
+            <strong>
+              <em>Riff</em>
+            </strong>{" "}
+            is not for writers but for friends. Built by friends, a{" "}
             <FakeCommentHighlight
               comments={[]}
               commentId="highlight-4"
