@@ -21,8 +21,83 @@ const FOUNDERS = [
   { name: "Kyla", avatarSrc: "/images/about/founderAvatars/kyla-avatar.jpg" },
 ];
 
-// Hardcoded comments — will be populated with real data
-const COMMENTS: SidebarComment[] = [];
+const COMMENTS: SidebarComment[] = [
+  {
+    id: "highlight-1",
+    author: "Jarric",
+    avatarSrc: "/images/about/founderAvatars/jarric-avatar.png",
+    text: "i had a blog once",
+    replies: [
+      {
+        author: "Derek",
+        avatarSrc: "/images/about/founderAvatars/derek-avatar.png",
+        text: "that only your mom read",
+      },
+    ],
+  },
+  {
+    id: "highlight-2",
+    author: "Chris",
+    avatarSrc: "/images/about/founderAvatars/chris-avatar.jpeg",
+    text: "create more, consume less",
+    replies: [
+      {
+        author: "Jarric",
+        avatarSrc: "/images/about/founderAvatars/jarric-avatar.png",
+        text: "aka, chris needs to spend less time doomscrolling butts on instagram",
+      },
+    ],
+  },
+  {
+    id: "highlight-3",
+    author: "Jarric",
+    avatarSrc: "/images/about/founderAvatars/jarric-avatar.png",
+    text: "except derek",
+    replies: [
+      {
+        author: "Derek",
+        avatarSrc: "/images/about/founderAvatars/derek-avatar.png",
+        text: "sorry, i can't help it if my best ideas come the night before the deadline",
+      },
+    ],
+  },
+  {
+    id: "highlight-4",
+    author: "Kyla",
+    avatarSrc: "/images/about/founderAvatars/kyla-avatar.jpg",
+    text: "i cried",
+    replies: [
+      {
+        author: "Derek",
+        avatarSrc: "/images/about/founderAvatars/derek-avatar.png",
+        text: "really?",
+      },
+      {
+        author: "Chris",
+        avatarSrc: "/images/about/founderAvatars/chris-avatar.jpeg",
+        text: "get in touch with your emotions derek",
+      },
+    ],
+  },
+  {
+    id: "highlight-5",
+    author: "Kyle",
+    avatarSrc: "/images/about/founderAvatars/kyle-avatar.jpg",
+    text: "sex whoop was not a parody",
+    replies: [
+      {
+        author: "Chris",
+        avatarSrc: "/images/about/founderAvatars/chris-avatar.jpeg",
+        text: "either way, it was tmi",
+      },
+    ],
+  },
+];
+
+function commentFor(id: string) {
+  const c = COMMENTS.find((entry) => entry.id === id);
+  return c ? [c] : [];
+}
 
 function FounderAvatars() {
   return (
@@ -162,66 +237,75 @@ export default function FoundersNotePage() {
           <p style={bodyStyle}>
             The five of us are not writers in the{" "}
             <FakeCommentHighlight
-              comments={[]}
+              comments={commentFor("highlight-1")}
               commentId="highlight-1"
               onActivate={handleActivate}
               isActive={activeCommentId === "highlight-1"}
             >
-              have a blog, grow an audience, make money from our writing
-            </FakeCommentHighlight>{" "}
-            sense. We&apos;re just five friends with shared desires to be
-            creative and maybe get a few laughs out of each other. We had this
-            crazy idea, what if the five of us wrote something and just shared
-            them with each other? Two weeks later, we shared five personal
-            essays all at the same time: a{" "}
+              have a blog
+            </FakeCommentHighlight>
+            , grow an audience, make money from our writing sense. We&apos;re
+            just five friends with shared{" "}
             <FakeCommentHighlight
-              comments={[]}
+              comments={commentFor("highlight-2")}
               commentId="highlight-2"
               onActivate={handleActivate}
               isActive={activeCommentId === "highlight-2"}
             >
-              baseball love letter, a children&apos;s book on a family heritage,
-              a political rabbit hole, a letter to self, and a hilarious parody
-              on bedroom analytics
+              desires to be creative
+            </FakeCommentHighlight>{" "}
+            and maybe get a few laughs out of each other. We had this crazy
+            idea, what if the five of us wrote something and just shared them
+            with each other? Two weeks later, we shared five personal essays{" "}
+            <FakeCommentHighlight
+              comments={commentFor("highlight-3")}
+              commentId="highlight-3"
+              onActivate={handleActivate}
+              isActive={activeCommentId === "highlight-3"}
+            >
+              all at the same time
+            </FakeCommentHighlight>
+            : a{" "}
+            <FakeCommentHighlight
+              comments={commentFor("highlight-4")}
+              commentId="highlight-4"
+              onActivate={handleActivate}
+              isActive={activeCommentId === "highlight-4"}
+            >
+              baseball love letter
+            </FakeCommentHighlight>
+            , a children&apos;s book on a family heritage, a political rabbit
+            hole, a letter to self, and a hilarious{" "}
+            <FakeCommentHighlight
+              comments={commentFor("highlight-5")}
+              commentId="highlight-5"
+              onActivate={handleActivate}
+              isActive={activeCommentId === "highlight-5"}
+            >
+              parody on bedroom analytics
             </FakeCommentHighlight>
             .
           </p>
 
           <p style={bodyStyle}>
-            We were instantly{" "}
-            <FakeCommentHighlight
-              comments={[]}
-              commentId="highlight-3"
-              onActivate={handleActivate}
-              isActive={activeCommentId === "highlight-3"}
-            >
-              hooked on writing with friends
-            </FakeCommentHighlight>{" "}
-            because it wasn&apos;t just about the writing. It was about the
-            conversations sparked by the writing, the stories and perspectives
-            that never came up in the routine of our relationships, and the
-            deeper discovery of people we thought we already knew so well.
-            &ldquo;Welcome to Write Club,&rdquo; we said when other friends
-            wanted to join in. Like a book club but for writing — the writing a
-            reason to gather and a way to riff with friends.
+            We were instantly hooked on writing with friends because it
+            wasn&apos;t just about the writing. It was about the conversations
+            sparked by the writing, the stories and perspectives that never came
+            up in the routine of our relationships, and the deeper discovery of
+            people we thought we already knew so well. &ldquo;Welcome to Write
+            Club,&rdquo; we said when other friends wanted to join in. Like a
+            book club but for writing — the writing a reason to gather and a way
+            to riff with friends.
           </p>
 
           <p style={bodyStyle}>
             <strong>
               <em>Riff</em>
             </strong>{" "}
-            is not for writers but for friends. Built by friends, a{" "}
-            <FakeCommentHighlight
-              comments={[]}
-              commentId="highlight-4"
-              onActivate={handleActivate}
-              isActive={activeCommentId === "highlight-4"}
-            >
-              passion project
-            </FakeCommentHighlight>{" "}
-            for ourselves. And if writing, storytelling, and riffing with your
-            friends sounds like your thing, it&apos;s free and it&apos;s for
-            you.
+            is not for writers but for friends. Built by friends, a passion
+            project for ourselves. And if writing, storytelling, and riffing
+            with your friends sounds like your thing, it&apos;s free and
+            it&apos;s for you.
           </p>
 
           {/* GIF */}
