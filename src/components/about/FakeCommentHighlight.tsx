@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 
 const FOUNDER_COLORS: Record<string, string> = {
   Jarric: "#01EFFC",
@@ -36,10 +37,17 @@ interface FakeComment {
 export default function FakeCommentHighlight({
   children,
   comments,
+  commentId,
+  onActivate,
+  isActive,
 }: {
   children: React.ReactNode;
   comments: FakeComment[];
+  commentId?: string;
+  onActivate?: (id: string) => void;
+  isActive?: boolean;
 }) {
+  const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0 });
   const highlightRef = useRef<HTMLElement>(null);
@@ -64,6 +72,10 @@ export default function FakeCommentHighlight({
   const color = FOUNDER_COLORS[comments[0]?.author] ?? "#01EFFC";
 
   const handleClick = () => {
+    if (!isMobile && commentId && onActivate) {
+      onActivate(commentId);
+      return;
+    }
     if (!highlightRef.current) return;
     const rect = highlightRef.current.getBoundingClientRect();
     const popoverWidth = 280;
@@ -89,7 +101,7 @@ export default function FakeCommentHighlight({
         ref={highlightRef}
         onClick={handleClick}
         style={{
-          background: hexToRgba(color, 0.25),
+          background: hexToRgba(color, isActive ? 0.5 : 0.25),
           borderRadius: "2px",
           cursor: "pointer",
           padding: 0,
@@ -98,6 +110,7 @@ export default function FakeCommentHighlight({
         {children}
       </mark>
       {open &&
+        (isMobile || !onActivate) &&
         typeof document !== "undefined" &&
         createPortal(
           <div
