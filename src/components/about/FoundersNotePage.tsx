@@ -92,6 +92,92 @@ const COMMENTS: SidebarComment[] = [
       },
     ],
   },
+  {
+    id: "highlight-6",
+    author: "Kyle",
+    avatarSrc: "/images/about/founderAvatars/kyle-avatar.jpg",
+    text: "i hate writing",
+    replies: [
+      {
+        author: "Chris",
+        avatarSrc: "/images/about/founderAvatars/chris-avatar.jpeg",
+        text: "what do you like?",
+      },
+      {
+        author: "Kyle",
+        avatarSrc: "/images/about/founderAvatars/kyle-avatar.jpg",
+        text: "i like lamps",
+      },
+    ],
+  },
+  {
+    id: "highlight-7",
+    author: "Derek",
+    avatarSrc: "/images/about/founderAvatars/derek-avatar.png",
+    text: "had no idea jarric was a Swiftie",
+    replies: [
+      {
+        author: "Chris",
+        avatarSrc: "/images/about/founderAvatars/chris-avatar.jpeg",
+        text: "had no idea jarric was gay",
+      },
+    ],
+  },
+  {
+    id: "highlight-8",
+    author: "Kyla",
+    avatarSrc: "/images/about/founderAvatars/kyla-avatar.jpg",
+    text: "literary mosh pit with friends",
+  },
+  {
+    id: "highlight-9",
+    author: "Jarric",
+    avatarSrc: "/images/about/founderAvatars/jarric-avatar.png",
+    text: "write clubs are the new book clubs",
+  },
+  {
+    id: "highlight-10",
+    author: "Jarric",
+    avatarSrc: "/images/about/founderAvatars/jarric-avatar.png",
+    text: "friends should have more clubs",
+    replies: [
+      {
+        author: "Kyla",
+        avatarSrc: "/images/about/founderAvatars/kyla-avatar.jpg",
+        text: "spicy margarita vinyl music club?",
+      },
+      {
+        author: "Chris",
+        avatarSrc: "/images/about/founderAvatars/chris-avatar.jpeg",
+        text: "down",
+      },
+    ],
+  },
+  {
+    id: "highlight-11",
+    author: "Kyle",
+    avatarSrc: "/images/about/founderAvatars/kyle-avatar.jpg",
+    text: "jarric thinks this is his life mission",
+  },
+  {
+    id: "highlight-12",
+    author: "Jarric",
+    avatarSrc: "/images/about/founderAvatars/jarric-avatar.png",
+    text: "since we're the only write club that we know",
+  },
+  {
+    id: "highlight-13",
+    author: "Chris",
+    avatarSrc: "/images/about/founderAvatars/chris-avatar.jpeg",
+    text: "we can't be the only dorks out there who think this is cool?",
+    replies: [
+      {
+        author: "Jarric",
+        avatarSrc: "/images/about/founderAvatars/jarric-avatar.png",
+        text: "i hear crickets",
+      },
+    ],
+  },
 ];
 
 function commentFor(id: string) {
@@ -289,23 +375,88 @@ export default function FoundersNotePage() {
 
           <p style={bodyStyle}>
             We were instantly hooked on writing with friends because it
-            wasn&apos;t just about the writing. It was about the conversations
-            sparked by the writing, the stories and perspectives that never came
-            up in the routine of our relationships, and the deeper discovery of
-            people we thought we already knew so well. &ldquo;Welcome to Write
-            Club,&rdquo; we said when other friends wanted to join in. Like a
-            book club but for writing — the writing a reason to gather and a way
-            to riff with friends.
+            wasn&apos;t just{" "}
+            <FakeCommentHighlight
+              comments={commentFor("highlight-6")}
+              commentId="highlight-6"
+              onActivate={handleActivate}
+              isActive={activeCommentId === "highlight-6"}
+            >
+              about the writing
+            </FakeCommentHighlight>
+            . It was about the conversations sparked by the writing, the stories
+            and perspectives that never came up in the routine of our
+            relationships, and the{" "}
+            <FakeCommentHighlight
+              comments={commentFor("highlight-7")}
+              commentId="highlight-7"
+              onActivate={handleActivate}
+              isActive={activeCommentId === "highlight-7"}
+            >
+              deeper discovery of people we thought we already knew so well
+            </FakeCommentHighlight>
+            . &ldquo;Welcome to{" "}
+            <FakeCommentHighlight
+              comments={commentFor("highlight-8")}
+              commentId="highlight-8"
+              onActivate={handleActivate}
+              isActive={activeCommentId === "highlight-8"}
+            >
+              Write Club
+            </FakeCommentHighlight>
+            ,&rdquo; we said when other friends wanted to join in.{" "}
+            <FakeCommentHighlight
+              comments={commentFor("highlight-9")}
+              commentId="highlight-9"
+              onActivate={handleActivate}
+              isActive={activeCommentId === "highlight-9"}
+            >
+              Like a book club but for writing
+            </FakeCommentHighlight>{" "}
+            — the writing a{" "}
+            <FakeCommentHighlight
+              comments={commentFor("highlight-10")}
+              commentId="highlight-10"
+              onActivate={handleActivate}
+              isActive={activeCommentId === "highlight-10"}
+            >
+              reason to gather
+            </FakeCommentHighlight>{" "}
+            and a way to riff with friends.
           </p>
 
           <p style={bodyStyle}>
             <strong>
               <em>Riff</em>
             </strong>{" "}
-            is not for writers but for friends. Built by friends, a passion
-            project for ourselves. And if writing, storytelling, and riffing
-            with your friends sounds like your thing, it&apos;s free and
-            it&apos;s for you.
+            is not for writers but for friends. Built by friends, a{" "}
+            <FakeCommentHighlight
+              comments={commentFor("highlight-11")}
+              commentId="highlight-11"
+              onActivate={handleActivate}
+              isActive={activeCommentId === "highlight-11"}
+            >
+              passion project
+            </FakeCommentHighlight>{" "}
+            <FakeCommentHighlight
+              comments={commentFor("highlight-12")}
+              commentId="highlight-12"
+              onActivate={handleActivate}
+              isActive={activeCommentId === "highlight-12"}
+            >
+              for ourselves
+            </FakeCommentHighlight>
+            . And if writing, storytelling, and riffing with your friends sounds
+            like your thing, it&apos;s free and{" "}
+            <FakeCommentHighlight
+              comments={commentFor("highlight-13")}
+              commentId="highlight-13"
+              onActivate={handleActivate}
+              isActive={activeCommentId === "highlight-13"}
+            >
+              it&apos;s for you
+            </FakeCommentHighlight>
+            .
           </p>
 
           {/* GIF */}
