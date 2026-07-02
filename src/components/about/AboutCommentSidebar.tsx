@@ -96,10 +96,10 @@ export default function AboutCommentSidebar({
                 <p
                   style={{
                     fontFamily: "var(--font-dm-sans)",
-                    fontSize: "13px",
-                    fontWeight: 500,
+                    fontSize: "12px",
+                    fontWeight: 700,
                     color: "#000",
-                    margin: "0 0 4px 0",
+                    margin: "0 0 2px 0",
                   }}
                 >
                   {comment.author}
@@ -108,7 +108,7 @@ export default function AboutCommentSidebar({
                   <p
                     style={{
                       fontFamily: "var(--font-dm-sans)",
-                      fontSize: "13px",
+                      fontSize: "14px",
                       fontWeight: 300,
                       color: "#000",
                       margin: 0,
@@ -186,16 +186,7 @@ export default function AboutCommentSidebar({
             </div>
 
             {comment.replies && comment.replies.length > 0 && (
-              <div
-                style={{
-                  marginTop: "8px",
-                  borderTop: "1px solid #E6E6E6",
-                  paddingTop: "8px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "8px",
-                }}
-              >
+              <div>
                 {comment.replies.map((reply, i) => (
                   <div
                     // eslint-disable-next-line react/no-array-index-key -- static seeded data
@@ -204,14 +195,15 @@ export default function AboutCommentSidebar({
                       display: "flex",
                       gap: "8px",
                       alignItems: "flex-start",
-                      marginLeft: "4px",
+                      marginTop: "10px",
+                      marginLeft: "36px",
                     }}
                   >
                     <Image
                       src={reply.avatarSrc}
                       alt={reply.author}
-                      width={24}
-                      height={24}
+                      width={28}
+                      height={28}
                       style={{
                         borderRadius: "50%",
                         border: "1px solid #000",
@@ -224,7 +216,7 @@ export default function AboutCommentSidebar({
                         style={{
                           fontFamily: "var(--font-dm-sans)",
                           fontSize: "12px",
-                          fontWeight: 500,
+                          fontWeight: 700,
                           color: "#000",
                           margin: "0 0 2px 0",
                         }}
@@ -234,7 +226,7 @@ export default function AboutCommentSidebar({
                       <p
                         style={{
                           fontFamily: "var(--font-dm-sans)",
-                          fontSize: "12px",
+                          fontSize: "14px",
                           fontWeight: 300,
                           color: "#000",
                           margin: 0,

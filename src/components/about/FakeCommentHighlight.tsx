@@ -100,6 +100,7 @@ export default function FakeCommentHighlight({
       <mark
         ref={highlightRef}
         onClick={handleClick}
+        data-comment-id={commentId}
         style={{
           background: hexToRgba(color, isActive ? 0.5 : 0.25),
           borderRadius: "2px",
