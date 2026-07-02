@@ -411,6 +411,15 @@ export default function FoundersNotePage() {
             and a way to riff with friends.
           </p>
 
+          {/* GIF */}
+          <div style={{ margin: "1em 0" }}>
+            <img
+              src="/images/about/friendsgiving2025.gif"
+              alt="Friendsgiving 2025"
+              style={{ width: "100%", height: "auto", display: "block" }}
+            />
+          </div>
+
           <p style={bodyStyle}>
             <strong>
               <em>Riff</em>
@@ -444,15 +453,6 @@ export default function FoundersNotePage() {
             </FakeCommentHighlight>
             .
           </p>
-
-          {/* GIF */}
-          <div style={{ margin: "1em 0" }}>
-            <img
-              src="/images/about/friendsgiving2025.gif"
-              alt="Friendsgiving 2025"
-              style={{ width: "100%", height: "auto", display: "block" }}
-            />
-          </div>
 
           {/* CTA */}
           <Link
