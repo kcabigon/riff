@@ -411,9 +411,12 @@ export default function FoundersNotePage() {
 
           {/* GIF */}
           <div style={{ margin: "1em 0" }}>
-            <img
+            <Image
               src="/images/about/friendsgiving2025.gif"
               alt="Friendsgiving 2025"
+              width={680}
+              height={510}
+              unoptimized
               style={{ width: "100%", height: "auto", display: "block" }}
             />
           </div>

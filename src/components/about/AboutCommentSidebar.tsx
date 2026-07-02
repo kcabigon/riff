@@ -8,14 +8,7 @@ import {
   useCallback,
 } from "react";
 import Image from "next/image";
-
-const FOUNDER_COLORS: Record<string, string> = {
-  Jarric: "#01EFFC",
-  Chris: "#00FF66",
-  Kyle: "#EECF01",
-  Derek: "#FF6B35",
-  Kyla: "#C01582",
-};
+import { FOUNDER_COLORS } from "./founderColors";
 
 const GAP = 8;
 
@@ -195,7 +188,7 @@ export default function AboutCommentSidebar({
                 width={28}
                 height={28}
                 style={{
-                  borderRadius: "50%",
+                  borderRadius: "64px",
                   border: "1px solid #000",
                   objectFit: "cover",
                   flexShrink: 0,
@@ -304,7 +297,7 @@ export default function AboutCommentSidebar({
                       display: "flex",
                       gap: "8px",
                       alignItems: "flex-start",
-                      marginTop: "10px",
+                      marginTop: "8px",
                       marginLeft: "36px",
                     }}
                   >
@@ -314,7 +307,7 @@ export default function AboutCommentSidebar({
                       width={28}
                       height={28}
                       style={{
-                        borderRadius: "50%",
+                        borderRadius: "64px",
                         border: "1px solid #000",
                         objectFit: "cover",
                         flexShrink: 0,
