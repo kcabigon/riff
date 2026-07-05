@@ -16,6 +16,15 @@ interface DeleteAccountConfirmModalProps {
   onClose: () => void;
 }
 
+function formatClubNames(clubs: BlockingClub[]): string {
+  if (clubs.length === 1) return clubs[0].name;
+  if (clubs.length === 2) return `${clubs[0].name} and ${clubs[1].name}`;
+  return `${clubs
+    .slice(0, -1)
+    .map((c) => c.name)
+    .join(", ")}, and ${clubs[clubs.length - 1].name}`;
+}
+
 export default function DeleteAccountConfirmModal({
   isOpen,
   onClose,
@@ -27,6 +36,7 @@ export default function DeleteAccountConfirmModal({
     null
   );
   const [isChecking, setIsChecking] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
 
   const isConfirmed = confirmText === "DELETE";
   const isBlocked = blockingClubs !== null && blockingClubs.length > 0;
@@ -37,15 +47,32 @@ export default function DeleteAccountConfirmModal({
       setError(null);
       setIsDeleting(false);
       setBlockingClubs(null);
+      setIsChecking(false);
+      setFetchError(false);
       return;
     }
 
+    let ignore = false;
     setIsChecking(true);
+    setFetchError(false);
     fetch("/api/users/me/admin-clubs")
-      .then((res) => res.json())
-      .then((data) => setBlockingClubs(data.blockingClubs ?? []))
-      .catch(() => setBlockingClubs([]))
-      .finally(() => setIsChecking(false));
+      .then((res) => {
+        if (!res.ok) throw new Error("check_failed");
+        return res.json();
+      })
+      .then((data) => {
+        if (!ignore) setBlockingClubs(data.blockingClubs ?? []);
+      })
+      .catch(() => {
+        if (!ignore) setFetchError(true);
+      })
+      .finally(() => {
+        if (!ignore) setIsChecking(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
   }, [isOpen]);
 
   const handleDelete = async () => {
@@ -57,13 +84,16 @@ export default function DeleteAccountConfirmModal({
       const res = await fetch("/api/users/me", { method: "DELETE" });
 
       if (!res.ok) {
-        const data = await res.json();
-        setError(data.error || "Failed to delete account");
+        setError(
+          res.status === 409
+            ? "You're hosting a club with other members. Head to your club settings to transfer host or delete the club first."
+            : "Something went wrong. Please try again."
+        );
         setIsDeleting(false);
         return;
       }
 
-      signOut({ callbackUrl: "/" });
+      await signOut({ callbackUrl: "/" });
     } catch {
       setError("Something went wrong. Please try again.");
       setIsDeleting(false);
@@ -71,11 +101,6 @@ export default function DeleteAccountConfirmModal({
   };
 
   const buttonDisabled = !isConfirmed || isDeleting;
-
-  const clubLabel =
-    blockingClubs && blockingClubs.length === 1
-      ? blockingClubs[0].name
-      : blockingClubs?.map((c) => c.name).join(" and ");
 
   return (
     <Modal
@@ -97,6 +122,39 @@ export default function DeleteAccountConfirmModal({
         >
           Loading...
         </p>
+      ) : fetchError ? (
+        <>
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "16px",
+              fontWeight: 300,
+              color: "#808080",
+              margin: "0 0 24px",
+              lineHeight: 1.6,
+            }}
+          >
+            Unable to verify your clubs right now. Close and try again.
+          </p>
+          <div style={{ textAlign: "center" }}>
+            <button
+              onClick={onClose}
+              style={{
+                backgroundColor: "#FFFFFF",
+                border: "none",
+                cursor: "pointer",
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "12px",
+                fontWeight: 300,
+                color: "#808080",
+                padding: "4px 12px",
+                textDecoration: "underline",
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </>
       ) : isBlocked ? (
         <>
           {/* Host gate warning box */}
@@ -118,7 +176,8 @@ export default function DeleteAccountConfirmModal({
                 lineHeight: 1.6,
               }}
             >
-              You&apos;re the host of <strong>{clubLabel}</strong>.
+              You&apos;re the host of{" "}
+              <strong>{formatClubNames(blockingClubs)}</strong>.
             </p>
             <p
               style={{
