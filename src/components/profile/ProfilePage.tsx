@@ -123,28 +123,7 @@ export default function ProfilePage({
             onShare={(pieceId) => setShareTarget(pieceId)}
           />
         </div>
-      ) : (
-        <div
-          style={{
-            maxWidth: "1000px",
-            margin: "0 auto",
-            padding: "80px 24px",
-          }}
-        >
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              color: "#808080",
-              margin: 0,
-              lineHeight: 1.6,
-            }}
-          >
-            Every writer starts with a blank page.
-          </p>
-        </div>
-      )}
+      ) : null}
     </div>
   );
 }
