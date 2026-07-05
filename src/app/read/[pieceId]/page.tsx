@@ -93,12 +93,11 @@ export default async function ReadPage({
       where: {
         pieceId,
         riffId,
-        riff: {
-          status: "REVEALED",
-          club: {
-            members: { some: { userId } },
-          },
-        },
+        riff: { status: "REVEALED" },
+        OR: [
+          { riff: { club: { members: { some: { userId } } } } },
+          { piece: { authorId: userId } },
+        ],
       },
       select: {
         riffId: true,
@@ -118,12 +117,11 @@ export default async function ReadPage({
     const pieceRiff = await prisma.pieceRiff.findFirst({
       where: {
         pieceId,
-        riff: {
-          status: "REVEALED",
-          club: {
-            members: { some: { userId } },
-          },
-        },
+        riff: { status: "REVEALED" },
+        OR: [
+          { riff: { club: { members: { some: { userId } } } } },
+          { piece: { authorId: userId } },
+        ],
       },
       select: {
         riffId: true,
