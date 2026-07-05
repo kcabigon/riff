@@ -35,7 +35,7 @@ export default function DeleteAccountConfirmModal({
   const [blockingClubs, setBlockingClubs] = useState<BlockingClub[] | null>(
     null
   );
-  const [isChecking, setIsChecking] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
   const [fetchError, setFetchError] = useState(false);
 
   const isConfirmed = confirmText === "DELETE";
@@ -47,7 +47,7 @@ export default function DeleteAccountConfirmModal({
       setError(null);
       setIsDeleting(false);
       setBlockingClubs(null);
-      setIsChecking(false);
+      setIsChecking(true);
       setFetchError(false);
       return;
     }
@@ -92,12 +92,17 @@ export default function DeleteAccountConfirmModal({
         setIsDeleting(false);
         return;
       }
-
-      await signOut({ callbackUrl: "/" });
     } catch {
       setError("Something went wrong. Please try again.");
       setIsDeleting(false);
+      return;
     }
+
+    // Account deleted — sign out outside the try/catch so a signOut failure
+    // doesn't show a "try again" prompt on an already-deleted account.
+    signOut({ callbackUrl: "/" }).catch(() => {
+      window.location.href = "/";
+    });
   };
 
   const buttonDisabled = !isConfirmed || isDeleting;
