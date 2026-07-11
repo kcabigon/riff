@@ -323,16 +323,16 @@ export default function FoundersNotePage() {
               have a blog
             </FakeCommentHighlight>
             , grow an audience, make money from our writing sense. We&apos;re
-            just friends with shared{" "}
+            just friends who{" "}
             <FakeCommentHighlight
               comments={commentFor("highlight-2")}
               commentId="highlight-2"
               onActivate={handleActivate}
               isActive={activeCommentId === "highlight-2"}
             >
-              desires to be creative
+              want to be creative
             </FakeCommentHighlight>{" "}
-            and maybe get a few laughs out of each other. We had this crazy
+            and like to get a few laughs out of each other. We had this crazy
             idea, what if the five of us wrote something and just shared them
             with each other? Two weeks later, we shared five personal essays{" "}
             <FakeCommentHighlight
