@@ -57,6 +57,7 @@ export default async function RiffPage({
           id: true,
           name: true,
           adminId: true,
+          moderatorId: true,
           admin: { select: { firstName: true } },
         },
       },
@@ -104,7 +105,7 @@ export default async function RiffPage({
     redirect("/");
   }
 
-  // Verify user is a club member + predicted volume number in parallel (both need only riff.clubId)
+  // Verify user is a club member OR a riff participant + predicted volume number in parallel
   const [member, predictedVolumeNumber] = await Promise.all([
     prisma.clubMember.findFirst({
       where: { clubId: riff.clubId, userId },
@@ -121,16 +122,19 @@ export default async function RiffPage({
       : Promise.resolve(undefined),
   ]);
 
-  if (!member) {
+  const isJoined = riff.participants.some((p) => p.user.id === userId);
+
+  if (!member && !isJoined) {
     redirect("/");
   }
-
-  const isJoined = riff.participants.some((p) => p.user.id === userId);
   const hasDraft = riff.pieces.some((p) => p.piece.authorId === userId);
   const hasSubmitted = riff.pieces.some(
     (p) => p.piece.authorId === userId && p.submittedAt !== null
   );
-  const isAdmin = riff.club.adminId === userId;
+  const isAdmin =
+    riff.club.adminId === userId || riff.club.moderatorId === userId;
+  const canDeleteRiff =
+    riff.club.adminId === userId || riff.creatorId === userId;
 
   // ID of the user's unsubmitted piece — needed for late submission on revealed riffs
   const draftPieceId =
@@ -252,6 +256,7 @@ export default async function RiffPage({
       riff={serializedRiff}
       currentUserId={userId}
       isAdmin={isAdmin}
+      canDeleteRiff={canDeleteRiff}
       isJoined={isJoined}
       hasDraft={hasDraft}
       hasSubmitted={hasSubmitted}
