@@ -117,9 +117,24 @@ export function getTotalWordCount(
   return pieces.reduce((sum, p) => sum + (p.piece?.wordCount || 0), 0);
 }
 
-// Whole days between now and a future date, rounded up (e.g. 6.1 days -> 7).
+// Calendar days between today and a future date (0 = later today, 1 =
+// tomorrow, etc). Uses UTC date components rather than raw elapsed
+// milliseconds so a deadline later *today* correctly returns 0 instead of
+// rounding up to "1 day" (which previously showed as "tomorrow").
 export function daysUntil(date: Date): number {
-  return Math.ceil((date.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const now = new Date();
+  const startOfToday = Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate()
+  );
+  const startOfTargetDay = Date.UTC(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate()
+  );
+  return Math.round((startOfTargetDay - startOfToday) / DAY_MS);
 }
 
 // Whole days elapsed since a past date, rounded down.

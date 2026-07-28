@@ -714,7 +714,12 @@ export async function sendDeadlineApproachingEmail({
     month: "long",
     day: "numeric",
   });
-  const dayLabel = daysRemaining <= 1 ? "tomorrow" : `in ${daysRemaining} days`;
+  const dayLabel =
+    daysRemaining <= 0
+      ? "today"
+      : daysRemaining === 1
+        ? "tomorrow"
+        : `in ${daysRemaining} days`;
   const variant = deadlineApproachingVariant(
     daysRemaining,
     clubName,
