@@ -116,3 +116,22 @@ export function getTotalWordCount(
 ): number {
   return pieces.reduce((sum, p) => sum + (p.piece?.wordCount || 0), 0);
 }
+
+// Whole days between now and a future date, rounded up (e.g. 6.1 days -> 7).
+export function daysUntil(date: Date): number {
+  return Math.ceil((date.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+}
+
+// Whole days elapsed since a past date, rounded down.
+export function daysSince(date: Date): number {
+  return Math.floor((Date.now() - date.getTime()) / (24 * 60 * 60 * 1000));
+}
+
+// Re-send lookback window for the deadline-approaching reminder, scaled to
+// how much time is left — weekly when there's plenty of runway, more
+// frequent as the deadline nears.
+export function deadlineReminderLookbackDays(daysRemaining: number): number {
+  if (daysRemaining > 7) return 7;
+  if (daysRemaining >= 3) return 3;
+  return 2;
+}
