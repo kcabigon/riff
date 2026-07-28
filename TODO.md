@@ -137,6 +137,7 @@ Last updated: May 16, 2026
 ## Soon (post-launch)
 
 - [x] Welcome tutorial: mobile-optimized version (portrait layout, swipe navigation)
+- [ ] 🔨 @chris — Engagement reminders: club invite nudges, riff-created push, deadline-approaching emails, "remember to write" nudges, activity updates when others submit/comment (supersedes the two items below)
 - [ ] Notification emails via Resend — deadline approaching, new comment
 - [ ] Deadline reminder cron job (Vercel Cron, 24h before deadline)
 - [ ] Toast notifications replacing `console.error` catches
