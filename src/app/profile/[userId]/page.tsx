@@ -34,10 +34,16 @@ export default async function ProfilePageRoute({
 
   const currentUserId = session.user.id;
 
-  // Get the current user's last active club for back navigation
+  // Get the current user's last active club for back navigation + nav display
   const currentUser = await prisma.user.findUnique({
     where: { id: currentUserId },
-    select: { lastActiveClubId: true },
+    select: {
+      id: true,
+      username: true,
+      name: true,
+      avatarUrl: true,
+      lastActiveClubId: true,
+    },
   });
 
   // Fetch the target user
@@ -49,6 +55,9 @@ export default async function ProfilePageRoute({
       firstName: true,
       lastName: true,
       username: true,
+      avatarUrl: true,
+      bio: true,
+      createdAt: true,
     },
   });
 
@@ -78,7 +87,6 @@ export default async function ProfilePageRoute({
       id: true,
       title: true,
       coverImage: true,
-      currentContent: true,
       wordCount: true,
       riffs: {
         where: { submittedAt: { not: null } },
@@ -105,7 +113,6 @@ export default async function ProfilePageRoute({
     id: p.id,
     title: p.title,
     coverImage: p.coverImage,
-    currentContent: p.currentContent,
     wordCount: p.wordCount,
     // Revealed = riff is REVEALED/COMPLETED AND viewer is in that club
     // (own profile skips the club check — always accessible)
@@ -126,6 +133,16 @@ export default async function ProfilePageRoute({
   return (
     <ProfilePage
       user={user}
+      currentUser={
+        currentUser
+          ? {
+              id: currentUser.id,
+              username: currentUser.username,
+              name: currentUser.name,
+              avatarUrl: currentUser.avatarUrl,
+            }
+          : null
+      }
       stats={{ pieceCount, totalWordCount }}
       pieces={pieces}
       isOwnProfile={isOwnProfile}

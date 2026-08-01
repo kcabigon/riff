@@ -64,7 +64,6 @@ interface RiffPageLayoutProps {
         authorId: string;
         wordCount: number;
         coverImage?: string | null;
-        currentContent?: string | null;
         updatedAt?: string;
         commentCount?: number;
         author?: {
@@ -77,6 +76,7 @@ interface RiffPageLayoutProps {
   };
   currentUserId: string;
   isAdmin: boolean;
+  canDeleteRiff?: boolean;
   isJoined: boolean;
   hasDraft: boolean;
   hasSubmitted: boolean;
@@ -106,6 +106,7 @@ export default function RiffPageLayout({
   riff,
   currentUserId,
   isAdmin,
+  canDeleteRiff = isAdmin,
   isJoined: initialIsJoined,
   hasDraft,
   hasSubmitted,
@@ -282,13 +283,17 @@ export default function RiffPageLayout({
                             },
                           ]
                         : []),
-                      { type: "divider" },
-                      {
-                        type: "action",
-                        label: "Delete riff",
-                        color: "#DC2626",
-                        onClick: () => setIsDeleteModalOpen(true),
-                      },
+                      ...(canDeleteRiff
+                        ? [
+                            { type: "divider" as const },
+                            {
+                              type: "action" as const,
+                              label: "Delete riff",
+                              color: "#DC2626",
+                              onClick: () => setIsDeleteModalOpen(true),
+                            },
+                          ]
+                        : []),
                     ];
                     return (
                       <ThreeDotButton
@@ -519,7 +524,6 @@ export default function RiffPageLayout({
                       id: pieceRiff.piece.id,
                       title: pieceRiff.piece.title,
                       coverImage: pieceRiff.piece.coverImage,
-                      currentContent: pieceRiff.piece.currentContent || "",
                       wordCount: pieceRiff.piece.wordCount,
                       commentCount: pieceRiff.piece.commentCount,
                       author: pieceRiff.piece.author || {

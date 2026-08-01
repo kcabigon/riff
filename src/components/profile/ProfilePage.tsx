@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
 import ProfileHeader from "./ProfileHeader";
-import PiecesGrid, { FeaturedPiece } from "./tabs/PiecesGrid";
+import PiecesGrid from "./tabs/PiecesGrid";
 import type { Piece } from "./tabs/PiecesGrid";
 import DeletePieceModal from "@/components/profile/DeletePieceModal";
 import ShareModal, { PublicShare } from "@/components/profile/ShareModal";
@@ -16,7 +15,16 @@ interface ProfilePageProps {
     firstName: string | null;
     lastName: string | null;
     username: string | null;
+    avatarUrl: string | null;
+    bio: string | null;
+    createdAt: Date;
   };
+  currentUser: {
+    id: string;
+    username: string | null;
+    name: string | null;
+    avatarUrl: string | null;
+  } | null;
   stats: {
     pieceCount: number;
     totalWordCount: number;
@@ -28,12 +36,12 @@ interface ProfilePageProps {
 
 export default function ProfilePage({
   user,
+  currentUser,
   stats,
   lastActiveClubId,
   pieces: initialPieces,
   isOwnProfile,
 }: ProfilePageProps) {
-  const router = useRouter();
   const [pieces, setPieces] = useState(initialPieces);
   const [deleteTarget, setDeleteTarget] = useState<{
     id: string;
@@ -60,8 +68,6 @@ export default function ProfilePage({
       )
     );
   };
-
-  const [featured, ...rest] = pieces;
 
   const isEmpty = pieces.length === 0;
 
@@ -160,9 +166,10 @@ export default function ProfilePage({
 
       <ProfileHeader
         profileUser={user}
+        currentUser={currentUser}
         isOwnProfile={isOwnProfile}
         lastActiveClubId={lastActiveClubId}
-        stats={isOwnProfile ? stats : undefined}
+        stats={stats}
       />
 
       {/* Empty state — bouncing box */}
@@ -211,40 +218,9 @@ export default function ProfilePage({
       )}
 
       <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
-        {featured && (
-          <div style={{ padding: "32px 0 0" }}>
-            <FeaturedPiece
-              piece={featured}
-              onClick={
-                !featured.isRevealed && isOwnProfile
-                  ? () => router.push(`/write/${featured.id}`)
-                  : !featured.isRevealed && featured.isPublic
-                    ? () => router.push(`/p/${featured.id}`)
-                    : !featured.isRevealed
-                      ? () => {}
-                      : isOwnProfile || featured.viewerHasClubAccess
-                        ? () =>
-                            router.push(
-                              `/read/${featured.id}?from=profile&userId=${user.id}`
-                            )
-                        : featured.isPublic
-                          ? () => router.push(`/p/${featured.id}`)
-                          : () => {}
-              }
-              isOwnProfile={isOwnProfile}
-              onDelete={() =>
-                setDeleteTarget({ id: featured.id, title: featured.title })
-              }
-              onShare={(pieceId) => setShareTarget(pieceId)}
-            />
-          </div>
-        )}
-
-        {/* Jams — coming soon */}
-
-        {rest.length > 0 && (
+        {pieces.length > 0 && (
           <PiecesGrid
-            pieces={rest}
+            pieces={pieces}
             isOwnProfile={isOwnProfile}
             profileUserId={user.id}
             onDelete={(id: string, title: string | null) =>
