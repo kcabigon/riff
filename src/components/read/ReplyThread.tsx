@@ -387,7 +387,7 @@ const ReplyThread = forwardRef<ReplyThreadHandle, ReplyThreadProps>(
                           loading={deleting}
                           onClick={() => handleDeleteReply(reply.id)}
                         >
-                          Delete
+                          {deleting ? "Deleting..." : "Delete"}
                         </DestructiveButton>
                       </div>
                     </div>
