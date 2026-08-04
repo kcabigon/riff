@@ -11,7 +11,6 @@ import DestructiveButton from "@/components/DestructiveButton";
 import { AUTHOR_COLORS, buildAuthorColorMap } from "./ReadOnlyEditor";
 import { timeAgo } from "@/lib/timeAgo";
 import { CommentAuthor } from "@/types";
-import NoiseBackground from "@/components/NoiseBackground";
 
 interface CommentData {
   id: string;
@@ -500,24 +499,6 @@ export default function CommentSidebar({
   const [minHeight, setMinHeight] = useState(0);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [unanchoredOpen, setUnanchoredOpen] = useState(false);
-  const [unanchoredHovered, setUnanchoredHovered] = useState(false);
-  const unanchoredRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!unanchoredOpen) return;
-    function handleClickOutside(e: MouseEvent) {
-      if (
-        unanchoredRef.current &&
-        !unanchoredRef.current.contains(e.target as Node)
-      ) {
-        setUnanchoredOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [unanchoredOpen]);
-
   // Measure actual rendered height of a comment card
   const getCardHeight = (id: string) => {
     const el = cardRefs.current[id];
@@ -840,13 +821,10 @@ export default function CommentSidebar({
         </div>
       )}
 
-      {/* Unanchored comments — collapsible section below anchored cards.
-          minHeight = maxBottom + 40 (the position system adds a 40px buffer beyond the last card).
-          GAP is the fixed spacing on both sides of the divider. */}
+      {/* Unanchored comments — shown below anchored cards with a subtle label */}
       {unanchoredComments.length > 0 &&
         (() => {
           const GAP = 24;
-          // Subtract the 40px buffer so the divider is GAP px below the actual last card bottom
           const dividerTop = minHeight > 0 ? minHeight - 40 + GAP : GAP;
           return (
             <>
@@ -858,185 +836,74 @@ export default function CommentSidebar({
                 }}
               />
 
-              <div
-                ref={unanchoredRef}
+              <span
                 style={{
+                  display: "block",
                   marginTop: `${GAP}px`,
-                  boxShadow: unanchoredOpen ? "4px 4px 0 #000" : "none",
-                  transition: "box-shadow 0.15s ease",
+                  marginBottom: "12px",
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "11px",
+                  fontWeight: 300,
+                  color: "#808080",
                 }}
               >
-                {/* Toggle header */}
-                <button
-                  onClick={() => setUnanchoredOpen((o) => !o)}
-                  onMouseEnter={() => setUnanchoredHovered(true)}
-                  onMouseLeave={() => setUnanchoredHovered(false)}
-                  style={{
-                    position: "relative",
-                    overflow: "hidden",
-                    width: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    background: unanchoredOpen ? "#000000" : "#FFFFFF",
-                    borderTop:
-                      unanchoredOpen || unanchoredHovered
-                        ? "2px solid #000000"
-                        : "2px solid #E6E6E6",
-                    borderRight:
-                      unanchoredOpen || unanchoredHovered
-                        ? "2px solid #000000"
-                        : "2px solid #E6E6E6",
-                    borderBottom: unanchoredOpen
-                      ? "none"
-                      : unanchoredHovered
-                        ? "2px solid #000000"
-                        : "2px solid #E6E6E6",
-                    borderLeft:
-                      unanchoredOpen || unanchoredHovered
-                        ? "2px solid #000000"
-                        : "2px solid #E6E6E6",
-                    padding: "14px 14px",
-                    cursor: "pointer",
-                    transition:
-                      "background 0.15s ease, border-color 0.15s ease",
-                  }}
-                >
-                  {/* Noise texture — only visible when collapsed (white bg) */}
-                  {!unanchoredOpen && <NoiseBackground />}
-                  <div
-                    style={{
-                      position: "relative",
-                      zIndex: 1,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontFamily: "var(--font-dm-sans)",
-                        fontSize: "11px",
-                        fontWeight: 600,
-                        letterSpacing: "0.08em",
-                        textTransform: "uppercase",
-                        color: unanchoredOpen ? "#FFFFFF" : "#000000",
-                      }}
-                    >
-                      Replies on Modified Text
-                    </span>
-                    <span
-                      style={{
-                        fontFamily: "var(--font-dm-sans)",
-                        fontSize: "11px",
-                        fontWeight: 500,
-                        color: unanchoredOpen ? "#9C9C9C" : "#808080",
-                      }}
-                    >
-                      {unanchoredComments.length}
-                    </span>
-                  </div>
-                  {/* Chevron */}
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 12 12"
-                    fill="none"
-                    style={{
-                      position: "relative",
-                      zIndex: 1,
-                      transform: unanchoredOpen
-                        ? "rotate(180deg)"
-                        : "rotate(0deg)",
-                      transition: "transform 0.2s ease",
-                      flexShrink: 0,
-                    }}
-                  >
-                    <path
-                      d="M2 4L6 8L10 4"
-                      stroke={unanchoredOpen ? "#FFFFFF" : "#000000"}
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </button>
+                On edited text · {unanchoredComments.length}
+              </span>
 
-                {/* Collapsible body — whole container gets shadow when open */}
-                <div
-                  style={{
-                    overflow: "hidden",
-                    maxHeight: unanchoredOpen ? "9999px" : "0",
-                    transition: unanchoredOpen
-                      ? "max-height 0.35s ease"
-                      : "max-height 0.2s ease",
-                    borderTop: "none",
-                    borderRight: unanchoredOpen ? "2px solid #000000" : "none",
-                    borderBottom: unanchoredOpen ? "2px solid #000000" : "none",
-                    borderLeft: unanchoredOpen ? "2px solid #000000" : "none",
-                  }}
-                >
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "8px",
+                }}
+              >
+                {unanchoredComments.map((comment) => (
                   <div
-                    style={{
-                      padding: "16px",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "8px",
+                    key={comment.id}
+                    ref={(el) => {
+                      cardRefs.current[comment.id] = el;
                     }}
+                    data-sidebar-comment-id={comment.id}
+                    onClick={() => onCommentClick?.(comment.id)}
+                    style={{ cursor: "pointer" }}
                   >
-                    {unanchoredComments.map((comment) => (
-                      <div
-                        key={comment.id}
-                        ref={(el) => {
-                          cardRefs.current[comment.id] = el;
-                        }}
-                        data-sidebar-comment-id={comment.id}
-                        onClick={() => onCommentClick?.(comment.id)}
-                        style={{ cursor: "pointer" }}
-                      >
-                        <CommentCard
-                          comment={comment}
-                          isActive={activeHighlightIds.includes(comment.id)}
-                          isOwn={comment.authorId === currentUserId}
-                          isEditing={editingId === comment.id}
-                          isExpanded={expandedId === comment.id}
-                          onDelete={() => onDelete(comment.id)}
-                          onEdit={() => setEditingId(comment.id)}
-                          onSave={async (newContent) => {
-                            await onUpdate(comment.id, newContent);
-                            setEditingId(null);
-                          }}
-                          onCancelEdit={() => setEditingId(null)}
-                          onActivate={() => onCommentClick?.(comment.id)}
-                          onToggleReplies={() =>
-                            setExpandedId(
-                              expandedId === comment.id ? null : comment.id
-                            )
-                          }
-                          onReplyAdded={(reply) =>
-                            onReplyAdded(comment.id, reply)
-                          }
-                          onReplyUpdated={(replyId, newContent) =>
-                            onReplyUpdated(comment.id, replyId, newContent)
-                          }
-                          onReplyDeleted={(replyId) =>
-                            onReplyDeleted(comment.id, replyId)
-                          }
-                          currentUser={currentUser}
-                          pieceId={pieceId}
-                          riffId={riffId}
-                          clubId={clubId}
-                          disableReplies={disableReplies}
-                          color={
-                            authorColors[comment.authorId] || AUTHOR_COLORS[0]
-                          }
-                          showQuote
-                          colorShadow={false}
-                        />
-                      </div>
-                    ))}
+                    <CommentCard
+                      comment={comment}
+                      isActive={activeHighlightIds.includes(comment.id)}
+                      isOwn={comment.authorId === currentUserId}
+                      isEditing={editingId === comment.id}
+                      isExpanded={expandedId === comment.id}
+                      onDelete={() => onDelete(comment.id)}
+                      onEdit={() => setEditingId(comment.id)}
+                      onSave={async (newContent) => {
+                        await onUpdate(comment.id, newContent);
+                        setEditingId(null);
+                      }}
+                      onCancelEdit={() => setEditingId(null)}
+                      onActivate={() => onCommentClick?.(comment.id)}
+                      onToggleReplies={() =>
+                        setExpandedId(
+                          expandedId === comment.id ? null : comment.id
+                        )
+                      }
+                      onReplyAdded={(reply) => onReplyAdded(comment.id, reply)}
+                      onReplyUpdated={(replyId, newContent) =>
+                        onReplyUpdated(comment.id, replyId, newContent)
+                      }
+                      onReplyDeleted={(replyId) =>
+                        onReplyDeleted(comment.id, replyId)
+                      }
+                      currentUser={currentUser}
+                      pieceId={pieceId}
+                      riffId={riffId}
+                      clubId={clubId}
+                      disableReplies={disableReplies}
+                      color={authorColors[comment.authorId] || AUTHOR_COLORS[0]}
+                      showQuote
+                      colorShadow={false}
+                    />
                   </div>
-                </div>
+                ))}
               </div>
             </>
           );
