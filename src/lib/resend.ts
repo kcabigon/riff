@@ -627,8 +627,8 @@ function deadlineApproachingVariant(
 ): ReminderEmailVariant {
   if (daysRemaining > 7) {
     return {
-      subject: `${riffTitle} closes ${dayLabel} — Great Scott`,
-      headline: `Great Scott — ${riffTitle} closes ${dayLabel}.`,
+      subject: `${riffTitle} closes ${dayLabel}`,
+      headline: `Plenty of time. Famous last words.`,
       body: `The deadline's ${deadlineStr}. Get your piece in before ${clubName} moves on without you.`,
     };
   }
