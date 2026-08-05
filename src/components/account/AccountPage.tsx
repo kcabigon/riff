@@ -13,6 +13,7 @@ interface AccountPageProps {
     firstName: string | null;
     lastName: string | null;
     avatarUrl: string | null;
+    bio: string | null;
     email: string | null;
   };
   clubs: Array<{ id: string; name: string }>;

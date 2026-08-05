@@ -5,6 +5,7 @@
 
 import { Resend } from "resend";
 import { prisma } from "@/lib/prisma";
+import { getBaseUrl } from "@/lib/env";
 
 function getResend() {
   return new Resend(process.env.RESEND_API_KEY);
@@ -47,7 +48,7 @@ function emailShell({
   clubName?: string;
   unsubscribe?: boolean;
 }): string {
-  const baseUrl = process.env.NEXTAUTH_URL || "https://letsriff.app";
+  const baseUrl = getBaseUrl();
   const fullFooterText = unsubscribe
     ? `${footerText} · <a href="${baseUrl}/account" style="color:#bbbbbb;">Unsubscribe</a>`
     : footerText;
@@ -217,7 +218,7 @@ export async function sendRiffCreatedEmail({
   email,
   actorName,
   clubName,
-  clubUrl,
+  riffUrl,
   riffTitle,
   prompt,
   deadline,
@@ -225,7 +226,7 @@ export async function sendRiffCreatedEmail({
   email: string;
   actorName: string;
   clubName: string;
-  clubUrl: string;
+  riffUrl: string;
   riffTitle?: string | null;
   prompt?: string | null;
   deadline?: Date | null;
@@ -238,7 +239,7 @@ export async function sendRiffCreatedEmail({
       html: getRiffCreatedEmailTemplate({
         actorName,
         clubName,
-        clubUrl,
+        riffUrl,
         riffTitle,
         prompt,
         deadline,
@@ -373,11 +374,11 @@ function getOnboardingEmailTemplate(magicLink: string): string {
 function getRiffCreatedEmailTemplate({
   actorName,
   clubName,
-  clubUrl,
+  riffUrl,
 }: {
   actorName: string;
   clubName: string;
-  clubUrl: string;
+  riffUrl: string;
   riffTitle?: string | null;
   prompt?: string | null;
   deadline?: Date | null;
@@ -394,7 +395,7 @@ function getRiffCreatedEmailTemplate({
             </td>
           </tr>
 
-          ${emailButton("Let's riff", clubUrl)}`,
+          ${emailButton("Let's riff", riffUrl)}`,
   });
 }
 
@@ -605,6 +606,84 @@ export async function sendAllPiecesSubmittedEmail({
     if (error) console.error("Resend error (allPiecesSubmitted):", error);
   } catch (error) {
     console.error("Error sending all pieces submitted email:", error);
+  }
+}
+
+export async function sendCoHostAssignedEmail({
+  email,
+  coHostName,
+  adminName,
+  clubName,
+  clubUrl,
+}: {
+  email: string;
+  coHostName: string;
+  adminName: string;
+  clubName: string;
+  clubUrl: string;
+}): Promise<void> {
+  try {
+    const { error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to: email,
+      subject: `You're a co-host of ${clubName}`,
+      html: emailShell({
+        title: `You're a co-host of ${clubName}`,
+        clubName,
+        footerText: `You're receiving this because you're a member of ${clubName} on Riff.`,
+        content: `
+          <tr>
+            <td style="padding:40px 40px 16px;">
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">You're a co-host.</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;"><strong style="font-weight:500;">${adminName}</strong> made you a co-host of <strong style="font-weight:500;">${clubName}</strong>. You can now start riffs, reveal pieces, and edit club details.</p>
+            </td>
+          </tr>
+
+          ${emailButton("Visit club", clubUrl)}`,
+      }),
+    });
+    if (error) console.error("Resend error (coHostAssigned):", error);
+  } catch (error) {
+    console.error("Error sending co-host assigned email:", error);
+  }
+}
+
+export async function sendHostTransferredEmail({
+  email,
+  oldHostName,
+  newHostName,
+  clubName,
+  clubUrl,
+}: {
+  email: string;
+  oldHostName: string;
+  newHostName: string;
+  clubName: string;
+  clubUrl: string;
+}): Promise<void> {
+  try {
+    const { error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to: email,
+      subject: `New host in ${clubName}`,
+      html: emailShell({
+        title: `New host in ${clubName}`,
+        clubName,
+        footerText: `You're receiving this because you're a member of ${clubName} on Riff.`,
+        content: `
+          <tr>
+            <td style="padding:40px 40px 16px;">
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">New club host.</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;"><strong style="font-weight:500;">${oldHostName}</strong> has transferred host privileges to <strong style="font-weight:500;">${newHostName}</strong>.</p>
+            </td>
+          </tr>
+
+          ${emailButton("Visit club", clubUrl)}`,
+      }),
+    });
+    if (error) console.error("Resend error (hostTransferred):", error);
+  } catch (error) {
+    console.error("Error sending host transferred email:", error);
   }
 }
 

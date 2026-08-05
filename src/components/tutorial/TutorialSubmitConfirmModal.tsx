@@ -41,7 +41,6 @@ export default function TutorialSubmitConfirmModal({
             id: TUTORIAL_PIECE.id,
             title: TUTORIAL_PIECE.title,
             coverImage: TUTORIAL_PIECE.coverImage,
-            currentContent: "",
           }}
           isRead={true}
           onClick={() => {}}
