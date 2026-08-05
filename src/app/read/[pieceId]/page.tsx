@@ -4,6 +4,14 @@ import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import ReadPageLayout from "@/components/read/ReadPageLayout";
 
+// ── Immersive read experience (single piece) ─────────────────────────────────
+// The default read view renders normally; for ONE opted-in piece we surface an
+// "Experience in motion (Beta)" CTA under the author metadata that opens the
+// bespoke immersive experience as an overlay. Flip EXPERIMENT_ENABLED to false to
+// remove the CTA. No DB writes, no schema changes; no other piece is affected.
+const EXPERIMENT_ENABLED = true;
+const EXPERIMENT_PIECE_ID = "cmpbuo77j0001le04v4apbyyd";
+
 export async function generateMetadata({
   params,
 }: {
@@ -85,12 +93,11 @@ export default async function ReadPage({
       where: {
         pieceId,
         riffId,
-        riff: {
-          status: "REVEALED",
-          club: {
-            members: { some: { userId } },
-          },
-        },
+        riff: { status: "REVEALED" },
+        OR: [
+          { riff: { club: { members: { some: { userId } } } } },
+          { piece: { authorId: userId } },
+        ],
       },
       select: {
         riffId: true,
@@ -110,12 +117,11 @@ export default async function ReadPage({
     const pieceRiff = await prisma.pieceRiff.findFirst({
       where: {
         pieceId,
-        riff: {
-          status: "REVEALED",
-          club: {
-            members: { some: { userId } },
-          },
-        },
+        riff: { status: "REVEALED" },
+        OR: [
+          { riff: { club: { members: { some: { userId } } } } },
+          { piece: { authorId: userId } },
+        ],
       },
       select: {
         riffId: true,
@@ -215,6 +221,12 @@ export default async function ReadPage({
     },
   });
 
+  // The CTA shows only on the one opted-in piece, in every environment. That ID
+  // lives in the production DB and never exists in the (separate) dev DB, so the
+  // CTA simply doesn't appear locally — to test the experience, temporarily point
+  // EXPERIMENT_PIECE_ID at a local piece, then revert before merging.
+  const showMotion = EXPERIMENT_ENABLED && pieceId === EXPERIMENT_PIECE_ID;
+
   return (
     <ReadPageLayout
       piece={{
@@ -244,6 +256,7 @@ export default async function ReadPage({
       previousPiece={previousPiece}
       nextPiece={nextPiece}
       fromProfileUserId={from === "profile" ? fromUserId : undefined}
+      showMotion={showMotion}
     />
   );
 }
