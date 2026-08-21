@@ -475,8 +475,8 @@ export async function sendMemberJoinedEmail({
         content: `
           <tr>
             <td style="padding:40px 40px 16px;">
-              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">Your club has a new member.</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">Welcome ${newMemberFullName} to the club.</p>
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${newMemberFullName} joined ${clubName}.</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">Riff on, baby.</p>
             </td>
           </tr>
 
@@ -699,7 +699,9 @@ export async function sendCommentNotificationEmail({
   pieceUrl: string;
 }): Promise<void> {
   const commentLabel =
-    commentCount === 1 ? "1 new comment" : `${commentCount} new comments`;
+    commentCount === 1
+      ? "1 new comment was left for you in the last 24 hours."
+      : `${commentCount} new comments were left for you in the last 24 hours.`;
 
   try {
     const { error } = await getResend().emails.send({
@@ -713,7 +715,7 @@ export async function sendCommentNotificationEmail({
           <tr>
             <td style="padding:40px 40px 16px;">
               <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">New comments on "${pieceTitle}".</h1>
-              <p style="margin:0 0 16px 0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${commentLabel} in the past 24 hours.</p>
+              <p style="margin:0 0 16px 0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${commentLabel}</p>
             </td>
           </tr>
 
