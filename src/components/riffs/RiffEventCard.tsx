@@ -287,23 +287,20 @@ export default function RiffEventCard({
                 gap: "12px",
               }}
             >
-              <p
-                className={
-                  riff.participants.length > 5
-                    ? "riff-joined-by-mobile-hidden"
-                    : ""
-                }
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "14px",
-                  fontWeight: 300,
-                  lineHeight: "normal",
-                  color: textColor,
-                  margin: 0,
-                }}
-              >
-                Joined by
-              </p>
+              {riff.participants.length <= 5 && (
+                <p
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "14px",
+                    fontWeight: 300,
+                    lineHeight: "normal",
+                    color: textColor,
+                    margin: 0,
+                  }}
+                >
+                  Joined by
+                </p>
+              )}
               <div style={{ display: "flex", alignItems: "center" }}>
                 <AvatarStack
                   users={riff.participants
@@ -518,9 +515,6 @@ export default function RiffEventCard({
           }
           .riff-event-card-cta button {
             width: 100% !important;
-          }
-          .riff-joined-by-mobile-hidden {
-            display: none !important;
           }
         }
       `}</style>
