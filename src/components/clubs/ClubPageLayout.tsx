@@ -307,6 +307,7 @@ export default function ClubPageLayout({
           }
           clubs={userClubs}
           currentClub={{ id: club.id, name: clubName }}
+          showCreateDropdown={false}
         />
       </div>
 

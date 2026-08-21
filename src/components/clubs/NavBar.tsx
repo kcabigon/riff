@@ -24,6 +24,7 @@ interface NavBarProps {
     name: string;
   } | null;
   showClubDropdown?: boolean;
+  showCreateDropdown?: boolean;
 }
 
 export default function NavBar({
@@ -31,6 +32,7 @@ export default function NavBar({
   clubs,
   currentClub,
   showClubDropdown = true,
+  showCreateDropdown = true,
 }: NavBarProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -90,7 +92,7 @@ export default function NavBar({
             />
           )}
 
-          <CreateDropdown />
+          {showCreateDropdown && <CreateDropdown />}
         </div>
 
         {/* Right Section: Bell + Avatar Dropdown */}
