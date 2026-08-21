@@ -439,7 +439,7 @@ export default function RiffEventCard({
                         margin: 0,
                       }}
                     >
-                      Words written
+                      Words
                     </p>
                   </div>
                 ) : (
@@ -503,12 +503,7 @@ export default function RiffEventCard({
             align-items: center !important;
           }
           .riff-event-card-progress {
-            align-items: center !important;
-          }
-          .riff-event-card-progress-line {
-            flex-direction: row !important;
-            align-items: baseline !important;
-            gap: 6px !important;
+            display: none !important;
           }
           .riff-event-card-cta {
             width: 100% !important;
