@@ -122,6 +122,11 @@ export default async function MyRiffsPage() {
               },
             },
           },
+          newShares: {
+            where: { shareType: "PUBLIC" },
+            select: { id: true },
+            take: 1,
+          },
         },
         orderBy: { updatedAt: "desc" },
       }),
@@ -260,6 +265,8 @@ export default async function MyRiffsPage() {
         deadline: pr.riff.deadline ? pr.riff.deadline.toISOString() : null,
       },
     })),
+    isPublic: p.newShares.length > 0,
+    publicShareId: p.newShares[0]?.id ?? null,
   }));
 
   return (

@@ -13,6 +13,7 @@ import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import Tagline from "@/components/Tagline";
 import type { DropdownItem } from "@/components/shared/Dropdown";
 import DeletePieceModal from "@/components/profile/DeletePieceModal";
+import ShareModal, { PublicShare } from "@/components/profile/ShareModal";
 import {
   getSubmittedPieces,
   hasUnreadPieces,
@@ -78,6 +79,8 @@ interface WritingPiece {
   createdAt: string;
   updatedAt: string;
   riffs: PieceRiffSummary[];
+  isPublic: boolean;
+  publicShareId: string | null;
 }
 
 interface MyRiffsClientProps {
@@ -122,6 +125,14 @@ function SectionHeading({
 
 function isSubmitted(piece: WritingPiece): boolean {
   return piece.riffs.some((r) => r.submittedAt !== null);
+}
+
+// Mirrors the profile page's isRevealed check (ProfilePage's viewer-access
+// clause is skipped — every piece here already belongs to the current user).
+function isPieceRevealed(piece: WritingPiece): boolean {
+  return piece.riffs.some(
+    (r) => r.riff.status === "REVEALED" || r.riff.status === "COMPLETED"
+  );
 }
 
 function pieceLabel(
@@ -220,6 +231,7 @@ export default function MyRiffsClient({
     id: string;
     title: string;
   } | null>(null);
+  const [shareTarget, setShareTarget] = useState<string | null>(null);
   const [draftsExpanded, setDraftsExpanded] = useState(false);
   const [piecesExpanded, setPiecesExpanded] = useState(false);
   const [pastRiffsExpanded, setPastRiffsExpanded] = useState(false);
@@ -264,6 +276,22 @@ export default function MyRiffsClient({
     setAllPieces((prev) => prev.filter((p) => p.id !== pieceId));
   };
 
+  const handleShareCreated = (pieceId: string, share: PublicShare) => {
+    setAllPieces((prev) =>
+      prev.map((p) =>
+        p.id === pieceId ? { ...p, isPublic: true, publicShareId: share.id } : p
+      )
+    );
+  };
+
+  const handleShareRevoked = (pieceId: string) => {
+    setAllPieces((prev) =>
+      prev.map((p) =>
+        p.id === pieceId ? { ...p, isPublic: false, publicShareId: null } : p
+      )
+    );
+  };
+
   const renderPieceGrid = (
     list: WritingPiece[],
     variant: "draft" | "piece",
@@ -277,6 +305,15 @@ export default function MyRiffsClient({
             label: "Edit",
             onClick: () => router.push(`/write/${piece.id}`),
           },
+          ...(isPieceRevealed(piece)
+            ? [
+                {
+                  type: "action" as const,
+                  label: "Access",
+                  onClick: () => setShareTarget(piece.id),
+                },
+              ]
+            : []),
           { type: "divider" },
           {
             type: "action",
@@ -335,7 +372,13 @@ export default function MyRiffsClient({
                     coverImage: piece.coverImage,
                   }}
                   isRead={true}
-                  onClick={() => router.push(`/write/${piece.id}`)}
+                  onClick={() =>
+                    router.push(
+                      isPieceRevealed(piece)
+                        ? `/read/${piece.id}`
+                        : `/write/${piece.id}`
+                    )
+                  }
                 />
               )}
             </div>
@@ -377,6 +420,30 @@ export default function MyRiffsClient({
           onDeleted={() => handleDeleted(deleteTarget.id)}
         />
       )}
+
+      {shareTarget &&
+        (() => {
+          const piece = allPieces.find((p) => p.id === shareTarget);
+          if (!piece) return null;
+          return (
+            <ShareModal
+              pieceId={piece.id}
+              isRevealed={isPieceRevealed(piece)}
+              existingShare={
+                piece.publicShareId
+                  ? {
+                      id: piece.publicShareId,
+                      shareType: "PUBLIC",
+                      isPublic: true,
+                    }
+                  : null
+              }
+              onClose={() => setShareTarget(null)}
+              onShareCreated={(share) => handleShareCreated(piece.id, share)}
+              onShareRevoked={() => handleShareRevoked(piece.id)}
+            />
+          );
+        })()}
 
       <NavBar
         user={user}
