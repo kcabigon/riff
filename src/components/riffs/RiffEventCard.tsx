@@ -87,15 +87,6 @@ export default function RiffEventCard({
     riff.pieces.find((p) => p.piece.authorId === currentUserId)?.piece ?? null;
   const existingPieceId = myPiece?.id ?? null;
 
-  // Collective word count across everyone's pieces attached to this riff so
-  // far (draft or submitted) — the pot "your words" is measured against.
-  const totalWords = riff.pieces.reduce((sum, p) => sum + p.piece.wordCount, 0);
-  const myWords = myPiece?.wordCount ?? 0;
-  const wordsProgressPct =
-    totalWords > 0
-      ? Math.min(100, Math.round((myWords / totalWords) * 100))
-      : 0;
-
   const handleRevealClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onReveal?.();
@@ -375,109 +366,81 @@ export default function RiffEventCard({
                   gap: "4px",
                 }}
               >
-                {totalWords > 0 ? (
+                {hasSubmitted ? (
+                  <>
+                    <svg
+                      width="22"
+                      height="22"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="11"
+                        stroke={textColor}
+                        strokeWidth="2"
+                      />
+                      <path
+                        d="M7 12.5L10.5 16L17 8.5"
+                        stroke={textColor}
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    <p
+                      style={{
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "11px",
+                        fontWeight: 700,
+                        lineHeight: "normal",
+                        color: mutedTextColor,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                        margin: 0,
+                      }}
+                    >
+                      Submitted
+                    </p>
+                  </>
+                ) : hasDraft && myPiece ? (
                   <div
                     className="riff-event-card-progress-line"
                     style={{
                       display: "flex",
                       flexDirection: "column",
                       alignItems: "flex-end",
-                      gap: "6px",
+                      gap: "2px",
                     }}
                   >
-                    <div
+                    <p
                       style={{
-                        display: "flex",
-                        alignItems: "baseline",
-                        gap: "2px",
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "28px",
+                        fontWeight: 700,
+                        lineHeight: 1,
+                        color: textColor,
+                        margin: 0,
                       }}
                     >
-                      <span
-                        style={{
-                          fontFamily: "var(--font-dm-sans)",
-                          fontSize: "28px",
-                          fontWeight: 700,
-                          lineHeight: 1,
-                          color: textColor,
-                        }}
-                      >
-                        {myWords.toLocaleString()}
-                      </span>
-                      <span
-                        style={{
-                          fontFamily: "var(--font-dm-sans)",
-                          fontSize: "16px",
-                          fontWeight: 300,
-                          lineHeight: 1,
-                          color: mutedTextColor,
-                        }}
-                      >
-                        /{totalWords.toLocaleString()}
-                      </span>
-                    </div>
-
-                    <div
+                      {myPiece.wordCount}
+                    </p>
+                    <p
                       style={{
-                        width: "64px",
-                        height: "5px",
-                        border: `1px solid ${mutedTextColor}`,
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "11px",
+                        fontWeight: 700,
+                        lineHeight: "normal",
+                        color: mutedTextColor,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                        margin: 0,
                       }}
                     >
-                      <div
-                        style={{
-                          width: `${wordsProgressPct}%`,
-                          height: "100%",
-                          backgroundColor: "#00FF66",
-                        }}
-                      />
-                    </div>
-
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "4px",
-                      }}
-                    >
-                      {hasSubmitted && (
-                        <svg
-                          width="12"
-                          height="12"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          aria-hidden="true"
-                        >
-                          <circle
-                            cx="12"
-                            cy="12"
-                            r="11"
-                            stroke={mutedTextColor}
-                            strokeWidth="2"
-                          />
-                          <path
-                            d="M7 12.5L10.5 16L17 8.5"
-                            stroke={mutedTextColor}
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      )}
-                      <p
-                        style={{
-                          fontFamily: "var(--font-dm-sans)",
-                          fontSize: "11px",
-                          fontWeight: 700,
-                          lineHeight: "normal",
-                          color: mutedTextColor,
-                          textTransform: "uppercase",
-                          letterSpacing: "0.06em",
-                          margin: 0,
-                        }}
-                      >
-                        {hasSubmitted ? "Submitted" : "Words written"}
-                      </p>
-                    </div>
+                      Words written
+                    </p>
                   </div>
                 ) : (
                   <p
@@ -543,7 +506,9 @@ export default function RiffEventCard({
             align-items: center !important;
           }
           .riff-event-card-progress-line {
-            align-items: center !important;
+            flex-direction: row !important;
+            align-items: baseline !important;
+            gap: 6px !important;
           }
           .riff-event-card-cta {
             width: 100% !important;
