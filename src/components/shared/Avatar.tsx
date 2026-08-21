@@ -6,10 +6,11 @@ import AdminBadge from "./AdminBadge";
 
 interface AvatarProps {
   user: AvatarUser;
-  size?: 24 | 32 | 40 | 48 | 120; // Default: 32
+  size?: 24 | 32 | 40 | 48 | 56 | 120; // Default: 32
   borderColor?: string; // Default: '#000000' (black)
   tag?: string | null; // Optional label (e.g., "H" for host)
   badge?: "admin" | "moderator" | null; // Optional role badge
+  ringColor?: string | null; // Optional colored ring outside the border (e.g. unread indicator), Instagram-style with a white gap
   onClick?: (userId: string) => void;
   className?: string;
   style?: CSSProperties;
@@ -32,6 +33,7 @@ export default function Avatar({
   borderColor = "#000000",
   tag = null,
   badge = null,
+  ringColor = null,
   onClick,
   className = "",
   style = {},
@@ -98,9 +100,9 @@ export default function Avatar({
     justifyContent: "center",
   };
 
-  return (
+  const avatarNode = (
     <div
-      className={className}
+      className={ringColor ? undefined : className}
       style={avatarStyle}
       onClick={handleClick}
       title={getTooltipText()}
@@ -169,6 +171,35 @@ export default function Avatar({
       )}
     </div>
   );
+
+  // Ring wrapper: colored circle outside the border with a white gap between
+  // them (Instagram Stories-style). Space is only reserved when a ring color
+  // is passed in, so every other Avatar call site is unaffected.
+  if (!ringColor) {
+    return avatarNode;
+  }
+
+  const ringGap = 3;
+  const ringWidth = 2;
+
+  return (
+    <div
+      className={className}
+      style={{
+        width: `${size + 2 * (ringGap + ringWidth)}px`,
+        height: `${size + 2 * (ringGap + ringWidth)}px`,
+        borderRadius: "64px",
+        border: `${ringWidth}px solid ${ringColor}`,
+        backgroundColor: "#FFFFFF",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexShrink: 0,
+      }}
+    >
+      {avatarNode}
+    </div>
+  );
 }
 
 // Helper functions for scaled sizes
@@ -183,6 +214,7 @@ function getTextSize(avatarSize: number): number {
     32: 12,
     40: 14,
     48: 16,
+    56: 18,
     120: 32,
   };
   return sizeMap[avatarSize] || 12;
@@ -194,6 +226,7 @@ function getTagSize(avatarSize: number): number {
     32: 20,
     40: 22,
     48: 24,
+    56: 26,
     120: 36,
   };
   return sizeMap[avatarSize] || 20;
@@ -205,6 +238,7 @@ function getTagTextSize(avatarSize: number): number {
     32: 12,
     40: 12,
     48: 12,
+    56: 12,
     120: 14,
   };
   return sizeMap[avatarSize] || 12;
@@ -216,6 +250,7 @@ function getTagTopOffset(avatarSize: number): number {
     32: -10,
     40: -11,
     48: -12,
+    56: -13,
     120: -18,
   };
   return sizeMap[avatarSize] || -10;

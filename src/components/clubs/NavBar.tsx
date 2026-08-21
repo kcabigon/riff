@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import ClubDropdown from "./ClubDropdown";
+import CreateDropdown from "./CreateDropdown";
 import AvatarDropdown from "./AvatarDropdown";
 import NotificationBell from "@/components/notifications/NotificationBell";
 
@@ -56,7 +57,7 @@ export default function NavBar({
           justifyContent: "space-between",
         }}
       >
-        {/* Left Section: Logo + Club Dropdown */}
+        {/* Left Section: Logo + Club Dropdown + Create Dropdown */}
         <div
           style={{
             display: "flex",
@@ -88,6 +89,8 @@ export default function NavBar({
               onClose={() => setIsDropdownOpen(false)}
             />
           )}
+
+          <CreateDropdown />
         </div>
 
         {/* Right Section: Bell + Avatar Dropdown */}

@@ -27,7 +27,6 @@ interface CompletedRiffCardProps {
 
 export default function CompletedRiffCard({
   riff,
-  clubName,
   pieces,
 }: CompletedRiffCardProps) {
   const [isHovered, setIsHovered] = useState(false);
@@ -46,7 +45,7 @@ export default function CompletedRiffCard({
         width: "100%",
         transform: "translateY(-50%)",
         backgroundColor: "#000000",
-        padding: "8px 12px",
+        padding: "13px 20px",
         zIndex: 1,
         boxSizing: "border-box",
       }}
@@ -54,7 +53,7 @@ export default function CompletedRiffCard({
       <p
         style={{
           fontFamily: "var(--font-dm-serif-text)",
-          fontSize: "12px",
+          fontSize: "20px",
           fontWeight: 400,
           color: "#FFFFFF",
           margin: 0,
@@ -67,16 +66,15 @@ export default function CompletedRiffCard({
   );
 
   const cardStyle = {
-    width: "240px",
-    height: "320px",
-    border: "2px solid #000000",
+    width: "100%",
+    aspectRatio: "5 / 4",
+    border: "1px solid #000000",
     boxShadow: isHovered
       ? "8px 8px 0px 0px #01EFFC"
       : "8px 8px 0px 0px #000000",
     position: "relative" as const,
     cursor: "pointer",
     overflow: "hidden",
-    flexShrink: 0,
     transition: "none",
   };
 
@@ -101,7 +99,7 @@ export default function CompletedRiffCard({
       onMouseLeave={() => setIsHovered(false)}
       style={cardStyle}
     >
-      <MosaicCollage pieces={pieces} width={240} height={320} />
+      <MosaicCollage pieces={pieces} />
       {labelStrip}
     </div>
   );
