@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import NavBar from "@/components/clubs/NavBar";
 import AvatarStack from "@/components/shared/AvatarStack";
-import RiffCard from "@/components/riffs/RiffCard";
+import RiffEventCard from "@/components/riffs/RiffEventCard";
 import EmptyRiffState from "@/components/riffs/EmptyRiffState";
 import CompletedRiffCard from "@/components/riffs/CompletedRiffCard";
 import CreateRiffModal from "@/components/riffs/CreateRiffModal";
@@ -774,7 +774,7 @@ export default function ClubPageLayout({
               </h2>
 
               {activeRiff ? (
-                <RiffCard
+                <RiffEventCard
                   riff={{
                     id: activeRiff.id,
                     title: activeRiff.title,
@@ -788,6 +788,7 @@ export default function ClubPageLayout({
                     participants: activeRiff.participants,
                     pieces: activeRiff.pieces,
                   }}
+                  club={{ name: clubName, bannerImage: clubBannerImage }}
                   isJoined={isJoined}
                   hasDraft={hasDraft}
                   hasSubmitted={hasSubmitted}
