@@ -23,6 +23,7 @@ export default function DraftCard({ piece, onClick }: DraftCardProps) {
       onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      className="draft-card"
       style={{
         display: "flex",
         flexDirection: "column",
@@ -118,6 +119,15 @@ export default function DraftCard({ piece, onClick }: DraftCardProps) {
           {piece.wordCount === 1 ? "word" : "words"}
         </span>
       </div>
+
+      <style>{`
+        @media (max-width: 639px) {
+          .draft-card {
+            aspect-ratio: auto !important;
+            height: 250px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
