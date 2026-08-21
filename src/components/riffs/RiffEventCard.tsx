@@ -86,6 +86,20 @@ export default function RiffEventCard({
   const myPiece =
     riff.pieces.find((p) => p.piece.authorId === currentUserId)?.piece ?? null;
   const existingPieceId = myPiece?.id ?? null;
+  const myWords = myPiece?.wordCount ?? 0;
+
+  // Round up so anything under a day still reads as "1 day left" rather
+  // than falsely implying time's already up.
+  const daysLeft = riff.deadline
+    ? Math.max(
+        0,
+        Math.ceil(
+          (new Date(riff.deadline).getTime() - Date.now()) /
+            (1000 * 60 * 60 * 24)
+        )
+      )
+    : null;
+  const daysLeftUrgent = daysLeft !== null && daysLeft <= 1;
 
   const handleRevealClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -366,95 +380,46 @@ export default function RiffEventCard({
                   gap: "4px",
                 }}
               >
-                {hasSubmitted ? (
-                  <>
-                    <svg
-                      width="22"
-                      height="22"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      aria-hidden="true"
-                    >
-                      <circle
-                        cx="12"
-                        cy="12"
-                        r="11"
-                        stroke={textColor}
-                        strokeWidth="2"
-                      />
-                      <path
-                        d="M7 12.5L10.5 16L17 8.5"
-                        stroke={textColor}
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    <p
-                      style={{
-                        fontFamily: "var(--font-dm-sans)",
-                        fontSize: "11px",
-                        fontWeight: 700,
-                        lineHeight: "normal",
-                        color: mutedTextColor,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.06em",
-                        margin: 0,
-                      }}
-                    >
-                      Submitted
-                    </p>
-                  </>
-                ) : hasDraft && myPiece ? (
-                  <div
-                    className="riff-event-card-progress-line"
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "flex-end",
-                      gap: "2px",
-                    }}
-                  >
-                    <p
-                      style={{
-                        fontFamily: "var(--font-dm-sans)",
-                        fontSize: "28px",
-                        fontWeight: 700,
-                        lineHeight: 1,
-                        color: textColor,
-                        margin: 0,
-                      }}
-                    >
-                      {myPiece.wordCount}
-                    </p>
-                    <p
-                      style={{
-                        fontFamily: "var(--font-dm-sans)",
-                        fontSize: "11px",
-                        fontWeight: 700,
-                        lineHeight: "normal",
-                        color: mutedTextColor,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.06em",
-                        margin: 0,
-                      }}
-                    >
-                      Words written
-                    </p>
-                  </div>
-                ) : (
+                <p
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "16px",
+                    fontWeight: 700,
+                    lineHeight: "normal",
+                    color: textColor,
+                    margin: 0,
+                  }}
+                >
+                  {myWords.toLocaleString()} {myWords === 1 ? "word" : "words"}
+                </p>
+                {deadlinePassed ? (
                   <p
                     style={{
                       fontFamily: "var(--font-dm-sans)",
-                      fontSize: "14px",
-                      fontWeight: 300,
+                      fontSize: "13px",
+                      fontWeight: 700,
                       lineHeight: "normal",
-                      color: mutedTextColor,
+                      color: "#DC2626",
                       margin: 0,
                     }}
                   >
-                    Not started
+                    Time&apos;s up!
                   </p>
+                ) : (
+                  daysLeft !== null && (
+                    <p
+                      style={{
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "13px",
+                        fontWeight: 300,
+                        lineHeight: "normal",
+                        color: daysLeftUrgent ? "#DC2626" : mutedTextColor,
+                        margin: 0,
+                      }}
+                    >
+                      {daysLeft} {daysLeft === 1 ? "day" : "days"} left
+                    </p>
+                  )
                 )}
               </div>
             )}
@@ -504,11 +469,6 @@ export default function RiffEventCard({
           }
           .riff-event-card-progress {
             align-items: center !important;
-          }
-          .riff-event-card-progress-line {
-            flex-direction: row !important;
-            align-items: baseline !important;
-            gap: 6px !important;
           }
           .riff-event-card-cta {
             width: 100% !important;
