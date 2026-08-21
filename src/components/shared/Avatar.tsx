@@ -10,7 +10,6 @@ interface AvatarProps {
   borderColor?: string; // Default: '#000000' (black)
   tag?: string | null; // Optional label (e.g., "H" for host)
   badge?: "admin" | "moderator" | null; // Optional role badge
-  ringColor?: string | null; // Optional colored ring outside the border (e.g. unread indicator), Instagram-style with a white gap
   onClick?: (userId: string) => void;
   className?: string;
   style?: CSSProperties;
@@ -33,7 +32,6 @@ export default function Avatar({
   borderColor = "#000000",
   tag = null,
   badge = null,
-  ringColor = null,
   onClick,
   className = "",
   style = {},
@@ -100,9 +98,9 @@ export default function Avatar({
     justifyContent: "center",
   };
 
-  const avatarNode = (
+  return (
     <div
-      className={ringColor ? undefined : className}
+      className={className}
       style={avatarStyle}
       onClick={handleClick}
       title={getTooltipText()}
@@ -169,35 +167,6 @@ export default function Avatar({
           </span>
         </div>
       )}
-    </div>
-  );
-
-  // Ring wrapper: colored circle outside the border with a white gap between
-  // them (Instagram Stories-style). Space is only reserved when a ring color
-  // is passed in, so every other Avatar call site is unaffected.
-  if (!ringColor) {
-    return avatarNode;
-  }
-
-  const ringGap = 3;
-  const ringWidth = 2;
-
-  return (
-    <div
-      className={className}
-      style={{
-        width: `${size + 2 * (ringGap + ringWidth)}px`,
-        height: `${size + 2 * (ringGap + ringWidth)}px`,
-        borderRadius: "64px",
-        border: `${ringWidth}px solid ${ringColor}`,
-        backgroundColor: "#FFFFFF",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexShrink: 0,
-      }}
-    >
-      {avatarNode}
     </div>
   );
 }

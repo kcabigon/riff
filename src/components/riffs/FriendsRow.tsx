@@ -8,7 +8,6 @@ interface Friend {
   name: string | null;
   username: string | null;
   avatarUrl: string | null;
-  hasUnread: boolean;
 }
 
 interface FriendsRowProps {
@@ -53,11 +52,7 @@ export default function FriendsRow({ friends }: FriendsRowProps) {
             width: "66px",
           }}
         >
-          <Avatar
-            user={friend}
-            size={56}
-            ringColor={friend.hasUnread ? "#00FF66" : "transparent"}
-          />
+          <Avatar user={friend} size={56} />
           <span
             style={{
               fontFamily: "var(--font-dm-sans)",

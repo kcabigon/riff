@@ -163,27 +163,8 @@ export default async function MyRiffsPage() {
   ]);
 
   const readCounts: Record<string, number> = {};
-  const readPieceIds = new Set<string>();
   for (const read of pieceReads) {
     readCounts[read.riffId] = (readCounts[read.riffId] || 0) + 1;
-    readPieceIds.add(read.pieceId);
-  }
-
-  // Friends with an unread piece — a submitted piece in a revealed riff,
-  // authored by someone else, that this user hasn't opened yet. Powers the
-  // green unread ring on the Friends row. Only covers riff-bound pieces
-  // since PieceRead requires a riffId; standalone (non-riff) pieces can't
-  // be tracked here until that column is made optional.
-  const friendIdsWithUnread = new Set<string>();
-  for (const riff of riffs) {
-    if (riff.status !== "REVEALED") continue;
-    for (const p of riff.pieces) {
-      if (p.submittedAt === null) continue;
-      if (p.piece.authorId === userId) continue;
-      if (!readPieceIds.has(p.piece.id)) {
-        friendIdsWithUnread.add(p.piece.authorId);
-      }
-    }
   }
 
   // Latest submission timestamp per friend, across all shared riffs — used
@@ -228,16 +209,14 @@ export default async function MyRiffsPage() {
   for (const { user: friend } of [...clubmates, ...riffmates]) {
     friendsById.set(friend.id, friend);
   }
-  // Unread friends first, then by most recent submission, alphabetical as
-  // the final tiebreaker.
-  const rankedFriends = Array.from(friendsById.values())
+  // Most recent submission first, alphabetical as the fallback for friends
+  // with no shared-riff activity.
+  const friends = Array.from(friendsById.values())
     .map((friend) => ({
       friend,
-      hasUnread: friendIdsWithUnread.has(friend.id),
       lastActivityAt: latestPieceAtByFriend.get(friend.id) ?? null,
     }))
     .sort((a, b) => {
-      if (a.hasUnread !== b.hasUnread) return a.hasUnread ? -1 : 1;
       if (a.lastActivityAt && b.lastActivityAt) {
         return b.lastActivityAt.getTime() - a.lastActivityAt.getTime();
       }
@@ -247,11 +226,8 @@ export default async function MyRiffsPage() {
       return (a.friend.name || a.friend.username || "").localeCompare(
         b.friend.name || b.friend.username || ""
       );
-    });
-  const friends = rankedFriends.map(({ friend, hasUnread }) => ({
-    ...friend,
-    hasUnread,
-  }));
+    })
+    .map(({ friend }) => friend);
 
   const serializedRiffs = riffs.map((r) => ({
     id: r.id,

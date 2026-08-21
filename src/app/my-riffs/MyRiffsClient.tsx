@@ -55,7 +55,6 @@ interface Friend {
   name: string | null;
   username: string | null;
   avatarUrl: string | null;
-  hasUnread: boolean;
 }
 
 interface PieceRiffSummary {
