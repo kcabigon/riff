@@ -137,6 +137,21 @@ export default async function MyRiffsPage() {
   const riffs = participations.map((p) => p.riff);
   const riffIds = riffs.map((r) => r.id);
 
+  // Dedupe clubmates + riffmates into a single friends list.
+  const friendsById = new Map<
+    string,
+    {
+      id: string;
+      name: string | null;
+      username: string | null;
+      avatarUrl: string | null;
+    }
+  >();
+  for (const { user: friend } of [...clubmates, ...riffmates]) {
+    friendsById.set(friend.id, friend);
+  }
+  const friendIds = Array.from(friendsById.keys());
+
   // For active riffs, compute predictedVolumeNumber per club (count of REVEALED+COMPLETED riffs + 1)
   const activeClubIds = [
     ...new Set([
@@ -148,7 +163,7 @@ export default async function MyRiffsPage() {
     ]),
   ];
 
-  const [pieceReads, volumeCounts] = await Promise.all([
+  const [pieceReads, volumeCounts, friendSubmissions] = await Promise.all([
     riffIds.length > 0
       ? prisma.pieceRead.findMany({
           where: { userId, riffId: { in: riffIds } },
@@ -165,6 +180,21 @@ export default async function MyRiffsPage() {
           _count: { id: true },
         })
       : Promise.resolve([]),
+    // Every submission a friend has ever made, across any riff — not just
+    // ones shared with the current user. Powers the Friends row as a
+    // general "active friends" feed rather than only shared collaborators.
+    friendIds.length > 0
+      ? prisma.pieceRiff.findMany({
+          where: {
+            submittedAt: { not: null },
+            piece: { authorId: { in: friendIds } },
+          },
+          select: {
+            submittedAt: true,
+            piece: { select: { authorId: true } },
+          },
+        })
+      : Promise.resolve([]),
   ]);
 
   const readCounts: Record<string, number> = {};
@@ -172,19 +202,15 @@ export default async function MyRiffsPage() {
     readCounts[read.riffId] = (readCounts[read.riffId] || 0) + 1;
   }
 
-  // Latest submission timestamp per friend, across all shared riffs — used
-  // to rank the Friends row by recent activity once unread friends are
-  // pinned first.
+  // Latest submission timestamp per friend, across any riff they've
+  // submitted to — used to rank the Friends row by overall recent activity.
   const latestPieceAtByFriend = new Map<string, Date>();
-  for (const riff of riffs) {
-    for (const p of riff.pieces) {
-      if (p.submittedAt === null) continue;
-      if (p.piece.authorId === userId) continue;
-      const submittedAt = new Date(p.submittedAt);
-      const existing = latestPieceAtByFriend.get(p.piece.authorId);
-      if (!existing || submittedAt > existing) {
-        latestPieceAtByFriend.set(p.piece.authorId, submittedAt);
-      }
+  for (const pr of friendSubmissions) {
+    if (pr.submittedAt === null) continue;
+    const submittedAt = new Date(pr.submittedAt);
+    const existing = latestPieceAtByFriend.get(pr.piece.authorId);
+    if (!existing || submittedAt > existing) {
+      latestPieceAtByFriend.set(pr.piece.authorId, submittedAt);
     }
   }
 
@@ -201,21 +227,8 @@ export default async function MyRiffsPage() {
     userClubs[0] ??
     null;
 
-  // Dedupe clubmates + riffmates into a single friends list.
-  const friendsById = new Map<
-    string,
-    {
-      id: string;
-      name: string | null;
-      username: string | null;
-      avatarUrl: string | null;
-    }
-  >();
-  for (const { user: friend } of [...clubmates, ...riffmates]) {
-    friendsById.set(friend.id, friend);
-  }
-  // Most recent submission first, alphabetical as the fallback for friends
-  // with no shared-riff activity.
+  // Most recent submission first (any riff), alphabetical as the fallback
+  // for friends with no submissions at all.
   const friends = Array.from(friendsById.values())
     .map((friend) => ({
       friend,
