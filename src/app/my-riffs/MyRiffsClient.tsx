@@ -116,7 +116,7 @@ function SectionHeading({
       width={width}
       fontSize={16}
       fontFamily="var(--font-dm-sans)"
-      fontWeight={500}
+      fontWeight={700}
       align="left"
       heightPadding={9}
     />
