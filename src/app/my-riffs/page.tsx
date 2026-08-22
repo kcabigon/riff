@@ -163,10 +163,24 @@ export default async function MyRiffsPage() {
     ]),
   ];
 
+  // Own pieces are excluded from read counts — a riff is "fully read" when
+  // every *other* participant's piece has been read. Viewing your own piece
+  // creates a PieceRead record too, which would otherwise inflate the count
+  // and prematurely move the riff to Past Riffs. Mirrors the club page.
+  const ownPieceIds = riffs.flatMap((r) =>
+    r.pieces
+      .filter((p) => p.piece.authorId === userId && p.submittedAt !== null)
+      .map((p) => p.piece.id)
+  );
+
   const [pieceReads, volumeCounts, friendSubmissions] = await Promise.all([
     riffIds.length > 0
       ? prisma.pieceRead.findMany({
-          where: { userId, riffId: { in: riffIds } },
+          where: {
+            userId,
+            riffId: { in: riffIds },
+            ...(ownPieceIds.length > 0 && { pieceId: { notIn: ownPieceIds } }),
+          },
           select: { riffId: true, pieceId: true },
         })
       : Promise.resolve([]),
