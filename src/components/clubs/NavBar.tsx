@@ -32,7 +32,7 @@ export default function NavBar({
   clubs,
   currentClub,
   showClubDropdown = true,
-  showCreateDropdown = true,
+  showCreateDropdown = false,
 }: NavBarProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 

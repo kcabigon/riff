@@ -450,6 +450,7 @@ export default function MyRiffsClient({
         clubs={userClubs}
         currentClub={currentClub}
         showClubDropdown={false}
+        showCreateDropdown
       />
 
       <div
