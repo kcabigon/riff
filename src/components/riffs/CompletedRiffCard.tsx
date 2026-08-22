@@ -67,6 +67,8 @@ export default function CompletedRiffCard({
 
   const cardStyle = {
     width: "100%",
+    maxWidth: "320px",
+    flexShrink: 0,
     aspectRatio: "5 / 4",
     border: "1px solid #000000",
     boxShadow: isHovered
