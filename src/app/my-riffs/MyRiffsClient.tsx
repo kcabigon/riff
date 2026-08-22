@@ -565,12 +565,12 @@ export default function MyRiffsClient({
               }}
             >
               <SectionHeading text="DRAFTS" color="#EECF01" width={74} />
-              {drafts.length > DRAFTS_CAP && !draftsExpanded && (
+              {drafts.length > DRAFTS_CAP && (
                 <button
-                  onClick={() => setDraftsExpanded(true)}
+                  onClick={() => setDraftsExpanded((prev) => !prev)}
                   style={viewAllButtonStyle}
                 >
-                  View all
+                  {draftsExpanded ? "View less" : "View all"}
                 </button>
               )}
             </div>
@@ -592,12 +592,12 @@ export default function MyRiffsClient({
               }}
             >
               <SectionHeading text="PIECES" color="#C01582" width={68} />
-              {submittedPieces.length > PIECES_CAP && !piecesExpanded && (
+              {submittedPieces.length > PIECES_CAP && (
                 <button
-                  onClick={() => setPiecesExpanded(true)}
+                  onClick={() => setPiecesExpanded((prev) => !prev)}
                   style={viewAllButtonStyle}
                 >
-                  View all
+                  {piecesExpanded ? "View less" : "View all"}
                 </button>
               )}
             </div>
@@ -620,12 +620,12 @@ export default function MyRiffsClient({
               }}
             >
               <SectionHeading text="PAST RIFFS" color="#955CB5" width={96} />
-              {pastRiffs.length > PAST_RIFFS_CAP && !pastRiffsExpanded && (
+              {pastRiffs.length > PAST_RIFFS_CAP && (
                 <button
-                  onClick={() => setPastRiffsExpanded(true)}
+                  onClick={() => setPastRiffsExpanded((prev) => !prev)}
                   style={viewAllButtonStyle}
                 >
-                  View all
+                  {pastRiffsExpanded ? "View less" : "View all"}
                 </button>
               )}
             </div>
