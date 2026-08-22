@@ -10,7 +10,6 @@ import CompletedRiffCard from "@/components/riffs/CompletedRiffCard";
 import CreateRiffModal from "@/components/riffs/CreateRiffModal";
 import RevealConfirmModal from "@/components/riffs/RevealConfirmModal";
 import ReadyToRevealCard from "@/components/riffs/ReadyToRevealCard";
-import RiffCardGrid from "@/components/riffs/RiffCardGrid";
 import ClubSettingsModal from "@/components/clubs/ClubSettingsModal";
 import InviteOptions from "@/components/clubs/InviteOptions";
 import CloseButton from "@/components/CloseButton";
@@ -282,16 +281,6 @@ export default function ClubPageLayout({
   const showGettingStarted = isAdmin && !userOnboardingComplete;
   const showMemberGettingStarted = !isAdmin && !userMemberOnboardingComplete;
 
-  const allPastRiffs = [
-    ...completedRiffs,
-    ...pastRevealedRiffs,
-    ...revealedRiffs.filter(isFullyReadForUser),
-  ].sort((a, b) => {
-    if (a.volumeNumber != null && b.volumeNumber != null) {
-      return b.volumeNumber - a.volumeNumber;
-    }
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-  });
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
       {/* Sticky NavBar */}
@@ -730,18 +719,22 @@ export default function ClubPageLayout({
                 Current Read
               </h2>
 
-              <RiffCardGrid
-                items={unfinishedRevealed}
-                keyForItem={(riff) => riff.id}
-                centerSingle
-                renderItem={(riff) => (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "32px",
+                }}
+              >
+                {unfinishedRevealed.map((riff) => (
                   <ReadyToRevealCard
+                    key={riff.id}
                     riff={riff}
                     readCount={readCounts[riff.id] || 0}
                     totalPieces={otherSubmittedCount(riff)}
                   />
-                )}
-              />
+                ))}
+              </div>
             </div>
           );
         })()}
@@ -810,26 +803,53 @@ export default function ClubPageLayout({
 
         {/* Past Riffs section — includes COMPLETED + pre-join REVEALED + fully-read REVEALED riffs */}
         {(() => {
-          if (allPastRiffs.length === 0) return null;
-          return (
-            <div>
-              <h2
-                style={{
-                  fontFamily: "var(--font-dm-serif-text)",
-                  fontSize: "24px",
-                  fontWeight: 400,
-                  color: "#000000",
-                  margin: "0 0 16px 0",
-                }}
-              >
-                Past Riffs
-              </h2>
+          const fullyReadRevealed = revealedRiffs.filter(isFullyReadForUser);
+          const allPast = [
+            ...completedRiffs,
+            ...pastRevealedRiffs,
+            ...fullyReadRevealed,
+          ];
+          return allPast.length > 0;
+        })() && (
+          <div>
+            <h2
+              style={{
+                fontFamily: "var(--font-dm-serif-text)",
+                fontSize: "24px",
+                fontWeight: 400,
+                color: "#000000",
+                margin: "0 0 16px 0",
+              }}
+            >
+              Past Riffs
+            </h2>
 
-              <RiffCardGrid
-                items={allPastRiffs}
-                keyForItem={(riff) => riff.id}
-                renderItem={(riff) => (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                gap: "40px",
+                overflowX: "auto",
+                paddingBottom: "16px",
+              }}
+            >
+              {[
+                ...completedRiffs,
+                ...pastRevealedRiffs,
+                ...revealedRiffs.filter(isFullyReadForUser),
+              ]
+                .sort((a, b) => {
+                  if (a.volumeNumber != null && b.volumeNumber != null) {
+                    return b.volumeNumber - a.volumeNumber;
+                  }
+                  return (
+                    new Date(b.createdAt).getTime() -
+                    new Date(a.createdAt).getTime()
+                  );
+                })
+                .map((riff) => (
                   <CompletedRiffCard
+                    key={riff.id}
                     riff={{
                       id: riff.id,
                       title: riff.title,
@@ -846,11 +866,10 @@ export default function ClubPageLayout({
                       wordCount: p.piece.wordCount,
                     }))}
                   />
-                )}
-              />
+                ))}
             </div>
-          );
-        })()}
+          </div>
+        )}
       </div>
 
       <style>{`
