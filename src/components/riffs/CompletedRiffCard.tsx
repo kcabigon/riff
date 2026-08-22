@@ -87,9 +87,17 @@ export default function CompletedRiffCard({
         onClick={handleClick}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        className="completed-riff-card"
         style={{ ...cardStyle, backgroundColor: "#E6E6E6" }}
       >
         {labelStrip}
+        <style>{`
+          @media (max-width: 639px) {
+            .completed-riff-card {
+              max-width: none !important;
+            }
+          }
+        `}</style>
       </div>
     );
   }
@@ -99,10 +107,18 @@ export default function CompletedRiffCard({
       onClick={handleClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      className="completed-riff-card"
       style={cardStyle}
     >
       <MosaicCollage pieces={pieces} />
       {labelStrip}
+      <style>{`
+        @media (max-width: 639px) {
+          .completed-riff-card {
+            max-width: none !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
