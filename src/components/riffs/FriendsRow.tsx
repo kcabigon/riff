@@ -52,7 +52,7 @@ export default function FriendsRow({ friends }: FriendsRowProps) {
             width: "66px",
           }}
         >
-          <Avatar user={friend} size={56} />
+          <Avatar user={friend} size={56} style={{ cursor: "pointer" }} />
           <span
             style={{
               fontFamily: "var(--font-dm-sans)",
