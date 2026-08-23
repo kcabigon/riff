@@ -6,6 +6,7 @@ import AvatarStack from "@/components/shared/AvatarStack";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
 import {
   getRiffDisplayTitle,
+  getSubmittedPieces,
   allPiecesSubmitted,
   isPastDeadline,
 } from "@/lib/riff-utils";
@@ -75,6 +76,11 @@ export default function RiffEventCard({
     riff.pieces,
     riff.participants.length
   );
+  const submittedCount = getSubmittedPieces(riff.pieces).length;
+  // Hosts see group progress the whole time — they're accountable for the
+  // riff, not just their own piece. Members switch to it once they've
+  // submitted, since their own word count stops being the useful number.
+  const showSubmittedProgress = isAdmin || hasSubmitted;
 
   const handleCardClick = () => {
     router.push(`/riffs/${riff.id}`);
@@ -366,30 +372,28 @@ export default function RiffEventCard({
                   gap: "4px",
                 }}
               >
-                {hasSubmitted ? (
-                  <>
-                    <svg
-                      width="22"
-                      height="22"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      aria-hidden="true"
+                {showSubmittedProgress ? (
+                  <div
+                    className="riff-event-card-progress-line"
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "flex-end",
+                      gap: "2px",
+                    }}
+                  >
+                    <p
+                      style={{
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "28px",
+                        fontWeight: 700,
+                        lineHeight: 1,
+                        color: textColor,
+                        margin: 0,
+                      }}
                     >
-                      <circle
-                        cx="12"
-                        cy="12"
-                        r="11"
-                        stroke={textColor}
-                        strokeWidth="2"
-                      />
-                      <path
-                        d="M7 12.5L10.5 16L17 8.5"
-                        stroke={textColor}
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
+                      {submittedCount}/{riff.participants.length}
+                    </p>
                     <p
                       style={{
                         fontFamily: "var(--font-dm-sans)",
@@ -404,7 +408,7 @@ export default function RiffEventCard({
                     >
                       Submitted
                     </p>
-                  </>
+                  </div>
                 ) : hasDraft && myPiece ? (
                   <div
                     className="riff-event-card-progress-line"

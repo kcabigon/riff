@@ -6,6 +6,7 @@ import NavBar from "@/components/clubs/NavBar";
 import RiffEventCard from "@/components/riffs/RiffEventCard";
 import ReadyToRevealCard from "@/components/riffs/ReadyToRevealCard";
 import CompletedRiffCard from "@/components/riffs/CompletedRiffCard";
+import RevealConfirmModal from "@/components/riffs/RevealConfirmModal";
 import FriendsRow from "@/components/riffs/FriendsRow";
 import PieceCard from "@/components/riffs/PieceCard";
 import DraftCard from "@/components/write/DraftCard";
@@ -16,6 +17,8 @@ import DeletePieceModal from "@/components/profile/DeletePieceModal";
 import ShareModal, { PublicShare } from "@/components/profile/ShareModal";
 import {
   getSubmittedPieces,
+  getSubmittedParticipants,
+  getWaitingParticipants,
   hasUnreadPieces,
   getRiffDisplayTitle,
 } from "@/lib/riff-utils";
@@ -39,7 +42,13 @@ interface Riff {
   prompt?: string | null;
   deadline: string | null;
   createdAt: string;
-  club: { id: string; name: string; bannerImage: string | null };
+  club: {
+    id: string;
+    name: string;
+    bannerImage: string | null;
+    adminId: string;
+    moderatorId: string | null;
+  };
   participants: Array<{
     user: {
       id: string;
@@ -98,6 +107,7 @@ interface MyRiffsClientProps {
   predictedVolumeByClub: Record<string, number>;
   friends: Friend[];
   pieces: WritingPiece[];
+  joinableRiffs: Riff[];
 }
 
 function SectionHeading({
@@ -224,6 +234,7 @@ export default function MyRiffsClient({
   predictedVolumeByClub,
   friends,
   pieces,
+  joinableRiffs,
 }: MyRiffsClientProps) {
   const router = useRouter();
   const [allPieces, setAllPieces] = useState(pieces);
@@ -235,6 +246,8 @@ export default function MyRiffsClient({
   const [draftsExpanded, setDraftsExpanded] = useState(false);
   const [piecesExpanded, setPiecesExpanded] = useState(false);
   const [pastRiffsExpanded, setPastRiffsExpanded] = useState(false);
+  const [revealRiffId, setRevealRiffId] = useState<string | null>(null);
+  const [isRevealing, setIsRevealing] = useState(false);
 
   const otherSubmittedCount = (riff: Riff) =>
     getSubmittedPieces(riff.pieces).filter(
@@ -244,7 +257,45 @@ export default function MyRiffsClient({
   const hasUnreadForUser = (riff: Riff) =>
     hasUnreadPieces(riff.id, readCounts, otherSubmittedCount(riff));
 
-  const writingRiffs = riffs.filter((r) => r.status === "ACTIVE");
+  // After joining a riff, refresh so it flips from "joinable" to "writing".
+  const handleJoinRiff = () => {
+    router.refresh();
+  };
+
+  const handleRevealConfirm = async () => {
+    if (!revealRiffId) return;
+    setIsRevealing(true);
+    try {
+      const res = await fetch(`/api/riffs/${revealRiffId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "REVEALED" }),
+      });
+      if (res.ok) {
+        setRevealRiffId(null);
+        router.refresh();
+      }
+    } catch (err) {
+      console.error("Error revealing riff:", err);
+    } finally {
+      setIsRevealing(false);
+    }
+  };
+
+  const isRiffAdmin = (riff: Riff) =>
+    riff.club.adminId === currentUserId ||
+    riff.club.moderatorId === currentUserId;
+
+  const currentRiffs = [
+    ...riffs
+      .filter((r) => r.status === "ACTIVE")
+      .map((riff) => ({ riff, isJoined: true })),
+    ...joinableRiffs.map((riff) => ({ riff, isJoined: false })),
+  ];
+
+  const revealTarget = currentRiffs.find(
+    ({ riff }) => riff.id === revealRiffId
+  )?.riff;
   const readingRiffs = riffs.filter(
     (r) => r.status === "REVEALED" && hasUnreadForUser(r)
   );
@@ -412,6 +463,34 @@ export default function MyRiffsClient({
         }
       `}</style>
 
+      {revealTarget && (
+        <RevealConfirmModal
+          isOpen={revealRiffId !== null}
+          onClose={() => setRevealRiffId(null)}
+          onConfirm={handleRevealConfirm}
+          isRevealing={isRevealing}
+          riffTitle={getRiffDisplayTitle(
+            revealTarget,
+            predictedVolumeByClub[revealTarget.club.id]
+          )}
+          waitingUsers={getWaitingParticipants(
+            revealTarget.participants,
+            revealTarget.pieces
+          ).map((p) => ({
+            id: p.user.id,
+            name: p.user.name,
+            avatarUrl: p.user.avatarUrl,
+          }))}
+          submittedCount={
+            getSubmittedParticipants(
+              revealTarget.participants,
+              revealTarget.pieces
+            ).length
+          }
+          totalParticipants={revealTarget.participants.length}
+        />
+      )}
+
       {deleteTarget && (
         <DeletePieceModal
           pieceId={deleteTarget.id}
@@ -500,8 +579,8 @@ export default function MyRiffsClient({
           </SectionColumn>
         )}
 
-        {/* Riffs — active riffs you're writing for */}
-        {writingRiffs.length > 0 && (
+        {/* Riffs — active riffs you're writing for, plus ones you can join */}
+        {currentRiffs.length > 0 && (
           <SectionColumn maxWidth={FEED_WIDTH}>
             <SectionHeading text="CURRENT RIFFS" color="#00FF66" width={129} />
             <div
@@ -512,7 +591,7 @@ export default function MyRiffsClient({
                 marginTop: "16px",
               }}
             >
-              {writingRiffs.map((riff) => {
+              {currentRiffs.map(({ riff, isJoined }) => {
                 const hasSubmitted = riff.pieces.some(
                   (p) =>
                     p.piece.authorId === currentUserId && p.submittedAt !== null
@@ -538,11 +617,13 @@ export default function MyRiffsClient({
                       name: riff.club.name,
                       bannerImage: riff.club.bannerImage,
                     }}
-                    isJoined={true}
+                    isJoined={isJoined}
                     hasDraft={hasDraft}
                     hasSubmitted={hasSubmitted}
                     currentUserId={currentUserId}
-                    isAdmin={false}
+                    isAdmin={isRiffAdmin(riff)}
+                    onJoin={handleJoinRiff}
+                    onReveal={() => setRevealRiffId(riff.id)}
                     predictedVolumeNumber={predictedVolumeByClub[riff.club.id]}
                   />
                 );
