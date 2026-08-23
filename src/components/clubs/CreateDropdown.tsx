@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import Dropdown from "@/components/shared/Dropdown";
 import type { DropdownItem } from "@/components/shared/Dropdown";
@@ -64,8 +65,7 @@ export default function CreateDropdown() {
             Create
           </span>
 
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src="/icons/arrow_down.svg"
             alt=""
             width={16}
