@@ -21,9 +21,7 @@ interface RiffEventCardProps {
     title: string | null;
     volumeNumber?: number | null;
     status: string;
-    prompt?: string | null;
     deadline?: Date | null;
-    createdAt: Date;
     participants: Array<{
       user: {
         id: string;
@@ -158,7 +156,6 @@ export default function RiffEventCard({
 
       {/* Content — overlaid directly on the image */}
       <div
-        className="riff-event-card-content"
         style={{
           position: "relative",
           zIndex: 1,
@@ -172,7 +169,6 @@ export default function RiffEventCard({
       >
         {/* Top row — date badge + riff title/club name */}
         <div
-          className="riff-event-card-top"
           style={{
             display: "flex",
             alignItems: "flex-start",
@@ -374,7 +370,6 @@ export default function RiffEventCard({
               >
                 {showSubmittedProgress ? (
                   <div
-                    className="riff-event-card-progress-line"
                     style={{
                       display: "flex",
                       flexDirection: "column",
@@ -409,9 +404,8 @@ export default function RiffEventCard({
                       Submitted
                     </p>
                   </div>
-                ) : hasDraft && myPiece ? (
+                ) : myPiece ? (
                   <div
-                    className="riff-event-card-progress-line"
                     style={{
                       display: "flex",
                       flexDirection: "column",

@@ -607,9 +607,7 @@ export default function MyRiffsClient({
                       title: riff.title,
                       volumeNumber: riff.volumeNumber,
                       status: riff.status,
-                      prompt: riff.prompt,
                       deadline: riff.deadline ? new Date(riff.deadline) : null,
-                      createdAt: new Date(riff.createdAt),
                       participants: riff.participants,
                       pieces: riff.pieces,
                     }}
