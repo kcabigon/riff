@@ -45,7 +45,7 @@ export default function CompletedRiffCard({
         width: "100%",
         transform: "translateY(-50%)",
         backgroundColor: "#000000",
-        padding: "13px 20px",
+        padding: "12px 20px",
         zIndex: 1,
         boxSizing: "border-box",
       }}

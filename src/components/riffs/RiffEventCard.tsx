@@ -189,7 +189,7 @@ export default function RiffEventCard({
               <div style={{ height: "4px", backgroundColor: "#DC2626" }} />
               <div
                 style={{
-                  padding: "6px 10px",
+                  padding: "8px 12px",
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",

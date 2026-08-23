@@ -30,7 +30,7 @@ export default function FriendsRow({ friends }: FriendsRowProps) {
     <div
       style={{
         display: "flex",
-        gap: "10px",
+        gap: "8px",
         overflowX: "auto",
         paddingBottom: "8px",
       }}
