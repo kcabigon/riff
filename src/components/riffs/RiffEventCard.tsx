@@ -186,7 +186,7 @@ export default function RiffEventCard({
                 overflow: "hidden",
               }}
             >
-              <div style={{ height: "4px", backgroundColor: "#DC2626" }} />
+              <div style={{ height: "8px", backgroundColor: "#DC2626" }} />
               <div
                 style={{
                   padding: "8px 12px",
