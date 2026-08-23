@@ -21,7 +21,7 @@ interface CompletedRiffCardProps {
     createdAt: Date;
     deadline?: Date | null;
   };
-  clubName: string;
+  clubName?: string;
   pieces: CompletedRiffPiece[];
 }
 
@@ -70,7 +70,7 @@ export default function CompletedRiffCard({
     maxWidth: "320px",
     flexShrink: 0,
     aspectRatio: "5 / 4",
-    border: "1px solid #000000",
+    border: "2px solid #000000",
     boxShadow: isHovered
       ? "8px 8px 0px 0px #01EFFC"
       : "8px 8px 0px 0px #000000",
