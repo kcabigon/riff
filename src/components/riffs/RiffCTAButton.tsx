@@ -29,7 +29,7 @@ export default function RiffCTAButton({
   const label = !isJoined
     ? "Let's riff"
     : hasSubmitted
-      ? "View submission"
+      ? "Submitted"
       : hasDraft
         ? "Continue writing"
         : "Start writing";
@@ -60,5 +60,13 @@ export default function RiffCTAButton({
     }
   };
 
-  return <CTAButton onClick={handleClick}>{label}</CTAButton>;
+  return (
+    <CTAButton
+      onClick={handleClick}
+      disabled={isJoined && hasSubmitted}
+      style={isJoined && hasSubmitted ? { opacity: 0.5 } : undefined}
+    >
+      {label}
+    </CTAButton>
+  );
 }
