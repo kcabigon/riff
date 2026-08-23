@@ -847,7 +847,6 @@ export default function ClubPageLayout({
                       createdAt: new Date(riff.createdAt),
                       deadline: riff.deadline ? new Date(riff.deadline) : null,
                     }}
-                    clubName={clubName}
                     pieces={getSubmittedPieces(riff.pieces).map((p) => ({
                       id: p.piece.id,
                       title: p.piece.title,

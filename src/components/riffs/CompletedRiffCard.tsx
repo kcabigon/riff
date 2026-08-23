@@ -21,7 +21,6 @@ interface CompletedRiffCardProps {
     createdAt: Date;
     deadline?: Date | null;
   };
-  clubName?: string;
   pieces: CompletedRiffPiece[];
 }
 
