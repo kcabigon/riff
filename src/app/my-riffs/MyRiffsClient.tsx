@@ -15,6 +15,7 @@ import Tagline from "@/components/Tagline";
 import type { DropdownItem } from "@/components/shared/Dropdown";
 import DeletePieceModal from "@/components/profile/DeletePieceModal";
 import ShareModal, { PublicShare } from "@/components/profile/ShareModal";
+import { useRevealRiff } from "@/hooks/useRevealRiff";
 import {
   getSubmittedPieces,
   getSubmittedParticipants,
@@ -247,7 +248,7 @@ export default function MyRiffsClient({
   const [piecesExpanded, setPiecesExpanded] = useState(false);
   const [pastRiffsExpanded, setPastRiffsExpanded] = useState(false);
   const [revealRiffId, setRevealRiffId] = useState<string | null>(null);
-  const [isRevealing, setIsRevealing] = useState(false);
+  const { revealRiff, isRevealing } = useRevealRiff();
 
   const otherSubmittedCount = (riff: Riff) =>
     getSubmittedPieces(riff.pieces).filter(
@@ -264,21 +265,10 @@ export default function MyRiffsClient({
 
   const handleRevealConfirm = async () => {
     if (!revealRiffId) return;
-    setIsRevealing(true);
-    try {
-      const res = await fetch(`/api/riffs/${revealRiffId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "REVEALED" }),
-      });
-      if (res.ok) {
-        setRevealRiffId(null);
-        router.refresh();
-      }
-    } catch (err) {
-      console.error("Error revealing riff:", err);
-    } finally {
-      setIsRevealing(false);
+    const ok = await revealRiff(revealRiffId);
+    if (ok) {
+      setRevealRiffId(null);
+      router.refresh();
     }
   };
 

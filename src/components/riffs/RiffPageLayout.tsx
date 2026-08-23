@@ -25,6 +25,7 @@ import RevealRiffButton, {
 } from "@/components/riffs/RevealRiffButton";
 import ProgressCard from "@/components/riffs/ProgressCard";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
+import { useRevealRiff } from "@/hooks/useRevealRiff";
 import type { DropdownItem } from "@/components/shared/Dropdown";
 import ContributionStrip from "@/components/riffs/ContributionStrip";
 import NoiseBackground from "@/components/NoiseBackground";
@@ -125,7 +126,7 @@ export default function RiffPageLayout({
 }: RiffPageLayoutProps) {
   const [isJoined, setIsJoined] = useState(initialIsJoined);
   const [isRevealModalOpen, setIsRevealModalOpen] = useState(false);
-  const [isRevealing, setIsRevealing] = useState(false);
+  const { revealRiff, isRevealing } = useRevealRiff();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
@@ -150,22 +151,11 @@ export default function RiffPageLayout({
   };
 
   const handleRevealConfirm = async () => {
-    setIsRevealing(true);
-    try {
-      const res = await fetch(`/api/riffs/${riff.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "REVEALED" }),
-      });
-      if (res.ok) {
-        setIsRevealModalOpen(false);
-        setShowCelebration(true);
-        router.refresh();
-      }
-    } catch (err) {
-      console.error("Error revealing riff:", err);
-    } finally {
-      setIsRevealing(false);
+    const ok = await revealRiff(riff.id);
+    if (ok) {
+      setIsRevealModalOpen(false);
+      setShowCelebration(true);
+      router.refresh();
     }
   };
 
