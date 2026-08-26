@@ -62,7 +62,6 @@ export default function RiffEventCard({
   hasSubmitted,
   currentUserId,
   isAdmin,
-  onJoin,
   onReveal,
   predictedVolumeNumber,
 }: RiffEventCardProps) {
@@ -474,7 +473,6 @@ export default function RiffEventCard({
                   hasDraft={hasDraft}
                   hasSubmitted={hasSubmitted}
                   existingPieceId={existingPieceId}
-                  onJoin={onJoin}
                   stopPropagation
                 />
               ) : null}
