@@ -225,11 +225,6 @@ export default function ClubPageLayout({
   const hasUnreadForUser = (riff: Riff) =>
     hasUnreadPieces(riff.id, readCounts, otherSubmittedCount(riff));
 
-  // After joining a riff, refresh the page to get updated state
-  const handleJoinRiff = useCallback(() => {
-    router.refresh();
-  }, []);
-
   const handleRiffCreated = useCallback((_riffId: string) => {
     setIsCreateRiffModalOpen(false);
     router.refresh();
@@ -785,7 +780,6 @@ export default function ClubPageLayout({
                   hasSubmitted={hasSubmitted}
                   currentUserId={currentUserId}
                   isAdmin={isAdmin || isCoHost}
-                  onJoin={handleJoinRiff}
                   onReveal={() => setIsRevealModalOpen(true)}
                   predictedVolumeNumber={predictedVolumeNumber}
                 />
