@@ -22,6 +22,21 @@ export async function batchNotificationsEnabled(
   return new Set(users.map((u) => u.email));
 }
 
+// Gates the recurring nudges (deadline approaching, remember-to-write,
+// join-riff-nudge) on the "Reminders" toggle — repurposes the previously
+// unused emailMarketing column so these can be silenced independently of
+// the one-time alerts gated by emailNotifications.
+export async function batchRemindersEnabled(
+  emails: string[]
+): Promise<Set<string>> {
+  if (emails.length === 0) return new Set();
+  const users = await prisma.user.findMany({
+    where: { email: { in: emails }, emailMarketing: true },
+    select: { email: true },
+  });
+  return new Set(users.map((u) => u.email));
+}
+
 const EMAIL_LOGO_URL =
   "https://wmqlbbtgexpsxzwwurpi.supabase.co/storage/v1/object/public/images/riff-wordmark-email.png";
 
@@ -606,6 +621,234 @@ export async function sendAllPiecesSubmittedEmail({
     if (error) console.error("Resend error (allPiecesSubmitted):", error);
   } catch (error) {
     console.error("Error sending all pieces submitted email:", error);
+  }
+}
+
+interface ReminderEmailVariant {
+  subject: string;
+  headline: string;
+  body: string;
+}
+
+// Deadline-approaching copy is picked by urgency tier (same >7 / 3-7 / <3
+// day boundaries as deadlineReminderLookbackDays), not by send count — the
+// joke should get more urgent as the deadline nears, not rotate arbitrarily.
+function deadlineApproachingVariant(
+  daysRemaining: number,
+  clubName: string,
+  riffTitle: string,
+  deadlineStr: string,
+  dayLabel: string
+): ReminderEmailVariant {
+  if (daysRemaining > 7) {
+    return {
+      subject: `${riffTitle} closes ${dayLabel}`,
+      headline: `Plenty of time. Famous last words.`,
+      body: `The deadline's ${deadlineStr}. Get your piece in before ${clubName} moves on without you.`,
+    };
+  }
+  if (daysRemaining >= 3) {
+    return {
+      subject: `1.21 gigawatts won't save this deadline`,
+      headline: `1.21 gigawatts won't save this deadline.`,
+      body: `${riffTitle} closes ${dayLabel}. Time travel's not real — get your piece in before ${clubName} moves on.`,
+    };
+  }
+  return {
+    subject: `This deadline will self-destruct ${dayLabel}`,
+    headline: `This deadline will self-destruct ${dayLabel}.`,
+    body: `${riffTitle} closes ${deadlineStr}. Get your piece in — this offer won't repeat itself.`,
+  };
+}
+
+// Remember-to-write and join-riff-nudge cycle through a fixed pool of copy
+// by send number (variantIndex = how many times this reminder has already
+// gone out to this person for this riff), so a repeat nudge doesn't repeat
+// the same joke.
+const REMEMBER_TO_WRITE_VARIANTS: Array<
+  (clubName: string, riffTitle: string) => ReminderEmailVariant
+> = [
+  (clubName, riffTitle) => ({
+    subject: `The first rule of ${clubName}`,
+    headline: `The first rule of ${clubName}: you gotta write something.`,
+    body: `You joined ${riffTitle} — now all that's missing is your piece.`,
+  }),
+  (clubName, riffTitle) => ({
+    subject: `If you write it...`,
+    headline: `If you write it, they will read it.`,
+    body: `${riffTitle}'s waiting on your piece in ${clubName}.`,
+  }),
+  (clubName) => ({
+    subject: `${clubName}, show me the words`,
+    headline: `${clubName}, show me the words.`,
+    body: `You joined this riff — time to put something on the page.`,
+  }),
+  (clubName, riffTitle) => ({
+    subject: `Isn't it ironic?`,
+    headline: `Isn't it ironic?`,
+    body: `You joined ${riffTitle} in ${clubName} but haven't written a word yet. A little too ironic, don't you think?`,
+  }),
+];
+
+const JOIN_RIFF_NUDGE_VARIANTS: Array<
+  (clubName: string, riffTitle: string) => ReminderEmailVariant
+> = [
+  (clubName, riffTitle) => ({
+    subject: `Looks like you got left behind`,
+    headline: `${clubName} started riffing... and you got left behind.`,
+    body: `${riffTitle}'s underway. Don't miss the party.`,
+  }),
+  (clubName, riffTitle) => ({
+    subject: `Smells like team spirit`,
+    headline: `${clubName} is riffing, and it smells like team spirit.`,
+    body: `${riffTitle}'s underway — everyone's in but you.`,
+  }),
+  (clubName, riffTitle) => ({
+    subject: `Insert coin to continue`,
+    headline: `${clubName}'s riffing — insert coin to continue.`,
+    body: `${riffTitle} is live and waiting on your next move.`,
+  }),
+];
+
+export async function sendDeadlineApproachingEmail({
+  email,
+  riffTitle,
+  clubName,
+  riffUrl,
+  deadline,
+  daysRemaining,
+}: {
+  email: string;
+  riffTitle: string;
+  clubName: string;
+  riffUrl: string;
+  deadline: Date;
+  daysRemaining: number;
+}): Promise<void> {
+  const deadlineStr = deadline.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+  });
+  const dayLabel =
+    daysRemaining <= 0
+      ? "today"
+      : daysRemaining === 1
+        ? "tomorrow"
+        : `in ${daysRemaining} days`;
+  const variant = deadlineApproachingVariant(
+    daysRemaining,
+    clubName,
+    riffTitle,
+    deadlineStr,
+    dayLabel
+  );
+  try {
+    const { error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to: email,
+      subject: variant.subject,
+      html: emailShell({
+        title: variant.headline,
+        clubName,
+        footerText: `You're receiving this because you haven't submitted a piece to ${riffTitle} yet.`,
+        content: `
+          <tr>
+            <td style="padding:40px 40px 16px;">
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${variant.headline}</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${variant.body}</p>
+            </td>
+          </tr>
+
+          ${emailButton("Finish your piece", riffUrl)}`,
+      }),
+    });
+    if (error) console.error("Resend error (deadlineApproaching):", error);
+  } catch (error) {
+    console.error("Error sending deadline approaching email:", error);
+  }
+}
+
+export async function sendRememberToWriteEmail({
+  email,
+  riffTitle,
+  clubName,
+  riffUrl,
+  variantIndex,
+}: {
+  email: string;
+  riffTitle: string;
+  clubName: string;
+  riffUrl: string;
+  variantIndex: number;
+}): Promise<void> {
+  const variant = REMEMBER_TO_WRITE_VARIANTS[
+    variantIndex % REMEMBER_TO_WRITE_VARIANTS.length
+  ](clubName, riffTitle);
+  try {
+    const { error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to: email,
+      subject: variant.subject,
+      html: emailShell({
+        title: variant.headline,
+        clubName,
+        footerText: `You're receiving this because you joined ${riffTitle} in ${clubName} but haven't started writing yet.`,
+        content: `
+          <tr>
+            <td style="padding:40px 40px 16px;">
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${variant.headline}</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${variant.body}</p>
+            </td>
+          </tr>
+
+          ${emailButton("Start writing", riffUrl)}`,
+      }),
+    });
+    if (error) console.error("Resend error (rememberToWrite):", error);
+  } catch (error) {
+    console.error("Error sending remember to write email:", error);
+  }
+}
+
+export async function sendJoinRiffNudgeEmail({
+  email,
+  riffTitle,
+  clubName,
+  riffUrl,
+  variantIndex,
+}: {
+  email: string;
+  riffTitle: string;
+  clubName: string;
+  riffUrl: string;
+  variantIndex: number;
+}): Promise<void> {
+  const variant = JOIN_RIFF_NUDGE_VARIANTS[
+    variantIndex % JOIN_RIFF_NUDGE_VARIANTS.length
+  ](clubName, riffTitle);
+  try {
+    const { error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to: email,
+      subject: variant.subject,
+      html: emailShell({
+        title: variant.headline,
+        clubName,
+        footerText: `You're receiving this because you're a member of ${clubName} on Riff.`,
+        content: `
+          <tr>
+            <td style="padding:40px 40px 16px;">
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${variant.headline}</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${variant.body}</p>
+            </td>
+          </tr>
+
+          ${emailButton("Let's riff", riffUrl)}`,
+      }),
+    });
+    if (error) console.error("Resend error (joinRiffNudge):", error);
+  } catch (error) {
+    console.error("Error sending join riff nudge email:", error);
   }
 }
 
