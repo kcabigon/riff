@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { NotificationType } from "@prisma/client";
 import { getBaseUrl } from "@/lib/env";
 import {
-  batchNotificationsEnabled,
+  batchRemindersEnabled,
   sendDeadlineApproachingEmail,
   sendRememberToWriteEmail,
   sendJoinRiffNudgeEmail,
@@ -141,7 +141,7 @@ export async function runDeadlineApproachingCheck(
     });
     if (eligible.length === 0) continue;
 
-    const enabled = await batchNotificationsEnabled(
+    const enabled = await batchRemindersEnabled(
       eligible.map((p) => p.user.email)
     );
     const riffTitle = riff.title || riff.club.name;
@@ -196,7 +196,7 @@ export async function runRememberToWriteCheck(
     });
     if (eligible.length === 0) continue;
 
-    const enabled = await batchNotificationsEnabled(
+    const enabled = await batchRemindersEnabled(
       eligible.map((p) => p.user.email)
     );
     const riffTitle = riff.title || riff.club.name;
@@ -249,7 +249,7 @@ export async function runJoinRiffNudgeCheck(
     });
     if (eligible.length === 0) continue;
 
-    const enabled = await batchNotificationsEnabled(
+    const enabled = await batchRemindersEnabled(
       eligible.map((m) => m.user.email)
     );
     const riffTitle = riff.title || riff.club.name;

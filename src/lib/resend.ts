@@ -22,6 +22,21 @@ export async function batchNotificationsEnabled(
   return new Set(users.map((u) => u.email));
 }
 
+// Gates the recurring nudges (deadline approaching, remember-to-write,
+// join-riff-nudge) on the "Reminders" toggle — repurposes the previously
+// unused emailMarketing column so these can be silenced independently of
+// the one-time alerts gated by emailNotifications.
+export async function batchRemindersEnabled(
+  emails: string[]
+): Promise<Set<string>> {
+  if (emails.length === 0) return new Set();
+  const users = await prisma.user.findMany({
+    where: { email: { in: emails }, emailMarketing: true },
+    select: { email: true },
+  });
+  return new Set(users.map((u) => u.email));
+}
+
 const EMAIL_LOGO_URL =
   "https://wmqlbbtgexpsxzwwurpi.supabase.co/storage/v1/object/public/images/riff-wordmark-email.png";
 
