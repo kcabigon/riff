@@ -88,6 +88,22 @@ export async function DELETE() {
     const user = await requireAuth();
     const userId = user.id;
 
+    const adminClubs = await prisma.club.findMany({
+      where: { adminId: userId },
+      select: { id: true, name: true, _count: { select: { members: true } } },
+    });
+
+    const blockingClubs = adminClubs.filter((c) => c._count.members > 1);
+    if (blockingClubs.length > 0) {
+      return NextResponse.json(
+        {
+          error: "Cannot delete account while hosting clubs with other members",
+          blockingClubs: blockingClubs.map((c) => ({ id: c.id, name: c.name })),
+        },
+        { status: 409 }
+      );
+    }
+
     // Delete in order of dependencies
     await prisma.$transaction([
       prisma.notification.deleteMany({ where: { recipientId: userId } }),

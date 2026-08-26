@@ -25,9 +25,10 @@ import RevealRiffButton, {
 } from "@/components/riffs/RevealRiffButton";
 import ProgressCard from "@/components/riffs/ProgressCard";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
+import { useRevealRiff } from "@/hooks/useRevealRiff";
 import type { DropdownItem } from "@/components/shared/Dropdown";
-import ContributionStrip from "@/components/riffs/ContributionStrip";
-import NoiseBackground from "@/components/NoiseBackground";
+import ActivityFeed from "@/components/riffs/ActivityFeed";
+import ReadByStrip from "@/components/riffs/ReadByStrip";
 import PrimaryButton from "@/components/PrimaryButton";
 
 interface RiffPageLayoutProps {
@@ -64,7 +65,6 @@ interface RiffPageLayoutProps {
         authorId: string;
         wordCount: number;
         coverImage?: string | null;
-        currentContent?: string | null;
         updatedAt?: string;
         commentCount?: number;
         author?: {
@@ -77,6 +77,7 @@ interface RiffPageLayoutProps {
   };
   currentUserId: string;
   isAdmin: boolean;
+  canDeleteRiff?: boolean;
   isJoined: boolean;
   hasDraft: boolean;
   hasSubmitted: boolean;
@@ -106,6 +107,7 @@ export default function RiffPageLayout({
   riff,
   currentUserId,
   isAdmin,
+  canDeleteRiff = isAdmin,
   isJoined: initialIsJoined,
   hasDraft,
   hasSubmitted,
@@ -123,11 +125,19 @@ export default function RiffPageLayout({
 }: RiffPageLayoutProps) {
   const [isJoined, setIsJoined] = useState(initialIsJoined);
   const [isRevealModalOpen, setIsRevealModalOpen] = useState(false);
-  const [isRevealing, setIsRevealing] = useState(false);
+  const { revealRiff, isRevealing } = useRevealRiff();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [viewMode, setViewMode] = useState<"read" | "comment">("read");
+  const [badgeMap, setBadgeMap] =
+    useState<Record<string, boolean>>(hasNewCommentsMap);
   const router = useRouter();
+
+  const switchToComment = () => {
+    setViewMode("comment");
+    setBadgeMap({});
+  };
   const deadlinePassed = isPastDeadline(riff.deadline);
   const piecesAllSubmitted = allPiecesSubmitted(
     riff.pieces,
@@ -148,28 +158,21 @@ export default function RiffPageLayout({
   };
 
   const handleRevealConfirm = async () => {
-    setIsRevealing(true);
-    try {
-      const res = await fetch(`/api/riffs/${riff.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "REVEALED" }),
-      });
-      if (res.ok) {
-        setIsRevealModalOpen(false);
-        setShowCelebration(true);
-        router.refresh();
-      }
-    } catch (err) {
-      console.error("Error revealing riff:", err);
-    } finally {
-      setIsRevealing(false);
+    const ok = await revealRiff(riff.id);
+    if (ok) {
+      setIsRevealModalOpen(false);
+      setShowCelebration(true);
+      router.refresh();
     }
   };
 
   const existingPieceId =
     riff.pieces.find((p) => p.piece.authorId === currentUserId)?.piece.id ??
     null;
+  const totalWords = riff.pieces.reduce(
+    (sum, p) => sum + (p.piece.wordCount || 0),
+    0
+  );
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
@@ -244,8 +247,10 @@ export default function RiffPageLayout({
                 >
                   {deadlinePassed && riff.status !== "REVEALED"
                     ? "Deadline passed"
-                    : riff.status === "REVEALED" && riff.deadline
-                      ? `${formatDateLong(riff.createdAt)} - ${formatDateLong(riff.deadline)}`
+                    : riff.status === "REVEALED"
+                      ? riff.updatedAt
+                        ? `Revealed ${formatDateShort(riff.updatedAt)}`
+                        : "Revealed"
                       : riff.deadline
                         ? `Deadline: ${formatDateLong(riff.deadline)}`
                         : "No deadline"}
@@ -268,13 +273,17 @@ export default function RiffPageLayout({
                             },
                           ]
                         : []),
-                      { type: "divider" },
-                      {
-                        type: "action",
-                        label: "Delete riff",
-                        color: "#DC2626",
-                        onClick: () => setIsDeleteModalOpen(true),
-                      },
+                      ...(canDeleteRiff
+                        ? [
+                            { type: "divider" as const },
+                            {
+                              type: "action" as const,
+                              label: "Delete riff",
+                              color: "#DC2626",
+                              onClick: () => setIsDeleteModalOpen(true),
+                            },
+                          ]
+                        : []),
                     ];
                     return (
                       <ThreeDotButton
@@ -332,29 +341,39 @@ export default function RiffPageLayout({
                 </PrimaryButton>
               )}
 
-            {riff.status === "REVEALED" && riff.updatedAt && (
+            {riff.status === "REVEALED" && (
               <div
                 style={{
-                  position: "relative",
-                  overflow: "hidden",
+                  display: "inline-flex",
                   border: "2px solid #000000",
-                  padding: "12px 48px",
-                  whiteSpace: "nowrap",
+                  overflow: "hidden",
                 }}
               >
-                <NoiseBackground fillMode="cover" />
-                <span
-                  style={{
-                    position: "relative",
-                    zIndex: 1,
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "16px",
-                    fontWeight: 300,
-                    color: "#000000",
-                  }}
-                >
-                  Revealed {formatDateShort(riff.updatedAt)}
-                </span>
+                {(["read", "comment"] as const).map((mode, i) => (
+                  <button
+                    key={mode}
+                    onClick={() =>
+                      mode === "comment" ? switchToComment() : setViewMode(mode)
+                    }
+                    style={{
+                      backgroundColor:
+                        viewMode === mode ? "#000000" : "#FFFFFF",
+                      border: "none",
+                      borderLeft: i > 0 ? "2px solid #000000" : "none",
+                      cursor: "pointer",
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "14px",
+                      fontWeight: 400,
+                      color: viewMode === mode ? "#FFFFFF" : "#000000",
+                      padding: "6px 16px",
+                      textTransform: "capitalize",
+                      transition:
+                        "background-color 0.15s ease, color 0.15s ease",
+                    }}
+                  >
+                    {mode}
+                  </button>
+                ))}
               </div>
             )}
 
@@ -366,10 +385,6 @@ export default function RiffPageLayout({
                 );
                 const totalComments = contributionData.reduce(
                   (sum, m) => sum + m.commentCount,
-                  0
-                );
-                const totalWords = riff.pieces.reduce(
-                  (sum, p) => sum + (p.piece.wordCount || 0),
                   0
                 );
                 const revealStats = [
@@ -453,9 +468,6 @@ export default function RiffPageLayout({
                 hasDraft={hasDraft}
                 hasSubmitted={hasSubmitted}
                 existingPieceId={existingPieceId}
-                onJoin={() => {
-                  setIsJoined(true);
-                }}
               />
             ) : null}
 
@@ -481,54 +493,76 @@ export default function RiffPageLayout({
           </div>
         </div>
 
-        {/* Pieces gallery for REVEALED riffs */}
-        {riff.status === "REVEALED" && riff.pieces.length > 0 && (
+        {/* Revealed riff content — Pieces or Feed */}
+        {riff.status === "REVEALED" && (
           <div style={{ marginTop: "48px" }}>
-            {/* Pieces grid */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-                gap: "24px",
-              }}
-            >
-              {riff.pieces.map((pieceRiff) => (
-                <PieceCard
-                  key={pieceRiff.piece.id}
-                  piece={{
-                    id: pieceRiff.piece.id,
-                    title: pieceRiff.piece.title,
-                    coverImage: pieceRiff.piece.coverImage,
-                    currentContent: pieceRiff.piece.currentContent || "",
-                    wordCount: pieceRiff.piece.wordCount,
-                    commentCount: pieceRiff.piece.commentCount,
-                    author: pieceRiff.piece.author || {
-                      id: pieceRiff.piece.authorId,
-                      name: null,
-                      avatarUrl: null,
-                    },
-                  }}
-                  isRead={readPieceIds.includes(pieceRiff.piece.id)}
-                  hasNewComments={
-                    hasNewCommentsMap[pieceRiff.piece.id] ?? false
-                  }
-                  isOwnPiece={pieceRiff.piece.authorId === currentUserId}
-                  onClick={() =>
-                    router.push(`/read/${pieceRiff.piece.id}?riff=${riff.id}`)
-                  }
-                />
-              ))}
-            </div>
-          </div>
-        )}
+            {viewMode === "read" && riff.pieces.length > 0 && (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                  gap: "24px",
+                }}
+              >
+                {riff.pieces.map((pieceRiff) => (
+                  <PieceCard
+                    key={pieceRiff.piece.id}
+                    piece={{
+                      id: pieceRiff.piece.id,
+                      title: pieceRiff.piece.title,
+                      coverImage: pieceRiff.piece.coverImage,
+                      wordCount: pieceRiff.piece.wordCount,
+                      commentCount: pieceRiff.piece.commentCount,
+                      author: pieceRiff.piece.author || {
+                        id: pieceRiff.piece.authorId,
+                        name: null,
+                        avatarUrl: null,
+                      },
+                    }}
+                    isRead={readPieceIds.includes(pieceRiff.piece.id)}
+                    hasNewComments={badgeMap[pieceRiff.piece.id] ?? false}
+                    isOwnPiece={pieceRiff.piece.authorId === currentUserId}
+                    onClick={() =>
+                      router.push(`/read/${pieceRiff.piece.id}?riff=${riff.id}`)
+                    }
+                  />
+                ))}
+              </div>
+            )}
 
-        {/* Contribution strip for REVEALED riffs — below pieces so readers see the grid first */}
-        {riff.status === "REVEALED" && contributionData.length > 0 && (
-          <div style={{ marginTop: "48px" }}>
-            <ContributionStrip
-              members={contributionData}
-              totalPieces={totalPieces}
-            />
+            {viewMode === "read" && contributionData.length > 0 && (
+              <ReadByStrip
+                members={contributionData}
+                totalPieces={totalPieces}
+              />
+            )}
+
+            {viewMode === "comment" && (
+              <ActivityFeed
+                riffId={riff.id}
+                clubId={riff.clubId}
+                currentUser={navUser}
+                readPieces={
+                  (readPieceIds ?? [])
+                    .map((id) => {
+                      const match = riff.pieces.find((p) => p.piece.id === id);
+                      return match
+                        ? {
+                            id: match.piece.id,
+                            title: match.piece.title,
+                            coverImage: match.piece.coverImage ?? null,
+                          }
+                        : null;
+                    })
+                    .filter(Boolean) as Array<{
+                    id: string;
+                    title: string;
+                    coverImage: string | null;
+                  }>
+                }
+                totalPieceCount={riff.pieces.length}
+              />
+            )}
           </div>
         )}
 

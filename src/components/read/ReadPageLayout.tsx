@@ -501,8 +501,6 @@ export default function ReadPageLayout({
               }}
             >
               {readMinutes} min read
-              {" \u2022 "}
-              {piece.wordCount.toLocaleString()} words
               {piece.submittedAt && (
                 <>
                   {" \u2022 "}

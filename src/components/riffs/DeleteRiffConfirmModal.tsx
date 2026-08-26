@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Modal from "@/components/shared/Modal";
+import DestructiveButton from "@/components/DestructiveButton";
 
 interface DeleteRiffConfirmModalProps {
   isOpen: boolean;
@@ -118,39 +119,27 @@ export default function DeleteRiffConfirmModal({
         </div>
       )}
 
-      <button
+      <DestructiveButton
+        size="lg"
         onClick={handleDelete}
         disabled={isDeleting}
-        style={{
-          backgroundColor: isDeleting ? "#E6E6E6" : "#DC2626",
-          border: "2px solid #000000",
-          boxShadow: isDeleting ? "none" : "8px 8px 0px 0px #000000",
-          padding: "12px 48px",
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "16px",
-          fontWeight: 300,
-          color: isDeleting ? "#000000" : "#FFFFFF",
-          cursor: isDeleting ? "not-allowed" : "pointer",
-          transition: "none",
-          width: "100%",
-          marginBottom: "16px",
-        }}
+        style={{ width: "100%", marginBottom: "16px" }}
       >
         {isDeleting ? "Deleting..." : "Delete riff"}
-      </button>
+      </DestructiveButton>
 
       <div style={{ textAlign: "center" }}>
         <button
           onClick={onClose}
           style={{
-            background: "none",
+            backgroundColor: "#FFFFFF",
             border: "none",
             cursor: "pointer",
             fontFamily: "var(--font-dm-sans)",
             fontSize: "14px",
             fontWeight: 300,
             color: "#808080",
-            padding: "4px",
+            padding: "4px 12px",
             textDecoration: "underline",
           }}
         >
