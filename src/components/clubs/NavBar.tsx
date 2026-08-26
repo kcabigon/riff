@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import ClubDropdown from "./ClubDropdown";
+import CreateDropdown from "./CreateDropdown";
 import AvatarDropdown from "./AvatarDropdown";
 import NotificationBell from "@/components/notifications/NotificationBell";
 
@@ -23,6 +24,7 @@ interface NavBarProps {
     name: string;
   } | null;
   showClubDropdown?: boolean;
+  showCreateDropdown?: boolean;
 }
 
 export default function NavBar({
@@ -30,6 +32,7 @@ export default function NavBar({
   clubs,
   currentClub,
   showClubDropdown = true,
+  showCreateDropdown = false,
 }: NavBarProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -56,7 +59,7 @@ export default function NavBar({
           justifyContent: "space-between",
         }}
       >
-        {/* Left Section: Logo + Club Dropdown */}
+        {/* Left Section: Logo + Club Dropdown + Create Dropdown */}
         <div
           style={{
             display: "flex",
@@ -88,6 +91,8 @@ export default function NavBar({
               onClose={() => setIsDropdownOpen(false)}
             />
           )}
+
+          {showCreateDropdown && <CreateDropdown />}
         </div>
 
         {/* Right Section: Bell + Avatar Dropdown */}

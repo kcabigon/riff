@@ -20,21 +20,15 @@ interface MosaicPiece {
 
 interface MosaicCollageProps {
   pieces: MosaicPiece[];
-  width: number;
-  height: number;
 }
 
-export default function MosaicCollage({
-  pieces,
-  width,
-  height,
-}: MosaicCollageProps) {
+export default function MosaicCollage({ pieces }: MosaicCollageProps) {
   if (pieces.length === 0) {
     return (
       <div
         style={{
-          width: `${width}px`,
-          height: `${height}px`,
+          width: "100%",
+          height: "100%",
           backgroundColor: "#E6E6E6",
         }}
       />
@@ -44,8 +38,8 @@ export default function MosaicCollage({
   return (
     <div
       style={{
-        width: `${width}px`,
-        height: `${height}px`,
+        width: "100%",
+        height: "100%",
         display: "flex",
         flexDirection: "row",
         overflow: "hidden",

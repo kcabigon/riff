@@ -16,6 +16,7 @@ import CloseButton from "@/components/CloseButton";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
 import { useIsMobile } from "@/hooks/useMediaQuery";
+import { useRevealRiff } from "@/hooks/useRevealRiff";
 import {
   getRiffDisplayTitle,
   getSubmittedPieces,
@@ -130,7 +131,7 @@ export default function ClubPageLayout({
   const [clubBannerImage, setClubBannerImage] = useState(club.bannerImage);
   const [isCreateRiffModalOpen, setIsCreateRiffModalOpen] = useState(false);
   const [isRevealModalOpen, setIsRevealModalOpen] = useState(false);
-  const [isRevealing, setIsRevealing] = useState(false);
+  const { revealRiff, isRevealing } = useRevealRiff();
   const [isClubDetailsModalOpen, setIsClubDetailsModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isDeleteClubModalOpen, setIsDeleteClubModalOpen] = useState(false);
@@ -233,23 +234,12 @@ export default function ClubPageLayout({
   // Handle reveal confirmation
   const handleRevealConfirm = useCallback(async () => {
     if (!activeRiff) return;
-    setIsRevealing(true);
-    try {
-      const res = await fetch(`/api/riffs/${activeRiff.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "REVEALED" }),
-      });
-      if (res.ok) {
-        setIsRevealModalOpen(false);
-        router.refresh();
-      }
-    } catch (err) {
-      console.error("Error revealing riff:", err);
-    } finally {
-      setIsRevealing(false);
+    const ok = await revealRiff(activeRiff.id);
+    if (ok) {
+      setIsRevealModalOpen(false);
+      router.refresh();
     }
-  }, [activeRiff]);
+  }, [activeRiff, revealRiff, router]);
 
   // Compute joined/submitted state for active riff
   const isJoined = activeRiff
@@ -851,7 +841,6 @@ export default function ClubPageLayout({
                       createdAt: new Date(riff.createdAt),
                       deadline: riff.deadline ? new Date(riff.deadline) : null,
                     }}
-                    clubName={clubName}
                     pieces={getSubmittedPieces(riff.pieces).map((p) => ({
                       id: p.piece.id,
                       title: p.piece.title,

@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import MosaicCollage from "./MosaicCollage";
 import Badge from "@/components/shared/Badge";
 import { getRiffDisplayTitle, getSubmittedPieces } from "@/lib/riff-utils";
-import { useIsMobile } from "@/hooks/useMediaQuery";
 
 interface ReadyToRevealCardProps {
   riff: {
@@ -42,18 +41,7 @@ export default function ReadyToRevealCard({
   totalPieces,
 }: ReadyToRevealCardProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const [mobileWidth, setMobileWidth] = useState(375);
-  const cardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const isMobile = useIsMobile();
-
-  useEffect(() => {
-    if (!isMobile || !cardRef.current) return;
-    setMobileWidth(cardRef.current.offsetWidth);
-  }, [isMobile]);
-
-  const cardWidth = isMobile ? mobileWidth : 400;
-  const cardHeight = isMobile ? 352 : 440;
 
   const handleClick = () => {
     router.push(`/riffs/${riff.id}`);
@@ -69,16 +57,15 @@ export default function ReadyToRevealCard({
       }}
     >
       <div
-        ref={cardRef}
         onClick={handleClick}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         style={{
           position: "relative",
           cursor: "pointer",
-          width: isMobile ? "100%" : `${cardWidth}px`,
-          height: `${cardHeight}px`,
-          border: "1px solid #000000",
+          width: "100%",
+          aspectRatio: "5 / 4",
+          border: "2px solid #000000",
           boxShadow: isHovered
             ? "8px 8px 0px 0px #01EFFC"
             : "8px 8px 0px 0px #000000",
@@ -91,8 +78,6 @@ export default function ReadyToRevealCard({
             id: p.piece.id,
             coverImage: p.piece.coverImage,
           }))}
-          width={cardWidth}
-          height={cardHeight}
         />
 
         {/* Unread badge */}
