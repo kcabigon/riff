@@ -162,18 +162,19 @@ export async function DELETE(
       );
     }
 
-    // Remove member
-    await prisma.clubMember.delete({
-      where: { id: targetMember.id },
-    });
-
-    // If removed member was moderator, clear moderatorId
-    if (club.moderatorId === targetUserId) {
-      await prisma.club.update({
-        where: { id: clubId },
-        data: { moderatorId: null },
+    // Remove member — clear moderatorId atomically if they were the co-host
+    await prisma.$transaction(async (tx) => {
+      await tx.clubMember.delete({
+        where: { id: targetMember.id },
       });
-    }
+
+      if (club.moderatorId === targetUserId) {
+        await tx.club.update({
+          where: { id: clubId },
+          data: { moderatorId: null },
+        });
+      }
+    });
 
     return NextResponse.json({
       success: true,

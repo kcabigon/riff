@@ -11,6 +11,7 @@ interface TaglineProps {
   fontFamily?: string;
   fontWeight?: number;
   align?: "left" | "center";
+  heightPadding?: number;
 }
 
 /**
@@ -33,6 +34,7 @@ export default function Tagline({
   fontFamily = "var(--font-dm-sans)",
   fontWeight = 300,
   align = "center",
+  heightPadding = 14,
 }: TaglineProps) {
   const foregroundColor = textColor || "#000000";
 
@@ -62,7 +64,7 @@ export default function Tagline({
     <div
       style={{
         width: `${width}px`,
-        height: `${fontSize + 14}px`,
+        height: `${fontSize + heightPadding}px`,
         position: "relative",
         display: "flex",
         alignItems: "center",
@@ -89,6 +91,7 @@ export default function Tagline({
           margin: 0,
           position: "relative",
           zIndex: 1,
+          whiteSpace: "nowrap",
         }}
       >
         {text}

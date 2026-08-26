@@ -110,9 +110,62 @@ export function isRiffFullyRead(
   return submittedCount > 0 && (readCounts[riffId] || 0) >= submittedCount;
 }
 
+// Strips HTML tags from editor content and truncates to a plain-text preview.
+export function getContentPreview(html: string, maxLength = 200): string {
+  const text = html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (text.length <= maxLength) return text;
+  const truncated = text.slice(0, maxLength);
+  const lastSpace = truncated.lastIndexOf(" ");
+  return `${truncated.slice(0, lastSpace > 0 ? lastSpace : maxLength)}…`;
+}
+
 // Sums word counts across a list of pieces.
 export function getTotalWordCount(
   pieces: { piece?: { wordCount?: number | null } | null }[]
 ): number {
   return pieces.reduce((sum, p) => sum + (p.piece?.wordCount || 0), 0);
+}
+
+// Calendar days between today and a future date (0 = later today, 1 =
+// tomorrow, etc). Uses UTC date components rather than raw elapsed
+// milliseconds so a deadline later *today* correctly returns 0 instead of
+// rounding up to "1 day" (which previously showed as "tomorrow").
+export function daysUntil(date: Date): number {
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const now = new Date();
+  const startOfToday = Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate()
+  );
+  const startOfTargetDay = Date.UTC(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate()
+  );
+  return Math.round((startOfTargetDay - startOfToday) / DAY_MS);
+}
+
+// Whole days elapsed since a past date, rounded down.
+export function daysSince(date: Date): number {
+  return Math.floor((Date.now() - date.getTime()) / (24 * 60 * 60 * 1000));
+}
+
+// Re-send lookback window for the deadline-approaching reminder, scaled to
+// how much time is left — weekly when there's plenty of runway, more
+// frequent as the deadline nears.
+export function deadlineReminderLookbackDays(daysRemaining: number): number {
+  if (daysRemaining > 7) return 7;
+  if (daysRemaining >= 3) return 3;
+  return 2;
 }

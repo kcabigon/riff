@@ -47,42 +47,50 @@ export async function POST(
       select: { name: true, firstName: true },
     });
 
-    // Notify existing members and send emails (non-blocking)
-    const appUrl = getBaseUrl();
-    const clubUrl = `${appUrl}/clubs/${clubId}`;
-    notifyClubMembers(
-      clubId,
-      NotificationType.CLUB_MEMBER_JOINED,
-      userId,
-      {}
-    ).catch(() => {});
-    prisma.clubMember
-      .findMany({
+    // Notify existing members and send emails — isolated so failures don't affect the join response
+    try {
+      const clubUrl = `${getBaseUrl()}/clubs/${clubId}`;
+
+      await notifyClubMembers(
+        clubId,
+        NotificationType.CLUB_MEMBER_JOINED,
+        userId,
+        {}
+      ).catch((err) =>
+        console.error("[notification error] member joined:", err)
+      );
+
+      const members = await prisma.clubMember.findMany({
         where: { clubId, userId: { not: userId } },
         include: { user: { select: { email: true } } },
-      })
-      .then(async (members) => {
-        const enabled = await batchNotificationsEnabled(
-          members.map((m) => m.user.email)
-        );
-        return Promise.allSettled(
-          members
-            .filter((m) => enabled.has(m.user.email))
-            .map((m) =>
-              sendMemberJoinedEmail({
-                email: m.user.email,
-                newMemberFullName: newMember.name || "A new member",
-                newMemberFirstName:
-                  newMember.firstName ||
-                  newMember.name?.split(" ")[0] ||
-                  "them",
-                clubName: club!.name,
-                clubUrl,
-              })
-            )
-        );
-      })
-      .catch(() => {});
+      });
+      const enabled = await batchNotificationsEnabled(
+        members.map((m) => m.user.email)
+      );
+      const eligibleMembers = members.filter((m) => enabled.has(m.user.email));
+      console.info(
+        `[notify] member joined club ${clubId}: ${members.length} members, ${eligibleMembers.length} email-enabled`
+      );
+      const emailResults = await Promise.allSettled(
+        eligibleMembers.map((m) =>
+          sendMemberJoinedEmail({
+            email: m.user.email,
+            newMemberFullName: newMember.name || "A new member",
+            newMemberFirstName:
+              newMember.firstName || newMember.name?.split(" ")[0] || "them",
+            clubName: club!.name,
+            clubUrl,
+          })
+        )
+      );
+      const sent = emailResults.filter((r) => r.status === "fulfilled").length;
+      const failed = emailResults.filter((r) => r.status === "rejected").length;
+      console.info(
+        `[notify] member joined club ${clubId}: ${sent} sent, ${failed} failed`
+      );
+    } catch (err) {
+      console.error("[notification error] member joined pipeline failed:", err);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error: unknown) {

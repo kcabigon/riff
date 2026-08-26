@@ -93,12 +93,11 @@ export default async function ReadPage({
       where: {
         pieceId,
         riffId,
-        riff: {
-          status: "REVEALED",
-          club: {
-            members: { some: { userId } },
-          },
-        },
+        riff: { status: "REVEALED" },
+        OR: [
+          { riff: { club: { members: { some: { userId } } } } },
+          { piece: { authorId: userId } },
+        ],
       },
       select: {
         riffId: true,
@@ -118,12 +117,11 @@ export default async function ReadPage({
     const pieceRiff = await prisma.pieceRiff.findFirst({
       where: {
         pieceId,
-        riff: {
-          status: "REVEALED",
-          club: {
-            members: { some: { userId } },
-          },
-        },
+        riff: { status: "REVEALED" },
+        OR: [
+          { riff: { club: { members: { some: { userId } } } } },
+          { piece: { authorId: userId } },
+        ],
       },
       select: {
         riffId: true,
@@ -223,13 +221,11 @@ export default async function ReadPage({
     },
   });
 
-  // The CTA shows on the opted-in piece everywhere, and on ANY piece only in
-  // local dev (for testing). NODE_ENV is "production" on every Vercel deploy
-  // (staging + prod), so in production this is provably gated to the one piece —
-  // no dependency on any runtime env var.
-  const showMotion =
-    EXPERIMENT_ENABLED &&
-    (pieceId === EXPERIMENT_PIECE_ID || process.env.NODE_ENV !== "production");
+  // The CTA shows only on the one opted-in piece, in every environment. That ID
+  // lives in the production DB and never exists in the (separate) dev DB, so the
+  // CTA simply doesn't appear locally — to test the experience, temporarily point
+  // EXPERIMENT_PIECE_ID at a local piece, then revert before merging.
+  const showMotion = EXPERIMENT_ENABLED && pieceId === EXPERIMENT_PIECE_ID;
 
   return (
     <ReadPageLayout

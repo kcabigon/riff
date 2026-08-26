@@ -10,7 +10,6 @@ interface RiffCTAButtonProps {
   hasDraft: boolean;
   hasSubmitted: boolean;
   existingPieceId?: string | null;
-  onJoin?: () => void;
   stopPropagation?: boolean;
 }
 
@@ -20,7 +19,6 @@ export default function RiffCTAButton({
   hasDraft,
   hasSubmitted,
   existingPieceId,
-  onJoin,
   stopPropagation = false,
 }: RiffCTAButtonProps) {
   const router = useRouter();
@@ -29,7 +27,7 @@ export default function RiffCTAButton({
   const label = !isJoined
     ? "Let's riff"
     : hasSubmitted
-      ? "View submission"
+      ? "Submitted"
       : hasDraft
         ? "Continue writing"
         : "Start writing";
@@ -41,7 +39,9 @@ export default function RiffCTAButton({
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
-      if (res.ok && onJoin) onJoin();
+      if (res.ok) {
+        router.push(`/riffs/${riffId}`);
+      }
     } catch (err) {
       console.error("Error joining riff:", err);
     }
@@ -60,5 +60,13 @@ export default function RiffCTAButton({
     }
   };
 
-  return <CTAButton onClick={handleClick}>{label}</CTAButton>;
+  return (
+    <CTAButton
+      onClick={handleClick}
+      disabled={isJoined && hasSubmitted}
+      style={isJoined && hasSubmitted ? { opacity: 0.5 } : undefined}
+    >
+      {label}
+    </CTAButton>
+  );
 }

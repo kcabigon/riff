@@ -62,7 +62,7 @@ function OnOffToggle({
 
 export default function EmailSection() {
   const [appNotifications, setAppNotifications] = useState(true);
-  const [marketing, setMarketing] = useState(true);
+  const [reminders, setReminders] = useState(true);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{
@@ -93,7 +93,7 @@ export default function EmailSection() {
           setAppNotifications(data.emailNotifications);
         }
         if (typeof data.emailMarketing === "boolean") {
-          setMarketing(data.emailMarketing);
+          setReminders(data.emailMarketing);
         }
       })
       .catch(() => {})
@@ -105,7 +105,7 @@ export default function EmailSection() {
     val: boolean
   ) {
     if (field === "emailNotifications") setAppNotifications(val);
-    else setMarketing(val);
+    else setReminders(val);
 
     setSaving(true);
     try {
@@ -118,7 +118,7 @@ export default function EmailSection() {
       showToast("Saved", "success");
     } catch {
       if (field === "emailNotifications") setAppNotifications(!val);
-      else setMarketing(!val);
+      else setReminders(!val);
       showToast("Couldn't save — changes reverted", "error");
     } finally {
       setSaving(false);
@@ -134,10 +134,10 @@ export default function EmailSection() {
       field: "emailNotifications" as const,
     },
     {
-      label: "Marketing & updates",
+      label: "Reminders",
       description:
-        "Occasional product news and announcements from the Riff team.",
-      value: marketing,
+        "Nudges to write, join a riff, or beat a deadline — recurring, not one-time alerts.",
+      value: reminders,
       field: "emailMarketing" as const,
     },
   ];

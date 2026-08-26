@@ -92,8 +92,8 @@ Last updated: May 16, 2026
 ### Notifications
 - [x] Notification bell uses SVG icon with unread count badge
 - [x] Clicking a notification should navigate to the relevant page
-- [ ] In-app notifications: full audit of triggers and copy (which events fire, what the message says)
-- [ ] Email notifications: audit triggers, design emails, and write copy for all notification types
+- [x] In-app notifications: full audit of triggers and copy (which events fire, what the message says)
+- [x] Email notifications: audit triggers, design emails, and write copy for all notification types
 
 ### Settings
 - [x] Avatar upload and management
@@ -137,8 +137,8 @@ Last updated: May 16, 2026
 ## Soon (post-launch)
 
 - [x] Welcome tutorial: mobile-optimized version (portrait layout, swipe navigation)
-- [ ] Notification emails via Resend — deadline approaching, new comment
-- [ ] Deadline reminder cron job (Vercel Cron, 24h before deadline)
+- [x] Engagement reminders v1: deadline-approaching (cadence scales with time left), remember-to-write (joined, no draft), join-riff-nudge (club member hasn't joined active riff) — all email-only via new `/api/cron/engagement-reminders`, rotating joke copy per reminder type. Cut from scope: club-invite tracking for non-members (no data model for it today) and a "someone started writing" social ping (unproven value, revisit only if the above don't move completion rate enough)
+- [ ] Notification emails via Resend — new comment digest (already covered by existing `daily-comment-notifications` cron; deadline-approaching now covered by engagement reminders above)
 - [ ] Toast notifications replacing `console.error` catches
 - [ ] Onboarding page refinements (create-club, join-club pages)
 
@@ -147,7 +147,9 @@ Last updated: May 16, 2026
 ## Backlog (nice to have)
 
 - [ ] Collections system (personal, group, circle)
+- [x] My Riffs page (`/my-riffs`): aggregate all club riffs cross-club, tabs for Current (Writing/Reading) and Past (by club), club badge on cards, avatar dropdown nav entry
 - [ ] 🔨 @jarric — Multi-level sharing UI (CLUB, RIFF, INDIVIDUAL, PUBLIC)
+- [x] Riff activity feed: post-reveal riff page redesign with Pieces/Feed toggle and comment activity feed
 - [ ] Permission helpers / reusable middleware
 - [ ] Refactor editor: extract shared tiptap logic into `useRiffEditor` hook + unified `EditorToolbar`
 
