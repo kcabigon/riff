@@ -23,6 +23,7 @@ import {
   hasUnreadPieces,
   getRiffDisplayTitle,
 } from "@/lib/riff-utils";
+import type { FriendSummary } from "@/lib/friends";
 
 interface RiffPiece {
   submittedAt: string | null;
@@ -59,13 +60,6 @@ interface Riff {
     };
   }>;
   pieces: RiffPiece[];
-}
-
-interface Friend {
-  id: string;
-  name: string | null;
-  username: string | null;
-  avatarUrl: string | null;
 }
 
 interface PieceRiffSummary {
@@ -106,7 +100,7 @@ interface MyRiffsClientProps {
   currentUserId: string;
   readCounts: Record<string, number>;
   predictedVolumeByClub: Record<string, number>;
-  friends: Friend[];
+  friends: FriendSummary[];
   pieces: WritingPiece[];
   joinableRiffs: Riff[];
 }

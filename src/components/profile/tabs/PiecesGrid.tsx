@@ -11,7 +11,7 @@ export interface Piece {
   title: string | null;
   coverImage: string | null;
   isRevealed: boolean;
-  viewerHasClubAccess: boolean;
+  viewerHasAccess: boolean;
   isPublic: boolean;
   publicShareId: string | null;
 }
@@ -128,7 +128,7 @@ export default function PiecesGrid({
               : piece.isPublic
                 ? () => router.push(`/p/${piece.id}`)
                 : undefined
-            : isOwnProfile || piece.viewerHasClubAccess
+            : isOwnProfile || piece.viewerHasAccess
               ? () =>
                   router.push(
                     `/read/${piece.id}?from=profile&userId=${profileUserId}`
