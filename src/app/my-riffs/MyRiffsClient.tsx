@@ -292,8 +292,9 @@ export default function MyRiffsClient({
   const pastRiffs = riffs
     .filter(
       (r) =>
-        r.status === "COMPLETED" ||
-        (r.status === "REVEALED" && !hasUnreadForUser(r))
+        getSubmittedPieces(r.pieces).length > 0 &&
+        (r.status === "COMPLETED" ||
+          (r.status === "REVEALED" && !hasUnreadForUser(r)))
     )
     .sort((a, b) => {
       if (a.volumeNumber != null && b.volumeNumber != null) {

@@ -786,12 +786,14 @@ export default function ClubPageLayout({
 
         {/* Past Riffs section — includes COMPLETED + pre-join REVEALED + fully-read REVEALED riffs */}
         {(() => {
+          const hasSubmittedPieces = (riff: Riff) =>
+            getSubmittedPieces(riff.pieces).length > 0;
           const fullyReadRevealed = revealedRiffs.filter(isFullyReadForUser);
           const allPast = [
             ...completedRiffs,
             ...pastRevealedRiffs,
             ...fullyReadRevealed,
-          ];
+          ].filter(hasSubmittedPieces);
           return allPast.length > 0;
         })() && (
           <div>
@@ -821,6 +823,7 @@ export default function ClubPageLayout({
                 ...pastRevealedRiffs,
                 ...revealedRiffs.filter(isFullyReadForUser),
               ]
+                .filter((riff) => getSubmittedPieces(riff.pieces).length > 0)
                 .sort((a, b) => {
                   if (a.volumeNumber != null && b.volumeNumber != null) {
                     return b.volumeNumber - a.volumeNumber;
