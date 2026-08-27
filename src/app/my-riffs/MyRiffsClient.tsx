@@ -296,12 +296,10 @@ export default function MyRiffsClient({
         (r.status === "COMPLETED" ||
           (r.status === "REVEALED" && !hasUnreadForUser(r)))
     )
-    .sort((a, b) => {
-      if (a.volumeNumber != null && b.volumeNumber != null) {
-        return b.volumeNumber - a.volumeNumber;
-      }
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
 
   const drafts = allPieces.filter((p) => !isSubmitted(p));
   const submittedPieces = allPieces.filter(isSubmitted);
