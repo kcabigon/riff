@@ -226,6 +226,21 @@ export default function ClubPageLayout({
   const hasUnreadForUser = (riff: Riff) =>
     hasUnreadPieces(riff.id, readCounts, otherSubmittedCount(riff));
 
+  // Past Riffs — COMPLETED + pre-join REVEALED + fully-read REVEALED riffs,
+  // excluding any with no submitted pieces (e.g. the sole submission was deleted).
+  const pastRiffs = [
+    ...completedRiffs,
+    ...pastRevealedRiffs,
+    ...revealedRiffs.filter(isFullyReadForUser),
+  ]
+    .filter((riff) => getSubmittedPieces(riff.pieces).length > 0)
+    .sort((a, b) => {
+      if (a.volumeNumber != null && b.volumeNumber != null) {
+        return b.volumeNumber - a.volumeNumber;
+      }
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+
   const handleRiffCreated = useCallback((_riffId: string) => {
     setIsCreateRiffModalOpen(false);
     router.refresh();
@@ -785,15 +800,7 @@ export default function ClubPageLayout({
         })()}
 
         {/* Past Riffs section — includes COMPLETED + pre-join REVEALED + fully-read REVEALED riffs */}
-        {(() => {
-          const fullyReadRevealed = revealedRiffs.filter(isFullyReadForUser);
-          const allPast = [
-            ...completedRiffs,
-            ...pastRevealedRiffs,
-            ...fullyReadRevealed,
-          ];
-          return allPast.length > 0;
-        })() && (
+        {pastRiffs.length > 0 && (
           <div>
             <h2
               style={{
@@ -816,39 +823,25 @@ export default function ClubPageLayout({
                 paddingBottom: "16px",
               }}
             >
-              {[
-                ...completedRiffs,
-                ...pastRevealedRiffs,
-                ...revealedRiffs.filter(isFullyReadForUser),
-              ]
-                .sort((a, b) => {
-                  if (a.volumeNumber != null && b.volumeNumber != null) {
-                    return b.volumeNumber - a.volumeNumber;
-                  }
-                  return (
-                    new Date(b.createdAt).getTime() -
-                    new Date(a.createdAt).getTime()
-                  );
-                })
-                .map((riff) => (
-                  <CompletedRiffCard
-                    key={riff.id}
-                    riff={{
-                      id: riff.id,
-                      title: riff.title,
-                      volumeNumber: riff.volumeNumber,
-                      status: riff.status,
-                      createdAt: new Date(riff.createdAt),
-                      deadline: riff.deadline ? new Date(riff.deadline) : null,
-                    }}
-                    pieces={getSubmittedPieces(riff.pieces).map((p) => ({
-                      id: p.piece.id,
-                      title: p.piece.title,
-                      coverImage: p.piece.coverImage,
-                      wordCount: p.piece.wordCount,
-                    }))}
-                  />
-                ))}
+              {pastRiffs.map((riff) => (
+                <CompletedRiffCard
+                  key={riff.id}
+                  riff={{
+                    id: riff.id,
+                    title: riff.title,
+                    volumeNumber: riff.volumeNumber,
+                    status: riff.status,
+                    createdAt: new Date(riff.createdAt),
+                    deadline: riff.deadline ? new Date(riff.deadline) : null,
+                  }}
+                  pieces={getSubmittedPieces(riff.pieces).map((p) => ({
+                    id: p.piece.id,
+                    title: p.piece.title,
+                    coverImage: p.piece.coverImage,
+                    wordCount: p.piece.wordCount,
+                  }))}
+                />
+              ))}
             </div>
           </div>
         )}
