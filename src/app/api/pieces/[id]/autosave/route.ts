@@ -103,6 +103,11 @@ export async function PATCH(
       for (const comment of comments) {
         if (!comment.selectedText) continue;
 
+        // Image comments use a placeholder "[Image]" that never appears in the
+        // HTML, so text-matching will always fail. Skip them — the frontend
+        // uses a position-based heuristic to anchor image comments instead.
+        if (comment.selectedText === "[Image]") continue;
+
         // Count all occurrences of selectedText in the new content
         const occurrences: number[] = [];
         let searchFrom = 0;
