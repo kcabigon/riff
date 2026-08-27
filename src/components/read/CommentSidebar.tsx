@@ -15,8 +15,8 @@ import { CommentAuthor } from "@/types";
 interface CommentData {
   id: string;
   content: string;
-  selectionStart: number;
-  selectionEnd: number;
+  selectionStart: number | null;
+  selectionEnd: number | null;
   selectedText: string;
   authorId: string;
   createdAt: string;
@@ -89,6 +89,8 @@ function CommentCard({
   clubId,
   disableReplies = false,
   color,
+  showQuote,
+  colorShadow = true,
 }: {
   comment: CommentData;
   isActive: boolean;
@@ -110,6 +112,8 @@ function CommentCard({
   clubId: string;
   disableReplies?: boolean;
   color: string;
+  showQuote?: boolean;
+  colorShadow?: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -186,7 +190,7 @@ function CommentCard({
         position: "relative",
         border: isActive || hovered ? "2px solid #000000" : "2px solid #E6E6E6",
         backgroundColor: "#FFFFFF",
-        boxShadow: isActive ? `4px 4px 0 ${color}` : "none",
+        boxShadow: isActive && colorShadow ? `4px 4px 0 ${color}` : "none",
         padding: "12px",
         transition:
           "border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease",
@@ -320,6 +324,22 @@ function CommentCard({
         </div>
       ) : (
         <>
+          {showQuote && comment.selectedText && (
+            <p
+              style={{
+                fontFamily: "var(--font-playfair)",
+                fontSize: "13px",
+                color: "#808080",
+                margin: "0 0 8px 0",
+                fontStyle: "italic",
+                borderLeft: `2px solid ${color}`,
+                paddingLeft: "8px",
+                overflowWrap: "break-word",
+              }}
+            >
+              {comment.selectedText}
+            </p>
+          )}
           <p
             style={{
               fontFamily: "var(--font-dm-sans)",
@@ -351,7 +371,7 @@ function CommentCard({
               <p
                 style={{
                   fontFamily: "var(--font-dm-sans)",
-                  fontSize: "13px",
+                  fontSize: "11px",
                   fontWeight: 300,
                   color: "#000000",
                   margin: 0,
@@ -370,7 +390,7 @@ function CommentCard({
                     border: "none",
                     cursor: "pointer",
                     fontFamily: "var(--font-dm-sans)",
-                    fontSize: "13px",
+                    fontSize: "11px",
                     fontWeight: 300,
                     color: "#808080",
                   }}
@@ -479,7 +499,6 @@ export default function CommentSidebar({
   const [minHeight, setMinHeight] = useState(0);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-
   // Measure actual rendered height of a comment card
   const getCardHeight = (id: string) => {
     const el = cardRefs.current[id];
@@ -527,7 +546,7 @@ export default function CommentSidebar({
           const otherComment = comments.find((c) => c.id === otherCommentId);
           if (otherComment) {
             const dist = Math.abs(
-              otherComment.selectionStart - comment.selectionStart
+              (otherComment.selectionStart ?? 0) - (comment.selectionStart ?? 0)
             );
             if (dist < bestDist) {
               bestDist = dist;
@@ -686,6 +705,9 @@ export default function CommentSidebar({
     };
   }, [comments, updatePositions]);
 
+  const anchoredComments = comments.filter((c) => c.selectionStart !== null);
+  const unanchoredComments = comments.filter((c) => c.selectionStart === null);
+
   return (
     <div
       ref={sidebarRef}
@@ -715,7 +737,7 @@ export default function CommentSidebar({
         </p>
       )}
 
-      {comments.map((comment) => {
+      {anchoredComments.map((comment) => {
         const isActive = activeHighlightIds.includes(comment.id);
         const top = positions[comment.id];
 
@@ -798,6 +820,94 @@ export default function CommentSidebar({
           />
         </div>
       )}
+
+      {/* Unanchored comments — shown below anchored cards with a subtle label */}
+      {unanchoredComments.length > 0 &&
+        (() => {
+          const GAP = 24;
+          const dividerTop = minHeight > 0 ? minHeight - 40 + GAP : GAP;
+          return (
+            <>
+              <div
+                style={{
+                  marginTop: `${dividerTop}px`,
+                  height: "1px",
+                  backgroundColor: "#E6E6E6",
+                }}
+              />
+
+              <span
+                style={{
+                  display: "block",
+                  marginTop: `${GAP}px`,
+                  marginBottom: "12px",
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "11px",
+                  fontWeight: 300,
+                  color: "#808080",
+                }}
+              >
+                On edited text · {unanchoredComments.length}
+              </span>
+
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "8px",
+                }}
+              >
+                {unanchoredComments.map((comment) => (
+                  <div
+                    key={comment.id}
+                    ref={(el) => {
+                      cardRefs.current[comment.id] = el;
+                    }}
+                    data-sidebar-comment-id={comment.id}
+                    onClick={() => onCommentClick?.(comment.id)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <CommentCard
+                      comment={comment}
+                      isActive={activeHighlightIds.includes(comment.id)}
+                      isOwn={comment.authorId === currentUserId}
+                      isEditing={editingId === comment.id}
+                      isExpanded={expandedId === comment.id}
+                      onDelete={() => onDelete(comment.id)}
+                      onEdit={() => setEditingId(comment.id)}
+                      onSave={async (newContent) => {
+                        await onUpdate(comment.id, newContent);
+                        setEditingId(null);
+                      }}
+                      onCancelEdit={() => setEditingId(null)}
+                      onActivate={() => onCommentClick?.(comment.id)}
+                      onToggleReplies={() =>
+                        setExpandedId(
+                          expandedId === comment.id ? null : comment.id
+                        )
+                      }
+                      onReplyAdded={(reply) => onReplyAdded(comment.id, reply)}
+                      onReplyUpdated={(replyId, newContent) =>
+                        onReplyUpdated(comment.id, replyId, newContent)
+                      }
+                      onReplyDeleted={(replyId) =>
+                        onReplyDeleted(comment.id, replyId)
+                      }
+                      currentUser={currentUser}
+                      pieceId={pieceId}
+                      riffId={riffId}
+                      clubId={clubId}
+                      disableReplies={disableReplies}
+                      color={authorColors[comment.authorId] || AUTHOR_COLORS[0]}
+                      showQuote
+                      colorShadow={false}
+                    />
+                  </div>
+                ))}
+              </div>
+            </>
+          );
+        })()}
     </div>
   );
 }
