@@ -189,6 +189,7 @@ model Piece {
   coverImage     String?  // Cover image URL for piece display (uploaded later)
   wordCount      Int      @default(0)
   readLengthMin  Int      @default(1)
+  publishedAt    DateTime? 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
