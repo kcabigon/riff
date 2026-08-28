@@ -148,7 +148,7 @@ export default async function ProfilePageRoute({
               name: currentUser.name,
               avatarUrl: currentUser.avatarUrl,
             }
-          : null
+          : { id: currentUserId, username: null, name: null, avatarUrl: null }
       }
       stats={{ pieceCount, totalWordCount }}
       pieces={pieces}

@@ -21,7 +21,7 @@ interface ProfileHeaderProps {
     username: string | null;
     name: string | null;
     avatarUrl: string | null;
-  } | null;
+  };
   isOwnProfile?: boolean;
   currentClub: { id: string; name: string } | null;
   stats: {
@@ -59,14 +59,12 @@ export default function ProfileHeader({
 
   return (
     <div style={{ backgroundColor: "#000000" }}>
-      {currentUser && (
-        <NavBar
-          user={currentUser}
-          clubs={[]}
-          currentClub={currentClub}
-          showClubDropdown={false}
-        />
-      )}
+      <NavBar
+        user={currentUser}
+        clubs={[]}
+        currentClub={currentClub}
+        showClubDropdown={false}
+      />
 
       {/* Hero */}
       <div

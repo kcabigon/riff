@@ -23,7 +23,7 @@ interface ProfilePageProps {
     username: string | null;
     name: string | null;
     avatarUrl: string | null;
-  } | null;
+  };
   stats: {
     pieceCount: number;
     totalWordCount: number;
