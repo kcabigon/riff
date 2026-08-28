@@ -1,10 +1,7 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import NotificationBell from "@/components/notifications/NotificationBell";
-import AvatarDropdown from "@/components/clubs/AvatarDropdown";
+import NavBar from "@/components/clubs/NavBar";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import Avatar from "@/components/shared/Avatar";
 
@@ -26,7 +23,7 @@ interface ProfileHeaderProps {
     avatarUrl: string | null;
   } | null;
   isOwnProfile?: boolean;
-  lastActiveClubId?: string | null;
+  currentClub: { id: string; name: string } | null;
   stats: {
     pieceCount: number;
     totalWordCount: number;
@@ -37,11 +34,10 @@ export default function ProfileHeader({
   profileUser,
   currentUser,
   isOwnProfile,
-  lastActiveClubId,
+  currentClub,
   stats,
 }: ProfileHeaderProps) {
   const router = useRouter();
-  const logoHref = lastActiveClubId ? `/clubs/${lastActiveClubId}` : "/";
 
   const firstName =
     profileUser.firstName ||
@@ -63,50 +59,14 @@ export default function ProfileHeader({
 
   return (
     <div style={{ backgroundColor: "#000000" }}>
-      {/* Nav */}
-      <nav
-        style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 50,
-          backgroundColor: "#000000",
-          display: "flex",
-          alignItems: "center",
-          padding: "16px 0",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: "1000px",
-            width: "100%",
-            margin: "0 auto",
-            padding: "0 24px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <Link
-            href={logoHref}
-            style={{ display: "flex", alignItems: "center" }}
-          >
-            <Image
-              src="/images/landing/riff_logo.svg"
-              alt="Riff"
-              width={55}
-              height={36}
-              priority
-            />
-          </Link>
-
-          {currentUser && (
-            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-              <NotificationBell />
-              <AvatarDropdown user={currentUser} />
-            </div>
-          )}
-        </div>
-      </nav>
+      {currentUser && (
+        <NavBar
+          user={currentUser}
+          clubs={[]}
+          currentClub={currentClub}
+          showClubDropdown={false}
+        />
+      )}
 
       {/* Hero */}
       <div
