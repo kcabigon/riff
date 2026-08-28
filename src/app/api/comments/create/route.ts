@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
+import { isFriendOf } from "@/lib/friends";
 
 export async function POST(req: Request) {
   try {
@@ -83,16 +84,19 @@ export async function POST(req: Request) {
       });
 
       if (!isParticipant) {
-        // Also allow club members who have read access (riff is REVEALED)
+        // Also allow club members who have read access (riff is REVEALED),
+        // or a Friend of the author (clubmate elsewhere, or riffmate) — same
+        // relation that grants read access on /read/[pieceId].
         const isMember = await prisma.clubMember.findFirst({
           where: { clubId, userId },
           select: { id: true },
         });
 
-        if (!isMember) {
+        if (!isMember && !(await isFriendOf(userId, piece.authorId))) {
           return NextResponse.json(
             {
-              error: "You must be a riff participant or club member to comment",
+              error:
+                "You must be a riff participant, club member, or friend of the author to comment",
             },
             { status: 403 }
           );

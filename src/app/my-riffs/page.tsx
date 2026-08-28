@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { getContentPreview } from "@/lib/riff-utils";
+import { getFriends } from "@/lib/friends";
 import MyRiffsClient from "./MyRiffsClient";
 
 export const metadata: Metadata = {
@@ -17,200 +18,156 @@ export default async function MyRiffsPage() {
 
   const userId = session.user.id;
 
-  const [
-    participations,
-    userClubs,
-    user,
-    clubmates,
-    riffmates,
-    pieces,
-    joinableRiffs,
-  ] = await Promise.all([
-    prisma.riffParticipant.findMany({
-      where: { userId },
-      include: {
-        riff: {
-          include: {
-            club: {
-              select: {
-                id: true,
-                name: true,
-                bannerImage: true,
-                adminId: true,
-                moderatorId: true,
+  const [participations, userClubs, user, rawFriends, pieces, joinableRiffs] =
+    await Promise.all([
+      prisma.riffParticipant.findMany({
+        where: { userId },
+        include: {
+          riff: {
+            include: {
+              club: {
+                select: {
+                  id: true,
+                  name: true,
+                  bannerImage: true,
+                  adminId: true,
+                  moderatorId: true,
+                },
               },
-            },
-            participants: {
-              include: {
-                user: {
-                  select: {
-                    id: true,
-                    name: true,
-                    username: true,
-                    avatarUrl: true,
+              participants: {
+                include: {
+                  user: {
+                    select: {
+                      id: true,
+                      name: true,
+                      username: true,
+                      avatarUrl: true,
+                    },
                   },
                 },
               },
-            },
-            pieces: {
-              include: {
-                piece: {
-                  select: {
-                    id: true,
-                    title: true,
-                    authorId: true,
-                    coverImage: true,
-                    wordCount: true,
+              pieces: {
+                include: {
+                  piece: {
+                    select: {
+                      id: true,
+                      title: true,
+                      authorId: true,
+                      coverImage: true,
+                      wordCount: true,
+                    },
                   },
                 },
               },
             },
           },
         },
-      },
-    }),
-    prisma.club.findMany({
-      where: { members: { some: { userId } }, isArchived: false },
-      select: { id: true, name: true },
-      orderBy: { updatedAt: "desc" },
-    }),
-    prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        name: true,
-        username: true,
-        avatarUrl: true,
-        lastActiveClubId: true,
-      },
-    }),
-    // Friends — anyone who shares a (non-archived) club with you.
-    prisma.clubMember.findMany({
-      where: {
-        club: { members: { some: { userId } }, isArchived: false },
-        userId: { not: userId },
-      },
-      select: {
-        user: {
-          select: { id: true, name: true, username: true, avatarUrl: true },
+      }),
+      prisma.club.findMany({
+        where: { members: { some: { userId } }, isArchived: false },
+        select: { id: true, name: true },
+        orderBy: { updatedAt: "desc" },
+      }),
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          avatarUrl: true,
+          lastActiveClubId: true,
         },
-      },
-      distinct: ["userId"],
-    }),
-    // Friends — anyone who's participated in a riff with you (covers people
-    // you've written alongside even if you're no longer in the same club).
-    prisma.riffParticipant.findMany({
-      where: {
-        riff: { participants: { some: { userId } } },
-        userId: { not: userId },
-      },
-      select: {
-        user: {
-          select: { id: true, name: true, username: true, avatarUrl: true },
+      }),
+      // Friends — clubmates in active clubs, unioned with riffmates (covers
+      // people you've written alongside even if you're no longer in the same club).
+      getFriends(userId),
+      // Pieces the user has authored — powers the Drafts and Pieces sections.
+      prisma.piece.findMany({
+        where: { authorId: userId },
+        select: {
+          id: true,
+          title: true,
+          coverImage: true,
+          currentContent: true,
+          wordCount: true,
+          createdAt: true,
+          updatedAt: true,
+          riffs: {
+            select: {
+              submittedAt: true,
+              riff: {
+                select: {
+                  id: true,
+                  title: true,
+                  volumeNumber: true,
+                  status: true,
+                  deadline: true,
+                  club: { select: { id: true, name: true } },
+                },
+              },
+            },
+          },
+          newShares: {
+            where: { shareType: "PUBLIC" },
+            select: { id: true },
+            take: 1,
+          },
         },
-      },
-      distinct: ["userId"],
-    }),
-    // Pieces the user has authored — powers the Drafts and Pieces sections.
-    prisma.piece.findMany({
-      where: { authorId: userId },
-      select: {
-        id: true,
-        title: true,
-        coverImage: true,
-        currentContent: true,
-        wordCount: true,
-        createdAt: true,
-        updatedAt: true,
-        riffs: {
-          select: {
-            submittedAt: true,
-            riff: {
-              select: {
-                id: true,
-                title: true,
-                volumeNumber: true,
-                status: true,
-                deadline: true,
-                club: { select: { id: true, name: true } },
+        orderBy: { updatedAt: "desc" },
+      }),
+      // Active riffs in the user's clubs they haven't joined yet — powers
+      // the "join" CTA in the Current Riffs section.
+      prisma.riff.findMany({
+        where: {
+          status: "ACTIVE",
+          club: { members: { some: { userId } }, isArchived: false },
+          participants: { none: { userId } },
+        },
+        include: {
+          club: {
+            select: {
+              id: true,
+              name: true,
+              bannerImage: true,
+              adminId: true,
+              moderatorId: true,
+            },
+          },
+          participants: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  username: true,
+                  avatarUrl: true,
+                },
+              },
+            },
+          },
+          pieces: {
+            include: {
+              piece: {
+                select: {
+                  id: true,
+                  title: true,
+                  authorId: true,
+                  coverImage: true,
+                  wordCount: true,
+                },
               },
             },
           },
         },
-        newShares: {
-          where: { shareType: "PUBLIC" },
-          select: { id: true },
-          take: 1,
-        },
-      },
-      orderBy: { updatedAt: "desc" },
-    }),
-    // Active riffs in the user's clubs they haven't joined yet — powers
-    // the "join" CTA in the Current Riffs section.
-    prisma.riff.findMany({
-      where: {
-        status: "ACTIVE",
-        club: { members: { some: { userId } }, isArchived: false },
-        participants: { none: { userId } },
-      },
-      include: {
-        club: {
-          select: {
-            id: true,
-            name: true,
-            bannerImage: true,
-            adminId: true,
-            moderatorId: true,
-          },
-        },
-        participants: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                username: true,
-                avatarUrl: true,
-              },
-            },
-          },
-        },
-        pieces: {
-          include: {
-            piece: {
-              select: {
-                id: true,
-                title: true,
-                authorId: true,
-                coverImage: true,
-                wordCount: true,
-              },
-            },
-          },
-        },
-      },
-    }),
-  ]);
+      }),
+    ]);
 
   if (!user) redirect("/login");
 
   const riffs = participations.map((p) => p.riff);
   const riffIds = riffs.map((r) => r.id);
 
-  // Dedupe clubmates + riffmates into a single friends list.
-  const friendsById = new Map<
-    string,
-    {
-      id: string;
-      name: string | null;
-      username: string | null;
-      avatarUrl: string | null;
-    }
-  >();
-  for (const { user: friend } of [...clubmates, ...riffmates]) {
-    friendsById.set(friend.id, friend);
-  }
-  const friendIds = Array.from(friendsById.keys());
+  const friendIds = rawFriends.map((f) => f.id);
 
   // For active riffs, compute predictedVolumeNumber per club (count of REVEALED+COMPLETED riffs + 1)
   const activeClubIds = [
@@ -304,7 +261,7 @@ export default async function MyRiffsPage() {
 
   // Most recent submission first (any riff), alphabetical as the fallback
   // for friends with no submissions at all.
-  const friends = Array.from(friendsById.values())
+  const friends = rawFriends
     .map((friend) => ({
       friend,
       lastActivityAt: latestPieceAtByFriend.get(friend.id) ?? null,

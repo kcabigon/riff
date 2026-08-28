@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
+import { friendOfWhere } from "@/lib/friends";
 import ReadPageLayout from "@/components/read/ReadPageLayout";
 
 // ── Immersive read experience (single piece) ─────────────────────────────────
@@ -97,6 +98,7 @@ export default async function ReadPage({
         OR: [
           { riff: { club: { members: { some: { userId } } } } },
           { piece: { authorId: userId } },
+          { piece: { author: friendOfWhere(userId) } },
         ],
       },
       select: {
@@ -121,6 +123,7 @@ export default async function ReadPage({
         OR: [
           { riff: { club: { members: { some: { userId } } } } },
           { piece: { authorId: userId } },
+          { piece: { author: friendOfWhere(userId) } },
         ],
       },
       select: {

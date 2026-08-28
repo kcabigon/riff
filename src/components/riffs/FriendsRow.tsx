@@ -2,16 +2,10 @@
 
 import Avatar from "@/components/shared/Avatar";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
-
-interface Friend {
-  id: string;
-  name: string | null;
-  username: string | null;
-  avatarUrl: string | null;
-}
+import type { FriendSummary } from "@/lib/friends";
 
 interface FriendsRowProps {
-  friends: Friend[];
+  friends: FriendSummary[];
 }
 
 // Horizontal-scroll row of people you've shared a club or riff with — the
@@ -23,7 +17,7 @@ export default function FriendsRow({ friends }: FriendsRowProps) {
 
   if (friends.length === 0) return null;
 
-  const firstName = (friend: Friend) =>
+  const firstName = (friend: FriendSummary) =>
     (friend.name || friend.username || "Friend").split(" ")[0];
 
   return (
