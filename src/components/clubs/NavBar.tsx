@@ -76,7 +76,12 @@ export default function NavBar({
               "Riff" lockup. */}
           <Link
             href={currentClub ? `/clubs/${currentClub.id}` : "/no-club"}
-            style={{ display: "flex", alignItems: "center", gap: "10px" }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              textDecoration: "none",
+            }}
           >
             <Image
               src="/images/landing/riff_logo.svg"
