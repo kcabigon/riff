@@ -26,9 +26,10 @@ interface NavBarProps {
   } | null;
   showClubDropdown?: boolean;
   showCreateDropdown?: boolean;
-  // Single-action "New riff" button for club pages — the club context is
+  // Single-action "Let's Riff" button for club pages — the club context is
   // implicit (this page's club), so unlike showCreateDropdown there's no
-  // menu, just one button that opens the club's riff creation flow.
+  // menu, just one button that opens the club's riff creation flow. Caller
+  // is responsible for only passing this when there's no active riff.
   onNewRiff?: () => void;
 }
 
@@ -102,7 +103,7 @@ export default function NavBar({
           {showCreateDropdown && <CreateDropdown />}
           {onNewRiff && (
             <CreatePillButton
-              label="New Riff"
+              label="Let's Riff"
               icon="plus"
               iconLeading
               hideIconOnMobile
