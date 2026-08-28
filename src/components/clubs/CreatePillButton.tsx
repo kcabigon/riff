@@ -67,6 +67,9 @@ export default function CreatePillButton({
         onClick={onClick}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        // compactOnMobile hides the visible label under 768px — aria-label
+        // keeps the button's accessible name intact for screen readers.
+        aria-label={compactOnMobile ? label : undefined}
         className={compactOnMobile ? "create-pill compact-mobile" : undefined}
         style={{
           backgroundColor: "#000000",
