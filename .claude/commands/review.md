@@ -1,4 +1,4 @@
-Review open PRs, run code quality checks, test locally, and approve. This is the full PR review workflow.
+Review open PRs for quality — code checks, local testing, and optional approval. On this repo, review is **encouraged but not required** to merge, so this is a "second pair of eyes" quality pass, not a gate. Anyone can merge their own PR to develop without it (except schema changes, which still go through Kyle).
 
 ## Arguments
 
@@ -16,15 +16,16 @@ Run:
 gh pr list --base develop --json number,title,author,createdAt,headRefName,reviews
 ```
 
-For each PR, count reviews where `state == "APPROVED"`. Display a clean list:
+For each PR, show whether anyone's reviewed it yet — **informational only**, since review isn't required to merge. Display a clean list:
 ```
-#44 • feat: add comment notifications • jarric22 • 3 days ago • 1/2 approvals
-#41 • fix: club banner upload • cdpeders • 1 week ago • ✓ 2/2 approvals — ready to merge!
+#44 • feat: add comment notifications • jarric22 • 3 days ago • 👀 reviewed
+#41 • fix: club banner upload • cdpeders • 1 week ago • not yet reviewed
 ```
 
-- 0 approvals: no approval indicator
-- 1 approval: `1/2 approvals`
-- 2+ approvals: `✓ 2/2 approvals — ready to merge!`
+- Has ≥1 approval: `👀 reviewed`
+- No reviews yet: `not yet reviewed`
+
+Reviews are a quality nicety here, not a merge requirement — anyone can merge their own PR whenever (except schema changes → Kyle).
 
 If no open PRs: "No open PRs right now — everyone's either building or done. Run `/letsriff` to start something new."
 
@@ -141,9 +142,9 @@ Ask: "Ready to approve, leave a comment, or request changes?"
 
 **Approve:**
 - Check for self-approval: run `gh pr view <number> --json author --jq '.author.login'` and `gh api user --jq '.login'`
-- If they match: "You can't approve your own PR — you need someone else to review it."
+- If they match: "That's your own PR — GitHub won't let you approve it, but you don't need approval to merge anyway. Just merge it when you're ready."
 - If clear: run `gh pr review <number> --approve --body "Looks good!"`
-- Confirm: "Approved! PR #[number] is one vote closer to merging."
+- Confirm: "Approved! 👍 Nice — that's a thumbs-up for [author]."
 
 **Comment:**
 - Ask what they want to say
@@ -156,22 +157,16 @@ Ask: "Ready to approve, leave a comment, or request changes?"
 **Skip for now:**
 - "No problem — the PR stays open. Come back when you're ready."
 
-### Step 7 — Merge if ready
+### Step 6 — Merge (optional — no approval gate)
 
-After any approve/comment/skip action, check the current approval count:
-```
-gh pr view <number> --json reviews --jq '[.reviews[] | select(.state == "APPROVED")] | length'
-```
+Anyone can merge a PR into develop; approvals are **not** required. After reviewing, offer:
 
-**If 2+ approvals:**
-> "This PR has [N] approvals — it's ready to merge into develop. Want me to merge it?"
-- If yes: run `gh pr merge <number> --merge` (regular merge commit)
-- Confirm: "Merged! PR #[number] is now in develop."
-- Remind them: "You'll want to run `git pull origin develop` to get these changes locally."
+> "Want me to merge this into develop? Reviews are encouraged but not required here, so it's good to go whenever."
 
-**If fewer than 2 approvals:**
-- "This PR has [N]/2 approvals — it needs one more before it can merge. Let someone else know to take a look."
-- Do not offer to merge.
+- 🚨 **Schema exception:** if the diff touched `prisma/schema.prisma`, do **NOT** merge. Say: "This changes the DB schema — that still needs Kyle's coordination. Don't merge without checking with him."
+- If yes: run `gh pr merge <number> --squash --delete-branch`
+- Confirm: "Merged into develop! 🎉 Run `git pull origin develop` to pull it locally."
+- If they'd rather leave it for the author: "Cool — left it open. [author] can merge it whenever."
 
 ---
 
