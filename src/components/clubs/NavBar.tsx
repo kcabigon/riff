@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import ClubDropdown from "./ClubDropdown";
 import CreateDropdown from "./CreateDropdown";
+import CreatePillButton from "./CreatePillButton";
 import AvatarDropdown from "./AvatarDropdown";
 import NotificationBell from "@/components/notifications/NotificationBell";
 
@@ -25,6 +26,10 @@ interface NavBarProps {
   } | null;
   showClubDropdown?: boolean;
   showCreateDropdown?: boolean;
+  // Single-action "New riff" button for club pages — the club context is
+  // implicit (this page's club), so unlike showCreateDropdown there's no
+  // menu, just one button that opens the club's riff creation flow.
+  onNewRiff?: () => void;
 }
 
 export default function NavBar({
@@ -33,6 +38,7 @@ export default function NavBar({
   currentClub,
   showClubDropdown = true,
   showCreateDropdown = false,
+  onNewRiff,
 }: NavBarProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -50,16 +56,14 @@ export default function NavBar({
     >
       <div
         style={{
-          maxWidth: "1000px",
           width: "100%",
-          margin: "0 auto",
           padding: "0 24px",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
         }}
       >
-        {/* Left Section: Logo + Club Dropdown + Create Dropdown */}
+        {/* Left Section: Logo + Create Dropdown / New Riff */}
         <div
           style={{
             display: "flex",
@@ -67,10 +71,11 @@ export default function NavBar({
             gap: "24px",
           }}
         >
-          {/* Logo */}
+          {/* Logo — wordmark treatment matches LandingNavBar's icon +
+              "Riff" lockup. */}
           <Link
             href={currentClub ? `/clubs/${currentClub.id}` : "/no-club"}
-            style={{ display: "flex", alignItems: "center" }}
+            style={{ display: "flex", alignItems: "center", gap: "10px" }}
           >
             <Image
               src="/images/landing/riff_logo.svg"
@@ -79,9 +84,35 @@ export default function NavBar({
               height={36}
               priority
             />
+            <span
+              className="navbar-wordmark"
+              style={{
+                fontFamily: "var(--font-playfair)",
+                fontSize: "32px",
+                fontWeight: 900,
+                fontStyle: "italic",
+                color: "#FFFFFF",
+                lineHeight: 1,
+              }}
+            >
+              Riff
+            </span>
           </Link>
 
-          {/* Club Dropdown */}
+          {showCreateDropdown && <CreateDropdown />}
+          {onNewRiff && (
+            <CreatePillButton
+              label="New Riff"
+              icon="plus"
+              iconLeading
+              compactOnMobile
+              onClick={onNewRiff}
+            />
+          )}
+        </div>
+
+        {/* Right Section: Club Dropdown + Bell + Avatar Dropdown */}
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
           {showClubDropdown && currentClub && (
             <ClubDropdown
               clubs={clubs}
@@ -91,16 +122,16 @@ export default function NavBar({
               onClose={() => setIsDropdownOpen(false)}
             />
           )}
-
-          {showCreateDropdown && <CreateDropdown />}
-        </div>
-
-        {/* Right Section: Bell + Avatar Dropdown */}
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
           <NotificationBell />
           <AvatarDropdown user={user} />
         </div>
       </div>
+
+      <style>{`
+        @media (max-width: 767px) {
+          .navbar-wordmark { display: none; }
+        }
+      `}</style>
     </nav>
   );
 }

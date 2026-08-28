@@ -296,6 +296,11 @@ export default function ClubPageLayout({
           }
           clubs={userClubs}
           currentClub={{ id: club.id, name: clubName }}
+          onNewRiff={
+            isAdmin || isCoHost
+              ? () => setIsCreateRiffModalOpen(true)
+              : undefined
+          }
         />
       </div>
 
