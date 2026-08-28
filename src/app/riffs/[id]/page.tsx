@@ -265,7 +265,9 @@ export default async function RiffPage({
       hasNewCommentsMap={hasNewCommentsMap}
       contributionData={contributionData}
       totalPieces={getSubmittedPieces(riff.pieces).length}
-      navUser={navUser}
+      navUser={
+        navUser ?? { id: userId, name: null, username: null, avatarUrl: null }
+      }
       userClubs={userClubs}
       hostFirstName={riff.club.admin?.firstName ?? null}
       isFirstReveal={isFirstReveal}

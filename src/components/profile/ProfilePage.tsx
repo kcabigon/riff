@@ -23,21 +23,21 @@ interface ProfilePageProps {
     username: string | null;
     name: string | null;
     avatarUrl: string | null;
-  } | null;
+  };
   stats: {
     pieceCount: number;
     totalWordCount: number;
   };
   pieces: Piece[];
   isOwnProfile: boolean;
-  lastActiveClubId: string | null;
+  currentClub: { id: string; name: string } | null;
 }
 
 export default function ProfilePage({
   user,
   currentUser,
   stats,
-  lastActiveClubId,
+  currentClub,
   pieces: initialPieces,
   isOwnProfile,
 }: ProfilePageProps) {
@@ -107,7 +107,7 @@ export default function ProfilePage({
         profileUser={user}
         currentUser={currentUser}
         isOwnProfile={isOwnProfile}
-        lastActiveClubId={lastActiveClubId}
+        currentClub={currentClub}
         stats={stats}
       />
 

@@ -47,6 +47,13 @@ export default async function ProfilePageRoute({
     },
   });
 
+  const currentClub = currentUser?.lastActiveClubId
+    ? await prisma.club.findUnique({
+        where: { id: currentUser.lastActiveClubId },
+        select: { id: true, name: true },
+      })
+    : null;
+
   // Fetch the target user
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -134,12 +141,12 @@ export default async function ProfilePageRoute({
               name: currentUser.name,
               avatarUrl: currentUser.avatarUrl,
             }
-          : null
+          : { id: currentUserId, username: null, name: null, avatarUrl: null }
       }
       stats={{ pieceCount, totalWordCount }}
       pieces={pieces}
       isOwnProfile={isOwnProfile}
-      lastActiveClubId={currentUser?.lastActiveClubId ?? null}
+      currentClub={currentClub}
     />
   );
 }

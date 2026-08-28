@@ -82,12 +82,12 @@ interface RiffPageLayoutProps {
   hasDraft: boolean;
   hasSubmitted: boolean;
   draftPieceId?: string | null;
-  navUser?: {
+  navUser: {
     id: string;
     name: string | null;
     username: string | null;
     avatarUrl: string | null;
-  } | null;
+  };
   userClubs?: Array<{ id: string; name: string }>;
   readPieceIds?: string[];
   hasNewCommentsMap?: Record<string, boolean>;
@@ -177,13 +177,11 @@ export default function RiffPageLayout({
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
       {/* Nav bar */}
-      {navUser && (
-        <NavBar
-          user={navUser}
-          clubs={userClubs}
-          currentClub={{ id: riff.clubId, name: riff.club.name }}
-        />
-      )}
+      <NavBar
+        user={navUser}
+        clubs={userClubs}
+        currentClub={{ id: riff.clubId, name: riff.club.name }}
+      />
 
       {/* Main content */}
       <div
