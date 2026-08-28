@@ -105,7 +105,7 @@ export default function NavBar({
               label="New Riff"
               icon="plus"
               iconLeading
-              compactOnMobile
+              hideIconOnMobile
               onClick={onNewRiff}
             />
           )}

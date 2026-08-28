@@ -11,6 +11,9 @@ interface CreatePillButtonProps {
   // "+" on Create/New Riff). Trailing = after the label (reads as "pick
   // from a list", used for the chevron on Clubs). Default trailing.
   iconLeading?: boolean;
+  // Hides the icon under 768px, keeping just the text label — for cases
+  // where the icon doesn't earn its space at pill width on mobile.
+  hideIconOnMobile?: boolean;
   // External "open" state to keep the shadow accent while a dropdown menu
   // this button triggers is open, even if the mouse isn't hovering it.
   forceActive?: boolean;
@@ -28,15 +31,12 @@ const ICON_SRC = {
   plus: "/icons/add.svg",
 };
 
-// Shared visual for the pill-style nav buttons used across NavBar —
-// the Create dropdown trigger (CreateDropdown), the club dropdown
-// trigger (ClubDropdown), and the single-action "New riff" button
-// on club pages (ClubPageLayout via NavBar's onNewRiff prop).
 export default function CreatePillButton({
   label,
   onClick,
   icon,
   iconLeading = false,
+  hideIconOnMobile = false,
   forceActive = false,
   reverseShadow = false,
   compactOnMobile = false,
@@ -52,7 +52,11 @@ export default function CreatePillButton({
       alt=""
       width={16}
       height={16}
-      className="create-pill-icon"
+      className={
+        hideIconOnMobile
+          ? "create-pill-icon hide-icon-mobile"
+          : "create-pill-icon"
+      }
       style={{ filter: "invert(1)" }}
     />
   );
@@ -94,21 +98,26 @@ export default function CreatePillButton({
         {!iconLeading && iconEl}
       </button>
 
-      {compactOnMobile && (
+      {(compactOnMobile || hideIconOnMobile) && (
         <style>{`
           @media (max-width: 767px) {
-            .compact-mobile {
-              background: none !important;
-              border: none !important;
-              box-shadow: none !important;
-              padding: 0 !important;
-            }
-            .compact-mobile .create-pill-label { display: none; }
-            /* Match the other navbar controls' size (logo/bell/avatar are
-               ~40px tall) instead of the small 16px in-pill icon size. */
-            .compact-mobile .create-pill-icon {
-              width: 40px !important;
-              height: 40px !important;
+            .hide-icon-mobile { display: none; }
+            ${
+              compactOnMobile
+                ? `.compact-mobile {
+                    background: none !important;
+                    border: none !important;
+                    box-shadow: none !important;
+                    padding: 0 !important;
+                  }
+                  .compact-mobile .create-pill-label { display: none; }
+                  /* Match the other navbar controls' size (logo/bell/avatar
+                     are ~40px tall) instead of the small 16px in-pill icon size. */
+                  .compact-mobile .create-pill-icon {
+                    width: 40px !important;
+                    height: 40px !important;
+                  }`
+                : ""
             }
           }
         `}</style>

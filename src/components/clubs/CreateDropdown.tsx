@@ -39,7 +39,6 @@ export default function CreateDropdown() {
           icon="plus"
           iconLeading
           forceActive={isOpen}
-          compactOnMobile
         />
       }
       items={items}
