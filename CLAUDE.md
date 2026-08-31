@@ -113,4 +113,4 @@ When referring to collaborators in chat, PR descriptions, or anywhere user-facin
 | `kcabigon` | Kyle |
 | `jarric22` | Jarric |
 | `djorgensen316` | Derek |
-| `riffwithfriends` | Chris |
+| `pedersennnnn` | Chris |
