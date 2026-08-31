@@ -75,7 +75,7 @@ export default function NavBar({
           {/* Logo — wordmark treatment matches LandingNavBar's icon +
               "Riff" lockup. */}
           <Link
-            href={currentClub ? `/clubs/${currentClub.id}` : "/no-club"}
+            href="/my-riffs"
             style={{
               display: "flex",
               alignItems: "center",
