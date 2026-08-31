@@ -26,6 +26,7 @@ export default async function WritePageRoute({
       currentContent: true,
       coverImage: true,
       authorId: true,
+      publishedAt: true,
       riffs: {
         include: {
           riff: {
@@ -63,6 +64,8 @@ export default async function WritePageRoute({
     subtitle: piece.subtitle,
     currentContent: piece.currentContent,
     coverImage: piece.coverImage,
+    authorId: piece.authorId,
+    publishedAt: piece.publishedAt ? piece.publishedAt.toISOString() : null,
     riffs: piece.riffs.map((pr) => ({
       id: pr.riff.id,
       title: pr.riff.title,

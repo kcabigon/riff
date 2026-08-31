@@ -82,6 +82,7 @@ interface WritingPiece {
   wordCount: number;
   createdAt: string;
   updatedAt: string;
+  publishedAt: string | null;
   riffs: PieceRiffSummary[];
   isPublic: boolean;
   publicShareId: string | null;
@@ -128,15 +129,21 @@ function SectionHeading({
   );
 }
 
-function isSubmitted(piece: WritingPiece): boolean {
-  return piece.riffs.some((r) => r.submittedAt !== null);
+function isFinished(piece: WritingPiece): boolean {
+  return (
+    piece.riffs.some((r) => r.submittedAt !== null) ||
+    piece.publishedAt !== null
+  );
 }
 
 // Mirrors the profile page's isRevealed check (ProfilePage's viewer-access
 // clause is skipped — every piece here already belongs to the current user).
 function isPieceRevealed(piece: WritingPiece): boolean {
-  return piece.riffs.some(
-    (r) => r.riff.status === "REVEALED" || r.riff.status === "COMPLETED"
+  return (
+    piece.publishedAt !== null ||
+    piece.riffs.some(
+      (r) => r.riff.status === "REVEALED" || r.riff.status === "COMPLETED"
+    )
   );
 }
 
@@ -295,8 +302,8 @@ export default function MyRiffsClient({
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
 
-  const drafts = allPieces.filter((p) => !isSubmitted(p));
-  const submittedPieces = allPieces.filter(isSubmitted);
+  const drafts = allPieces.filter((p) => !isFinished(p));
+  const submittedPieces = allPieces.filter(isFinished);
 
   const visibleDrafts = draftsExpanded ? drafts : drafts.slice(0, DRAFTS_CAP);
   const visiblePieces = piecesExpanded
