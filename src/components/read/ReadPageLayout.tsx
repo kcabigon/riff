@@ -51,10 +51,11 @@ interface ReadPageLayoutProps {
     wordCount: number;
     readLengthMin: number;
     submittedAt: string | null;
+    publishedAt: string | null;
     author: CommentAuthor;
   };
-  riffId: string;
-  clubId: string;
+  riffId: string | null;
+  clubId: string | null;
   currentUser: CommentAuthor;
   initialComments: CommentData[];
   isAlreadyRead: boolean;
@@ -503,10 +504,12 @@ export default function ReadPageLayout({
               }}
             >
               {readMinutes} min read
-              {piece.submittedAt && (
+              {(piece.submittedAt || piece.publishedAt) && (
                 <>
                   {" \u2022 "}
-                  {formatSubmittedDate(piece.submittedAt)}
+                  {formatSubmittedDate(
+                    (piece.submittedAt ?? piece.publishedAt) as string
+                  )}
                 </>
               )}
             </p>

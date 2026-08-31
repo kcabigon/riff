@@ -21,8 +21,8 @@ interface NewComment {
   id: string;
   content: string;
   pieceId: string;
-  riffId: string;
-  clubId: string;
+  riffId: string | null;
+  clubId: string | null;
   selectionStart: number;
   selectionEnd: number;
   selectedText: string;
@@ -36,8 +36,8 @@ interface CommentPopoverProps {
   selection: PendingSelection;
   currentUser: CommentAuthor;
   pieceId: string;
-  riffId: string;
-  clubId: string;
+  riffId: string | null;
+  clubId: string | null;
   onSubmit: (comment: NewComment) => void;
   onClose: () => void;
 }

@@ -79,17 +79,22 @@ export default async function ProfilePageRoute({
   const viewerHasAccess =
     isOwnProfile || (await isFriendOf(currentUserId, userId));
 
-  // Fetch submitted pieces by this user, with riff status + club to determine visibility
+  // Fetch pieces by this user — either submitted to a riff, or published
+  // standalone (riff-less) — with riff status + club to determine visibility
   const rawPieces = await prisma.piece.findMany({
     where: {
       authorId: userId,
-      riffs: { some: { submittedAt: { not: null } } },
+      OR: [
+        { riffs: { some: { submittedAt: { not: null } } } },
+        { publishedAt: { not: null } },
+      ],
     },
     select: {
       id: true,
       title: true,
       coverImage: true,
       wordCount: true,
+      publishedAt: true,
       riffs: {
         where: { submittedAt: { not: null } },
         select: {
@@ -105,23 +110,26 @@ export default async function ProfilePageRoute({
     },
   });
 
-  rawPieces.sort((a, b) => {
-    const latestA = Math.max(...a.riffs.map((r) => r.submittedAt!.getTime()));
-    const latestB = Math.max(...b.riffs.map((r) => r.submittedAt!.getTime()));
-    return latestB - latestA;
-  });
+  const latestActivity = (p: (typeof rawPieces)[number]) =>
+    p.publishedAt
+      ? p.publishedAt.getTime()
+      : Math.max(...p.riffs.map((r) => r.submittedAt!.getTime()));
+
+  rawPieces.sort((a, b) => latestActivity(b) - latestActivity(a));
 
   const pieces = rawPieces.map((p) => ({
     id: p.id,
     title: p.title,
     coverImage: p.coverImage,
     wordCount: p.wordCount,
-    // Revealed = riff is REVEALED/COMPLETED AND viewer has access (owner or friend)
-    isRevealed: p.riffs.some(
-      (r) =>
-        (r.riff.status === "REVEALED" || r.riff.status === "COMPLETED") &&
-        viewerHasAccess
-    ),
+    // Revealed = viewer has access (owner or friend), and either the piece
+    // was published standalone or its riff is REVEALED/COMPLETED
+    isRevealed:
+      viewerHasAccess &&
+      (p.publishedAt !== null ||
+        p.riffs.some(
+          (r) => r.riff.status === "REVEALED" || r.riff.status === "COMPLETED"
+        )),
     viewerHasAccess,
     isPublic: p.newShares.length > 0,
     publicShareId: p.newShares[0]?.id ?? null,

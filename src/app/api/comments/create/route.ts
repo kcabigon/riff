@@ -26,9 +26,18 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!pieceId || !riffId || !clubId) {
+    if (!pieceId) {
       return NextResponse.json(
-        { error: "pieceId, riffId, and clubId are required" },
+        { error: "pieceId is required" },
+        { status: 400 }
+      );
+    }
+
+    // riffId/clubId are only present for comments on a riff-submitted piece —
+    // a standalone published piece has neither
+    if ((riffId && !clubId) || (!riffId && clubId)) {
+      return NextResponse.json(
+        { error: "riffId and clubId must be provided together" },
         { status: 400 }
       );
     }
@@ -67,7 +76,7 @@ export async function POST(req: Request) {
     // Verify piece exists and get author
     const piece = await prisma.piece.findUnique({
       where: { id: pieceId },
-      select: { id: true, authorId: true },
+      select: { id: true, authorId: true, publishedAt: true },
     });
 
     if (!piece) {
@@ -78,25 +87,39 @@ export async function POST(req: Request) {
     const isAuthor = piece.authorId === userId;
 
     if (!isAuthor) {
-      const isParticipant = await prisma.riffParticipant.findUnique({
-        where: { riffId_userId: { riffId, userId } },
-        select: { id: true },
-      });
-
-      if (!isParticipant) {
-        // Also allow club members who have read access (riff is REVEALED),
-        // or a Friend of the author (clubmate elsewhere, or riffmate) — same
-        // relation that grants read access on /read/[pieceId].
-        const isMember = await prisma.clubMember.findFirst({
-          where: { clubId, userId },
+      if (riffId && clubId) {
+        const isParticipant = await prisma.riffParticipant.findUnique({
+          where: { riffId_userId: { riffId, userId } },
           select: { id: true },
         });
 
-        if (!isMember && !(await isFriendOf(userId, piece.authorId))) {
+        if (!isParticipant) {
+          // Also allow club members who have read access (riff is REVEALED),
+          // or a Friend of the author (clubmate elsewhere, or riffmate) — same
+          // relation that grants read access on /read/[pieceId].
+          const isMember = await prisma.clubMember.findFirst({
+            where: { clubId, userId },
+            select: { id: true },
+          });
+
+          if (!isMember && !(await isFriendOf(userId, piece.authorId))) {
+            return NextResponse.json(
+              {
+                error:
+                  "You must be a riff participant, club member, or friend of the author to comment",
+              },
+              { status: 403 }
+            );
+          }
+        }
+      } else {
+        // Riff-less (standalone published piece) — no riff/club membership
+        // to check against, so access mirrors /read/[pieceId]: the piece
+        // must be published, and the commenter must be a friend of the author.
+        if (!piece.publishedAt || !(await isFriendOf(userId, piece.authorId))) {
           return NextResponse.json(
             {
-              error:
-                "You must be a riff participant, club member, or friend of the author to comment",
+              error: "You must be a friend of the author to comment",
             },
             { status: 403 }
           );

@@ -18,6 +18,8 @@ import "@/app/write/[pieceId]/editor.css";
 import BackButton from "@/components/BackButton";
 import CoverImageModal from "@/components/write/CoverImageModal";
 import SubmitConfirmModal from "@/components/write/SubmitConfirmModal";
+import PublishConfirmModal from "@/components/write/PublishConfirmModal";
+import PieceActionCTA from "@/components/write/PieceActionCTA";
 import { convertHeicToJpeg, isHeicFile } from "@/lib/convert-heic";
 import NoiseBackground from "@/components/NoiseBackground";
 import { useIsMobile } from "@/hooks/useMediaQuery";
@@ -27,7 +29,6 @@ import { useScrollDirection } from "@/hooks/useScrollDirection";
 import EmbedModal from "@/components/write/EmbedModal";
 import MediaEmbedModal from "@/components/write/MediaEmbedModal";
 import LinkPopover from "@/components/write/LinkPopover";
-import CTAButton from "@/components/CTAButton";
 import { uploadImage } from "@/lib/upload-image";
 
 const ALLOWED_IMAGE_TYPES = [
@@ -55,6 +56,8 @@ interface WritePageProps {
     subtitle: string | null;
     currentContent: string;
     coverImage: string | null;
+    authorId: string;
+    publishedAt: string | null;
     riffs: RiffConnection[];
   };
 }
@@ -68,6 +71,7 @@ export default function WritePage({ piece }: WritePageProps) {
   const [coverImage, setCoverImage] = useState<string | null>(piece.coverImage);
   const [showCoverModal, setShowCoverModal] = useState(false);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [showPublishModal, setShowPublishModal] = useState(false);
   const [showLinkModal, setShowLinkModal] = useState(false);
   const linkSelectionRef = useRef<{ from: number; to: number } | null>(null);
   const [mediaEmbed, setMediaEmbed] = useState<{
@@ -86,6 +90,7 @@ export default function WritePage({ piece }: WritePageProps) {
   const [isSubmitted, setIsSubmitted] = useState(
     piece.riffs.some((r) => r.submittedAt !== null)
   );
+  const [isPublished, setIsPublished] = useState(piece.publishedAt !== null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const titleRef = useRef<HTMLTextAreaElement>(null);
   const subtitleRef = useRef<HTMLTextAreaElement>(null);
@@ -456,11 +461,15 @@ export default function WritePage({ piece }: WritePageProps) {
   };
 
   const handleBack = () => {
+    // The destination (My Riffs, or the riff page) may already be sitting in
+    // the client-side Router Cache from before this edit session — refresh()
+    // forces it to refetch instead of showing what it looked like on the way in.
     if (piece.riffs.length > 0) {
       router.push(`/riffs/${piece.riffs[0].id}`);
     } else {
       router.back();
     }
+    router.refresh();
   };
 
   if (!editor) {
@@ -588,54 +597,36 @@ export default function WritePage({ piece }: WritePageProps) {
               }}
             >
               {/* Submit CTA / cover icon */}
-              {piece.riffs.length > 0 &&
-                (isSubmitted ? (
-                  <button
-                    onClick={() => {
-                      if (coverImage) {
-                        setShowSubmitModal(true);
-                      } else {
-                        setShowCoverModal(true);
-                      }
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "#F5F5F5";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "#FFFFFF";
-                    }}
-                    style={{
-                      padding: isMobile ? "6px 10px" : "8px 16px",
-                      fontSize: isMobile ? "11px" : "12px",
-                      fontFamily: "var(--font-dm-sans)",
-                      fontWeight: 300,
-                      color: "#000000",
-                      backgroundColor: "#FFFFFF",
-                      border: "2px solid #000000",
-                      boxShadow: "none",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Cover
-                  </button>
-                ) : (
-                  <CTAButton
-                    onClick={() => {
-                      if (coverImage) {
-                        setShowSubmitModal(true);
-                      } else {
-                        setShowCoverModal(true);
-                      }
-                    }}
-                    style={{
-                      padding: isMobile ? "8px 24px" : "10px 32px",
-                      fontSize: "12px",
-                      boxShadow: "4px 4px 0px 0px #00FF66",
-                    }}
-                  >
-                    Cover + Submit
-                  </CTAButton>
-                ))}
+              {piece.riffs.length > 0 && (
+                <PieceActionCTA
+                  isDone={isSubmitted}
+                  label="Cover + Submit"
+                  isMobile={isMobile}
+                  onOpenModal={() => {
+                    if (coverImage) {
+                      setShowSubmitModal(true);
+                    } else {
+                      setShowCoverModal(true);
+                    }
+                  }}
+                />
+              )}
+
+              {/* Publish CTA / cover icon — riff-less pieces only */}
+              {piece.riffs.length === 0 && (
+                <PieceActionCTA
+                  isDone={isPublished}
+                  label="Cover + Publish"
+                  isMobile={isMobile}
+                  onOpenModal={() => {
+                    if (coverImage) {
+                      setShowPublishModal(true);
+                    } else {
+                      setShowCoverModal(true);
+                    }
+                  }}
+                />
+              )}
             </div>
           </div>
 
@@ -936,11 +927,19 @@ export default function WritePage({ piece }: WritePageProps) {
         onSelect={(url) => {
           handleCoverImageSelect(url);
           setShowCoverModal(false);
-          setShowSubmitModal(true);
+          if (piece.riffs.length > 0) {
+            setShowSubmitModal(true);
+          } else {
+            setShowPublishModal(true);
+          }
         }}
         onSkip={() => {
           setShowCoverModal(false);
-          setShowSubmitModal(true);
+          if (piece.riffs.length > 0) {
+            setShowSubmitModal(true);
+          } else {
+            setShowPublishModal(true);
+          }
         }}
         pieceContent={editor.getHTML()}
         currentCoverImage={coverImage}
@@ -957,6 +956,7 @@ export default function WritePage({ piece }: WritePageProps) {
             setIsSubmitted(true);
             setShowSubmitModal(false);
             router.push(`/riffs/${riff.id}`);
+            router.refresh();
           }}
           submitDisabled={isSubmitted}
           onCoverAction={() => {
@@ -971,9 +971,37 @@ export default function WritePage({ piece }: WritePageProps) {
             id: piece.id,
             title,
             coverImage,
-            currentContent: editor?.getHTML() ?? piece.currentContent,
           }}
           riff={piece.riffs[0]}
+        />
+      )}
+      {piece.riffs.length === 0 && (
+        <PublishConfirmModal
+          isOpen={showPublishModal}
+          onClose={() => setShowPublishModal(false)}
+          onConfirm={async () => {
+            await fetch(`/api/pieces/${piece.id}/publish`, {
+              method: "PATCH",
+            });
+            setIsPublished(true);
+            setShowPublishModal(false);
+            router.push(`/profile/${piece.authorId}`);
+            router.refresh();
+          }}
+          publishDisabled={isPublished}
+          onCoverAction={() => {
+            if (coverImage) {
+              setCoverImage(null);
+              autosaveCoverImage(null);
+            }
+            setShowPublishModal(false);
+            setShowCoverModal(true);
+          }}
+          piece={{
+            id: piece.id,
+            title,
+            coverImage,
+          }}
         />
       )}
 

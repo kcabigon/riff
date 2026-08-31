@@ -92,6 +92,7 @@ export default async function MyRiffsPage() {
           wordCount: true,
           createdAt: true,
           updatedAt: true,
+          publishedAt: true,
           riffs: {
             select: {
               submittedAt: true,
@@ -319,6 +320,7 @@ export default async function MyRiffsPage() {
     wordCount: p.wordCount,
     createdAt: p.createdAt.toISOString(),
     updatedAt: p.updatedAt.toISOString(),
+    publishedAt: p.publishedAt ? p.publishedAt.toISOString() : null,
     riffs: p.riffs.map((pr) => ({
       submittedAt: pr.submittedAt ? pr.submittedAt.toISOString() : null,
       riff: {

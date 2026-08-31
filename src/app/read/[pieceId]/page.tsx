@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
-import { friendOfWhere } from "@/lib/friends";
+import { friendOfWhere, isFriendOf } from "@/lib/friends";
 import ReadPageLayout from "@/components/read/ReadPageLayout";
 
 // ── Immersive read experience (single piece) ─────────────────────────────────
@@ -68,6 +68,7 @@ export default async function ReadPage({
       coverImage: true,
       wordCount: true,
       readLengthMin: true,
+      publishedAt: true,
       author: {
         select: {
           id: true,
@@ -133,25 +134,38 @@ export default async function ReadPage({
       },
     });
 
-    if (!pieceRiff) {
-      redirect("/");
+    if (pieceRiff) {
+      validRiffId = pieceRiff.riffId;
+      clubId = pieceRiff.riff.clubId;
+      submittedAt = pieceRiff.submittedAt?.toISOString() ?? null;
     }
-
-    validRiffId = pieceRiff.riffId;
-    clubId = pieceRiff.riff.clubId;
-    submittedAt = pieceRiff.submittedAt?.toISOString() ?? null;
   }
 
-  // Check if already read
-  const existingRead = await prisma.pieceRead.findUnique({
-    where: {
-      userId_pieceId_riffId: {
-        userId,
-        pieceId,
-        riffId: validRiffId,
-      },
-    },
-  });
+  // Standalone (riff-less) published piece — no riff/club context at all.
+  // Access: the author, or a friend of the author (same relation that gates
+  // visibility on the profile page).
+  const isStandalonePublished =
+    !validRiffId &&
+    piece.publishedAt !== null &&
+    (userId === piece.author.id || (await isFriendOf(userId, piece.author.id)));
+
+  if (!validRiffId && !isStandalonePublished) {
+    redirect("/");
+  }
+
+  // Check if already read — skipped for riff-less pieces, there's no reveal
+  // progress to track against.
+  const existingRead = validRiffId
+    ? await prisma.pieceRead.findUnique({
+        where: {
+          userId_pieceId_riffId: {
+            userId,
+            pieceId,
+            riffId: validRiffId,
+          },
+        },
+      })
+    : null;
 
   // Fetch comments server-side (top-level only; replies included nested)
   const rawComments = await prisma.comment.findMany({
@@ -193,16 +207,19 @@ export default async function ReadPage({
     })),
   }));
 
-  // Fetch sibling pieces in same riff for navigation
-  const siblingPieces = await prisma.pieceRiff.findMany({
-    where: { riffId: validRiffId },
-    select: {
-      piece: {
-        select: { id: true, title: true },
-      },
-    },
-    orderBy: { submittedAt: "asc" },
-  });
+  // Fetch sibling pieces in same riff for navigation — no siblings for a
+  // riff-less published piece, there's no riff to gather them from
+  const siblingPieces = validRiffId
+    ? await prisma.pieceRiff.findMany({
+        where: { riffId: validRiffId },
+        select: {
+          piece: {
+            select: { id: true, title: true },
+          },
+        },
+        orderBy: { submittedAt: "asc" },
+      })
+    : [];
 
   const orderedPieces = siblingPieces.map((pr) => pr.piece);
   const currentIndex = orderedPieces.findIndex((p) => p.id === pieceId);
@@ -241,10 +258,12 @@ export default async function ReadPage({
         wordCount: piece.wordCount,
         readLengthMin: piece.readLengthMin,
         submittedAt,
+        publishedAt: piece.publishedAt ? piece.publishedAt.toISOString() : null,
         author: piece.author,
       }}
       riffId={validRiffId}
-      clubId={clubId!}
+      clubId={clubId}
+      disableReadTracking={validRiffId === null}
       currentUser={
         currentUser ?? {
           id: userId,
@@ -259,6 +278,13 @@ export default async function ReadPage({
       previousPiece={previousPiece}
       nextPiece={nextPiece}
       fromProfileUserId={from === "profile" ? fromUserId : undefined}
+      backHref={
+        !validRiffId
+          ? userId === piece.author.id
+            ? "/my-riffs"
+            : `/profile/${piece.author.id}`
+          : undefined
+      }
       showMotion={showMotion}
     />
   );

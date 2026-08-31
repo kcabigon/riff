@@ -27,8 +27,8 @@ interface CommentModalProps {
   currentUserId: string;
   currentUser: CommentAuthor;
   pieceId: string;
-  riffId: string;
-  clubId: string;
+  riffId: string | null;
+  clubId: string | null;
   authorColorMap: Record<string, string>;
   onClose: () => void;
   onDelete: (commentId: string) => void;

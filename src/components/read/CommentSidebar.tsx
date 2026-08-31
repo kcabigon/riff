@@ -36,8 +36,8 @@ interface PendingCommentProps {
   selection: PendingSelection;
   currentUser: CommentAuthor;
   pieceId: string;
-  riffId: string;
-  clubId: string;
+  riffId: string | null;
+  clubId: string | null;
   onSubmit: (
     comment: Omit<CommentData, "replies"> & { replies?: ReplyData[] }
   ) => void;
@@ -50,8 +50,8 @@ interface CommentSidebarProps {
   currentUserId: string;
   currentUser: CommentAuthor;
   pieceId: string;
-  riffId: string;
-  clubId: string;
+  riffId: string | null;
+  clubId: string | null;
   onDelete: (commentId: string) => void;
   onUpdate: (commentId: string, newContent: string) => Promise<void>;
   onReplyAdded: (commentId: string, reply: ReplyData) => void;
@@ -108,8 +108,8 @@ function CommentCard({
   onReplyDeleted: (replyId: string) => void;
   currentUser: CommentAuthor;
   pieceId: string;
-  riffId: string;
-  clubId: string;
+  riffId: string | null;
+  clubId: string | null;
   disableReplies?: boolean;
   color: string;
   showQuote?: boolean;

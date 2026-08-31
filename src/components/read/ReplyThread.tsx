@@ -35,8 +35,8 @@ interface ReplyThreadProps {
   replies: ReplyData[];
   parentId: string;
   pieceId: string;
-  riffId: string;
-  clubId: string;
+  riffId: string | null;
+  clubId: string | null;
   currentUser: CommentAuthor;
   onReplyAdded: (reply: ReplyData) => void;
   onReplyUpdated?: (replyId: string, newContent: string) => void;
