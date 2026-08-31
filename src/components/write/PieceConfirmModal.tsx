@@ -35,6 +35,7 @@ interface PieceConfirmModalProps {
     coverImage: string | null;
   };
   note: ReactNode;
+  footerExtra?: ReactNode;
 }
 
 // Shared by SubmitConfirmModal and PublishConfirmModal — same PieceCard
@@ -50,6 +51,7 @@ export default function PieceConfirmModal({
   disabled = false,
   piece,
   note,
+  footerExtra,
 }: PieceConfirmModalProps) {
   const [isConfirming, setIsConfirming] = useState(false);
 
@@ -64,13 +66,18 @@ export default function PieceConfirmModal({
   };
 
   const footer = (
-    <PrimaryButton
-      onClick={handleConfirm}
-      loading={isConfirming}
-      disabled={disabled}
+    <div
+      style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
     >
-      {disabled ? doneLabel : actionLabel}
-    </PrimaryButton>
+      <PrimaryButton
+        onClick={handleConfirm}
+        loading={isConfirming}
+        disabled={disabled}
+      >
+        {disabled ? doneLabel : actionLabel}
+      </PrimaryButton>
+      {footerExtra}
+    </div>
   );
 
   return (

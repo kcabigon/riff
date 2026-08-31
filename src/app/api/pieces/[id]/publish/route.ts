@@ -10,6 +10,20 @@ export async function PATCH(
   try {
     const user = await requireAuth();
     const { id } = await params;
+    const body = await req.json().catch(() => ({}));
+    const { publishedAt } = body ?? {};
+
+    let publishDate = new Date();
+    if (publishedAt) {
+      const parsed = new Date(publishedAt);
+      if (isNaN(parsed.getTime())) {
+        return NextResponse.json(
+          { error: "Invalid publish date" },
+          { status: 400 }
+        );
+      }
+      publishDate = parsed;
+    }
 
     const piece = await prisma.piece.findUnique({
       where: { id },
@@ -44,7 +58,7 @@ export async function PATCH(
 
     const updated = await prisma.piece.update({
       where: { id },
-      data: { publishedAt: new Date() },
+      data: { publishedAt: publishDate },
     });
 
     return NextResponse.json(updated);
