@@ -22,8 +22,8 @@ interface NewComment {
   id: string;
   content: string;
   pieceId: string;
-  riffId: string;
-  clubId: string;
+  riffId: string | null;
+  clubId: string | null;
   selectionStart: number;
   selectionEnd: number;
   selectedText: string;
@@ -37,8 +37,8 @@ interface CommentComposeModalProps {
   selection: PendingSelection;
   currentUser: CommentAuthor;
   pieceId: string;
-  riffId: string;
-  clubId: string;
+  riffId: string | null;
+  clubId: string | null;
   quoteColor?: string;
   onSubmit: (comment: NewComment) => void;
   onClose: () => void;

@@ -48,6 +48,7 @@ export default async function TutorialReadPage({
         wordCount: TUTORIAL_PIECE.wordCount,
         readLengthMin: 1,
         submittedAt: pieceSubmittedAt,
+        publishedAt: null,
         author: currentUser,
       }}
       riffId="tutorial-riff"
