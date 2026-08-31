@@ -18,8 +18,8 @@ If the user asks you to "regain context" or "catch up", run `/letsriff`.
 | `/test` | Start the dev server and test your changes locally |
 | `/sync` | Pull latest develop into your feature branch — prevents merge conflicts |
 | `/pr-check` | Pre-PR validation — lint, type-check, build, commit format |
-| `/review` | Review a PR for design system, component reuse, code quality, and merge readiness |
-| `/finish-feature` | Push branch and create a PR targeting develop |
+| `/review` | Optional quality pass on a PR — design system, component reuse, code quality. Encouraged, not required to merge |
+| `/finish-feature` | Push branch, create a PR to develop, and merge it (or leave it open for a quick review) |
 | `/promote` | Kyle only — promote develop → staging or staging → main (stops between steps) |
 | `/release` | Kyle only — fast-path: `develop → staging → main` chained with a single confirmation |
 | `/setup` | First-time setup — walks through environment, deps, database |
@@ -70,15 +70,21 @@ npx prisma generate      # Regenerate Prisma client after schema changes
 Collaborators (Jarric, Chris, Derek) follow this flow. Guide them through it — suggest the next step, don't make them guess. Let them explore or ask questions between steps, but always bring them back to the track.
 
 ```
-/letsriff → /new-feature → build → /test → /finish-feature
+/letsriff → /new-feature → build → /test → /finish-feature → merge
 ```
 
 1. **`/letsriff`** — start of every session. Loads context, checks state. → suggests `/new-feature` or `/todo`
 2. **`/new-feature`** — syncs with develop, creates branch, builds the feature. → suggests `/test`
 3. **`/test`** — starts dev server for local testing. → suggests `/finish-feature` or fix bugs
-4. **`/finish-feature`** — syncs with develop, validates, pushes, creates PR. → done
+4. **`/finish-feature`** — syncs with develop, validates, pushes, creates PR, then **merges it to develop** (or leaves it open for a quick `/review` first). → done
 
-After each step completes, proactively suggest the next one: "Ready to test? Run `/test`" or "Happy with it? Run `/finish-feature` to create a PR."
+After each step completes, proactively suggest the next one: "Ready to test? Run `/test`" or "Happy with it? Run `/finish-feature`."
+
+### Merging (develop)
+
+**Anyone can merge their own PR to develop — no approval required.** Review is encouraged (a quick `/review` from a friend) but never a blocker. `main` stays protected; only Kyle promotes develop → staging → main.
+
+**The one exception: database/schema changes still coordinate through Kyle.** If a PR touches `prisma/schema.prisma`, don't self-merge — check with Kyle first (the schema-edit and prisma hooks enforce this too).
 
 ### Context persistence (compaction)
 

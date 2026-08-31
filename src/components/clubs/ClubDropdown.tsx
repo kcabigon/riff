@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Dropdown from "@/components/shared/Dropdown";
 import type { DropdownItem } from "@/components/shared/Dropdown";
+import CreatePillButton from "./CreatePillButton";
 
 interface ClubDropdownProps {
   clubs: Array<{
@@ -26,7 +26,6 @@ export default function ClubDropdown({
   onToggle,
   onClose,
 }: ClubDropdownProps) {
-  const [isHovered, setIsHovered] = useState(false);
   const router = useRouter();
 
   const items: DropdownItem[] = [
@@ -56,48 +55,16 @@ export default function ClubDropdown({
   return (
     <Dropdown
       trigger={
-        <button
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-          style={{
-            backgroundColor: "#000000",
-            border: "2px solid #FFFFFF",
-            boxShadow:
-              isHovered || isOpen
-                ? "4px 4px 0px 0px #01EFFC"
-                : "4px 4px 0px 0px #00FF66",
-            padding: "8px 12px",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            cursor: "pointer",
-            transition: "none",
-          }}
-        >
-          <span
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              fontWeight: 300,
-              color: "#FFFFFF",
-              transition: "none",
-            }}
-          >
-            My Clubs
-          </span>
-
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/icons/arrow_down.svg"
-            alt=""
-            width={16}
-            height={16}
-            style={{ filter: "invert(1)" }}
-          />
-        </button>
+        <CreatePillButton
+          label="My Clubs"
+          icon="chevron"
+          forceActive={isOpen}
+          reverseShadow
+          compactOnMobile
+        />
       }
       items={items}
-      align="left"
+      align="right"
       minWidth={200}
       isOpen={isOpen}
       onToggle={onToggle}

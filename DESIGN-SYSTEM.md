@@ -85,6 +85,9 @@ This is the single source of truth for Riff's visual design. Read this before bu
 | Small bold | 12px | DM Sans | 700 | 1.4 |
 | Tiny | 11px | DM Sans | 700 | 1.4 |
 | Editor | 18px | Playfair Display | 400 | 1.6 |
+| Stat | 28px | DM Sans | 700 | 1.0 |
+
+Stat: large numeric callouts (e.g. word/submission counts on RiffEventCard).
 
 ### Font Weight Reference
 - **300** (Light) — most UI text, buttons, labels

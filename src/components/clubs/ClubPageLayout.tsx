@@ -16,6 +16,7 @@ import CloseButton from "@/components/CloseButton";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
 import { useIsMobile } from "@/hooks/useMediaQuery";
+import { useRevealRiff } from "@/hooks/useRevealRiff";
 import {
   getRiffDisplayTitle,
   getSubmittedPieces,
@@ -130,7 +131,7 @@ export default function ClubPageLayout({
   const [clubBannerImage, setClubBannerImage] = useState(club.bannerImage);
   const [isCreateRiffModalOpen, setIsCreateRiffModalOpen] = useState(false);
   const [isRevealModalOpen, setIsRevealModalOpen] = useState(false);
-  const [isRevealing, setIsRevealing] = useState(false);
+  const { revealRiff, isRevealing } = useRevealRiff();
   const [isClubDetailsModalOpen, setIsClubDetailsModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isDeleteClubModalOpen, setIsDeleteClubModalOpen] = useState(false);
@@ -225,10 +226,20 @@ export default function ClubPageLayout({
   const hasUnreadForUser = (riff: Riff) =>
     hasUnreadPieces(riff.id, readCounts, otherSubmittedCount(riff));
 
-  // After joining a riff, refresh the page to get updated state
-  const handleJoinRiff = useCallback(() => {
-    router.refresh();
-  }, []);
+  // Past Riffs — COMPLETED + pre-join REVEALED + fully-read REVEALED riffs,
+  // excluding any with no submitted pieces (e.g. the sole submission was deleted).
+  const pastRiffs = [
+    ...completedRiffs,
+    ...pastRevealedRiffs,
+    ...revealedRiffs.filter(isFullyReadForUser),
+  ]
+    .filter((riff) => getSubmittedPieces(riff.pieces).length > 0)
+    .sort((a, b) => {
+      if (a.volumeNumber != null && b.volumeNumber != null) {
+        return b.volumeNumber - a.volumeNumber;
+      }
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
 
   const handleRiffCreated = useCallback((_riffId: string) => {
     setIsCreateRiffModalOpen(false);
@@ -238,23 +249,12 @@ export default function ClubPageLayout({
   // Handle reveal confirmation
   const handleRevealConfirm = useCallback(async () => {
     if (!activeRiff) return;
-    setIsRevealing(true);
-    try {
-      const res = await fetch(`/api/riffs/${activeRiff.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "REVEALED" }),
-      });
-      if (res.ok) {
-        setIsRevealModalOpen(false);
-        router.refresh();
-      }
-    } catch (err) {
-      console.error("Error revealing riff:", err);
-    } finally {
-      setIsRevealing(false);
+    const ok = await revealRiff(activeRiff.id);
+    if (ok) {
+      setIsRevealModalOpen(false);
+      router.refresh();
     }
-  }, [activeRiff]);
+  }, [activeRiff, revealRiff, router]);
 
   // Compute joined/submitted state for active riff
   const isJoined = activeRiff
@@ -296,6 +296,11 @@ export default function ClubPageLayout({
           }
           clubs={userClubs}
           currentClub={{ id: club.id, name: clubName }}
+          onNewRiff={
+            (isAdmin || isCoHost) && !activeRiff
+              ? () => setIsCreateRiffModalOpen(true)
+              : undefined
+          }
         />
       </div>
 
@@ -785,7 +790,6 @@ export default function ClubPageLayout({
                   hasSubmitted={hasSubmitted}
                   currentUserId={currentUserId}
                   isAdmin={isAdmin || isCoHost}
-                  onJoin={handleJoinRiff}
                   onReveal={() => setIsRevealModalOpen(true)}
                   predictedVolumeNumber={predictedVolumeNumber}
                 />
@@ -801,15 +805,7 @@ export default function ClubPageLayout({
         })()}
 
         {/* Past Riffs section — includes COMPLETED + pre-join REVEALED + fully-read REVEALED riffs */}
-        {(() => {
-          const fullyReadRevealed = revealedRiffs.filter(isFullyReadForUser);
-          const allPast = [
-            ...completedRiffs,
-            ...pastRevealedRiffs,
-            ...fullyReadRevealed,
-          ];
-          return allPast.length > 0;
-        })() && (
+        {pastRiffs.length > 0 && (
           <div>
             <h2
               style={{
@@ -832,40 +828,25 @@ export default function ClubPageLayout({
                 paddingBottom: "16px",
               }}
             >
-              {[
-                ...completedRiffs,
-                ...pastRevealedRiffs,
-                ...revealedRiffs.filter(isFullyReadForUser),
-              ]
-                .sort((a, b) => {
-                  if (a.volumeNumber != null && b.volumeNumber != null) {
-                    return b.volumeNumber - a.volumeNumber;
-                  }
-                  return (
-                    new Date(b.createdAt).getTime() -
-                    new Date(a.createdAt).getTime()
-                  );
-                })
-                .map((riff) => (
-                  <CompletedRiffCard
-                    key={riff.id}
-                    riff={{
-                      id: riff.id,
-                      title: riff.title,
-                      volumeNumber: riff.volumeNumber,
-                      status: riff.status,
-                      createdAt: new Date(riff.createdAt),
-                      deadline: riff.deadline ? new Date(riff.deadline) : null,
-                    }}
-                    clubName={clubName}
-                    pieces={getSubmittedPieces(riff.pieces).map((p) => ({
-                      id: p.piece.id,
-                      title: p.piece.title,
-                      coverImage: p.piece.coverImage,
-                      wordCount: p.piece.wordCount,
-                    }))}
-                  />
-                ))}
+              {pastRiffs.map((riff) => (
+                <CompletedRiffCard
+                  key={riff.id}
+                  riff={{
+                    id: riff.id,
+                    title: riff.title,
+                    volumeNumber: riff.volumeNumber,
+                    status: riff.status,
+                    createdAt: new Date(riff.createdAt),
+                    deadline: riff.deadline ? new Date(riff.deadline) : null,
+                  }}
+                  pieces={getSubmittedPieces(riff.pieces).map((p) => ({
+                    id: p.piece.id,
+                    title: p.piece.title,
+                    coverImage: p.piece.coverImage,
+                    wordCount: p.piece.wordCount,
+                  }))}
+                />
+              ))}
             </div>
           </div>
         )}

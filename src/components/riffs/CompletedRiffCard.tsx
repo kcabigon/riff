@@ -21,13 +21,11 @@ interface CompletedRiffCardProps {
     createdAt: Date;
     deadline?: Date | null;
   };
-  clubName: string;
   pieces: CompletedRiffPiece[];
 }
 
 export default function CompletedRiffCard({
   riff,
-  clubName,
   pieces,
 }: CompletedRiffCardProps) {
   const [isHovered, setIsHovered] = useState(false);
@@ -46,7 +44,7 @@ export default function CompletedRiffCard({
         width: "100%",
         transform: "translateY(-50%)",
         backgroundColor: "#000000",
-        padding: "8px 12px",
+        padding: "12px 20px",
         zIndex: 1,
         boxSizing: "border-box",
       }}
@@ -54,7 +52,7 @@ export default function CompletedRiffCard({
       <p
         style={{
           fontFamily: "var(--font-dm-serif-text)",
-          fontSize: "12px",
+          fontSize: "20px",
           fontWeight: 400,
           color: "#FFFFFF",
           margin: 0,
@@ -67,8 +65,10 @@ export default function CompletedRiffCard({
   );
 
   const cardStyle = {
-    width: "240px",
-    height: "320px",
+    width: "100%",
+    maxWidth: "320px",
+    flexShrink: 0,
+    aspectRatio: "5 / 4",
     border: "2px solid #000000",
     boxShadow: isHovered
       ? "8px 8px 0px 0px #01EFFC"
@@ -76,7 +76,6 @@ export default function CompletedRiffCard({
     position: "relative" as const,
     cursor: "pointer",
     overflow: "hidden",
-    flexShrink: 0,
     transition: "none",
   };
 
@@ -87,9 +86,17 @@ export default function CompletedRiffCard({
         onClick={handleClick}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        className="completed-riff-card"
         style={{ ...cardStyle, backgroundColor: "#E6E6E6" }}
       >
         {labelStrip}
+        <style>{`
+          @media (max-width: 639px) {
+            .completed-riff-card {
+              max-width: none !important;
+            }
+          }
+        `}</style>
       </div>
     );
   }
@@ -99,10 +106,18 @@ export default function CompletedRiffCard({
       onClick={handleClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      className="completed-riff-card"
       style={cardStyle}
     >
-      <MosaicCollage pieces={pieces} width={240} height={320} />
+      <MosaicCollage pieces={pieces} />
       {labelStrip}
+      <style>{`
+        @media (max-width: 639px) {
+          .completed-riff-card {
+            max-width: none !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

@@ -12,8 +12,8 @@ import { CommentAuthor } from "@/types";
 interface CommentData {
   id: string;
   content: string;
-  selectionStart: number;
-  selectionEnd: number;
+  selectionStart: number | null;
+  selectionEnd: number | null;
   selectedText: string;
   authorId: string;
   createdAt: string;

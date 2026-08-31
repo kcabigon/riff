@@ -110,6 +110,25 @@ export function isRiffFullyRead(
   return submittedCount > 0 && (readCounts[riffId] || 0) >= submittedCount;
 }
 
+// Strips HTML tags from editor content and truncates to a plain-text preview.
+export function getContentPreview(html: string, maxLength = 200): string {
+  const text = html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (text.length <= maxLength) return text;
+  const truncated = text.slice(0, maxLength);
+  const lastSpace = truncated.lastIndexOf(" ");
+  return `${truncated.slice(0, lastSpace > 0 ? lastSpace : maxLength)}…`;
+}
+
 // Sums word counts across a list of pieces.
 export function getTotalWordCount(
   pieces: { piece?: { wordCount?: number | null } | null }[]

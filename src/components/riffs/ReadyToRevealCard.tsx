@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import MosaicCollage from "./MosaicCollage";
 import Badge from "@/components/shared/Badge";
 import { getRiffDisplayTitle, getSubmittedPieces } from "@/lib/riff-utils";
-import { useIsMobile } from "@/hooks/useMediaQuery";
 
 interface ReadyToRevealCardProps {
   riff: {
@@ -43,10 +42,6 @@ export default function ReadyToRevealCard({
 }: ReadyToRevealCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const router = useRouter();
-  const isMobile = useIsMobile();
-
-  const cardWidth = isMobile ? 320 : 400;
-  const cardHeight = isMobile ? 352 : 440;
 
   const handleClick = () => {
     router.push(`/riffs/${riff.id}`);
@@ -68,10 +63,9 @@ export default function ReadyToRevealCard({
         style={{
           position: "relative",
           cursor: "pointer",
-          width: `${cardWidth}px`,
-          height: `${cardHeight}px`,
-          margin: "0 auto",
-          border: "1px solid #000000",
+          width: "100%",
+          aspectRatio: "5 / 4",
+          border: "2px solid #000000",
           boxShadow: isHovered
             ? "8px 8px 0px 0px #01EFFC"
             : "8px 8px 0px 0px #000000",
@@ -84,8 +78,6 @@ export default function ReadyToRevealCard({
             id: p.piece.id,
             coverImage: p.piece.coverImage,
           }))}
-          width={cardWidth}
-          height={cardHeight}
         />
 
         {/* Unread badge */}

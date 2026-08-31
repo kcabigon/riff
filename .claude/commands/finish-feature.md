@@ -63,17 +63,30 @@ Complete the current feature branch: validate, push, and create a PR targeting d
      ```
    - Use the PR template format from `.github/pull_request_template.md`
 
-9. **Clean up local branch only**:
-   - Switch back to develop: `git checkout develop && git pull origin develop`
-   - Delete the local feature branch: `git branch -d <branch-name>`
-   - Do NOT delete the remote branch — it needs to stay alive for the PR. GitHub will auto-delete it when the PR is merged.
+9. **Merge it now, or get a quick review first (their call)**:
+   - `develop` no longer requires approval — anyone can merge their own PR. A quick peer review is **encouraged but not required**.
+   - Ask: "PR's up! 🎉 You can merge it straight to develop now, or have a friend run a quick `/review` first. What's the move?"
+   - **If they merge now:**
+     ```
+     gh pr merge <number> --squash --delete-branch
+     ```
+     (GitHub deletes the remote branch on merge.)
+   - **If they want a review first:** leave the PR open, and tell them to ping a friend to run `/review <number>` on it. Then go to Report.
+   - 🚨 **Exception — schema changes:** if the PR touches `prisma/schema.prisma`, do **NOT** self-merge. Database/schema changes still coordinate through Kyle. Tell them to check with him first.
 
-10. **Report**:
-    - Show the PR URL
-    - Tell the user: "Sick! Kyle's gonna review this PR and decide if it's dope enough. Want to start something new? Run `/letsriff`."
+10. **Clean up local branch**:
+    - Switch back to develop: `git checkout develop && git pull origin develop`
+    - If it was merged: delete the local feature branch: `git branch -d <branch-name>`
+    - If the PR was left open for review: leave the branch as-is.
+
+11. **Report**:
+    - Show the PR URL (and whether it merged)
+    - If merged: "Boom — merged to develop! 🎉 Wanna start something new? Run `/letsriff`."
+    - If left open for review: "PR's up and waiting for a quick look. Ping a friend to `/review` it, then merge whenever. Run `/letsriff` to start something else."
 
 ## Important
 - Never force-push unless the user explicitly asks
 - Always suggest syncing with develop before creating the PR
 - If the feature branch has only one commit, suggest squashing isn't needed
 - Include the testing checklist in the PR body
+- Anyone can merge their own PR to develop (no approval required) — **except** schema changes, which still go through Kyle

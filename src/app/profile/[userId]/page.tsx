@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
+import { isFriendOf } from "@/lib/friends";
 import ProfilePage from "@/components/profile/ProfilePage";
 
 export async function generateMetadata({
@@ -46,6 +47,13 @@ export default async function ProfilePageRoute({
     },
   });
 
+  const currentClub = currentUser?.lastActiveClubId
+    ? await prisma.club.findUnique({
+        where: { id: currentUser.lastActiveClubId },
+        select: { id: true, name: true },
+      })
+    : null;
+
   // Fetch the target user
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -65,17 +73,11 @@ export default async function ProfilePageRoute({
     redirect("/");
   }
 
-  // Fetch viewer's club memberships to gate piece access by club
-  // (skip for own profile — owner always sees their pieces unlocked)
+  // Gate piece access by friendship (clubmate in an active club, or riffmate)
+  // — skip for own profile, owner always sees their pieces unlocked
   const isOwnProfile = currentUserId === userId;
-  const viewerClubIds = new Set<string>();
-  if (!isOwnProfile) {
-    const memberships = await prisma.clubMember.findMany({
-      where: { userId: currentUserId },
-      select: { clubId: true },
-    });
-    memberships.forEach((m) => viewerClubIds.add(m.clubId));
-  }
+  const viewerHasAccess =
+    isOwnProfile || (await isFriendOf(currentUserId, userId));
 
   // Fetch submitted pieces by this user, with riff status + club to determine visibility
   const rawPieces = await prisma.piece.findMany({
@@ -92,7 +94,7 @@ export default async function ProfilePageRoute({
         where: { submittedAt: { not: null } },
         select: {
           submittedAt: true,
-          riff: { select: { status: true, clubId: true } },
+          riff: { select: { status: true } },
         },
       },
       newShares: {
@@ -114,15 +116,13 @@ export default async function ProfilePageRoute({
     title: p.title,
     coverImage: p.coverImage,
     wordCount: p.wordCount,
-    // Revealed = riff is REVEALED/COMPLETED AND viewer is in that club
-    // (own profile skips the club check — always accessible)
+    // Revealed = riff is REVEALED/COMPLETED AND viewer has access (owner or friend)
     isRevealed: p.riffs.some(
       (r) =>
         (r.riff.status === "REVEALED" || r.riff.status === "COMPLETED") &&
-        (isOwnProfile || viewerClubIds.has(r.riff.clubId))
+        viewerHasAccess
     ),
-    // Viewer has club access if they're a member of any club this piece's riff belongs to
-    viewerHasClubAccess: p.riffs.some((r) => viewerClubIds.has(r.riff.clubId)),
+    viewerHasAccess,
     isPublic: p.newShares.length > 0,
     publicShareId: p.newShares[0]?.id ?? null,
   }));
@@ -141,12 +141,12 @@ export default async function ProfilePageRoute({
               name: currentUser.name,
               avatarUrl: currentUser.avatarUrl,
             }
-          : null
+          : { id: currentUserId, username: null, name: null, avatarUrl: null }
       }
       stats={{ pieceCount, totalWordCount }}
       pieces={pieces}
       isOwnProfile={isOwnProfile}
-      lastActiveClubId={currentUser?.lastActiveClubId ?? null}
+      currentClub={currentClub}
     />
   );
 }

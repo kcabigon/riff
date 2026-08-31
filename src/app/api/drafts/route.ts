@@ -2,19 +2,25 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
 
-// POST /api/drafts - Create a new draft piece connected to a riff
+// POST /api/drafts - Create a new draft piece, optionally connected to a riff
 export async function POST(req: Request) {
   try {
     const user = await requireAuth();
     const userId = user.id;
     const body = await req.json().catch(() => ({}));
-    const { riffId } = body;
+    const { riffId } = body as { riffId?: string };
 
     if (!riffId) {
-      return NextResponse.json(
-        { error: "riffId is required" },
-        { status: 400 }
-      );
+      const piece = await prisma.piece.create({
+        data: {
+          title: "Untitled",
+          currentContent: "<p></p>",
+          authorId: userId,
+        },
+        select: { id: true, title: true, currentContent: true },
+      });
+
+      return NextResponse.json({ success: true, piece }, { status: 201 });
     }
 
     const riff = await prisma.riff.findUnique({
