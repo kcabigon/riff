@@ -979,10 +979,15 @@ export default function WritePage({ piece }: WritePageProps) {
         <PublishConfirmModal
           isOpen={showPublishModal}
           onClose={() => setShowPublishModal(false)}
-          onConfirm={async () => {
-            await fetch(`/api/pieces/${piece.id}/publish`, {
+          onConfirm={async (publishDate) => {
+            const res = await fetch(`/api/pieces/${piece.id}/publish`, {
               method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ publishedAt: publishDate }),
             });
+            if (!res.ok) {
+              throw new Error("Failed to publish piece");
+            }
             setIsPublished(true);
             setShowPublishModal(false);
             router.push(`/profile/${piece.authorId}`);
