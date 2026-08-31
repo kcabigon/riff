@@ -461,11 +461,15 @@ export default function WritePage({ piece }: WritePageProps) {
   };
 
   const handleBack = () => {
+    // The destination (My Riffs, or the riff page) may already be sitting in
+    // the client-side Router Cache from before this edit session — refresh()
+    // forces it to refetch instead of showing what it looked like on the way in.
     if (piece.riffs.length > 0) {
       router.push(`/riffs/${piece.riffs[0].id}`);
     } else {
       router.back();
     }
+    router.refresh();
   };
 
   if (!editor) {
@@ -952,6 +956,7 @@ export default function WritePage({ piece }: WritePageProps) {
             setIsSubmitted(true);
             setShowSubmitModal(false);
             router.push(`/riffs/${riff.id}`);
+            router.refresh();
           }}
           submitDisabled={isSubmitted}
           onCoverAction={() => {
@@ -981,6 +986,7 @@ export default function WritePage({ piece }: WritePageProps) {
             setIsPublished(true);
             setShowPublishModal(false);
             router.push(`/profile/${piece.authorId}`);
+            router.refresh();
           }}
           publishDisabled={isPublished}
           onCoverAction={() => {
