@@ -29,7 +29,6 @@ import DeleteClubConfirmModal from "@/components/clubs/DeleteClubConfirmModal";
 import LeaveClubConfirmModal from "@/components/clubs/LeaveClubConfirmModal";
 import TransferHostModal from "@/components/clubs/TransferHostModal";
 import AssignCoHostModal from "@/components/clubs/AssignCoHostModal";
-import GettingStartedSection from "@/components/tutorial/GettingStartedSection";
 
 interface ClubMember {
   user: {
@@ -101,9 +100,6 @@ interface ClubPageLayoutProps {
     pieceCount: number;
     wordCount: number;
   };
-  userOnboardingComplete: boolean;
-  userMemberOnboardingComplete: boolean;
-  avatarDone: boolean;
   initialWelcome?: "host" | "member";
   predictedVolumeNumber?: number;
 }
@@ -119,9 +115,6 @@ export default function ClubPageLayout({
   readCounts,
   completedRiffs,
   stats,
-  userOnboardingComplete,
-  userMemberOnboardingComplete,
-  avatarDone,
   initialWelcome,
   predictedVolumeNumber,
 }: ClubPageLayoutProps) {
@@ -273,13 +266,6 @@ export default function ClubPageLayout({
   const formatNumber = (n: number): string => {
     return n.toLocaleString();
   };
-
-  // Getting Started — host: shown until graduated on any admin club
-  //                 — member: shown until they've submitted a piece anywhere
-  const step1Done = stats.riffCount > 0 || activeRiff !== null;
-  const step2Done = club.members.length > 1;
-  const showGettingStarted = isAdmin && !userOnboardingComplete;
-  const showMemberGettingStarted = !isAdmin && !userMemberOnboardingComplete;
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
@@ -680,31 +666,6 @@ export default function ClubPageLayout({
           </div>
         )}
 
-        {/* Getting Started — host onboarding checklist, shown until both steps complete */}
-        {showGettingStarted && (
-          <GettingStartedSection
-            variant="host"
-            clubId={club.id}
-            userId={currentUserId}
-            clubName={clubName}
-            step1Done={step1Done}
-            step2Done={step2Done}
-            onStartRiff={() => setIsCreateRiffModalOpen(true)}
-            onInvite={() => setIsInviteModalOpen(true)}
-          />
-        )}
-
-        {showMemberGettingStarted && (
-          <GettingStartedSection
-            variant="member"
-            clubId={club.id}
-            userId={currentUserId}
-            clubName={clubName}
-            activeRiffId={activeRiff?.id ?? null}
-            avatarDone={avatarDone}
-          />
-        )}
-
         {/* Current Read section — shown above Current Riff when there are unread revealed riffs */}
         {(() => {
           const unfinishedRevealed = revealedRiffs.filter(hasUnreadForUser);
@@ -743,11 +704,9 @@ export default function ClubPageLayout({
           );
         })()}
 
-        {/* Current Riff section — hidden for members when there's a current read and no active riff;
-            also hidden for admin when Getting Started is active and there's no real riff to show */}
+        {/* Current Riff section — hidden for members when there's a current read and no active riff */}
         {(() => {
           const hasCurrentRead = revealedRiffs.some(hasUnreadForUser);
-          if (showGettingStarted && !activeRiff) return null;
           const showSection =
             activeRiff || isAdmin || isCoHost || !hasCurrentRead;
           if (!showSection) return null;
@@ -885,7 +844,7 @@ export default function ClubPageLayout({
           if (otherClub) {
             router.push(`/clubs/${otherClub.id}`);
           } else {
-            router.push("/no-club");
+            router.push("/my-riffs");
           }
         }}
         clubId={club.id}
@@ -910,7 +869,7 @@ export default function ClubPageLayout({
           if (otherClub) {
             router.push(`/clubs/${otherClub.id}`);
           } else {
-            router.push("/no-club");
+            router.push("/my-riffs");
           }
         }}
         clubId={club.id}

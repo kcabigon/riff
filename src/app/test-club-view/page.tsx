@@ -199,9 +199,6 @@ export default function TestClubViewPage() {
       readCounts={{}}
       completedRiffs={[completedRiff1, completedRiff2]}
       stats={{ riffCount: 3, pieceCount: 6, wordCount: 250 }}
-      userOnboardingComplete={false}
-      userMemberOnboardingComplete={false}
-      avatarDone={false}
     />
   );
 }
