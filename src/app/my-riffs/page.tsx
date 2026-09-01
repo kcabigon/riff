@@ -1,14 +1,9 @@
 import { redirect } from "next/navigation";
-import type { Metadata } from "next";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { getContentPreview } from "@/lib/riff-utils";
 import { getFriends } from "@/lib/friends";
 import MyRiffsClient from "./MyRiffsClient";
-
-export const metadata: Metadata = {
-  title: "Riffs",
-};
 
 export default async function MyRiffsPage() {
   const session = await getSession();
