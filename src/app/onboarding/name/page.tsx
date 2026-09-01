@@ -42,8 +42,8 @@ export default function OnboardingNamePage() {
         throw new Error(data.error || "Failed to save name");
       }
 
-      // Success - redirect to club choice
-      router.push("/onboarding/club-choice");
+      // Success - onboarding is complete, home is My Riffs
+      router.push("/my-riffs");
     } catch (err: any) {
       console.error("Error saving name:", err);
       setError(err.message || "Something went wrong. Please try again.");
