@@ -75,7 +75,7 @@ export default function NavBar({
           {/* Logo — wordmark treatment matches LandingNavBar's icon +
               "Riff" lockup. */}
           <Link
-            href={currentClub ? `/clubs/${currentClub.id}` : "/no-club"}
+            href="/my-riffs"
             style={{
               display: "flex",
               alignItems: "center",
@@ -122,7 +122,6 @@ export default function NavBar({
           {showClubDropdown && currentClub && (
             <ClubDropdown
               clubs={clubs}
-              currentClub={currentClub}
               isOpen={isDropdownOpen}
               onToggle={() => setIsDropdownOpen(!isDropdownOpen)}
               onClose={() => setIsDropdownOpen(false)}

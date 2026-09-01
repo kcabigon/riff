@@ -16,6 +16,8 @@ import type { DropdownItem } from "@/components/shared/Dropdown";
 import DeletePieceModal from "@/components/profile/DeletePieceModal";
 import ShareModal, { PublicShare } from "@/components/profile/ShareModal";
 import { useRevealRiff } from "@/hooks/useRevealRiff";
+import { useDraftCreation } from "@/hooks/useDraftCreation";
+import MyRiffsEmptyState from "@/components/home/MyRiffsEmptyState";
 import {
   getSubmittedPieces,
   getSubmittedParticipants,
@@ -250,6 +252,7 @@ export default function MyRiffsClient({
   const [pastRiffsExpanded, setPastRiffsExpanded] = useState(false);
   const [revealRiffId, setRevealRiffId] = useState<string | null>(null);
   const { revealRiff, isRevealing } = useRevealRiff();
+  const { createDraft, isCreating: isCreatingDraft } = useDraftCreation();
 
   const otherSubmittedCount = (riff: Riff) =>
     getSubmittedPieces(riff.pieces).filter(
@@ -312,6 +315,14 @@ export default function MyRiffsClient({
   const visiblePastRiffs = pastRiffsExpanded
     ? pastRiffs
     : pastRiffs.slice(0, PAST_RIFFS_CAP);
+
+  const isEmpty =
+    friends.length === 0 &&
+    readingRiffs.length === 0 &&
+    currentRiffs.length === 0 &&
+    drafts.length === 0 &&
+    submittedPieces.length === 0 &&
+    pastRiffs.length === 0;
 
   const handleDeleted = (pieceId: string) => {
     setAllPieces((prev) => prev.filter((p) => p.id !== pieceId));
@@ -521,213 +532,233 @@ export default function MyRiffsClient({
         showCreateDropdown
       />
 
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "48px",
-          padding: "32px 0 64px",
-        }}
-      >
-        {/* Friends — anyone you've shared a club or riff with */}
-        {friends.length > 0 && (
-          <SectionColumn maxWidth={FEED_WIDTH}>
-            <SectionHeading text="FRIENDS" color="#01EFFC" width={78} />
-            <div style={{ marginTop: "16px" }}>
-              <FriendsRow friends={friends} />
-            </div>
-          </SectionColumn>
-        )}
+      {isEmpty ? (
+        <MyRiffsEmptyState
+          onStartWriting={() => createDraft()}
+          isCreatingDraft={isCreatingDraft}
+        />
+      ) : (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "48px",
+            padding: "32px 0 64px",
+          }}
+        >
+          {/* Friends — anyone you've shared a club or riff with */}
+          {friends.length > 0 && (
+            <SectionColumn maxWidth={FEED_WIDTH}>
+              <SectionHeading text="FRIENDS" color="#01EFFC" width={78} />
+              <div style={{ marginTop: "16px" }}>
+                <FriendsRow friends={friends} />
+              </div>
+            </SectionColumn>
+          )}
 
-        {/* Unread — revealed riffs with pieces you haven't read yet. Full width
+          {/* Unread — revealed riffs with pieces you haven't read yet. Full width
             of the page column (flexes with it — 602px on desktop, whatever's
             available on mobile) instead of a fixed grid-cell width, so the
             mosaic covers always fill the card regardless of piece count. */}
-        {readingRiffs.length > 0 && (
-          <SectionColumn maxWidth={FEED_WIDTH}>
-            <SectionHeading text="UNREAD RIFFS" color="#FF6B35" width={121} />
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "20px",
-                marginTop: "16px",
-              }}
-            >
-              {readingRiffs.map((riff) => (
-                <div key={riff.id}>
-                  <p style={cardLabelStyle}>{riff.club.name}</p>
-                  <ReadyToRevealCard
-                    riff={riff}
-                    readCount={readCounts[riff.id] || 0}
-                    totalPieces={otherSubmittedCount(riff)}
-                  />
-                </div>
-              ))}
-            </div>
-          </SectionColumn>
-        )}
+          {readingRiffs.length > 0 && (
+            <SectionColumn maxWidth={FEED_WIDTH}>
+              <SectionHeading text="UNREAD RIFFS" color="#FF6B35" width={121} />
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "20px",
+                  marginTop: "16px",
+                }}
+              >
+                {readingRiffs.map((riff) => (
+                  <div key={riff.id}>
+                    <p style={cardLabelStyle}>{riff.club.name}</p>
+                    <ReadyToRevealCard
+                      riff={riff}
+                      readCount={readCounts[riff.id] || 0}
+                      totalPieces={otherSubmittedCount(riff)}
+                    />
+                  </div>
+                ))}
+              </div>
+            </SectionColumn>
+          )}
 
-        {/* Riffs — active riffs you're writing for, plus ones you can join */}
-        {currentRiffs.length > 0 && (
-          <SectionColumn maxWidth={FEED_WIDTH}>
-            <SectionHeading text="CURRENT RIFFS" color="#00FF66" width={129} />
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "20px",
-                marginTop: "16px",
-              }}
-            >
-              {currentRiffs.map(({ riff, isJoined }) => {
-                const hasSubmitted = riff.pieces.some(
-                  (p) =>
-                    p.piece.authorId === currentUserId && p.submittedAt !== null
-                );
-                const hasDraft = riff.pieces.some(
-                  (p) => p.piece.authorId === currentUserId
-                );
-                return (
-                  <RiffEventCard
-                    key={riff.id}
-                    riff={{
-                      id: riff.id,
-                      title: riff.title,
-                      volumeNumber: riff.volumeNumber,
-                      status: riff.status,
-                      deadline: riff.deadline ? new Date(riff.deadline) : null,
-                      participants: riff.participants,
-                      pieces: riff.pieces,
-                    }}
-                    club={{
-                      name: riff.club.name,
-                      bannerImage: riff.club.bannerImage,
-                    }}
-                    isJoined={isJoined}
-                    hasDraft={hasDraft}
-                    hasSubmitted={hasSubmitted}
-                    currentUserId={currentUserId}
-                    isAdmin={isRiffAdmin(riff)}
-                    onJoin={handleJoinRiff}
-                    onReveal={() => setRevealRiffId(riff.id)}
-                    predictedVolumeNumber={predictedVolumeByClub[riff.club.id]}
-                  />
-                );
-              })}
-            </div>
-          </SectionColumn>
-        )}
+          {/* Riffs — active riffs you're writing for, plus ones you can join */}
+          {currentRiffs.length > 0 && (
+            <SectionColumn maxWidth={FEED_WIDTH}>
+              <SectionHeading
+                text="CURRENT RIFFS"
+                color="#00FF66"
+                width={129}
+              />
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "20px",
+                  marginTop: "16px",
+                }}
+              >
+                {currentRiffs.map(({ riff, isJoined }) => {
+                  const hasSubmitted = riff.pieces.some(
+                    (p) =>
+                      p.piece.authorId === currentUserId &&
+                      p.submittedAt !== null
+                  );
+                  const hasDraft = riff.pieces.some(
+                    (p) => p.piece.authorId === currentUserId
+                  );
+                  return (
+                    <RiffEventCard
+                      key={riff.id}
+                      riff={{
+                        id: riff.id,
+                        title: riff.title,
+                        volumeNumber: riff.volumeNumber,
+                        status: riff.status,
+                        deadline: riff.deadline
+                          ? new Date(riff.deadline)
+                          : null,
+                        participants: riff.participants,
+                        pieces: riff.pieces,
+                      }}
+                      club={{
+                        name: riff.club.name,
+                        bannerImage: riff.club.bannerImage,
+                      }}
+                      isJoined={isJoined}
+                      hasDraft={hasDraft}
+                      hasSubmitted={hasSubmitted}
+                      currentUserId={currentUserId}
+                      isAdmin={isRiffAdmin(riff)}
+                      onJoin={handleJoinRiff}
+                      onReveal={() => setRevealRiffId(riff.id)}
+                      predictedVolumeNumber={
+                        predictedVolumeByClub[riff.club.id]
+                      }
+                    />
+                  );
+                })}
+              </div>
+            </SectionColumn>
+          )}
 
-        {/* Drafts — starts at feed width capped to 2, "View all" widens the
+          {/* Drafts — starts at feed width capped to 2, "View all" widens the
             section to the 1000px 3-column grid. */}
-        {drafts.length > 0 && (
-          <SectionColumn
-            maxWidth={draftsExpanded ? EXPANDED_WIDTH : FEED_WIDTH}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "baseline",
-                justifyContent: "space-between",
-                marginBottom: "16px",
-              }}
+          {drafts.length > 0 && (
+            <SectionColumn
+              maxWidth={draftsExpanded ? EXPANDED_WIDTH : FEED_WIDTH}
             >
-              <SectionHeading text="DRAFTS" color="#EECF01" width={74} />
-              {drafts.length > DRAFTS_CAP && (
-                <button
-                  onClick={() => setDraftsExpanded((prev) => !prev)}
-                  style={viewAllButtonStyle}
-                >
-                  {draftsExpanded ? "View less" : "View all"}
-                </button>
-              )}
-            </div>
-            {renderPieceGrid(visibleDrafts, "draft", draftsExpanded)}
-          </SectionColumn>
-        )}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "baseline",
+                  justifyContent: "space-between",
+                  marginBottom: "16px",
+                }}
+              >
+                <SectionHeading text="DRAFTS" color="#EECF01" width={74} />
+                {drafts.length > DRAFTS_CAP && (
+                  <button
+                    onClick={() => setDraftsExpanded((prev) => !prev)}
+                    style={viewAllButtonStyle}
+                  >
+                    {draftsExpanded ? "View less" : "View all"}
+                  </button>
+                )}
+              </div>
+              {renderPieceGrid(visibleDrafts, "draft", draftsExpanded)}
+            </SectionColumn>
+          )}
 
-        {/* Pieces — same expand pattern as Drafts. */}
-        {submittedPieces.length > 0 && (
-          <SectionColumn
-            maxWidth={piecesExpanded ? EXPANDED_WIDTH : FEED_WIDTH}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "baseline",
-                justifyContent: "space-between",
-                marginBottom: "16px",
-              }}
+          {/* Pieces — same expand pattern as Drafts. */}
+          {submittedPieces.length > 0 && (
+            <SectionColumn
+              maxWidth={piecesExpanded ? EXPANDED_WIDTH : FEED_WIDTH}
             >
-              <SectionHeading text="PIECES" color="#C01582" width={68} />
-              {submittedPieces.length > PIECES_CAP && (
-                <button
-                  onClick={() => setPiecesExpanded((prev) => !prev)}
-                  style={viewAllButtonStyle}
-                >
-                  {piecesExpanded ? "View less" : "View all"}
-                </button>
-              )}
-            </div>
-            {renderPieceGrid(visiblePieces, "piece", piecesExpanded)}
-          </SectionColumn>
-        )}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "baseline",
+                  justifyContent: "space-between",
+                  marginBottom: "16px",
+                }}
+              >
+                <SectionHeading text="PIECES" color="#C01582" width={68} />
+                {submittedPieces.length > PIECES_CAP && (
+                  <button
+                    onClick={() => setPiecesExpanded((prev) => !prev)}
+                    style={viewAllButtonStyle}
+                  >
+                    {piecesExpanded ? "View less" : "View all"}
+                  </button>
+                )}
+              </div>
+              {renderPieceGrid(visiblePieces, "piece", piecesExpanded)}
+            </SectionColumn>
+          )}
 
-        {/* Past Riffs — completed, or revealed and fully read. Same expand
+          {/* Past Riffs — completed, or revealed and fully read. Same expand
             pattern as Drafts/Pieces. */}
-        {pastRiffs.length > 0 && (
-          <SectionColumn
-            maxWidth={pastRiffsExpanded ? EXPANDED_WIDTH : FEED_WIDTH}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "baseline",
-                justifyContent: "space-between",
-                marginBottom: "16px",
-              }}
+          {pastRiffs.length > 0 && (
+            <SectionColumn
+              maxWidth={pastRiffsExpanded ? EXPANDED_WIDTH : FEED_WIDTH}
             >
-              <SectionHeading text="PAST RIFFS" color="#955CB5" width={96} />
-              {pastRiffs.length > PAST_RIFFS_CAP && (
-                <button
-                  onClick={() => setPastRiffsExpanded((prev) => !prev)}
-                  style={viewAllButtonStyle}
-                >
-                  {pastRiffsExpanded ? "View less" : "View all"}
-                </button>
-              )}
-            </div>
-            <div
-              className={
-                pastRiffsExpanded ? "card-grid-expanded" : "card-grid-collapsed"
-              }
-            >
-              {visiblePastRiffs.map((riff) => (
-                <div key={riff.id}>
-                  <p style={cardLabelStyle}>{riff.club.name}</p>
-                  <CompletedRiffCard
-                    riff={{
-                      id: riff.id,
-                      title: riff.title,
-                      volumeNumber: riff.volumeNumber,
-                      status: riff.status,
-                      createdAt: new Date(riff.createdAt),
-                      deadline: riff.deadline ? new Date(riff.deadline) : null,
-                    }}
-                    pieces={getSubmittedPieces(riff.pieces).map((p) => ({
-                      id: p.piece.id,
-                      title: p.piece.title,
-                      coverImage: p.piece.coverImage,
-                      wordCount: p.piece.wordCount,
-                    }))}
-                  />
-                </div>
-              ))}
-            </div>
-          </SectionColumn>
-        )}
-      </div>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "baseline",
+                  justifyContent: "space-between",
+                  marginBottom: "16px",
+                }}
+              >
+                <SectionHeading text="PAST RIFFS" color="#955CB5" width={96} />
+                {pastRiffs.length > PAST_RIFFS_CAP && (
+                  <button
+                    onClick={() => setPastRiffsExpanded((prev) => !prev)}
+                    style={viewAllButtonStyle}
+                  >
+                    {pastRiffsExpanded ? "View less" : "View all"}
+                  </button>
+                )}
+              </div>
+              <div
+                className={
+                  pastRiffsExpanded
+                    ? "card-grid-expanded"
+                    : "card-grid-collapsed"
+                }
+              >
+                {visiblePastRiffs.map((riff) => (
+                  <div key={riff.id}>
+                    <p style={cardLabelStyle}>{riff.club.name}</p>
+                    <CompletedRiffCard
+                      riff={{
+                        id: riff.id,
+                        title: riff.title,
+                        volumeNumber: riff.volumeNumber,
+                        status: riff.status,
+                        createdAt: new Date(riff.createdAt),
+                        deadline: riff.deadline
+                          ? new Date(riff.deadline)
+                          : null,
+                      }}
+                      pieces={getSubmittedPieces(riff.pieces).map((p) => ({
+                        id: p.piece.id,
+                        title: p.piece.title,
+                        coverImage: p.piece.coverImage,
+                        wordCount: p.piece.wordCount,
+                      }))}
+                    />
+                  </div>
+                ))}
+              </div>
+            </SectionColumn>
+          )}
+        </div>
+      )}
     </div>
   );
 }
