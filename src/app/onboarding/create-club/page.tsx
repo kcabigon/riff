@@ -56,8 +56,7 @@ export default function OnboardingCreateClubPage() {
           <BackButton
             onClick={() => {
               const from =
-                sessionStorage.getItem("pendingClubFrom") ??
-                "/onboarding/club-choice";
+                sessionStorage.getItem("pendingClubFrom") ?? "/my-riffs";
               sessionStorage.removeItem("pendingClubFrom");
               router.push(from);
             }}
