@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import NoiseBackground from "@/components/NoiseBackground";
+import CTAButton from "@/components/CTAButton";
 
 type Shape = "bolt" | "triangle" | "circle";
 
@@ -26,7 +26,7 @@ interface Panel {
 const PANELS: Panel[] = [
   {
     id: "write",
-    lines: ["Write something.", "Send to a friend."],
+    lines: ["Write something.", "Share with a friend."],
     cta: "Start writing",
     accentColor: "#01EFFC",
     shapeColor: "#FF6B35",
@@ -138,68 +138,13 @@ function ShapeIcon({
   );
 }
 
-function StickerButton({
-  accentColor,
-  disabled,
-  onClick,
-  children,
-}: {
-  accentColor: string;
-  disabled?: boolean;
-  onClick?: () => void;
-  children: string;
-}) {
-  const [isHovered, setIsHovered] = useState(false);
-
-  if (disabled) {
-    return (
-      <button
-        type="button"
-        disabled
-        style={{
-          border: "2px solid #9C9C9C",
-          padding: "16px 36px",
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "17px",
-          fontWeight: 700,
-          cursor: "not-allowed",
-          backgroundColor: "#FFFFFF",
-          color: "#9C9C9C",
-          boxShadow: "none",
-          whiteSpace: "nowrap",
-        }}
-      >
-        {children}
-      </button>
-    );
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      style={{
-        border: "2px solid #000000",
-        padding: "16px 36px",
-        fontFamily: "var(--font-dm-sans)",
-        fontSize: "17px",
-        fontWeight: 700,
-        cursor: "pointer",
-        backgroundColor: isHovered ? "#FFFFFF" : accentColor,
-        color: "#000000",
-        boxShadow: isHovered
-          ? `8px 8px 0px 0px ${accentColor}`
-          : "8px 8px 0px 0px #000000",
-        transition: "none",
-        whiteSpace: "nowrap",
-      }}
-    >
-      {children}
-    </button>
-  );
-}
+// Sizing shared by all three panel CTAs — bigger than CTAButton's own
+// default so it reads as a hero action, not an inline one. Weight is left
+// at CTAButton's default (300, the design system's standard button weight).
+const panelButtonStyle = {
+  padding: "16px 36px",
+  fontSize: "17px",
+};
 
 interface MyRiffsEmptyStateProps {
   onStartWriting: () => void;
@@ -249,9 +194,8 @@ export default function MyRiffsEmptyState({
           maxWidth: "900px",
         }}
       >
-        Write with friends.
-        <br />
-        Write for fun.
+        Write with friends,{" "}
+        <span style={{ fontStyle: "italic" }}>for fun.</span>
       </h1>
 
       <div
@@ -290,7 +234,7 @@ export default function MyRiffsEmptyState({
               style={{
                 fontFamily: "var(--font-dm-sans)",
                 fontSize: "20px",
-                fontWeight: 400,
+                fontWeight: 700,
                 lineHeight: 1.4,
                 color: "#000000",
                 margin: 0,
@@ -302,39 +246,35 @@ export default function MyRiffsEmptyState({
             </p>
 
             {panel.id === "write" && (
-              <StickerButton
+              <CTAButton
                 accentColor={panel.accentColor}
                 onClick={onStartWriting}
+                style={panelButtonStyle}
               >
                 {isCreatingDraft ? "Creating…" : panel.cta}
-              </StickerButton>
+              </CTAButton>
             )}
 
             {panel.id === "riff" && (
-              <>
-                <StickerButton accentColor={panel.accentColor} disabled>
-                  {panel.cta}
-                </StickerButton>
-                <span
-                  style={{
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "12px",
-                    fontWeight: 300,
-                    color: "#9C9C9C",
-                  }}
-                >
-                  Coming soon
-                </span>
-              </>
+              // Not wired up yet — riffing without a club is still gated on
+              // Kyle's schema migration. Looks like a real CTA so the trio
+              // reads as complete, but has no onClick.
+              <CTAButton
+                accentColor={panel.accentColor}
+                style={panelButtonStyle}
+              >
+                {panel.cta}
+              </CTAButton>
             )}
 
             {panel.id === "club" && (
-              <StickerButton
+              <CTAButton
                 accentColor={panel.accentColor}
                 onClick={handleStartClub}
+                style={panelButtonStyle}
               >
                 {panel.cta}
-              </StickerButton>
+              </CTAButton>
             )}
           </div>
         ))}
