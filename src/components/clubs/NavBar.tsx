@@ -122,7 +122,6 @@ export default function NavBar({
           {showClubDropdown && currentClub && (
             <ClubDropdown
               clubs={clubs}
-              currentClub={currentClub}
               isOpen={isDropdownOpen}
               onToggle={() => setIsDropdownOpen(!isDropdownOpen)}
               onClose={() => setIsDropdownOpen(false)}
