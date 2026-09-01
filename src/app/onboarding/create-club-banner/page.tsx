@@ -84,14 +84,12 @@ export default function OnboardingCreateClubBannerPage() {
       const data = await response.json();
       const clubId = data.club.id;
 
-      // Mark onboarding complete
+      // Set as the user's last active club — onboarding is already complete
+      // by the time anyone reaches club creation, whether via signup or Home.
       await fetch("/api/onboarding/complete", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          step: "COMPLETED",
-          clubId: clubId,
-        }),
+        body: JSON.stringify({ clubId: clubId }),
       });
 
       // Clear pending club data

@@ -19,16 +19,19 @@ export default async function OnboardingPage() {
   });
 
   if (user?.onboardingCompleted) {
-    redirect("/clubs");
+    redirect("/my-riffs");
   }
 
-  // Redirect to appropriate step
+  // Redirect to appropriate step. CLUB_CHOICE/INVITE are dead steps from the
+  // old club-first onboarding flow — kept here only as a safe landing spot
+  // for any pre-existing user parked mid-flow, since neither page exists
+  // anymore.
   const step = user?.onboardingStep || "NAME";
   const stepRoutes = {
     NAME: "/onboarding/name",
-    CLUB_CHOICE: "/onboarding/club-choice",
-    INVITE: "/onboarding/invite",
-    COMPLETED: "/clubs",
+    CLUB_CHOICE: "/my-riffs",
+    INVITE: "/my-riffs",
+    COMPLETED: "/my-riffs",
   };
 
   redirect(stepRoutes[step as keyof typeof stepRoutes]);
