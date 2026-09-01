@@ -162,7 +162,7 @@ export default function ShareModal({
                 lineHeight: 1.5,
               }}
             >
-              All clubmates and riffmates can view and comment on this piece.
+              All club-mates and riff-mates can view and comment on this piece.
             </p>
           </div>
         </button>
