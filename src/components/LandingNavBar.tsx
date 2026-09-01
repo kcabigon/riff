@@ -108,8 +108,8 @@ export default function LandingNavBar({
                 items={[
                   {
                     type: "action",
-                    label: "Club",
-                    onClick: () => router.push("/auth/post-login"),
+                    label: "Home",
+                    onClick: () => router.push("/my-riffs"),
                   },
                   {
                     type: "action",
@@ -244,11 +244,11 @@ export default function LandingNavBar({
             <button
               onClick={() => {
                 closeDrawer();
-                router.push("/auth/post-login");
+                router.push("/my-riffs");
               }}
               style={drawerLinkStyle}
             >
-              Club
+              Home
             </button>
             <button
               onClick={() => {
