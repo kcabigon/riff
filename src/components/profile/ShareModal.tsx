@@ -150,7 +150,7 @@ export default function ShareModal({
                 margin: "0 0 4px 0",
               }}
             >
-              Private
+              Friends
             </p>
             <p
               style={{
@@ -162,7 +162,7 @@ export default function ShareModal({
                 lineHeight: 1.5,
               }}
             >
-              Only members of your club can view this piece.
+              All clubmates and riffmates can view and comment on this piece.
             </p>
           </div>
         </button>
