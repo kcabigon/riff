@@ -43,12 +43,19 @@ export default async function ReadPage({
   searchParams: Promise<{
     riff?: string;
     notify?: string;
+    comment?: string;
     from?: string;
     userId?: string;
   }>;
 }) {
   const { pieceId } = await params;
-  const { riff: riffId, notify, from, userId: fromUserId } = await searchParams;
+  const {
+    riff: riffId,
+    notify,
+    comment: commentId,
+    from,
+    userId: fromUserId,
+  } = await searchParams;
   const session = await getSession();
 
   if (!session?.user) {
@@ -274,6 +281,7 @@ export default async function ReadPage({
       }
       initialComments={initialComments}
       startInRiffMode={notify === "1"}
+      targetCommentId={commentId}
       isAlreadyRead={!!existingRead}
       previousPiece={previousPiece}
       nextPiece={nextPiece}
