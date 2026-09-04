@@ -724,7 +724,7 @@ export async function sendDeadlineApproachingEmail({
   riffUrl: string;
   deadline: Date;
   daysRemaining: number;
-}): Promise<void> {
+}): Promise<boolean> {
   const deadlineStr = deadline.toLocaleDateString("en-US", {
     month: "long",
     day: "numeric",
@@ -762,9 +762,14 @@ export async function sendDeadlineApproachingEmail({
           ${emailButton("Finish your piece", riffUrl)}`,
       }),
     });
-    if (error) console.error("Resend error (deadlineApproaching):", error);
+    if (error) {
+      console.error("Resend error (deadlineApproaching):", error);
+      return false;
+    }
+    return true;
   } catch (error) {
     console.error("Error sending deadline approaching email:", error);
+    return false;
   }
 }
 
@@ -780,7 +785,7 @@ export async function sendRememberToWriteEmail({
   clubName: string;
   riffUrl: string;
   variantIndex: number;
-}): Promise<void> {
+}): Promise<boolean> {
   const variant = REMEMBER_TO_WRITE_VARIANTS[
     variantIndex % REMEMBER_TO_WRITE_VARIANTS.length
   ](clubName, riffTitle);
@@ -804,9 +809,14 @@ export async function sendRememberToWriteEmail({
           ${emailButton("Start writing", riffUrl)}`,
       }),
     });
-    if (error) console.error("Resend error (rememberToWrite):", error);
+    if (error) {
+      console.error("Resend error (rememberToWrite):", error);
+      return false;
+    }
+    return true;
   } catch (error) {
     console.error("Error sending remember to write email:", error);
+    return false;
   }
 }
 
@@ -822,7 +832,7 @@ export async function sendJoinRiffNudgeEmail({
   clubName: string;
   riffUrl: string;
   variantIndex: number;
-}): Promise<void> {
+}): Promise<boolean> {
   const variant = JOIN_RIFF_NUDGE_VARIANTS[
     variantIndex % JOIN_RIFF_NUDGE_VARIANTS.length
   ](clubName, riffTitle);
@@ -846,9 +856,14 @@ export async function sendJoinRiffNudgeEmail({
           ${emailButton("Let's riff", riffUrl)}`,
       }),
     });
-    if (error) console.error("Resend error (joinRiffNudge):", error);
+    if (error) {
+      console.error("Resend error (joinRiffNudge):", error);
+      return false;
+    }
+    return true;
   } catch (error) {
     console.error("Error sending join riff nudge email:", error);
+    return false;
   }
 }
 

@@ -100,12 +100,21 @@ async function fetchSendHistory(
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+interface DeadlineCheckResult {
+  sent: number;
+  // `${riffId}:${userId}` for everyone actually emailed this run. The
+  // remember-to-write check skips these — an unstarted participant matches
+  // both nudges, and the deadline one is the more urgent of the two.
+  notified: Set<string>;
+}
+
 export async function runDeadlineApproachingCheck(
   riffs: ActiveRiff[]
-): Promise<number> {
+): Promise<DeadlineCheckResult> {
   const now = new Date();
+  const notified = new Set<string>();
   const withDeadline = riffs.filter((r) => r.deadline && r.deadline > now);
-  if (withDeadline.length === 0) return 0;
+  if (withDeadline.length === 0) return { sent: 0, notified };
 
   // Widest possible lookback is 7 days, but fetch full history — the map is
   // shared eligibility-check machinery, even though this check doesn't need
@@ -147,7 +156,7 @@ export async function runDeadlineApproachingCheck(
     const riffTitle = riff.title || riff.club.name;
 
     for (const p of eligible.filter((p) => enabled.has(p.user.email))) {
-      await sendDeadlineApproachingEmail({
+      const delivered = await sendDeadlineApproachingEmail({
         email: p.user.email,
         riffTitle,
         clubName: riff.club.name,
@@ -155,20 +164,25 @@ export async function runDeadlineApproachingCheck(
         deadline,
         daysRemaining,
       });
+      // Only log a send that actually went out — a logged failure would
+      // suppress this recipient for the whole lookback window.
+      if (!delivered) continue;
       await logSend(
         NotificationType.RIFF_DEADLINE_APPROACHING,
         riff.id,
         p.userId
       );
+      notified.add(`${riff.id}:${p.userId}`);
       sent++;
     }
   }
 
-  return sent;
+  return { sent, notified };
 }
 
 export async function runRememberToWriteCheck(
-  riffs: ActiveRiff[]
+  riffs: ActiveRiff[],
+  skip: Set<string> = new Set()
 ): Promise<number> {
   const now = new Date();
   const active = riffs.filter((r) => !r.deadline || r.deadline > now);
@@ -186,7 +200,10 @@ export async function runRememberToWriteCheck(
   for (const riff of active) {
     const authorsWithPiece = new Set(riff.pieces.map((p) => p.piece.authorId));
     const neverStarted = riff.participants.filter(
-      (p) => !authorsWithPiece.has(p.userId) && daysSince(p.joinedAt) >= 3
+      (p) =>
+        !authorsWithPiece.has(p.userId) &&
+        daysSince(p.joinedAt) >= 3 &&
+        !skip.has(`${riff.id}:${p.userId}`)
     );
     if (neverStarted.length === 0) continue;
 
@@ -203,13 +220,14 @@ export async function runRememberToWriteCheck(
 
     for (const p of eligible.filter((p) => enabled.has(p.user.email))) {
       const variantIndex = history.get(`${riff.id}:${p.userId}`)?.count ?? 0;
-      await sendRememberToWriteEmail({
+      const delivered = await sendRememberToWriteEmail({
         email: p.user.email,
         riffTitle,
         clubName: riff.club.name,
         riffUrl: `${baseUrl}/riffs/${riff.id}`,
         variantIndex,
       });
+      if (!delivered) continue;
       await logSend(NotificationType.RIFF_STARTED, riff.id, p.userId);
       sent++;
     }
@@ -256,13 +274,14 @@ export async function runJoinRiffNudgeCheck(
 
     for (const m of eligible.filter((m) => enabled.has(m.user.email))) {
       const variantIndex = history.get(`${riff.id}:${m.userId}`)?.count ?? 0;
-      await sendJoinRiffNudgeEmail({
+      const delivered = await sendJoinRiffNudgeEmail({
         email: m.user.email,
         riffTitle,
         clubName: riff.club.name,
         riffUrl: `${baseUrl}/riffs/${riff.id}`,
         variantIndex,
       });
+      if (!delivered) continue;
       await logSend(NotificationType.RIFF_INVITATION, riff.id, m.userId);
       sent++;
     }
@@ -273,11 +292,20 @@ export async function runJoinRiffNudgeCheck(
 
 export async function runEngagementReminders() {
   const riffs = await fetchActiveRiffs();
-  const [deadlineApproaching, rememberToWrite, joinRiffNudge] =
-    await Promise.all([
-      runDeadlineApproachingCheck(riffs),
-      runRememberToWriteCheck(riffs),
-      runJoinRiffNudgeCheck(riffs),
-    ]);
-  return { deadlineApproaching, rememberToWrite, joinRiffNudge };
+  // Deadline check runs first so remember-to-write can skip anyone it already
+  // emailed. The join nudge targets non-participants, so it can never overlap
+  // with either and stays parallel.
+  const [deadline, joinRiffNudge] = await Promise.all([
+    runDeadlineApproachingCheck(riffs),
+    runJoinRiffNudgeCheck(riffs),
+  ]);
+  const rememberToWrite = await runRememberToWriteCheck(
+    riffs,
+    deadline.notified
+  );
+  return {
+    deadlineApproaching: deadline.sent,
+    rememberToWrite,
+    joinRiffNudge,
+  };
 }
