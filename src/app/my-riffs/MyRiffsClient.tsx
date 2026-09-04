@@ -199,10 +199,10 @@ const DRAFTS_CAP = 2;
 const PIECES_CAP = 2;
 const PAST_RIFFS_CAP = 2;
 
-// Every section starts pinned to the 602px feed width for visual consistency.
+// Every section starts pinned to the 680px feed width for visual consistency.
 // Drafts/Pieces/Past Riffs cap at 2 there; "View all" widens just that
 // section to 1000px and switches its grid to 3 columns.
-const FEED_WIDTH = 602;
+const FEED_WIDTH = 680;
 const EXPANDED_WIDTH = 1000;
 
 function SectionColumn({
