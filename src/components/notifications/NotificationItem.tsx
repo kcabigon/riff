@@ -20,6 +20,7 @@ interface NotificationItemProps {
       volumeNumber: number | null;
     } | null;
     piece: { id: string; title: string } | null;
+    commentId: string | null;
     commentCount?: number;
   };
   onClose: () => void;
@@ -70,6 +71,7 @@ function getLink(n: NotificationItemProps["notification"]): string {
         const params = new URLSearchParams();
         if (n.riff?.id) params.set("riff", n.riff.id);
         params.set("notify", "1");
+        if (n.commentId) params.set("comment", n.commentId);
         return `/read/${n.piece.id}?${params.toString()}`;
       }
       if (n.riff) return `/riffs/${n.riff.id}`;
