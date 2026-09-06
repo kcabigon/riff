@@ -143,12 +143,12 @@ export default function PieceCard({
         </h4>
       </div>
 
-      {/* Optional label — same position as ProgressCard activity text */}
+      {/* Optional label — sits above the avatar when one is shown, otherwise flush at the bottom */}
       {label && (
         <div
           style={{
             position: "absolute",
-            bottom: "56px",
+            bottom: piece.author ? "56px" : "16px",
             left: 0,
             right: 0,
             display: "flex",
@@ -159,7 +159,7 @@ export default function PieceCard({
           <p
             style={{
               fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
+              fontSize: "12px",
               fontWeight: 300,
               color: "rgba(255, 255, 255, 0.7)",
               margin: 0,

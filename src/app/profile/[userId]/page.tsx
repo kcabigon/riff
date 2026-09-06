@@ -133,6 +133,12 @@ export default async function ProfilePageRoute({
     viewerHasAccess,
     isPublic: p.newShares.length > 0,
     publicShareId: p.newShares[0]?.id ?? null,
+    submittedAt: p.riffs.length
+      ? new Date(
+          Math.max(...p.riffs.map((r) => r.submittedAt!.getTime()))
+        ).toISOString()
+      : null,
+    publishedAt: p.publishedAt ? p.publishedAt.toISOString() : null,
   }));
 
   const pieceCount = pieces.length;

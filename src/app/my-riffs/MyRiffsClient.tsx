@@ -26,6 +26,7 @@ import {
   hasUnreadPieces,
   getRiffDisplayTitle,
 } from "@/lib/riff-utils";
+import { formatSubmittedDate } from "@/lib/timeAgo";
 import type { FriendSummary } from "@/lib/friends";
 
 interface RiffPiece {
@@ -148,6 +149,16 @@ function isPieceRevealed(piece: WritingPiece): boolean {
       (r) => r.riff.status === "REVEALED" || r.riff.status === "COMPLETED"
     )
   );
+}
+
+function pieceDisplayDate(piece: WritingPiece): string | null {
+  const submittedDates = piece.riffs
+    .map((r) => r.submittedAt)
+    .filter((d): d is string => d !== null);
+  if (submittedDates.length > 0) {
+    return submittedDates.reduce((latest, d) => (d > latest ? d : latest));
+  }
+  return piece.publishedAt;
 }
 
 function pieceLabel(
@@ -428,6 +439,11 @@ export default function MyRiffsClient({
                     coverImage: piece.coverImage,
                   }}
                   isRead={true}
+                  label={
+                    pieceDisplayDate(piece)
+                      ? formatSubmittedDate(pieceDisplayDate(piece) as string)
+                      : undefined
+                  }
                   onClick={() =>
                     router.push(
                       isPieceRevealed(piece)

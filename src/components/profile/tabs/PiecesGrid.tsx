@@ -5,6 +5,7 @@ import PieceCard from "@/components/riffs/PieceCard";
 import PublicShareIndicator from "@/components/riffs/PublicShareIndicator";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import type { DropdownItem } from "@/components/shared/Dropdown";
+import { formatSubmittedDate } from "@/lib/timeAgo";
 
 export interface Piece {
   id: string;
@@ -14,6 +15,8 @@ export interface Piece {
   viewerHasAccess: boolean;
   isPublic: boolean;
   publicShareId: string | null;
+  submittedAt: string | null;
+  publishedAt: string | null;
 }
 
 function LockIcon({ style }: { style?: React.CSSProperties }) {
@@ -156,6 +159,13 @@ export default function PiecesGrid({
                   coverImage: piece.coverImage,
                 }}
                 isRead={true}
+                label={
+                  piece.submittedAt || piece.publishedAt
+                    ? formatSubmittedDate(
+                        (piece.submittedAt ?? piece.publishedAt) as string
+                      )
+                    : undefined
+                }
                 onClick={handleClick ?? (() => {})}
               />
             </div>
