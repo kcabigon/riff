@@ -2,14 +2,14 @@
 
 import { useState } from "react";
 
-function CopyIcon() {
+function CopyIcon({ color }: { color: string }) {
   return (
     <svg
       width="14"
       height="14"
       viewBox="0 0 24 24"
       fill="none"
-      stroke="#FFFFFF"
+      stroke={color}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -21,14 +21,14 @@ function CopyIcon() {
   );
 }
 
-function CheckIcon() {
+function CheckIcon({ color }: { color: string }) {
   return (
     <svg
       width="14"
       height="14"
       viewBox="0 0 24 24"
       fill="none"
-      stroke="#FFFFFF"
+      stroke={color}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -39,14 +39,14 @@ function CheckIcon() {
   );
 }
 
-function OpenLinkIcon() {
+function OpenLinkIcon({ color }: { color: string }) {
   return (
     <svg
       width="14"
       height="14"
       viewBox="0 0 24 24"
       fill="none"
-      stroke="#FFFFFF"
+      stroke={color}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -56,6 +56,44 @@ function OpenLinkIcon() {
       <path d="M15 3h6v6" />
       <path d="M10 14 21 3" />
     </svg>
+  );
+}
+
+// Same hover treatment as ThreeDotButton's "dark" variant — cyan fill,
+// black border + shadow on hover, so the two share one interaction language.
+function IconButton({
+  onClick,
+  ariaLabel,
+  children,
+}: {
+  onClick: (e: React.MouseEvent) => void;
+  ariaLabel: string;
+  children: (color: string) => React.ReactNode;
+}) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      aria-label={ariaLabel}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: isHovered ? "#01EFFC" : "transparent",
+        border: isHovered ? "2px solid #000000" : "2px solid transparent",
+        boxShadow: isHovered ? "4px 4px 0px 0px #000000" : "none",
+        opacity: isHovered ? 1 : 0.7,
+        padding: "4px 6px",
+        cursor: "pointer",
+        transition:
+          "opacity 0.15s ease, background-color 0.15s ease, box-shadow 0.1s ease",
+      }}
+    >
+      {children(isHovered ? "#000000" : "#FFFFFF")}
+    </button>
   );
 }
 
@@ -93,7 +131,7 @@ export default function PublicShareIndicator({
         zIndex: 3,
         display: "flex",
         alignItems: "center",
-        gap: "8px",
+        gap: "4px",
       }}
       onClick={(e) => e.stopPropagation()}
     >
@@ -105,44 +143,27 @@ export default function PublicShareIndicator({
           color: "#FFFFFF",
           textTransform: "uppercase",
           letterSpacing: "0.02em",
+          marginRight: "4px",
         }}
       >
         Public
       </span>
       {interactive && (
         <>
-          <button
+          <IconButton
             onClick={handleCopy}
-            aria-label={copied ? "Link copied" : "Copy public link"}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: "transparent",
-              border: "none",
-              padding: 0,
-              cursor: "pointer",
-              opacity: 0.85,
-            }}
+            ariaLabel={copied ? "Link copied" : "Copy public link"}
           >
-            {copied ? <CheckIcon /> : <CopyIcon />}
-          </button>
-          <button
+            {(color) =>
+              copied ? <CheckIcon color={color} /> : <CopyIcon color={color} />
+            }
+          </IconButton>
+          <IconButton
             onClick={handleOpen}
-            aria-label="Open public page in new tab"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: "transparent",
-              border: "none",
-              padding: 0,
-              cursor: "pointer",
-              opacity: 0.85,
-            }}
+            ariaLabel="Open public page in new tab"
           >
-            <OpenLinkIcon />
-          </button>
+            {(color) => <OpenLinkIcon color={color} />}
+          </IconButton>
         </>
       )}
     </div>
