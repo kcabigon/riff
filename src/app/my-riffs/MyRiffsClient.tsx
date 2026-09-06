@@ -9,6 +9,7 @@ import CompletedRiffCard from "@/components/riffs/CompletedRiffCard";
 import RevealConfirmModal from "@/components/riffs/RevealConfirmModal";
 import FriendsRow from "@/components/riffs/FriendsRow";
 import PieceCard from "@/components/riffs/PieceCard";
+import PublicShareIndicator from "@/components/riffs/PublicShareIndicator";
 import DraftCard from "@/components/write/DraftCard";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import Tagline from "@/components/Tagline";
@@ -404,6 +405,9 @@ export default function MyRiffsClient({
                   items={menuItems}
                 />
               </div>
+              {variant === "piece" && piece.isPublic && (
+                <PublicShareIndicator pieceId={piece.id} interactive={true} />
+              )}
               {variant === "draft" ? (
                 <DraftCard
                   piece={{
