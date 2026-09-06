@@ -15,8 +15,7 @@ export interface Piece {
   viewerHasAccess: boolean;
   isPublic: boolean;
   publicShareId: string | null;
-  submittedAt: string | null;
-  publishedAt: string | null;
+  displayDate: string | null;
 }
 
 function LockIcon({ style }: { style?: React.CSSProperties }) {
@@ -160,10 +159,8 @@ export default function PiecesGrid({
                 }}
                 isRead={true}
                 label={
-                  piece.submittedAt || piece.publishedAt
-                    ? formatSubmittedDate(
-                        (piece.submittedAt ?? piece.publishedAt) as string
-                      )
+                  piece.displayDate
+                    ? formatSubmittedDate(piece.displayDate)
                     : undefined
                 }
                 onClick={handleClick ?? (() => {})}

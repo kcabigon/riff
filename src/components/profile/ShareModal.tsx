@@ -105,9 +105,13 @@ export default function ShareModal({
   };
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(publicUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(publicUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard access denied or unavailable — nothing to recover from.
+    }
   };
 
   const handleOpen = () => {

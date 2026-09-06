@@ -19,9 +19,13 @@ export default function PublicShareIndicator({
       typeof window !== "undefined"
         ? `${window.location.origin}/p/${pieceId}`
         : `/p/${pieceId}`;
-    await navigator.clipboard.writeText(url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard access denied or unavailable — nothing to recover from.
+    }
   };
 
   const handleOpen = (e: React.MouseEvent) => {
