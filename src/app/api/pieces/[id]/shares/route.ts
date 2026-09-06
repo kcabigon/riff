@@ -42,13 +42,15 @@ export async function POST(
       );
     }
 
-    const isRevealed = piece.riffs.some(
-      (r) => r.riff.status === "REVEALED" || r.riff.status === "COMPLETED"
-    );
+    const isRevealed =
+      piece.publishedAt !== null ||
+      piece.riffs.some(
+        (r) => r.riff.status === "REVEALED" || r.riff.status === "COMPLETED"
+      );
 
     if (!isRevealed) {
       return NextResponse.json(
-        { error: "Only revealed pieces can be shared publicly" },
+        { error: "Only revealed or published pieces can be shared publicly" },
         { status: 403 }
       );
     }
