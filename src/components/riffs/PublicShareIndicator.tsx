@@ -1,101 +1,8 @@
 "use client";
 
 import { useState } from "react";
-
-function CopyIcon({ color }: { color: string }) {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <rect x="9" y="9" width="12" height="12" rx="1" />
-      <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" />
-    </svg>
-  );
-}
-
-function CheckIcon({ color }: { color: string }) {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path d="M20 6 9 17l-5-5" />
-    </svg>
-  );
-}
-
-function OpenLinkIcon({ color }: { color: string }) {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-      <path d="M15 3h6v6" />
-      <path d="M10 14 21 3" />
-    </svg>
-  );
-}
-
-// Same hover treatment as ThreeDotButton's "dark" variant — cyan fill,
-// black border + shadow on hover, so the two share one interaction language.
-function IconButton({
-  onClick,
-  ariaLabel,
-  children,
-}: {
-  onClick: (e: React.MouseEvent) => void;
-  ariaLabel: string;
-  children: (color: string) => React.ReactNode;
-}) {
-  const [isHovered, setIsHovered] = useState(false);
-
-  return (
-    <button
-      onClick={onClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      aria-label={ariaLabel}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: isHovered ? "#01EFFC" : "transparent",
-        border: isHovered ? "2px solid #000000" : "2px solid transparent",
-        boxShadow: isHovered ? "4px 4px 0px 0px #000000" : "none",
-        opacity: isHovered ? 1 : 0.7,
-        padding: "4px 6px",
-        cursor: "pointer",
-        transition:
-          "opacity 0.15s ease, background-color 0.15s ease, box-shadow 0.1s ease",
-      }}
-    >
-      {children(isHovered ? "#000000" : "#FFFFFF")}
-    </button>
-  );
-}
+import { CopyIcon, CheckIcon, OpenLinkIcon } from "@/components/shared/icons";
+import IconButton from "@/components/shared/IconButton";
 
 export default function PublicShareIndicator({
   pieceId,
@@ -151,6 +58,7 @@ export default function PublicShareIndicator({
       {interactive && (
         <>
           <IconButton
+            variant="dark"
             onClick={handleCopy}
             ariaLabel={copied ? "Link copied" : "Copy public link"}
           >
@@ -159,6 +67,7 @@ export default function PublicShareIndicator({
             }
           </IconButton>
           <IconButton
+            variant="dark"
             onClick={handleOpen}
             ariaLabel="Open public page in new tab"
           >

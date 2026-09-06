@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Modal from "@/components/shared/Modal";
+import { CopyIcon, CheckIcon, OpenLinkIcon } from "@/components/shared/icons";
+import IconButton from "@/components/shared/IconButton";
 
 export interface PublicShare {
   id: string;
@@ -106,6 +108,10 @@ export default function ShareModal({
     await navigator.clipboard.writeText(publicUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleOpen = () => {
+    window.open(publicUrl, "_blank", "noopener,noreferrer");
   };
 
   const publicDisabled = !isRevealed;
@@ -252,24 +258,26 @@ export default function ShareModal({
             >
               {publicUrl}
             </span>
-            <button
-              onClick={handleCopy}
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "12px",
-                fontWeight: 700,
-                color: "#000000",
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                padding: 0,
-                whiteSpace: "nowrap",
-                flexShrink: 0,
-                opacity: copied ? 0.5 : 1,
-              }}
-            >
-              {copied ? "Copied!" : "Copy link"}
-            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+              <IconButton
+                onClick={handleCopy}
+                ariaLabel={copied ? "Link copied" : "Copy link"}
+              >
+                {(color) =>
+                  copied ? (
+                    <CheckIcon color={color} />
+                  ) : (
+                    <CopyIcon color={color} />
+                  )
+                }
+              </IconButton>
+              <IconButton
+                onClick={handleOpen}
+                ariaLabel="Open public page in new tab"
+              >
+                {(color) => <OpenLinkIcon color={color} />}
+              </IconButton>
+            </div>
           </div>
         )}
 
