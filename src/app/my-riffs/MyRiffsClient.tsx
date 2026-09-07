@@ -9,6 +9,7 @@ import CompletedRiffCard from "@/components/riffs/CompletedRiffCard";
 import RevealConfirmModal from "@/components/riffs/RevealConfirmModal";
 import FriendsRow from "@/components/riffs/FriendsRow";
 import PieceCard from "@/components/riffs/PieceCard";
+import PublicShareIndicator from "@/components/riffs/PublicShareIndicator";
 import DraftCard from "@/components/write/DraftCard";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import Tagline from "@/components/Tagline";
@@ -24,7 +25,9 @@ import {
   getWaitingParticipants,
   hasUnreadPieces,
   getRiffDisplayTitle,
+  getPieceDisplayDate,
 } from "@/lib/riff-utils";
+import { formatSubmittedDate } from "@/lib/timeAgo";
 import type { FriendSummary } from "@/lib/friends";
 
 interface RiffPiece {
@@ -377,6 +380,10 @@ export default function MyRiffsClient({
         ];
 
         const label = pieceLabel(piece, predictedVolumeByClub);
+        const dateLabel = getPieceDisplayDate(
+          piece.publishedAt,
+          piece.riffs.map((r) => r.submittedAt)
+        );
 
         return (
           <div key={piece.id}>
@@ -404,6 +411,9 @@ export default function MyRiffsClient({
                   items={menuItems}
                 />
               </div>
+              {variant === "piece" && piece.isPublic && (
+                <PublicShareIndicator pieceId={piece.id} />
+              )}
               {variant === "draft" ? (
                 <DraftCard
                   piece={{
@@ -424,6 +434,7 @@ export default function MyRiffsClient({
                     coverImage: piece.coverImage,
                   }}
                   isRead={true}
+                  label={dateLabel ? formatSubmittedDate(dateLabel) : undefined}
                   onClick={() =>
                     router.push(
                       isPieceRevealed(piece)

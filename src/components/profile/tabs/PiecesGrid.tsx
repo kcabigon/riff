@@ -1,10 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import Badge from "@/components/shared/Badge";
 import PieceCard from "@/components/riffs/PieceCard";
+import PublicShareIndicator from "@/components/riffs/PublicShareIndicator";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import type { DropdownItem } from "@/components/shared/Dropdown";
+import { formatSubmittedDate } from "@/lib/timeAgo";
 
 export interface Piece {
   id: string;
@@ -14,6 +15,7 @@ export interface Piece {
   viewerHasAccess: boolean;
   isPublic: boolean;
   publicShareId: string | null;
+  displayDate: string | null;
 }
 
 function LockIcon({ style }: { style?: React.CSSProperties }) {
@@ -28,20 +30,6 @@ function LockIcon({ style }: { style?: React.CSSProperties }) {
     >
       <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
     </svg>
-  );
-}
-
-function PublicBadge({
-  top = "8px",
-  left = "8px",
-}: {
-  top?: string;
-  left?: string;
-}) {
-  return (
-    <Badge variant="pink" style={{ top, left, zIndex: 3 }}>
-      Public
-    </Badge>
   );
 }
 
@@ -156,7 +144,9 @@ export default function PiecesGrid({
                   />
                 </div>
               )}
-              {piece.isPublic && <PublicBadge />}
+              {piece.isPublic && isOwnProfile && (
+                <PublicShareIndicator pieceId={piece.id} />
+              )}
               {isLocked && <LockOverlay />}
               <PieceCard
                 piece={{
@@ -165,6 +155,11 @@ export default function PiecesGrid({
                   coverImage: piece.coverImage,
                 }}
                 isRead={true}
+                label={
+                  piece.displayDate
+                    ? formatSubmittedDate(piece.displayDate)
+                    : undefined
+                }
                 onClick={handleClick ?? (() => {})}
               />
             </div>

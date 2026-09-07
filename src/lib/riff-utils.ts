@@ -49,6 +49,23 @@ export function toEndOfDay(dateString: string): string {
   return new Date(year, month - 1, day, 23, 59, 59, 999).toISOString();
 }
 
+// Returns the date to show for a piece — the latest riff submission, or
+// (for riff-less pieces) when it was published standalone. Submission
+// always wins over publishedAt when both are somehow present.
+export function getPieceDisplayDate(
+  publishedAt: string | Date | null,
+  submittedAts: (string | Date | null)[]
+): string | null {
+  const submittedTimes = submittedAts
+    .filter((d): d is string | Date => d !== null)
+    .map((d) => new Date(d).getTime());
+
+  if (submittedTimes.length > 0) {
+    return new Date(Math.max(...submittedTimes)).toISOString();
+  }
+  return publishedAt ? new Date(publishedAt).toISOString() : null;
+}
+
 // Formats a date as "Jan 15" (short month + day, no year).
 export function formatDateShort(date: string | Date): string {
   return new Date(date).toLocaleDateString("en-US", {

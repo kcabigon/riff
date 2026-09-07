@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { isFriendOf } from "@/lib/friends";
+import { getPieceDisplayDate } from "@/lib/riff-utils";
 import ProfilePage from "@/components/profile/ProfilePage";
 
 export async function generateMetadata({
@@ -133,6 +134,10 @@ export default async function ProfilePageRoute({
     viewerHasAccess,
     isPublic: p.newShares.length > 0,
     publicShareId: p.newShares[0]?.id ?? null,
+    displayDate: getPieceDisplayDate(
+      p.publishedAt,
+      p.riffs.map((r) => r.submittedAt)
+    ),
   }));
 
   const pieceCount = pieces.length;
