@@ -386,7 +386,7 @@ export default function MyRiffsClient({
         );
 
         return (
-          <div key={piece.id}>
+          <div key={piece.id} style={{ minWidth: 0 }}>
             <p
               style={{
                 ...cardLabelStyle,
@@ -743,7 +743,7 @@ export default function MyRiffsClient({
                 }
               >
                 {visiblePastRiffs.map((riff) => (
-                  <div key={riff.id}>
+                  <div key={riff.id} style={{ minWidth: 0 }}>
                     <p style={cardLabelStyle}>{riff.club.name}</p>
                     <CompletedRiffCard
                       riff={{

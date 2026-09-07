@@ -222,6 +222,7 @@ export default function RiffEventCard({
           )}
 
           <div
+            className="riff-event-card-title-col"
             style={{
               display: "flex",
               flexDirection: "column",
@@ -487,6 +488,11 @@ export default function RiffEventCard({
             position: absolute;
             top: 20px;
             right: 24px;
+          }
+          .riff-event-card-title-col {
+            /* Reserves room for the absolutely-positioned progress badge
+               above so long titles wrap instead of running under it. */
+            padding-right: 120px;
           }
         }
         @media (max-width: 767px) {
