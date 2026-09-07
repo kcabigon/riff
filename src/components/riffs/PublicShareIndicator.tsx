@@ -4,13 +4,8 @@ import { useState } from "react";
 import { CopyIcon, CheckIcon, OpenLinkIcon } from "@/components/shared/icons";
 import IconButton from "@/components/shared/IconButton";
 
-export default function PublicShareIndicator({
-  pieceId,
-  interactive,
-}: {
-  pieceId: string;
-  interactive: boolean;
-}) {
+// Author-only, same as ThreeDotButton — gate rendering at the call site.
+export default function PublicShareIndicator({ pieceId }: { pieceId: string }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async (e: React.MouseEvent) => {
@@ -46,39 +41,22 @@ export default function PublicShareIndicator({
       }}
       onClick={(e) => e.stopPropagation()}
     >
-      <span
-        style={{
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "11px",
-          fontWeight: 700,
-          color: "#FFFFFF",
-          textTransform: "uppercase",
-          letterSpacing: "0.02em",
-          marginRight: "4px",
-        }}
+      <IconButton
+        variant="dark"
+        onClick={handleCopy}
+        ariaLabel={copied ? "Link copied" : "Copy public link"}
       >
-        Public
-      </span>
-      {interactive && (
-        <>
-          <IconButton
-            variant="dark"
-            onClick={handleCopy}
-            ariaLabel={copied ? "Link copied" : "Copy public link"}
-          >
-            {(color) =>
-              copied ? <CheckIcon color={color} /> : <CopyIcon color={color} />
-            }
-          </IconButton>
-          <IconButton
-            variant="dark"
-            onClick={handleOpen}
-            ariaLabel="Open public page in new tab"
-          >
-            {(color) => <OpenLinkIcon color={color} />}
-          </IconButton>
-        </>
-      )}
+        {(color) =>
+          copied ? <CheckIcon color={color} /> : <CopyIcon color={color} />
+        }
+      </IconButton>
+      <IconButton
+        variant="dark"
+        onClick={handleOpen}
+        ariaLabel="Open public page in new tab"
+      >
+        {(color) => <OpenLinkIcon color={color} />}
+      </IconButton>
     </div>
   );
 }

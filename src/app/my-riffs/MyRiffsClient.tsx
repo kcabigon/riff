@@ -412,7 +412,7 @@ export default function MyRiffsClient({
                 />
               </div>
               {variant === "piece" && piece.isPublic && (
-                <PublicShareIndicator pieceId={piece.id} interactive={true} />
+                <PublicShareIndicator pieceId={piece.id} />
               )}
               {variant === "draft" ? (
                 <DraftCard

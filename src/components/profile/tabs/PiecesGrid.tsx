@@ -144,11 +144,8 @@ export default function PiecesGrid({
                   />
                 </div>
               )}
-              {piece.isPublic && (
-                <PublicShareIndicator
-                  pieceId={piece.id}
-                  interactive={isOwnProfile}
-                />
+              {piece.isPublic && isOwnProfile && (
+                <PublicShareIndicator pieceId={piece.id} />
               )}
               {isLocked && <LockOverlay />}
               <PieceCard
