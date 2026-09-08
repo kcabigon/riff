@@ -13,7 +13,6 @@ import RevealRiffButton, {
 import Tagline from "@/components/Tagline";
 import CreateRiffModal from "@/components/riffs/CreateRiffModal";
 import RevealConfirmModal from "@/components/riffs/RevealConfirmModal";
-import ReadyToRevealCard from "@/components/riffs/ReadyToRevealCard";
 import ClubSettingsModal from "@/components/clubs/ClubSettingsModal";
 import InviteOptions from "@/components/clubs/InviteOptions";
 import CloseButton from "@/components/CloseButton";
@@ -103,6 +102,7 @@ interface ClubPageLayoutProps {
   revealedRiffs: Riff[];
   pastRevealedRiffs: Riff[];
   readCounts: Record<string, number>;
+  readPieceIds: string[];
   completedRiffs: Riff[];
   stats: {
     riffCount: number;
@@ -255,6 +255,7 @@ export default function ClubPageLayout({
   revealedRiffs,
   pastRevealedRiffs,
   readCounts,
+  readPieceIds,
   completedRiffs,
   stats,
   initialWelcome,
@@ -360,6 +361,11 @@ export default function ClubPageLayout({
 
   const hasUnreadForUser = (riff: Riff) =>
     hasUnreadPieces(riff.id, readCounts, otherSubmittedCount(riff));
+
+  // A piece is unread when it's someone else's submitted work the current
+  // user hasn't opened yet — drives the per-card "Unread" badge.
+  const isPieceUnread = (piece: { id: string; authorId: string }) =>
+    piece.authorId !== currentUserId && !readPieceIds.includes(piece.id);
 
   // Past Riffs — COMPLETED + pre-join REVEALED + fully-read REVEALED riffs,
   // excluding any with no submitted pieces (e.g. the sole submission was deleted).
@@ -853,44 +859,6 @@ export default function ClubPageLayout({
           </div>
         )}
 
-        {/* Current Read section — shown above Current Riff when there are unread revealed riffs */}
-        {(() => {
-          const unfinishedRevealed = revealedRiffs.filter(hasUnreadForUser);
-          if (unfinishedRevealed.length === 0) return null;
-          return (
-            <div style={{ marginBottom: "48px" }}>
-              <h2
-                style={{
-                  fontFamily: "var(--font-dm-serif-text)",
-                  fontSize: "24px",
-                  fontWeight: 400,
-                  color: "#000000",
-                  margin: "0 0 16px 0",
-                }}
-              >
-                Current Read
-              </h2>
-
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "32px",
-                }}
-              >
-                {unfinishedRevealed.map((riff) => (
-                  <ReadyToRevealCard
-                    key={riff.id}
-                    riff={riff}
-                    readCount={readCounts[riff.id] || 0}
-                    totalPieces={otherSubmittedCount(riff)}
-                  />
-                ))}
-              </div>
-            </div>
-          );
-        })()}
-
         {/* Current Riff section — hidden for members when there's a current read and no active riff */}
         {(() => {
           const hasCurrentRead = revealedRiffs.some(hasUnreadForUser);
@@ -1108,6 +1076,74 @@ export default function ClubPageLayout({
                   />
                 </div>
               )}
+            </div>
+          );
+        })()}
+
+        {/* Current Read section — revealed riffs the user hasn't fully read yet */}
+        {(() => {
+          const unfinishedRevealed = revealedRiffs.filter(hasUnreadForUser);
+          if (unfinishedRevealed.length === 0) return null;
+
+          return (
+            <div style={{ marginBottom: "56px" }}>
+              <SectionHeading text="CURRENT READ" color="#01EFFC" width={140} />
+
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "32px",
+                  marginTop: "16px",
+                }}
+              >
+                {unfinishedRevealed.map((riff) => {
+                  const authorPieces = pieceByAuthor(riff);
+                  const piecesToShow = sortedParticipants(
+                    riff.participants,
+                    authorPieces
+                  ).filter((p) => authorPieces[p.user.id]?.submittedAt);
+
+                  return (
+                    <div key={riff.id}>
+                      <h3
+                        onClick={() => router.push(`/riffs/${riff.id}`)}
+                        className="riff-row-link"
+                        style={{
+                          cursor: "pointer",
+                          display: "inline-block",
+                          fontFamily: "var(--font-dm-serif-text)",
+                          fontSize: "20px",
+                          fontWeight: 400,
+                          color: "#000000",
+                          margin: "0 0 12px 0",
+                        }}
+                      >
+                        {getRiffDisplayTitle(riff)}
+                      </h3>
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns:
+                            "repeat(auto-fill, minmax(280px, 1fr))",
+                          gap: "24px",
+                        }}
+                      >
+                        {piecesToShow.map((p) => (
+                          <ProgressCard
+                            key={p.user.id}
+                            user={p.user}
+                            piece={authorPieces[p.user.id]}
+                            revealed={true}
+                            showDate={false}
+                            isUnread={isPieceUnread(authorPieces[p.user.id])}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           );
         })()}

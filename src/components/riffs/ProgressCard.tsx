@@ -1,6 +1,7 @@
 "use client";
 
 import Avatar from "@/components/shared/Avatar";
+import Badge from "@/components/shared/Badge";
 import NoiseBackground from "@/components/NoiseBackground";
 import DraftCard from "@/components/write/DraftCard";
 import { relativeTime } from "@/lib/timeAgo";
@@ -27,6 +28,9 @@ interface ProgressCardProps {
   // True once the riff this piece belongs to has been revealed — drops the
   // lock icon, since "submitted" no longer means "hidden until reveal."
   revealed?: boolean;
+  // Shows the green "Unread" badge — caller decides eligibility (never the
+  // viewer's own piece, already-read pieces excluded).
+  isUnread?: boolean;
   // False hides the submitted/last-active date line — used where the date
   // isn't meaningful (e.g. the club page's past-riffs grouped view).
   showDate?: boolean;
@@ -62,6 +66,7 @@ export default function ProgressCard({
   user,
   piece,
   revealed = false,
+  isUnread = false,
   showDate = true,
   onClick,
   variant = "noise",
@@ -167,6 +172,13 @@ export default function ProgressCard({
             backgroundColor: "rgba(0, 0, 0, 0.5)",
           }}
         />
+
+        {/* Unread badge — top left */}
+        {isUnread && (
+          <Badge variant="green" style={{ zIndex: 3 }}>
+            Unread
+          </Badge>
+        )}
 
         {/* Lock icon — top center (only while hidden pending reveal) */}
         {!revealed && (

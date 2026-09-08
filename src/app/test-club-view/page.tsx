@@ -229,6 +229,7 @@ export default function TestClubViewPage() {
       revealedRiffs={[]}
       pastRevealedRiffs={[]}
       readCounts={{}}
+      readPieceIds={[]}
       completedRiffs={[completedRiff1, completedRiff2]}
       stats={{ riffCount: 3, pieceCount: 6, wordCount: 250 }}
     />

@@ -200,24 +200,28 @@ export default async function ClubPage({
   // would collide with the old +1 hack and prematurely move the riff to Past Riffs.
   const revealedRiffIds = revealedRiffs.map((r) => r.id);
   let readCounts: Record<string, number> = {};
+  // Per-piece read state — needed for the "Unread" badge on individual piece
+  // cards in the Current Read grid (readCounts above is riff-level only).
+  let readPieceIds: string[] = [];
   if (revealedRiffIds.length > 0) {
     const ownPieceIds = revealedRiffs.flatMap((r) =>
       r.pieces
         .filter((p) => p.piece.authorId === userId && p.submittedAt !== null)
         .map((p) => p.piece.id)
     );
-    const readGroups = await prisma.pieceRead.groupBy({
-      by: ["riffId"],
-      where: {
-        userId,
-        riffId: { in: revealedRiffIds },
-        ...(ownPieceIds.length > 0 && { pieceId: { notIn: ownPieceIds } }),
-      },
-      _count: { pieceId: true },
+    const reads = await prisma.pieceRead.findMany({
+      where: { userId, riffId: { in: revealedRiffIds } },
+      select: { riffId: true, pieceId: true },
     });
-    readCounts = Object.fromEntries(
-      readGroups.map((g) => [g.riffId, g._count.pieceId])
-    );
+    readPieceIds = reads.map((r) => r.pieceId);
+    const countableReads =
+      ownPieceIds.length > 0
+        ? reads.filter((r) => !ownPieceIds.includes(r.pieceId))
+        : reads;
+    readCounts = countableReads.reduce<Record<string, number>>((acc, r) => {
+      acc[r.riffId] = (acc[r.riffId] || 0) + 1;
+      return acc;
+    }, {});
   }
 
   const isAdmin = club.adminId === userId;
@@ -240,6 +244,7 @@ export default async function ClubPage({
       revealedRiffs={revealedRiffs}
       pastRevealedRiffs={pastRevealedRiffs}
       readCounts={readCounts}
+      readPieceIds={readPieceIds}
       completedRiffs={completedRiffs}
       stats={{ riffCount, pieceCount, wordCount }}
       predictedVolumeNumber={predictedVolumeNumber}
