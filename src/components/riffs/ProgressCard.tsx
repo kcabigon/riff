@@ -346,20 +346,38 @@ export default function ProgressCard({
 
   // ── In progress, draft variant ───────────────────────────────────────────
   if (variant === "draft") {
-    // The viewer's own piece — the exact DraftCard used on My Riffs.
+    // The viewer's own piece — the exact DraftCard used on My Riffs, plus an
+    // avatar overlay so it matches the other draft-variant cards (which all
+    // show one). Added here rather than in DraftCard itself, since that
+    // component is also used on My Riffs, where there's no "other users" to
+    // distinguish it from.
     if (onClick) {
       return (
-        <DraftCard
-          piece={{
-            id: piece.id,
-            title: piece.title,
-            preview: piece.preview ?? "",
-            wordCount: piece.wordCount,
-            createdAt: piece.createdAt ?? piece.updatedAt,
-            dueDate: null,
-          }}
-          onClick={onClick}
-        />
+        <div style={{ position: "relative" }}>
+          <DraftCard
+            piece={{
+              id: piece.id,
+              title: piece.title,
+              preview: piece.preview ?? "",
+              wordCount: piece.wordCount,
+              createdAt: piece.createdAt ?? piece.updatedAt,
+              dueDate: null,
+            }}
+            onClick={onClick}
+          />
+          <div style={{ position: "absolute", top: "20px", right: "20px" }}>
+            <Avatar
+              user={{
+                id: user.id,
+                name: user.name,
+                username: null,
+                avatarUrl: user.avatarUrl,
+              }}
+              size={24}
+              borderColor="#000000"
+            />
+          </div>
+        </div>
       );
     }
 

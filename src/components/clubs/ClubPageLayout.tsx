@@ -249,6 +249,33 @@ const sortedParticipants = (
     return 0;
   });
 
+// Current Riff grid only — the viewer's own card always leads, then
+// whoever's furthest along (by word count) rises to the top, ties broken by
+// most recent activity. Distinct from `sortedParticipants` (used for
+// Current Read / Past Riffs, which group by submitted vs. not instead).
+const sortedByProgress = (
+  participants: RiffParticipant[],
+  authorPieces: Record<
+    string,
+    RiffPiece["piece"] & {
+      submittedAt: string | null;
+    }
+  >,
+  currentUserId: string
+) =>
+  [...participants].sort((a, b) => {
+    if (a.user.id === currentUserId) return -1;
+    if (b.user.id === currentUserId) return 1;
+    const pa = authorPieces[a.user.id];
+    const pb = authorPieces[b.user.id];
+    const wcA = pa?.wordCount ?? 0;
+    const wcB = pb?.wordCount ?? 0;
+    if (wcA !== wcB) return wcB - wcA;
+    const timeA = pa ? new Date(pa.updatedAt).getTime() : 0;
+    const timeB = pb ? new Date(pb.updatedAt).getTime() : 0;
+    return timeB - timeA;
+  });
+
 export default function ClubPageLayout({
   club,
   userClubs,
@@ -445,7 +472,11 @@ export default function ClubPageLayout({
 
   const activeAuthorPieces = activeRiff ? pieceByAuthor(activeRiff) : {};
   const sortedActiveParticipants = activeRiff
-    ? sortedParticipants(activeRiff.participants, activeAuthorPieces)
+    ? sortedByProgress(
+        activeRiff.participants,
+        activeAuthorPieces,
+        currentUserId
+      )
     : [];
 
   // Mobile Current Riff: the user's own unsubmitted draft leads as a fixed,
