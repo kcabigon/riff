@@ -80,6 +80,35 @@ export default function ProgressCard({
 
   // ── Not started ──────────────────────────────────────────────────────────
   if (!piece) {
+    // Draft variant — same blank-card chrome as the other draft states,
+    // just an avatar in the corner. No noise, no status text.
+    if (variant === "draft") {
+      return (
+        <div
+          style={{
+            position: "relative",
+            aspectRatio: "4 / 5",
+            backgroundColor: "#FFFFFF",
+            border: "2px dashed #808080",
+            padding: "20px",
+          }}
+        >
+          <div style={{ position: "absolute", top: "20px", right: "20px" }}>
+            <Avatar
+              user={{
+                id: user.id,
+                name: user.name,
+                username: null,
+                avatarUrl: user.avatarUrl,
+              }}
+              size={24}
+              borderColor="#000000"
+            />
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div style={cardBase}>
         <NoiseBackground fillMode="cover" />
