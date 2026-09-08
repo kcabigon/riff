@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 
 interface MobileCardCarouselProps {
   // Each child must carry its own explicit `key` (callers already key
@@ -33,7 +33,10 @@ export default function MobileCardCarousel({
     setActiveIndex(Math.round(el.scrollLeft / el.clientWidth));
   };
 
-  useEffect(() => {
+  // Layout effect (not a plain effect) — measures and applies the height
+  // before the browser paints, so there's no visible frame at the wrong
+  // (stale/tallest-sibling) height on mount or on slide change.
+  useLayoutEffect(() => {
     setActiveHeight(slideRefs.current[activeIndex]?.offsetHeight);
   }, [activeIndex, children.length]);
 

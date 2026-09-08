@@ -353,7 +353,10 @@ export default function ProgressCard({
     // distinguish it from.
     if (onClick) {
       return (
-        <div style={{ position: "relative" }}>
+        <div
+          className="progress-card-own-draft"
+          style={{ position: "relative" }}
+        >
           <DraftCard
             piece={{
               id: piece.id,
@@ -377,6 +380,19 @@ export default function ProgressCard({
               borderColor="#000000"
             />
           </div>
+          {/* DraftCard fixes itself to a 250px height below 639px, tuned
+              for My Riffs' grid — override back to the same aspect-ratio
+              every other card in this grid/carousel uses, so the viewer's
+              own card doesn't stand out as a different size. Scoped here
+              rather than in DraftCard.tsx, which My Riffs still uses as-is. */}
+          <style>{`
+            @media (max-width: 639px) {
+              .progress-card-own-draft .draft-card {
+                aspect-ratio: 4 / 5 !important;
+                height: auto !important;
+              }
+            }
+          `}</style>
         </div>
       );
     }
