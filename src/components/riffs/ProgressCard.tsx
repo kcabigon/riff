@@ -350,7 +350,7 @@ export default function ProgressCard({
               avatarUrl: user.avatarUrl,
             }}
             size={24}
-            borderColor="#FFFFFF"
+            borderColor="#000000"
           />
         </div>
 
