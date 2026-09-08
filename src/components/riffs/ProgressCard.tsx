@@ -85,12 +85,14 @@ export default function ProgressCard({
     if (variant === "draft") {
       return (
         <div
+          onClick={onClick}
           style={{
             position: "relative",
             aspectRatio: "4 / 5",
             backgroundColor: "#FFFFFF",
             border: "2px dashed #808080",
             padding: "20px",
+            cursor: onClick ? "pointer" : undefined,
           }}
         >
           <div style={{ position: "absolute", top: "20px", right: "20px" }}>
@@ -105,6 +107,33 @@ export default function ProgressCard({
               borderColor="#000000"
             />
           </div>
+
+          {/* "+" — only the viewer's own not-started card is clickable
+              (start-writing affordance); other participants' blank cards
+              stay purely informational. */}
+          {onClick && (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "48px",
+                  fontWeight: 300,
+                  color: "#808080",
+                  lineHeight: 1,
+                }}
+              >
+                +
+              </span>
+            </div>
+          )}
         </div>
       );
     }

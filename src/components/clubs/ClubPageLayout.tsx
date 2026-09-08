@@ -10,6 +10,7 @@ import RiffCTAButton from "@/components/riffs/RiffCTAButton";
 import RevealRiffButton, {
   shouldShowReveal,
 } from "@/components/riffs/RevealRiffButton";
+import { useDraftCreation } from "@/hooks/useDraftCreation";
 import Tagline from "@/components/Tagline";
 import CreateRiffModal from "@/components/riffs/CreateRiffModal";
 import RevealConfirmModal from "@/components/riffs/RevealConfirmModal";
@@ -268,6 +269,7 @@ export default function ClubPageLayout({
   const [isCreateRiffModalOpen, setIsCreateRiffModalOpen] = useState(false);
   const [isRevealModalOpen, setIsRevealModalOpen] = useState(false);
   const { revealRiff, isRevealing } = useRevealRiff();
+  const { createDraft } = useDraftCreation();
   const [isClubDetailsModalOpen, setIsClubDetailsModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isDeleteClubModalOpen, setIsDeleteClubModalOpen] = useState(false);
@@ -948,10 +950,10 @@ export default function ClubPageLayout({
                         onClick={() => setIsRevealModalOpen(true)}
                       />
                     ) : (
-                      // Once a draft exists, the clickable card in the grid
-                      // below is the "continue writing" affordance — this
-                      // button only needs to cover joining and starting.
-                      (!isJoined || !hasDraft) && (
+                      // Once the user has joined, the clickable card in the
+                      // grid below covers both starting and continuing a
+                      // draft — this button only needs to cover joining.
+                      !isJoined && (
                         <RiffCTAButton
                           riffId={activeRiff.id}
                           isJoined={isJoined}
@@ -1014,22 +1016,33 @@ export default function ClubPageLayout({
                             paddingBottom: "8px",
                           }}
                         >
-                          {mobileActiveParticipants.map((p) => (
-                            <div
-                              key={p.user.id}
-                              style={{
-                                width: "80%",
-                                flexShrink: 0,
-                                scrollSnapAlign: "start",
-                              }}
-                            >
-                              <ProgressCard
-                                user={p.user}
-                                piece={activeAuthorPieces[p.user.id] ?? null}
-                                variant="draft"
-                              />
-                            </div>
-                          ))}
+                          {mobileActiveParticipants.map((p) => {
+                            const piece = activeAuthorPieces[p.user.id] ?? null;
+                            const isOwnNotStarted =
+                              p.user.id === currentUserId && !piece;
+
+                            return (
+                              <div
+                                key={p.user.id}
+                                style={{
+                                  width: "80%",
+                                  flexShrink: 0,
+                                  scrollSnapAlign: "start",
+                                }}
+                              >
+                                <ProgressCard
+                                  user={p.user}
+                                  piece={piece}
+                                  variant="draft"
+                                  onClick={
+                                    isOwnNotStarted
+                                      ? () => createDraft(activeRiff.id)
+                                      : undefined
+                                  }
+                                />
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
@@ -1045,10 +1058,10 @@ export default function ClubPageLayout({
                     >
                       {sortedActiveParticipants.map((p) => {
                         const piece = activeAuthorPieces[p.user.id] ?? null;
+                        const isOwnUser = p.user.id === currentUserId;
                         const isOwnDraft =
-                          p.user.id === currentUserId &&
-                          piece &&
-                          piece.submittedAt === null;
+                          isOwnUser && piece && piece.submittedAt === null;
+                        const isOwnNotStarted = isOwnUser && !piece;
 
                         return (
                           <ProgressCard
@@ -1059,7 +1072,9 @@ export default function ClubPageLayout({
                             onClick={
                               isOwnDraft
                                 ? () => router.push(`/write/${piece.id}`)
-                                : undefined
+                                : isOwnNotStarted
+                                  ? () => createDraft(activeRiff.id)
+                                  : undefined
                             }
                           />
                         );
