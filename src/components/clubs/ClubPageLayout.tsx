@@ -1001,7 +1001,7 @@ export default function ClubPageLayout({
                         marginTop: "16px",
                         borderLeft: "2px solid #000000",
                         paddingLeft: "16px",
-                        maxWidth: "600px",
+                        maxWidth: "680px",
                       }}
                     >
                       <p
