@@ -20,8 +20,9 @@ interface ProgressCardProps {
     submittedAt: string | null;
     coverImage?: string | null;
     activityLabel?: string;
-    // Only populated for the viewer's own piece (see club page's serializer) —
-    // required to render the "draft" variant's real DraftCard for the owner.
+    // Plain-text preview (truncated) — populated for every piece, including
+    // other participants' unrevealed drafts, which the "draft" variant
+    // blurs client-side rather than substituting placeholder text.
     preview?: string;
     createdAt?: string;
   } | null;
@@ -43,13 +44,6 @@ interface ProgressCardProps {
   // "noise" so existing callers (e.g. the individual riff page) are unaffected.
   variant?: "noise" | "draft";
 }
-
-// Fixed filler text for other participants' in-progress cards — never the
-// real content. Blurring real content with CSS is trivially bypassed
-// (devtools, view-source, disabling styles), which would defeat the whole
-// point of hiding work in progress from other participants.
-const BLURRED_PREVIEW_FILLER =
-  "Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua ut enim ad minim veniam quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur excepteur sint occaecat cupidatat non proident sunt in culpa qui officia deserunt mollit anim id est laborum sed ut perspiciatis unde omnis iste natus error sit voluptatem.";
 
 /* eslint-disable riff/no-non-palette-colors -- intentional pastel rotation */
 const PLACEHOLDER_COLORS = [
@@ -369,9 +363,9 @@ export default function ProgressCard({
       );
     }
 
-    // Everyone else's — same card chrome, but the body is fixed filler text
-    // (never real content) behind a blur, since a piece's word count and
-    // title are fine to reveal pre-submission but its actual writing isn't.
+    // Everyone else's — same card chrome, but the body is their real
+    // (truncated) preview text behind a CSS blur, so the blur reflects
+    // actual content instead of a fixed-length placeholder.
     return (
       <div
         style={{
@@ -445,7 +439,7 @@ export default function ProgressCard({
               pointerEvents: "none",
             }}
           >
-            {BLURRED_PREVIEW_FILLER}
+            {piece.preview}
           </p>
           <div
             style={{

@@ -54,7 +54,9 @@ interface RiffPiece {
     wordCount: number;
     createdAt: string;
     updatedAt: string;
-    // Populated only for the viewer's own piece (see page.tsx's serializer).
+    // Plain-text preview, truncated to 500 chars — populated for every
+    // piece (see page.tsx's serializer), including other participants'
+    // unrevealed drafts, which the club page blurs client-side.
     preview: string;
   };
 }
