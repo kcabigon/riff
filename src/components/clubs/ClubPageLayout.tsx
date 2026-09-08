@@ -6,7 +6,6 @@ import NavBar from "@/components/clubs/NavBar";
 import AvatarStack from "@/components/shared/AvatarStack";
 import EmptyRiffState from "@/components/riffs/EmptyRiffState";
 import ProgressCard from "@/components/riffs/ProgressCard";
-import DraftCard from "@/components/write/DraftCard";
 import RiffCTAButton from "@/components/riffs/RiffCTAButton";
 import RevealRiffButton, {
   shouldShowReveal,
@@ -53,9 +52,7 @@ interface RiffPiece {
     authorId: string;
     coverImage?: string | null;
     wordCount: number;
-    createdAt: string;
     updatedAt: string;
-    preview: string;
   };
 }
 
@@ -438,10 +435,13 @@ export default function ClubPageLayout({
     ? sortedParticipants(activeRiff.participants, activeAuthorPieces)
     : [];
 
-  // Mobile Current Riff: the user's own unsubmitted draft leads as a fixed
-  // DraftCard, everyone else scrolls as a peek carousel below it. If the
-  // user has no draft to lead with, they just take their normal sorted spot
-  // in the carousel like on desktop.
+  // Mobile Current Riff: the user's own unsubmitted draft leads as a fixed,
+  // clickable card, everyone else scrolls as a peek carousel below it. If
+  // the user has no draft to lead with, they just take their normal sorted
+  // spot in the carousel like on desktop.
+  const ownUser = activeRiff?.participants.find(
+    (p) => p.user.id === currentUserId
+  )?.user;
   const ownActivePiece = activeAuthorPieces[currentUserId] ?? null;
   const ownDraftPiece =
     ownActivePiece && ownActivePiece.submittedAt === null
@@ -977,7 +977,7 @@ export default function ClubPageLayout({
                         onClick={() => setIsRevealModalOpen(true)}
                       />
                     ) : (
-                      // Once a draft exists, its own DraftCard in the grid
+                      // Once a draft exists, the clickable card in the grid
                       // below is the "continue writing" affordance — this
                       // button only needs to cover joining and starting.
                       (!isJoined || !hasDraft) && (
@@ -992,13 +992,16 @@ export default function ClubPageLayout({
                     )}
                   </div>
 
-                  {/* Prompt row — own line below, when the riff was created with one */}
+                  {/* Prompt row — own line below, when the riff was created with one.
+                      Capped to a readable line length instead of spanning the
+                      full (up to 1240px) grid width. */}
                   {activeRiff.prompt && (
                     <div
                       style={{
                         marginTop: "16px",
                         borderLeft: "2px solid #000000",
                         paddingLeft: "16px",
+                        maxWidth: "600px",
                       }}
                     >
                       <p
@@ -1018,17 +1021,11 @@ export default function ClubPageLayout({
 
                   {isMobile ? (
                     <div style={{ marginTop: "24px" }}>
-                      {ownDraftPiece && (
+                      {ownDraftPiece && ownUser && (
                         <div style={{ marginBottom: "16px" }}>
-                          <DraftCard
-                            piece={{
-                              id: ownDraftPiece.id,
-                              title: ownDraftPiece.title,
-                              preview: ownDraftPiece.preview,
-                              wordCount: ownDraftPiece.wordCount,
-                              createdAt: ownDraftPiece.createdAt,
-                              dueDate: null,
-                            }}
+                          <ProgressCard
+                            user={ownUser}
+                            piece={ownDraftPiece}
                             onClick={() =>
                               router.push(`/write/${ownDraftPiece.id}`)
                             }
@@ -1075,36 +1072,21 @@ export default function ClubPageLayout({
                     >
                       {sortedActiveParticipants.map((p) => {
                         const piece = activeAuthorPieces[p.user.id] ?? null;
-
-                        // Your own unsubmitted draft gets the same clickable
-                        // DraftCard you'd see on My Riffs — everyone else's
-                        // progress stays a ProgressCard, submitted or not.
-                        if (
+                        const isOwnDraft =
                           p.user.id === currentUserId &&
                           piece &&
-                          piece.submittedAt === null
-                        ) {
-                          return (
-                            <DraftCard
-                              key={p.user.id}
-                              piece={{
-                                id: piece.id,
-                                title: piece.title,
-                                preview: piece.preview,
-                                wordCount: piece.wordCount,
-                                createdAt: piece.createdAt,
-                                dueDate: null,
-                              }}
-                              onClick={() => router.push(`/write/${piece.id}`)}
-                            />
-                          );
-                        }
+                          piece.submittedAt === null;
 
                         return (
                           <ProgressCard
                             key={p.user.id}
                             user={p.user}
                             piece={piece}
+                            onClick={
+                              isOwnDraft
+                                ? () => router.push(`/write/${piece.id}`)
+                                : undefined
+                            }
                           />
                         );
                       })}

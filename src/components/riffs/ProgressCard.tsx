@@ -25,6 +25,9 @@ interface ProgressCardProps {
   // False hides the submitted/last-active date line — used where the date
   // isn't meaningful (e.g. the club page's past-riffs grouped view).
   showDate?: boolean;
+  // Present only for the viewer's own in-progress piece — makes the whole
+  // card clickable (to jump back into writing) instead of purely informational.
+  onClick?: () => void;
 }
 
 /* eslint-disable riff/no-non-palette-colors -- intentional pastel rotation */
@@ -43,6 +46,7 @@ export default function ProgressCard({
   piece,
   revealed = false,
   showDate = true,
+  onClick,
 }: ProgressCardProps) {
   const cardBase: React.CSSProperties = {
     position: "relative",
@@ -260,7 +264,10 @@ export default function ProgressCard({
 
   // ── In progress ──────────────────────────────────────────────────────────
   return (
-    <div style={{ ...cardBase }}>
+    <div
+      onClick={onClick}
+      style={{ ...cardBase, cursor: onClick ? "pointer" : undefined }}
+    >
       <NoiseBackground fillMode="cover" />
 
       {/* Dark overlay */}
