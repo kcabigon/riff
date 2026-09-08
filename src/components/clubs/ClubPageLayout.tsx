@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import NavBar from "@/components/clubs/NavBar";
 import AvatarStack from "@/components/shared/AvatarStack";
+import MobileCardCarousel from "@/components/shared/MobileCardCarousel";
 import EmptyRiffState from "@/components/riffs/EmptyRiffState";
 import ProgressCard from "@/components/riffs/ProgressCard";
 import RiffCTAButton from "@/components/riffs/RiffCTAButton";
@@ -478,22 +479,6 @@ export default function ClubPageLayout({
         currentUserId
       )
     : [];
-
-  // Mobile Current Riff: the user's own unsubmitted draft leads as a fixed,
-  // clickable card, everyone else scrolls as a peek carousel below it. If
-  // the user has no draft to lead with, they just take their normal sorted
-  // spot in the carousel like on desktop.
-  const ownUser = activeRiff?.participants.find(
-    (p) => p.user.id === currentUserId
-  )?.user;
-  const ownActivePiece = activeAuthorPieces[currentUserId] ?? null;
-  const ownDraftPiece =
-    ownActivePiece && ownActivePiece.submittedAt === null
-      ? ownActivePiece
-      : null;
-  const mobileActiveParticipants = ownDraftPiece
-    ? sortedActiveParticipants.filter((p) => p.user.id !== currentUserId)
-    : sortedActiveParticipants;
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
@@ -1025,95 +1010,55 @@ export default function ClubPageLayout({
                     </div>
                   )}
 
-                  {isMobile ? (
-                    <div style={{ marginTop: "24px" }}>
-                      {ownDraftPiece && ownUser && (
-                        <div style={{ marginBottom: "16px" }}>
-                          <ProgressCard
-                            user={ownUser}
-                            piece={ownDraftPiece}
-                            variant="draft"
-                            onClick={() =>
-                              router.push(`/write/${ownDraftPiece.id}`)
-                            }
-                          />
-                        </div>
-                      )}
-                      {mobileActiveParticipants.length > 0 && (
-                        <div
-                          style={{
-                            display: "flex",
-                            gap: "12px",
-                            overflowX: "auto",
-                            scrollSnapType: "x mandatory",
-                            paddingBottom: "8px",
-                          }}
-                        >
-                          {mobileActiveParticipants.map((p) => {
-                            const piece = activeAuthorPieces[p.user.id] ?? null;
-                            const isOwnNotStarted =
-                              p.user.id === currentUserId && !piece;
+                  {(() => {
+                    // Own card always leads (sortedActiveParticipants
+                    // guarantees it), whether not-started, in-progress, or
+                    // submitted — this is the single card-render path shared
+                    // by both the mobile carousel and the desktop grid below.
+                    const renderCard = (p: RiffParticipant) => {
+                      const piece = activeAuthorPieces[p.user.id] ?? null;
+                      const isOwnUser = p.user.id === currentUserId;
+                      const isOwnDraft =
+                        isOwnUser && piece && piece.submittedAt === null;
+                      const isOwnNotStarted = isOwnUser && !piece;
 
-                            return (
-                              <div
-                                key={p.user.id}
-                                style={{
-                                  width: "80%",
-                                  flexShrink: 0,
-                                  scrollSnapAlign: "start",
-                                }}
-                              >
-                                <ProgressCard
-                                  user={p.user}
-                                  piece={piece}
-                                  variant="draft"
-                                  onClick={
-                                    isOwnNotStarted
-                                      ? () => createDraft(activeRiff.id)
-                                      : undefined
-                                  }
-                                />
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns:
-                          "repeat(auto-fill, minmax(280px, 1fr))",
-                        gap: "24px",
-                        marginTop: "24px",
-                      }}
-                    >
-                      {sortedActiveParticipants.map((p) => {
-                        const piece = activeAuthorPieces[p.user.id] ?? null;
-                        const isOwnUser = p.user.id === currentUserId;
-                        const isOwnDraft =
-                          isOwnUser && piece && piece.submittedAt === null;
-                        const isOwnNotStarted = isOwnUser && !piece;
+                      return (
+                        <ProgressCard
+                          key={p.user.id}
+                          user={p.user}
+                          piece={piece}
+                          variant="draft"
+                          onClick={
+                            isOwnDraft
+                              ? () => router.push(`/write/${piece.id}`)
+                              : isOwnNotStarted
+                                ? () => createDraft(activeRiff.id)
+                                : undefined
+                          }
+                        />
+                      );
+                    };
 
-                        return (
-                          <ProgressCard
-                            key={p.user.id}
-                            user={p.user}
-                            piece={piece}
-                            variant="draft"
-                            onClick={
-                              isOwnDraft
-                                ? () => router.push(`/write/${piece.id}`)
-                                : isOwnNotStarted
-                                  ? () => createDraft(activeRiff.id)
-                                  : undefined
-                            }
-                          />
-                        );
-                      })}
-                    </div>
-                  )}
+                    return isMobile ? (
+                      <div style={{ marginTop: "24px" }}>
+                        <MobileCardCarousel>
+                          {sortedActiveParticipants.map(renderCard)}
+                        </MobileCardCarousel>
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns:
+                            "repeat(auto-fill, minmax(280px, 1fr))",
+                          gap: "24px",
+                          marginTop: "24px",
+                        }}
+                      >
+                        {sortedActiveParticipants.map(renderCard)}
+                      </div>
+                    );
+                  })()}
                 </>
               ) : (
                 <div style={{ marginTop: "24px" }}>
@@ -1147,10 +1092,30 @@ export default function ClubPageLayout({
               >
                 {unfinishedRevealed.map((riff) => {
                   const authorPieces = pieceByAuthor(riff);
+                  // Unread pieces lead here instead of the viewer's own —
+                  // stable sort preserves sortedParticipants' tier/recency
+                  // order within each unread/read group.
                   const piecesToShow = sortedParticipants(
                     riff.participants,
                     authorPieces
-                  ).filter((p) => authorPieces[p.user.id]?.submittedAt);
+                  )
+                    .filter((p) => authorPieces[p.user.id]?.submittedAt)
+                    .sort(
+                      (a, b) =>
+                        Number(!isPieceUnread(authorPieces[a.user.id])) -
+                        Number(!isPieceUnread(authorPieces[b.user.id]))
+                    );
+
+                  const renderCard = (p: RiffParticipant) => (
+                    <ProgressCard
+                      key={p.user.id}
+                      user={p.user}
+                      piece={authorPieces[p.user.id]}
+                      revealed={true}
+                      showDate={false}
+                      isUnread={isPieceUnread(authorPieces[p.user.id])}
+                    />
+                  );
 
                   return (
                     <div key={riff.id}>
@@ -1169,25 +1134,22 @@ export default function ClubPageLayout({
                       >
                         {getRiffDisplayTitle(riff)}
                       </h3>
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns:
-                            "repeat(auto-fill, minmax(280px, 1fr))",
-                          gap: "24px",
-                        }}
-                      >
-                        {piecesToShow.map((p) => (
-                          <ProgressCard
-                            key={p.user.id}
-                            user={p.user}
-                            piece={authorPieces[p.user.id]}
-                            revealed={true}
-                            showDate={false}
-                            isUnread={isPieceUnread(authorPieces[p.user.id])}
-                          />
-                        ))}
-                      </div>
+                      {isMobile ? (
+                        <MobileCardCarousel>
+                          {piecesToShow.map(renderCard)}
+                        </MobileCardCarousel>
+                      ) : (
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns:
+                              "repeat(auto-fill, minmax(280px, 1fr))",
+                            gap: "24px",
+                          }}
+                        >
+                          {piecesToShow.map(renderCard)}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -1211,6 +1173,19 @@ export default function ClubPageLayout({
             >
               {pastRiffs.map((riff) => {
                 const authorPieces = pieceByAuthor(riff);
+                // Own piece leads — stable sort preserves the existing
+                // submitted-recency order for everyone else.
+                const piecesToShow = sortedParticipants(
+                  riff.participants,
+                  authorPieces
+                )
+                  .filter((p) => authorPieces[p.user.id]?.submittedAt)
+                  .sort(
+                    (a, b) =>
+                      Number(b.user.id === currentUserId) -
+                      Number(a.user.id === currentUserId)
+                  );
+
                 return (
                   <div key={riff.id}>
                     <h3
@@ -1228,25 +1203,34 @@ export default function ClubPageLayout({
                     >
                       {getRiffDisplayTitle(riff)}
                     </h3>
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "row",
-                        gap: isMobile ? "12px" : "24px",
-                        overflowX: "auto",
-                        scrollSnapType: isMobile ? "x mandatory" : undefined,
-                        paddingBottom: "8px",
-                      }}
-                    >
-                      {sortedParticipants(riff.participants, authorPieces)
-                        .filter((p) => authorPieces[p.user.id]?.submittedAt)
-                        .map((p) => (
+                    {isMobile ? (
+                      <MobileCardCarousel>
+                        {piecesToShow.map((p) => (
+                          <ProgressCard
+                            key={p.user.id}
+                            user={p.user}
+                            piece={authorPieces[p.user.id]}
+                            revealed={true}
+                            showDate={false}
+                          />
+                        ))}
+                      </MobileCardCarousel>
+                    ) : (
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "row",
+                          gap: "24px",
+                          overflowX: "auto",
+                          paddingBottom: "8px",
+                        }}
+                      >
+                        {piecesToShow.map((p) => (
                           <div
                             key={p.user.id}
                             style={{
-                              width: isMobile ? "80%" : `${desktopCardWidth}px`,
+                              width: `${desktopCardWidth}px`,
                               flexShrink: 0,
-                              scrollSnapAlign: isMobile ? "start" : undefined,
                             }}
                           >
                             <ProgressCard
@@ -1257,7 +1241,8 @@ export default function ClubPageLayout({
                             />
                           </div>
                         ))}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}
