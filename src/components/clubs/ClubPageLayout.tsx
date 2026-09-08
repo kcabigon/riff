@@ -142,61 +142,6 @@ function SectionHeading({
   );
 }
 
-// The date badge from RiffEventCard (white card, black border, thin red
-// strip at the top, month + day) — reused here to show the current riff's
-// real deadline next to its title.
-function DeadlineBadge({ date }: { date: Date }) {
-  const month = date
-    .toLocaleDateString("en-US", { month: "short" })
-    .toUpperCase();
-
-  return (
-    <div
-      style={{
-        flexShrink: 0,
-        backgroundColor: "#FFFFFF",
-        border: "2px solid #000000",
-        boxShadow: "2px 2px 0px 0px #000000",
-        overflow: "hidden",
-      }}
-    >
-      <div style={{ height: "8px", backgroundColor: "#DC2626" }} />
-      <div
-        style={{
-          padding: "8px 12px",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          lineHeight: 1,
-        }}
-      >
-        <span
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "11px",
-            fontWeight: 700,
-            color: "#808080",
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-          }}
-        >
-          {month}
-        </span>
-        <span
-          style={{
-            fontFamily: "var(--font-dm-serif-text)",
-            fontSize: "22px",
-            fontWeight: 400,
-            color: "#000000",
-          }}
-        >
-          {date.getDate()}
-        </span>
-      </div>
-    </div>
-  );
-}
-
 // Whole days remaining until the deadline, clamped at 0.
 const daysUntilDeadline = (deadline: string): number => {
   const diffMs = new Date(deadline).getTime() - Date.now();
@@ -907,110 +852,235 @@ export default function ClubPageLayout({
 
               {activeRiff ? (
                 <>
-                  {/* Badge-left, title-column-right, CTA-right — mirrors
-                      RiffEventCard's top row from My Riffs. */}
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "12px",
-                      marginTop: "16px",
-                      flexWrap: "wrap",
-                    }}
-                  >
-                    {activeRiff.deadline && (
-                      <DeadlineBadge date={new Date(activeRiff.deadline)} />
-                    )}
+                  {/* Desktop stacks the prompt into the same column as the
+                      title/days-left, right-aligning the CTA across from it —
+                      mobile keeps title/days-left on their own row, with the
+                      prompt as its own line below. */}
+                  {isMobile ? (
+                    <>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "12px",
+                          marginTop: "16px",
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "4px",
+                            flex: 1,
+                            minWidth: 0,
+                          }}
+                        >
+                          <h2
+                            onClick={() =>
+                              router.push(`/riffs/${activeRiff.id}`)
+                            }
+                            className="riff-row-link"
+                            style={{
+                              cursor: "pointer",
+                              display: "inline-block",
+                              fontFamily: "var(--font-dm-serif-text)",
+                              fontSize: "24px",
+                              fontWeight: 400,
+                              color: "#000000",
+                              margin: 0,
+                            }}
+                          >
+                            {getRiffDisplayTitle(
+                              activeRiff,
+                              predictedVolumeNumber
+                            )}
+                          </h2>
+                          <p
+                            style={{
+                              fontFamily: "var(--font-dm-sans)",
+                              fontSize: "14px",
+                              fontWeight: 300,
+                              color: activeRiff.deadline
+                                ? "#DC2626"
+                                : "#808080",
+                              margin: 0,
+                            }}
+                          >
+                            {deadlinePassed
+                              ? "Deadline passed"
+                              : activeRiff.deadline
+                                ? (() => {
+                                    const days = daysUntilDeadline(
+                                      activeRiff.deadline
+                                    );
+                                    return `${days} ${days === 1 ? "day" : "days"} left`;
+                                  })()
+                                : "No deadline"}
+                          </p>
+                        </div>
+
+                        {showReveal ? (
+                          <RevealRiffButton
+                            onClick={() => setIsRevealModalOpen(true)}
+                          />
+                        ) : (
+                          // Once the user has joined, the clickable card in
+                          // the grid below covers both starting and
+                          // continuing a draft — this button only needs to
+                          // cover joining.
+                          !isJoined && (
+                            <RiffCTAButton
+                              riffId={activeRiff.id}
+                              isJoined={isJoined}
+                              hasDraft={hasDraft}
+                              hasSubmitted={hasSubmitted}
+                              existingPieceId={existingPieceId}
+                            />
+                          )
+                        )}
+                      </div>
+
+                      {/* Prompt row — own line below, when the riff was
+                          created with one. Capped to a readable line length
+                          instead of spanning the full (up to 1240px) grid
+                          width. */}
+                      {activeRiff.prompt && (
+                        <div
+                          style={{
+                            marginTop: "16px",
+                            borderLeft: "2px solid #000000",
+                            paddingLeft: "16px",
+                            maxWidth: "780px",
+                          }}
+                        >
+                          <p
+                            style={{
+                              fontFamily: "var(--font-dm-sans)",
+                              fontSize: "16px",
+                              fontWeight: 300,
+                              color: "#000000",
+                              margin: 0,
+                              lineHeight: 1.5,
+                            }}
+                          >
+                            {activeRiff.prompt}
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  ) : (
                     <div
                       style={{
                         display: "flex",
-                        flexDirection: "column",
-                        gap: "4px",
-                        flex: 1,
-                        minWidth: 0,
-                      }}
-                    >
-                      <h2
-                        onClick={() => router.push(`/riffs/${activeRiff.id}`)}
-                        className="riff-row-link"
-                        style={{
-                          cursor: "pointer",
-                          display: "inline-block",
-                          fontFamily: "var(--font-dm-serif-text)",
-                          fontSize: "24px",
-                          fontWeight: 400,
-                          color: "#000000",
-                          margin: 0,
-                        }}
-                      >
-                        {getRiffDisplayTitle(activeRiff, predictedVolumeNumber)}
-                      </h2>
-                      <p
-                        style={{
-                          fontFamily: "var(--font-dm-sans)",
-                          fontSize: "14px",
-                          fontWeight: 300,
-                          color: activeRiff.deadline ? "#DC2626" : "#808080",
-                          margin: 0,
-                        }}
-                      >
-                        {deadlinePassed
-                          ? "Deadline passed"
-                          : activeRiff.deadline
-                            ? (() => {
-                                const days = daysUntilDeadline(
-                                  activeRiff.deadline
-                                );
-                                return `${days} ${days === 1 ? "day" : "days"} left`;
-                              })()
-                            : "No deadline"}
-                      </p>
-                    </div>
-
-                    {showReveal ? (
-                      <RevealRiffButton
-                        onClick={() => setIsRevealModalOpen(true)}
-                      />
-                    ) : (
-                      // Once the user has joined, the clickable card in the
-                      // grid below covers both starting and continuing a
-                      // draft — this button only needs to cover joining.
-                      !isJoined && (
-                        <RiffCTAButton
-                          riffId={activeRiff.id}
-                          isJoined={isJoined}
-                          hasDraft={hasDraft}
-                          hasSubmitted={hasSubmitted}
-                          existingPieceId={existingPieceId}
-                        />
-                      )
-                    )}
-                  </div>
-
-                  {/* Prompt row — own line below, when the riff was created with one.
-                      Capped to a readable line length instead of spanning the
-                      full (up to 1240px) grid width. */}
-                  {activeRiff.prompt && (
-                    <div
-                      style={{
+                        alignItems: "flex-start",
+                        justifyContent: "space-between",
+                        gap: "24px",
                         marginTop: "16px",
-                        borderLeft: "2px solid #000000",
-                        paddingLeft: "16px",
-                        maxWidth: "780px",
                       }}
                     >
-                      <p
+                      <div
                         style={{
-                          fontFamily: "var(--font-dm-sans)",
-                          fontSize: "16px",
-                          fontWeight: 300,
-                          color: "#000000",
-                          margin: 0,
-                          lineHeight: 1.5,
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "4px",
+                          flex: 1,
+                          minWidth: 0,
                         }}
                       >
-                        {activeRiff.prompt}
-                      </p>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "baseline",
+                            gap: "12px",
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          <h2
+                            onClick={() =>
+                              router.push(`/riffs/${activeRiff.id}`)
+                            }
+                            className="riff-row-link"
+                            style={{
+                              cursor: "pointer",
+                              display: "inline-block",
+                              fontFamily: "var(--font-dm-serif-text)",
+                              fontSize: "24px",
+                              fontWeight: 400,
+                              color: "#000000",
+                              margin: 0,
+                            }}
+                          >
+                            {getRiffDisplayTitle(
+                              activeRiff,
+                              predictedVolumeNumber
+                            )}
+                          </h2>
+                          <p
+                            style={{
+                              fontFamily: "var(--font-dm-sans)",
+                              fontSize: "14px",
+                              fontWeight: 300,
+                              color: activeRiff.deadline
+                                ? "#DC2626"
+                                : "#808080",
+                              margin: 0,
+                            }}
+                          >
+                            {deadlinePassed
+                              ? "Deadline passed"
+                              : activeRiff.deadline
+                                ? (() => {
+                                    const days = daysUntilDeadline(
+                                      activeRiff.deadline
+                                    );
+                                    return `${days} ${days === 1 ? "day" : "days"} left`;
+                                  })()
+                                : "No deadline"}
+                          </p>
+                        </div>
+                        {activeRiff.prompt && (
+                          <div
+                            style={{
+                              marginTop: "8px",
+                              borderLeft: "2px solid #000000",
+                              paddingLeft: "16px",
+                              maxWidth: "780px",
+                            }}
+                          >
+                            <p
+                              style={{
+                                fontFamily: "var(--font-dm-sans)",
+                                fontSize: "16px",
+                                fontWeight: 300,
+                                color: "#000000",
+                                margin: 0,
+                                lineHeight: 1.5,
+                              }}
+                            >
+                              {activeRiff.prompt}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      <div style={{ flexShrink: 0 }}>
+                        {showReveal ? (
+                          <RevealRiffButton
+                            onClick={() => setIsRevealModalOpen(true)}
+                          />
+                        ) : (
+                          !isJoined && (
+                            <RiffCTAButton
+                              riffId={activeRiff.id}
+                              isJoined={isJoined}
+                              hasDraft={hasDraft}
+                              hasSubmitted={hasSubmitted}
+                              existingPieceId={existingPieceId}
+                            />
+                          )
+                        )}
+                      </div>
                     </div>
                   )}
 
