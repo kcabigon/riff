@@ -19,6 +19,12 @@ interface ProgressCardProps {
     coverImage?: string | null;
     activityLabel?: string;
   } | null;
+  // True once the riff this piece belongs to has been revealed — drops the
+  // lock icon, since "submitted" no longer means "hidden until reveal."
+  revealed?: boolean;
+  // False hides the submitted/last-active date line — used where the date
+  // isn't meaningful (e.g. the club page's past-riffs grouped view).
+  showDate?: boolean;
 }
 
 /* eslint-disable riff/no-non-palette-colors -- intentional pastel rotation */
@@ -32,7 +38,12 @@ const PLACEHOLDER_COLORS = [
 ];
 /* eslint-enable riff/no-non-palette-colors */
 
-export default function ProgressCard({ user, piece }: ProgressCardProps) {
+export default function ProgressCard({
+  user,
+  piece,
+  revealed = false,
+  showDate = true,
+}: ProgressCardProps) {
   const cardBase: React.CSSProperties = {
     position: "relative",
     border: "1px solid #000000",
@@ -135,28 +146,30 @@ export default function ProgressCard({ user, piece }: ProgressCardProps) {
           }}
         />
 
-        {/* Lock icon — top center */}
-        <div
-          style={{
-            position: "absolute",
-            top: "12px",
-            left: 0,
-            right: 0,
-            display: "flex",
-            justifyContent: "center",
-            zIndex: 3,
-          }}
-        >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="white"
-            xmlns="http://www.w3.org/2000/svg"
+        {/* Lock icon — top center (only while hidden pending reveal) */}
+        {!revealed && (
+          <div
+            style={{
+              position: "absolute",
+              top: "12px",
+              left: 0,
+              right: 0,
+              display: "flex",
+              justifyContent: "center",
+              zIndex: 3,
+            }}
           >
-            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
-          </svg>
-        </div>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="white"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
+            </svg>
+          </div>
+        )}
 
         {/* Title — vertically centered */}
         <div
@@ -192,29 +205,31 @@ export default function ProgressCard({ user, piece }: ProgressCardProps) {
         </div>
 
         {/* Submitted label — fixed position above avatar */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: "56px",
-            left: 0,
-            right: 0,
-            display: "flex",
-            justifyContent: "center",
-            zIndex: 2,
-          }}
-        >
-          <p
+        {showDate && (
+          <div
             style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              color: "rgba(255, 255, 255, 0.7)",
-              margin: 0,
+              position: "absolute",
+              bottom: "56px",
+              left: 0,
+              right: 0,
+              display: "flex",
+              justifyContent: "center",
+              zIndex: 2,
             }}
           >
-            {relativeTime(piece.submittedAt)}
-          </p>
-        </div>
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "16px",
+                fontWeight: 300,
+                color: "rgba(255, 255, 255, 0.7)",
+                margin: 0,
+              }}
+            >
+              {relativeTime(piece.submittedAt)}
+            </p>
+          </div>
+        )}
 
         {/* Author avatar — bottom center */}
         <div
@@ -320,17 +335,19 @@ export default function ProgressCard({ user, piece }: ProgressCardProps) {
           {piece.wordCount.toLocaleString()}{" "}
           {piece.wordCount === 1 ? "word" : "words"}
         </p>
-        <p
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
-            fontWeight: 300,
-            color: "rgba(255, 255, 255, 0.7)",
-            margin: 0,
-          }}
-        >
-          {piece.activityLabel ?? relativeTime(piece.updatedAt)}
-        </p>
+        {showDate && (
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "16px",
+              fontWeight: 300,
+              color: "rgba(255, 255, 255, 0.7)",
+              margin: 0,
+            }}
+          >
+            {piece.activityLabel ?? relativeTime(piece.updatedAt)}
+          </p>
+        )}
       </div>
 
       {/* Avatar — bottom */}

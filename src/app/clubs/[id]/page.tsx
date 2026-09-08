@@ -3,7 +3,11 @@ import type { Metadata } from "next";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import ClubPageLayout from "@/components/clubs/ClubPageLayout";
-import { getSubmittedPieces, getTotalWordCount } from "@/lib/riff-utils";
+import {
+  getSubmittedPieces,
+  getTotalWordCount,
+  getContentPreview,
+} from "@/lib/riff-utils";
 
 export async function generateMetadata({
   params,
@@ -95,6 +99,9 @@ export default async function ClubPage({
                 authorId: true,
                 coverImage: true,
                 wordCount: true,
+                currentContent: true,
+                createdAt: true,
+                updatedAt: true,
               },
             },
           },
@@ -135,11 +142,32 @@ export default async function ClubPage({
     0
   );
 
-  // Serialize dates to strings for client component boundary (Prisma returns Date objects)
+  // Serialize dates to strings for client component boundary (Prisma returns Date objects).
+  // Never ship currentContent for pieces authored by someone else — only the
+  // current user's own draft preview is ever rendered client-side, and this
+  // is fetched pre-reveal, so leaking it in the RSC payload would spoil
+  // unrevealed submissions for every other participant.
   const serializeRiff = (r: (typeof riffs)[0]) => ({
     ...r,
     createdAt: r.createdAt.toISOString(),
     deadline: r.deadline ? r.deadline.toISOString() : null,
+    pieces: r.pieces.map((pr) => ({
+      ...pr,
+      submittedAt: pr.submittedAt ? pr.submittedAt.toISOString() : null,
+      piece: {
+        id: pr.piece.id,
+        title: pr.piece.title,
+        authorId: pr.piece.authorId,
+        coverImage: pr.piece.coverImage,
+        wordCount: pr.piece.wordCount,
+        createdAt: pr.piece.createdAt.toISOString(),
+        updatedAt: pr.piece.updatedAt.toISOString(),
+        preview:
+          pr.piece.authorId === userId
+            ? getContentPreview(pr.piece.currentContent, 200)
+            : "",
+      },
+    })),
   });
 
   // Separate riffs by status

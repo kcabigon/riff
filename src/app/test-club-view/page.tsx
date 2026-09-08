@@ -68,6 +68,10 @@ const club = {
 // ---------------------------------------------------------------------------
 // Active riff — you joined, Alice submitted, Bob & Carol waiting, Dave didn't join
 // ---------------------------------------------------------------------------
+const activeRiffCreatedAt = new Date(
+  Date.now() - 3 * 24 * 60 * 60 * 1000
+).toISOString(); // 3 days ago
+
 const activeRiff = {
   id: "riff-active-1",
   title: "Write About a Place",
@@ -75,7 +79,7 @@ const activeRiff = {
     "Describe a place that has changed you — not where you live now, but somewhere you carry with you. Lean into the sensory details.",
   deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 1 week out
   status: "ACTIVE",
-  createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+  createdAt: activeRiffCreatedAt,
   creator: ME,
   participants: [{ user: ME }, { user: ALICE }, { user: BOB }, { user: CAROL }],
   pieces: [
@@ -88,6 +92,10 @@ const activeRiff = {
         currentContent:
           "<p>I first arrived at Prague's main station on a grey Tuesday in March. The ceiling arches above you like the ribcage of some enormous creature.</p>",
         wordCount: 58,
+        createdAt: activeRiffCreatedAt,
+        updatedAt: activeRiffCreatedAt,
+        preview:
+          "I first arrived at Prague's main station on a grey Tuesday in March. The ceiling arches above you like the ribcage of some enormous creature.",
       },
     },
   ],
@@ -96,13 +104,15 @@ const activeRiff = {
 // ---------------------------------------------------------------------------
 // Completed riff 1 — 3 pieces, plain text only → placeholder mosaic colors
 // ---------------------------------------------------------------------------
+const completedRiff1CreatedAt = new Date("2025-12-01T10:00:00Z").toISOString();
+
 const completedRiff1 = {
   id: "riff-completed-1",
   title: "Childhood Memories",
   prompt: "Write about something you remember from before you were ten.",
   deadline: new Date("2026-01-15T23:59:59Z").toISOString(),
   status: "COMPLETED",
-  createdAt: new Date("2025-12-01T10:00:00Z").toISOString(),
+  createdAt: completedRiff1CreatedAt,
   creator: ME,
   participants: [{ user: ME }, { user: ALICE }, { user: BOB }],
   pieces: [
@@ -115,6 +125,10 @@ const completedRiff1 = {
         currentContent:
           "<p>The summer I turned seven, my father brought home a red bicycle. It was too big for me — my feet barely grazed the pedals — but I rode it anyway.</p>",
         wordCount: 42,
+        createdAt: completedRiff1CreatedAt,
+        updatedAt: completedRiff1CreatedAt,
+        preview:
+          "The summer I turned seven, my father brought home a red bicycle. It was too big for me — my feet barely grazed the pedals — but I rode it anyway.",
       },
     },
     {
@@ -126,6 +140,10 @@ const completedRiff1 = {
         currentContent:
           "<p>Saturday mornings meant cartoons and toast with too much butter. My sister and I would camp on the living room floor with blankets.</p>",
         wordCount: 36,
+        createdAt: completedRiff1CreatedAt,
+        updatedAt: completedRiff1CreatedAt,
+        preview:
+          "Saturday mornings meant cartoons and toast with too much butter. My sister and I would camp on the living room floor with blankets.",
       },
     },
     {
@@ -137,6 +155,10 @@ const completedRiff1 = {
         currentContent:
           "<p>The kitchen smelled like cardamom and something I still can't name. She never measured anything. She just knew.</p>",
         wordCount: 38,
+        createdAt: completedRiff1CreatedAt,
+        updatedAt: completedRiff1CreatedAt,
+        preview:
+          "The kitchen smelled like cardamom and something I still can't name. She never measured anything. She just knew.",
       },
     },
   ],
@@ -145,13 +167,15 @@ const completedRiff1 = {
 // ---------------------------------------------------------------------------
 // Completed riff 2 — 2 pieces, one with an embedded <img> → mixed mosaic
 // ---------------------------------------------------------------------------
+const completedRiff2CreatedAt = new Date("2025-11-10T10:00:00Z").toISOString();
+
 const completedRiff2 = {
   id: "riff-completed-2",
   title: "Objects We Keep",
   prompt: "Pick an object you've carried for years. Why?",
   deadline: new Date("2025-12-20T23:59:59Z").toISOString(),
   status: "COMPLETED",
-  createdAt: new Date("2025-11-10T10:00:00Z").toISOString(),
+  createdAt: completedRiff2CreatedAt,
   creator: ME,
   participants: [{ user: CAROL }, { user: DAVE }],
   pieces: [
@@ -164,6 +188,10 @@ const completedRiff2 = {
         currentContent:
           '<p>My grandfather\'s compass stopped working in 1998, but I still carry it.</p><img src="https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=400" alt="compass"><p>It points nowhere now, but holding it makes me feel oriented.</p>',
         wordCount: 34,
+        createdAt: completedRiff2CreatedAt,
+        updatedAt: completedRiff2CreatedAt,
+        preview:
+          "My grandfather's compass stopped working in 1998, but I still carry it. It points nowhere now, but holding it makes me feel oriented.",
       },
     },
     {
@@ -175,6 +203,10 @@ const completedRiff2 = {
         currentContent:
           "<p>I wrote it when I was nineteen. Folded it into thirds and put it in the front pocket of my wallet, where it stayed for six years.</p>",
         wordCount: 42,
+        createdAt: completedRiff2CreatedAt,
+        updatedAt: completedRiff2CreatedAt,
+        preview:
+          "I wrote it when I was nineteen. Folded it into thirds and put it in the front pocket of my wallet, where it stayed for six years.",
       },
     },
   ],

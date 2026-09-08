@@ -4,9 +4,14 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import NavBar from "@/components/clubs/NavBar";
 import AvatarStack from "@/components/shared/AvatarStack";
-import RiffCard from "@/components/riffs/RiffCard";
 import EmptyRiffState from "@/components/riffs/EmptyRiffState";
-import CompletedRiffCard from "@/components/riffs/CompletedRiffCard";
+import ProgressCard from "@/components/riffs/ProgressCard";
+import DraftCard from "@/components/write/DraftCard";
+import RiffCTAButton from "@/components/riffs/RiffCTAButton";
+import RevealRiffButton, {
+  shouldShowReveal,
+} from "@/components/riffs/RevealRiffButton";
+import Tagline from "@/components/Tagline";
 import CreateRiffModal from "@/components/riffs/CreateRiffModal";
 import RevealConfirmModal from "@/components/riffs/RevealConfirmModal";
 import ReadyToRevealCard from "@/components/riffs/ReadyToRevealCard";
@@ -22,6 +27,7 @@ import {
   getSubmittedPieces,
   hasUnreadPieces,
   isRiffFullyRead,
+  isPastDeadline,
   getWaitingParticipants,
   getSubmittedParticipants,
 } from "@/lib/riff-utils";
@@ -47,6 +53,9 @@ interface RiffPiece {
     authorId: string;
     coverImage?: string | null;
     wordCount: number;
+    createdAt: string;
+    updatedAt: string;
+    preview: string;
   };
 }
 
@@ -103,6 +112,139 @@ interface ClubPageLayoutProps {
   initialWelcome?: "host" | "member";
   predictedVolumeNumber?: number;
 }
+
+// Same tagline-heading treatment as the My Riffs page's section headers —
+// used here for "CURRENT RIFF" / "PAST RIFFS" instead of a plain <h2>.
+function SectionHeading({
+  text,
+  color,
+  width,
+}: {
+  text: string;
+  color: string;
+  width: number;
+}) {
+  return (
+    <Tagline
+      text={text}
+      color={color}
+      width={width}
+      fontSize={16}
+      fontFamily="var(--font-dm-sans)"
+      fontWeight={700}
+      align="left"
+      heightPadding={9}
+    />
+  );
+}
+
+// The date badge from RiffEventCard (white card, black border, thin red
+// strip at the top, month + day) — reused here to show the current riff's
+// real deadline next to its title.
+function DeadlineBadge({ date }: { date: Date }) {
+  const month = date
+    .toLocaleDateString("en-US", { month: "short" })
+    .toUpperCase();
+
+  return (
+    <div
+      style={{
+        flexShrink: 0,
+        backgroundColor: "#FFFFFF",
+        border: "2px solid #000000",
+        boxShadow: "2px 2px 0px 0px #000000",
+        overflow: "hidden",
+      }}
+    >
+      <div style={{ height: "8px", backgroundColor: "#DC2626" }} />
+      <div
+        style={{
+          padding: "8px 12px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          lineHeight: 1,
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "11px",
+            fontWeight: 700,
+            color: "#808080",
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+          }}
+        >
+          {month}
+        </span>
+        <span
+          style={{
+            fontFamily: "var(--font-dm-serif-text)",
+            fontSize: "22px",
+            fontWeight: 400,
+            color: "#000000",
+          }}
+        >
+          {date.getDate()}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// Whole days remaining until the deadline, clamped at 0.
+const daysUntilDeadline = (deadline: string): number => {
+  const diffMs = new Date(deadline).getTime() - Date.now();
+  return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+};
+
+// Groups a riff's pieces by author id for quick per-participant lookup.
+// submittedAt is narrowed to string here — pieces reaching this client
+// component are always pre-serialized by the server (see page.tsx).
+const pieceByAuthor = (
+  riff: Riff
+): Record<
+  string,
+  RiffPiece["piece"] & {
+    submittedAt: string | null;
+  }
+> =>
+  Object.fromEntries(
+    riff.pieces.map((pr) => [
+      pr.piece.authorId,
+      { ...pr.piece, submittedAt: pr.submittedAt as string | null },
+    ])
+  );
+
+// Every participant gets a card — sort so submitted rises above in-progress
+// above not-started, matching the individual riff page's ordering.
+const sortedParticipants = (
+  participants: RiffParticipant[],
+  authorPieces: Record<
+    string,
+    RiffPiece["piece"] & {
+      submittedAt: string | null;
+    }
+  >
+) =>
+  [...participants].sort((a, b) => {
+    const pa = authorPieces[a.user.id];
+    const pb = authorPieces[b.user.id];
+    const tierA = !pa ? 2 : pa.submittedAt ? 0 : 1;
+    const tierB = !pb ? 2 : pb.submittedAt ? 0 : 1;
+    if (tierA !== tierB) return tierA - tierB;
+    if (tierA === 0)
+      return (
+        new Date(pb.submittedAt!).getTime() -
+        new Date(pa.submittedAt!).getTime()
+      );
+    if (tierA === 1)
+      return (
+        new Date(pb.updatedAt).getTime() - new Date(pa.updatedAt).getTime()
+      );
+    return 0;
+  });
 
 export default function ClubPageLayout({
   club,
@@ -261,11 +403,53 @@ export default function ClubPageLayout({
         (p) => p.piece.authorId === currentUserId && p.submittedAt !== null
       )
     : false;
+  const existingPieceId = activeRiff
+    ? (activeRiff.pieces.find((p) => p.piece.authorId === currentUserId)?.piece
+        .id ?? null)
+    : null;
+  const deadlinePassed = activeRiff
+    ? isPastDeadline(activeRiff.deadline)
+    : false;
+  const piecesAllSubmitted = activeRiff
+    ? getSubmittedPieces(activeRiff.pieces).length >=
+      activeRiff.participants.length
+    : false;
 
   // Format word count with commas
   const formatNumber = (n: number): string => {
     return n.toLocaleString();
   };
+
+  // Card-grid layout responsive to club size — sized so cards land close to
+  // their natural ~280-300px width whether the club has 2, 3, or 4+ members,
+  // instead of a fixed-width container stretching 2 cards across the row or
+  // leaving a big empty gap.
+  const memberCount = club.members.length;
+  const desktopContentWidth =
+    memberCount <= 2 ? 680 : memberCount === 3 ? 1000 : 1240;
+  // Matches the width a card lands at inside the wrapping grid above, so
+  // fixed-width cards in the horizontally-scrolling Past Riffs rows look the
+  // same size as the Current Riff grid at the same club size.
+  const desktopCardWidth =
+    memberCount <= 2 ? 304 : memberCount === 3 ? 301 : 280;
+
+  const activeAuthorPieces = activeRiff ? pieceByAuthor(activeRiff) : {};
+  const sortedActiveParticipants = activeRiff
+    ? sortedParticipants(activeRiff.participants, activeAuthorPieces)
+    : [];
+
+  // Mobile Current Riff: the user's own unsubmitted draft leads as a fixed
+  // DraftCard, everyone else scrolls as a peek carousel below it. If the
+  // user has no draft to lead with, they just take their normal sorted spot
+  // in the carousel like on desktop.
+  const ownActivePiece = activeAuthorPieces[currentUserId] ?? null;
+  const ownDraftPiece =
+    ownActivePiece && ownActivePiece.submittedAt === null
+      ? ownActivePiece
+      : null;
+  const mobileActiveParticipants = ownDraftPiece
+    ? sortedActiveParticipants.filter((p) => p.user.id !== currentUserId)
+    : sortedActiveParticipants;
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
@@ -551,10 +735,10 @@ export default function ClubPageLayout({
         </div>
       )}
 
-      {/* Main content — max-width 1000px, centered */}
+      {/* Main content — width responsive to club size (680/1000/1240 for 2/3/4+ members), centered */}
       <div
         style={{
-          maxWidth: "1000px",
+          maxWidth: `${desktopContentWidth}px`,
           margin: "0 auto",
           padding: "32px 24px 64px",
         }}
@@ -715,49 +899,226 @@ export default function ClubPageLayout({
             club.members.find((m) => m.user.id === club.adminId)?.user.name ??
             null;
 
+          const showReveal = activeRiff
+            ? shouldShowReveal({
+                deadlinePassed,
+                isJoined,
+                hasSubmitted,
+                piecesAllSubmitted,
+                isAdmin: isAdmin || isCoHost,
+                status: activeRiff.status,
+              })
+            : false;
+
           return (
-            <div style={{ marginBottom: "48px" }}>
-              <h2
-                style={{
-                  fontFamily: "var(--font-dm-serif-text)",
-                  fontSize: "24px",
-                  fontWeight: 400,
-                  color: "#000000",
-                  margin: "0 0 16px 0",
-                }}
-              >
-                Current Riff
-              </h2>
+            <div style={{ marginBottom: "56px" }}>
+              <SectionHeading text="CURRENT RIFF" color="#00FF66" width={121} />
 
               {activeRiff ? (
-                <RiffCard
-                  riff={{
-                    id: activeRiff.id,
-                    title: activeRiff.title,
-                    volumeNumber: activeRiff.volumeNumber,
-                    status: activeRiff.status,
-                    prompt: activeRiff.prompt,
-                    deadline: activeRiff.deadline
-                      ? new Date(activeRiff.deadline)
-                      : null,
-                    createdAt: new Date(activeRiff.createdAt),
-                    participants: activeRiff.participants,
-                    pieces: activeRiff.pieces,
-                  }}
-                  isJoined={isJoined}
-                  hasDraft={hasDraft}
-                  hasSubmitted={hasSubmitted}
-                  currentUserId={currentUserId}
-                  isAdmin={isAdmin || isCoHost}
-                  onReveal={() => setIsRevealModalOpen(true)}
-                  predictedVolumeNumber={predictedVolumeNumber}
-                />
+                <>
+                  {/* Badge-left, title-column-right, CTA-right — mirrors
+                      RiffEventCard's top row from My Riffs. */}
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "12px",
+                      marginTop: "16px",
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    {activeRiff.deadline && (
+                      <DeadlineBadge date={new Date(activeRiff.deadline)} />
+                    )}
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "4px",
+                        flex: 1,
+                        minWidth: 0,
+                      }}
+                    >
+                      <h2
+                        style={{
+                          fontFamily: "var(--font-dm-serif-text)",
+                          fontSize: "24px",
+                          fontWeight: 400,
+                          color: "#000000",
+                          margin: 0,
+                        }}
+                      >
+                        {getRiffDisplayTitle(activeRiff, predictedVolumeNumber)}
+                      </h2>
+                      <p
+                        style={{
+                          fontFamily: "var(--font-dm-sans)",
+                          fontSize: "14px",
+                          fontWeight: 300,
+                          color: deadlinePassed ? "#DC2626" : "#808080",
+                          margin: 0,
+                        }}
+                      >
+                        {deadlinePassed
+                          ? "Deadline passed"
+                          : activeRiff.deadline
+                            ? (() => {
+                                const days = daysUntilDeadline(
+                                  activeRiff.deadline
+                                );
+                                return `${days} ${days === 1 ? "day" : "days"} left`;
+                              })()
+                            : "No deadline"}
+                      </p>
+                    </div>
+
+                    {showReveal ? (
+                      <RevealRiffButton
+                        onClick={() => setIsRevealModalOpen(true)}
+                      />
+                    ) : (
+                      // Once a draft exists, its own DraftCard in the grid
+                      // below is the "continue writing" affordance — this
+                      // button only needs to cover joining and starting.
+                      (!isJoined || !hasDraft) && (
+                        <RiffCTAButton
+                          riffId={activeRiff.id}
+                          isJoined={isJoined}
+                          hasDraft={hasDraft}
+                          hasSubmitted={hasSubmitted}
+                          existingPieceId={existingPieceId}
+                        />
+                      )
+                    )}
+                  </div>
+
+                  {/* Prompt row — own line below, when the riff was created with one */}
+                  {activeRiff.prompt && (
+                    <div
+                      style={{
+                        marginTop: "16px",
+                        borderLeft: "2px solid #000000",
+                        paddingLeft: "16px",
+                      }}
+                    >
+                      <p
+                        style={{
+                          fontFamily: "var(--font-dm-sans)",
+                          fontSize: "16px",
+                          fontWeight: 300,
+                          color: "#000000",
+                          margin: 0,
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {activeRiff.prompt}
+                      </p>
+                    </div>
+                  )}
+
+                  {isMobile ? (
+                    <div style={{ marginTop: "24px" }}>
+                      {ownDraftPiece && (
+                        <div style={{ marginBottom: "16px" }}>
+                          <DraftCard
+                            piece={{
+                              id: ownDraftPiece.id,
+                              title: ownDraftPiece.title,
+                              preview: ownDraftPiece.preview,
+                              wordCount: ownDraftPiece.wordCount,
+                              createdAt: ownDraftPiece.createdAt,
+                              dueDate: null,
+                            }}
+                            onClick={() =>
+                              router.push(`/write/${ownDraftPiece.id}`)
+                            }
+                          />
+                        </div>
+                      )}
+                      {mobileActiveParticipants.length > 0 && (
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "12px",
+                            overflowX: "auto",
+                            scrollSnapType: "x mandatory",
+                            paddingBottom: "8px",
+                          }}
+                        >
+                          {mobileActiveParticipants.map((p) => (
+                            <div
+                              key={p.user.id}
+                              style={{
+                                width: "80%",
+                                flexShrink: 0,
+                                scrollSnapAlign: "start",
+                              }}
+                            >
+                              <ProgressCard
+                                user={p.user}
+                                piece={activeAuthorPieces[p.user.id] ?? null}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns:
+                          "repeat(auto-fill, minmax(280px, 1fr))",
+                        gap: "24px",
+                        marginTop: "24px",
+                      }}
+                    >
+                      {sortedActiveParticipants.map((p) => {
+                        const piece = activeAuthorPieces[p.user.id] ?? null;
+
+                        // Your own unsubmitted draft gets the same clickable
+                        // DraftCard you'd see on My Riffs — everyone else's
+                        // progress stays a ProgressCard, submitted or not.
+                        if (
+                          p.user.id === currentUserId &&
+                          piece &&
+                          piece.submittedAt === null
+                        ) {
+                          return (
+                            <DraftCard
+                              key={p.user.id}
+                              piece={{
+                                id: piece.id,
+                                title: piece.title,
+                                preview: piece.preview,
+                                wordCount: piece.wordCount,
+                                createdAt: piece.createdAt,
+                                dueDate: null,
+                              }}
+                              onClick={() => router.push(`/write/${piece.id}`)}
+                            />
+                          );
+                        }
+
+                        return (
+                          <ProgressCard
+                            key={p.user.id}
+                            user={p.user}
+                            piece={piece}
+                          />
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
               ) : (
-                <EmptyRiffState
-                  onStartNewRiff={() => setIsCreateRiffModalOpen(true)}
-                  isAdmin={isAdmin || isCoHost}
-                  hostName={hostName}
-                />
+                <div style={{ marginTop: "24px" }}>
+                  <EmptyRiffState
+                    onStartNewRiff={() => setIsCreateRiffModalOpen(true)}
+                    isAdmin={isAdmin || isCoHost}
+                    hostName={hostName}
+                  />
+                </div>
               )}
             </div>
           );
@@ -766,46 +1127,68 @@ export default function ClubPageLayout({
         {/* Past Riffs section — includes COMPLETED + pre-join REVEALED + fully-read REVEALED riffs */}
         {pastRiffs.length > 0 && (
           <div>
-            <h2
-              style={{
-                fontFamily: "var(--font-dm-serif-text)",
-                fontSize: "24px",
-                fontWeight: 400,
-                color: "#000000",
-                margin: "0 0 16px 0",
-              }}
-            >
-              Past Riffs
-            </h2>
+            <SectionHeading text="PAST RIFFS" color="#955CB5" width={96} />
 
             <div
               style={{
                 display: "flex",
-                flexDirection: "row",
-                gap: "40px",
-                overflowX: "auto",
-                paddingBottom: "16px",
+                flexDirection: "column",
+                gap: "32px",
+                marginTop: "16px",
               }}
             >
-              {pastRiffs.map((riff) => (
-                <CompletedRiffCard
-                  key={riff.id}
-                  riff={{
-                    id: riff.id,
-                    title: riff.title,
-                    volumeNumber: riff.volumeNumber,
-                    status: riff.status,
-                    createdAt: new Date(riff.createdAt),
-                    deadline: riff.deadline ? new Date(riff.deadline) : null,
-                  }}
-                  pieces={getSubmittedPieces(riff.pieces).map((p) => ({
-                    id: p.piece.id,
-                    title: p.piece.title,
-                    coverImage: p.piece.coverImage,
-                    wordCount: p.piece.wordCount,
-                  }))}
-                />
-              ))}
+              {pastRiffs.map((riff) => {
+                const authorPieces = pieceByAuthor(riff);
+                return (
+                  <div key={riff.id}>
+                    <h3
+                      onClick={() => router.push(`/riffs/${riff.id}`)}
+                      className="riff-row-link"
+                      style={{
+                        cursor: "pointer",
+                        display: "inline-block",
+                        fontFamily: "var(--font-dm-serif-text)",
+                        fontSize: "20px",
+                        fontWeight: 400,
+                        color: "#000000",
+                        margin: "0 0 12px 0",
+                      }}
+                    >
+                      {getRiffDisplayTitle(riff)}
+                    </h3>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        gap: isMobile ? "12px" : "24px",
+                        overflowX: "auto",
+                        scrollSnapType: isMobile ? "x mandatory" : undefined,
+                        paddingBottom: "8px",
+                      }}
+                    >
+                      {sortedParticipants(riff.participants, authorPieces)
+                        .filter((p) => authorPieces[p.user.id]?.submittedAt)
+                        .map((p) => (
+                          <div
+                            key={p.user.id}
+                            style={{
+                              width: isMobile ? "80%" : `${desktopCardWidth}px`,
+                              flexShrink: 0,
+                              scrollSnapAlign: isMobile ? "start" : undefined,
+                            }}
+                          >
+                            <ProgressCard
+                              user={p.user}
+                              piece={authorPieces[p.user.id]}
+                              revealed={true}
+                              showDate={false}
+                            />
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
@@ -816,6 +1199,9 @@ export default function ClubPageLayout({
           .club-banner {
             height: 200px !important;
           }
+        }
+        .riff-row-link:hover {
+          text-decoration: underline;
         }
       `}</style>
 
