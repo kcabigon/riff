@@ -52,7 +52,10 @@ interface RiffPiece {
     authorId: string;
     coverImage?: string | null;
     wordCount: number;
+    createdAt: string;
     updatedAt: string;
+    // Populated only for the viewer's own piece (see page.tsx's serializer).
+    preview: string;
   };
 }
 
@@ -1026,6 +1029,7 @@ export default function ClubPageLayout({
                           <ProgressCard
                             user={ownUser}
                             piece={ownDraftPiece}
+                            variant="draft"
                             onClick={() =>
                               router.push(`/write/${ownDraftPiece.id}`)
                             }
@@ -1054,6 +1058,7 @@ export default function ClubPageLayout({
                               <ProgressCard
                                 user={p.user}
                                 piece={activeAuthorPieces[p.user.id] ?? null}
+                                variant="draft"
                               />
                             </div>
                           ))}
@@ -1082,6 +1087,7 @@ export default function ClubPageLayout({
                             key={p.user.id}
                             user={p.user}
                             piece={piece}
+                            variant="draft"
                             onClick={
                               isOwnDraft
                                 ? () => router.push(`/write/${piece.id}`)

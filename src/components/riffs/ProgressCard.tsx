@@ -2,6 +2,7 @@
 
 import Avatar from "@/components/shared/Avatar";
 import NoiseBackground from "@/components/NoiseBackground";
+import DraftCard from "@/components/write/DraftCard";
 import { relativeTime } from "@/lib/timeAgo";
 
 interface ProgressCardProps {
@@ -18,6 +19,10 @@ interface ProgressCardProps {
     submittedAt: string | null;
     coverImage?: string | null;
     activityLabel?: string;
+    // Only populated for the viewer's own piece (see club page's serializer) —
+    // required to render the "draft" variant's real DraftCard for the owner.
+    preview?: string;
+    createdAt?: string;
   } | null;
   // True once the riff this piece belongs to has been revealed — drops the
   // lock icon, since "submitted" no longer means "hidden until reveal."
@@ -28,7 +33,19 @@ interface ProgressCardProps {
   // Present only for the viewer's own in-progress piece — makes the whole
   // card clickable (to jump back into writing) instead of purely informational.
   onClick?: () => void;
+  // "draft" swaps the in-progress state's noise/dark-overlay treatment for a
+  // DraftCard-style card — the real thing for the viewer's own piece (passed
+  // via onClick), a blurred lookalike for everyone else's. Defaults to
+  // "noise" so existing callers (e.g. the individual riff page) are unaffected.
+  variant?: "noise" | "draft";
 }
+
+// Fixed filler text for other participants' in-progress cards — never the
+// real content. Blurring real content with CSS is trivially bypassed
+// (devtools, view-source, disabling styles), which would defeat the whole
+// point of hiding work in progress from other participants.
+const BLURRED_PREVIEW_FILLER =
+  "Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua ut enim ad minim veniam quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
 
 /* eslint-disable riff/no-non-palette-colors -- intentional pastel rotation */
 const PLACEHOLDER_COLORS = [
@@ -47,6 +64,7 @@ export default function ProgressCard({
   revealed = false,
   showDate = true,
   onClick,
+  variant = "noise",
 }: ProgressCardProps) {
   const cardBase: React.CSSProperties = {
     position: "relative",
@@ -262,7 +280,150 @@ export default function ProgressCard({
     );
   }
 
-  // ── In progress ──────────────────────────────────────────────────────────
+  // ── In progress, draft variant ───────────────────────────────────────────
+  if (variant === "draft") {
+    // The viewer's own piece — the exact DraftCard used on My Riffs.
+    if (onClick) {
+      return (
+        <DraftCard
+          piece={{
+            id: piece.id,
+            title: piece.title,
+            preview: piece.preview ?? "",
+            wordCount: piece.wordCount,
+            createdAt: piece.createdAt ?? piece.updatedAt,
+            dueDate: null,
+          }}
+          onClick={onClick}
+        />
+      );
+    }
+
+    // Everyone else's — same card chrome, but the body is fixed filler text
+    // (never real content) behind a blur, since a piece's word count and
+    // title are fine to reveal pre-submission but its actual writing isn't.
+    return (
+      <div
+        style={{
+          position: "relative",
+          display: "flex",
+          flexDirection: "column",
+          aspectRatio: "4 / 5",
+          backgroundColor: "#FFFFFF",
+          border: "2px solid #000000",
+          padding: "20px",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            gap: "8px",
+            marginBottom: "8px",
+          }}
+        >
+          <h4
+            style={{
+              fontFamily: "var(--font-dm-serif-text)",
+              fontSize: "20px",
+              fontWeight: 400,
+              color: "#000000",
+              margin: 0,
+              lineHeight: 1.3,
+              flex: 1,
+              minWidth: 0,
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
+          >
+            {piece.title}
+          </h4>
+          <Avatar
+            user={{
+              id: user.id,
+              name: user.name,
+              username: null,
+              avatarUrl: user.avatarUrl,
+            }}
+            size={24}
+            borderColor="#FFFFFF"
+          />
+        </div>
+
+        <div
+          style={{
+            position: "relative",
+            flex: 1,
+            minHeight: 0,
+            overflow: "hidden",
+          }}
+        >
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "16px",
+              fontWeight: 300,
+              color: "#000000",
+              lineHeight: 1.5,
+              margin: 0,
+              filter: "blur(4px)",
+              userSelect: "none",
+              pointerEvents: "none",
+            }}
+          >
+            {BLURRED_PREVIEW_FILLER}
+          </p>
+          <div
+            style={{
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: "28px",
+              background: "linear-gradient(rgba(255,255,255,0), #FFFFFF)",
+              pointerEvents: "none",
+            }}
+          />
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            marginTop: "12px",
+          }}
+        >
+          <span
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "12px",
+              fontWeight: 300,
+              color: "#808080",
+            }}
+          >
+            Last activity {relativeTime(piece.updatedAt)}
+          </span>
+          <span
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "12px",
+              fontWeight: 300,
+              color: "#808080",
+            }}
+          >
+            {piece.wordCount.toLocaleString()}{" "}
+            {piece.wordCount === 1 ? "word" : "words"}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // ── In progress, noise variant (default) ─────────────────────────────────
   return (
     <div
       onClick={onClick}
