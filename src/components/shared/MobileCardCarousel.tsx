@@ -8,6 +8,12 @@ interface MobileCardCarouselProps {
   children: React.ReactElement[];
 }
 
+// Visible breathing room between slides while swiping — kept out of each
+// slide's own width so cards stay full-bleed at rest. Also factored into
+// the active-slide math below, since each "page" of scroll distance is a
+// full card width plus one gap, not just the card width.
+const SLIDE_GAP_PX = 16;
+
 // Full-bleed, one-card-at-a-time swipe carousel with dot pagination —
 // the mobile treatment for card rows where one card (the lead) matters
 // most and the rest are a couple of swipes away. Callers control lead
@@ -30,7 +36,7 @@ export default function MobileCardCarousel({
   const handleScroll = () => {
     const el = containerRef.current;
     if (!el || el.clientWidth === 0) return;
-    setActiveIndex(Math.round(el.scrollLeft / el.clientWidth));
+    setActiveIndex(Math.round(el.scrollLeft / (el.clientWidth + SLIDE_GAP_PX)));
   };
 
   // Layout effect (not a plain effect) — measures and applies the height
@@ -45,12 +51,16 @@ export default function MobileCardCarousel({
       <div
         ref={containerRef}
         onScroll={handleScroll}
+        className="mobile-card-carousel-track"
         style={{
           display: "flex",
           alignItems: "flex-start",
+          gap: `${SLIDE_GAP_PX}px`,
           overflowX: "auto",
           overflowY: "hidden",
           scrollSnapType: "x mandatory",
+          scrollbarWidth: "none",
+          msOverflowStyle: "none",
           height: activeHeight,
           transition: "height 0.2s ease",
         }}
@@ -90,6 +100,12 @@ export default function MobileCardCarousel({
           ))}
         </div>
       )}
+
+      <style>{`
+        .mobile-card-carousel-track::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </div>
   );
 }
