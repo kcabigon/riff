@@ -164,7 +164,7 @@ export default async function ClubPage({
         updatedAt: pr.piece.updatedAt.toISOString(),
         preview:
           pr.piece.authorId === userId
-            ? getContentPreview(pr.piece.currentContent, 200)
+            ? getContentPreview(pr.piece.currentContent, 500)
             : "",
       },
     })),
