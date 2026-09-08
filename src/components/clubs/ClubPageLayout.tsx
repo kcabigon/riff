@@ -961,7 +961,7 @@ export default function ClubPageLayout({
                           fontFamily: "var(--font-dm-sans)",
                           fontSize: "14px",
                           fontWeight: 300,
-                          color: deadlinePassed ? "#DC2626" : "#808080",
+                          color: activeRiff.deadline ? "#DC2626" : "#808080",
                           margin: 0,
                         }}
                       >
