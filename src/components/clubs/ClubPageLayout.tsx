@@ -824,11 +824,16 @@ export default function ClubPageLayout({
           </div>
         )}
 
-        {/* Current Riff section — hidden for members when there's a current read and no active riff */}
+        {/* Current Riff section — with no active riff, admins/co-hosts get
+            an empty body now that the start-a-riff CTA lives in the nav bar
+            instead, so the section (heading included) always hides for them
+            rather than showing over nothing. Regular members still get a
+            meaningful "host will start soon" body, so it stays open for them
+            unless there's a current read to prioritize instead. */}
         {(() => {
           const hasCurrentRead = revealedRiffs.some(hasUnreadForUser);
           const showSection =
-            activeRiff || isAdmin || isCoHost || !hasCurrentRead;
+            activeRiff || (!isAdmin && !isCoHost && !hasCurrentRead);
           if (!showSection) return null;
 
           const hostName =
@@ -1137,7 +1142,6 @@ export default function ClubPageLayout({
               ) : (
                 <div style={{ marginTop: "24px" }}>
                   <EmptyRiffState
-                    onStartNewRiff={() => setIsCreateRiffModalOpen(true)}
                     isAdmin={isAdmin || isCoHost}
                     hostName={hostName}
                   />
