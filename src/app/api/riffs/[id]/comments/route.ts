@@ -21,13 +21,18 @@ export async function GET(
             members: { where: { userId: user.id }, select: { id: true } },
           },
         },
+        participants: { where: { userId: user.id }, select: { id: true } },
       },
     });
 
     if (!riff) {
       return NextResponse.json({ error: "Riff not found" }, { status: 404 });
     }
-    if (riff.club.members.length === 0) {
+    // Club riffs: club member. Clubless riffs: riff participant.
+    const hasAccess = riff.clubId
+      ? (riff.club?.members.length ?? 0) > 0
+      : riff.participants.length > 0;
+    if (!hasAccess) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     if (riff.status !== "REVEALED") {

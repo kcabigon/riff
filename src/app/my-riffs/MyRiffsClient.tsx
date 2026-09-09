@@ -55,7 +55,7 @@ interface Riff {
     bannerImage: string | null;
     adminId: string;
     moderatorId: string | null;
-  };
+  } | null; // null = clubless (open) riff
   participants: Array<{
     user: {
       id: string;
@@ -75,7 +75,7 @@ interface PieceRiffSummary {
     volumeNumber: number | null;
     status: string;
     deadline: string | null;
-    club: { id: string; name: string };
+    club: { id: string; name: string } | null;
   };
 }
 
@@ -160,9 +160,10 @@ function pieceLabel(
   const { riff } = piece.riffs[0];
   const displayTitle = getRiffDisplayTitle(
     riff,
-    predictedVolumeByClub[riff.club.id]
+    riff.club ? predictedVolumeByClub[riff.club.id] : undefined
   );
-  return displayTitle ? `${riff.club.name} · ${displayTitle}` : riff.club.name;
+  const clubName = riff.club?.name ?? "Open riff";
+  return displayTitle ? `${clubName} · ${displayTitle}` : clubName;
 }
 
 function pieceDueDate(piece: WritingPiece): string | null {
@@ -279,9 +280,11 @@ export default function MyRiffsClient({
     }
   };
 
+  // Clubless riffs have no admin concept — host actions for them are PR2 scope
   const isRiffAdmin = (riff: Riff) =>
-    riff.club.adminId === currentUserId ||
-    riff.club.moderatorId === currentUserId;
+    riff.club !== null &&
+    (riff.club.adminId === currentUserId ||
+      riff.club.moderatorId === currentUserId);
 
   const currentRiffs = [
     ...riffs
@@ -483,7 +486,9 @@ export default function MyRiffsClient({
           isRevealing={isRevealing}
           riffTitle={getRiffDisplayTitle(
             revealTarget,
-            predictedVolumeByClub[revealTarget.club.id]
+            revealTarget.club
+              ? predictedVolumeByClub[revealTarget.club.id]
+              : undefined
           )}
           waitingUsers={getWaitingParticipants(
             revealTarget.participants,
@@ -584,7 +589,9 @@ export default function MyRiffsClient({
               >
                 {readingRiffs.map((riff) => (
                   <div key={riff.id}>
-                    <p style={cardLabelStyle}>{riff.club.name}</p>
+                    <p style={cardLabelStyle}>
+                      {riff.club?.name ?? "Open riff"}
+                    </p>
                     <ReadyToRevealCard
                       riff={riff}
                       readCount={readCounts[riff.id] || 0}
@@ -636,8 +643,8 @@ export default function MyRiffsClient({
                         pieces: riff.pieces,
                       }}
                       club={{
-                        name: riff.club.name,
-                        bannerImage: riff.club.bannerImage,
+                        name: riff.club?.name ?? "Open riff",
+                        bannerImage: riff.club?.bannerImage ?? null,
                       }}
                       isJoined={isJoined}
                       hasDraft={hasDraft}
@@ -647,7 +654,9 @@ export default function MyRiffsClient({
                       onJoin={handleJoinRiff}
                       onReveal={() => setRevealRiffId(riff.id)}
                       predictedVolumeNumber={
-                        predictedVolumeByClub[riff.club.id]
+                        riff.club
+                          ? predictedVolumeByClub[riff.club.id]
+                          : undefined
                       }
                     />
                   );
@@ -744,7 +753,9 @@ export default function MyRiffsClient({
               >
                 {visiblePastRiffs.map((riff) => (
                   <div key={riff.id} style={{ minWidth: 0 }}>
-                    <p style={cardLabelStyle}>{riff.club.name}</p>
+                    <p style={cardLabelStyle}>
+                      {riff.club?.name ?? "Open riff"}
+                    </p>
                     <CompletedRiffCard
                       riff={{
                         id: riff.id,

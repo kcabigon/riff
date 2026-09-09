@@ -18,7 +18,8 @@ export async function GET(req: Request) {
       );
     }
 
-    // Verify the riff exists and user is a club member
+    // Verify the riff exists and user has access — club member for club riffs,
+    // riff participant for clubless (open) riffs
     const riff = await prisma.riff.findUnique({
       where: { id: riffId },
       select: {
@@ -31,6 +32,10 @@ export async function GET(req: Request) {
             },
           },
         },
+        participants: {
+          where: { userId },
+          select: { id: true },
+        },
       },
     });
 
@@ -38,7 +43,10 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Riff not found" }, { status: 404 });
     }
 
-    if (riff.club.members.length === 0) {
+    const hasAccess = riff.clubId
+      ? (riff.club?.members.length ?? 0) > 0
+      : riff.participants.length > 0;
+    if (!hasAccess) {
       return NextResponse.json(
         { error: "You must be a club member to view comments" },
         { status: 403 }

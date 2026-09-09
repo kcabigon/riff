@@ -166,15 +166,18 @@ export default async function MyRiffsPage() {
   const friendIds = rawFriends.map((f) => f.id);
 
   // For active riffs, compute predictedVolumeNumber per club (count of REVEALED+COMPLETED riffs + 1)
+  // Clubless riffs are filtered out — they have no per-club volume sequence
   const activeClubIds = [
-    ...new Set([
-      ...riffs.filter((r) => r.status === "ACTIVE").map((r) => r.clubId),
-      ...pieces
-        .flatMap((p) => p.riffs)
-        .filter((pr) => pr.riff.status === "ACTIVE")
-        .map((pr) => pr.riff.club.id),
-      ...joinableRiffs.map((r) => r.clubId),
-    ]),
+    ...new Set(
+      [
+        ...riffs.filter((r) => r.status === "ACTIVE").map((r) => r.clubId),
+        ...pieces
+          .flatMap((p) => p.riffs)
+          .filter((pr) => pr.riff.status === "ACTIVE")
+          .map((pr) => pr.riff.club?.id ?? null),
+        ...joinableRiffs.map((r) => r.clubId),
+      ].filter((id): id is string => id !== null)
+    ),
   ];
 
   // Own pieces are excluded from read counts — a riff is "fully read" when
@@ -247,7 +250,9 @@ export default async function MyRiffsPage() {
     predictedVolumeByClub[clubId] = 1;
   }
   for (const row of volumeCounts) {
-    predictedVolumeByClub[row.clubId] = row._count.id + 1;
+    // clubId can't actually be null here (query is scoped to activeClubIds),
+    // but the groupBy result type is nullable now
+    if (row.clubId) predictedVolumeByClub[row.clubId] = row._count.id + 1;
   }
 
   const currentClub =

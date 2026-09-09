@@ -87,7 +87,7 @@ export async function POST(req: Request) {
     const isAuthor = piece.authorId === userId;
 
     if (!isAuthor) {
-      if (riffId && clubId) {
+      if (riffId) {
         const isParticipant = await prisma.riffParticipant.findUnique({
           where: { riffId_userId: { riffId, userId } },
           select: { id: true },
@@ -96,11 +96,14 @@ export async function POST(req: Request) {
         if (!isParticipant) {
           // Also allow club members who have read access (riff is REVEALED),
           // or a Friend of the author (clubmate elsewhere, or riffmate) — same
-          // relation that grants read access on /read/[pieceId].
-          const isMember = await prisma.clubMember.findFirst({
-            where: { clubId, userId },
-            select: { id: true },
-          });
+          // relation that grants read access on /read/[pieceId]. Clubless
+          // (open) riffs have no club, so the member check is skipped there.
+          const isMember = clubId
+            ? await prisma.clubMember.findFirst({
+                where: { clubId, userId },
+                select: { id: true },
+              })
+            : null;
 
           if (!isMember && !(await isFriendOf(userId, piece.authorId))) {
             return NextResponse.json(
