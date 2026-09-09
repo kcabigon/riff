@@ -126,7 +126,7 @@ export default function ProgressCard({
                 username: null,
                 avatarUrl: user.avatarUrl,
               }}
-              size={24}
+              size={32}
               borderColor="#000000"
             />
           </div>
@@ -374,7 +374,7 @@ export default function ProgressCard({
                 username: null,
                 avatarUrl: user.avatarUrl,
               }}
-              size={24}
+              size={32}
               borderColor="#000000"
             />
           </div>
@@ -446,7 +446,7 @@ export default function ProgressCard({
               username: null,
               avatarUrl: user.avatarUrl,
             }}
-            size={24}
+            size={32}
             borderColor="#000000"
           />
         </div>
