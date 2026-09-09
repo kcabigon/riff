@@ -27,8 +27,10 @@ interface ProgressCardProps {
     preview?: string;
     createdAt?: string;
   } | null;
-  // False hides the submitted/last-active date line — used where the date
-  // isn't meaningful (e.g. the club page's past-riffs grouped view).
+  // False hides the "Last activity" line on the in-progress noise-variant
+  // card (the only remaining branch that reads it — RiffPageLayout's
+  // pre-reveal grid). No current caller passes false; kept for callers that
+  // want the card purely informational without a timestamp.
   showDate?: boolean;
   // Makes the whole card clickable instead of purely informational — jump
   // back into writing (own in-progress piece) or open the piece to read
@@ -113,6 +115,7 @@ export default function ProgressCard({
             padding: "20px",
             cursor: onClick ? "pointer" : undefined,
             boxShadow: hoverShadow,
+            transition: "box-shadow 0.1s ease",
           }}
         >
           <div style={{ position: "absolute", top: "20px", right: "20px" }}>
@@ -542,6 +545,7 @@ export default function ProgressCard({
         ...cardBase,
         cursor: onClick ? "pointer" : undefined,
         boxShadow: hoverShadow,
+        transition: "box-shadow 0.1s ease",
       }}
     >
       <NoiseBackground fillMode="cover" />
