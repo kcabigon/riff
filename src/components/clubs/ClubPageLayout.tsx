@@ -1047,11 +1047,13 @@ export default function ClubPageLayout({
                                 : "No deadline"}
                           </p>
                           {(isAdmin || isCoHost) && (
-                            <ThreeDotButton
-                              variant="light"
-                              items={riffMenuItems}
-                              align="left"
-                            />
+                            <div style={{ alignSelf: "center" }}>
+                              <ThreeDotButton
+                                variant="light"
+                                items={riffMenuItems}
+                                align="left"
+                              />
+                            </div>
                           )}
                         </div>
                         {activeRiff.prompt && (
