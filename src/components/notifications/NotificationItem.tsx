@@ -16,7 +16,7 @@ interface NotificationItemProps {
     riff: {
       id: string;
       title: string | null;
-      clubId: string;
+      clubId: string | null;
       volumeNumber: number | null;
     } | null;
     piece: { id: string; title: string } | null;
@@ -32,6 +32,13 @@ function getMessage(n: NotificationItemProps["notification"]): string {
   switch (n.type) {
     case "CLUB_MEMBER_JOINED":
       return `${actor} joined ${n.club ? n.club.name : "the club"}`;
+    case "RIFF_PARTICIPANT_JOINED": {
+      if (n.riff) {
+        const display = getRiffDisplayTitle({ ...n.riff, status: "ACTIVE" });
+        return `${actor} joined ${display}`;
+      }
+      return `${actor} joined your riff`;
+    }
     case "RIFF_CREATED":
     case "RIFF_STARTED":
       return `New riff in ${n.club ? n.club.name : "your club"}`;
@@ -79,10 +86,12 @@ function getLink(n: NotificationItemProps["notification"]): string {
     case "RIFF_CREATED":
     case "RIFF_DEADLINE_CHANGED":
       if (n.club) return `/clubs/${n.club.id}`;
-      if (n.riff) return `/clubs/${n.riff.clubId}`;
+      if (n.riff?.clubId) return `/clubs/${n.riff.clubId}`;
+      if (n.riff) return `/riffs/${n.riff.id}`;
       break;
     case "ALL_PIECES_SUBMITTED":
     case "PIECE_SUBMITTED_TO_RIFF":
+    case "RIFF_PARTICIPANT_JOINED":
       if (n.riff) return `/riffs/${n.riff.id}`;
       if (n.club) return `/clubs/${n.club.id}`;
       break;

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
-import { notifyClubMembers } from "@/lib/notifications";
+import { notifyClubMembers, notifyRiffParticipants } from "@/lib/notifications";
 import {
   sendRiffCreatedEmail,
   sendRiffRevealedEmail,
@@ -88,16 +88,24 @@ export async function GET(
       return NextResponse.json({ error: "Riff not found" }, { status: 404 });
     }
 
-    // Check if user is a club member
-    const member = await prisma.clubMember.findFirst({
-      where: {
-        clubId: riff.clubId,
-        userId: user.id,
-      },
-    });
+    // Club riffs: must be a club member. Clubless riffs: must be a participant.
+    if (riff.clubId) {
+      const member = await prisma.clubMember.findFirst({
+        where: {
+          clubId: riff.clubId,
+          userId: user.id,
+        },
+      });
 
-    if (!member) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      if (!member) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    } else {
+      const isParticipant = riff.participants.some((p) => p.userId === user.id);
+
+      if (!isParticipant) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
     }
 
     // Strip piece content before reveal — cover image still returned for locked card teaser
@@ -144,16 +152,27 @@ export async function PATCH(
       return NextResponse.json({ error: "Riff not found" }, { status: 404 });
     }
 
-    // Check permissions
-    const member = await prisma.clubMember.findFirst({
-      where: {
-        clubId: riff.clubId,
-        userId: user.id,
-      },
-    });
+    // Check permissions — club riffs: club member; clubless: participant or creator
+    if (riff.clubId) {
+      const member = await prisma.clubMember.findFirst({
+        where: {
+          clubId: riff.clubId,
+          userId: user.id,
+        },
+      });
 
-    if (!member) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      if (!member) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    } else {
+      const participant = await prisma.riffParticipant.findUnique({
+        where: { riffId_userId: { riffId, userId: user.id } },
+        select: { id: true },
+      });
+
+      if (!participant && riff.creatorId !== user.id) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
     }
 
     // Only DRAFT or ACTIVE riffs can have details edited
@@ -167,15 +186,21 @@ export async function PATCH(
       );
     }
 
-    // Fetch club for permission checks
-    const club = await prisma.club.findUnique({
-      where: { id: riff.clubId },
-      select: { adminId: true, moderatorId: true },
-    });
+    // Fetch club for permission checks (club riffs only — clubless have no admin concept)
+    const club = riff.clubId
+      ? await prisma.club.findUnique({
+          where: { id: riff.clubId },
+          select: { adminId: true, moderatorId: true },
+        })
+      : null;
 
     const isClubAdmin = club?.adminId === user.id;
     const isClubCoHost = club?.moderatorId === user.id;
     const isClubAdminOrCoHost = isClubAdmin || isClubCoHost;
+    // Host powers (reveal/complete): club riffs = admin/co-host; clubless = creator
+    const canHost = riff.clubId
+      ? isClubAdminOrCoHost
+      : riff.creatorId === user.id;
 
     // Creator, admin, or co-host can update title, prompt, deadline
     if (
@@ -210,10 +235,14 @@ export async function PATCH(
           );
         }
       } else if (status === "REVEALED") {
-        // Admin or co-host can reveal, and riff must be ACTIVE
-        if (!isClubAdminOrCoHost) {
+        // Club riffs: admin or co-host can reveal. Clubless: creator. Riff must be ACTIVE.
+        if (!canHost) {
           return NextResponse.json(
-            { error: "Only the club admin or co-host can reveal pieces" },
+            {
+              error: riff.clubId
+                ? "Only the club admin or co-host can reveal pieces"
+                : "Only the riff creator can reveal pieces",
+            },
             { status: 403 }
           );
         }
@@ -224,10 +253,14 @@ export async function PATCH(
           );
         }
       } else if (status === "COMPLETED") {
-        // Admin or co-host can complete
-        if (!isClubAdminOrCoHost) {
+        // Club riffs: admin or co-host can complete. Clubless: creator.
+        if (!canHost) {
           return NextResponse.json(
-            { error: "Only the club admin or co-host can complete a riff" },
+            {
+              error: riff.clubId
+                ? "Only the club admin or co-host can complete a riff"
+                : "Only the riff creator can complete a riff",
+            },
             { status: 403 }
           );
         }
@@ -245,7 +278,8 @@ export async function PATCH(
     // Update riff — assign volumeNumber atomically at reveal time to prevent race conditions
     const updatedRiff = await prisma.$transaction(async (tx) => {
       let volumeNumber: number | undefined;
-      if (status === "REVEALED" && riff.status === "ACTIVE") {
+      // Volume numbers are a per-club sequence — clubless riffs don't get one
+      if (status === "REVEALED" && riff.status === "ACTIVE" && riff.clubId) {
         const revealedCount = await tx.riff.count({
           where: {
             clubId: riff.clubId,
@@ -303,7 +337,8 @@ export async function PATCH(
     // Fire notifications for status changes — isolated so failures don't affect the riff response
     if (status && status !== riff.status) {
       const actorId = user.id;
-      if (status === "ACTIVE") {
+      // Clubless riffs skip RIFF_CREATED entirely — the join link replaces it
+      if (status === "ACTIVE" && riff.clubId) {
         try {
           await notifyClubMembers(
             riff.clubId,
@@ -333,7 +368,7 @@ export async function PATCH(
               sendRiffCreatedEmail({
                 email: m.user.email,
                 actorName: updatedRiff.creator.name || "Your host",
-                clubName: updatedRiff.club.name,
+                clubName: updatedRiff.club?.name ?? "your club",
                 riffUrl: riffCreatedUrl,
                 riffTitle: riff.title,
                 prompt: riff.prompt,
@@ -350,7 +385,7 @@ export async function PATCH(
             err
           );
         }
-      } else if (status === "REVEALED") {
+      } else if (status === "REVEALED" && riff.clubId) {
         try {
           await notifyClubMembers(
             riff.clubId,
@@ -379,7 +414,53 @@ export async function PATCH(
             eligibleRevealed.map((m) =>
               sendRiffRevealedEmail({
                 email: m.user.email,
-                clubName: updatedRiff.club.name,
+                clubName: updatedRiff.club?.name ?? "your club",
+                riffUrl,
+                riffTitle: updatedRiff.title,
+                volumeNumber: updatedRiff.volumeNumber,
+                pieceCount: updatedRiff._count.pieces,
+              })
+            )
+          );
+          console.info(
+            `[notify] riff revealed ${riffId}: ${revealedResults.filter((r) => r.status === "fulfilled").length} sent, ${revealedResults.filter((r) => r.status === "rejected").length} failed`
+          );
+        } catch (err) {
+          console.error(
+            "[notification error] riff revealed pipeline failed:",
+            err
+          );
+        }
+      } else if (status === "REVEALED") {
+        // Clubless riff reveal — same pipeline, scoped to riff participants
+        try {
+          await notifyRiffParticipants(
+            riffId,
+            NotificationType.RIFF_COMPLETED,
+            actorId
+          ).catch((err) =>
+            console.error("[notification error] riff revealed:", err)
+          );
+
+          const riffUrl = `${getBaseUrl()}/riffs/${riffId}`;
+          const revealedParticipants = await prisma.riffParticipant.findMany({
+            where: { riffId, userId: { not: actorId } },
+            include: { user: { select: { email: true, name: true } } },
+          });
+          const revealedEnabled = await batchNotificationsEnabled(
+            revealedParticipants.map((p) => p.user.email)
+          );
+          const eligibleRevealed = revealedParticipants.filter((p) =>
+            revealedEnabled.has(p.user.email)
+          );
+          console.info(
+            `[notify] riff revealed ${riffId}: ${revealedParticipants.length} participants, ${eligibleRevealed.length} email-enabled`
+          );
+          const revealedResults = await Promise.allSettled(
+            eligibleRevealed.map((p) =>
+              sendRiffRevealedEmail({
+                email: p.user.email,
+                clubName: updatedRiff.title ?? "your riff",
                 riffUrl,
                 riffTitle: updatedRiff.title,
                 volumeNumber: updatedRiff.volumeNumber,
@@ -405,7 +486,7 @@ export async function PATCH(
       deadline !== null &&
       !status &&
       new Date(deadline).getTime() !== (riff.deadline?.getTime() ?? null);
-    if (deadlineChanged) {
+    if (deadlineChanged && riff.clubId) {
       try {
         const newDeadline = new Date(deadline);
         await notifyClubMembers(
@@ -438,7 +519,53 @@ export async function PATCH(
               hostName: updatedRiff.creator.name || "Your host",
               newDeadline,
               riffUrl,
-              clubName: updatedRiff.club.name,
+              clubName: updatedRiff.club?.name ?? "your club",
+            })
+          )
+        );
+        console.info(
+          `[notify] deadline changed ${riffId}: ${deadlineResults.filter((r) => r.status === "fulfilled").length} sent, ${deadlineResults.filter((r) => r.status === "rejected").length} failed`
+        );
+      } catch (err) {
+        console.error(
+          "[notification error] deadline changed pipeline failed:",
+          err
+        );
+      }
+    } else if (deadlineChanged) {
+      // Clubless riff deadline change — same pipeline, scoped to riff participants
+      try {
+        const newDeadline = new Date(deadline);
+        await notifyRiffParticipants(
+          riffId,
+          NotificationType.RIFF_DEADLINE_CHANGED,
+          user.id
+        ).catch((err) =>
+          console.error("[notification error] deadline changed:", err)
+        );
+
+        const riffUrl = `${getBaseUrl()}/riffs/${riffId}`;
+        const deadlineParticipants = await prisma.riffParticipant.findMany({
+          where: { riffId, userId: { not: user.id } },
+          include: { user: { select: { email: true } } },
+        });
+        const deadlineEnabled = await batchNotificationsEnabled(
+          deadlineParticipants.map((p) => p.user.email)
+        );
+        const eligibleDeadline = deadlineParticipants.filter((p) =>
+          deadlineEnabled.has(p.user.email)
+        );
+        console.info(
+          `[notify] deadline changed ${riffId}: ${deadlineParticipants.length} participants, ${eligibleDeadline.length} email-enabled`
+        );
+        const deadlineResults = await Promise.allSettled(
+          eligibleDeadline.map((p) =>
+            sendDeadlineChangedEmail({
+              email: p.user.email,
+              hostName: updatedRiff.creator.name || "Your host",
+              newDeadline,
+              riffUrl,
+              clubName: updatedRiff.title ?? "your riff",
             })
           )
         );
@@ -495,20 +622,27 @@ export async function DELETE(
       );
     }
 
-    // Only creator or club admin can delete
-    const club = await prisma.club.findUnique({
-      where: { id: riff.clubId },
-    });
+    // Club riffs: creator or club admin can delete. Clubless: creator only.
+    if (riff.clubId) {
+      const club = await prisma.club.findUnique({
+        where: { id: riff.clubId },
+      });
 
-    if (!club) {
-      return NextResponse.json({ error: "Club not found" }, { status: 404 });
-    }
+      if (!club) {
+        return NextResponse.json({ error: "Club not found" }, { status: 404 });
+      }
 
-    const canDelete = riff.creatorId === user.id || club.adminId === user.id;
+      const canDelete = riff.creatorId === user.id || club.adminId === user.id;
 
-    if (!canDelete) {
+      if (!canDelete) {
+        return NextResponse.json(
+          { error: "Only the riff creator or club admin can delete the riff" },
+          { status: 403 }
+        );
+      }
+    } else if (riff.creatorId !== user.id) {
       return NextResponse.json(
-        { error: "Only the riff creator or club admin can delete the riff" },
+        { error: "Only the riff creator can delete the riff" },
         { status: 403 }
       );
     }

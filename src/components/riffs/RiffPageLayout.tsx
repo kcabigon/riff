@@ -41,8 +41,8 @@ interface RiffPageLayoutProps {
     status: string;
     createdAt: string;
     updatedAt?: string;
-    clubId: string;
-    club: { id: string; name: string };
+    clubId: string | null;
+    club: { id: string; name: string } | null;
     creator: {
       id: string;
       name: string | null;
@@ -180,7 +180,9 @@ export default function RiffPageLayout({
       <NavBar
         user={navUser}
         clubs={userClubs}
-        currentClub={{ id: riff.clubId, name: riff.club.name }}
+        currentClub={
+          riff.club ? { id: riff.club.id, name: riff.club.name } : undefined
+        }
       />
 
       {/* Main content */}
@@ -695,7 +697,7 @@ export default function RiffPageLayout({
           onClose={() => setIsDeleteModalOpen(false)}
           onDeleted={() => {
             setIsDeleteModalOpen(false);
-            router.push(`/clubs/${riff.clubId}`);
+            router.push(riff.clubId ? `/clubs/${riff.clubId}` : "/my-riffs");
           }}
           riffId={riff.id}
           riffTitle={getRiffDisplayTitle(riff, predictedVolumeNumber)}

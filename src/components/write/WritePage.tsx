@@ -44,7 +44,7 @@ interface RiffConnection {
   title: string | null;
   prompt: string | null;
   deadline: string | null;
-  clubId: string;
+  clubId: string | null; // null = clubless (open) riff
   clubName: string;
   submittedAt: string | null;
 }

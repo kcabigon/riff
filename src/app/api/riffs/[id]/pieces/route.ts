@@ -60,20 +60,23 @@ export async function POST(
       },
     });
 
-    // Auto-join riff when submitting a piece
+    // Auto-join riff when submitting a piece. Club riffs gate on membership;
+    // clubless riffs have no gate — anyone with the riff link can submit.
     if (!participant) {
-      const member = await prisma.clubMember.findFirst({
-        where: {
-          clubId: riff.clubId,
-          userId: user.id,
-        },
-      });
+      if (riff.clubId) {
+        const member = await prisma.clubMember.findFirst({
+          where: {
+            clubId: riff.clubId,
+            userId: user.id,
+          },
+        });
 
-      if (!member) {
-        return NextResponse.json(
-          { error: "You must be a club member to submit to this riff" },
-          { status: 403 }
-        );
+        if (!member) {
+          return NextResponse.json(
+            { error: "You must be a club member to submit to this riff" },
+            { status: 403 }
+          );
+        }
       }
 
       participant = await prisma.riffParticipant.create({
