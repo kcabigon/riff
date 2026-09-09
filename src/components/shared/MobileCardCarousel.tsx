@@ -36,8 +36,27 @@ export default function MobileCardCarousel({
   const handleScroll = () => {
     const el = containerRef.current;
     if (!el || el.clientWidth === 0) return;
-    setActiveIndex(Math.round(el.scrollLeft / (el.clientWidth + SLIDE_GAP_PX)));
+    // Clamp — WebKit's rubber-band overscroll can push scrollLeft negative
+    // or past the max, which would otherwise compute an out-of-range index
+    // and momentarily drop the pinned height (no slide ref at that index).
+    const raw = Math.round(el.scrollLeft / (el.clientWidth + SLIDE_GAP_PX));
+    setActiveIndex(Math.max(0, Math.min(children.length - 1, raw)));
   };
+
+  // If the caller's own list reorders or shrinks in place (e.g. sort order
+  // changes on a data refresh) without this component remounting, snap back
+  // to the first slide instead of leaving activeIndex pointing at whatever
+  // now occupies that position — otherwise the pinned height/active dot
+  // silently reference the wrong card.
+  const prevKeysRef = useRef<string | null>(null);
+  useLayoutEffect(() => {
+    const keys = children.map((child) => child.key).join(",");
+    if (prevKeysRef.current !== null && prevKeysRef.current !== keys) {
+      setActiveIndex(0);
+      if (containerRef.current) containerRef.current.scrollLeft = 0;
+    }
+    prevKeysRef.current = keys;
+  }, [children]);
 
   // Layout effect (not a plain effect) — measures and applies the height
   // before the browser paints, so there's no visible frame at the wrong
@@ -99,6 +118,7 @@ export default function MobileCardCarousel({
         <div
           style={{
             display: "flex",
+            flexWrap: "wrap",
             justifyContent: "center",
             gap: "6px",
             marginTop: "12px",
