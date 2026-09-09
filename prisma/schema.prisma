@@ -115,7 +115,7 @@ enum ClubRole {
 
 model Riff {
   id          String     @id @default(cuid())
-  clubId      String
+  clubId      String?
   creatorId   String
   title        String?
   prompt       String?    @db.Text
@@ -126,7 +126,7 @@ model Riff {
   updatedAt   DateTime   @updatedAt
 
   // Relations
-  club         Club              @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  club         Club?             @relation(fields: [clubId], references: [id], onDelete: Cascade)
   creator      User              @relation("RiffCreator", fields: [creatorId], references: [id], onDelete: Cascade)
   participants RiffParticipant[]
   pieces       PieceRiff[]
@@ -426,6 +426,7 @@ enum NotificationType {
   ALL_PIECES_SUBMITTED
   PIECE_SUBMITTED_TO_RIFF
   CLUB_MEMBER_JOINED
+  RIFF_PARTICIPANT_JOINED
 
   // Comment notifications
   NEW_COMMENT

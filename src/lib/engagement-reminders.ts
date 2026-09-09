@@ -144,13 +144,13 @@ export async function runDeadlineApproachingCheck(
     const enabled = await batchRemindersEnabled(
       eligible.map((p) => p.user.email)
     );
-    const riffTitle = riff.title || riff.club.name;
+    const riffTitle = riff.title || riff.club?.name || "your riff";
 
     for (const p of eligible.filter((p) => enabled.has(p.user.email))) {
       await sendDeadlineApproachingEmail({
         email: p.user.email,
         riffTitle,
-        clubName: riff.club.name,
+        clubName: riff.club?.name ?? riffTitle,
         riffUrl: `${baseUrl}/riffs/${riff.id}`,
         deadline,
         daysRemaining,
@@ -199,14 +199,14 @@ export async function runRememberToWriteCheck(
     const enabled = await batchRemindersEnabled(
       eligible.map((p) => p.user.email)
     );
-    const riffTitle = riff.title || riff.club.name;
+    const riffTitle = riff.title || riff.club?.name || "your riff";
 
     for (const p of eligible.filter((p) => enabled.has(p.user.email))) {
       const variantIndex = history.get(`${riff.id}:${p.userId}`)?.count ?? 0;
       await sendRememberToWriteEmail({
         email: p.user.email,
         riffTitle,
-        clubName: riff.club.name,
+        clubName: riff.club?.name ?? riffTitle,
         riffUrl: `${baseUrl}/riffs/${riff.id}`,
         variantIndex,
       });
@@ -238,7 +238,8 @@ export async function runJoinRiffNudgeCheck(
 
   for (const riff of active) {
     const participantIds = new Set(riff.participants.map((p) => p.userId));
-    const nonMembers = riff.club.members.filter(
+    // Clubless riffs have no club members to nudge — the join link handles invites
+    const nonMembers = (riff.club?.members ?? []).filter(
       (m) => !participantIds.has(m.userId)
     );
     if (nonMembers.length === 0) continue;
@@ -252,14 +253,14 @@ export async function runJoinRiffNudgeCheck(
     const enabled = await batchRemindersEnabled(
       eligible.map((m) => m.user.email)
     );
-    const riffTitle = riff.title || riff.club.name;
+    const riffTitle = riff.title || riff.club?.name || "your riff";
 
     for (const m of eligible.filter((m) => enabled.has(m.user.email))) {
       const variantIndex = history.get(`${riff.id}:${m.userId}`)?.count ?? 0;
       await sendJoinRiffNudgeEmail({
         email: m.user.email,
         riffTitle,
-        clubName: riff.club.name,
+        clubName: riff.club?.name ?? riffTitle,
         riffUrl: `${baseUrl}/riffs/${riff.id}`,
         variantIndex,
       });

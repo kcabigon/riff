@@ -106,11 +106,14 @@ export default async function RiffPage({
   }
 
   // Verify user is a club member OR a riff participant + predicted volume number in parallel
+  // (clubless riffs have no members to check and no per-club volume sequence)
   const [member, predictedVolumeNumber] = await Promise.all([
-    prisma.clubMember.findFirst({
-      where: { clubId: riff.clubId, userId },
-    }),
-    riff.status === "ACTIVE"
+    riff.clubId
+      ? prisma.clubMember.findFirst({
+          where: { clubId: riff.clubId, userId },
+        })
+      : Promise.resolve(null),
+    riff.status === "ACTIVE" && riff.clubId
       ? prisma.riff
           .count({
             where: {
@@ -131,10 +134,12 @@ export default async function RiffPage({
   const hasSubmitted = riff.pieces.some(
     (p) => p.piece.authorId === userId && p.submittedAt !== null
   );
-  const isAdmin =
-    riff.club.adminId === userId || riff.club.moderatorId === userId;
+  // Clubless riffs have no admin — the creator holds host powers
+  const isAdmin = riff.club
+    ? riff.club.adminId === userId || riff.club.moderatorId === userId
+    : riff.creatorId === userId;
   const canDeleteRiff =
-    riff.club.adminId === userId || riff.creatorId === userId;
+    riff.club?.adminId === userId || riff.creatorId === userId;
 
   // ID of the user's unsubmitted piece — needed for late submission on revealed riffs
   const draftPieceId =
@@ -188,11 +193,21 @@ export default async function RiffPage({
       );
     }
 
-    // Contribution strip data
-    const clubMembers = await prisma.clubMember.findMany({
-      where: { clubId: riff.clubId },
-      select: { user: { select: { id: true, name: true, avatarUrl: true } } },
-    });
+    // Contribution strip data — club members for club riffs, participants for clubless
+    const clubMembers = riff.clubId
+      ? await prisma.clubMember.findMany({
+          where: { clubId: riff.clubId },
+          select: {
+            user: { select: { id: true, name: true, avatarUrl: true } },
+          },
+        })
+      : riff.participants.map((p) => ({
+          user: {
+            id: p.user.id,
+            name: p.user.name,
+            avatarUrl: p.user.avatarUrl,
+          },
+        }));
 
     const readGroups = await prisma.pieceRead.groupBy({
       by: ["userId"],
@@ -269,7 +284,7 @@ export default async function RiffPage({
         navUser ?? { id: userId, name: null, username: null, avatarUrl: null }
       }
       userClubs={userClubs}
-      hostFirstName={riff.club.admin?.firstName ?? null}
+      hostFirstName={riff.club?.admin?.firstName ?? null}
       isFirstReveal={isFirstReveal}
       predictedVolumeNumber={predictedVolumeNumber}
     />

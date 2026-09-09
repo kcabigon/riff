@@ -41,16 +41,27 @@ export async function POST(
       );
     }
 
-    // Validate user is a club member
-    const member = await prisma.clubMember.findFirst({
-      where: {
-        clubId: riff.clubId,
-        userId: user.id,
-      },
-    });
+    // Club riffs: must be a club member. Clubless riffs: must be a participant.
+    if (riff.clubId) {
+      const member = await prisma.clubMember.findFirst({
+        where: {
+          clubId: riff.clubId,
+          userId: user.id,
+        },
+      });
 
-    if (!member) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      if (!member) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    } else {
+      const participant = await prisma.riffParticipant.findUnique({
+        where: { riffId_userId: { riffId, userId: user.id } },
+        select: { id: true },
+      });
+
+      if (!participant) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
     }
 
     // Validate piece belongs to this riff

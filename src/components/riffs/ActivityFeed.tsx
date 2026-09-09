@@ -68,7 +68,7 @@ export default function ActivityFeed({
   totalPieceCount = 0,
 }: {
   riffId: string;
-  clubId: string;
+  clubId: string | null; // null for clubless (open) riffs
   currentUser: CurrentUser | null | undefined;
   readPieces?: ReadPiece[];
   totalPieceCount?: number;

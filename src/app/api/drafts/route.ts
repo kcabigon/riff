@@ -39,16 +39,19 @@ export async function POST(req: Request) {
       );
     }
 
-    // Verify user is a club member
-    const member = await prisma.clubMember.findFirst({
-      where: { clubId: riff.clubId, userId },
-    });
+    // Club riffs: must be a club member. Clubless riffs: no gate — the riff
+    // link is the invitation, and the existing auto-join below adds them.
+    if (riff.clubId) {
+      const member = await prisma.clubMember.findFirst({
+        where: { clubId: riff.clubId, userId },
+      });
 
-    if (!member) {
-      return NextResponse.json(
-        { error: "You must be a club member to write for this riff" },
-        { status: 403 }
-      );
+      if (!member) {
+        return NextResponse.json(
+          { error: "You must be a club member to write for this riff" },
+          { status: 403 }
+        );
+      }
     }
 
     // Check if user already has a piece connected to this riff

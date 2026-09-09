@@ -98,6 +98,7 @@ export default async function ReadPage({
         riff: { status: "REVEALED" },
         OR: [
           { riff: { club: { members: { some: { userId } } } } },
+          { riff: { participants: { some: { userId } } } },
           { piece: { authorId: userId } },
           { piece: { author: friendOfWhere(userId) } },
         ],
@@ -123,6 +124,7 @@ export default async function ReadPage({
         riff: { status: "REVEALED" },
         OR: [
           { riff: { club: { members: { some: { userId } } } } },
+          { riff: { participants: { some: { userId } } } },
           { piece: { authorId: userId } },
           { piece: { author: friendOfWhere(userId) } },
         ],
