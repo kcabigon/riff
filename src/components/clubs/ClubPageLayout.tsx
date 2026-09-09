@@ -13,7 +13,7 @@ import RevealRiffButton, {
   shouldShowReveal,
 } from "@/components/riffs/RevealRiffButton";
 import { useDraftCreation } from "@/hooks/useDraftCreation";
-import Tagline from "@/components/Tagline";
+import SectionHeading from "@/components/shared/SectionHeading";
 import CreateRiffModal from "@/components/riffs/CreateRiffModal";
 import EditRiffModal from "@/components/riffs/EditRiffModal";
 import DeleteRiffConfirmModal from "@/components/riffs/DeleteRiffConfirmModal";
@@ -118,31 +118,6 @@ interface ClubPageLayoutProps {
     wordCount: number;
   };
   predictedVolumeNumber?: number;
-}
-
-// Same tagline-heading treatment as the My Riffs page's section headers —
-// used here for "CURRENT RIFF" / "PAST RIFFS" instead of a plain <h2>.
-function SectionHeading({
-  text,
-  color,
-  width,
-}: {
-  text: string;
-  color: string;
-  width: number;
-}) {
-  return (
-    <Tagline
-      text={text}
-      color={color}
-      width={width}
-      fontSize={16}
-      fontFamily="var(--font-dm-sans)"
-      fontWeight={700}
-      align="left"
-      heightPadding={9}
-    />
-  );
 }
 
 // Whole days remaining until the deadline, clamped at 0.

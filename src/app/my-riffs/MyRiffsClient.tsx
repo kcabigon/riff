@@ -12,7 +12,7 @@ import PieceCard from "@/components/riffs/PieceCard";
 import PublicShareIndicator from "@/components/riffs/PublicShareIndicator";
 import DraftCard from "@/components/write/DraftCard";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
-import Tagline from "@/components/Tagline";
+import SectionHeading from "@/components/shared/SectionHeading";
 import type { DropdownItem } from "@/components/shared/Dropdown";
 import DeletePieceModal from "@/components/profile/DeletePieceModal";
 import ShareModal, { PublicShare } from "@/components/profile/ShareModal";
@@ -109,29 +109,6 @@ interface MyRiffsClientProps {
   friends: FriendSummary[];
   pieces: WritingPiece[];
   joinableRiffs: Riff[];
-}
-
-function SectionHeading({
-  text,
-  color,
-  width,
-}: {
-  text: string;
-  color: string;
-  width: number;
-}) {
-  return (
-    <Tagline
-      text={text}
-      color={color}
-      width={width}
-      fontSize={16}
-      fontFamily="var(--font-dm-sans)"
-      fontWeight={700}
-      align="left"
-      heightPadding={9}
-    />
-  );
 }
 
 function isFinished(piece: WritingPiece): boolean {
