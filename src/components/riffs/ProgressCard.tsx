@@ -308,33 +308,6 @@ export default function ProgressCard({
           </h4>
         </div>
 
-        {/* Submitted label — fixed position above avatar */}
-        {showDate && (
-          <div
-            style={{
-              position: "absolute",
-              bottom: "56px",
-              left: 0,
-              right: 0,
-              display: "flex",
-              justifyContent: "center",
-              zIndex: 2,
-            }}
-          >
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 300,
-                color: "rgba(255, 255, 255, 0.7)",
-                margin: 0,
-              }}
-            >
-              {relativeTime(piece.submittedAt)}
-            </p>
-          </div>
-        )}
-
         {/* Author avatar — bottom center */}
         <div
           style={{

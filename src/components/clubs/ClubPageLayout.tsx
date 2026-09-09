@@ -1244,7 +1244,6 @@ export default function ClubPageLayout({
                       user={p.user}
                       piece={authorPieces[p.user.id]}
                       revealed={true}
-                      showDate={false}
                       isUnread={isPieceUnread(authorPieces[p.user.id])}
                     />
                   );
@@ -1343,7 +1342,6 @@ export default function ClubPageLayout({
                             user={p.user}
                             piece={authorPieces[p.user.id]}
                             revealed={true}
-                            showDate={false}
                           />
                         ))}
                       </MobileCardCarousel>
@@ -1369,7 +1367,6 @@ export default function ClubPageLayout({
                               user={p.user}
                               piece={authorPieces[p.user.id]}
                               revealed={true}
-                              showDate={false}
                             />
                           </div>
                         ))}
