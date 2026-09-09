@@ -27,13 +27,10 @@ export async function generateMetadata({
 
 export default async function ClubPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ welcome?: string }>;
 }) {
   const { id } = await params;
-  const { welcome } = await searchParams;
   const session = await getSession();
 
   if (!session?.user) {
@@ -249,9 +246,6 @@ export default async function ClubPage({
       completedRiffs={completedRiffs}
       stats={{ riffCount, pieceCount, wordCount }}
       predictedVolumeNumber={predictedVolumeNumber}
-      initialWelcome={
-        welcome === "host" || welcome === "member" ? welcome : undefined
-      }
     />
   );
 }

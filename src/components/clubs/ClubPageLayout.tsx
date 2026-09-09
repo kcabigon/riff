@@ -117,7 +117,6 @@ interface ClubPageLayoutProps {
     pieceCount: number;
     wordCount: number;
   };
-  initialWelcome?: "host" | "member";
   predictedVolumeNumber?: number;
 }
 
@@ -238,7 +237,6 @@ export default function ClubPageLayout({
   readPieceIds,
   completedRiffs,
   stats,
-  initialWelcome,
   predictedVolumeNumber,
 }: ClubPageLayoutProps) {
   const router = useRouter();
