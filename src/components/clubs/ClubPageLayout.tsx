@@ -225,9 +225,6 @@ export default function ClubPageLayout({
   const [isLeaveClubModalOpen, setIsLeaveClubModalOpen] = useState(false);
   const [isTransferHostModalOpen, setIsTransferHostModalOpen] = useState(false);
   const [isAssignCoHostModalOpen, setIsAssignCoHostModalOpen] = useState(false);
-  const [currentActiveRiff, setCurrentActiveRiff] = useState<Riff | null>(
-    activeRiff
-  );
   const handleAvatarClick = useProfileNavigation();
   const isMobile = useIsMobile();
 
@@ -333,10 +330,10 @@ export default function ClubPageLayout({
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
 
-  const handleRiffCreated = useCallback((_riffId: string) => {
+  const handleRiffCreated = useCallback(() => {
     setIsCreateRiffModalOpen(false);
     router.refresh();
-  }, []);
+  }, [router]);
 
   // Handle reveal confirmation
   const handleRevealConfirm = useCallback(async () => {
