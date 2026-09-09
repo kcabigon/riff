@@ -42,8 +42,25 @@ export default function MobileCardCarousel({
   // Layout effect (not a plain effect) — measures and applies the height
   // before the browser paints, so there's no visible frame at the wrong
   // (stale/tallest-sibling) height on mount or on slide change.
+  //
+  // A single measurement on mount isn't enough: cards size themselves off
+  // their own width (aspect-ratio), so the pinned height goes stale if
+  // anything reflows the container's width afterward — content loading in
+  // above the carousel, a scrollbar appearing, a resizing dev-tools viewport
+  // — without ever changing activeIndex. The ResizeObserver below catches
+  // those cases; the effect itself still handles the mount/slide-change case
+  // immediately (before paint), since a resize observer's first callback
+  // fires async and would otherwise show a stale height for a frame.
   useLayoutEffect(() => {
     setActiveHeight(slideRefs.current[activeIndex]?.offsetHeight);
+
+    const el = containerRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => {
+      setActiveHeight(slideRefs.current[activeIndex]?.offsetHeight);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
   }, [activeIndex, children.length]);
 
   return (
