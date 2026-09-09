@@ -880,12 +880,7 @@ export default function ClubPageLayout({
                           }}
                         >
                           <h2
-                            onClick={() =>
-                              router.push(`/riffs/${activeRiff.id}`)
-                            }
-                            className="riff-row-link"
                             style={{
-                              cursor: "pointer",
                               display: "inline-block",
                               fontFamily: "var(--font-dm-serif-text)",
                               fontSize: "24px",
@@ -1015,12 +1010,7 @@ export default function ClubPageLayout({
                           }}
                         >
                           <h2
-                            onClick={() =>
-                              router.push(`/riffs/${activeRiff.id}`)
-                            }
-                            className="riff-row-link"
                             style={{
-                              cursor: "pointer",
                               display: "inline-block",
                               fontFamily: "var(--font-dm-serif-text)",
                               fontSize: "24px",
