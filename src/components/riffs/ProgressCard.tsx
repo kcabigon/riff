@@ -459,48 +459,32 @@ export default function ProgressCard({
             overflow: "hidden",
           }}
         >
-          {piece.wordCount === 0 ? (
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: 300,
-                color: "#808080",
-                margin: 0,
-              }}
-            >
-              Just started
-            </p>
-          ) : (
-            <>
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#000000",
-                  lineHeight: 1.5,
-                  margin: 0,
-                  filter: "blur(4px)",
-                  userSelect: "none",
-                  pointerEvents: "none",
-                }}
-              >
-                {blurredPreviewFiller(piece.wordCount)}
-              </p>
-              <div
-                style={{
-                  position: "absolute",
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  height: "28px",
-                  background: "linear-gradient(rgba(255,255,255,0), #FFFFFF)",
-                  pointerEvents: "none",
-                }}
-              />
-            </>
-          )}
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "16px",
+              fontWeight: 300,
+              color: "#000000",
+              lineHeight: 1.5,
+              margin: 0,
+              filter: "blur(4px)",
+              userSelect: "none",
+              pointerEvents: "none",
+            }}
+          >
+            {blurredPreviewFiller(piece.wordCount)}
+          </p>
+          <div
+            style={{
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: "28px",
+              background: "linear-gradient(rgba(255,255,255,0), #FFFFFF)",
+              pointerEvents: "none",
+            }}
+          />
         </div>
 
         <div
