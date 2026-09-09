@@ -1,7 +1,7 @@
 "use client";
 
+import { useState } from "react";
 import Avatar from "@/components/shared/Avatar";
-import Badge from "@/components/shared/Badge";
 import NoiseBackground from "@/components/NoiseBackground";
 import DraftCard from "@/components/write/DraftCard";
 import { relativeTime } from "@/lib/timeAgo";
@@ -27,17 +27,13 @@ interface ProgressCardProps {
     preview?: string;
     createdAt?: string;
   } | null;
-  // True once the riff this piece belongs to has been revealed — drops the
-  // lock icon, since "submitted" no longer means "hidden until reveal."
-  revealed?: boolean;
-  // Shows the green "Unread" badge — caller decides eligibility (never the
-  // viewer's own piece, already-read pieces excluded).
-  isUnread?: boolean;
   // False hides the submitted/last-active date line — used where the date
   // isn't meaningful (e.g. the club page's past-riffs grouped view).
   showDate?: boolean;
-  // Present only for the viewer's own in-progress piece — makes the whole
-  // card clickable (to jump back into writing) instead of purely informational.
+  // Makes the whole card clickable instead of purely informational — jump
+  // back into writing (own in-progress piece) or open the piece to read
+  // (revealed/submitted piece). Caller decides eligibility; omit to leave
+  // a card non-interactive (e.g. a locked pre-reveal piece).
   onClick?: () => void;
   // "draft" swaps the in-progress state's noise/dark-overlay treatment for a
   // DraftCard-style card — the real thing for the viewer's own piece (passed
@@ -77,12 +73,22 @@ const blurredPreviewFiller = (wordCount: number): string =>
 export default function ProgressCard({
   user,
   piece,
-  revealed = false,
-  isUnread = false,
   showDate = true,
   onClick,
   variant = "noise",
 }: ProgressCardProps) {
+  // Hard-shadow-on-hover is the established affordance for a clickable card
+  // (see PieceCard, DraftCard) — only wired where onClick is actually
+  // present below, so a non-interactive card never implies it's clickable.
+  const [isHovered, setIsHovered] = useState(false);
+  const hoverProps = onClick
+    ? {
+        onMouseEnter: () => setIsHovered(true),
+        onMouseLeave: () => setIsHovered(false),
+      }
+    : {};
+  const hoverShadow = onClick && isHovered ? "8px 8px 0px 0px #000000" : "none";
+
   const cardBase: React.CSSProperties = {
     position: "relative",
     border: "1px solid #000000",
@@ -98,6 +104,7 @@ export default function ProgressCard({
       return (
         <div
           onClick={onClick}
+          {...hoverProps}
           style={{
             position: "relative",
             aspectRatio: "4 / 5",
@@ -105,6 +112,7 @@ export default function ProgressCard({
             border: "2px dashed #CCCCCC",
             padding: "20px",
             cursor: onClick ? "pointer" : undefined,
+            boxShadow: hoverShadow,
           }}
         >
           <div style={{ position: "absolute", top: "20px", right: "20px" }}>
@@ -212,6 +220,9 @@ export default function ProgressCard({
       PLACEHOLDER_COLORS[piece.id.charCodeAt(0) % PLACEHOLDER_COLORS.length];
 
     return (
+      // Always pre-reveal now — Current Read/Past Riffs render actual
+      // readable pieces via PieceCard instead, so this card is never
+      // clickable (a locked piece shouldn't be jumpable-to).
       <div
         style={{
           ...cardBase,
@@ -243,37 +254,30 @@ export default function ProgressCard({
           }}
         />
 
-        {/* Unread badge — top left */}
-        {isUnread && (
-          <Badge variant="green" style={{ zIndex: 3 }}>
-            Unread
-          </Badge>
-        )}
-
-        {/* Lock icon — top center (only while hidden pending reveal) */}
-        {!revealed && (
-          <div
-            style={{
-              position: "absolute",
-              top: "12px",
-              left: 0,
-              right: 0,
-              display: "flex",
-              justifyContent: "center",
-              zIndex: 3,
-            }}
+        {/* Lock icon — top center. This branch is only ever reached
+            pre-reveal now (Current Read/Past Riffs use PieceCard once a
+            piece is actually readable), so it's unconditional. */}
+        <div
+          style={{
+            position: "absolute",
+            top: "12px",
+            left: 0,
+            right: 0,
+            display: "flex",
+            justifyContent: "center",
+            zIndex: 3,
+          }}
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="white"
+            xmlns="http://www.w3.org/2000/svg"
           >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="white"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
-            </svg>
-          </div>
-        )}
+            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
+          </svg>
+        </div>
 
         {/* Title — vertically centered */}
         <div
@@ -533,7 +537,12 @@ export default function ProgressCard({
   return (
     <div
       onClick={onClick}
-      style={{ ...cardBase, cursor: onClick ? "pointer" : undefined }}
+      {...hoverProps}
+      style={{
+        ...cardBase,
+        cursor: onClick ? "pointer" : undefined,
+        boxShadow: hoverShadow,
+      }}
     >
       <NoiseBackground fillMode="cover" />
 

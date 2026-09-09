@@ -7,6 +7,7 @@ import AvatarStack from "@/components/shared/AvatarStack";
 import MobileCardCarousel from "@/components/shared/MobileCardCarousel";
 import EmptyRiffState from "@/components/riffs/EmptyRiffState";
 import ProgressCard from "@/components/riffs/ProgressCard";
+import PieceCard from "@/components/riffs/PieceCard";
 import RiffCTAButton from "@/components/riffs/RiffCTAButton";
 import RevealRiffButton, {
   shouldShowReveal,
@@ -1238,15 +1239,26 @@ export default function ClubPageLayout({
                         Number(!isPieceUnread(authorPieces[b.user.id]))
                     );
 
-                  const renderCard = (p: RiffParticipant) => (
-                    <ProgressCard
-                      key={p.user.id}
-                      user={p.user}
-                      piece={authorPieces[p.user.id]}
-                      revealed={true}
-                      isUnread={isPieceUnread(authorPieces[p.user.id])}
-                    />
-                  );
+                  const renderCard = (p: RiffParticipant) => {
+                    const piece = authorPieces[p.user.id];
+                    return (
+                      <PieceCard
+                        key={p.user.id}
+                        piece={{
+                          id: piece.id,
+                          title: piece.title,
+                          coverImage: piece.coverImage,
+                          wordCount: piece.wordCount,
+                          author: p.user,
+                        }}
+                        isRead={!isPieceUnread(piece)}
+                        isOwnPiece={p.user.id === currentUserId}
+                        onClick={() =>
+                          router.push(`/read/${piece.id}?riff=${riff.id}`)
+                        }
+                      />
+                    );
+                  };
 
                   return (
                     <div key={riff.id}>
@@ -1317,6 +1329,28 @@ export default function ClubPageLayout({
                       Number(a.user.id === currentUserId)
                   );
 
+                const renderCard = (p: RiffParticipant) => {
+                  const piece = authorPieces[p.user.id];
+                  return (
+                    <PieceCard
+                      key={p.user.id}
+                      piece={{
+                        id: piece.id,
+                        title: piece.title,
+                        coverImage: piece.coverImage,
+                        wordCount: piece.wordCount,
+                        author: p.user,
+                      }}
+                      // Past Riffs is fully-read riffs only, by definition.
+                      isRead={true}
+                      isOwnPiece={p.user.id === currentUserId}
+                      onClick={() =>
+                        router.push(`/read/${piece.id}?riff=${riff.id}`)
+                      }
+                    />
+                  );
+                };
+
                 return (
                   <div key={riff.id}>
                     <h3
@@ -1336,14 +1370,7 @@ export default function ClubPageLayout({
                     </h3>
                     {isMobile ? (
                       <MobileCardCarousel>
-                        {piecesToShow.map((p) => (
-                          <ProgressCard
-                            key={p.user.id}
-                            user={p.user}
-                            piece={authorPieces[p.user.id]}
-                            revealed={true}
-                          />
-                        ))}
+                        {piecesToShow.map(renderCard)}
                       </MobileCardCarousel>
                     ) : (
                       <div
@@ -1363,11 +1390,7 @@ export default function ClubPageLayout({
                               flexShrink: 0,
                             }}
                           >
-                            <ProgressCard
-                              user={p.user}
-                              piece={authorPieces[p.user.id]}
-                              revealed={true}
-                            />
+                            {renderCard(p)}
                           </div>
                         ))}
                       </div>
