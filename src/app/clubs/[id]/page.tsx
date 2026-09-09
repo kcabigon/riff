@@ -3,7 +3,11 @@ import type { Metadata } from "next";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import ClubPageLayout from "@/components/clubs/ClubPageLayout";
-import { getSubmittedPieces, getTotalWordCount } from "@/lib/riff-utils";
+import {
+  getSubmittedPieces,
+  getTotalWordCount,
+  getContentPreview,
+} from "@/lib/riff-utils";
 
 export async function generateMetadata({
   params,
@@ -23,13 +27,10 @@ export async function generateMetadata({
 
 export default async function ClubPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ welcome?: string }>;
 }) {
   const { id } = await params;
-  const { welcome } = await searchParams;
   const session = await getSession();
 
   if (!session?.user) {
@@ -95,6 +96,9 @@ export default async function ClubPage({
                 authorId: true,
                 coverImage: true,
                 wordCount: true,
+                createdAt: true,
+                updatedAt: true,
+                currentContent: true,
               },
             },
           },
@@ -135,11 +139,33 @@ export default async function ClubPage({
     0
   );
 
-  // Serialize dates to strings for client component boundary (Prisma returns Date objects)
+  // Serialize dates to strings for client component boundary (Prisma returns Date objects).
+  // Preview text (stripped of HTML, truncated to 500 chars) is only computed
+  // for the viewer's own piece — it's rendered as-is in their own draft card.
+  // Other participants' in-progress previews are faked client-side from
+  // wordCount alone (see ProgressCard's blurredPreviewFiller), so no other
+  // piece's content — full or truncated — is ever shipped pre-reveal.
   const serializeRiff = (r: (typeof riffs)[0]) => ({
     ...r,
     createdAt: r.createdAt.toISOString(),
     deadline: r.deadline ? r.deadline.toISOString() : null,
+    pieces: r.pieces.map((pr) => ({
+      ...pr,
+      submittedAt: pr.submittedAt ? pr.submittedAt.toISOString() : null,
+      piece: {
+        id: pr.piece.id,
+        title: pr.piece.title,
+        authorId: pr.piece.authorId,
+        coverImage: pr.piece.coverImage,
+        wordCount: pr.piece.wordCount,
+        createdAt: pr.piece.createdAt.toISOString(),
+        updatedAt: pr.piece.updatedAt.toISOString(),
+        preview:
+          pr.piece.authorId === userId
+            ? getContentPreview(pr.piece.currentContent, 500)
+            : "",
+      },
+    })),
   });
 
   // Separate riffs by status
@@ -172,24 +198,28 @@ export default async function ClubPage({
   // would collide with the old +1 hack and prematurely move the riff to Past Riffs.
   const revealedRiffIds = revealedRiffs.map((r) => r.id);
   let readCounts: Record<string, number> = {};
+  // Per-piece read state — needed for the "Unread" badge on individual piece
+  // cards in the Current Read grid (readCounts above is riff-level only).
+  let readPieceIds: string[] = [];
   if (revealedRiffIds.length > 0) {
     const ownPieceIds = revealedRiffs.flatMap((r) =>
       r.pieces
         .filter((p) => p.piece.authorId === userId && p.submittedAt !== null)
         .map((p) => p.piece.id)
     );
-    const readGroups = await prisma.pieceRead.groupBy({
-      by: ["riffId"],
-      where: {
-        userId,
-        riffId: { in: revealedRiffIds },
-        ...(ownPieceIds.length > 0 && { pieceId: { notIn: ownPieceIds } }),
-      },
-      _count: { pieceId: true },
+    const reads = await prisma.pieceRead.findMany({
+      where: { userId, riffId: { in: revealedRiffIds } },
+      select: { riffId: true, pieceId: true },
     });
-    readCounts = Object.fromEntries(
-      readGroups.map((g) => [g.riffId, g._count.pieceId])
-    );
+    readPieceIds = reads.map((r) => r.pieceId);
+    const countableReads =
+      ownPieceIds.length > 0
+        ? reads.filter((r) => !ownPieceIds.includes(r.pieceId))
+        : reads;
+    readCounts = countableReads.reduce<Record<string, number>>((acc, r) => {
+      acc[r.riffId] = (acc[r.riffId] || 0) + 1;
+      return acc;
+    }, {});
   }
 
   const isAdmin = club.adminId === userId;
@@ -212,12 +242,10 @@ export default async function ClubPage({
       revealedRiffs={revealedRiffs}
       pastRevealedRiffs={pastRevealedRiffs}
       readCounts={readCounts}
+      readPieceIds={readPieceIds}
       completedRiffs={completedRiffs}
       stats={{ riffCount, pieceCount, wordCount }}
       predictedVolumeNumber={predictedVolumeNumber}
-      initialWelcome={
-        welcome === "host" || welcome === "member" ? welcome : undefined
-      }
     />
   );
 }
