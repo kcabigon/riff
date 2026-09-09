@@ -14,11 +14,14 @@ import RevealRiffButton, {
 import { useDraftCreation } from "@/hooks/useDraftCreation";
 import Tagline from "@/components/Tagline";
 import CreateRiffModal from "@/components/riffs/CreateRiffModal";
+import EditRiffModal from "@/components/riffs/EditRiffModal";
+import DeleteRiffConfirmModal from "@/components/riffs/DeleteRiffConfirmModal";
 import RevealConfirmModal from "@/components/riffs/RevealConfirmModal";
 import ClubSettingsModal from "@/components/clubs/ClubSettingsModal";
 import InviteOptions from "@/components/clubs/InviteOptions";
 import CloseButton from "@/components/CloseButton";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
+import type { DropdownItem } from "@/components/shared/Dropdown";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import { useRevealRiff } from "@/hooks/useRevealRiff";
@@ -243,6 +246,8 @@ export default function ClubPageLayout({
   const [clubBannerImage, setClubBannerImage] = useState(club.bannerImage);
   const [isCreateRiffModalOpen, setIsCreateRiffModalOpen] = useState(false);
   const [isRevealModalOpen, setIsRevealModalOpen] = useState(false);
+  const [isEditRiffModalOpen, setIsEditRiffModalOpen] = useState(false);
+  const [isDeleteRiffModalOpen, setIsDeleteRiffModalOpen] = useState(false);
   const { revealRiff, isRevealing } = useRevealRiff();
   const { createDraft } = useDraftCreation();
   const [isClubDetailsModalOpen, setIsClubDetailsModalOpen] = useState(false);
@@ -851,6 +856,33 @@ export default function ClubPageLayout({
               })
             : false;
 
+          // Same menu as the individual riff page's 3-dot (RiffPageLayout),
+          // minus "Reveal now" — that's already its own button here via
+          // showReveal. canDeleteRiff mirrors the riff page's stricter gate
+          // (club admin or the riff's own creator — not just any co-host).
+          const canDeleteRiff =
+            isAdmin || activeRiff?.creator.id === currentUserId;
+          const riffMenuItems: DropdownItem[] = activeRiff
+            ? [
+                {
+                  type: "action",
+                  label: "Edit riff",
+                  onClick: () => setIsEditRiffModalOpen(true),
+                },
+                ...(canDeleteRiff
+                  ? ([
+                      { type: "divider" },
+                      {
+                        type: "action",
+                        label: "Delete riff",
+                        color: "#DC2626",
+                        onClick: () => setIsDeleteRiffModalOpen(true),
+                      },
+                    ] as DropdownItem[])
+                  : []),
+              ]
+            : [];
+
           return (
             <div style={{ marginBottom: "56px" }}>
               <SectionHeading text="CURRENT RIFF" color="#00FF66" width={121} />
@@ -901,28 +933,43 @@ export default function ClubPageLayout({
                               predictedVolumeNumber
                             )}
                           </h2>
-                          <p
+                          <div
                             style={{
-                              fontFamily: "var(--font-dm-sans)",
-                              fontSize: "14px",
-                              fontWeight: 300,
-                              color: activeRiff.deadline
-                                ? "#DC2626"
-                                : "#808080",
-                              margin: 0,
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
                             }}
                           >
-                            {deadlinePassed
-                              ? "Deadline passed"
-                              : activeRiff.deadline
-                                ? (() => {
-                                    const days = daysUntilDeadline(
-                                      activeRiff.deadline
-                                    );
-                                    return `${days} ${days === 1 ? "day" : "days"} left`;
-                                  })()
-                                : "No deadline"}
-                          </p>
+                            <p
+                              style={{
+                                fontFamily: "var(--font-dm-sans)",
+                                fontSize: "14px",
+                                fontWeight: 300,
+                                color: activeRiff.deadline
+                                  ? "#DC2626"
+                                  : "#808080",
+                                margin: 0,
+                              }}
+                            >
+                              {deadlinePassed
+                                ? "Deadline passed"
+                                : activeRiff.deadline
+                                  ? (() => {
+                                      const days = daysUntilDeadline(
+                                        activeRiff.deadline
+                                      );
+                                      return `${days} ${days === 1 ? "day" : "days"} left`;
+                                    })()
+                                  : "No deadline"}
+                            </p>
+                            {(isAdmin || isCoHost) && (
+                              <ThreeDotButton
+                                variant="light"
+                                items={riffMenuItems}
+                                align="left"
+                              />
+                            )}
+                          </div>
                         </div>
 
                         {showReveal ? (
@@ -1043,6 +1090,13 @@ export default function ClubPageLayout({
                                   })()
                                 : "No deadline"}
                           </p>
+                          {(isAdmin || isCoHost) && (
+                            <ThreeDotButton
+                              variant="light"
+                              items={riffMenuItems}
+                              align="left"
+                            />
+                          )}
                         </div>
                         {activeRiff.prompt && (
                           <div
@@ -1502,6 +1556,38 @@ export default function ClubPageLayout({
               .length
           }
           totalParticipants={activeRiff.participants.length}
+        />
+      )}
+
+      {/* Edit Riff Modal */}
+      {activeRiff && isEditRiffModalOpen && (
+        <EditRiffModal
+          isOpen={isEditRiffModalOpen}
+          onClose={() => setIsEditRiffModalOpen(false)}
+          onUpdated={() => {
+            setIsEditRiffModalOpen(false);
+            router.refresh();
+          }}
+          riff={{
+            id: activeRiff.id,
+            title: activeRiff.title,
+            prompt: activeRiff.prompt,
+            deadline: activeRiff.deadline,
+          }}
+        />
+      )}
+
+      {/* Delete Riff Modal */}
+      {activeRiff && isDeleteRiffModalOpen && (
+        <DeleteRiffConfirmModal
+          isOpen={isDeleteRiffModalOpen}
+          onClose={() => setIsDeleteRiffModalOpen(false)}
+          onDeleted={() => {
+            setIsDeleteRiffModalOpen(false);
+            router.refresh();
+          }}
+          riffId={activeRiff.id}
+          riffTitle={getRiffDisplayTitle(activeRiff, predictedVolumeNumber)}
         />
       )}
     </div>
