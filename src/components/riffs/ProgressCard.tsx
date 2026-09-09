@@ -102,7 +102,7 @@ export default function ProgressCard({
             position: "relative",
             aspectRatio: "4 / 5",
             backgroundColor: "#FFFFFF",
-            border: "2px dashed #808080",
+            border: "2px dashed #CCCCCC",
             padding: "20px",
             cursor: onClick ? "pointer" : undefined,
           }}
