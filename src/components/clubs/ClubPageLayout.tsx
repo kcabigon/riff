@@ -34,6 +34,7 @@ import {
   isPastDeadline,
   getWaitingParticipants,
   getSubmittedParticipants,
+  daysUntil,
 } from "@/lib/riff-utils";
 import DeleteClubConfirmModal from "@/components/clubs/DeleteClubConfirmModal";
 import LeaveClubConfirmModal from "@/components/clubs/LeaveClubConfirmModal";
@@ -119,12 +120,6 @@ interface ClubPageLayoutProps {
   };
   predictedVolumeNumber?: number;
 }
-
-// Whole days remaining until the deadline, clamped at 0.
-const daysUntilDeadline = (deadline: string): number => {
-  const diffMs = new Date(deadline).getTime() - Date.now();
-  return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
-};
 
 // Groups a riff's pieces by author id for quick per-participant lookup.
 // submittedAt is narrowed to string here — pieces reaching this client
@@ -929,8 +924,8 @@ export default function ClubPageLayout({
                                 ? "Deadline passed"
                                 : activeRiff.deadline
                                   ? (() => {
-                                      const days = daysUntilDeadline(
-                                        activeRiff.deadline
+                                      const days = daysUntil(
+                                        new Date(activeRiff.deadline)
                                       );
                                       return `${days} ${days === 1 ? "day" : "days"} left`;
                                     })()
@@ -1057,8 +1052,8 @@ export default function ClubPageLayout({
                               ? "Deadline passed"
                               : activeRiff.deadline
                                 ? (() => {
-                                    const days = daysUntilDeadline(
-                                      activeRiff.deadline
+                                    const days = daysUntil(
+                                      new Date(activeRiff.deadline)
                                     );
                                     return `${days} ${days === 1 ? "day" : "days"} left`;
                                   })()
