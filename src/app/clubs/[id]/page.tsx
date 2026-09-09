@@ -143,13 +143,11 @@ export default async function ClubPage({
   );
 
   // Serialize dates to strings for client component boundary (Prisma returns Date objects).
-  // Preview text (stripped of HTML, truncated to 500 chars) ships for every
-  // piece, including other participants' in-progress drafts pre-reveal — the
-  // club page blurs those client-side. Note this is a deliberate product
-  // choice, not a leak-proof one: the truncated text is still present in the
-  // RSC payload, so it's readable via view-source or devtools before reveal.
-  // Full currentContent (raw HTML) is never shipped for pieces the viewer
-  // doesn't own.
+  // Preview text (stripped of HTML, truncated to 500 chars) is only computed
+  // for the viewer's own piece — it's rendered as-is in their own draft card.
+  // Other participants' in-progress previews are faked client-side from
+  // wordCount alone (see ProgressCard's blurredPreviewFiller), so no other
+  // piece's content — full or truncated — is ever shipped pre-reveal.
   const serializeRiff = (r: (typeof riffs)[0]) => ({
     ...r,
     createdAt: r.createdAt.toISOString(),
@@ -165,7 +163,10 @@ export default async function ClubPage({
         wordCount: pr.piece.wordCount,
         createdAt: pr.piece.createdAt.toISOString(),
         updatedAt: pr.piece.updatedAt.toISOString(),
-        preview: getContentPreview(pr.piece.currentContent, 500),
+        preview:
+          pr.piece.authorId === userId
+            ? getContentPreview(pr.piece.currentContent, 500)
+            : "",
       },
     })),
   });

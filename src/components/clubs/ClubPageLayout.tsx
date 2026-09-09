@@ -55,9 +55,9 @@ interface RiffPiece {
     wordCount: number;
     createdAt: string;
     updatedAt: string;
-    // Plain-text preview, truncated to 500 chars — populated for every
-    // piece (see page.tsx's serializer), including other participants'
-    // unrevealed drafts, which the club page blurs client-side.
+    // Plain-text preview, truncated to 500 chars — only populated for the
+    // viewer's own piece (see page.tsx's serializer); "" for everyone else's,
+    // since ProgressCard fakes their blurred preview from wordCount alone.
     preview: string;
   };
 }

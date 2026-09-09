@@ -20,9 +20,10 @@ interface ProgressCardProps {
     submittedAt: string | null;
     coverImage?: string | null;
     activityLabel?: string;
-    // Plain-text preview (truncated) — populated for every piece, including
-    // other participants' unrevealed drafts, which the "draft" variant
-    // blurs client-side rather than substituting placeholder text.
+    // Plain-text preview (truncated) — only meaningful (and only sent by
+    // the server) for the viewer's own unsubmitted piece, rendered via
+    // DraftCard below. Other participants' draft previews are faked from
+    // wordCount alone (see blurredPreviewFiller) — never real content.
     preview?: string;
     createdAt?: string;
   } | null;
@@ -55,6 +56,23 @@ const PLACEHOLDER_COLORS = [
   "#E0D5E8",
 ];
 /* eslint-enable riff/no-non-palette-colors */
+
+// Fixed filler paragraph used to fake other participants' draft previews —
+// never real content, so there's nothing to leak. Long enough to cover the
+// blurred preview's cap below without repeating.
+const FILLER_PREVIEW_TEXT =
+  "The story began quietly, the way most important things do, without any fanfare or warning that everything was about to change. She had always believed certain mornings carried more weight than others, though she could never explain why some felt heavier and slower than the rest of an ordinary week spent waiting for something worth remembering to finally arrive and settle into place. It was easier, she thought, to notice these things in hindsight than to trust the feeling while it was happening";
+const FILLER_PREVIEW_WORDS = FILLER_PREVIEW_TEXT.split(" ");
+const FILLER_PREVIEW_CAP = 60;
+
+// Fakes a preview whose *length* matches the real word count, so the blur
+// looks proportionally accurate (a 5-word draft reads as a sliver, a
+// 50+-word one fills the card) without ever transmitting real content —
+// only wordCount, which the app already sends regardless.
+const blurredPreviewFiller = (wordCount: number): string =>
+  FILLER_PREVIEW_WORDS.slice(0, Math.min(wordCount, FILLER_PREVIEW_CAP)).join(
+    " "
+  );
 
 export default function ProgressCard({
   user,
@@ -397,9 +415,10 @@ export default function ProgressCard({
       );
     }
 
-    // Everyone else's — same card chrome, but the body is their real
-    // (truncated) preview text behind a CSS blur, so the blur reflects
-    // actual content instead of a fixed-length placeholder.
+    // Everyone else's — same card chrome, but the body is a fixed filler
+    // paragraph sliced to their real word count and blurred, so the preview
+    // is proportionally accurate (matches how much they've actually written)
+    // without ever rendering real content.
     return (
       <div
         style={{
@@ -460,32 +479,48 @@ export default function ProgressCard({
             overflow: "hidden",
           }}
         >
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              color: "#000000",
-              lineHeight: 1.5,
-              margin: 0,
-              filter: "blur(4px)",
-              userSelect: "none",
-              pointerEvents: "none",
-            }}
-          >
-            {piece.preview}
-          </p>
-          <div
-            style={{
-              position: "absolute",
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: "28px",
-              background: "linear-gradient(rgba(255,255,255,0), #FFFFFF)",
-              pointerEvents: "none",
-            }}
-          />
+          {piece.wordCount === 0 ? (
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "14px",
+                fontWeight: 300,
+                color: "#808080",
+                margin: 0,
+              }}
+            >
+              Just started
+            </p>
+          ) : (
+            <>
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 300,
+                  color: "#000000",
+                  lineHeight: 1.5,
+                  margin: 0,
+                  filter: "blur(4px)",
+                  userSelect: "none",
+                  pointerEvents: "none",
+                }}
+              >
+                {blurredPreviewFiller(piece.wordCount)}
+              </p>
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: "28px",
+                  background: "linear-gradient(rgba(255,255,255,0), #FFFFFF)",
+                  pointerEvents: "none",
+                }}
+              />
+            </>
+          )}
         </div>
 
         <div
