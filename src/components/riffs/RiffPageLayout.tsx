@@ -34,7 +34,6 @@ import ReadByStrip from "@/components/riffs/ReadByStrip";
 import PrimaryButton from "@/components/PrimaryButton";
 import CTAButton from "@/components/CTAButton";
 import Avatar from "@/components/shared/Avatar";
-import SectionHeading from "@/components/shared/SectionHeading";
 
 interface RiffPageLayoutProps {
   riff: {
@@ -554,11 +553,17 @@ export default function RiffPageLayout({
                   justifyContent: "space-between",
                 }}
               >
-                <SectionHeading
-                  text={`COMMENTS (${totalComments})`}
-                  color="#FF6B35"
-                  width={172}
-                />
+                <h3
+                  style={{
+                    fontFamily: "var(--font-dm-serif-text)",
+                    fontSize: "20px",
+                    fontWeight: 400,
+                    color: "#000000",
+                    margin: 0,
+                  }}
+                >
+                  Comments ({totalComments})
+                </h3>
                 {hasUnreadComments && (
                   <button
                     onClick={markAllCommentsRead}
