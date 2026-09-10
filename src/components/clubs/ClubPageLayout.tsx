@@ -824,10 +824,9 @@ export default function ClubPageLayout({
               })
             : false;
 
-          // Same menu as the individual riff page's 3-dot (RiffPageLayout),
-          // minus "Reveal now" — that's already its own button here via
-          // showReveal. canDeleteRiff mirrors the riff page's stricter gate
-          // (club admin or the riff's own creator — not just any co-host).
+          // Same menu as the individual riff page's 3-dot (RiffPageLayout).
+          // canDeleteRiff mirrors the riff page's stricter gate (club admin
+          // or the riff's own creator — not just any co-host).
           const canDeleteRiff =
             isAdmin || activeRiff?.creator.id === currentUserId;
           const riffMenuItems: DropdownItem[] = activeRiff
@@ -837,6 +836,20 @@ export default function ClubPageLayout({
                   label: "Edit riff",
                   onClick: () => setIsEditRiffModalOpen(true),
                 },
+                // Looser than the RevealRiffButton's shouldShowReveal gate —
+                // matches the standalone riff page's "Reveal now" menu item,
+                // which only needs at least one submission, independent of
+                // deadline/all-submitted.
+                ...(activeRiff.status === "ACTIVE" &&
+                getSubmittedPieces(activeRiff.pieces).length > 0
+                  ? [
+                      {
+                        type: "action" as const,
+                        label: "Reveal now",
+                        onClick: () => setIsRevealModalOpen(true),
+                      },
+                    ]
+                  : []),
                 ...(canDeleteRiff
                   ? ([
                       { type: "divider" },

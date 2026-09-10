@@ -115,6 +115,20 @@ export default async function RiffPage({
     redirect("/");
   }
 
+  // The club page's Current Riff section already has full feature parity
+  // with this page's pre-reveal view — send club riffs there instead once
+  // they exist, so there's one home for a riff while it's being written,
+  // not two. Clubless riffs have no club page to fall back to, so they
+  // always render here regardless of status. Club access control is left
+  // to /clubs/[id]/page.tsx itself, not duplicated here.
+  if (
+    riff.clubId &&
+    riff.status !== "REVEALED" &&
+    riff.status !== "COMPLETED"
+  ) {
+    redirect(`/clubs/${riff.clubId}`);
+  }
+
   // Verify user is a club member OR a riff participant + predicted volume number in parallel
   // (clubless riffs have no members to check and no per-club volume sequence)
   const [member, predictedVolumeNumber] = await Promise.all([
