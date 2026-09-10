@@ -49,6 +49,7 @@ interface Riff {
   prompt?: string | null;
   deadline: string | null;
   createdAt: string;
+  creatorId: string;
   club: {
     id: string;
     name: string;
@@ -262,11 +263,12 @@ export default function MyRiffsClient({
     }
   };
 
-  // Clubless riffs have no admin concept — host actions for them are PR2 scope
+  // Club riffs: admin/co-host holds host powers. Clubless: the creator does.
   const isRiffAdmin = (riff: Riff) =>
-    riff.club !== null &&
-    (riff.club.adminId === currentUserId ||
-      riff.club.moderatorId === currentUserId);
+    riff.club !== null
+      ? riff.club.adminId === currentUserId ||
+        riff.club.moderatorId === currentUserId
+      : riff.creatorId === currentUserId;
 
   const currentRiffs = [
     ...allRiffs
@@ -676,6 +678,7 @@ export default function MyRiffsClient({
                         name: riff.club?.name ?? "Open riff",
                         bannerImage: riff.club?.bannerImage ?? null,
                       }}
+                      isClubless={!riff.club}
                       isJoined={isJoined}
                       hasDraft={hasDraft}
                       hasSubmitted={hasSubmitted}
