@@ -596,7 +596,15 @@ export default function RiffPageLayout({
                         const match = riff.pieces.find(
                           (p) => p.piece.id === id
                         );
-                        return match
+                        // Own pieces are always counted as "read" (no
+                        // PieceRead row needed — you don't need to "read"
+                        // your own work), but that shouldn't count toward
+                        // "have you actually read anything" for the empty
+                        // comment-feed message below, or a viewer who's only
+                        // submitted their own piece gets told there are "no
+                        // comments on pieces you've read" instead of being
+                        // nudged to go read something.
+                        return match && match.piece.authorId !== currentUserId
                           ? {
                               id: match.piece.id,
                               title: match.piece.title,
