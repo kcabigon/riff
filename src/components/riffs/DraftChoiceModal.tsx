@@ -89,52 +89,45 @@ export default function DraftChoiceModal({
             <div style={{ borderTop: "1px solid #E6E6E6" }} />
 
             <div
-              style={{ display: "flex", flexDirection: "column", gap: "20px" }}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+                width: "100%",
+                border: "2px solid #000000",
+                boxShadow: "8px 8px 0px 0px #000000",
+                padding: "12px 16px",
+              }}
             >
-              {[0, 1].map((i) => (
+              <div
+                style={{
+                  width: "50%",
+                  height: "18px",
+                  backgroundColor: "#E6E6E6",
+                }}
+              />
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "6px",
+                }}
+              >
                 <div
-                  key={i}
                   style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "8px",
                     width: "100%",
-                    border: "2px solid #000000",
-                    boxShadow: "8px 8px 0px 0px #000000",
-                    padding: "12px 16px",
+                    height: "13px",
+                    backgroundColor: "#F5F5F5",
                   }}
-                >
-                  <div
-                    style={{
-                      width: "50%",
-                      height: "18px",
-                      backgroundColor: "#E6E6E6",
-                    }}
-                  />
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "6px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: "100%",
-                        height: "13px",
-                        backgroundColor: "#F5F5F5",
-                      }}
-                    />
-                    <div
-                      style={{
-                        width: "70%",
-                        height: "13px",
-                        backgroundColor: "#F5F5F5",
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
+                />
+                <div
+                  style={{
+                    width: "70%",
+                    height: "13px",
+                    backgroundColor: "#F5F5F5",
+                  }}
+                />
+              </div>
             </div>
           </>
         )}
