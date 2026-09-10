@@ -150,6 +150,7 @@ Last updated: May 16, 2026
 - [x] My Riffs page (`/my-riffs`): aggregate all club riffs cross-club, tabs for Current (Writing/Reading) and Past (by club), club badge on cards, avatar dropdown nav entry
 - [ ] 🔨 @jarric — Multi-level sharing UI (CLUB, RIFF, INDIVIDUAL, PUBLIC)
 - [x] Riff activity feed: post-reveal riff page redesign with Pieces/Feed toggle and comment activity feed
+- [ ] 🔨 @jarric — Consolidate riff page Pieces/Comment tabs into one scrolling page; per-piece click-to-read replaces bulk mark-read
 - [ ] Permission helpers / reusable middleware
 - [ ] Refactor editor: extract shared tiptap logic into `useRiffEditor` hook + unified `EditorToolbar`
 
