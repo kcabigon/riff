@@ -171,6 +171,22 @@ export default function RiffPageLayout({
     0
   );
 
+  // The viewer always gets a slot in the progress grid, even before
+  // joining — mirrors the same check inside the grid render below, hoisted
+  // here so the page width can respond to it too.
+  const viewerInParticipants = riff.participants.some(
+    (p) => p.user.id === currentUserId
+  );
+  const participantCount = viewerInParticipants
+    ? riff.participants.length
+    : riff.participants.length + 1;
+
+  // Main content width responsive to participant count, mirroring club
+  // page's club-size tiering (680/1000/1240 for 2/3/4+) — grows as more
+  // people join the riff instead of staying fixed.
+  const desktopContentWidth =
+    participantCount <= 2 ? 680 : participantCount === 3 ? 1000 : 1240;
+
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
       {/* Nav bar */}
@@ -182,10 +198,11 @@ export default function RiffPageLayout({
         }
       />
 
-      {/* Main content */}
+      {/* Main content — width responsive to participant count (680/1000/1240
+          for 2/3/4+ people), centered */}
       <div
         style={{
-          maxWidth: "1000px",
+          maxWidth: `${desktopContentWidth}px`,
           margin: "0 auto",
           padding: "32px 24px 64px",
         }}
@@ -589,10 +606,8 @@ export default function RiffPageLayout({
 
             // The viewer always gets a slot, even before joining — joining
             // now only ever happens as a side effect of picking New/Attach
-            // draft on their own card.
-            const viewerInParticipants = riff.participants.some(
-              (p) => p.user.id === currentUserId
-            );
+            // draft on their own card. (viewerInParticipants is hoisted
+            // above so the page width can respond to it too.)
             const participantsForGrid = viewerInParticipants
               ? riff.participants
               : [...riff.participants, { user: navUser }];
