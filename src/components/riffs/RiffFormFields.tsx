@@ -10,6 +10,7 @@ interface RiffFormFieldsProps {
   deadline: string;
   setDeadline: (v: string) => void;
   deadlineRequired?: boolean;
+  titleRequired?: boolean;
 }
 
 const inputStyle: React.CSSProperties = {
@@ -61,6 +62,7 @@ export default function RiffFormFields({
   deadline,
   setDeadline,
   deadlineRequired = false,
+  titleRequired = false,
 }: RiffFormFieldsProps) {
   const daysUntilDeadline = deadline
     ? Math.round(
@@ -126,13 +128,14 @@ export default function RiffFormFields({
             width={124}
             align="left"
           />
-          {optionalSpan}
+          {!titleRequired && optionalSpan}
         </div>
         <input
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="e.g. Summer Stories"
+          required={titleRequired}
           style={inputStyle}
           onFocus={onFocusGreen}
           onBlur={onBlurBlack}
