@@ -160,6 +160,7 @@ export default async function RiffPage({
     user: { id: string; name: string | null; avatarUrl: string | null };
     readCount: number;
     commentCount: number;
+    piecesToRead: number;
   }> = [];
   if (riff.status === "REVEALED") {
     // Fetch read records with readAt timestamps
@@ -233,11 +234,26 @@ export default async function RiffPage({
       commentGroups.map((g) => [g.authorId, g._count.id])
     );
 
+    // Own pieces never get a PieceRead row from normal viewing, so a piece's
+    // author can never reach a full ring against the riff-wide total. Shrink
+    // their personal denominator by 1 instead of inflating the numerator —
+    // "have you read everyone else's piece" rather than "did you read your
+    // own too", which needs no synthetic read-row bookkeeping.
+    const submittedPieces = getSubmittedPieces(riff.pieces);
+    const submittedPieceAuthorIds = new Set(
+      submittedPieces.map((p) => p.piece.authorId)
+    );
+
     contributionData = clubMembers
       .map((m) => ({
         user: m.user,
         readCount: readCountMap[m.user.id] ?? 0,
         commentCount: commentCountMap[m.user.id] ?? 0,
+        piecesToRead: Math.max(
+          submittedPieces.length -
+            (submittedPieceAuthorIds.has(m.user.id) ? 1 : 0),
+          0
+        ),
       }))
       .filter((m) => m.readCount >= 1)
       .sort((a, b) =>

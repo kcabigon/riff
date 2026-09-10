@@ -7,21 +7,23 @@ interface ReadByMember {
   user: { id: string; name: string | null; avatarUrl: string | null };
   readCount: number;
   commentCount: number;
+  // Submitted pieces minus the member's own, if they submitted one — a
+  // piece's author can never get a PieceRead row for their own work, so
+  // scoring them against the full riff-wide total would cap their ring
+  // short of 100% forever. Reading everyone else's is what "complete" means.
+  piecesToRead: number;
 }
 
-function ProgressRingAvatar({
-  member,
-  totalPieces,
-}: {
-  member: ReadByMember;
-  totalPieces: number;
-}) {
+function ProgressRingAvatar({ member }: { member: ReadByMember }) {
   const firstName = member.user.name?.split(" ")[0] ?? "Someone";
   const tooltipText =
     member.commentCount === 0
       ? firstName
       : `${firstName} · ${member.commentCount === 1 ? "1 comment" : `${member.commentCount} comments`}`;
-  const progress = Math.min(member.readCount / totalPieces, 1);
+  const progress =
+    member.piecesToRead === 0
+      ? 1
+      : Math.min(member.readCount / member.piecesToRead, 1);
   const deg = progress * 360;
 
   return (
@@ -90,11 +92,7 @@ export default function ReadByStrip({
         }}
       >
         {members.map((member) => (
-          <ProgressRingAvatar
-            key={member.user.id}
-            member={member}
-            totalPieces={totalPieces}
-          />
+          <ProgressRingAvatar key={member.user.id} member={member} />
         ))}
       </div>
     </div>

@@ -101,6 +101,7 @@ interface RiffPageLayoutProps {
     user: { id: string; name: string | null; avatarUrl: string | null };
     readCount: number;
     commentCount: number;
+    piecesToRead: number;
   }>;
   totalPieces?: number;
   onReveal?: () => void;
