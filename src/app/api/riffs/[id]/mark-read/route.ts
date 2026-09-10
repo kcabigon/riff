@@ -42,41 +42,10 @@ export async function POST(
       );
     }
 
-    // Union of pieces already marked read, plus the user's own pieces in
-    // this riff. Own pieces never get a PieceRead row from normal viewing
-    // (see GET /api/riffs/[id]/comments), so a plain updateMany would
-    // silently skip them here — upsert so new comments on your own piece
-    // actually get cleared too, not just pieces you've explicitly read.
-    // Never touches a piece the user hasn't read at all (no Unread badge
-    // gets cleared by this call).
-    const [existingReads, ownPieces] = await Promise.all([
-      prisma.pieceRead.findMany({
-        where: { riffId, userId: user.id },
-        select: { pieceId: true },
-      }),
-      prisma.pieceRiff.findMany({
-        where: { riffId, piece: { authorId: user.id } },
-        select: { pieceId: true },
-      }),
-    ]);
-    const pieceIds = [
-      ...new Set([
-        ...existingReads.map((r) => r.pieceId),
-        ...ownPieces.map((p) => p.pieceId),
-      ]),
-    ];
-
-    await Promise.all(
-      pieceIds.map((pieceId) =>
-        prisma.pieceRead.upsert({
-          where: {
-            userId_pieceId_riffId: { userId: user.id, pieceId, riffId },
-          },
-          create: { userId: user.id, pieceId, riffId },
-          update: { readAt: new Date() },
-        })
-      )
-    );
+    await prisma.pieceRead.updateMany({
+      where: { riffId, userId: user.id },
+      data: { readAt: new Date() },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
