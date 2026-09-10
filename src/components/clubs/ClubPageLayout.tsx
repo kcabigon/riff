@@ -8,7 +8,6 @@ import MobileCardCarousel from "@/components/shared/MobileCardCarousel";
 import EmptyRiffState from "@/components/riffs/EmptyRiffState";
 import ProgressCard from "@/components/riffs/ProgressCard";
 import PieceCard from "@/components/riffs/PieceCard";
-import Badge from "@/components/shared/Badge";
 import DraftChoiceTrigger from "@/components/riffs/DraftChoiceTrigger";
 import RevealRiffButton, {
   shouldShowReveal,
@@ -1371,16 +1370,35 @@ export default function ClubPageLayout({
                         {getRiffDisplayTitle(riff)}
                       </h3>
                       {newComments > 0 && (
-                        <Badge
-                          variant="cyan"
+                        <span
                           style={{
-                            position: "static",
-                            top: "auto",
-                            left: "auto",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
                           }}
                         >
-                          {newComments} new
-                        </Badge>
+                          <span
+                            style={{
+                              width: "8px",
+                              height: "8px",
+                              borderRadius: "50%",
+                              backgroundColor: "#01EFFC",
+                              display: "inline-block",
+                              flexShrink: 0,
+                            }}
+                          />
+                          <span
+                            style={{
+                              fontFamily: "var(--font-dm-sans)",
+                              fontSize: "14px",
+                              fontWeight: 300,
+                              color: "#808080",
+                            }}
+                          >
+                            {newComments} new{" "}
+                            {newComments === 1 ? "comment" : "comments"}
+                          </span>
+                        </span>
                       )}
                     </div>
                     {isMobile ? (
