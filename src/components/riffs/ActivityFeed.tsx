@@ -172,8 +172,27 @@ export default function ActivityFeed({
     }
   };
 
+  const subLabel =
+    !loading && !fetchError && comments.length === 0
+      ? readPieces.length === 0
+        ? "Read pieces and add to the conversation."
+        : "No comments on pieces you've read. Add to the conversation."
+      : "Comment activity on pieces you've read";
+
   return (
     <div>
+      <p
+        style={{
+          fontFamily: "var(--font-dm-sans)",
+          fontSize: "14px",
+          fontWeight: 300,
+          color: "#808080",
+          margin: "0 0 16px",
+        }}
+      >
+        {subLabel}
+      </p>
+
       {/* Loading skeleton */}
       {loading && (
         <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
@@ -232,26 +251,9 @@ export default function ActivityFeed({
         </p>
       )}
 
-      {/* Empty state */}
-      {!loading && !fetchError && comments.length === 0 && (
-        <p
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
-            fontWeight: 300,
-            color: "#808080",
-            margin: 0,
-          }}
-        >
-          {readPieces && readPieces.length === 0
-            ? "Read pieces and add to the conversation."
-            : "No comments on pieces you've read. Add to the conversation."}
-        </p>
-      )}
-
       {/* Comment list */}
       {!loading && comments.length > 0 && (
-        <div style={{ borderTop: "1px solid #E6E6E6", paddingTop: "24px" }}>
+        <div>
           {comments.map((comment, i) => {
             const firstName = comment.author.name?.split(" ")[0] ?? "Someone";
             const pieceTitle = comment.piece.title || "Untitled";

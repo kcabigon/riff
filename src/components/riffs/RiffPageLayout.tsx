@@ -282,15 +282,29 @@ export default function RiffPageLayout({
                     margin: 0,
                   }}
                 >
-                  {deadlinePassed && riff.status !== "REVEALED"
-                    ? "Deadline passed"
-                    : riff.status === "REVEALED"
-                      ? riff.updatedAt
-                        ? `Revealed ${formatDateShort(riff.updatedAt)} · ${totalWords.toLocaleString()} ${totalWords === 1 ? "word" : "words"}`
-                        : "Revealed"
-                      : riff.deadline
-                        ? `Deadline: ${formatDateLong(riff.deadline)}`
-                        : "No deadline"}
+                  {deadlinePassed && riff.status !== "REVEALED" ? (
+                    "Deadline passed"
+                  ) : riff.status === "REVEALED" ? (
+                    riff.updatedAt ? (
+                      <>
+                        Revealed:{" "}
+                        <span style={{ color: "#000000" }}>
+                          {formatDateShort(riff.updatedAt)}
+                        </span>
+                        {" · "}
+                        Words:{" "}
+                        <span style={{ color: "#000000" }}>
+                          {totalWords.toLocaleString()}
+                        </span>
+                      </>
+                    ) : (
+                      "Revealed"
+                    )
+                  ) : riff.deadline ? (
+                    `Deadline: ${formatDateLong(riff.deadline)}`
+                  ) : (
+                    "No deadline"
+                  )}
                 </p>
                 {!deadlinePassed &&
                   riff.status !== "REVEALED" &&
@@ -564,18 +578,7 @@ export default function RiffPageLayout({
                   </button>
                 )}
               </div>
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "14px",
-                  fontWeight: 300,
-                  color: "#808080",
-                  margin: "8px 0 0",
-                }}
-              >
-                Comment activity on pieces you&apos;ve read
-              </p>
-              <div style={{ marginTop: "16px" }}>
+              <div style={{ marginTop: "8px" }}>
                 <ActivityFeed
                   riffId={riff.id}
                   clubId={riff.clubId}
