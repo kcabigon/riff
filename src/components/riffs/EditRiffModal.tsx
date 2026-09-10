@@ -4,7 +4,7 @@ import { useState } from "react";
 import Modal from "@/components/shared/Modal";
 import RiffFormFields from "./RiffFormFields";
 import PrimaryButton from "@/components/PrimaryButton";
-import { toEndOfDay } from "@/lib/riff-utils";
+import { toEndOfDay, toLocalDateInputValue } from "@/lib/riff-utils";
 
 interface EditRiffModalProps {
   isOpen: boolean;
@@ -27,7 +27,7 @@ export default function EditRiffModal({
   const [title, setTitle] = useState(riff.title || "");
   const [prompt, setPrompt] = useState(riff.prompt || "");
   const [deadline, setDeadline] = useState(
-    riff.deadline ? new Date(riff.deadline).toISOString().split("T")[0] : ""
+    riff.deadline ? toLocalDateInputValue(riff.deadline) : ""
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);

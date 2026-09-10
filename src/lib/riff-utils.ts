@@ -71,6 +71,20 @@ export function toEndOfDay(dateString: string): string {
   return new Date(year, month - 1, day, 23, 59, 59, 999).toISOString();
 }
 
+// Inverse of toEndOfDay — extracts the LOCAL calendar date (YYYY-MM-DD) from
+// a stored deadline, for pre-filling a <input type="date">. Must read local
+// date components, not toISOString()'s UTC date: an end-of-day deadline
+// (23:59:59.999 local) crosses into the next UTC calendar day for any
+// timezone behind UTC, which would silently shift the date forward by one
+// every time it round-trips through toEndOfDay again on save.
+export function toLocalDateInputValue(date: string | Date): string {
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 // Returns the date to show for a piece — the latest riff submission, or
 // (for riff-less pieces) when it was published standalone. Submission
 // always wins over publishedAt when both are somehow present.
