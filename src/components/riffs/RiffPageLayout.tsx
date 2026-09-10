@@ -33,6 +33,7 @@ import ActivityFeed from "@/components/riffs/ActivityFeed";
 import ReadByStrip from "@/components/riffs/ReadByStrip";
 import PrimaryButton from "@/components/PrimaryButton";
 import CTAButton from "@/components/CTAButton";
+import Avatar from "@/components/shared/Avatar";
 
 interface RiffPageLayoutProps {
   riff: {
@@ -348,26 +349,58 @@ export default function RiffPageLayout({
               </div>
             </div>
 
-            {/* Prompt */}
-            {riff.prompt && (
+            {/* Hosted by (clubless riffs only) + prompt — shared accent border,
+                since the prompt is effectively a note from the host. */}
+            {(!riff.club || riff.prompt) && (
               <div
                 style={{
                   borderLeft: "2px solid #000000",
                   paddingLeft: "16px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "16px",
                 }}
               >
-                <p
-                  style={{
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "16px",
-                    fontWeight: 300,
-                    color: "#000000",
-                    margin: 0,
-                    lineHeight: 1.5,
-                  }}
-                >
-                  {riff.prompt}
-                </p>
+                {!riff.club && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                    }}
+                  >
+                    <Avatar user={riff.creator} size={32} />
+                    <p
+                      style={{
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "16px",
+                        fontWeight: 300,
+                        color: "#000000",
+                        margin: 0,
+                      }}
+                    >
+                      Hosted by{" "}
+                      <span style={{ fontWeight: 700 }}>
+                        {riff.creator.name || "a Riff writer"}
+                      </span>
+                    </p>
+                  </div>
+                )}
+
+                {riff.prompt && (
+                  <p
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "16px",
+                      fontWeight: 300,
+                      color: "#000000",
+                      margin: 0,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {riff.prompt}
+                  </p>
+                )}
               </div>
             )}
           </div>
