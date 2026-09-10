@@ -14,7 +14,7 @@ import {
 import LandingNavBar from "@/components/LandingNavBar";
 import NavBar from "@/components/clubs/NavBar";
 import TextInput from "@/components/TextInput";
-import SecondaryButton from "@/components/SecondaryButton";
+import PrimaryButton from "@/components/PrimaryButton";
 import Avatar from "@/components/shared/Avatar";
 import NoiseBackground from "@/components/NoiseBackground";
 import Tagline from "@/components/Tagline";
@@ -571,9 +571,9 @@ export default function JoinRiffClient({
                       autoFocus
                       autoComplete="email"
                     />
-                    <SecondaryButton type="submit" loading={loading}>
-                      Join riff
-                    </SecondaryButton>
+                    <PrimaryButton type="submit" loading={loading}>
+                      Let's riff
+                    </PrimaryButton>
                   </form>
                 </>
               )}
@@ -637,9 +637,9 @@ export default function JoinRiffClient({
                       required
                     />
                     {error && <p style={errorStyle}>{error}</p>}
-                    <SecondaryButton type="submit" loading={loading}>
-                      Join riff
-                    </SecondaryButton>
+                    <PrimaryButton type="submit" loading={loading}>
+                      Let's riff
+                    </PrimaryButton>
                   </form>
                 </>
               )}
@@ -656,9 +656,9 @@ export default function JoinRiffClient({
                   }}
                 >
                   {error && <p style={errorStyle}>{error}</p>}
-                  <SecondaryButton loading={loading} onClick={handleJoin}>
-                    Join riff
-                  </SecondaryButton>
+                  <PrimaryButton loading={loading} onClick={handleJoin}>
+                    Let's riff
+                  </PrimaryButton>
                 </div>
               )}
             </div>
