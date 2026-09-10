@@ -26,14 +26,25 @@ export function getSubmittedPieces<
   return pieces.filter((p) => p.submittedAt !== null);
 }
 
-// Returns true if every participant has submitted a piece.
-export function allPiecesSubmitted(
-  pieces: { submittedAt: string | Date | null }[],
-  participantCount: number
+// Returns true if every participant who has actually started writing
+// (wordCount > 0) has submitted a piece. Participants who joined but never
+// wrote anything (e.g. clicked "New draft" and abandoned it) don't count —
+// otherwise a single abandoned 0-word draft would block early reveal.
+export function allPiecesSubmitted<T extends { user: { id: string } }>(
+  participants: T[],
+  pieces: {
+    submittedAt: string | Date | null;
+    piece: { authorId: string; wordCount: number };
+  }[]
 ): boolean {
+  const startedParticipants = participants.filter((p) =>
+    pieces.some(
+      (pr) => pr.piece.authorId === p.user.id && pr.piece.wordCount > 0
+    )
+  );
   return (
-    participantCount > 0 &&
-    getSubmittedPieces(pieces).length >= participantCount
+    startedParticipants.length > 0 &&
+    getSubmittedPieces(pieces).length >= startedParticipants.length
   );
 }
 
