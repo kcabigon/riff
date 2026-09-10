@@ -1002,29 +1002,29 @@ export default function ClubPageLayout({
                           minWidth: 0,
                         }}
                       >
+                        <h2
+                          style={{
+                            display: "inline-block",
+                            fontFamily: "var(--font-dm-serif-text)",
+                            fontSize: "24px",
+                            fontWeight: 400,
+                            color: "#000000",
+                            margin: 0,
+                          }}
+                        >
+                          {getRiffDisplayTitle(
+                            activeRiff,
+                            predictedVolumeNumber
+                          )}
+                        </h2>
                         <div
                           style={{
                             display: "flex",
-                            alignItems: "baseline",
-                            gap: "12px",
+                            alignItems: "center",
+                            gap: "8px",
                             flexWrap: "wrap",
                           }}
                         >
-                          <h2
-                            style={{
-                              display: "inline-block",
-                              fontFamily: "var(--font-dm-serif-text)",
-                              fontSize: "24px",
-                              fontWeight: 400,
-                              color: "#000000",
-                              margin: 0,
-                            }}
-                          >
-                            {getRiffDisplayTitle(
-                              activeRiff,
-                              predictedVolumeNumber
-                            )}
-                          </h2>
                           {!deadlinePassed && activeRiff.deadline && (
                             <p
                               style={{
@@ -1064,13 +1064,11 @@ export default function ClubPageLayout({
                                 : "No deadline"}
                           </p>
                           {(isAdmin || isCoHost) && (
-                            <div style={{ alignSelf: "center" }}>
-                              <ThreeDotButton
-                                variant="light"
-                                items={riffMenuItems}
-                                align="left"
-                              />
-                            </div>
+                            <ThreeDotButton
+                              variant="light"
+                              items={riffMenuItems}
+                              align="left"
+                            />
                           )}
                         </div>
                         {activeRiff.prompt && (
