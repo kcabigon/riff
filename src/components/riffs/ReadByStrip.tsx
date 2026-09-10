@@ -2,19 +2,9 @@
 
 import Avatar from "@/components/shared/Avatar";
 import { useIsMobile } from "@/hooks/useMediaQuery";
+import type { RiffContributor } from "@/lib/riff-utils";
 
-interface ReadByMember {
-  user: { id: string; name: string | null; avatarUrl: string | null };
-  readCount: number;
-  commentCount: number;
-  // Submitted pieces minus the member's own, if they submitted one — a
-  // piece's author can never get a PieceRead row for their own work, so
-  // scoring them against the full riff-wide total would cap their ring
-  // short of 100% forever. Reading everyone else's is what "complete" means.
-  piecesToRead: number;
-}
-
-function ProgressRingAvatar({ member }: { member: ReadByMember }) {
+function ProgressRingAvatar({ member }: { member: RiffContributor }) {
   const firstName = member.user.name?.split(" ")[0] ?? "Someone";
   const tooltipText =
     member.commentCount === 0
@@ -55,7 +45,7 @@ export default function ReadByStrip({
   members,
   totalPieces,
 }: {
-  members: ReadByMember[];
+  members: RiffContributor[];
   totalPieces: number;
 }) {
   const isMobile = useIsMobile();

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
+import { isAuthoredBy } from "@/lib/riff-utils";
 
 // GET /api/riffs/[id]/comments — all top-level comments + replies for a revealed riff
 export async function GET(
@@ -65,7 +66,7 @@ export async function GET(
     const readMap = new Map(pieceReads.map((r) => [r.pieceId, r.readAt]));
 
     const comments = rawComments
-      .filter((c) => readMap.has(c.piece.id) || c.piece.authorId === user.id)
+      .filter((c) => readMap.has(c.piece.id) || isAuthoredBy(c.piece, user.id))
       .sort((a, b) => {
         const aLatest =
           a.replies.length > 0
@@ -84,7 +85,7 @@ export async function GET(
         return bLatest - aLatest;
       })
       .map((c) => {
-        const isOwnPiece = c.piece.authorId === user.id;
+        const isOwnPiece = isAuthoredBy(c.piece, user.id);
         const readAt = readMap.get(c.piece.id);
         const commentIsNew =
           !!readAt && c.author.id !== user.id && c.createdAt > readAt;

@@ -3,7 +3,12 @@ import type { Metadata } from "next";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import RiffPageLayout from "@/components/riffs/RiffPageLayout";
-import { getSubmittedPieces, getContentPreview } from "@/lib/riff-utils";
+import {
+  getSubmittedPieces,
+  getContentPreview,
+  isAuthoredBy,
+  type RiffContributor,
+} from "@/lib/riff-utils";
 
 export async function generateMetadata({
   params,
@@ -152,29 +157,32 @@ export default async function RiffPage({
       (p) => p.piece.authorId === userId && p.submittedAt === null
     )?.piece.id ?? null;
 
+  // Computed once, reused for both the header's totalPieces prop and the
+  // Read-by ring denominators below — same filter, one source of truth.
+  const submittedPieces = getSubmittedPieces(riff.pieces);
+
   // Fetch read data and compute per-piece flags for REVEALED riffs
   let readPieceIds: string[] = [];
   let isFirstReveal = false;
   const hasNewCommentsMap: Record<string, boolean> = {};
-  let contributionData: Array<{
-    user: { id: string; name: string | null; avatarUrl: string | null };
-    readCount: number;
-    commentCount: number;
-    piecesToRead: number;
-  }> = [];
+  let contributionData: RiffContributor[] = [];
   if (riff.status === "REVEALED") {
-    // Fetch read records with readAt timestamps
-    const reads = await prisma.pieceRead.findMany({
-      where: { userId, riffId: id },
-      select: { pieceId: true, readAt: true },
+    // One PieceRead fetch for the whole riff — derives both the viewer's
+    // own per-piece readAt map and every member's total read count, instead
+    // of a separate findMany + groupBy round-trip for each.
+    const allReads = await prisma.pieceRead.findMany({
+      where: { riffId: id },
+      select: { userId: true, pieceId: true, readAt: true },
     });
-    const readAtMap: Record<string, Date> = Object.fromEntries(
-      reads.map((r) => [r.pieceId, r.readAt])
-    );
+    const reads = allReads.filter((r) => r.userId === userId);
+    const readCountMap: Record<string, number> = {};
+    for (const r of allReads) {
+      readCountMap[r.userId] = (readCountMap[r.userId] ?? 0) + 1;
+    }
 
     // Own pieces always treated as read — no Unread badge on your own work
     const ownPieceIds = riff.pieces
-      .filter((p) => p.piece.authorId === userId)
+      .filter((p) => isAuthoredBy(p.piece, userId))
       .map((p) => p.piece.id);
     readPieceIds = [
       ...new Set([...reads.map((r) => r.pieceId), ...ownPieceIds]),
@@ -184,18 +192,24 @@ export default async function RiffPage({
     // new members browsing past riffs) should not see the "moment you've been waiting for" modal
     isFirstReveal = !isAdmin && reads.length === 0 && isJoined;
 
-    // Fetch all comment timestamps for this riff in one query
-    // Exclude the current user's own comments — leaving a comment shouldn't
-    // trigger a "New" badge on your own piece
-    const comments = await prisma.comment.findMany({
-      where: { riffId: id, authorId: { not: userId } },
-      select: { pieceId: true, createdAt: true },
+    // One Comment fetch for the whole riff — derives both the "new since
+    // you last read it" flags and every author's total comment count.
+    const allComments = await prisma.comment.findMany({
+      where: { riffId: id },
+      select: { pieceId: true, createdAt: true, authorId: true },
     });
+    const commentCountMap: Record<string, number> = {};
+    for (const c of allComments) {
+      commentCountMap[c.authorId] = (commentCountMap[c.authorId] ?? 0) + 1;
+    }
 
-    // For each piece the user has read, check if any comment is newer than readAt
+    // For each piece the user has read, check if any comment is newer than
+    // readAt — excludes the viewer's own comments, since leaving one
+    // shouldn't trigger a "New" badge on your own piece.
     for (const { pieceId: pid, readAt } of reads) {
-      hasNewCommentsMap[pid] = comments.some(
-        (c) => c.pieceId === pid && c.createdAt > readAt
+      hasNewCommentsMap[pid] = allComments.some(
+        (c) =>
+          c.authorId !== userId && c.pieceId === pid && c.createdAt > readAt
       );
     }
 
@@ -215,31 +229,11 @@ export default async function RiffPage({
           },
         }));
 
-    const readGroups = await prisma.pieceRead.groupBy({
-      by: ["userId"],
-      where: { riffId: id },
-      _count: { pieceId: true },
-    });
-
-    const commentGroups = await prisma.comment.groupBy({
-      by: ["authorId"],
-      where: { riffId: id },
-      _count: { id: true },
-    });
-
-    const readCountMap: Record<string, number> = Object.fromEntries(
-      readGroups.map((g) => [g.userId, g._count.pieceId])
-    );
-    const commentCountMap: Record<string, number> = Object.fromEntries(
-      commentGroups.map((g) => [g.authorId, g._count.id])
-    );
-
     // Own pieces never get a PieceRead row from normal viewing, so a piece's
     // author can never reach a full ring against the riff-wide total. Shrink
     // their personal denominator by 1 instead of inflating the numerator —
     // "have you read everyone else's piece" rather than "did you read your
     // own too", which needs no synthetic read-row bookkeeping.
-    const submittedPieces = getSubmittedPieces(riff.pieces);
     const submittedPieceAuthorIds = new Set(
       submittedPieces.map((p) => p.piece.authorId)
     );
@@ -308,7 +302,7 @@ export default async function RiffPage({
       readPieceIds={readPieceIds}
       hasNewCommentsMap={hasNewCommentsMap}
       contributionData={contributionData}
-      totalPieces={getSubmittedPieces(riff.pieces).length}
+      totalPieces={submittedPieces.length}
       navUser={
         navUser ?? { id: userId, name: null, username: null, avatarUrl: null }
       }

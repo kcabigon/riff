@@ -20,6 +20,8 @@ import {
   daysUntil,
   getSubmittedParticipants,
   getWaitingParticipants,
+  isAuthoredBy,
+  type RiffContributor,
 } from "@/lib/riff-utils";
 import DraftChoiceTrigger from "@/components/riffs/DraftChoiceTrigger";
 import RevealRiffButton, {
@@ -97,12 +99,7 @@ interface RiffPageLayoutProps {
   userClubs?: Array<{ id: string; name: string }>;
   readPieceIds?: string[];
   hasNewCommentsMap?: Record<string, boolean>;
-  contributionData?: Array<{
-    user: { id: string; name: string | null; avatarUrl: string | null };
-    readCount: number;
-    commentCount: number;
-    piecesToRead: number;
-  }>;
+  contributionData?: RiffContributor[];
   totalPieces?: number;
   onReveal?: () => void;
   hostFirstName?: string | null;
@@ -189,8 +186,12 @@ export default function RiffPageLayout({
     (sum, p) => sum + (p.piece.wordCount || 0),
     0
   );
-  const totalComments = contributionData.reduce(
-    (sum, m) => sum + m.commentCount,
+  // Independent of contributionData, which is filtered to members who've
+  // read at least one piece (for the Read-by strip) — sourcing this from
+  // the pieces directly means the heading total can't silently undercount
+  // if someone's commentCount ever outpaced their readCount.
+  const totalComments = riff.pieces.reduce(
+    (sum, p) => sum + (p.piece.commentCount ?? 0),
     0
   );
 
@@ -524,7 +525,7 @@ export default function RiffPageLayout({
                     }}
                     isRead={readPieceIds.includes(pieceRiff.piece.id)}
                     hasNewComments={badgeMap[pieceRiff.piece.id] ?? false}
-                    isOwnPiece={pieceRiff.piece.authorId === currentUserId}
+                    isOwnPiece={isAuthoredBy(pieceRiff.piece, currentUserId)}
                     onClick={() =>
                       router.push(`/read/${pieceRiff.piece.id}?riff=${riff.id}`)
                     }
@@ -605,7 +606,8 @@ export default function RiffPageLayout({
                         // submitted their own piece gets told there are "no
                         // comments on pieces you've read" instead of being
                         // nudged to go read something.
-                        return match && match.piece.authorId !== currentUserId
+                        return match &&
+                          !isAuthoredBy(match.piece, currentUserId)
                           ? {
                               id: match.piece.id,
                               title: match.piece.title,
