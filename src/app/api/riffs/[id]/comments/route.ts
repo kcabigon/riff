@@ -85,7 +85,14 @@ export async function GET(
       })
       .map((c) => {
         const isOwnPiece = c.piece.authorId === user.id;
-        const readAt = readMap.get(c.piece.id);
+        // Own pieces never get a PieceRead row from normal viewing — you
+        // don't need to "read" your own piece to know it exists. Without a
+        // fallback, that missing row would make commentIsNew always false,
+        // so a genuinely new comment on your own piece would incorrectly
+        // fall back to just "own piece" (yellow) instead of "new" (green).
+        // Treat a missing row as epoch — new until you actually check it.
+        const readAt =
+          readMap.get(c.piece.id) ?? (isOwnPiece ? new Date(0) : undefined);
         const commentIsNew =
           !!readAt && c.author.id !== user.id && c.createdAt > readAt;
         const replyIsNew =
