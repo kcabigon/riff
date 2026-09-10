@@ -26,6 +26,28 @@ export function getSubmittedPieces<
   return pieces.filter((p) => p.submittedAt !== null);
 }
 
+// Returns true if the given piece was authored by the given user — the
+// recurring "is this mine" check threaded through riff-page read tracking,
+// badges, and comments (own pieces skip the Unread badge, never get a
+// PieceRead row from normal viewing, and are excluded from ring
+// denominators and "have you read anything" checks).
+export function isAuthoredBy(
+  piece: { authorId: string },
+  userId: string
+): boolean {
+  return piece.authorId === userId;
+}
+
+// A riff participant's read/comment activity, used for the "Read by" strip.
+export interface RiffContributor {
+  user: { id: string; name: string | null; avatarUrl: string | null };
+  readCount: number;
+  commentCount: number;
+  // Submitted pieces minus the contributor's own, if they submitted one —
+  // see piecesToRead computation in src/app/riffs/[id]/page.tsx.
+  piecesToRead: number;
+}
+
 // Returns true if every participant who has actually started writing
 // (wordCount > 0) has submitted a piece. Participants who joined but never
 // wrote anything (e.g. clicked "New draft" and abandoned it) don't count —

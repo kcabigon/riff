@@ -20,6 +20,8 @@ import {
   daysUntil,
   getSubmittedParticipants,
   getWaitingParticipants,
+  isAuthoredBy,
+  type RiffContributor,
 } from "@/lib/riff-utils";
 import DraftChoiceTrigger from "@/components/riffs/DraftChoiceTrigger";
 import RevealRiffButton, {
@@ -97,11 +99,7 @@ interface RiffPageLayoutProps {
   userClubs?: Array<{ id: string; name: string }>;
   readPieceIds?: string[];
   hasNewCommentsMap?: Record<string, boolean>;
-  contributionData?: Array<{
-    user: { id: string; name: string | null; avatarUrl: string | null };
-    readCount: number;
-    commentCount: number;
-  }>;
+  contributionData?: RiffContributor[];
   totalPieces?: number;
   onReveal?: () => void;
   hostFirstName?: string | null;
@@ -137,15 +135,28 @@ export default function RiffPageLayout({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
-  const [viewMode, setViewMode] = useState<"read" | "comment">("read");
   const [badgeMap, setBadgeMap] =
     useState<Record<string, boolean>>(hasNewCommentsMap);
   const router = useRouter();
 
-  const switchToComment = () => {
-    setViewMode("comment");
-    setBadgeMap({});
+  const markPieceCommentsRead = (pieceId: string) => {
+    setBadgeMap((prev) => ({ ...prev, [pieceId]: false }));
+    fetch(`/api/riffs/${riff.id}/read`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pieceId }),
+    }).catch(() => {});
   };
+
+  const [markAllReadSignal, setMarkAllReadSignal] = useState(0);
+  const markAllCommentsRead = () => {
+    setBadgeMap({});
+    setMarkAllReadSignal((n) => n + 1);
+    fetch(`/api/riffs/${riff.id}/mark-read`, { method: "POST" }).catch(
+      () => {}
+    );
+  };
+  const hasUnreadComments = Object.values(badgeMap).some(Boolean);
   const deadlinePassed = isPastDeadline(riff.deadline);
   const piecesAllSubmitted = allPiecesSubmitted(riff.participants, riff.pieces);
   const submittedUsers = getSubmittedParticipants(
@@ -173,6 +184,14 @@ export default function RiffPageLayout({
 
   const totalWords = riff.pieces.reduce(
     (sum, p) => sum + (p.piece.wordCount || 0),
+    0
+  );
+  // Independent of contributionData, which is filtered to members who've
+  // read at least one piece (for the Read-by strip) — sourcing this from
+  // the pieces directly means the heading total can't silently undercount
+  // if someone's commentCount ever outpaced their readCount.
+  const totalComments = riff.pieces.reduce(
+    (sum, p) => sum + (p.piece.commentCount ?? 0),
     0
   );
 
@@ -264,15 +283,29 @@ export default function RiffPageLayout({
                     margin: 0,
                   }}
                 >
-                  {deadlinePassed && riff.status !== "REVEALED"
-                    ? "Deadline passed"
-                    : riff.status === "REVEALED"
-                      ? riff.updatedAt
-                        ? `Revealed ${formatDateShort(riff.updatedAt)}`
-                        : "Revealed"
-                      : riff.deadline
-                        ? `Deadline: ${formatDateLong(riff.deadline)}`
-                        : "No deadline"}
+                  {deadlinePassed && riff.status !== "REVEALED" ? (
+                    "Deadline passed"
+                  ) : riff.status === "REVEALED" ? (
+                    riff.updatedAt ? (
+                      <>
+                        Revealed:{" "}
+                        <span style={{ color: "#000000" }}>
+                          {formatDateShort(riff.updatedAt)}
+                        </span>
+                        {" · "}
+                        Words:{" "}
+                        <span style={{ color: "#000000" }}>
+                          {totalWords.toLocaleString()}
+                        </span>
+                      </>
+                    ) : (
+                      "Revealed"
+                    )
+                  ) : riff.deadline ? (
+                    `Deadline: ${formatDateLong(riff.deadline)}`
+                  ) : (
+                    "No deadline"
+                  )}
                 </p>
                 {!deadlinePassed &&
                   riff.status !== "REVEALED" &&
@@ -426,117 +459,6 @@ export default function RiffPageLayout({
                 </PrimaryButton>
               )}
 
-            {riff.status === "REVEALED" && (
-              <div
-                style={{
-                  display: "inline-flex",
-                  border: "2px solid #000000",
-                  overflow: "hidden",
-                }}
-              >
-                {(["read", "comment"] as const).map((mode, i) => (
-                  <button
-                    key={mode}
-                    onClick={() =>
-                      mode === "comment" ? switchToComment() : setViewMode(mode)
-                    }
-                    style={{
-                      backgroundColor:
-                        viewMode === mode ? "#000000" : "#FFFFFF",
-                      border: "none",
-                      borderLeft: i > 0 ? "2px solid #000000" : "none",
-                      cursor: "pointer",
-                      fontFamily: "var(--font-dm-sans)",
-                      fontSize: "14px",
-                      fontWeight: 400,
-                      color: viewMode === mode ? "#FFFFFF" : "#000000",
-                      padding: "6px 16px",
-                      textTransform: "capitalize",
-                      transition:
-                        "background-color 0.15s ease, color 0.15s ease",
-                    }}
-                  >
-                    {mode}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {riff.status === "REVEALED" &&
-              (() => {
-                const totalReads = contributionData.reduce(
-                  (sum, m) => sum + m.readCount,
-                  0
-                );
-                const totalComments = contributionData.reduce(
-                  (sum, m) => sum + m.commentCount,
-                  0
-                );
-                const revealStats = [
-                  {
-                    value: riff.pieces.length,
-                    label: riff.pieces.length === 1 ? "Piece" : "Pieces",
-                  },
-                  { value: totalWords.toLocaleString(), label: "Words" },
-                  {
-                    value: totalReads,
-                    label: totalReads === 1 ? "Read" : "Reads",
-                  },
-                  {
-                    value: totalComments,
-                    label: totalComments === 1 ? "Comment" : "Comments",
-                  },
-                ];
-                return (
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "12px",
-                      lineHeight: "normal",
-                    }}
-                  >
-                    {revealStats.map((stat, i) => (
-                      <div
-                        // eslint-disable-next-line react/no-array-index-key -- static stat tiles; length and order are stable
-                        key={i}
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <p
-                          style={{
-                            fontFamily: "var(--font-dm-sans)",
-                            fontSize: "16px",
-                            fontWeight: 700,
-                            lineHeight: "normal",
-                            color: "#000000",
-                            margin: 0,
-                          }}
-                        >
-                          {stat.value}
-                        </p>
-                        <p
-                          style={{
-                            fontFamily: "var(--font-dm-sans)",
-                            fontSize: "12px",
-                            fontWeight: 300,
-                            lineHeight: "normal",
-                            color: "#000000",
-                            margin: 0,
-                          }}
-                        >
-                          {stat.label}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })()}
-
             {/* Prominent while it's just the host — once someone else joins,
                 friends have presumably been invited, so the action recedes
                 into the 3-dot menu instead of staying front and center. */}
@@ -574,10 +496,11 @@ export default function RiffPageLayout({
           </div>
         </div>
 
-        {/* Revealed riff content — Pieces or Feed */}
+        {/* Revealed riff content — pieces, read-by strip, and comment activity
+            all flow on one page instead of behind a tab toggle */}
         {riff.status === "REVEALED" && (
           <div style={{ marginTop: "48px" }}>
-            {viewMode === "read" && riff.pieces.length > 0 && (
+            {riff.pieces.length > 0 && (
               <div
                 style={{
                   display: "grid",
@@ -602,7 +525,7 @@ export default function RiffPageLayout({
                     }}
                     isRead={readPieceIds.includes(pieceRiff.piece.id)}
                     hasNewComments={badgeMap[pieceRiff.piece.id] ?? false}
-                    isOwnPiece={pieceRiff.piece.authorId === currentUserId}
+                    isOwnPiece={isAuthoredBy(pieceRiff.piece, currentUserId)}
                     onClick={() =>
                       router.push(`/read/${pieceRiff.piece.id}?riff=${riff.id}`)
                     }
@@ -611,39 +534,96 @@ export default function RiffPageLayout({
               </div>
             )}
 
-            {viewMode === "read" && contributionData.length > 0 && (
+            {contributionData.length > 0 && (
               <ReadByStrip
                 members={contributionData}
                 totalPieces={totalPieces}
               />
             )}
 
-            {viewMode === "comment" && (
-              <ActivityFeed
-                riffId={riff.id}
-                clubId={riff.clubId}
-                currentUser={navUser}
-                readPieces={
-                  (readPieceIds ?? [])
-                    .map((id) => {
-                      const match = riff.pieces.find((p) => p.piece.id === id);
-                      return match
-                        ? {
-                            id: match.piece.id,
-                            title: match.piece.title,
-                            coverImage: match.piece.coverImage ?? null,
-                          }
-                        : null;
-                    })
-                    .filter(Boolean) as Array<{
-                    id: string;
-                    title: string;
-                    coverImage: string | null;
-                  }>
-                }
-                totalPieceCount={riff.pieces.length}
-              />
-            )}
+            <div
+              style={{
+                marginTop: "48px",
+                paddingTop: "32px",
+                borderTop: "1px solid #E6E6E6",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <h3
+                  style={{
+                    fontFamily: "var(--font-dm-serif-text)",
+                    fontSize: "20px",
+                    fontWeight: 400,
+                    color: "#000000",
+                    margin: 0,
+                  }}
+                >
+                  Comments ({totalComments})
+                </h3>
+                {hasUnreadComments && (
+                  <button
+                    onClick={markAllCommentsRead}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "12px",
+                      fontWeight: 300,
+                      color: "#808080",
+                      padding: 0,
+                      textDecoration: "underline",
+                    }}
+                  >
+                    Mark all read
+                  </button>
+                )}
+              </div>
+              <div style={{ marginTop: "8px" }}>
+                <ActivityFeed
+                  riffId={riff.id}
+                  clubId={riff.clubId}
+                  currentUser={navUser}
+                  onMarkPieceRead={markPieceCommentsRead}
+                  markAllReadSignal={markAllReadSignal}
+                  readPieces={
+                    (readPieceIds ?? [])
+                      .map((id) => {
+                        const match = riff.pieces.find(
+                          (p) => p.piece.id === id
+                        );
+                        // Own pieces are always counted as "read" (no
+                        // PieceRead row needed — you don't need to "read"
+                        // your own work), but that shouldn't count toward
+                        // "have you actually read anything" for the empty
+                        // comment-feed message below, or a viewer who's only
+                        // submitted their own piece gets told there are "no
+                        // comments on pieces you've read" instead of being
+                        // nudged to go read something.
+                        return match &&
+                          !isAuthoredBy(match.piece, currentUserId)
+                          ? {
+                              id: match.piece.id,
+                              title: match.piece.title,
+                              coverImage: match.piece.coverImage ?? null,
+                            }
+                          : null;
+                      })
+                      .filter(Boolean) as Array<{
+                      id: string;
+                      title: string;
+                      coverImage: string | null;
+                    }>
+                  }
+                />
+              </div>
+            </div>
           </div>
         )}
 

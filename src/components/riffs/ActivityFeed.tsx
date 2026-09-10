@@ -7,18 +7,6 @@ import CommentButton from "@/components/read/CommentButton";
 import { relativeTime } from "@/lib/timeAgo";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 
-// Placeholder colors for pieces without cover images. Intentional pastel rotation.
-/* eslint-disable riff/no-non-palette-colors */
-const PLACEHOLDER_COLORS = [
-  "#E8E0D5",
-  "#D5E0E8",
-  "#E0E8D5",
-  "#E8D5E0",
-  "#D5E8E0",
-  "#E0D5E8",
-];
-/* eslint-enable riff/no-non-palette-colors */
-
 interface ReadPiece {
   id: string;
   title: string;
@@ -65,13 +53,15 @@ export default function ActivityFeed({
   clubId,
   currentUser,
   readPieces = [],
-  totalPieceCount = 0,
+  onMarkPieceRead,
+  markAllReadSignal = 0,
 }: {
   riffId: string;
   clubId: string | null; // null for clubless (open) riffs
   currentUser: CurrentUser | null | undefined;
   readPieces?: ReadPiece[];
-  totalPieceCount?: number;
+  onMarkPieceRead?: (pieceId: string) => void;
+  markAllReadSignal?: number;
 }) {
   const router = useRouter();
   const isMobile = useIsMobile();
@@ -98,9 +88,6 @@ export default function ActivityFeed({
         if (!data) return;
         setComments(data.comments ?? []);
         setLoading(false);
-        fetch(`/api/riffs/${riffId}/mark-read`, { method: "POST" }).catch(
-          () => {}
-        );
       })
       .catch(() => {
         setFetchError(true);
@@ -115,9 +102,29 @@ export default function ActivityFeed({
     }
   }, [replyingTo]);
 
-  const openReply = (commentId: string) => {
-    if (replyingTo === commentId) return;
-    setReplyingTo(commentId);
+  // Bulk "Mark all read" was clicked in the parent — clear every comment's
+  // green "new" indicator locally so it doesn't linger until a page refresh.
+  // 0 is the initial/unset value, so this only fires on an actual click.
+  useEffect(() => {
+    if (!markAllReadSignal) return;
+    setComments((prev) => prev.map((c) => ({ ...c, isNew: false })));
+  }, [markAllReadSignal]);
+
+  const openReply = (comment: FeedComment) => {
+    if (replyingTo === comment.id) return;
+    // Own-piece comments never show a "new" indicator anywhere (the grid
+    // badge and the feed's own dot/border both stay yellow regardless of
+    // recency), so there's nothing for a real PieceRead row to unlock here
+    // — creating one would just let a later comment silently flip
+    // hasUnreadComments true with no visible new-comment marker to explain
+    // why "Mark all read" showed up.
+    if (!comment.isOwnPiece) onMarkPieceRead?.(comment.piece.id);
+    setComments((prev) =>
+      prev.map((c) =>
+        c.piece.id === comment.piece.id ? { ...c, isNew: false } : c
+      )
+    );
+    setReplyingTo(comment.id);
     setReplyText("");
   };
 
@@ -171,73 +178,26 @@ export default function ActivityFeed({
     }
   };
 
+  const subLabel =
+    !loading && !fetchError && comments.length === 0
+      ? readPieces.length === 0
+        ? "Read pieces and add to the conversation."
+        : "No comments on pieces you've read. Add to the conversation."
+      : "Comment activity on pieces you've read";
+
   return (
     <div>
-      {/* Reading progress header */}
-      {totalPieceCount > 0 && (
-        <div
-          style={{
-            display: "flex",
-            gap: "4px",
-            marginBottom: "24px",
-            overflowX: "auto",
-          }}
-        >
-          {/* Read pieces */}
-          {readPieces.map((piece) => {
-            const color =
-              PLACEHOLDER_COLORS[
-                piece.id.charCodeAt(0) % PLACEHOLDER_COLORS.length
-              ];
-            return (
-              <div
-                key={piece.id}
-                title={piece.title}
-                style={{
-                  width: isMobile ? "48px" : "96px",
-                  height: isMobile ? "60px" : "120px",
-                  flexShrink: 0,
-                  position: "relative",
-                  border: "1px solid #000000",
-                  overflow: "hidden",
-                  backgroundColor: piece.coverImage ? undefined : color,
-                }}
-              >
-                {piece.coverImage && (
-                  <img
-                    src={piece.coverImage}
-                    alt=""
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                    }}
-                  />
-                )}
-              </div>
-            );
-          })}
-          {/* Unread placeholders — index key is stable, slots never reorder */}
-          {/* eslint-disable react/no-array-index-key */}
-          {Array.from({
-            length: totalPieceCount - readPieces.length,
-          }).map((_, i) => (
-            <div
-              key={`unread-${i}`}
-              style={{
-                width: isMobile ? "48px" : "96px",
-                height: isMobile ? "60px" : "120px",
-                flexShrink: 0,
-                border: "2px dashed #CCCCCC",
-                boxSizing: "border-box",
-              }}
-            />
-          ))}
-          {/* eslint-enable react/no-array-index-key */}
-        </div>
-      )}
+      <p
+        style={{
+          fontFamily: "var(--font-dm-sans)",
+          fontSize: "14px",
+          fontWeight: 300,
+          color: "#808080",
+          margin: "0 0 16px",
+        }}
+      >
+        {subLabel}
+      </p>
 
       {/* Loading skeleton */}
       {loading && (
@@ -297,26 +257,9 @@ export default function ActivityFeed({
         </p>
       )}
 
-      {/* Empty state */}
-      {!loading && !fetchError && comments.length === 0 && (
-        <p
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
-            fontWeight: 300,
-            color: "#808080",
-            margin: 0,
-          }}
-        >
-          {readPieces && readPieces.length === 0
-            ? "Read pieces and add to the conversation."
-            : "No comments on pieces you've read. Add to the conversation."}
-        </p>
-      )}
-
       {/* Comment list */}
       {!loading && comments.length > 0 && (
-        <div style={{ borderTop: "1px solid #E6E6E6", paddingTop: "24px" }}>
+        <>
           {comments.map((comment, i) => {
             const firstName = comment.author.name?.split(" ")[0] ?? "Someone";
             const pieceTitle = comment.piece.title || "Untitled";
@@ -332,7 +275,7 @@ export default function ActivityFeed({
             return (
               <div
                 key={comment.id}
-                onClick={() => openReply(comment.id)}
+                onClick={() => openReply(comment)}
                 style={{
                   paddingTop: i === 0 ? "0" : "20px",
                   paddingBottom: "20px",
@@ -652,7 +595,7 @@ export default function ActivityFeed({
               </div>
             );
           })}
-        </div>
+        </>
       )}
     </div>
   );
