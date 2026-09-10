@@ -252,6 +252,15 @@ export async function PATCH(
             { status: 400 }
           );
         }
+        const submittedCount = await prisma.pieceRiff.count({
+          where: { riffId, submittedAt: { not: null } },
+        });
+        if (submittedCount === 0) {
+          return NextResponse.json(
+            { error: "Can't reveal a riff before anyone has submitted" },
+            { status: 400 }
+          );
+        }
       } else if (status === "COMPLETED") {
         // Club riffs: admin or co-host can complete. Clubless: creator.
         if (!canHost) {
