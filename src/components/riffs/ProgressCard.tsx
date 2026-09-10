@@ -324,6 +324,14 @@ export default function ProgressCard({
   // without ever rendering real content.
   return (
     <div
+      // Establishes a query container so the filler paragraph's font-size
+      // (set in cqi below) scales with THIS card's actual rendered width —
+      // not the viewport's. Without it, a fixed px font-size fills a
+      // desktop grid cell (~280px) correctly but badly underfills a mobile
+      // carousel slide (~100% of the content width, often 350px+): the
+      // same word count wraps into fewer/shorter lines while the card
+      // itself grows taller (aspect-ratio scales with width), leaving a
+      // large dead gap instead of "50+ words fills the card."
       style={{
         position: "relative",
         display: "flex",
@@ -333,6 +341,7 @@ export default function ProgressCard({
         border: "2px solid #000000",
         padding: "20px",
         overflow: "hidden",
+        containerType: "inline-size",
       }}
     >
       <div
@@ -385,7 +394,10 @@ export default function ProgressCard({
         <p
           style={{
             fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
+            // 16px at the ~280px reference card width (desktop grid),
+            // scaling with the container's own inline size everywhere else
+            // — see the containerType comment above.
+            fontSize: "clamp(13px, 5.7cqi, 20px)",
             fontWeight: 300,
             color: "#000000",
             lineHeight: 1.5,
