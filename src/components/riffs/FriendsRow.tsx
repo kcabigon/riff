@@ -26,7 +26,6 @@ export default function FriendsRow({ friends }: FriendsRowProps) {
         display: "flex",
         gap: "8px",
         overflowX: "auto",
-        paddingBottom: "8px",
       }}
     >
       {friends.map((friend) => (

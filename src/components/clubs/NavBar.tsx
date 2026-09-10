@@ -62,6 +62,11 @@ export default function NavBar({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
+          // Floor on the space between the left and right clusters — on
+          // narrow viewports space-between alone can shrink this below the
+          // 16px gap already used between the club carrot/bell/avatar,
+          // making the carrot look crowded against Create on one side only.
+          gap: "16px",
         }}
       >
         {/* Left Section: Logo + Create Dropdown / New Riff */}

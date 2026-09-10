@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import NavBar from "@/components/clubs/NavBar";
 import RiffEventCard from "@/components/riffs/RiffEventCard";
@@ -223,6 +223,11 @@ export default function MyRiffsClient({
 }: MyRiffsClientProps) {
   const router = useRouter();
   const [allPieces, setAllPieces] = useState(pieces);
+  const [allRiffs, setAllRiffs] = useState(riffs);
+  // router.refresh() (join, reveal) delivers a fresh `riffs` prop — resync
+  // local state to it so those flows still update Current/Unread/Past Riffs,
+  // not just the optimistic detach/delete edits below.
+  useEffect(() => setAllRiffs(riffs), [riffs]);
   const [deleteTarget, setDeleteTarget] = useState<{
     id: string;
     title: string;
@@ -264,7 +269,7 @@ export default function MyRiffsClient({
       riff.club.moderatorId === currentUserId);
 
   const currentRiffs = [
-    ...riffs
+    ...allRiffs
       .filter((r) => r.status === "ACTIVE")
       .map((riff) => ({ riff, isJoined: true })),
     ...joinableRiffs.map((riff) => ({ riff, isJoined: false })),
@@ -273,10 +278,10 @@ export default function MyRiffsClient({
   const revealTarget = currentRiffs.find(
     ({ riff }) => riff.id === revealRiffId
   )?.riff;
-  const readingRiffs = riffs.filter(
+  const readingRiffs = allRiffs.filter(
     (r) => r.status === "REVEALED" && hasUnreadForUser(r)
   );
-  const pastRiffs = riffs
+  const pastRiffs = allRiffs
     .filter(
       (r) =>
         getSubmittedPieces(r.pieces).length > 0 &&
@@ -313,6 +318,12 @@ export default function MyRiffsClient({
 
   const handleDeleted = (pieceId: string) => {
     setAllPieces((prev) => prev.filter((p) => p.id !== pieceId));
+    setAllRiffs((prev) =>
+      prev.map((r) => ({
+        ...r,
+        pieces: r.pieces.filter((p) => p.piece.id !== pieceId),
+      }))
+    );
   };
 
   const handleDetach = async (pieceId: string, riffId: string) => {
@@ -330,6 +341,13 @@ export default function MyRiffsClient({
           p.id === pieceId
             ? { ...p, riffs: p.riffs.filter((r) => r.riff.id !== riffId) }
             : p
+        )
+      );
+      setAllRiffs((prev) =>
+        prev.map((r) =>
+          r.id === riffId
+            ? { ...r, pieces: r.pieces.filter((p) => p.piece.id !== pieceId) }
+            : r
         )
       );
     } catch (err) {
