@@ -150,6 +150,14 @@ export default function RiffPageLayout({
       body: JSON.stringify({ pieceId }),
     }).catch(() => {});
   };
+
+  const markAllCommentsRead = () => {
+    setBadgeMap({});
+    fetch(`/api/riffs/${riff.id}/mark-read`, { method: "POST" }).catch(
+      () => {}
+    );
+  };
+  const hasUnreadComments = Object.values(badgeMap).some(Boolean);
   const deadlinePassed = isPastDeadline(riff.deadline);
   const piecesAllSubmitted = allPiecesSubmitted(riff.participants, riff.pieces);
   const submittedUsers = getSubmittedParticipants(
@@ -588,7 +596,33 @@ export default function RiffPageLayout({
             )}
 
             <div style={{ marginTop: "48px" }}>
-              <SectionHeading text="COMMENTS" color="#FF6B35" width={116} />
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <SectionHeading text="COMMENTS" color="#FF6B35" width={116} />
+                {hasUnreadComments && (
+                  <button
+                    onClick={markAllCommentsRead}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "12px",
+                      fontWeight: 300,
+                      color: "#808080",
+                      padding: 0,
+                      textDecoration: "underline",
+                    }}
+                  >
+                    Mark all read
+                  </button>
+                )}
+              </div>
               <div style={{ marginTop: "16px" }}>
                 <ActivityFeed
                   riffId={riff.id}
