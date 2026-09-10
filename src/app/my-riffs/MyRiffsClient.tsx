@@ -140,8 +140,8 @@ function pieceLabel(
     riff,
     riff.club ? predictedVolumeByClub[riff.club.id] : undefined
   );
-  const clubName = riff.club?.name ?? "Open riff";
-  return displayTitle ? `${clubName} · ${displayTitle}` : clubName;
+  if (!riff.club) return displayTitle;
+  return displayTitle ? `${riff.club.name} · ${displayTitle}` : riff.club.name;
 }
 
 function pieceDueDate(piece: WritingPiece): string | null {
@@ -621,8 +621,13 @@ export default function MyRiffsClient({
               >
                 {readingRiffs.map((riff) => (
                   <div key={riff.id}>
-                    <p style={cardLabelStyle}>
-                      {riff.club?.name ?? "Open riff"}
+                    <p
+                      style={{
+                        ...cardLabelStyle,
+                        visibility: riff.club ? "visible" : "hidden",
+                      }}
+                    >
+                      {riff.club?.name || " "}
                     </p>
                     <ReadyToRevealCard
                       riff={riff}
@@ -675,7 +680,7 @@ export default function MyRiffsClient({
                         pieces: riff.pieces,
                       }}
                       club={{
-                        name: riff.club?.name ?? "Open riff",
+                        name: riff.club?.name ?? "",
                         bannerImage: riff.club?.bannerImage ?? null,
                       }}
                       isClubless={!riff.club}
@@ -787,8 +792,13 @@ export default function MyRiffsClient({
               >
                 {visiblePastRiffs.map((riff) => (
                   <div key={riff.id} style={{ minWidth: 0 }}>
-                    <p style={cardLabelStyle}>
-                      {riff.club?.name ?? "Open riff"}
+                    <p
+                      style={{
+                        ...cardLabelStyle,
+                        visibility: riff.club ? "visible" : "hidden",
+                      }}
+                    >
+                      {riff.club?.name || " "}
                     </p>
                     <CompletedRiffCard
                       riff={{
