@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import NavBar from "@/components/clubs/NavBar";
 import RiffEventCard from "@/components/riffs/RiffEventCard";
@@ -224,6 +224,10 @@ export default function MyRiffsClient({
   const router = useRouter();
   const [allPieces, setAllPieces] = useState(pieces);
   const [allRiffs, setAllRiffs] = useState(riffs);
+  // router.refresh() (join, reveal) delivers a fresh `riffs` prop — resync
+  // local state to it so those flows still update Current/Unread/Past Riffs,
+  // not just the optimistic detach/delete edits below.
+  useEffect(() => setAllRiffs(riffs), [riffs]);
   const [deleteTarget, setDeleteTarget] = useState<{
     id: string;
     title: string;
@@ -314,6 +318,12 @@ export default function MyRiffsClient({
 
   const handleDeleted = (pieceId: string) => {
     setAllPieces((prev) => prev.filter((p) => p.id !== pieceId));
+    setAllRiffs((prev) =>
+      prev.map((r) => ({
+        ...r,
+        pieces: r.pieces.filter((p) => p.piece.id !== pieceId),
+      }))
+    );
   };
 
   const handleDetach = async (pieceId: string, riffId: string) => {
