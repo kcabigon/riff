@@ -1,14 +1,49 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
+import Image from "next/image";
+import {
+  motion,
+  useReducedMotion,
+  useMotionValue,
+  useTransform,
+  useSpring,
+} from "framer-motion";
 import LandingNavBar from "@/components/LandingNavBar";
 import NavBar from "@/components/clubs/NavBar";
 import TextInput from "@/components/TextInput";
 import SecondaryButton from "@/components/SecondaryButton";
 import Avatar from "@/components/shared/Avatar";
-import { getRiffDisplayTitle, formatDateLong } from "@/lib/riff-utils";
+import NoiseBackground from "@/components/NoiseBackground";
+import Tagline from "@/components/Tagline";
+import { getRiffDisplayTitle } from "@/lib/riff-utils";
+
+// Ported from LandingClientPage's hero — same brush-reveal ease, same
+// rise-and-fade word treatment, so this line matches the landing page exactly.
+const BRUSH_EASE: [number, number, number, number] = [0.4, 0, 0.1, 1];
+
+function TextWord({
+  children,
+  delay,
+  dur,
+}: {
+  children: React.ReactNode;
+  delay: number;
+  dur: number;
+}) {
+  return (
+    <motion.span
+      className="jrhero-text-word"
+      initial={{ opacity: 0, y: 24 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: dur, delay, ease: "easeOut" }}
+    >
+      {children}
+    </motion.span>
+  );
+}
 
 type JoinStep = "email" | "check-email" | "name" | "join";
 
@@ -50,6 +85,79 @@ export default function JoinRiffClient({
   lastActiveClubId,
 }: JoinRiffClientProps) {
   const router = useRouter();
+  const reducedMotion = useReducedMotion();
+  const heroRef = useRef<HTMLDivElement | null>(null);
+  const [riffRevealed, setRiffRevealed] = useState(false);
+
+  // Mouse parallax — normalized cursor position [-1, 1] across the hero.
+  // Same spring config as the landing page's hero.
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const smoothX = useSpring(mouseX, { stiffness: 60, damping: 18, mass: 0.6 });
+  const smoothY = useSpring(mouseY, { stiffness: 60, damping: 18, mass: 0.6 });
+  const par = reducedMotion ? 4 : 18;
+  const riffX = useTransform(smoothX, [-1, 1], [-par, par]);
+  const riffY = useTransform(smoothY, [-1, 1], [-par * 0.55, par * 0.55]);
+
+  // Desktop-only, gated on "real mouse present" — same as the landing page.
+  useEffect(() => {
+    const el = heroRef.current;
+    if (!el) return;
+    const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
+    let cleanupListener: (() => void) | null = null;
+
+    const attach = () => {
+      const handle = (e: MouseEvent) => {
+        const rect = el.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        const y = ((e.clientY - rect.top) / rect.height) * 2 - 1;
+        mouseX.set(Math.max(-1, Math.min(1, x)));
+        mouseY.set(Math.max(-1, Math.min(1, y)));
+      };
+      window.addEventListener("mousemove", handle);
+      cleanupListener = () => window.removeEventListener("mousemove", handle);
+    };
+
+    const detach = () => {
+      cleanupListener?.();
+      cleanupListener = null;
+      mouseX.set(0);
+      mouseY.set(0);
+    };
+
+    if (mq.matches) attach();
+    const onChange = (e: MediaQueryListEvent) => {
+      if (e.matches) attach();
+      else detach();
+    };
+    mq.addEventListener("change", onChange);
+
+    return () => {
+      mq.removeEventListener("change", onChange);
+      detach();
+    };
+  }, [mouseX, mouseY]);
+
+  const amp = reducedMotion ? 0.25 : 1;
+  const idleRiff = {
+    rotate: [0, 1.5 * amp, 0, -1.5 * amp, 0],
+    y: [0, -6 * amp, 0, 6 * amp, 0],
+  };
+  const idleLoopRiff = {
+    duration: reducedMotion ? 9 : 5.5,
+    repeat: Infinity,
+    ease: "easeInOut" as const,
+    delay: 1.4,
+  };
+  const HERO_SEQ = reducedMotion
+    ? {
+        riff: { delay: 0.1, dur: 0.5 },
+        withFriends: { delay: 0.55, dur: 0.35 },
+      }
+    : {
+        riff: { delay: 0.15, dur: 0.95 },
+        withFriends: { delay: 0.95, dur: 0.55 },
+      };
 
   const getInitialStep = (): JoinStep => {
     if (!isLoggedIn) return "email";
@@ -173,7 +281,15 @@ export default function JoinRiffClient({
   };
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
+    <div
+      style={{
+        position: "relative",
+        overflow: "hidden",
+        minHeight: "100vh",
+        backgroundColor: "#FFFFFF",
+      }}
+    >
+      <NoiseBackground fillMode="cover" />
       {isLoggedIn && user ? (
         <div style={{ position: "sticky", top: 0, zIndex: 50 }}>
           <NavBar
@@ -191,285 +307,462 @@ export default function JoinRiffClient({
         <LandingNavBar sticky />
       )}
 
+      {/* Hero — full-bleed textured invite framing */}
       <div
+        ref={heroRef}
+        className="join-hero"
         style={{
-          maxWidth: "600px",
-          margin: "0 auto",
-          padding: "64px 24px 64px",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          textAlign: "center",
+          position: "relative",
+          overflow: "hidden",
+          padding: "80px 24px 96px",
         }}
       >
-        {/* Riff name — the hero */}
-        <h1
-          style={{
-            fontFamily: "var(--font-dm-serif-text)",
-            fontStyle: "italic",
-            fontSize: "44px",
-            fontWeight: 400,
-            color: "#000000",
-            margin: "0 0 16px 0",
-            lineHeight: 1.1,
-          }}
-        >
-          {displayTitle}
-        </h1>
-
-        {/* Hosted by — byline, secondary to the title */}
         <div
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-            marginBottom: "24px",
-          }}
-        >
-          <Avatar user={riff.creator} size={56} />
-          <p style={statStyle}>
-            Hosted by{" "}
-            <span style={{ fontWeight: 700 }}>
-              {riff.creator.name || "a Riff writer"}
-            </span>
-          </p>
-        </div>
-
-        {/* Riff details */}
-        <div
-          style={{
+            position: "relative",
+            zIndex: 1,
+            maxWidth: "840px",
+            margin: "0 auto",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            gap: "8px",
-            marginBottom: "32px",
+            textAlign: "center",
           }}
         >
-          {riff.deadline && (
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <div
-                style={{
-                  flexShrink: 0,
-                  backgroundColor: "#FFFFFF",
-                  border: "2px solid #000000",
-                  boxShadow: "2px 2px 0px 0px #000000",
-                  overflow: "hidden",
-                }}
+          <Tagline
+            text="YOU'RE INVITED TO"
+            color="#EECF01"
+            textColor="#000000"
+            width={260}
+            fontSize={13}
+            fontWeight={700}
+          />
+
+          {/* Ported from the landing page hero, line 1 only ("Riff with
+              friends.") — same brush-reveal art, offsets, and idle drift. */}
+          <div className="jrhero-frame" style={{ margin: "20px 0 0 0" }}>
+            <h1 className="jrhero-line">
+              <motion.span
+                className="jrhero-word-riff"
+                style={{ x: riffX, y: riffY }}
               >
-                <div style={{ height: "8px", backgroundColor: "#DC2626" }} />
-                <div
-                  style={{
-                    padding: "8px 12px",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    lineHeight: 1,
+                Riff
+                <motion.div
+                  className="jrhero-word-svg-wrap"
+                  initial={{ clipPath: "inset(0 100% 0 0)" }}
+                  animate={{ clipPath: "inset(0 0% 0 0)" }}
+                  transition={{
+                    duration: HERO_SEQ.riff.dur,
+                    ease: BRUSH_EASE,
+                    delay: HERO_SEQ.riff.delay,
                   }}
+                  onAnimationComplete={() => setRiffRevealed(true)}
+                  data-revealed={riffRevealed || undefined}
                 >
-                  <span
-                    style={{
-                      fontFamily: "var(--font-dm-sans)",
-                      fontSize: "11px",
-                      fontWeight: 700,
-                      color: "#808080",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.08em",
-                    }}
-                  >
-                    {new Date(riff.deadline)
-                      .toLocaleDateString("en-US", { month: "short" })
-                      .toUpperCase()}
-                  </span>
-                  <span
-                    style={{
-                      fontFamily: "var(--font-dm-serif-text)",
-                      fontSize: "22px",
-                      fontWeight: 400,
-                      color: "#000000",
-                    }}
-                  >
-                    {new Date(riff.deadline).getDate()}
-                  </span>
-                </div>
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "flex-start",
-                  gap: "2px",
-                }}
+                  <motion.div animate={idleRiff} transition={idleLoopRiff}>
+                    <Image
+                      src="/images/landing/riff_lp.webp"
+                      alt=""
+                      width={612}
+                      height={520}
+                      priority
+                      className="jrhero-word-svg"
+                    />
+                  </motion.div>
+                </motion.div>
+              </motion.span>{" "}
+              <TextWord
+                delay={HERO_SEQ.withFriends.delay}
+                dur={HERO_SEQ.withFriends.dur}
               >
-                <p style={{ ...statStyle, textAlign: "left" }}>Deadline</p>
-                <p style={{ ...statStyle, textAlign: "left", fontWeight: 700 }}>
-                  {formatDateLong(riff.deadline)}
+                with
+              </TextWord>{" "}
+              <TextWord
+                delay={HERO_SEQ.withFriends.delay}
+                dur={HERO_SEQ.withFriends.dur}
+              >
+                friends.
+              </TextWord>
+            </h1>
+          </div>
+
+          {/* Riff details card — pulled up to overlap the bottom of the
+              brush art, which is much taller than the text line it sits on
+              (absolutely positioned, so .jrhero-frame's reserved height
+              doesn't push the card below it). */}
+          <div
+            className="jrhero-card"
+            style={{
+              position: "relative",
+              zIndex: 1,
+              width: "100%",
+              maxWidth: "560px",
+              backgroundColor: "#FFFFFF",
+              border: "2px solid #000000",
+              boxShadow: "8px 8px 0px 0px #000000",
+              padding: "32px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "24px",
+              textAlign: "left",
+            }}
+          >
+            <h2
+              style={{
+                fontFamily: "var(--font-dm-serif-text)",
+                fontSize: "36px",
+                fontWeight: 400,
+                color: "#000000",
+                margin: 0,
+                lineHeight: 1.2,
+                textAlign: "center",
+              }}
+            >
+              {displayTitle}
+            </h2>
+
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <Avatar user={riff.creator} size={56} />
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: "2px" }}
+              >
+                <p style={cardLabelStyle}>Hosted by</p>
+                <p style={cardValueStyle}>
+                  {riff.creator.name || "a Riff writer"}
                 </p>
               </div>
             </div>
-          )}
 
-          {riff.prompt && (
-            <p
-              style={{
-                fontFamily: "var(--font-over-the-rainbow)",
-                fontSize: "24px",
-                fontWeight: 400,
-                color: "#000000",
-                margin: "24px 0 0 0",
-                lineHeight: "1.4",
-                maxWidth: "500px",
-              }}
-            >
-              {riff.prompt}
-            </p>
-          )}
-        </div>
+            {riff.deadline && (
+              <>
+                <div style={{ borderTop: "1px solid #E6E6E6" }} />
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "12px" }}
+                >
+                  <div
+                    style={{
+                      flexShrink: 0,
+                      backgroundColor: "#FFFFFF",
+                      border: "2px solid #000000",
+                      boxShadow: "2px 2px 0px 0px #000000",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <div
+                      style={{ height: "8px", backgroundColor: "#DC2626" }}
+                    />
+                    <div
+                      style={{
+                        padding: "8px 12px",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        lineHeight: 1,
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: "var(--font-dm-sans)",
+                          fontSize: "11px",
+                          fontWeight: 700,
+                          color: "#808080",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.08em",
+                        }}
+                      >
+                        {new Date(riff.deadline)
+                          .toLocaleDateString("en-US", { month: "short" })
+                          .toUpperCase()}
+                      </span>
+                      <span
+                        style={{
+                          fontFamily: "var(--font-dm-serif-text)",
+                          fontSize: "22px",
+                          fontWeight: 400,
+                          color: "#000000",
+                        }}
+                      >
+                        {new Date(riff.deadline).getDate()}
+                      </span>
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "2px",
+                    }}
+                  >
+                    <p style={cardLabelStyle}>Deadline</p>
+                    <p
+                      style={{
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "16px",
+                        fontWeight: 300,
+                        color: "#000000",
+                        margin: 0,
+                      }}
+                    >
+                      Write something and submit before this date.
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
 
-        {/* CTA area — changes based on riff availability / auth / onboarding state */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "16px",
-          }}
-        >
-          {!isJoinable && (
-            <p style={ctaTextStyle}>
-              This riff isn&apos;t accepting new writers anymore.
-            </p>
-          )}
+            {riff.prompt && (
+              <>
+                <div style={{ borderTop: "1px solid #E6E6E6" }} />
+                <p
+                  style={{
+                    fontFamily: "var(--font-over-the-rainbow)",
+                    fontSize: "24px",
+                    fontWeight: 400,
+                    color: "#000000",
+                    margin: 0,
+                    lineHeight: "1.4",
+                  }}
+                >
+                  {riff.prompt}
+                </p>
+              </>
+            )}
 
-          {isJoinable && step === "email" && (
-            <>
-              <p style={ctaTextStyle}>
-                You&apos;ve been invited to write along with this riff.
-              </p>
-              <form
-                onSubmit={handleEmailSubmit}
-                style={{
-                  width: "100%",
-                  maxWidth: "344px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "16px",
-                }}
-              >
-                <TextInput
-                  type="email"
-                  name="email"
-                  placeholder="Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  error={error ?? undefined}
-                  disabled={loading}
-                  required
-                  autoFocus
-                  autoComplete="email"
-                />
-                <SecondaryButton type="submit" loading={loading}>
-                  Join riff
-                </SecondaryButton>
-              </form>
-            </>
-          )}
+            <div style={{ borderTop: "1px solid #E6E6E6" }} />
 
-          {isJoinable && step === "check-email" && (
+            {/* CTA — changes based on riff availability / auth / onboarding state */}
             <div
               style={{
-                maxWidth: "344px",
-                textAlign: "center",
-                display: "flex",
-                flexDirection: "column",
-                gap: "8px",
-              }}
-            >
-              <p style={ctaTextStyle}>Check your inbox.</p>
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "14px",
-                  fontWeight: 300,
-                  color: "#808080",
-                  margin: 0,
-                }}
-              >
-                We sent a magic link to <strong>{email}</strong>. Click it to
-                continue joining {displayTitle}.
-              </p>
-            </div>
-          )}
-
-          {isJoinable && step === "name" && (
-            <>
-              <p style={ctaTextStyle}>First, tell us your name.</p>
-              <form
-                onSubmit={handleNameSubmit}
-                style={{
-                  width: "100%",
-                  maxWidth: "344px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "16px",
-                }}
-              >
-                <TextInput
-                  type="text"
-                  name="firstName"
-                  placeholder="First name"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  disabled={loading}
-                  required
-                  autoFocus
-                />
-                <TextInput
-                  type="text"
-                  name="lastName"
-                  placeholder="Last name"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  disabled={loading}
-                  required
-                />
-                {error && <p style={errorStyle}>{error}</p>}
-                <SecondaryButton type="submit" loading={loading}>
-                  Join riff
-                </SecondaryButton>
-              </form>
-            </>
-          )}
-
-          {isJoinable && step === "join" && (
-            <div
-              style={{
-                width: "100%",
-                maxWidth: "344px",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
+                textAlign: "center",
                 gap: "16px",
               }}
             >
-              <p style={ctaTextStyle}>
-                You&apos;ve been invited to write along with this riff.
-              </p>
-              {error && <p style={errorStyle}>{error}</p>}
-              <SecondaryButton loading={loading} onClick={handleJoin}>
-                Join riff
-              </SecondaryButton>
+              {!isJoinable && (
+                <p style={ctaTextStyle}>
+                  This riff isn&apos;t accepting new writers anymore.
+                </p>
+              )}
+
+              {isJoinable && step === "email" && (
+                <>
+                  <p style={ctaTextStyle}>Enter your email to get started.</p>
+                  <form
+                    onSubmit={handleEmailSubmit}
+                    style={{
+                      width: "100%",
+                      maxWidth: "344px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "16px",
+                    }}
+                  >
+                    <TextInput
+                      type="email"
+                      name="email"
+                      placeholder="Email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      error={error ?? undefined}
+                      disabled={loading}
+                      required
+                      autoFocus
+                      autoComplete="email"
+                    />
+                    <SecondaryButton type="submit" loading={loading}>
+                      Join riff
+                    </SecondaryButton>
+                  </form>
+                </>
+              )}
+
+              {isJoinable && step === "check-email" && (
+                <div
+                  style={{
+                    maxWidth: "344px",
+                    textAlign: "center",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "8px",
+                  }}
+                >
+                  <p style={ctaTextStyle}>Check your inbox.</p>
+                  <p
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "14px",
+                      fontWeight: 300,
+                      color: "#808080",
+                      margin: 0,
+                    }}
+                  >
+                    We sent a magic link to <strong>{email}</strong>. Click it
+                    to continue joining {displayTitle}.
+                  </p>
+                </div>
+              )}
+
+              {isJoinable && step === "name" && (
+                <>
+                  <p style={ctaTextStyle}>First, tell us your name.</p>
+                  <form
+                    onSubmit={handleNameSubmit}
+                    style={{
+                      width: "100%",
+                      maxWidth: "344px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "16px",
+                    }}
+                  >
+                    <TextInput
+                      type="text"
+                      name="firstName"
+                      placeholder="First name"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      disabled={loading}
+                      required
+                      autoFocus
+                    />
+                    <TextInput
+                      type="text"
+                      name="lastName"
+                      placeholder="Last name"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      disabled={loading}
+                      required
+                    />
+                    {error && <p style={errorStyle}>{error}</p>}
+                    <SecondaryButton type="submit" loading={loading}>
+                      Join riff
+                    </SecondaryButton>
+                  </form>
+                </>
+              )}
+
+              {isJoinable && step === "join" && (
+                <div
+                  style={{
+                    width: "100%",
+                    maxWidth: "344px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: "16px",
+                  }}
+                >
+                  {error && <p style={errorStyle}>{error}</p>}
+                  <SecondaryButton loading={loading} onClick={handleJoin}>
+                    Join riff
+                  </SecondaryButton>
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
+
+      <style>{`
+        /* Ported from LandingClientPage's hero CSS — the transparent-text +
+           absolutely-positioned brush-art overlay technique, scoped to just
+           the "Riff" word since this page only needs line 1. */
+        .jrhero-word-riff {
+          position: relative;
+          display: inline-block;
+          color: transparent;
+          z-index: -1;
+        }
+        .jrhero-text-word {
+          display: inline-block;
+        }
+        .jrhero-word-svg-wrap {
+          position: absolute;
+          height: auto;
+          pointer-events: none;
+          user-select: none;
+          overflow: visible;
+          z-index: -1;
+          will-change: transform, clip-path;
+          top: 24px;
+          left: -445px;
+          width: 612px;
+        }
+        .jrhero-word-svg-wrap[data-revealed] {
+          clip-path: none !important;
+          will-change: auto;
+        }
+        .jrhero-word-svg {
+          display: block;
+          width: 100%;
+          height: auto;
+        }
+        .jrhero-frame {
+          position: relative;
+          width: 898px;
+          max-width: 100%;
+          /* The brush art is absolutely positioned and doesn't contribute to
+             flow height on its own — reserve room for its full bleed (top
+             offset + rendered height) so .join-hero's overflow:hidden
+             doesn't truncate it, and so the noise background (which sizes
+             to .join-hero) covers the whole thing too. */
+          height: 640px;
+        }
+        .jrhero-line {
+          margin: 0;
+          font-family: var(--font-dm-serif-text);
+          font-size: 96px;
+          line-height: 132px;
+          font-weight: 400;
+          color: #000000;
+          text-align: left;
+        }
+        .jrhero-card {
+          margin-top: -460px;
+        }
+        @media (max-width: 767px) {
+          .join-hero {
+            padding: 48px 24px 64px !important;
+          }
+          .jrhero-frame {
+            height: 480px;
+          }
+          .jrhero-line {
+            font-size: clamp(56px, 18vw, 72px);
+            line-height: 1.375;
+            text-align: center;
+          }
+          .jrhero-word-svg-wrap {
+            top: 16px;
+            left: -342px;
+            width: 463px;
+          }
+          .jrhero-card {
+            margin-top: -240px;
+          }
+        }
+      `}</style>
     </div>
   );
 }
 
-const statStyle: React.CSSProperties = {
+const cardLabelStyle: React.CSSProperties = {
+  fontFamily: "var(--font-dm-sans)",
+  fontSize: "12px",
+  fontWeight: 700,
+  letterSpacing: "0.06em",
+  textTransform: "uppercase",
+  color: "#808080",
+  margin: 0,
+};
+
+const cardValueStyle: React.CSSProperties = {
   fontFamily: "var(--font-dm-sans)",
   fontSize: "16px",
-  fontWeight: 300,
+  fontWeight: 700,
   color: "#000000",
   margin: 0,
 };
