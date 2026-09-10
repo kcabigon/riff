@@ -7,6 +7,7 @@ import LandingNavBar from "@/components/LandingNavBar";
 import NavBar from "@/components/clubs/NavBar";
 import TextInput from "@/components/TextInput";
 import SecondaryButton from "@/components/SecondaryButton";
+import Avatar from "@/components/shared/Avatar";
 import { getRiffDisplayTitle, formatDateLong } from "@/lib/riff-utils";
 
 type JoinStep = "email" | "check-email" | "name" | "join";
@@ -192,66 +193,131 @@ export default function JoinRiffClient({
 
       <div
         style={{
-          maxWidth: "1000px",
+          maxWidth: "600px",
           margin: "0 auto",
           padding: "64px 24px 64px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          textAlign: "center",
         }}
       >
-        {/* Header — mirrors the riff page's own header (name, date, prompt) */}
+        {/* Riff name — the hero */}
+        <h1
+          style={{
+            fontFamily: "var(--font-dm-serif-text)",
+            fontStyle: "italic",
+            fontSize: "44px",
+            fontWeight: 400,
+            color: "#000000",
+            margin: "0 0 16px 0",
+            lineHeight: 1.1,
+          }}
+        >
+          {displayTitle}
+        </h1>
+
+        {/* Hosted by — byline, secondary to the title */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            marginBottom: "24px",
+          }}
+        >
+          <Avatar user={riff.creator} size={56} />
+          <p style={statStyle}>
+            Hosted by{" "}
+            <span style={{ fontWeight: 700 }}>
+              {riff.creator.name || "a Riff writer"}
+            </span>
+          </p>
+        </div>
+
+        {/* Riff details */}
         <div
           style={{
             display: "flex",
             flexDirection: "column",
-            gap: "16px",
-            marginBottom: "48px",
+            alignItems: "center",
+            gap: "8px",
+            marginBottom: "32px",
           }}
         >
-          <h1
-            style={{
-              fontFamily: "var(--font-dm-serif-text)",
-              fontSize: "32px",
-              fontWeight: 400,
-              color: "#000000",
-              margin: 0,
-            }}
-          >
-            {displayTitle}
-          </h1>
-
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "4px 12px",
-              alignItems: "start",
-            }}
-          >
-            <p style={statStyle}>
-              Hosted by{" "}
-              <span style={{ fontWeight: 700 }}>
-                {riff.creator.name || "a Riff writer"}
-              </span>
-            </p>
-            {riff.deadline && (
-              <p style={statStyle}>
-                Due{" "}
-                <span style={{ fontWeight: 700 }}>
+          {riff.deadline && (
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div
+                style={{
+                  flexShrink: 0,
+                  backgroundColor: "#FFFFFF",
+                  border: "2px solid #000000",
+                  boxShadow: "2px 2px 0px 0px #000000",
+                  overflow: "hidden",
+                }}
+              >
+                <div style={{ height: "8px", backgroundColor: "#DC2626" }} />
+                <div
+                  style={{
+                    padding: "8px 12px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    lineHeight: 1,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      color: "#808080",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                    }}
+                  >
+                    {new Date(riff.deadline)
+                      .toLocaleDateString("en-US", { month: "short" })
+                      .toUpperCase()}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: "var(--font-dm-serif-text)",
+                      fontSize: "22px",
+                      fontWeight: 400,
+                      color: "#000000",
+                    }}
+                  >
+                    {new Date(riff.deadline).getDate()}
+                  </span>
+                </div>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "flex-start",
+                  gap: "2px",
+                }}
+              >
+                <p style={{ ...statStyle, textAlign: "left" }}>Deadline</p>
+                <p style={{ ...statStyle, textAlign: "left", fontWeight: 700 }}>
                   {formatDateLong(riff.deadline)}
-                </span>
-              </p>
-            )}
-          </div>
+                </p>
+              </div>
+            </div>
+          )}
 
           {riff.prompt && (
             <p
               style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 300,
+                fontFamily: "var(--font-over-the-rainbow)",
+                fontSize: "24px",
+                fontWeight: 400,
                 color: "#000000",
-                margin: 0,
+                margin: "24px 0 0 0",
                 lineHeight: "1.4",
-                maxWidth: "600px",
+                maxWidth: "500px",
               }}
             >
               {riff.prompt}
