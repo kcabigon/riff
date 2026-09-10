@@ -1370,17 +1370,22 @@ export default function ClubPageLayout({
                         {getRiffDisplayTitle(riff)}
                       </h3>
                       {newComments > 0 && (
-                        <span
-                          title={`${newComments} new ${newComments === 1 ? "comment" : "comments"}`}
-                          style={{
-                            width: "8px",
-                            height: "8px",
-                            borderRadius: "50%",
-                            backgroundColor: "#01EFFC",
-                            display: "inline-block",
-                            flexShrink: 0,
-                          }}
-                        />
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          style={{ flexShrink: 0 }}
+                        >
+                          <title>{`${newComments} new ${newComments === 1 ? "comment" : "comments"}`}</title>
+                          <path
+                            d="M2 3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H6l-3 3v-3H3a1 1 0 0 1-1-1V3z"
+                            fill="#01EFFC"
+                            stroke="#000000"
+                            strokeWidth="1.2"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
                       )}
                     </div>
                     {isMobile ? (
