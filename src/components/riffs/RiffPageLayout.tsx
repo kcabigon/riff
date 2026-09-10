@@ -597,8 +597,11 @@ export default function RiffPageLayout({
               ? riff.participants
               : [...riff.participants, { user: navUser }];
 
-            // Sort: submitted (0) → in-progress (1) → not-started (2)
+            // Viewer's own card always leads, then: submitted (0) →
+            // in-progress (1) → not-started (2).
             const sorted = [...participantsForGrid].sort((a, b) => {
+              if (a.user.id === currentUserId) return -1;
+              if (b.user.id === currentUserId) return 1;
               const pa = pieceByAuthor[a.user.id];
               const pb = pieceByAuthor[b.user.id];
               const tierA = !pa ? 2 : pa.submittedAt ? 0 : 1;
