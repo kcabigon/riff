@@ -66,12 +66,14 @@ export default function ActivityFeed({
   currentUser,
   readPieces = [],
   totalPieceCount = 0,
+  onMarkPieceRead,
 }: {
   riffId: string;
   clubId: string | null; // null for clubless (open) riffs
   currentUser: CurrentUser | null | undefined;
   readPieces?: ReadPiece[];
   totalPieceCount?: number;
+  onMarkPieceRead?: (pieceId: string) => void;
 }) {
   const router = useRouter();
   const isMobile = useIsMobile();
@@ -98,9 +100,6 @@ export default function ActivityFeed({
         if (!data) return;
         setComments(data.comments ?? []);
         setLoading(false);
-        fetch(`/api/riffs/${riffId}/mark-read`, { method: "POST" }).catch(
-          () => {}
-        );
       })
       .catch(() => {
         setFetchError(true);
@@ -115,9 +114,10 @@ export default function ActivityFeed({
     }
   }, [replyingTo]);
 
-  const openReply = (commentId: string) => {
-    if (replyingTo === commentId) return;
-    setReplyingTo(commentId);
+  const openReply = (comment: FeedComment) => {
+    onMarkPieceRead?.(comment.piece.id);
+    if (replyingTo === comment.id) return;
+    setReplyingTo(comment.id);
     setReplyText("");
   };
 
@@ -332,7 +332,7 @@ export default function ActivityFeed({
             return (
               <div
                 key={comment.id}
-                onClick={() => openReply(comment.id)}
+                onClick={() => openReply(comment)}
                 style={{
                   paddingTop: i === 0 ? "0" : "20px",
                   paddingBottom: "20px",

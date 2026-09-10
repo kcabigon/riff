@@ -34,6 +34,7 @@ import ReadByStrip from "@/components/riffs/ReadByStrip";
 import PrimaryButton from "@/components/PrimaryButton";
 import CTAButton from "@/components/CTAButton";
 import Avatar from "@/components/shared/Avatar";
+import SectionHeading from "@/components/shared/SectionHeading";
 
 interface RiffPageLayoutProps {
   riff: {
@@ -137,14 +138,17 @@ export default function RiffPageLayout({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
-  const [viewMode, setViewMode] = useState<"read" | "comment">("read");
   const [badgeMap, setBadgeMap] =
     useState<Record<string, boolean>>(hasNewCommentsMap);
   const router = useRouter();
 
-  const switchToComment = () => {
-    setViewMode("comment");
-    setBadgeMap({});
+  const markPieceCommentsRead = (pieceId: string) => {
+    setBadgeMap((prev) => ({ ...prev, [pieceId]: false }));
+    fetch(`/api/riffs/${riff.id}/read`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pieceId }),
+    }).catch(() => {});
   };
   const deadlinePassed = isPastDeadline(riff.deadline);
   const piecesAllSubmitted = allPiecesSubmitted(riff.participants, riff.pieces);
@@ -426,42 +430,6 @@ export default function RiffPageLayout({
                 </PrimaryButton>
               )}
 
-            {riff.status === "REVEALED" && (
-              <div
-                style={{
-                  display: "inline-flex",
-                  border: "2px solid #000000",
-                  overflow: "hidden",
-                }}
-              >
-                {(["read", "comment"] as const).map((mode, i) => (
-                  <button
-                    key={mode}
-                    onClick={() =>
-                      mode === "comment" ? switchToComment() : setViewMode(mode)
-                    }
-                    style={{
-                      backgroundColor:
-                        viewMode === mode ? "#000000" : "#FFFFFF",
-                      border: "none",
-                      borderLeft: i > 0 ? "2px solid #000000" : "none",
-                      cursor: "pointer",
-                      fontFamily: "var(--font-dm-sans)",
-                      fontSize: "14px",
-                      fontWeight: 400,
-                      color: viewMode === mode ? "#FFFFFF" : "#000000",
-                      padding: "6px 16px",
-                      textTransform: "capitalize",
-                      transition:
-                        "background-color 0.15s ease, color 0.15s ease",
-                    }}
-                  >
-                    {mode}
-                  </button>
-                ))}
-              </div>
-            )}
-
             {riff.status === "REVEALED" &&
               (() => {
                 const totalReads = contributionData.reduce(
@@ -574,10 +542,11 @@ export default function RiffPageLayout({
           </div>
         </div>
 
-        {/* Revealed riff content — Pieces or Feed */}
+        {/* Revealed riff content — pieces, read-by strip, and comment activity
+            all flow on one page instead of behind a tab toggle */}
         {riff.status === "REVEALED" && (
           <div style={{ marginTop: "48px" }}>
-            {viewMode === "read" && riff.pieces.length > 0 && (
+            {riff.pieces.length > 0 && (
               <div
                 style={{
                   display: "grid",
@@ -611,39 +580,45 @@ export default function RiffPageLayout({
               </div>
             )}
 
-            {viewMode === "read" && contributionData.length > 0 && (
+            {contributionData.length > 0 && (
               <ReadByStrip
                 members={contributionData}
                 totalPieces={totalPieces}
               />
             )}
 
-            {viewMode === "comment" && (
-              <ActivityFeed
-                riffId={riff.id}
-                clubId={riff.clubId}
-                currentUser={navUser}
-                readPieces={
-                  (readPieceIds ?? [])
-                    .map((id) => {
-                      const match = riff.pieces.find((p) => p.piece.id === id);
-                      return match
-                        ? {
-                            id: match.piece.id,
-                            title: match.piece.title,
-                            coverImage: match.piece.coverImage ?? null,
-                          }
-                        : null;
-                    })
-                    .filter(Boolean) as Array<{
-                    id: string;
-                    title: string;
-                    coverImage: string | null;
-                  }>
-                }
-                totalPieceCount={riff.pieces.length}
-              />
-            )}
+            <div style={{ marginTop: "48px" }}>
+              <SectionHeading text="COMMENTS" color="#FF6B35" width={116} />
+              <div style={{ marginTop: "16px" }}>
+                <ActivityFeed
+                  riffId={riff.id}
+                  clubId={riff.clubId}
+                  currentUser={navUser}
+                  onMarkPieceRead={markPieceCommentsRead}
+                  readPieces={
+                    (readPieceIds ?? [])
+                      .map((id) => {
+                        const match = riff.pieces.find(
+                          (p) => p.piece.id === id
+                        );
+                        return match
+                          ? {
+                              id: match.piece.id,
+                              title: match.piece.title,
+                              coverImage: match.piece.coverImage ?? null,
+                            }
+                          : null;
+                      })
+                      .filter(Boolean) as Array<{
+                      id: string;
+                      title: string;
+                      coverImage: string | null;
+                    }>
+                  }
+                  totalPieceCount={riff.pieces.length}
+                />
+              </div>
+            </div>
           </div>
         )}
 
