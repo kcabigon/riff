@@ -7,18 +7,6 @@ import CommentButton from "@/components/read/CommentButton";
 import { relativeTime } from "@/lib/timeAgo";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 
-// Placeholder colors for pieces without cover images. Intentional pastel rotation.
-/* eslint-disable riff/no-non-palette-colors */
-const PLACEHOLDER_COLORS = [
-  "#E8E0D5",
-  "#D5E0E8",
-  "#E0E8D5",
-  "#E8D5E0",
-  "#D5E8E0",
-  "#E0D5E8",
-];
-/* eslint-enable riff/no-non-palette-colors */
-
 interface ReadPiece {
   id: string;
   title: string;
@@ -65,7 +53,6 @@ export default function ActivityFeed({
   clubId,
   currentUser,
   readPieces = [],
-  totalPieceCount = 0,
   onMarkPieceRead,
   markAllReadSignal = 0,
 }: {
@@ -73,7 +60,6 @@ export default function ActivityFeed({
   clubId: string | null; // null for clubless (open) riffs
   currentUser: CurrentUser | null | undefined;
   readPieces?: ReadPiece[];
-  totalPieceCount?: number;
   onMarkPieceRead?: (pieceId: string) => void;
   markAllReadSignal?: number;
 }) {
@@ -188,72 +174,6 @@ export default function ActivityFeed({
 
   return (
     <div>
-      {/* Reading progress header */}
-      {totalPieceCount > 0 && (
-        <div
-          style={{
-            display: "flex",
-            gap: "4px",
-            marginBottom: "24px",
-            overflowX: "auto",
-          }}
-        >
-          {/* Read pieces */}
-          {readPieces.map((piece) => {
-            const color =
-              PLACEHOLDER_COLORS[
-                piece.id.charCodeAt(0) % PLACEHOLDER_COLORS.length
-              ];
-            return (
-              <div
-                key={piece.id}
-                title={piece.title}
-                style={{
-                  width: isMobile ? "48px" : "96px",
-                  height: isMobile ? "60px" : "120px",
-                  flexShrink: 0,
-                  position: "relative",
-                  border: "1px solid #000000",
-                  overflow: "hidden",
-                  backgroundColor: piece.coverImage ? undefined : color,
-                }}
-              >
-                {piece.coverImage && (
-                  <img
-                    src={piece.coverImage}
-                    alt=""
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                    }}
-                  />
-                )}
-              </div>
-            );
-          })}
-          {/* Unread placeholders — index key is stable, slots never reorder */}
-          {/* eslint-disable react/no-array-index-key */}
-          {Array.from({
-            length: totalPieceCount - readPieces.length,
-          }).map((_, i) => (
-            <div
-              key={`unread-${i}`}
-              style={{
-                width: isMobile ? "48px" : "96px",
-                height: isMobile ? "60px" : "120px",
-                flexShrink: 0,
-                border: "2px dashed #CCCCCC",
-                boxSizing: "border-box",
-              }}
-            />
-          ))}
-          {/* eslint-enable react/no-array-index-key */}
-        </div>
-      )}
-
       {/* Loading skeleton */}
       {loading && (
         <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>

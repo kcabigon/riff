@@ -189,6 +189,10 @@ export default function RiffPageLayout({
     (sum, p) => sum + (p.piece.wordCount || 0),
     0
   );
+  const totalComments = contributionData.reduce(
+    (sum, m) => sum + m.commentCount,
+    0
+  );
 
   // The viewer always gets a slot in the progress grid, even before
   // joining — mirrors the same check inside the grid render below, hoisted
@@ -282,7 +286,7 @@ export default function RiffPageLayout({
                     ? "Deadline passed"
                     : riff.status === "REVEALED"
                       ? riff.updatedAt
-                        ? `Revealed ${formatDateShort(riff.updatedAt)}`
+                        ? `Revealed ${formatDateShort(riff.updatedAt)} · ${totalWords.toLocaleString()} ${totalWords === 1 ? "word" : "words"}`
                         : "Revealed"
                       : riff.deadline
                         ? `Deadline: ${formatDateLong(riff.deadline)}`
@@ -440,81 +444,6 @@ export default function RiffPageLayout({
                 </PrimaryButton>
               )}
 
-            {riff.status === "REVEALED" &&
-              (() => {
-                const totalReads = contributionData.reduce(
-                  (sum, m) => sum + m.readCount,
-                  0
-                );
-                const totalComments = contributionData.reduce(
-                  (sum, m) => sum + m.commentCount,
-                  0
-                );
-                const revealStats = [
-                  {
-                    value: riff.pieces.length,
-                    label: riff.pieces.length === 1 ? "Piece" : "Pieces",
-                  },
-                  { value: totalWords.toLocaleString(), label: "Words" },
-                  {
-                    value: totalReads,
-                    label: totalReads === 1 ? "Read" : "Reads",
-                  },
-                  {
-                    value: totalComments,
-                    label: totalComments === 1 ? "Comment" : "Comments",
-                  },
-                ];
-                return (
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "12px",
-                      lineHeight: "normal",
-                    }}
-                  >
-                    {revealStats.map((stat, i) => (
-                      <div
-                        // eslint-disable-next-line react/no-array-index-key -- static stat tiles; length and order are stable
-                        key={i}
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <p
-                          style={{
-                            fontFamily: "var(--font-dm-sans)",
-                            fontSize: "16px",
-                            fontWeight: 700,
-                            lineHeight: "normal",
-                            color: "#000000",
-                            margin: 0,
-                          }}
-                        >
-                          {stat.value}
-                        </p>
-                        <p
-                          style={{
-                            fontFamily: "var(--font-dm-sans)",
-                            fontSize: "12px",
-                            fontWeight: 300,
-                            lineHeight: "normal",
-                            color: "#000000",
-                            margin: 0,
-                          }}
-                        >
-                          {stat.label}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })()}
-
             {/* Prominent while it's just the host — once someone else joins,
                 friends have presumably been invited, so the action recedes
                 into the 3-dot menu instead of staying front and center. */}
@@ -597,7 +526,13 @@ export default function RiffPageLayout({
               />
             )}
 
-            <div style={{ marginTop: "48px" }}>
+            <div
+              style={{
+                marginTop: "48px",
+                paddingTop: "32px",
+                borderTop: "1px solid #E6E6E6",
+              }}
+            >
               <div
                 style={{
                   display: "flex",
@@ -605,7 +540,11 @@ export default function RiffPageLayout({
                   justifyContent: "space-between",
                 }}
               >
-                <SectionHeading text="COMMENTS" color="#FF6B35" width={116} />
+                <SectionHeading
+                  text={`COMMENTS (${totalComments})`}
+                  color="#FF6B35"
+                  width={172}
+                />
                 {hasUnreadComments && (
                   <button
                     onClick={markAllCommentsRead}
@@ -625,6 +564,17 @@ export default function RiffPageLayout({
                   </button>
                 )}
               </div>
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "14px",
+                  fontWeight: 300,
+                  color: "#808080",
+                  margin: "8px 0 0",
+                }}
+              >
+                Comment activity on pieces you&apos;ve read
+              </p>
               <div style={{ marginTop: "16px" }}>
                 <ActivityFeed
                   riffId={riff.id}
@@ -652,7 +602,6 @@ export default function RiffPageLayout({
                       coverImage: string | null;
                     }>
                   }
-                  totalPieceCount={riff.pieces.length}
                 />
               </div>
             </div>
