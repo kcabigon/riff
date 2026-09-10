@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import RiffPageLayout from "@/components/riffs/RiffPageLayout";
-import { getSubmittedPieces } from "@/lib/riff-utils";
+import { getSubmittedPieces, getContentPreview } from "@/lib/riff-utils";
 
 export async function generateMetadata({
   params,
@@ -35,8 +35,9 @@ export default async function RiffPage({
 
   const userId = session.user.id;
 
-  // Fetch user profile and all their clubs in parallel (for nav)
-  const [navUser, userClubs] = await Promise.all([
+  // Fetch user profile, all their clubs (for nav), and whether they have any
+  // standalone draft (for the Attach Draft option) in parallel
+  const [navUser, userClubs, standaloneDraftCount] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
       select: { id: true, name: true, username: true, avatarUrl: true },
@@ -46,7 +47,11 @@ export default async function RiffPage({
       select: { id: true, name: true },
       orderBy: { updatedAt: "desc" },
     }),
+    prisma.piece.count({
+      where: { authorId: userId, riffs: { none: {} }, publishedAt: null },
+    }),
   ]);
+  const hasStandaloneDrafts = standaloneDraftCount > 0;
 
   // Fetch riff with full data
   const riff = await prisma.riff.findUnique({
@@ -262,6 +267,14 @@ export default async function RiffPage({
           updatedAt: pr.piece.updatedAt.toISOString(),
           commentCount: pr.piece._count?.comments ?? 0,
           _count: undefined,
+          // Plain-text preview — only computed (and only sent) for the
+          // viewer's own unsubmitted piece, same privacy rule as the club
+          // page: other participants' previews are faked client-side from
+          // wordCount alone (see ProgressCard's blurredPreviewFiller).
+          preview:
+            pr.piece.authorId === userId
+              ? getContentPreview(pr.piece.currentContent, 500)
+              : "",
         },
       })),
   };
@@ -287,6 +300,7 @@ export default async function RiffPage({
       hostFirstName={riff.club?.admin?.firstName ?? null}
       isFirstReveal={isFirstReveal}
       predictedVolumeNumber={predictedVolumeNumber}
+      hasStandaloneDrafts={hasStandaloneDrafts}
     />
   );
 }

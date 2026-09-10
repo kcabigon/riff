@@ -8,11 +8,10 @@ import MobileCardCarousel from "@/components/shared/MobileCardCarousel";
 import EmptyRiffState from "@/components/riffs/EmptyRiffState";
 import ProgressCard from "@/components/riffs/ProgressCard";
 import PieceCard from "@/components/riffs/PieceCard";
-import RiffCTAButton from "@/components/riffs/RiffCTAButton";
+import DraftChoiceTrigger from "@/components/riffs/DraftChoiceTrigger";
 import RevealRiffButton, {
   shouldShowReveal,
 } from "@/components/riffs/RevealRiffButton";
-import { useDraftCreation } from "@/hooks/useDraftCreation";
 import SectionHeading from "@/components/shared/SectionHeading";
 import CreateRiffModal from "@/components/riffs/CreateRiffModal";
 import EditRiffModal from "@/components/riffs/EditRiffModal";
@@ -34,7 +33,9 @@ import {
   isPastDeadline,
   getWaitingParticipants,
   getSubmittedParticipants,
+  allPiecesSubmitted,
   daysUntil,
+  formatDateLong,
 } from "@/lib/riff-utils";
 import DeleteClubConfirmModal from "@/components/clubs/DeleteClubConfirmModal";
 import LeaveClubConfirmModal from "@/components/clubs/LeaveClubConfirmModal";
@@ -119,6 +120,7 @@ interface ClubPageLayoutProps {
     wordCount: number;
   };
   predictedVolumeNumber?: number;
+  hasStandaloneDrafts: boolean;
 }
 
 // Groups a riff's pieces by author id for quick per-participant lookup.
@@ -168,10 +170,10 @@ const sortedParticipants = (
     return 0;
   });
 
-// Current Riff grid only — the viewer's own card always leads, then
-// whoever's furthest along (by word count) rises to the top, ties broken by
-// most recent activity. Distinct from `sortedParticipants` (used for
-// Current Read / Past Riffs, which group by submitted vs. not instead).
+// Current Riff grid only — same tiering as `sortedParticipants` (submitted
+// → in-progress → not-started, matching the individual riff page's grid),
+// but with the viewer's own card always pulled to the front regardless of
+// their own progress.
 const sortedByProgress = (
   participants: RiffParticipant[],
   authorPieces: Record<
@@ -181,19 +183,15 @@ const sortedByProgress = (
     }
   >,
   currentUserId: string
-) =>
-  [...participants].sort((a, b) => {
-    if (a.user.id === currentUserId) return -1;
-    if (b.user.id === currentUserId) return 1;
-    const pa = authorPieces[a.user.id];
-    const pb = authorPieces[b.user.id];
-    const wcA = pa?.wordCount ?? 0;
-    const wcB = pb?.wordCount ?? 0;
-    if (wcA !== wcB) return wcB - wcA;
-    const timeA = pa ? new Date(pa.updatedAt).getTime() : 0;
-    const timeB = pb ? new Date(pb.updatedAt).getTime() : 0;
-    return timeB - timeA;
-  });
+) => {
+  const sorted = sortedParticipants(participants, authorPieces);
+  const ownIndex = sorted.findIndex((p) => p.user.id === currentUserId);
+  if (ownIndex > 0) {
+    const [own] = sorted.splice(ownIndex, 1);
+    sorted.unshift(own);
+  }
+  return sorted;
+};
 
 export default function ClubPageLayout({
   club,
@@ -208,6 +206,7 @@ export default function ClubPageLayout({
   completedRiffs,
   stats,
   predictedVolumeNumber,
+  hasStandaloneDrafts,
 }: ClubPageLayoutProps) {
   const router = useRouter();
   const [clubName, setClubName] = useState(club.name);
@@ -218,7 +217,6 @@ export default function ClubPageLayout({
   const [isEditRiffModalOpen, setIsEditRiffModalOpen] = useState(false);
   const [isDeleteRiffModalOpen, setIsDeleteRiffModalOpen] = useState(false);
   const { revealRiff, isRevealing } = useRevealRiff();
-  const { createDraft } = useDraftCreation();
   const [isClubDetailsModalOpen, setIsClubDetailsModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isDeleteClubModalOpen, setIsDeleteClubModalOpen] = useState(false);
@@ -349,24 +347,16 @@ export default function ClubPageLayout({
   const isJoined = activeRiff
     ? activeRiff.participants.some((p) => p.user.id === currentUserId)
     : false;
-  const hasDraft = activeRiff
-    ? activeRiff.pieces.some((p) => p.piece.authorId === currentUserId)
-    : false;
   const hasSubmitted = activeRiff
     ? activeRiff.pieces.some(
         (p) => p.piece.authorId === currentUserId && p.submittedAt !== null
       )
     : false;
-  const existingPieceId = activeRiff
-    ? (activeRiff.pieces.find((p) => p.piece.authorId === currentUserId)?.piece
-        .id ?? null)
-    : null;
   const deadlinePassed = activeRiff
     ? isPastDeadline(activeRiff.deadline)
     : false;
   const piecesAllSubmitted = activeRiff
-    ? getSubmittedPieces(activeRiff.pieces).length >=
-      activeRiff.participants.length
+    ? allPiecesSubmitted(activeRiff.participants, activeRiff.pieces)
     : false;
 
   // Format word count with commas
@@ -388,9 +378,18 @@ export default function ClubPageLayout({
     memberCount <= 2 ? 304 : memberCount === 3 ? 301 : 280;
 
   const activeAuthorPieces = activeRiff ? pieceByAuthor(activeRiff) : {};
+  // A not-yet-joined club member still gets a slot in the grid — joining now
+  // only ever happens as a side effect of picking New/Attach draft, so there's
+  // no separate "join" step to gate the card on. Sourced from club
+  // membership rather than a real RiffParticipant row.
+  const viewerMember = club.members.find((m) => m.user.id === currentUserId);
+  const activeParticipantsForGrid =
+    activeRiff && !isJoined && viewerMember
+      ? [...activeRiff.participants, { user: viewerMember.user }]
+      : (activeRiff?.participants ?? []);
   const sortedActiveParticipants = activeRiff
     ? sortedByProgress(
-        activeRiff.participants,
+        activeParticipantsForGrid,
         activeAuthorPieces,
         currentUserId
       )
@@ -901,6 +900,22 @@ export default function ClubPageLayout({
                               gap: "8px",
                             }}
                           >
+                            {!deadlinePassed && activeRiff.deadline && (
+                              <p
+                                style={{
+                                  fontFamily: "var(--font-dm-sans)",
+                                  fontSize: "14px",
+                                  fontWeight: 300,
+                                  color: "#808080",
+                                  margin: 0,
+                                }}
+                              >
+                                Deadline: {formatDateLong(activeRiff.deadline)}
+                              </p>
+                            )}
+                            {!deadlinePassed && activeRiff.deadline && (
+                              <span style={{ color: "#808080" }}>·</span>
+                            )}
                             <p
                               style={{
                                 fontFamily: "var(--font-dm-sans)",
@@ -933,24 +948,10 @@ export default function ClubPageLayout({
                           </div>
                         </div>
 
-                        {showReveal ? (
+                        {showReveal && (
                           <RevealRiffButton
                             onClick={() => setIsRevealModalOpen(true)}
                           />
-                        ) : (
-                          // Once the user has joined, the clickable card in
-                          // the grid below covers both starting and
-                          // continuing a draft — this button only needs to
-                          // cover joining.
-                          !isJoined && (
-                            <RiffCTAButton
-                              riffId={activeRiff.id}
-                              isJoined={isJoined}
-                              hasDraft={hasDraft}
-                              hasSubmitted={hasSubmitted}
-                              existingPieceId={existingPieceId}
-                            />
-                          )
                         )}
                       </div>
 
@@ -1001,29 +1002,45 @@ export default function ClubPageLayout({
                           minWidth: 0,
                         }}
                       >
+                        <h2
+                          style={{
+                            display: "inline-block",
+                            fontFamily: "var(--font-dm-serif-text)",
+                            fontSize: "24px",
+                            fontWeight: 400,
+                            color: "#000000",
+                            margin: 0,
+                          }}
+                        >
+                          {getRiffDisplayTitle(
+                            activeRiff,
+                            predictedVolumeNumber
+                          )}
+                        </h2>
                         <div
                           style={{
                             display: "flex",
-                            alignItems: "baseline",
-                            gap: "12px",
+                            alignItems: "center",
+                            gap: "8px",
                             flexWrap: "wrap",
                           }}
                         >
-                          <h2
-                            style={{
-                              display: "inline-block",
-                              fontFamily: "var(--font-dm-serif-text)",
-                              fontSize: "24px",
-                              fontWeight: 400,
-                              color: "#000000",
-                              margin: 0,
-                            }}
-                          >
-                            {getRiffDisplayTitle(
-                              activeRiff,
-                              predictedVolumeNumber
-                            )}
-                          </h2>
+                          {!deadlinePassed && activeRiff.deadline && (
+                            <p
+                              style={{
+                                fontFamily: "var(--font-dm-sans)",
+                                fontSize: "14px",
+                                fontWeight: 300,
+                                color: "#808080",
+                                margin: 0,
+                              }}
+                            >
+                              Deadline: {formatDateLong(activeRiff.deadline)}
+                            </p>
+                          )}
+                          {!deadlinePassed && activeRiff.deadline && (
+                            <span style={{ color: "#808080" }}>·</span>
+                          )}
                           <p
                             style={{
                               fontFamily: "var(--font-dm-sans)",
@@ -1047,13 +1064,11 @@ export default function ClubPageLayout({
                                 : "No deadline"}
                           </p>
                           {(isAdmin || isCoHost) && (
-                            <div style={{ alignSelf: "center" }}>
-                              <ThreeDotButton
-                                variant="light"
-                                items={riffMenuItems}
-                                align="left"
-                              />
-                            </div>
+                            <ThreeDotButton
+                              variant="light"
+                              items={riffMenuItems}
+                              align="left"
+                            />
                           )}
                         </div>
                         {activeRiff.prompt && (
@@ -1082,20 +1097,10 @@ export default function ClubPageLayout({
                       </div>
 
                       <div style={{ flexShrink: 0 }}>
-                        {showReveal ? (
+                        {showReveal && (
                           <RevealRiffButton
                             onClick={() => setIsRevealModalOpen(true)}
                           />
-                        ) : (
-                          !isJoined && (
-                            <RiffCTAButton
-                              riffId={activeRiff.id}
-                              isJoined={isJoined}
-                              hasDraft={hasDraft}
-                              hasSubmitted={hasSubmitted}
-                              existingPieceId={existingPieceId}
-                            />
-                          )
                         )}
                       </div>
                     </div>
@@ -1113,18 +1118,32 @@ export default function ClubPageLayout({
                         isOwnUser && piece && piece.submittedAt === null;
                       const isOwnNotStarted = isOwnUser && !piece;
 
+                      if (isOwnNotStarted) {
+                        return (
+                          <DraftChoiceTrigger
+                            key={p.user.id}
+                            riffId={activeRiff.id}
+                            hasStandaloneDrafts={hasStandaloneDrafts}
+                            renderTrigger={(onClick) => (
+                              <ProgressCard
+                                user={p.user}
+                                piece={null}
+                                onClick={onClick}
+                              />
+                            )}
+                          />
+                        );
+                      }
+
                       return (
                         <ProgressCard
                           key={p.user.id}
                           user={p.user}
                           piece={piece}
-                          variant="draft"
                           onClick={
                             isOwnDraft
                               ? () => router.push(`/write/${piece.id}`)
-                              : isOwnNotStarted
-                                ? () => createDraft(activeRiff.id)
-                                : undefined
+                              : undefined
                           }
                         />
                       );

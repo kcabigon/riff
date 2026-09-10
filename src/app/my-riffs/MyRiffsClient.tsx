@@ -290,6 +290,10 @@ export default function MyRiffsClient({
 
   const drafts = allPieces.filter((p) => !isFinished(p));
   const submittedPieces = allPieces.filter(isFinished);
+  // Whether the "Attach draft" option should show up on riff CTAs — a
+  // draft that's never been attached to any riff. Computed once here from
+  // data already in memory rather than re-fetched per card.
+  const hasStandaloneDrafts = drafts.some((p) => p.riffs.length === 0);
 
   const visibleDrafts = draftsExpanded ? drafts : drafts.slice(0, DRAFTS_CAP);
   const visiblePieces = piecesExpanded
@@ -309,6 +313,28 @@ export default function MyRiffsClient({
 
   const handleDeleted = (pieceId: string) => {
     setAllPieces((prev) => prev.filter((p) => p.id !== pieceId));
+  };
+
+  const handleDetach = async (pieceId: string, riffId: string) => {
+    try {
+      const res = await fetch(`/api/riffs/${riffId}/pieces/${pieceId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        console.error("Error detaching draft:", await res.text());
+        return;
+      }
+
+      setAllPieces((prev) =>
+        prev.map((p) =>
+          p.id === pieceId
+            ? { ...p, riffs: p.riffs.filter((r) => r.riff.id !== riffId) }
+            : p
+        )
+      );
+    } catch (err) {
+      console.error("Error detaching draft:", err);
+    }
   };
 
   const handleShareCreated = (pieceId: string, share: PublicShare) => {
@@ -340,6 +366,15 @@ export default function MyRiffsClient({
             label: "Edit",
             onClick: () => router.push(`/write/${piece.id}`),
           },
+          ...(piece.riffs.length > 0
+            ? [
+                {
+                  type: "action" as const,
+                  label: "Detach",
+                  onClick: () => handleDetach(piece.id, piece.riffs[0].riff.id),
+                },
+              ]
+            : []),
           ...(isPieceRevealed(piece)
             ? [
                 {
@@ -626,6 +661,7 @@ export default function MyRiffsClient({
                       isJoined={isJoined}
                       hasDraft={hasDraft}
                       hasSubmitted={hasSubmitted}
+                      hasStandaloneDrafts={hasStandaloneDrafts}
                       currentUserId={currentUserId}
                       isAdmin={isRiffAdmin(riff)}
                       onJoin={handleJoinRiff}

@@ -47,6 +47,7 @@ interface RiffEventCardProps {
   isJoined: boolean;
   hasDraft: boolean;
   hasSubmitted: boolean;
+  hasStandaloneDrafts: boolean;
   currentUserId: string;
   isAdmin: boolean;
   onJoin?: () => void;
@@ -60,6 +61,7 @@ export default function RiffEventCard({
   isJoined,
   hasDraft,
   hasSubmitted,
+  hasStandaloneDrafts,
   currentUserId,
   isAdmin,
   onReveal,
@@ -69,10 +71,7 @@ export default function RiffEventCard({
   const router = useRouter();
   const handleAvatarClick = useProfileNavigation();
   const deadlinePassed = isPastDeadline(riff.deadline ?? null);
-  const piecesAllSubmitted = allPiecesSubmitted(
-    riff.pieces,
-    riff.participants.length
-  );
+  const piecesAllSubmitted = allPiecesSubmitted(riff.participants, riff.pieces);
   const submittedCount = getSubmittedPieces(riff.pieces).length;
   // Hosts see group progress the whole time — they're accountable for the
   // riff, not just their own piece. Members switch to it once they've
@@ -473,6 +472,7 @@ export default function RiffEventCard({
                   isJoined={isJoined}
                   hasDraft={hasDraft}
                   hasSubmitted={hasSubmitted}
+                  hasStandaloneDrafts={hasStandaloneDrafts}
                   existingPieceId={existingPieceId}
                   stopPropagation
                 />

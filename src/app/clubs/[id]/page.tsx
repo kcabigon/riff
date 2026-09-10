@@ -40,8 +40,10 @@ export default async function ClubPage({
   const userId = session.user.id;
 
   // Fetch club (filtered to clubs the user is a member of), user's clubs dropdown,
-  // and riffs all in parallel. If club is null, user is not a member of this club.
-  const [club, userClubs, riffs] = await Promise.all([
+  // riffs, and whether the user has any standalone draft (for the Attach
+  // Draft option) all in parallel. If club is null, user is not a member of
+  // this club.
+  const [club, userClubs, riffs, standaloneDraftCount] = await Promise.all([
     prisma.club.findFirst({
       where: { id, members: { some: { userId } }, isArchived: false },
       select: {
@@ -107,7 +109,11 @@ export default async function ClubPage({
       },
       orderBy: { createdAt: "desc" },
     }),
+    prisma.piece.count({
+      where: { authorId: userId, riffs: { none: {} }, publishedAt: null },
+    }),
   ]);
+  const hasStandaloneDrafts = standaloneDraftCount > 0;
 
   if (!club) {
     // Club is archived or user is not a member — find another active club
@@ -246,6 +252,7 @@ export default async function ClubPage({
       completedRiffs={completedRiffs}
       stats={{ riffCount, pieceCount, wordCount }}
       predictedVolumeNumber={predictedVolumeNumber}
+      hasStandaloneDrafts={hasStandaloneDrafts}
     />
   );
 }

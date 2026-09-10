@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useCallback, ReactNode } from "react";
+import { createPortal } from "react-dom";
 import NoiseBackground from "@/components/NoiseBackground";
 import CloseButton from "@/components/CloseButton";
 
@@ -95,7 +96,12 @@ export default function Modal({
 
   if (!isOpen) return null;
 
-  return (
+  // Portaled to document.body — a modal rendered in place is only
+  // guaranteed to sit above its own subtree. Any ancestor between here and
+  // the root that establishes a new containing block (transform, filter,
+  // contain, etc.) silently traps `position: fixed`, causing exactly the
+  // "renders behind/clipped by other content" bug this sidesteps entirely.
+  return createPortal(
     <>
       {/* Backdrop */}
       <div
@@ -181,6 +187,7 @@ export default function Modal({
           </div>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 }

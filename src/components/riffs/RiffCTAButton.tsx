@@ -1,14 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useDraftCreation } from "@/hooks/useDraftCreation";
 import CTAButton from "@/components/CTAButton";
+import DraftChoiceTrigger from "./DraftChoiceTrigger";
 
 interface RiffCTAButtonProps {
   riffId: string;
   isJoined: boolean;
   hasDraft: boolean;
   hasSubmitted: boolean;
+  hasStandaloneDrafts: boolean;
   existingPieceId?: string | null;
   stopPropagation?: boolean;
 }
@@ -18,11 +19,11 @@ export default function RiffCTAButton({
   isJoined,
   hasDraft,
   hasSubmitted,
+  hasStandaloneDrafts,
   existingPieceId,
   stopPropagation = false,
 }: RiffCTAButtonProps) {
   const router = useRouter();
-  const { createDraft } = useDraftCreation();
 
   const label = !isJoined
     ? "Let's riff"
@@ -32,39 +33,34 @@ export default function RiffCTAButton({
         ? "Continue writing"
         : "Start writing";
 
-  const handleJoin = async (e: React.MouseEvent) => {
-    if (stopPropagation) e.stopPropagation();
-    try {
-      const res = await fetch(`/api/riffs/${riffId}/participants`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (res.ok) {
-        router.push(`/riffs/${riffId}`);
-      }
-    } catch (err) {
-      console.error("Error joining riff:", err);
-    }
-  };
+  // No piece yet (whether or not already joined — joining now only ever
+  // happens as a side effect of picking New/Attach draft, so hasDraft can
+  // never be true while unjoined) — hand off to the dropdown.
+  if (!hasDraft && !hasSubmitted) {
+    return (
+      <DraftChoiceTrigger
+        riffId={riffId}
+        hasStandaloneDrafts={hasStandaloneDrafts}
+        stopPropagation={stopPropagation}
+        renderTrigger={(onClick) => (
+          <CTAButton onClick={onClick}>{label}</CTAButton>
+        )}
+      />
+    );
+  }
 
   const handleClick = (e: React.MouseEvent) => {
     if (stopPropagation) e.stopPropagation();
-    if (!isJoined) {
-      handleJoin(e);
-      return;
-    }
     if (existingPieceId) {
       router.push(`/write/${existingPieceId}`);
-    } else {
-      createDraft(riffId);
     }
   };
 
   return (
     <CTAButton
       onClick={handleClick}
-      disabled={isJoined && hasSubmitted}
-      style={isJoined && hasSubmitted ? { opacity: 0.5 } : undefined}
+      disabled={hasSubmitted}
+      style={hasSubmitted ? { opacity: 0.5 } : undefined}
     >
       {label}
     </CTAButton>
