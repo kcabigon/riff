@@ -84,6 +84,61 @@ export default function DraftChoiceModal({
           {isCreating ? "Creating…" : "New draft"}
         </CTAButton>
 
+        {drafts === null && (
+          <>
+            <div style={{ borderTop: "1px solid #E6E6E6" }} />
+
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "20px" }}
+            >
+              {[0, 1].map((i) => (
+                <div
+                  key={i}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "8px",
+                    width: "100%",
+                    border: "2px solid #000000",
+                    boxShadow: "8px 8px 0px 0px #000000",
+                    padding: "12px 16px",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "50%",
+                      height: "18px",
+                      backgroundColor: "#E6E6E6",
+                    }}
+                  />
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "6px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "100%",
+                        height: "13px",
+                        backgroundColor: "#F5F5F5",
+                      }}
+                    />
+                    <div
+                      style={{
+                        width: "70%",
+                        height: "13px",
+                        backgroundColor: "#F5F5F5",
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
         {drafts && drafts.length > 0 && (
           <>
             <div style={{ borderTop: "1px solid #E6E6E6" }} />
