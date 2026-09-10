@@ -7,6 +7,7 @@ import {
   getSubmittedPieces,
   getTotalWordCount,
   getContentPreview,
+  isAuthoredBy,
 } from "@/lib/riff-utils";
 
 export async function generateMetadata({
@@ -228,6 +229,46 @@ export default async function ClubPage({
     }, {});
   }
 
+  // New comment activity for Past Riffs — batched across every riff that
+  // can end up there (COMPLETED + pre-join REVEALED + post-join REVEALED,
+  // since the final Past Riffs list is a client-side union and we don't
+  // know which subset of post-join revealed riffs will migrate in until
+  // isFullyReadForUser runs client-side). Same PieceRead(readAt) + Comment
+  // compare-and-count mechanic as hasNewCommentsMap in
+  // src/app/riffs/[id]/page.tsx, aggregated per-riff instead of per-piece.
+  const pastEligibleRiffIds = [
+    ...completedRiffs,
+    ...pastRevealedRiffs,
+    ...revealedRiffs,
+  ].map((r) => r.id);
+  let newCommentCounts: Record<string, number> = {};
+  if (pastEligibleRiffIds.length > 0) {
+    const [pastReads, pastComments] = await Promise.all([
+      prisma.pieceRead.findMany({
+        where: { userId, riffId: { in: pastEligibleRiffIds } },
+        select: { riffId: true, pieceId: true, readAt: true },
+      }),
+      prisma.comment.findMany({
+        where: { riffId: { in: pastEligibleRiffIds } },
+        select: {
+          riffId: true,
+          pieceId: true,
+          createdAt: true,
+          authorId: true,
+        },
+      }),
+    ]);
+    const readAtByPiece = new Map(pastReads.map((r) => [r.pieceId, r.readAt]));
+    newCommentCounts = pastComments.reduce<Record<string, number>>((acc, c) => {
+      if (isAuthoredBy(c, userId)) return acc;
+      const readAt = readAtByPiece.get(c.pieceId);
+      if (readAt && c.riffId && c.createdAt > readAt) {
+        acc[c.riffId] = (acc[c.riffId] || 0) + 1;
+      }
+      return acc;
+    }, {});
+  }
+
   const isAdmin = club.adminId === userId;
 
   // Update lastActiveClubId (fire-and-forget, non-blocking)
@@ -249,6 +290,7 @@ export default async function ClubPage({
       pastRevealedRiffs={pastRevealedRiffs}
       readCounts={readCounts}
       readPieceIds={readPieceIds}
+      newCommentCounts={newCommentCounts}
       completedRiffs={completedRiffs}
       stats={{ riffCount, pieceCount, wordCount }}
       predictedVolumeNumber={predictedVolumeNumber}

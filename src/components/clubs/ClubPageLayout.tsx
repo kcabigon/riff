@@ -8,6 +8,7 @@ import MobileCardCarousel from "@/components/shared/MobileCardCarousel";
 import EmptyRiffState from "@/components/riffs/EmptyRiffState";
 import ProgressCard from "@/components/riffs/ProgressCard";
 import PieceCard from "@/components/riffs/PieceCard";
+import Badge from "@/components/shared/Badge";
 import DraftChoiceTrigger from "@/components/riffs/DraftChoiceTrigger";
 import RevealRiffButton, {
   shouldShowReveal,
@@ -113,6 +114,7 @@ interface ClubPageLayoutProps {
   pastRevealedRiffs: Riff[];
   readCounts: Record<string, number>;
   readPieceIds: string[];
+  newCommentCounts: Record<string, number>;
   completedRiffs: Riff[];
   stats: {
     riffCount: number;
@@ -203,6 +205,7 @@ export default function ClubPageLayout({
   pastRevealedRiffs,
   readCounts,
   readPieceIds,
+  newCommentCounts,
   completedRiffs,
   stats,
   predictedVolumeNumber,
@@ -1327,23 +1330,46 @@ export default function ClubPageLayout({
                   );
                 };
 
+                const newComments = newCommentCounts[riff.id] ?? 0;
+
                 return (
                   <div key={riff.id}>
-                    <h3
-                      onClick={() => router.push(`/riffs/${riff.id}`)}
-                      className="riff-row-link"
+                    <div
                       style={{
-                        cursor: "pointer",
-                        display: "inline-block",
-                        fontFamily: "var(--font-dm-serif-text)",
-                        fontSize: "20px",
-                        fontWeight: 400,
-                        color: "#000000",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
                         margin: "0 0 12px 0",
                       }}
                     >
-                      {getRiffDisplayTitle(riff)}
-                    </h3>
+                      <h3
+                        onClick={() => router.push(`/riffs/${riff.id}`)}
+                        className="riff-row-link"
+                        style={{
+                          cursor: "pointer",
+                          display: "inline-block",
+                          fontFamily: "var(--font-dm-serif-text)",
+                          fontSize: "20px",
+                          fontWeight: 400,
+                          color: "#000000",
+                          margin: 0,
+                        }}
+                      >
+                        {getRiffDisplayTitle(riff)}
+                      </h3>
+                      {newComments > 0 && (
+                        <Badge
+                          variant="cyan"
+                          style={{
+                            position: "static",
+                            top: "auto",
+                            left: "auto",
+                          }}
+                        >
+                          {newComments} new
+                        </Badge>
+                      )}
+                    </div>
                     {isMobile ? (
                       <MobileCardCarousel>
                         {piecesToShow.map(renderCard)}
