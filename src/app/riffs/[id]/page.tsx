@@ -198,6 +198,21 @@ export default async function RiffPage({
       );
     }
 
+    // Own pieces never get a PieceRead row from normal viewing — you don't
+    // need to "read" your own piece to know it exists — so they're missing
+    // from `reads` above. Check them separately with the same epoch fallback
+    // used in GET /api/riffs/[id]/comments, so the "Mark all read" button
+    // (driven by this map) appears for new comments on your own piece too,
+    // not just on others' pieces you've read. PieceCard itself never shows
+    // a cyan badge for own pieces regardless, so this can't affect the grid.
+    for (const pid of ownPieceIds) {
+      if (pid in hasNewCommentsMap) continue;
+      const readAt = readAtMap[pid] ?? new Date(0);
+      hasNewCommentsMap[pid] = comments.some(
+        (c) => c.pieceId === pid && c.createdAt > readAt
+      );
+    }
+
     // Contribution strip data — club members for club riffs, participants for clubless
     const clubMembers = riff.clubId
       ? await prisma.clubMember.findMany({
