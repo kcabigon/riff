@@ -9,11 +9,15 @@ import {
   getSubmittedPieces,
   allPiecesSubmitted,
   isPastDeadline,
+  daysUntil,
 } from "@/lib/riff-utils";
 import RiffCTAButton from "@/components/riffs/RiffCTAButton";
 import RevealRiffButton, {
   shouldShowReveal,
 } from "@/components/riffs/RevealRiffButton";
+import CTAButton from "@/components/CTAButton";
+import Modal from "@/components/shared/Modal";
+import ShareLinkOptions from "@/components/shared/ShareLinkOptions";
 
 interface RiffEventCardProps {
   riff: {
@@ -44,6 +48,7 @@ interface RiffEventCardProps {
     name: string;
     bannerImage: string | null;
   };
+  isClubless?: boolean;
   isJoined: boolean;
   hasDraft: boolean;
   hasSubmitted: boolean;
@@ -58,6 +63,7 @@ interface RiffEventCardProps {
 export default function RiffEventCard({
   riff,
   club,
+  isClubless = false,
   isJoined,
   hasDraft,
   hasSubmitted,
@@ -68,6 +74,7 @@ export default function RiffEventCard({
   predictedVolumeNumber,
 }: RiffEventCardProps) {
   const [isCardHovered, setIsCardHovered] = useState(false);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const router = useRouter();
   const handleAvatarClick = useProfileNavigation();
   const deadlinePassed = isPastDeadline(riff.deadline ?? null);
@@ -77,9 +84,29 @@ export default function RiffEventCard({
   // riff, not just their own piece. Members switch to it once they've
   // submitted, since their own word count stops being the useful number.
   const showSubmittedProgress = isAdmin || hasSubmitted;
+  // Clubless riffs have no club name to show in the subtitle slot, so show
+  // the deadline countdown there instead.
+  const daysLeftText = !riff.deadline
+    ? "No deadline"
+    : deadlinePassed
+      ? "Deadline passed"
+      : (() => {
+          const days = daysUntil(riff.deadline as Date);
+          return `${days} ${days === 1 ? "day" : "days"} left`;
+        })();
+  const showInviteCta =
+    isClubless &&
+    isAdmin &&
+    riff.status === "ACTIVE" &&
+    riff.participants.length <= 1;
 
   const handleCardClick = () => {
     router.push(`/riffs/${riff.id}`);
+  };
+
+  const handleInviteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsInviteModalOpen(true);
   };
 
   const MAX_AVATARS = 10;
@@ -252,9 +279,9 @@ export default function RiffEventCard({
                 margin: 0,
               }}
             >
-              {club.name}
+              {isClubless ? daysLeftText : club.name}
             </p>
-            {!riff.deadline && (
+            {!isClubless && !riff.deadline && (
               <p
                 style={{
                   fontFamily: "var(--font-dm-sans)",
@@ -466,6 +493,10 @@ export default function RiffEventCard({
                 status: riff.status,
               }) ? (
                 <RevealRiffButton onClick={handleRevealClick} />
+              ) : showInviteCta ? (
+                <CTAButton onClick={handleInviteClick}>
+                  Invite friends
+                </CTAButton>
               ) : riff.status !== "REVEALED" ? (
                 <RiffCTAButton
                   riffId={riff.id}
@@ -515,6 +546,19 @@ export default function RiffEventCard({
           }
         }
       `}</style>
+
+      {isInviteModalOpen && (
+        <Modal
+          isOpen={isInviteModalOpen}
+          onClose={() => setIsInviteModalOpen(false)}
+          title="Invite friends"
+        >
+          <ShareLinkOptions
+            url={`${typeof window !== "undefined" ? window.location.origin : ""}/riffs/${riff.id}/join`}
+            shareText="Let's riff!"
+          />
+        </Modal>
+      )}
     </div>
   );
 }

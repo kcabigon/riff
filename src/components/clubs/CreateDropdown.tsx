@@ -6,11 +6,11 @@ import Dropdown from "@/components/shared/Dropdown";
 import type { DropdownItem } from "@/components/shared/Dropdown";
 import { useDraftCreation } from "@/hooks/useDraftCreation";
 import CreatePillButton from "./CreatePillButton";
+import CreateRiffModal from "@/components/riffs/CreateRiffModal";
 
-// "New riff" is left out for now — it can't be wired up until the schema
-// supports riffs that aren't tied to a club.
 export default function CreateDropdown() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isRiffModalOpen, setIsRiffModalOpen] = useState(false);
   const { createDraft, isCreating } = useDraftCreation();
   const router = useRouter();
   const pathname = usePathname();
@@ -23,6 +23,11 @@ export default function CreateDropdown() {
     },
     {
       type: "action",
+      label: "New riff",
+      onClick: () => setIsRiffModalOpen(true),
+    },
+    {
+      type: "action",
       label: "New club",
       onClick: () => {
         sessionStorage.setItem("pendingClubFrom", pathname);
@@ -32,21 +37,31 @@ export default function CreateDropdown() {
   ];
 
   return (
-    <Dropdown
-      trigger={
-        <CreatePillButton
-          label="Create"
-          icon="plus"
-          iconLeading
-          forceActive={isOpen}
-        />
-      }
-      items={items}
-      align="left"
-      minWidth={200}
-      isOpen={isOpen}
-      onToggle={() => setIsOpen((o) => !o)}
-      onClose={() => setIsOpen(false)}
-    />
+    <>
+      <Dropdown
+        trigger={
+          <CreatePillButton
+            label="Create"
+            icon="plus"
+            iconLeading
+            forceActive={isOpen}
+          />
+        }
+        items={items}
+        align="left"
+        minWidth={200}
+        isOpen={isOpen}
+        onToggle={() => setIsOpen((o) => !o)}
+        onClose={() => setIsOpen(false)}
+      />
+      <CreateRiffModal
+        isOpen={isRiffModalOpen}
+        onClose={() => setIsRiffModalOpen(false)}
+        onCreated={(riffId) => {
+          setIsRiffModalOpen(false);
+          router.push(`/riffs/${riffId}`);
+        }}
+      />
+    </>
   );
 }

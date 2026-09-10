@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import NoiseBackground from "@/components/NoiseBackground";
 import CTAButton from "@/components/CTAButton";
+import CreateRiffModal from "@/components/riffs/CreateRiffModal";
 
 type Shape = "bolt" | "triangle" | "circle";
 
@@ -157,6 +159,7 @@ export default function MyRiffsEmptyState({
 }: MyRiffsEmptyStateProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const [isRiffModalOpen, setIsRiffModalOpen] = useState(false);
 
   const handleStartClub = () => {
     sessionStorage.setItem("pendingClubFrom", pathname);
@@ -256,11 +259,9 @@ export default function MyRiffsEmptyState({
             )}
 
             {panel.id === "riff" && (
-              // Not wired up yet — riffing without a club is still gated on
-              // Kyle's schema migration. Looks like a real CTA so the trio
-              // reads as complete, but has no onClick.
               <CTAButton
                 accentColor={panel.accentColor}
+                onClick={() => setIsRiffModalOpen(true)}
                 style={panelButtonStyle}
               >
                 {panel.cta}
@@ -317,6 +318,15 @@ export default function MyRiffsEmptyState({
           }
         }
       `}</style>
+
+      <CreateRiffModal
+        isOpen={isRiffModalOpen}
+        onClose={() => setIsRiffModalOpen(false)}
+        onCreated={(riffId) => {
+          setIsRiffModalOpen(false);
+          router.push(`/riffs/${riffId}`);
+        }}
+      />
     </div>
   );
 }

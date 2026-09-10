@@ -6,6 +6,8 @@ import PieceCard from "./PieceCard";
 import RevealConfirmModal from "./RevealConfirmModal";
 import EditRiffModal from "./EditRiffModal";
 import DeleteRiffConfirmModal from "./DeleteRiffConfirmModal";
+import Modal from "@/components/shared/Modal";
+import ShareLinkOptions from "@/components/shared/ShareLinkOptions";
 import NavBar from "@/components/clubs/NavBar";
 import RevealCelebration from "./RevealCelebration";
 import {
@@ -30,6 +32,8 @@ import type { DropdownItem } from "@/components/shared/Dropdown";
 import ActivityFeed from "@/components/riffs/ActivityFeed";
 import ReadByStrip from "@/components/riffs/ReadByStrip";
 import PrimaryButton from "@/components/PrimaryButton";
+import CTAButton from "@/components/CTAButton";
+import Avatar from "@/components/shared/Avatar";
 
 interface RiffPageLayoutProps {
   riff: {
@@ -131,6 +135,7 @@ export default function RiffPageLayout({
   const { revealRiff, isRevealing } = useRevealRiff();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [viewMode, setViewMode] = useState<"read" | "comment">("read");
   const [badgeMap, setBadgeMap] =
@@ -299,7 +304,20 @@ export default function RiffPageLayout({
                         label: "Edit riff",
                         onClick: () => setIsEditModalOpen(true),
                       },
-                      ...(riff.status === "ACTIVE"
+                      // Only clubless riffs are invited-by-link — club riffs
+                      // invite people to the club itself, from the club page.
+                      ...(!riff.club && riff.status === "ACTIVE"
+                        ? [
+                            {
+                              type: "action" as const,
+                              label: "Invite friends",
+                              onClick: () => setIsInviteModalOpen(true),
+                            },
+                          ]
+                        : []),
+                      // Force-reveal only makes sense once someone has
+                      // actually submitted something.
+                      ...(riff.status === "ACTIVE" && totalPieces > 0
                         ? [
                             {
                               type: "action" as const,
@@ -331,26 +349,58 @@ export default function RiffPageLayout({
               </div>
             </div>
 
-            {/* Prompt */}
-            {riff.prompt && (
+            {/* Hosted by (clubless riffs only) + prompt — shared accent border,
+                since the prompt is effectively a note from the host. */}
+            {(!riff.club || riff.prompt) && (
               <div
                 style={{
                   borderLeft: "2px solid #000000",
                   paddingLeft: "16px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "16px",
                 }}
               >
-                <p
-                  style={{
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "16px",
-                    fontWeight: 300,
-                    color: "#000000",
-                    margin: 0,
-                    lineHeight: 1.5,
-                  }}
-                >
-                  {riff.prompt}
-                </p>
+                {!riff.club && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                    }}
+                  >
+                    <Avatar user={riff.creator} size={32} />
+                    <p
+                      style={{
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "16px",
+                        fontWeight: 300,
+                        color: "#000000",
+                        margin: 0,
+                      }}
+                    >
+                      <span style={{ color: "#808080" }}>Hosted by</span>{" "}
+                      <span style={{ fontWeight: 700 }}>
+                        {riff.creator.name || "a Riff writer"}
+                      </span>
+                    </p>
+                  </div>
+                )}
+
+                {riff.prompt && (
+                  <p
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "16px",
+                      fontWeight: 300,
+                      color: "#000000",
+                      margin: 0,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {riff.prompt}
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -486,6 +536,18 @@ export default function RiffPageLayout({
                   </div>
                 );
               })()}
+
+            {/* Prominent while it's just the host — once someone else joins,
+                friends have presumably been invited, so the action recedes
+                into the 3-dot menu instead of staying front and center. */}
+            {!riff.club &&
+              isAdmin &&
+              riff.status === "ACTIVE" &&
+              riff.participants.length <= 1 && (
+                <CTAButton onClick={() => setIsInviteModalOpen(true)}>
+                  Invite friends
+                </CTAButton>
+              )}
 
             {shouldShowReveal({
               deadlinePassed,
@@ -769,6 +831,20 @@ export default function RiffPageLayout({
           riffId={riff.id}
           riffTitle={getRiffDisplayTitle(riff, predictedVolumeNumber)}
         />
+      )}
+
+      {/* Invite Friends Modal (clubless riffs only) */}
+      {isInviteModalOpen && (
+        <Modal
+          isOpen={isInviteModalOpen}
+          onClose={() => setIsInviteModalOpen(false)}
+          title="Invite friends"
+        >
+          <ShareLinkOptions
+            url={`${typeof window !== "undefined" ? window.location.origin : ""}/riffs/${riff.id}/join`}
+            shareText="Let's riff!"
+          />
+        </Modal>
       )}
 
       <style>{`

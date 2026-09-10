@@ -18,7 +18,7 @@ import EditRiffModal from "@/components/riffs/EditRiffModal";
 import DeleteRiffConfirmModal from "@/components/riffs/DeleteRiffConfirmModal";
 import RevealConfirmModal from "@/components/riffs/RevealConfirmModal";
 import ClubSettingsModal from "@/components/clubs/ClubSettingsModal";
-import InviteOptions from "@/components/clubs/InviteOptions";
+import ShareLinkOptions from "@/components/shared/ShareLinkOptions";
 import CloseButton from "@/components/CloseButton";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import type { DropdownItem } from "@/components/shared/Dropdown";
@@ -1514,10 +1514,9 @@ export default function ClubPageLayout({
               </h2>
               <CloseButton onClick={() => setIsInviteModalOpen(false)} />
             </div>
-            <InviteOptions
-              clubId={club.id}
-              clubName={clubName}
-              inviteUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/clubs/${club.id}/join`}
+            <ShareLinkOptions
+              url={`${typeof window !== "undefined" ? window.location.origin : ""}/clubs/${club.id}/join`}
+              shareText={`Join ${clubName} on Riff!`}
             />
           </div>
         </div>

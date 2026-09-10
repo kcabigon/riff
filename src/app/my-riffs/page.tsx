@@ -288,6 +288,7 @@ export default async function MyRiffsPage() {
     prompt: r.prompt,
     deadline: r.deadline ? r.deadline.toISOString() : null,
     createdAt: r.createdAt.toISOString(),
+    creatorId: r.creatorId,
     club: r.club,
     participants: r.participants,
     pieces: r.pieces.map((p) => ({
@@ -304,6 +305,7 @@ export default async function MyRiffsPage() {
     prompt: r.prompt,
     deadline: r.deadline ? r.deadline.toISOString() : null,
     createdAt: r.createdAt.toISOString(),
+    creatorId: r.creatorId,
     club: r.club,
     participants: r.participants,
     pieces: r.pieces.map((p) => ({
