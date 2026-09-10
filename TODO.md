@@ -151,6 +151,7 @@ Last updated: May 16, 2026
 - [ ] 🔨 @jarric — Multi-level sharing UI (CLUB, RIFF, INDIVIDUAL, PUBLIC)
 - [x] Riff activity feed: post-reveal riff page redesign with Pieces/Feed toggle and comment activity feed
 - [x] Consolidate riff page Pieces/Comment tabs into one scrolling page; per-piece click-to-read replaces bulk mark-read
+- [ ] 🔨 @jarric — Club page: new-comment indicator on Past Riffs; route pre-reveal club riffs to club page instead of standalone riff page
 - [ ] Permission helpers / reusable middleware
 - [ ] Refactor editor: extract shared tiptap logic into `useRiffEditor` hook + unified `EditorToolbar`
 
