@@ -320,7 +320,10 @@ export default function MyRiffsClient({
       const res = await fetch(`/api/riffs/${riffId}/pieces/${pieceId}`, {
         method: "DELETE",
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        console.error("Error detaching draft:", await res.text());
+        return;
+      }
 
       setAllPieces((prev) =>
         prev.map((p) =>

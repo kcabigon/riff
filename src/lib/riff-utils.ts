@@ -30,6 +30,13 @@ export function getSubmittedPieces<
 // (wordCount > 0) has submitted a piece. Participants who joined but never
 // wrote anything (e.g. clicked "New draft" and abandoned it) don't count —
 // otherwise a single abandoned 0-word draft would block early reveal.
+//
+// Checked per-participant rather than by comparing aggregate counts: a
+// count comparison can false-positive if someone submits a 0-word piece
+// (nothing blocks that) — it would pad the submitted count without ever
+// appearing in the started-participants count, letting the two numbers
+// coincidentally match while a real, actively-writing participant still
+// hasn't submitted.
 export function allPiecesSubmitted<T extends { user: { id: string } }>(
   participants: T[],
   pieces: {
@@ -44,7 +51,11 @@ export function allPiecesSubmitted<T extends { user: { id: string } }>(
   );
   return (
     startedParticipants.length > 0 &&
-    getSubmittedPieces(pieces).length >= startedParticipants.length
+    startedParticipants.every((p) =>
+      pieces.some(
+        (pr) => pr.piece.authorId === p.user.id && pr.submittedAt !== null
+      )
+    )
   );
 }
 

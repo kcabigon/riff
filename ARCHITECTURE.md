@@ -93,10 +93,10 @@ src/components/
 │                  # Badge, ThreeDotButton
 ├── clubs/         # ClubPageLayout, NavBar, ClubDropdown, AvatarDropdown, ClubSettingsModal,
 │                  # DeleteClubConfirmModal, ConversionModal
-├── riffs/         # RiffCard, RiffCTAButton, RiffPageLayout, CreateRiffModal, EditRiffModal,
+├── riffs/         # RiffCTAButton, RiffPageLayout, CreateRiffModal, EditRiffModal,
 │                  # DeleteRiffConfirmModal, RevealCelebration, RevealConfirmModal, PieceCard,
 │                  # CompletedRiffCard, ReadyToRevealCard, MosaicCollage, ProgressCard,
-│                  # RiffFormFields, ContributionStrip, EmptyRiffState, CountdownTimer
+│                  # RiffFormFields, ContributionStrip, EmptyRiffState
 ├── read/          # ReadPageLayout, ReadOnlyEditor, ReadToggle, ReadingProgress,
 │                  # CommentAnchor, CommentPopover, CommentSidebar, CommentDrawer, CommentButton
 ├── profile/       # ProfilePage, ProfileHeader, ProfileSection tabs, DeletePieceModal,

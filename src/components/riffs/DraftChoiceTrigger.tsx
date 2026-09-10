@@ -17,7 +17,7 @@ interface DraftChoiceTriggerProps {
   renderTrigger: (onClick: () => void) => ReactNode;
   // Stops the click from bubbling past this component — needed when the
   // trigger sits inside a card that has its own navigate-on-click handler
-  // (RiffEventCard, RiffCard).
+  // (RiffEventCard).
   stopPropagation?: boolean;
 }
 
