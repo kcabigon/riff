@@ -306,7 +306,16 @@ export default function ProgressCard({
             every other card in this grid/carousel uses, so the viewer's
             own card doesn't stand out as a different size. Scoped here
             rather than in DraftCard.tsx, which My Riffs still uses as-is. */}
+        {/* DraftCard's title has no avatar to make room for on My Riffs, so
+            it spans the card's full width — here the avatar overlay above
+            covers that title's top-right corner. Reserve space (avatar
+            width + gap) so a wrapped title stops before the avatar instead
+            of running underneath it, matching how the "others" variant
+            below lays title and avatar out as flex siblings. */}
         <style>{`
+          .progress-card-own-draft .draft-card h4 {
+            padding-right: 40px;
+          }
           @media (max-width: 639px) {
             .progress-card-own-draft .draft-card {
               aspect-ratio: 4 / 5 !important;
