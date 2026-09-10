@@ -151,8 +151,10 @@ export default function RiffPageLayout({
     }).catch(() => {});
   };
 
+  const [markAllReadSignal, setMarkAllReadSignal] = useState(0);
   const markAllCommentsRead = () => {
     setBadgeMap({});
+    setMarkAllReadSignal((n) => n + 1);
     fetch(`/api/riffs/${riff.id}/mark-read`, { method: "POST" }).catch(
       () => {}
     );
@@ -629,6 +631,7 @@ export default function RiffPageLayout({
                   clubId={riff.clubId}
                   currentUser={navUser}
                   onMarkPieceRead={markPieceCommentsRead}
+                  markAllReadSignal={markAllReadSignal}
                   readPieces={
                     (readPieceIds ?? [])
                       .map((id) => {

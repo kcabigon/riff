@@ -67,6 +67,7 @@ export default function ActivityFeed({
   readPieces = [],
   totalPieceCount = 0,
   onMarkPieceRead,
+  markAllReadSignal = 0,
 }: {
   riffId: string;
   clubId: string | null; // null for clubless (open) riffs
@@ -74,6 +75,7 @@ export default function ActivityFeed({
   readPieces?: ReadPiece[];
   totalPieceCount?: number;
   onMarkPieceRead?: (pieceId: string) => void;
+  markAllReadSignal?: number;
 }) {
   const router = useRouter();
   const isMobile = useIsMobile();
@@ -114,8 +116,21 @@ export default function ActivityFeed({
     }
   }, [replyingTo]);
 
+  // Bulk "Mark all read" was clicked in the parent — clear every comment's
+  // green "new" indicator locally so it doesn't linger until a page refresh.
+  // 0 is the initial/unset value, so this only fires on an actual click.
+  useEffect(() => {
+    if (!markAllReadSignal) return;
+    setComments((prev) => prev.map((c) => ({ ...c, isNew: false })));
+  }, [markAllReadSignal]);
+
   const openReply = (comment: FeedComment) => {
     onMarkPieceRead?.(comment.piece.id);
+    setComments((prev) =>
+      prev.map((c) =>
+        c.piece.id === comment.piece.id ? { ...c, isNew: false } : c
+      )
+    );
     if (replyingTo === comment.id) return;
     setReplyingTo(comment.id);
     setReplyText("");
