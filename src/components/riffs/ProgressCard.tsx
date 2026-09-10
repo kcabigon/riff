@@ -49,7 +49,7 @@ const PLACEHOLDER_COLORS = [
 const FILLER_PREVIEW_TEXT =
   "The story began quietly, the way most important things do, without any fanfare or warning that everything was about to change. She had always believed certain mornings carried more weight than others, though she could never explain why some felt heavier and slower than the rest of an ordinary week spent waiting for something worth remembering to finally arrive and settle into place. It was easier, she thought, to notice these things in hindsight than to trust the feeling while it was happening";
 const FILLER_PREVIEW_WORDS = FILLER_PREVIEW_TEXT.split(" ");
-const FILLER_PREVIEW_CAP = 60;
+const FILLER_PREVIEW_CAP = 80;
 
 // Fakes a preview whose *length* matches the real word count, so the blur
 // looks proportionally accurate (a 5-word draft reads as a sliver, a
