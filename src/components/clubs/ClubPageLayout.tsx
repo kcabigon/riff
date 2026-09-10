@@ -1371,34 +1371,16 @@ export default function ClubPageLayout({
                       </h3>
                       {newComments > 0 && (
                         <span
+                          title={`${newComments} new ${newComments === 1 ? "comment" : "comments"}`}
                           style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "6px",
+                            width: "8px",
+                            height: "8px",
+                            borderRadius: "50%",
+                            backgroundColor: "#01EFFC",
+                            display: "inline-block",
+                            flexShrink: 0,
                           }}
-                        >
-                          <span
-                            style={{
-                              width: "8px",
-                              height: "8px",
-                              borderRadius: "50%",
-                              backgroundColor: "#01EFFC",
-                              display: "inline-block",
-                              flexShrink: 0,
-                            }}
-                          />
-                          <span
-                            style={{
-                              fontFamily: "var(--font-dm-sans)",
-                              fontSize: "14px",
-                              fontWeight: 300,
-                              color: "#808080",
-                            }}
-                          >
-                            {newComments} new{" "}
-                            {newComments === 1 ? "comment" : "comments"}
-                          </span>
-                        </span>
+                        />
                       )}
                     </div>
                     {isMobile ? (
