@@ -111,13 +111,19 @@ export default function ActivityFeed({
   }, [markAllReadSignal]);
 
   const openReply = (comment: FeedComment) => {
-    onMarkPieceRead?.(comment.piece.id);
+    if (replyingTo === comment.id) return;
+    // Own-piece comments never show a "new" indicator anywhere (the grid
+    // badge and the feed's own dot/border both stay yellow regardless of
+    // recency), so there's nothing for a real PieceRead row to unlock here
+    // — creating one would just let a later comment silently flip
+    // hasUnreadComments true with no visible new-comment marker to explain
+    // why "Mark all read" showed up.
+    if (!comment.isOwnPiece) onMarkPieceRead?.(comment.piece.id);
     setComments((prev) =>
       prev.map((c) =>
         c.piece.id === comment.piece.id ? { ...c, isNew: false } : c
       )
     );
-    if (replyingTo === comment.id) return;
     setReplyingTo(comment.id);
     setReplyText("");
   };
@@ -253,7 +259,7 @@ export default function ActivityFeed({
 
       {/* Comment list */}
       {!loading && comments.length > 0 && (
-        <div>
+        <>
           {comments.map((comment, i) => {
             const firstName = comment.author.name?.split(" ")[0] ?? "Someone";
             const pieceTitle = comment.piece.title || "Untitled";
@@ -589,7 +595,7 @@ export default function ActivityFeed({
               </div>
             );
           })}
-        </div>
+        </>
       )}
     </div>
   );
