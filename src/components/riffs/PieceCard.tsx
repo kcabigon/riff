@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Avatar from "@/components/shared/Avatar";
 import Badge from "@/components/shared/Badge";
 
@@ -66,18 +67,16 @@ export default function PieceCard({
         backgroundColor: imageUrl ? undefined : placeholderColor,
       }}
     >
-      {/* Cover image */}
+      {/* Cover image — next/image gives automatic resizing/caching and lazy
+          loads by default, so cards outside the viewport (e.g. further down
+          a long Past Riffs list) don't fetch until scrolled near. */}
       {imageUrl && (
-        <img
+        <Image
           src={imageUrl}
           alt=""
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-          }}
+          fill
+          sizes="(max-width: 767px) 90vw, 280px"
+          style={{ objectFit: "cover" }}
         />
       )}
 
