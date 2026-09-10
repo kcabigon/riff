@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import CountdownTimer from "./CountdownTimer";
 import PieceCard from "./PieceCard";
 import RevealConfirmModal from "./RevealConfirmModal";
 import EditRiffModal from "./EditRiffModal";
@@ -16,10 +15,11 @@ import {
   isPastDeadline,
   formatDateShort,
   formatDateLong,
+  daysUntil,
   getSubmittedParticipants,
   getWaitingParticipants,
 } from "@/lib/riff-utils";
-import RiffCTAButton from "@/components/riffs/RiffCTAButton";
+import DraftChoiceTrigger from "@/components/riffs/DraftChoiceTrigger";
 import RevealRiffButton, {
   shouldShowReveal,
 } from "@/components/riffs/RevealRiffButton";
@@ -67,6 +67,7 @@ interface RiffPageLayoutProps {
         coverImage?: string | null;
         updatedAt?: string;
         commentCount?: number;
+        preview?: string;
         author?: {
           id: string;
           name: string | null;
@@ -81,6 +82,7 @@ interface RiffPageLayoutProps {
   isJoined: boolean;
   hasDraft: boolean;
   hasSubmitted: boolean;
+  hasStandaloneDrafts: boolean;
   draftPieceId?: string | null;
   navUser: {
     id: string;
@@ -111,6 +113,7 @@ export default function RiffPageLayout({
   isJoined: initialIsJoined,
   hasDraft,
   hasSubmitted,
+  hasStandaloneDrafts,
   draftPieceId,
   navUser,
   userClubs = [],
@@ -139,10 +142,7 @@ export default function RiffPageLayout({
     setBadgeMap({});
   };
   const deadlinePassed = isPastDeadline(riff.deadline);
-  const piecesAllSubmitted = allPiecesSubmitted(
-    riff.pieces,
-    riff.participants.length
-  );
+  const piecesAllSubmitted = allPiecesSubmitted(riff.participants, riff.pieces);
   const submittedUsers = getSubmittedParticipants(
     riff.participants,
     riff.pieces
@@ -166,9 +166,6 @@ export default function RiffPageLayout({
     }
   };
 
-  const existingPieceId =
-    riff.pieces.find((p) => p.piece.authorId === currentUserId)?.piece.id ??
-    null;
   const totalWords = riff.pieces.reduce(
     (sum, p) => sum + (p.piece.wordCount || 0),
     0
@@ -255,6 +252,27 @@ export default function RiffPageLayout({
                         ? `Deadline: ${formatDateLong(riff.deadline)}`
                         : "No deadline"}
                 </p>
+                {!deadlinePassed &&
+                  riff.status !== "REVEALED" &&
+                  riff.deadline && <span style={{ color: "#808080" }}>·</span>}
+                {!deadlinePassed &&
+                  riff.status !== "REVEALED" &&
+                  riff.deadline && (
+                    <p
+                      style={{
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "16px",
+                        fontWeight: 300,
+                        color: "#DC2626",
+                        margin: 0,
+                      }}
+                    >
+                      {(() => {
+                        const days = daysUntil(new Date(riff.deadline));
+                        return `${days} ${days === 1 ? "day" : "days"} left`;
+                      })()}
+                    </p>
+                  )}
                 {isAdmin &&
                   riff.status !== "REVEALED" &&
                   (() => {
@@ -459,24 +477,8 @@ export default function RiffPageLayout({
               piecesAllSubmitted,
               isAdmin,
               status: riff.status,
-            }) ? (
-              <RevealRiffButton onClick={handleRevealClick} />
-            ) : riff.status !== "REVEALED" ? (
-              <RiffCTAButton
-                riffId={riff.id}
-                isJoined={isJoined}
-                hasDraft={hasDraft}
-                hasSubmitted={hasSubmitted}
-                existingPieceId={existingPieceId}
-              />
-            ) : null}
+            }) && <RevealRiffButton onClick={handleRevealClick} />}
 
-            {isJoined &&
-              riff.deadline &&
-              !deadlinePassed &&
-              riff.status !== "REVEALED" && (
-                <CountdownTimer deadline={new Date(riff.deadline)} />
-              )}
             {deadlinePassed && riff.deadline && riff.status !== "REVEALED" && (
               <p
                 style={{
@@ -568,7 +570,6 @@ export default function RiffPageLayout({
 
         {/* Progress view for non-revealed riffs */}
         {riff.status !== "REVEALED" &&
-          riff.participants.length > 0 &&
           (() => {
             // Build a map from authorId → piece data for quick lookup
             const pieceByAuthor = Object.fromEntries(
@@ -581,12 +582,23 @@ export default function RiffPageLayout({
                   updatedAt: pr.piece.updatedAt ?? new Date().toISOString(),
                   submittedAt: pr.submittedAt,
                   coverImage: pr.piece.coverImage,
+                  preview: pr.piece.preview,
                 },
               ])
             );
 
+            // The viewer always gets a slot, even before joining — joining
+            // now only ever happens as a side effect of picking New/Attach
+            // draft on their own card.
+            const viewerInParticipants = riff.participants.some(
+              (p) => p.user.id === currentUserId
+            );
+            const participantsForGrid = viewerInParticipants
+              ? riff.participants
+              : [...riff.participants, { user: navUser }];
+
             // Sort: submitted (0) → in-progress (1) → not-started (2)
-            const sorted = [...riff.participants].sort((a, b) => {
+            const sorted = [...participantsForGrid].sort((a, b) => {
               const pa = pieceByAuthor[a.user.id];
               const pb = pieceByAuthor[b.user.id];
               const tierA = !pa ? 2 : pa.submittedAt ? 0 : 1;
@@ -617,13 +629,50 @@ export default function RiffPageLayout({
                     gap: "24px",
                   }}
                 >
-                  {sorted.map((p) => (
-                    <ProgressCard
-                      key={p.user.id}
-                      user={p.user}
-                      piece={pieceByAuthor[p.user.id] ?? null}
-                    />
-                  ))}
+                  {sorted.map((p) => {
+                    const piece = pieceByAuthor[p.user.id] ?? null;
+                    const isOwnUser = p.user.id === currentUserId;
+
+                    if (isOwnUser && !piece) {
+                      return (
+                        <DraftChoiceTrigger
+                          key={p.user.id}
+                          riffId={riff.id}
+                          hasStandaloneDrafts={hasStandaloneDrafts}
+                          renderTrigger={(onClick) => (
+                            <ProgressCard
+                              user={p.user}
+                              piece={null}
+                              onClick={onClick}
+                            />
+                          )}
+                        />
+                      );
+                    }
+
+                    if (isOwnUser) {
+                      return (
+                        <ProgressCard
+                          key={p.user.id}
+                          user={p.user}
+                          piece={piece}
+                          onClick={
+                            piece && piece.submittedAt === null
+                              ? () => router.push(`/write/${piece.id}`)
+                              : undefined
+                          }
+                        />
+                      );
+                    }
+
+                    return (
+                      <ProgressCard
+                        key={p.user.id}
+                        user={p.user}
+                        piece={piece}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             );
