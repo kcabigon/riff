@@ -420,18 +420,24 @@ export default function ClubPageLayout({
         />
       </div>
 
-      {/* Mobile metadata — shown above the banner on small screens, so the
-          black header reads as one continuous block with the nav bar above
-          it. Black bg + white text/borders gives the header its own zone,
-          since it loses the banner overlay's visual separation on mobile. */}
+      {/* Mobile header — overlaps the banner photo (negative margin pulls
+          the photo up underneath it) instead of sitting as a separate
+          panel. The photo box itself is untouched — same size/crop as
+          desktop — only this header fades from solid black to transparent
+          over its own bottom edge, revealing the unmodified photo beneath
+          instead of resizing/recropping it. */}
       {clubBannerImage && isMobile && (
         <div
           style={{
-            padding: "24px",
+            position: "relative",
+            zIndex: 2,
+            marginBottom: "-64px",
+            padding: "24px 24px 88px",
             display: "flex",
             flexDirection: "column",
             gap: "12px",
-            backgroundColor: "#000000",
+            background:
+              "linear-gradient(to bottom, #000000 calc(100% - 64px), rgba(0, 0, 0, 0) 100%)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -530,7 +536,7 @@ export default function ClubPageLayout({
         </div>
       )}
 
-      {/* Banner — full width, 320px desktop / 200px mobile — KEEP IN SYNC WITH: JoinClubClient.tsx (banner header layout, avatar sizes, maxWidth) */}
+      {/* Banner — full width, 320px desktop / 200px mobile — KEEP IN SYNC WITH: JoinClubClient.tsx (banner header layout, avatar sizes, maxWidth). Untouched by the mobile header above (it overlaps via negative margin, not by resizing this box) so the photo's crop matches desktop exactly. */}
       {clubBannerImage && (
         <div
           className="club-banner"
