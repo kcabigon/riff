@@ -1,13 +1,10 @@
-import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendCommentNotificationEmail } from "@/lib/resend";
 
-export async function GET(req: Request) {
-  const authHeader = req.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export async function runCommentNotifications(): Promise<{
+  emailsSent: number;
+  piecesWithComments: number;
+}> {
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
   const comments = await prisma.comment.findMany({
@@ -69,5 +66,5 @@ export async function GET(req: Request) {
     emailsSent++;
   }
 
-  return NextResponse.json({ emailsSent, piecesWithComments: groups.size });
+  return { emailsSent, piecesWithComments: groups.size };
 }
