@@ -536,32 +536,40 @@ export default function ClubPageLayout({
         </div>
       )}
 
-      {/* Banner — full width, 320px desktop / 200px mobile — KEEP IN SYNC WITH: JoinClubClient.tsx (banner header layout, avatar sizes, maxWidth). Untouched by the mobile header above (it overlaps via negative margin, not by resizing this box) so the photo's crop matches desktop exactly. */}
-      {clubBannerImage && (
+      {/* Banner — full width, 320px desktop / 200px mobile — KEEP IN SYNC WITH: JoinClubClient.tsx (banner header layout, avatar sizes, maxWidth). Untouched by the mobile header above (it overlaps via negative margin, not by resizing this box) so the photo's crop matches desktop exactly. On desktop this always renders — falling back to a plain black bg (matching the black-bg convention used on mobile and on profile pages) when there's no uploaded banner — so every club gets the banner treatment instead of branching into a separate no-banner layout. Mobile still branches on whether a real banner was uploaded. */}
+      {(clubBannerImage || !isMobile) && (
         <div
           className="club-banner"
           style={{
             width: "100%",
             height: "320px",
-            backgroundImage: `url(${clubBannerImage})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
+            ...(clubBannerImage
+              ? {
+                  backgroundImage: `url(${clubBannerImage})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }
+              : { backgroundColor: "#000000" }),
             position: "relative",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
           }}
         >
-          {/* Dark overlay + metadata — desktop only */}
+          {/* Dark overlay + metadata — desktop only. Overlay only needed
+              over a real photo; the no-banner fallback is already solid
+              black. */}
           {!isMobile && (
             <>
-              <div
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  backgroundColor: "rgba(0, 0, 0, 0.66)",
-                }}
-              />
+              {clubBannerImage && (
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    backgroundColor: "rgba(0, 0, 0, 0.66)",
+                  }}
+                />
+              )}
               <div
                 style={
                   club.members.length > 9
@@ -700,30 +708,29 @@ export default function ClubPageLayout({
           padding: "32px 24px 64px",
         }}
       >
-        {/* Club frame — only shown when no banner image. On mobile, breaks
-            out of the page's padding to go full-bleed with a black band +
-            white text/borders, matching the banner case's header zone —
-            without it, mobile loses the banner overlay's visual separation
-            between the club header and the current riff below it. */}
-        {!clubBannerImage && (
+        {/* Club frame — mobile only, shown when no banner image has been
+            uploaded. Desktop always gets the banner treatment now (falling
+            back to a default photo below), so this no-banner layout only
+            exists for mobile. Breaks out of the page's padding to go
+            full-bleed with a black band + white text/borders, matching the
+            banner case's header zone — without it, mobile loses the banner
+            overlay's visual separation between the club header and the
+            current riff below it. */}
+        {!clubBannerImage && isMobile && (
           <div
             style={{
               display: "flex",
               flexDirection: "column",
               gap: "16px",
               marginBottom: "48px",
-              ...(isMobile
-                ? {
-                    marginTop: "-32px",
-                    marginLeft: "-24px",
-                    marginRight: "-24px",
-                    paddingTop: "24px",
-                    paddingLeft: "24px",
-                    paddingRight: "24px",
-                    paddingBottom: "24px",
-                    backgroundColor: "#000000",
-                  }
-                : {}),
+              marginTop: "-32px",
+              marginLeft: "-24px",
+              marginRight: "-24px",
+              paddingTop: "24px",
+              paddingLeft: "24px",
+              paddingRight: "24px",
+              paddingBottom: "24px",
+              backgroundColor: "#000000",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -732,14 +739,14 @@ export default function ClubPageLayout({
                   fontFamily: "var(--font-dm-serif-text)",
                   fontSize: "32px",
                   fontWeight: 400,
-                  color: isMobile ? "#FFFFFF" : "#000000",
+                  color: "#FFFFFF",
                   margin: 0,
                 }}
               >
                 {clubName}
               </h1>
               <ThreeDotButton
-                variant={isMobile ? "dark" : "light"}
+                variant="dark"
                 items={
                   isAdmin
                     ? adminMenuItems
@@ -764,7 +771,7 @@ export default function ClubPageLayout({
                   fontFamily: "var(--font-dm-sans)",
                   fontSize: "16px",
                   fontWeight: 300,
-                  color: isMobile ? "#FFFFFF" : "#000000",
+                  color: "#FFFFFF",
                   margin: 0,
                 }}
               >
@@ -775,7 +782,7 @@ export default function ClubPageLayout({
                   fontFamily: "var(--font-dm-sans)",
                   fontSize: "16px",
                   fontWeight: 300,
-                  color: isMobile ? "#FFFFFF" : "#000000",
+                  color: "#FFFFFF",
                   margin: 0,
                 }}
               >
@@ -787,7 +794,7 @@ export default function ClubPageLayout({
                   fontFamily: "var(--font-dm-sans)",
                   fontSize: "16px",
                   fontWeight: 300,
-                  color: isMobile ? "#FFFFFF" : "#000000",
+                  color: "#FFFFFF",
                   margin: 0,
                 }}
               >
@@ -800,10 +807,10 @@ export default function ClubPageLayout({
 
             <AvatarStack
               users={club.members.map((m) => m.user)}
-              size={isMobile ? 40 : 48}
-              borderColor={isMobile ? "#FFFFFF" : undefined}
+              size={40}
+              borderColor="#FFFFFF"
               onAvatarClick={handleAvatarClick}
-              style={isMobile ? { overflowX: "auto" } : undefined}
+              style={{ overflowX: "auto" }}
             />
 
             {clubDescription && (
@@ -812,7 +819,7 @@ export default function ClubPageLayout({
                   fontFamily: "var(--font-dm-sans)",
                   fontSize: "16px",
                   fontWeight: 300,
-                  color: isMobile ? "#FFFFFF" : "#000000",
+                  color: "#FFFFFF",
                   margin: 0,
                   lineHeight: "normal",
                   maxWidth: "600px",
