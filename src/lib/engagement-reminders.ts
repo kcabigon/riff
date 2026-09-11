@@ -25,6 +25,7 @@ async function fetchActiveRiffs() {
       createdAt: true,
       club: {
         select: {
+          id: true,
           name: true,
           members: {
             select: {
@@ -49,6 +50,13 @@ async function fetchActiveRiffs() {
 }
 
 type ActiveRiff = Awaited<ReturnType<typeof fetchActiveRiffs>>[number];
+
+// All riffs here are ACTIVE (pre-reveal) by construction, from
+// fetchActiveRiffs — a club riff's home while it's being written is the
+// club page, not the standalone one.
+function riffPath(riff: ActiveRiff): string {
+  return riff.club ? `/clubs/${riff.club.id}` : `/riffs/${riff.id}`;
+}
 
 // Notification rows are used purely as an internal send-log here: created with
 // isRead: true so they can never surface in the bell/panel (both the list and
@@ -151,7 +159,7 @@ export async function runDeadlineApproachingCheck(
         email: p.user.email,
         riffTitle,
         clubName: riff.club?.name ?? riffTitle,
-        riffUrl: `${baseUrl}/riffs/${riff.id}`,
+        riffUrl: `${baseUrl}${riffPath(riff)}`,
         deadline,
         daysRemaining,
       });
@@ -207,7 +215,7 @@ export async function runRememberToWriteCheck(
         email: p.user.email,
         riffTitle,
         clubName: riff.club?.name ?? riffTitle,
-        riffUrl: `${baseUrl}/riffs/${riff.id}`,
+        riffUrl: `${baseUrl}${riffPath(riff)}`,
         variantIndex,
       });
       await logSend(NotificationType.RIFF_STARTED, riff.id, p.userId);
@@ -261,7 +269,7 @@ export async function runJoinRiffNudgeCheck(
         email: m.user.email,
         riffTitle,
         clubName: riff.club?.name ?? riffTitle,
-        riffUrl: `${baseUrl}/riffs/${riff.id}`,
+        riffUrl: `${baseUrl}${riffPath(riff)}`,
         variantIndex,
       });
       await logSend(NotificationType.RIFF_INVITATION, riff.id, m.userId);
