@@ -9,7 +9,8 @@ import CreateRiffModal from "@/components/riffs/CreateRiffModal";
 
 interface Panel {
   id: "write" | "riff" | "club";
-  lines: [string, string];
+  heading: string;
+  body: string;
   cta: string;
   accentColor: string;
   rotate: number;
@@ -23,7 +24,8 @@ interface Panel {
 const PANELS: Panel[] = [
   {
     id: "write",
-    lines: ["Write something.", "Share with a friend."],
+    heading: "Write something.",
+    body: "Invite some friends to read and comment.",
     cta: "Start writing",
     accentColor: "#01EFFC",
     rotate: -3,
@@ -31,7 +33,8 @@ const PANELS: Panel[] = [
   },
   {
     id: "riff",
-    lines: ["Write with friends.", "Reveal together."],
+    heading: "Write with friends.",
+    body: "Submit before the deadline and reveal together.",
     cta: "Start a riff",
     accentColor: "#00FF66",
     rotate: 2,
@@ -39,7 +42,8 @@ const PANELS: Panel[] = [
   },
   {
     id: "club",
-    lines: ["Riff with friends.", "Every month."],
+    heading: "Riff with friends.",
+    body: "Name your group and write every month.",
     cta: "Start a club",
     accentColor: "#EECF01",
     rotate: -2,
@@ -163,10 +167,8 @@ export default function MyRiffsEmptyState({
             {/* Semi-transparent "sticker card" — a black scrim (legibility)
                 plus a thin wash of the panel's own accent (identity), so
                 the trio reads as three placed objects instead of text
-                floating loose on the photo. White border/shadow instead of
-                the usual black — a black brutal shadow disappears against
-                a dark photo the way the nav dropdown's shadow would on a
-                dark navbar. */}
+                floating loose on the photo. White border to stay visible
+                against the dark photo. */}
             <div
               style={{
                 position: "relative",
@@ -180,7 +182,7 @@ export default function MyRiffsEmptyState({
                 gap: "20px",
                 textAlign: "center",
                 border: "2px solid #FFFFFF",
-                boxShadow: `8px 8px 0px 0px ${panel.accentColor}`,
+                boxShadow: "8px 8px 0px 0px #000000",
               }}
             >
               <div
@@ -211,20 +213,38 @@ export default function MyRiffsEmptyState({
                   gap: "20px",
                 }}
               >
-                <p
+                <div
                   style={{
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "20px",
-                    fontWeight: 700,
-                    lineHeight: 1.4,
-                    color: "#FFFFFF",
-                    margin: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "8px",
                   }}
                 >
-                  {panel.lines[0]}
-                  <br />
-                  {panel.lines[1]}
-                </p>
+                  <h3
+                    style={{
+                      fontFamily: "var(--font-dm-serif-text)",
+                      fontSize: "24px",
+                      fontWeight: 400,
+                      lineHeight: 1.2,
+                      color: "#FFFFFF",
+                      margin: 0,
+                    }}
+                  >
+                    {panel.heading}
+                  </h3>
+                  <p
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "16px",
+                      fontWeight: 300,
+                      lineHeight: 1.6,
+                      color: "rgba(255, 255, 255, 0.8)",
+                      margin: 0,
+                    }}
+                  >
+                    {panel.body}
+                  </p>
+                </div>
 
                 {panel.id === "write" && (
                   <CTAButton
