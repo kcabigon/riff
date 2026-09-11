@@ -15,6 +15,8 @@ interface Panel {
   accentColor: string;
   rotate: number;
   lift: number;
+  quip: string;
+  quipRotate: number;
 }
 
 // The three domains as a ladder — write alone, riff with friends, club as
@@ -30,6 +32,8 @@ const PANELS: Panel[] = [
     accentColor: "#01EFFC",
     rotate: -3,
     lift: 0,
+    quip: "feeling creative, might delete later",
+    quipRotate: -4,
   },
   {
     id: "riff",
@@ -39,6 +43,8 @@ const PANELS: Panel[] = [
     accentColor: "#00FF66",
     rotate: 2,
     lift: -14,
+    quip: "literary mosh pit with friends",
+    quipRotate: 3,
   },
   {
     id: "club",
@@ -48,6 +54,8 @@ const PANELS: Panel[] = [
     accentColor: "#EECF01",
     rotate: -2,
     lift: 6,
+    quip: "write clubs are the new book clubs",
+    quipRotate: -3,
   },
 ];
 
@@ -186,11 +194,13 @@ export default function MyRiffsEmptyState({
                 position: "relative",
                 width: "100%",
                 maxWidth: "280px",
+                aspectRatio: "4 / 5",
                 boxSizing: "border-box",
                 padding: "36px 24px 28px",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
+                justifyContent: "center",
                 gap: "20px",
                 textAlign: "center",
                 border: "2px solid #000000",
@@ -200,6 +210,62 @@ export default function MyRiffsEmptyState({
                 transition: "box-shadow 0.1s ease",
               }}
             >
+              {/* Comic speech bubble — the one deliberately rounded shape in
+                  this build. Everything else in the design system is sharp
+                  corners, but a speech bubble reads as a speech bubble via
+                  its curve + tail, so the brutalist "no radius" rule gets a
+                  one-off exception here. */}
+              <div
+                aria-hidden
+                style={{
+                  position: "absolute",
+                  bottom: "100%",
+                  left: "50%",
+                  marginBottom: "16px",
+                  zIndex: 3,
+                  width: "max-content",
+                  maxWidth: "200px",
+                  padding: "12px 16px",
+                  backgroundColor: "#FFFFFF",
+                  border: "3px solid #000000",
+                  borderRadius: "20px",
+                  boxShadow: `4px 4px 0px 0px ${panel.accentColor}`,
+                  opacity: hoveredPanelId === panel.id ? 1 : 0,
+                  transform: `translateX(-50%) rotate(${panel.quipRotate}deg) translateY(${
+                    hoveredPanelId === panel.id ? 0 : 8
+                  }px)`,
+                  transition: "opacity 0.15s ease, transform 0.15s ease",
+                  pointerEvents: "none",
+                }}
+              >
+                <p
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontWeight: 700,
+                    fontSize: "13px",
+                    lineHeight: 1.4,
+                    color: "#000000",
+                    textAlign: "center",
+                    margin: 0,
+                  }}
+                >
+                  {panel.quip}
+                </p>
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: "-9px",
+                    left: "50%",
+                    transform: "translateX(-50%) rotate(45deg)",
+                    width: "16px",
+                    height: "16px",
+                    backgroundColor: "#FFFFFF",
+                    borderRight: "3px solid #000000",
+                    borderBottom: "3px solid #000000",
+                  }}
+                />
+              </div>
+
               <div
                 aria-hidden
                 style={{
@@ -225,20 +291,20 @@ export default function MyRiffsEmptyState({
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
-                  gap: "20px",
+                  gap: "32px",
                 }}
               >
                 <div
                   style={{
                     display: "flex",
                     flexDirection: "column",
-                    gap: "8px",
+                    gap: "12px",
                   }}
                 >
                   <h3
                     style={{
                       fontFamily: "var(--font-dm-serif-text)",
-                      fontSize: "24px",
+                      fontSize: "32px",
                       fontWeight: 400,
                       lineHeight: 1.2,
                       color: "#FFFFFF",
