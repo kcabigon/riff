@@ -6,6 +6,7 @@ import Image from "next/image";
 import NoiseBackground from "@/components/NoiseBackground";
 import CTAButton from "@/components/CTAButton";
 import CreateRiffModal from "@/components/riffs/CreateRiffModal";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 
 interface Panel {
   id: "write" | "riff" | "club";
@@ -86,6 +87,7 @@ export default function MyRiffsEmptyState({
 }: MyRiffsEmptyStateProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const isMobile = useIsMobile();
   const [isRiffModalOpen, setIsRiffModalOpen] = useState(false);
   const [hoveredPanelId, setHoveredPanelId] = useState<Panel["id"] | null>(
     null
@@ -141,19 +143,23 @@ export default function MyRiffsEmptyState({
 
       <NoiseBackground fillMode="cover" style={{ opacity: 0.15 }} />
 
+      {/* Sized down hard on mobile — at the desktop size this wrapped to
+          4-5 lines on a narrow screen and pushed every card below the
+          fold. Smaller size + tighter margin leaves room for about 1.5
+          cards to peek in under the hero. */}
       <h1
         style={{
           position: "relative",
           zIndex: 1,
           fontFamily: "var(--font-dm-serif-text)",
-          fontSize: "96px",
+          fontSize: isMobile ? "64px" : "80px",
           fontWeight: 400,
           lineHeight: 0.98,
           letterSpacing: "-0.01em",
           color: "#FFFFFF",
           textAlign: "center",
-          margin: "0 0 80px 0",
-          maxWidth: "900px",
+          margin: isMobile ? "0 0 32px 0" : "0 0 80px 0",
+          maxWidth: isMobile ? "300px" : "750px",
         }}
       >
         Write with friends,{" "}
@@ -193,7 +199,7 @@ export default function MyRiffsEmptyState({
               style={{
                 position: "relative",
                 width: "100%",
-                maxWidth: "280px",
+                maxWidth: "252px",
                 aspectRatio: "4 / 5",
                 boxSizing: "border-box",
                 padding: "36px 24px 28px",
