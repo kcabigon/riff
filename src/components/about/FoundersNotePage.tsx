@@ -119,7 +119,7 @@ const COMMENTS: SidebarComment[] = [
       {
         author: "Chris",
         avatarSrc: "/images/about/founderAvatars/chris-avatar.jpeg",
-        text: "had no idea jarric was gay",
+        text: "what a way to come out of the closet",
       },
     ],
   },
