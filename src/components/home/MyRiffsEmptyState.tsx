@@ -2,23 +2,21 @@
 
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import Image from "next/image";
 import NoiseBackground from "@/components/NoiseBackground";
 import CTAButton from "@/components/CTAButton";
 import CreateRiffModal from "@/components/riffs/CreateRiffModal";
 
-type Shape = "bolt" | "triangle" | "circle";
-
 interface Panel {
   id: "write" | "riff" | "club";
-  lines: [string, string];
+  heading: string;
+  body: string;
   cta: string;
   accentColor: string;
-  shapeColor: string;
   rotate: number;
   lift: number;
-  shape: Shape;
-  wobbleDuration: number;
-  wobbleDelay: number;
+  quip: string;
+  quipRotate: number;
 }
 
 // The three domains as a ladder — write alone, riff with friends, club as
@@ -28,116 +26,45 @@ interface Panel {
 const PANELS: Panel[] = [
   {
     id: "write",
-    lines: ["Write something.", "Share with a friend."],
+    heading: "Write something.",
+    body: "Invite some friends to read and comment.",
     cta: "Start writing",
     accentColor: "#01EFFC",
-    shapeColor: "#FF6B35",
     rotate: -3,
     lift: 0,
-    shape: "bolt",
-    wobbleDuration: 1.1,
-    wobbleDelay: 0,
+    quip: "feeling creative, might delete later",
+    quipRotate: -4,
   },
   {
     id: "riff",
-    lines: ["Write with friends.", "Reveal together."],
+    heading: "Write with friends.",
+    body: "Submit before the deadline and reveal together.",
     cta: "Start a riff",
     accentColor: "#00FF66",
-    shapeColor: "#955CB5",
     rotate: 2,
     lift: -14,
-    shape: "triangle",
-    wobbleDuration: 0.9,
-    wobbleDelay: 0.15,
+    quip: "literary mosh pit with friends",
+    quipRotate: 3,
   },
   {
     id: "club",
-    lines: ["Riff with friends.", "Every month."],
+    heading: "Riff with friends.",
+    body: "Name your group and write every month.",
     cta: "Start a club",
     accentColor: "#EECF01",
-    shapeColor: "#C01582",
     rotate: -2,
     lift: 6,
-    shape: "circle",
-    wobbleDuration: 1.3,
-    wobbleDelay: 0.3,
+    quip: "write clubs are the new book clubs",
+    quipRotate: -3,
   },
 ];
 
-const SHAPE_CLIP_PATH: Record<Shape, string | undefined> = {
-  // Fat wedge head tapering into a thin jagged tail, instead of a uniform
-  // zigzag stroke.
-  bolt: "polygon(30% 0%, 78% 0%, 42% 42%, 68% 42%, 26% 100%, 42% 52%, 10% 52%)",
-  // Scalene, not isoceles — an off-center apex and an uneven base so it
-  // reads as lopsided rather than a clean, centered triangle.
-  triangle: "polygon(38% 0%, 0% 78%, 100% 100%)",
-  circle: undefined,
-};
-
-// Flat color + black border + hard drop-shadow + a clipped noise texture
-// inside the shape's own outline. A regular CSS `border` doesn't trace a
-// clip-path outline (it clips away with the box), so the border is a
-// second, slightly larger black copy of the same shape sitting behind an
-// inset color copy — same trick as a drop-shadow, just with no offset.
-function ShapeIcon({
-  shape,
-  color,
-  wobbleDuration,
-  wobbleDelay,
-}: {
-  shape: Shape;
-  color: string;
-  wobbleDuration: number;
-  wobbleDelay: number;
-}) {
-  const borderRadius = shape === "circle" ? "50%" : 0;
-  // A circle spinning in place shows no visible motion at all — it needs a
-  // squash-stretch bounce instead of the rotational wobble the other two
-  // (asymmetric) shapes use.
-  const animationClass = shape === "circle" ? "shape-bounce" : "shape-wobble";
-
-  return (
-    <div
-      className={`shape-icon ${animationClass}`}
-      style={{
-        width: "72px",
-        height: "72px",
-        filter: "drop-shadow(6px 6px 0px #000000)",
-        animationDuration: `${wobbleDuration}s`,
-        animationDelay: `${wobbleDelay}s`,
-      }}
-    >
-      <div
-        style={{
-          position: "relative",
-          width: "100%",
-          height: "100%",
-          backgroundColor: "#000000",
-          borderRadius,
-          clipPath: SHAPE_CLIP_PATH[shape],
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            inset: "3px",
-            overflow: "hidden",
-            backgroundColor: color,
-            borderRadius,
-            clipPath: SHAPE_CLIP_PATH[shape],
-          }}
-        >
-          {/* NoiseBackground's own SVG paints an opaque white rect before
-              the speckles — multiply blends that white away so the flat
-              color shows through with just the black grain on top. */}
-          <NoiseBackground
-            fillMode="cover"
-            style={{ mixBlendMode: "multiply" }}
-          />
-        </div>
-      </div>
-    </div>
-  );
+function hexToRgba(hex: string, alpha: number): string {
+  const value = parseInt(hex.replace("#", ""), 16);
+  const r = (value >> 16) & 255;
+  const g = (value >> 8) & 255;
+  const b = value & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 // Sizing shared by all three panel CTAs — bigger than CTAButton's own
@@ -160,6 +87,9 @@ export default function MyRiffsEmptyState({
   const router = useRouter();
   const pathname = usePathname();
   const [isRiffModalOpen, setIsRiffModalOpen] = useState(false);
+  const [hoveredPanelId, setHoveredPanelId] = useState<Panel["id"] | null>(
+    null
+  );
 
   const handleStartClub = () => {
     sessionStorage.setItem("pendingClubFrom", pathname);
@@ -180,21 +110,54 @@ export default function MyRiffsEmptyState({
         boxSizing: "border-box",
       }}
     >
-      <NoiseBackground fillMode="cover" />
+      {/* Absolutely filled to match the panel's own bounds (not a fixed
+          100vh) so it always covers the full container even when the
+          panels stack taller than one screen on mobile — no gap to scroll
+          into below it. */}
+      <div aria-hidden style={{ position: "absolute", inset: 0 }}>
+        <Image
+          src="/images/about/friendsgiving2025.gif"
+          alt=""
+          fill
+          unoptimized
+          priority
+          style={{
+            objectFit: "cover",
+            // Soft enough to keep faces unrecognizable without losing the
+            // shapes/colors of the scene. Scaled up slightly so blur doesn't
+            // soften the image's own edges into a visible halo.
+            filter: "blur(4px)",
+            transform: "scale(1.05)",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.85)",
+          }}
+        />
+      </div>
 
+      <NoiseBackground fillMode="cover" style={{ opacity: 0.15 }} />
+
+      {/* Sized down hard on mobile via the .hero-heading media query below
+          (not a JS isMobile check) — at the desktop size this wrapped to
+          4-5 lines on a narrow screen and pushed every card below the
+          fold. Smaller size + tighter margin leaves room for about 1.5
+          cards to peek in under the hero. CSS avoids the flash-of-wrong-size
+          a JS viewport check would cause pre-hydration. */}
       <h1
+        className="hero-heading"
         style={{
           position: "relative",
           zIndex: 1,
           fontFamily: "var(--font-dm-serif-text)",
-          fontSize: "96px",
           fontWeight: 400,
           lineHeight: 0.98,
           letterSpacing: "-0.01em",
-          color: "#000000",
+          color: "#FFFFFF",
           textAlign: "center",
-          margin: "0 0 80px 0",
-          maxWidth: "900px",
         }}
       >
         Write with friends,{" "}
@@ -219,64 +182,186 @@ export default function MyRiffsEmptyState({
             style={{
               flex: 1,
               display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "20px",
-              textAlign: "center",
+              justifyContent: "center",
               transform: `rotate(${panel.rotate}deg) translateY(${panel.lift}px)`,
             }}
           >
-            <ShapeIcon
-              shape={panel.shape}
-              color={panel.shapeColor}
-              wobbleDuration={panel.wobbleDuration}
-              wobbleDelay={panel.wobbleDelay}
-            />
-
-            <p
+            {/* Semi-transparent "sticker card" — a black scrim (legibility)
+                plus a thin wash of the panel's own accent (identity), so
+                the trio reads as three placed objects instead of text
+                floating loose on the photo. Shadow turns the panel's accent
+                color on hover — a preview of the CTA's own hover color. */}
+            <div
+              onMouseEnter={() => setHoveredPanelId(panel.id)}
+              onMouseLeave={() => setHoveredPanelId(null)}
               style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "20px",
-                fontWeight: 700,
-                lineHeight: 1.4,
-                color: "#000000",
-                margin: 0,
+                position: "relative",
+                width: "100%",
+                maxWidth: "252px",
+                aspectRatio: "4 / 5",
+                boxSizing: "border-box",
+                padding: "36px 24px 28px",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "20px",
+                textAlign: "center",
+                border: "2px solid #000000",
+                boxShadow: `8px 8px 0px 0px ${
+                  hoveredPanelId === panel.id ? panel.accentColor : "#000000"
+                }`,
+                transition: "box-shadow 0.1s ease",
               }}
             >
-              {panel.lines[0]}
-              <br />
-              {panel.lines[1]}
-            </p>
-
-            {panel.id === "write" && (
-              <CTAButton
-                accentColor={panel.accentColor}
-                onClick={onStartWriting}
-                style={panelButtonStyle}
+              {/* Comic speech bubble — the one deliberately rounded shape in
+                  this build. Everything else in the design system is sharp
+                  corners, but a speech bubble reads as a speech bubble via
+                  its curve + tail, so the brutalist "no radius" rule gets a
+                  one-off exception here. */}
+              <div
+                aria-hidden
+                style={{
+                  position: "absolute",
+                  bottom: "100%",
+                  left: "50%",
+                  marginBottom: "16px",
+                  zIndex: 3,
+                  width: "max-content",
+                  maxWidth: "200px",
+                  padding: "12px 16px",
+                  backgroundColor: "#FFFFFF",
+                  border: "3px solid #000000",
+                  borderRadius: "20px",
+                  boxShadow: `4px 4px 0px 0px ${panel.accentColor}`,
+                  opacity: hoveredPanelId === panel.id ? 1 : 0,
+                  transform: `translateX(-50%) rotate(${panel.quipRotate}deg) translateY(${
+                    hoveredPanelId === panel.id ? 0 : 8
+                  }px)`,
+                  transition: "opacity 0.15s ease, transform 0.15s ease",
+                  pointerEvents: "none",
+                }}
               >
-                {isCreatingDraft ? "Creating…" : panel.cta}
-              </CTAButton>
-            )}
+                <p
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontWeight: 700,
+                    fontSize: "13px",
+                    lineHeight: 1.4,
+                    color: "#000000",
+                    textAlign: "center",
+                    margin: 0,
+                  }}
+                >
+                  {panel.quip}
+                </p>
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: "-9px",
+                    left: "50%",
+                    transform: "translateX(-50%) rotate(45deg)",
+                    width: "16px",
+                    height: "16px",
+                    backgroundColor: "#FFFFFF",
+                    borderRight: "3px solid #000000",
+                    borderBottom: "3px solid #000000",
+                  }}
+                />
+              </div>
 
-            {panel.id === "riff" && (
-              <CTAButton
-                accentColor={panel.accentColor}
-                onClick={() => setIsRiffModalOpen(true)}
-                style={panelButtonStyle}
-              >
-                {panel.cta}
-              </CTAButton>
-            )}
+              <div
+                aria-hidden
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  backgroundColor: "rgba(0, 0, 0, 0.45)",
+                }}
+              />
+              <div
+                aria-hidden
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  backgroundColor: hexToRgba(panel.accentColor, 0.16),
+                  mixBlendMode: "screen",
+                }}
+              />
 
-            {panel.id === "club" && (
-              <CTAButton
-                accentColor={panel.accentColor}
-                onClick={handleStartClub}
-                style={panelButtonStyle}
+              <div
+                style={{
+                  position: "relative",
+                  zIndex: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "32px",
+                }}
               >
-                {panel.cta}
-              </CTAButton>
-            )}
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "12px",
+                  }}
+                >
+                  <h2
+                    style={{
+                      fontFamily: "var(--font-dm-serif-text)",
+                      fontSize: "32px",
+                      fontWeight: 400,
+                      lineHeight: 1.2,
+                      color: "#FFFFFF",
+                      margin: 0,
+                    }}
+                  >
+                    {panel.heading}
+                  </h2>
+                  <p
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "16px",
+                      fontWeight: 300,
+                      lineHeight: 1.6,
+                      color: "rgba(255, 255, 255, 0.8)",
+                      margin: 0,
+                    }}
+                  >
+                    {panel.body}
+                  </p>
+                </div>
+
+                {panel.id === "write" && (
+                  <CTAButton
+                    accentColor={panel.accentColor}
+                    onClick={onStartWriting}
+                    style={panelButtonStyle}
+                  >
+                    {isCreatingDraft ? "Creating…" : panel.cta}
+                  </CTAButton>
+                )}
+
+                {panel.id === "riff" && (
+                  <CTAButton
+                    accentColor={panel.accentColor}
+                    onClick={() => setIsRiffModalOpen(true)}
+                    style={panelButtonStyle}
+                  >
+                    {panel.cta}
+                  </CTAButton>
+                )}
+
+                {panel.id === "club" && (
+                  <CTAButton
+                    accentColor={panel.accentColor}
+                    onClick={handleStartClub}
+                    style={panelButtonStyle}
+                  >
+                    {panel.cta}
+                  </CTAButton>
+                )}
+              </div>
+            </div>
           </div>
         ))}
       </div>
@@ -285,36 +370,21 @@ export default function MyRiffsEmptyState({
         .panels {
           flex-direction: column;
         }
+        .hero-heading {
+          font-size: 64px;
+          margin: 0 0 32px 0;
+          max-width: 300px;
+        }
         @media (min-width: 768px) {
           .panels {
             flex-direction: row;
             align-items: flex-start;
             padding-top: 24px;
           }
-        }
-        @keyframes shape-wobble {
-          0%, 100% { transform: rotate(-16deg); }
-          50% { transform: rotate(16deg); }
-        }
-        @keyframes shape-bounce {
-          0%, 100% { transform: translateY(0) scale(1, 1); }
-          20% { transform: translateY(2px) scale(1.12, 0.88); }
-          55% { transform: translateY(-20px) scale(0.9, 1.12); }
-          80% { transform: translateY(0) scale(1.08, 0.94); }
-        }
-        .shape-icon {
-          animation-timing-function: ease-in-out;
-          animation-iteration-count: infinite;
-        }
-        .shape-icon.shape-wobble {
-          animation-name: shape-wobble;
-        }
-        .shape-icon.shape-bounce {
-          animation-name: shape-bounce;
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .shape-icon {
-            animation: none;
+          .hero-heading {
+            font-size: 80px;
+            margin: 0 0 80px 0;
+            max-width: 750px;
           }
         }
       `}</style>
