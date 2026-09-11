@@ -79,6 +79,9 @@ export default function MyRiffsEmptyState({
   const router = useRouter();
   const pathname = usePathname();
   const [isRiffModalOpen, setIsRiffModalOpen] = useState(false);
+  const [hoveredPanelId, setHoveredPanelId] = useState<Panel["id"] | null>(
+    null
+  );
 
   const handleStartClub = () => {
     sessionStorage.setItem("pendingClubFrom", pathname);
@@ -110,7 +113,14 @@ export default function MyRiffsEmptyState({
           fill
           unoptimized
           priority
-          style={{ objectFit: "cover" }}
+          style={{
+            objectFit: "cover",
+            // Soft enough to keep faces unrecognizable without losing the
+            // shapes/colors of the scene. Scaled up slightly so blur doesn't
+            // soften the image's own edges into a visible halo.
+            filter: "blur(4px)",
+            transform: "scale(1.05)",
+          }}
         />
         <div
           style={{
@@ -167,9 +177,11 @@ export default function MyRiffsEmptyState({
             {/* Semi-transparent "sticker card" — a black scrim (legibility)
                 plus a thin wash of the panel's own accent (identity), so
                 the trio reads as three placed objects instead of text
-                floating loose on the photo. White border to stay visible
-                against the dark photo. */}
+                floating loose on the photo. Shadow turns the panel's accent
+                color on hover — a preview of the CTA's own hover color. */}
             <div
+              onMouseEnter={() => setHoveredPanelId(panel.id)}
+              onMouseLeave={() => setHoveredPanelId(null)}
               style={{
                 position: "relative",
                 width: "100%",
@@ -181,8 +193,11 @@ export default function MyRiffsEmptyState({
                 alignItems: "center",
                 gap: "20px",
                 textAlign: "center",
-                border: "2px solid #FFFFFF",
-                boxShadow: "8px 8px 0px 0px #000000",
+                border: "2px solid #000000",
+                boxShadow: `8px 8px 0px 0px ${
+                  hoveredPanelId === panel.id ? panel.accentColor : "#000000"
+                }`,
+                transition: "box-shadow 0.1s ease",
               }}
             >
               <div
