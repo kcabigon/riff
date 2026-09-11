@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import Image from "next/image";
 import NoiseBackground from "@/components/NoiseBackground";
 import CTAButton from "@/components/CTAButton";
 import CreateRiffModal from "@/components/riffs/CreateRiffModal";
@@ -63,6 +64,14 @@ const PANELS: Panel[] = [
     wobbleDelay: 0.3,
   },
 ];
+
+function hexToRgba(hex: string, alpha: number): string {
+  const value = parseInt(hex.replace("#", ""), 16);
+  const r = (value >> 16) & 255;
+  const g = (value >> 8) & 255;
+  const b = value & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
 
 const SHAPE_CLIP_PATH: Record<Shape, string | undefined> = {
   // Fat wedge head tapering into a thin jagged tail, instead of a uniform
@@ -180,7 +189,29 @@ export default function MyRiffsEmptyState({
         boxSizing: "border-box",
       }}
     >
-      <NoiseBackground fillMode="cover" />
+      {/* Absolutely filled to match the panel's own bounds (not a fixed
+          100vh) so it always covers the full container even when the
+          panels stack taller than one screen on mobile — no gap to scroll
+          into below it. */}
+      <div aria-hidden style={{ position: "absolute", inset: 0 }}>
+        <Image
+          src="/images/about/friendsgiving2025.gif"
+          alt=""
+          fill
+          unoptimized
+          priority
+          style={{ objectFit: "cover" }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.85)",
+          }}
+        />
+      </div>
+
+      <NoiseBackground fillMode="cover" style={{ opacity: 0.15 }} />
 
       <h1
         style={{
@@ -191,7 +222,7 @@ export default function MyRiffsEmptyState({
           fontWeight: 400,
           lineHeight: 0.98,
           letterSpacing: "-0.01em",
-          color: "#000000",
+          color: "#FFFFFF",
           textAlign: "center",
           margin: "0 0 80px 0",
           maxWidth: "900px",
@@ -219,64 +250,114 @@ export default function MyRiffsEmptyState({
             style={{
               flex: 1,
               display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "20px",
-              textAlign: "center",
+              justifyContent: "center",
               transform: `rotate(${panel.rotate}deg) translateY(${panel.lift}px)`,
             }}
           >
-            <ShapeIcon
-              shape={panel.shape}
-              color={panel.shapeColor}
-              wobbleDuration={panel.wobbleDuration}
-              wobbleDelay={panel.wobbleDelay}
-            />
-
-            <p
+            {/* Semi-transparent "sticker card" — a black scrim (legibility)
+                plus a thin wash of the panel's own accent (identity), so
+                the trio reads as three placed objects instead of text
+                floating loose on the photo. White border/shadow instead of
+                the usual black — a black brutal shadow disappears against
+                a dark photo the way the nav dropdown's shadow would on a
+                dark navbar. */}
+            <div
               style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "20px",
-                fontWeight: 700,
-                lineHeight: 1.4,
-                color: "#000000",
-                margin: 0,
+                position: "relative",
+                width: "100%",
+                maxWidth: "280px",
+                boxSizing: "border-box",
+                padding: "36px 24px 28px",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "20px",
+                textAlign: "center",
+                border: "2px solid #FFFFFF",
+                boxShadow: `8px 8px 0px 0px ${panel.accentColor}`,
               }}
             >
-              {panel.lines[0]}
-              <br />
-              {panel.lines[1]}
-            </p>
+              <div
+                aria-hidden
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  backgroundColor: "rgba(0, 0, 0, 0.45)",
+                }}
+              />
+              <div
+                aria-hidden
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  backgroundColor: hexToRgba(panel.accentColor, 0.16),
+                  mixBlendMode: "screen",
+                }}
+              />
 
-            {panel.id === "write" && (
-              <CTAButton
-                accentColor={panel.accentColor}
-                onClick={onStartWriting}
-                style={panelButtonStyle}
+              <div
+                style={{
+                  position: "relative",
+                  zIndex: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "20px",
+                }}
               >
-                {isCreatingDraft ? "Creating…" : panel.cta}
-              </CTAButton>
-            )}
+                <ShapeIcon
+                  shape={panel.shape}
+                  color={panel.shapeColor}
+                  wobbleDuration={panel.wobbleDuration}
+                  wobbleDelay={panel.wobbleDelay}
+                />
 
-            {panel.id === "riff" && (
-              <CTAButton
-                accentColor={panel.accentColor}
-                onClick={() => setIsRiffModalOpen(true)}
-                style={panelButtonStyle}
-              >
-                {panel.cta}
-              </CTAButton>
-            )}
+                <p
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "20px",
+                    fontWeight: 700,
+                    lineHeight: 1.4,
+                    color: "#FFFFFF",
+                    margin: 0,
+                  }}
+                >
+                  {panel.lines[0]}
+                  <br />
+                  {panel.lines[1]}
+                </p>
 
-            {panel.id === "club" && (
-              <CTAButton
-                accentColor={panel.accentColor}
-                onClick={handleStartClub}
-                style={panelButtonStyle}
-              >
-                {panel.cta}
-              </CTAButton>
-            )}
+                {panel.id === "write" && (
+                  <CTAButton
+                    accentColor={panel.accentColor}
+                    onClick={onStartWriting}
+                    style={panelButtonStyle}
+                  >
+                    {isCreatingDraft ? "Creating…" : panel.cta}
+                  </CTAButton>
+                )}
+
+                {panel.id === "riff" && (
+                  <CTAButton
+                    accentColor={panel.accentColor}
+                    onClick={() => setIsRiffModalOpen(true)}
+                    style={panelButtonStyle}
+                  >
+                    {panel.cta}
+                  </CTAButton>
+                )}
+
+                {panel.id === "club" && (
+                  <CTAButton
+                    accentColor={panel.accentColor}
+                    onClick={handleStartClub}
+                    style={panelButtonStyle}
+                  >
+                    {panel.cta}
+                  </CTAButton>
+                )}
+              </div>
+            </div>
           </div>
         ))}
       </div>
