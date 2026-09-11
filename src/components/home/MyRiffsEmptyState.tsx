@@ -6,7 +6,6 @@ import Image from "next/image";
 import NoiseBackground from "@/components/NoiseBackground";
 import CTAButton from "@/components/CTAButton";
 import CreateRiffModal from "@/components/riffs/CreateRiffModal";
-import { useIsMobile } from "@/hooks/useMediaQuery";
 
 interface Panel {
   id: "write" | "riff" | "club";
@@ -87,7 +86,6 @@ export default function MyRiffsEmptyState({
 }: MyRiffsEmptyStateProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const isMobile = useIsMobile();
   const [isRiffModalOpen, setIsRiffModalOpen] = useState(false);
   const [hoveredPanelId, setHoveredPanelId] = useState<Panel["id"] | null>(
     null
@@ -143,23 +141,23 @@ export default function MyRiffsEmptyState({
 
       <NoiseBackground fillMode="cover" style={{ opacity: 0.15 }} />
 
-      {/* Sized down hard on mobile — at the desktop size this wrapped to
+      {/* Sized down hard on mobile via the .hero-heading media query below
+          (not a JS isMobile check) — at the desktop size this wrapped to
           4-5 lines on a narrow screen and pushed every card below the
           fold. Smaller size + tighter margin leaves room for about 1.5
-          cards to peek in under the hero. */}
+          cards to peek in under the hero. CSS avoids the flash-of-wrong-size
+          a JS viewport check would cause pre-hydration. */}
       <h1
+        className="hero-heading"
         style={{
           position: "relative",
           zIndex: 1,
           fontFamily: "var(--font-dm-serif-text)",
-          fontSize: isMobile ? "64px" : "80px",
           fontWeight: 400,
           lineHeight: 0.98,
           letterSpacing: "-0.01em",
           color: "#FFFFFF",
           textAlign: "center",
-          margin: isMobile ? "0 0 32px 0" : "0 0 80px 0",
-          maxWidth: isMobile ? "300px" : "750px",
         }}
       >
         Write with friends,{" "}
@@ -372,11 +370,21 @@ export default function MyRiffsEmptyState({
         .panels {
           flex-direction: column;
         }
+        .hero-heading {
+          font-size: 64px;
+          margin: 0 0 32px 0;
+          max-width: 300px;
+        }
         @media (min-width: 768px) {
           .panels {
             flex-direction: row;
             align-items: flex-start;
             padding-top: 24px;
+          }
+          .hero-heading {
+            font-size: 80px;
+            margin: 0 0 80px 0;
+            max-width: 750px;
           }
         }
       `}</style>
