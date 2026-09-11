@@ -301,7 +301,7 @@ export default function MyRiffsEmptyState({
                     gap: "12px",
                   }}
                 >
-                  <h3
+                  <h2
                     style={{
                       fontFamily: "var(--font-dm-serif-text)",
                       fontSize: "32px",
@@ -312,7 +312,7 @@ export default function MyRiffsEmptyState({
                     }}
                   >
                     {panel.heading}
-                  </h3>
+                  </h2>
                   <p
                     style={{
                       fontFamily: "var(--font-dm-sans)",
