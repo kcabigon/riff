@@ -1,10 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-
-// Prisma needs a real Node.js runtime (this project's Postgres connection
-// isn't edge-compatible) — the default Edge middleware runtime can't run
-// the club-riff lookup below.
-export const runtime = "nodejs";
 
 // Routes that require authentication
 const protectedPrefixes = [
@@ -29,7 +23,7 @@ function isProtectedRoute(pathname: string): boolean {
   );
 }
 
-export async function middleware(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Staging password protection (if STAGING_PASSWORD is set)
@@ -68,31 +62,6 @@ export async function middleware(request: NextRequest) {
     if (!hasSession) {
       const loginUrl = new URL("/login", request.url);
       return NextResponse.redirect(loginUrl);
-    }
-  }
-
-  // Pre-reveal club riffs live on the club page now, not the standalone
-  // riff page — redirecting here instead of inside /riffs/[id]/page.tsx
-  // means the client's URL bar never commits to /riffs/[id] in the first
-  // place. A redirect() thrown from a Server Component only fires after
-  // the client has already navigated there, which briefly flashes the old
-  // URL/page on client-side navigations (router.push from RiffEventCard,
-  // the Write page, etc); a middleware redirect resolves before that
-  // commit happens.
-  const riffMatch = pathname.match(/^\/riffs\/([^/]+)$/);
-  if (riffMatch) {
-    const riff = await prisma.riff.findUnique({
-      where: { id: riffMatch[1] },
-      select: { clubId: true, status: true },
-    });
-    if (
-      riff?.clubId &&
-      riff.status !== "REVEALED" &&
-      riff.status !== "COMPLETED"
-    ) {
-      return NextResponse.redirect(
-        new URL(`/clubs/${riff.clubId}`, request.url)
-      );
     }
   }
 

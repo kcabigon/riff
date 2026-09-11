@@ -115,10 +115,6 @@ export default async function RiffPage({
     redirect("/");
   }
 
-  // Pre-reveal club riffs never reach this point — middleware (src/middleware.ts)
-  // redirects them to the club page before the request gets here, so the
-  // client's URL bar never commits to this page in the first place.
-
   // Verify user is a club member OR a riff participant + predicted volume number in parallel
   // (clubless riffs have no members to check and no per-club volume sequence)
   const [member, predictedVolumeNumber] = await Promise.all([
