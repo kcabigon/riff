@@ -45,6 +45,7 @@ interface RiffEventCardProps {
     }>;
   };
   club: {
+    id: string | null;
     name: string;
     bannerImage: string | null;
   };
@@ -101,7 +102,11 @@ export default function RiffEventCard({
     riff.participants.length <= 1;
 
   const handleCardClick = () => {
-    router.push(`/riffs/${riff.id}`);
+    // Only ever rendered for ACTIVE (pre-reveal) riffs — a club riff's home
+    // while it's being written is the club page, not the standalone one.
+    router.push(
+      !isClubless && club.id ? `/clubs/${club.id}` : `/riffs/${riff.id}`
+    );
   };
 
   const handleInviteClick = (e: React.MouseEvent) => {

@@ -36,6 +36,7 @@ export default async function WritePageRoute({
               prompt: true,
               deadline: true,
               clubId: true,
+              status: true,
               club: {
                 select: {
                   name: true,
@@ -72,6 +73,7 @@ export default async function WritePageRoute({
       prompt: pr.riff.prompt,
       deadline: pr.riff.deadline ? pr.riff.deadline.toISOString() : null,
       clubId: pr.riff.clubId,
+      status: pr.riff.status,
       clubName: pr.riff.club?.name ?? pr.riff.title ?? "",
       submittedAt: pr.submittedAt ? pr.submittedAt.toISOString() : null,
     })),
