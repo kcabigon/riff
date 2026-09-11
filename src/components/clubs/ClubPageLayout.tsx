@@ -113,6 +113,7 @@ interface ClubPageLayoutProps {
   pastRevealedRiffs: Riff[];
   readCounts: Record<string, number>;
   readPieceIds: string[];
+  newCommentCounts: Record<string, number>;
   completedRiffs: Riff[];
   stats: {
     riffCount: number;
@@ -203,6 +204,7 @@ export default function ClubPageLayout({
   pastRevealedRiffs,
   readCounts,
   readPieceIds,
+  newCommentCounts,
   completedRiffs,
   stats,
   predictedVolumeNumber,
@@ -821,10 +823,9 @@ export default function ClubPageLayout({
               })
             : false;
 
-          // Same menu as the individual riff page's 3-dot (RiffPageLayout),
-          // minus "Reveal now" — that's already its own button here via
-          // showReveal. canDeleteRiff mirrors the riff page's stricter gate
-          // (club admin or the riff's own creator — not just any co-host).
+          // Same menu as the individual riff page's 3-dot (RiffPageLayout).
+          // canDeleteRiff mirrors the riff page's stricter gate (club admin
+          // or the riff's own creator — not just any co-host).
           const canDeleteRiff =
             isAdmin || activeRiff?.creator.id === currentUserId;
           const riffMenuItems: DropdownItem[] = activeRiff
@@ -834,6 +835,20 @@ export default function ClubPageLayout({
                   label: "Edit riff",
                   onClick: () => setIsEditRiffModalOpen(true),
                 },
+                // Looser than the RevealRiffButton's shouldShowReveal gate —
+                // matches the standalone riff page's "Reveal now" menu item,
+                // which only needs at least one submission, independent of
+                // deadline/all-submitted.
+                ...(activeRiff.status === "ACTIVE" &&
+                getSubmittedPieces(activeRiff.pieces).length > 0
+                  ? [
+                      {
+                        type: "action" as const,
+                        label: "Reveal now",
+                        onClick: () => setIsRevealModalOpen(true),
+                      },
+                    ]
+                  : []),
                 ...(canDeleteRiff
                   ? ([
                       { type: "divider" },
@@ -1327,23 +1342,52 @@ export default function ClubPageLayout({
                   );
                 };
 
+                const newComments = newCommentCounts[riff.id] ?? 0;
+
                 return (
                   <div key={riff.id}>
-                    <h3
-                      onClick={() => router.push(`/riffs/${riff.id}`)}
-                      className="riff-row-link"
+                    <div
                       style={{
-                        cursor: "pointer",
-                        display: "inline-block",
-                        fontFamily: "var(--font-dm-serif-text)",
-                        fontSize: "20px",
-                        fontWeight: 400,
-                        color: "#000000",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
                         margin: "0 0 12px 0",
                       }}
                     >
-                      {getRiffDisplayTitle(riff)}
-                    </h3>
+                      <h3
+                        onClick={() => router.push(`/riffs/${riff.id}`)}
+                        className="riff-row-link"
+                        style={{
+                          cursor: "pointer",
+                          display: "inline-block",
+                          fontFamily: "var(--font-dm-serif-text)",
+                          fontSize: "20px",
+                          fontWeight: 400,
+                          color: "#000000",
+                          margin: 0,
+                        }}
+                      >
+                        {getRiffDisplayTitle(riff)}
+                      </h3>
+                      {newComments > 0 && (
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          style={{ flexShrink: 0 }}
+                        >
+                          <title>{`${newComments} new ${newComments === 1 ? "comment" : "comments"}`}</title>
+                          <path
+                            d="M2 3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H6l-3 3v-3H3a1 1 0 0 1-1-1V3z"
+                            fill="#01EFFC"
+                            stroke="#000000"
+                            strokeWidth="1.2"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      )}
+                    </div>
                     {isMobile ? (
                       <MobileCardCarousel>
                         {piecesToShow.map(renderCard)}

@@ -92,8 +92,12 @@ function getLink(n: NotificationItemProps["notification"]): string {
     case "ALL_PIECES_SUBMITTED":
     case "PIECE_SUBMITTED_TO_RIFF":
     case "RIFF_PARTICIPANT_JOINED":
-      if (n.riff) return `/riffs/${n.riff.id}`;
+      // These only ever fire pre-reveal (submitting/joining both stop being
+      // possible once a riff is revealed), so a club riff's home is always
+      // the club page here — same preference as CLUB_INVITATION etc above.
       if (n.club) return `/clubs/${n.club.id}`;
+      if (n.riff?.clubId) return `/clubs/${n.riff.clubId}`;
+      if (n.riff) return `/riffs/${n.riff.id}`;
       break;
     default:
       if (n.riff) return `/riffs/${n.riff.id}`;

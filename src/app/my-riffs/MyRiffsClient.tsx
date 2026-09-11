@@ -680,6 +680,7 @@ export default function MyRiffsClient({
                         pieces: riff.pieces,
                       }}
                       club={{
+                        id: riff.club?.id ?? null,
                         name: riff.club?.name ?? "",
                         bannerImage: riff.club?.bannerImage ?? null,
                       }}

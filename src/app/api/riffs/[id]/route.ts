@@ -358,7 +358,7 @@ export async function PATCH(
             console.error("[notification error] riff created:", err)
           );
 
-          const riffCreatedUrl = `${getBaseUrl()}/riffs/${riffId}`;
+          const riffCreatedUrl = `${getBaseUrl()}/clubs/${riff.clubId}`;
           const riffCreatedMembers = await prisma.clubMember.findMany({
             where: { clubId: riff.clubId, userId: { not: actorId } },
             include: { user: { select: { email: true, name: true } } },
@@ -507,7 +507,7 @@ export async function PATCH(
           console.error("[notification error] deadline changed:", err)
         );
 
-        const riffUrl = `${getBaseUrl()}/riffs/${riffId}`;
+        const riffUrl = `${getBaseUrl()}/clubs/${riff.clubId}`;
         const deadlineMembers = await prisma.clubMember.findMany({
           where: { clubId: riff.clubId, userId: { not: user.id } },
           include: { user: { select: { email: true } } },

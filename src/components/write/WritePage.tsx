@@ -45,8 +45,23 @@ interface RiffConnection {
   prompt: string | null;
   deadline: string | null;
   clubId: string | null; // null = clubless (open) riff
+  status: string;
   clubName: string;
   submittedAt: string | null;
+}
+
+// Pre-reveal club riffs live on the club page, not the standalone riff
+// page — everything else (revealed club riffs, clubless riffs of any
+// status) still goes to /riffs/[id].
+function riffHref(riff: RiffConnection): string {
+  if (
+    riff.clubId &&
+    riff.status !== "REVEALED" &&
+    riff.status !== "COMPLETED"
+  ) {
+    return `/clubs/${riff.clubId}`;
+  }
+  return `/riffs/${riff.id}`;
 }
 
 interface WritePageProps {
@@ -465,7 +480,7 @@ export default function WritePage({ piece }: WritePageProps) {
     // the client-side Router Cache from before this edit session — refresh()
     // forces it to refetch instead of showing what it looked like on the way in.
     if (piece.riffs.length > 0) {
-      router.push(`/riffs/${piece.riffs[0].id}`);
+      router.push(riffHref(piece.riffs[0]));
     } else {
       router.back();
     }
@@ -955,7 +970,7 @@ export default function WritePage({ piece }: WritePageProps) {
             });
             setIsSubmitted(true);
             setShowSubmitModal(false);
-            router.push(`/riffs/${riff.id}`);
+            router.push(riffHref(riff));
             router.refresh();
           }}
           submitDisabled={isSubmitted}
