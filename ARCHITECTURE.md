@@ -79,7 +79,7 @@ src/app/api/
 ├── pieces/[id]/shares/        # Public share management
 ├── comments/                  # List + create (with selection anchor)
 ├── notifications/             # List, mark read, unread count
-├── cron/daily-comment-notifications/  # Vercel Cron — daily comment digest emails
+├── cron/daily-notifications/  # Vercel Cron — comment digest + engagement reminders (merged)
 ├── users/me/                  # Current user, update, delete, export (docx/zip)
 ├── users/[id]/                # User profile data
 └── upload/image/              # Image upload (auth required, 5MB max)
