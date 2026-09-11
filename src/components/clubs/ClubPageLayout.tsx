@@ -897,7 +897,7 @@ export default function ClubPageLayout({
                             style={{
                               display: "inline-block",
                               fontFamily: "var(--font-dm-serif-text)",
-                              fontSize: "24px",
+                              fontSize: "32px",
                               fontWeight: 400,
                               color: "#000000",
                               margin: 0,
@@ -919,7 +919,7 @@ export default function ClubPageLayout({
                               <p
                                 style={{
                                   fontFamily: "var(--font-dm-sans)",
-                                  fontSize: "14px",
+                                  fontSize: "16px",
                                   fontWeight: 300,
                                   color: "#808080",
                                   margin: 0,
@@ -934,7 +934,7 @@ export default function ClubPageLayout({
                             <p
                               style={{
                                 fontFamily: "var(--font-dm-sans)",
-                                fontSize: "14px",
+                                fontSize: "16px",
                                 fontWeight: 300,
                                 color: activeRiff.deadline
                                   ? "#DC2626"
@@ -977,7 +977,7 @@ export default function ClubPageLayout({
                       {activeRiff.prompt && (
                         <div
                           style={{
-                            marginTop: "16px",
+                            marginTop: "24px",
                             borderLeft: "2px solid #000000",
                             paddingLeft: "16px",
                             maxWidth: "780px",
@@ -1021,7 +1021,7 @@ export default function ClubPageLayout({
                           style={{
                             display: "inline-block",
                             fontFamily: "var(--font-dm-serif-text)",
-                            fontSize: "24px",
+                            fontSize: "32px",
                             fontWeight: 400,
                             color: "#000000",
                             margin: 0,
@@ -1044,7 +1044,7 @@ export default function ClubPageLayout({
                             <p
                               style={{
                                 fontFamily: "var(--font-dm-sans)",
-                                fontSize: "14px",
+                                fontSize: "16px",
                                 fontWeight: 300,
                                 color: "#808080",
                                 margin: 0,
@@ -1059,7 +1059,7 @@ export default function ClubPageLayout({
                           <p
                             style={{
                               fontFamily: "var(--font-dm-sans)",
-                              fontSize: "14px",
+                              fontSize: "16px",
                               fontWeight: 300,
                               color: activeRiff.deadline
                                 ? "#DC2626"
@@ -1089,7 +1089,7 @@ export default function ClubPageLayout({
                         {activeRiff.prompt && (
                           <div
                             style={{
-                              marginTop: "8px",
+                              marginTop: "20px",
                               borderLeft: "2px solid #000000",
                               paddingLeft: "16px",
                               maxWidth: "780px",
@@ -1165,7 +1165,7 @@ export default function ClubPageLayout({
                     };
 
                     return isMobile ? (
-                      <div style={{ marginTop: "24px" }}>
+                      <div style={{ marginTop: "48px" }}>
                         <MobileCardCarousel>
                           {sortedActiveParticipants.map(renderCard)}
                         </MobileCardCarousel>
@@ -1177,7 +1177,7 @@ export default function ClubPageLayout({
                           gridTemplateColumns:
                             "repeat(auto-fill, minmax(280px, 1fr))",
                           gap: "24px",
-                          marginTop: "24px",
+                          marginTop: "48px",
                         }}
                       >
                         {sortedActiveParticipants.map(renderCard)}
