@@ -7,19 +7,13 @@ import NoiseBackground from "@/components/NoiseBackground";
 import CTAButton from "@/components/CTAButton";
 import CreateRiffModal from "@/components/riffs/CreateRiffModal";
 
-type Shape = "bolt" | "triangle" | "circle";
-
 interface Panel {
   id: "write" | "riff" | "club";
   lines: [string, string];
   cta: string;
   accentColor: string;
-  shapeColor: string;
   rotate: number;
   lift: number;
-  shape: Shape;
-  wobbleDuration: number;
-  wobbleDelay: number;
 }
 
 // The three domains as a ladder — write alone, riff with friends, club as
@@ -32,36 +26,24 @@ const PANELS: Panel[] = [
     lines: ["Write something.", "Share with a friend."],
     cta: "Start writing",
     accentColor: "#01EFFC",
-    shapeColor: "#FF6B35",
     rotate: -3,
     lift: 0,
-    shape: "bolt",
-    wobbleDuration: 1.1,
-    wobbleDelay: 0,
   },
   {
     id: "riff",
     lines: ["Write with friends.", "Reveal together."],
     cta: "Start a riff",
     accentColor: "#00FF66",
-    shapeColor: "#955CB5",
     rotate: 2,
     lift: -14,
-    shape: "triangle",
-    wobbleDuration: 0.9,
-    wobbleDelay: 0.15,
   },
   {
     id: "club",
     lines: ["Riff with friends.", "Every month."],
     cta: "Start a club",
     accentColor: "#EECF01",
-    shapeColor: "#C01582",
     rotate: -2,
     lift: 6,
-    shape: "circle",
-    wobbleDuration: 1.3,
-    wobbleDelay: 0.3,
   },
 ];
 
@@ -71,82 +53,6 @@ function hexToRgba(hex: string, alpha: number): string {
   const g = (value >> 8) & 255;
   const b = value & 255;
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
-
-const SHAPE_CLIP_PATH: Record<Shape, string | undefined> = {
-  // Fat wedge head tapering into a thin jagged tail, instead of a uniform
-  // zigzag stroke.
-  bolt: "polygon(30% 0%, 78% 0%, 42% 42%, 68% 42%, 26% 100%, 42% 52%, 10% 52%)",
-  // Scalene, not isoceles — an off-center apex and an uneven base so it
-  // reads as lopsided rather than a clean, centered triangle.
-  triangle: "polygon(38% 0%, 0% 78%, 100% 100%)",
-  circle: undefined,
-};
-
-// Flat color + black border + hard drop-shadow + a clipped noise texture
-// inside the shape's own outline. A regular CSS `border` doesn't trace a
-// clip-path outline (it clips away with the box), so the border is a
-// second, slightly larger black copy of the same shape sitting behind an
-// inset color copy — same trick as a drop-shadow, just with no offset.
-function ShapeIcon({
-  shape,
-  color,
-  wobbleDuration,
-  wobbleDelay,
-}: {
-  shape: Shape;
-  color: string;
-  wobbleDuration: number;
-  wobbleDelay: number;
-}) {
-  const borderRadius = shape === "circle" ? "50%" : 0;
-  // A circle spinning in place shows no visible motion at all — it needs a
-  // squash-stretch bounce instead of the rotational wobble the other two
-  // (asymmetric) shapes use.
-  const animationClass = shape === "circle" ? "shape-bounce" : "shape-wobble";
-
-  return (
-    <div
-      className={`shape-icon ${animationClass}`}
-      style={{
-        width: "72px",
-        height: "72px",
-        filter: "drop-shadow(6px 6px 0px #000000)",
-        animationDuration: `${wobbleDuration}s`,
-        animationDelay: `${wobbleDelay}s`,
-      }}
-    >
-      <div
-        style={{
-          position: "relative",
-          width: "100%",
-          height: "100%",
-          backgroundColor: "#000000",
-          borderRadius,
-          clipPath: SHAPE_CLIP_PATH[shape],
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            inset: "3px",
-            overflow: "hidden",
-            backgroundColor: color,
-            borderRadius,
-            clipPath: SHAPE_CLIP_PATH[shape],
-          }}
-        >
-          {/* NoiseBackground's own SVG paints an opaque white rect before
-              the speckles — multiply blends that white away so the flat
-              color shows through with just the black grain on top. */}
-          <NoiseBackground
-            fillMode="cover"
-            style={{ mixBlendMode: "multiply" }}
-          />
-        </div>
-      </div>
-    </div>
-  );
 }
 
 // Sizing shared by all three panel CTAs — bigger than CTAButton's own
@@ -305,13 +211,6 @@ export default function MyRiffsEmptyState({
                   gap: "20px",
                 }}
               >
-                <ShapeIcon
-                  shape={panel.shape}
-                  color={panel.shapeColor}
-                  wobbleDuration={panel.wobbleDuration}
-                  wobbleDelay={panel.wobbleDelay}
-                />
-
                 <p
                   style={{
                     fontFamily: "var(--font-dm-sans)",
@@ -371,31 +270,6 @@ export default function MyRiffsEmptyState({
             flex-direction: row;
             align-items: flex-start;
             padding-top: 24px;
-          }
-        }
-        @keyframes shape-wobble {
-          0%, 100% { transform: rotate(-16deg); }
-          50% { transform: rotate(16deg); }
-        }
-        @keyframes shape-bounce {
-          0%, 100% { transform: translateY(0) scale(1, 1); }
-          20% { transform: translateY(2px) scale(1.12, 0.88); }
-          55% { transform: translateY(-20px) scale(0.9, 1.12); }
-          80% { transform: translateY(0) scale(1.08, 0.94); }
-        }
-        .shape-icon {
-          animation-timing-function: ease-in-out;
-          animation-iteration-count: infinite;
-        }
-        .shape-icon.shape-wobble {
-          animation-name: shape-wobble;
-        }
-        .shape-icon.shape-bounce {
-          animation-name: shape-bounce;
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .shape-icon {
-            animation: none;
           }
         }
       `}</style>
