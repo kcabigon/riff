@@ -74,10 +74,7 @@ export default function InviteFriendModal({ onClose }: InviteFriendModalProps) {
             Share this piece to add Friends. Once they accept, they can read and
             comment on this piece, and all your other pieces by default.
           </p>
-          <ShareLinkOptions
-            url={joinUrl}
-            shareText="I want you to read this on Riff!"
-          />
+          <ShareLinkOptions url={joinUrl} shareText="Let's riff!" />
           {pieces && pieces.length > 1 && (
             <div style={{ textAlign: "center" }}>
               <button

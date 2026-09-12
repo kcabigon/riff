@@ -14,6 +14,7 @@ async function getEligiblePiece(pieceId: string) {
       title: true,
       subtitle: true,
       currentContent: true,
+      coverImage: true,
       wordCount: true,
       readLengthMin: true,
       publishedAt: true,
@@ -64,8 +65,25 @@ export async function generateMetadata({
 
   const authorName =
     piece.author.firstName || piece.author.name || piece.author.username;
+  const title = piece.title || "Untitled";
+  const description = `${authorName} wants you to read this on Riff.`;
+
   return {
-    title: `${piece.title || "Untitled"} — ${authorName} wants to riff`,
+    title: `${title} — ${authorName} wants to riff`,
+    description,
+    robots: { index: false, follow: false },
+    openGraph: {
+      title,
+      description,
+      type: "article",
+      ...(piece.coverImage ? { images: [{ url: piece.coverImage }] } : {}),
+    },
+    twitter: {
+      card: piece.coverImage ? "summary_large_image" : "summary",
+      title,
+      description,
+      ...(piece.coverImage ? { images: [piece.coverImage] } : {}),
+    },
   };
 }
 
