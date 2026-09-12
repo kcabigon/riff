@@ -4,6 +4,7 @@ import { useState } from "react";
 import Modal from "@/components/shared/Modal";
 import { CopyIcon, CheckIcon, OpenLinkIcon } from "@/components/shared/icons";
 import IconButton from "@/components/shared/IconButton";
+import ShareLinkOptions from "@/components/shared/ShareLinkOptions";
 
 export interface PublicShare {
   id: string;
@@ -50,6 +51,8 @@ export default function ShareModal({
   const [error, setError] = useState<string | null>(null);
   const [privateHovered, setPrivateHovered] = useState(false);
   const [publicHovered, setPublicHovered] = useState(false);
+  const [inviteHovered, setInviteHovered] = useState(false);
+  const [inviteExpanded, setInviteExpanded] = useState(false);
 
   const isPublic = share !== null;
 
@@ -57,6 +60,11 @@ export default function ShareModal({
     typeof window !== "undefined"
       ? `${window.location.origin}/p/${pieceId}`
       : `/p/${pieceId}`;
+
+  const joinUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/pieces/${pieceId}/join`
+      : `/pieces/${pieceId}/join`;
 
   const handleMakePublic = async () => {
     if (loading || isPublic) return;
@@ -235,6 +243,74 @@ export default function ShareModal({
             </p>
           </div>
         </button>
+
+        {/* Invite a friend — grants full mutual Friends access (not just
+            this piece), via the piece-join flow. Same isRevealed gate as
+            Public since it's shown to someone with no relationship yet. */}
+        <button
+          onClick={() => {
+            if (!publicDisabled) setInviteExpanded((prev) => !prev);
+          }}
+          disabled={publicDisabled}
+          onMouseEnter={() => {
+            if (!publicDisabled) setInviteHovered(true);
+          }}
+          onMouseLeave={() => setInviteHovered(false)}
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: "12px",
+            width: "100%",
+            border: inviteExpanded ? "2px solid #000000" : "2px solid #CCCCCC",
+            backgroundColor: "#FFFFFF",
+            padding: "16px",
+            cursor: !publicDisabled ? "pointer" : "default",
+            textAlign: "left",
+            boxShadow: inviteExpanded
+              ? "4px 4px 0px 0px #000000"
+              : inviteHovered
+                ? "4px 4px 0px 0px #01EFFC"
+                : "none",
+            opacity: publicDisabled ? 0.45 : 1,
+            transition: "none",
+          }}
+        >
+          <SelectionDot selected={inviteExpanded} />
+          <div>
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "16px",
+                fontWeight: 700,
+                color: "#000000",
+                margin: "0 0 4px 0",
+              }}
+            >
+              Invite a friend
+            </p>
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "12px",
+                fontWeight: 300,
+                color: "#000000",
+                margin: 0,
+                lineHeight: 1.5,
+              }}
+            >
+              {publicDisabled
+                ? "Only revealed pieces can be used to invite a friend."
+                : "Share this piece with one person — once they join, you're Friends, with access to everything you write."}
+            </p>
+          </div>
+        </button>
+
+        {inviteExpanded && !publicDisabled && (
+          <ShareLinkOptions
+            url={joinUrl}
+            shareText="I want you to read this on Riff!"
+          />
+        )}
 
         {/* URL box — visible when public */}
         {isPublic && (

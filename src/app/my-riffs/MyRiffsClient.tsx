@@ -8,6 +8,7 @@ import ReadyToRevealCard from "@/components/riffs/ReadyToRevealCard";
 import CompletedRiffCard from "@/components/riffs/CompletedRiffCard";
 import RevealConfirmModal from "@/components/riffs/RevealConfirmModal";
 import FriendsRow from "@/components/riffs/FriendsRow";
+import InviteFriendModal from "@/components/riffs/InviteFriendModal";
 import PieceCard from "@/components/riffs/PieceCard";
 import PublicShareIndicator from "@/components/riffs/PublicShareIndicator";
 import DraftCard from "@/components/write/DraftCard";
@@ -234,6 +235,7 @@ export default function MyRiffsClient({
     title: string;
   } | null>(null);
   const [shareTarget, setShareTarget] = useState<string | null>(null);
+  const [showInviteModal, setShowInviteModal] = useState(false);
   const [draftsExpanded, setDraftsExpanded] = useState(false);
   const [piecesExpanded, setPiecesExpanded] = useState(false);
   const [pastRiffsExpanded, setPastRiffsExpanded] = useState(false);
@@ -540,6 +542,10 @@ export default function MyRiffsClient({
         />
       )}
 
+      {showInviteModal && (
+        <InviteFriendModal onClose={() => setShowInviteModal(false)} />
+      )}
+
       {deleteTarget && (
         <DeletePieceModal
           pieceId={deleteTarget.id}
@@ -594,15 +600,19 @@ export default function MyRiffsClient({
             padding: "32px 0 64px",
           }}
         >
-          {/* Friends — anyone you've shared a club or riff with */}
-          {friends.length > 0 && (
-            <SectionColumn maxWidth={FEED_WIDTH}>
-              <SectionHeading text="FRIENDS" color="#01EFFC" width={78} />
-              <div style={{ marginTop: "16px" }}>
-                <FriendsRow friends={friends} />
-              </div>
-            </SectionColumn>
-          )}
+          {/* Friends — anyone you've shared a club or riff with, plus the
+              "+" tile to invite someone new via a piece. Always shown (not
+              gated on friends.length) so the invite entry point is
+              discoverable before you have any friends yet. */}
+          <SectionColumn maxWidth={FEED_WIDTH}>
+            <SectionHeading text="FRIENDS" color="#01EFFC" width={78} />
+            <div style={{ marginTop: "16px" }}>
+              <FriendsRow
+                friends={friends}
+                onInvite={() => setShowInviteModal(true)}
+              />
+            </div>
+          </SectionColumn>
 
           {/* Unread — revealed riffs with pieces you haven't read yet. Full width
             of the page column (flexes with it — 602px on desktop, whatever's

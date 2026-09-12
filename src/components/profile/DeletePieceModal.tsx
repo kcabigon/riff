@@ -19,14 +19,22 @@ export default function DeletePieceModal({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [friendWarning, setFriendWarning] = useState<number | null>(null);
 
   const handleDelete = async () => {
     setIsDeleting(true);
     setError(null);
     try {
-      const res = await fetch(`/api/pieces/${pieceId}`, { method: "DELETE" });
+      const res = await fetch(
+        `/api/pieces/${pieceId}${friendWarning ? "?force=true" : ""}`,
+        { method: "DELETE" }
+      );
       if (!res.ok) {
         const data = await res.json();
+        if (res.status === 409 && data.friendCount) {
+          setFriendWarning(data.friendCount);
+          return;
+        }
         setError(data.error ?? "Failed to delete.");
         return;
       }
@@ -70,7 +78,7 @@ export default function DeletePieceModal({
           transition: "none",
         }}
       >
-        {isDeleting ? "Deleting…" : "Delete"}
+        {isDeleting ? "Deleting…" : friendWarning ? "Delete anyway" : "Delete"}
       </button>
     </div>
   );
@@ -99,6 +107,22 @@ export default function DeletePieceModal({
         </strong>
         ? This can&apos;t be undone.
       </p>
+      {friendWarning && (
+        <p
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "12px",
+            fontWeight: 300,
+            color: "#DC2626",
+            margin: "12px 0 0 0",
+            lineHeight: 1.5,
+          }}
+        >
+          {friendWarning} friend{friendWarning === 1 ? "" : "s"} joined through
+          this piece — deleting it will end{" "}
+          {friendWarning === 1 ? "that friendship" : "those friendships"}.
+        </p>
+      )}
       {error && (
         <p
           style={{

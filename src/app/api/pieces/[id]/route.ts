@@ -152,6 +152,7 @@ export async function DELETE(
   try {
     const user = await requireAuth();
     const { id: pieceId } = await params;
+    const force = new URL(req.url).searchParams.get("force") === "true";
 
     // Check if user is the author
     const piece = await prisma.piece.findUnique({
@@ -167,6 +168,24 @@ export async function DELETE(
         { error: "Only the author can delete this piece" },
         { status: 403 }
       );
+    }
+
+    // Deleting cascades to any individual piece-invite shares, which are
+    // also how those friendships were established (src/lib/friends.ts) —
+    // warn before silently ending them.
+    if (!force) {
+      const friendCount = await prisma.share.count({
+        where: { pieceId, shareType: "INDIVIDUAL" },
+      });
+      if (friendCount > 0) {
+        return NextResponse.json(
+          {
+            error: `${friendCount} friend${friendCount === 1 ? "" : "s"} joined through this piece — deleting it will end ${friendCount === 1 ? "that friendship" : "those friendships"}.`,
+            friendCount,
+          },
+          { status: 409 }
+        );
+      }
     }
 
     // Delete piece (cascades to versions, shares, comments)
