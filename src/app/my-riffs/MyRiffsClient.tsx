@@ -8,6 +8,7 @@ import ReadyToRevealCard from "@/components/riffs/ReadyToRevealCard";
 import CompletedRiffCard from "@/components/riffs/CompletedRiffCard";
 import RevealConfirmModal from "@/components/riffs/RevealConfirmModal";
 import FriendsRow from "@/components/riffs/FriendsRow";
+import InviteFriendModal from "@/components/riffs/InviteFriendModal";
 import PieceCard from "@/components/riffs/PieceCard";
 import PublicShareIndicator from "@/components/riffs/PublicShareIndicator";
 import DraftCard from "@/components/write/DraftCard";
@@ -234,6 +235,7 @@ export default function MyRiffsClient({
     title: string;
   } | null>(null);
   const [shareTarget, setShareTarget] = useState<string | null>(null);
+  const [showInviteModal, setShowInviteModal] = useState(false);
   const [draftsExpanded, setDraftsExpanded] = useState(false);
   const [piecesExpanded, setPiecesExpanded] = useState(false);
   const [pastRiffsExpanded, setPastRiffsExpanded] = useState(false);
@@ -297,6 +299,13 @@ export default function MyRiffsClient({
 
   const drafts = allPieces.filter((p) => !isFinished(p));
   const submittedPieces = allPieces.filter(isFinished);
+  // Gate for the Friends section: show it once there's either an existing
+  // friend to display, or a published/revealed piece to invite with —
+  // drafts don't count. A user can have friends (via club/riff) with no
+  // eligible piece yet — the Friends row still shows them, just without
+  // the "+" tile (FriendsRow's canInvite prop, also driven by this flag).
+  const hasRevealedPiece = allPieces.some(isPieceRevealed);
+  const showFriendsSection = friends.length > 0 || hasRevealedPiece;
   // Whether the "Attach draft" option should show up on riff CTAs — a
   // draft that's never been attached to any riff. Computed once here from
   // data already in memory rather than re-fetched per card.
@@ -540,6 +549,10 @@ export default function MyRiffsClient({
         />
       )}
 
+      {showInviteModal && (
+        <InviteFriendModal onClose={() => setShowInviteModal(false)} />
+      )}
+
       {deleteTarget && (
         <DeletePieceModal
           pieceId={deleteTarget.id}
@@ -594,12 +607,21 @@ export default function MyRiffsClient({
             padding: "32px 0 64px",
           }}
         >
-          {/* Friends — anyone you've shared a club or riff with */}
-          {friends.length > 0 && (
+          {/* Friends — anyone you've shared a club or riff with, plus the
+              "+" tile to invite someone new via a piece. Shown once there's
+              either an existing friend to display or a revealed piece to
+              invite with — not gated on friends.length alone, so the invite
+              entry point is discoverable as soon as you publish your first
+              piece, even with zero friends yet. */}
+          {showFriendsSection && (
             <SectionColumn maxWidth={FEED_WIDTH}>
               <SectionHeading text="FRIENDS" color="#01EFFC" width={78} />
               <div style={{ marginTop: "16px" }}>
-                <FriendsRow friends={friends} />
+                <FriendsRow
+                  friends={friends}
+                  onInvite={() => setShowInviteModal(true)}
+                  canInvite={hasRevealedPiece}
+                />
               </div>
             </SectionColumn>
           )}

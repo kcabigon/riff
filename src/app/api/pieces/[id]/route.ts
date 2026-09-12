@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
+import { friendOfWhere } from "@/lib/friends";
 
 // GET /api/pieces/[id] - Get piece details
 export async function GET(
@@ -152,6 +153,7 @@ export async function DELETE(
   try {
     const user = await requireAuth();
     const { id: pieceId } = await params;
+    const force = new URL(req.url).searchParams.get("force") === "true";
 
     // Check if user is the author
     const piece = await prisma.piece.findUnique({
@@ -167,6 +169,52 @@ export async function DELETE(
         { error: "Only the author can delete this piece" },
         { status: 403 }
       );
+    }
+
+    // Deleting cascades to any individual piece-invite shares, which are
+    // also how those friendships were established (src/lib/friends.ts) —
+    // warn before silently ending them. Only warn about people who'd
+    // *actually* lose access, though — someone who joined via this piece
+    // but is now also a club-mate or riff-mate stays a friend regardless.
+    if (!force) {
+      const shares = await prisma.share.findMany({
+        where: { pieceId, shareType: "INDIVIDUAL" },
+        select: { sharedWithId: true },
+      });
+      const sharedWithIds = shares
+        .map((s) => s.sharedWithId)
+        .filter((id): id is string => id !== null);
+
+      if (sharedWithIds.length > 0) {
+        const stillFriends = await prisma.user.findMany({
+          where: {
+            id: { in: sharedWithIds },
+            ...friendOfWhere(user.id, { viaIndividualShare: false }),
+          },
+          select: { id: true },
+        });
+        const stillFriendIds = new Set(stillFriends.map((u) => u.id));
+        const lostIds = sharedWithIds.filter((id) => !stillFriendIds.has(id));
+
+        if (lostIds.length > 0) {
+          const lostUsers = await prisma.user.findMany({
+            where: { id: { in: lostIds } },
+            select: { firstName: true, name: true, username: true },
+          });
+          const friendNames = lostUsers.map(
+            (u) => u.firstName || u.name || u.username || "Someone"
+          );
+
+          return NextResponse.json(
+            {
+              error: `Deleting this piece will remove Friend-status for ${friendNames.length} ${friendNames.length === 1 ? "person" : "people"}.`,
+              friendCount: friendNames.length,
+              friendNames,
+            },
+            { status: 409 }
+          );
+        }
+      }
     }
 
     // Delete piece (cascades to versions, shares, comments)

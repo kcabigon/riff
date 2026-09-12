@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
+import { RiffStatus, type Prisma } from "@prisma/client";
 
 // GET /api/pieces - List pieces with filters
 export async function GET(req: Request) {
@@ -9,6 +10,29 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
 
     const authorId = searchParams.get("authorId");
+    const revealedOnly = searchParams.get("revealed") === "true";
+
+    // Same eligibility rule as the shares/join routes — a piece can only be
+    // used to invite someone (or made public) once it's actually revealed.
+    const revealedFilter: Prisma.PieceWhereInput = revealedOnly
+      ? {
+          OR: [
+            { publishedAt: { not: null } },
+            {
+              riffs: {
+                some: {
+                  submittedAt: { not: null },
+                  riff: {
+                    status: {
+                      in: [RiffStatus.REVEALED, RiffStatus.COMPLETED],
+                    },
+                  },
+                },
+              },
+            },
+          ],
+        }
+      : {};
 
     let pieces;
 
@@ -22,7 +46,7 @@ export async function GET(req: Request) {
       }
 
       pieces = await prisma.piece.findMany({
-        where: { authorId },
+        where: { authorId, ...revealedFilter },
         include: {
           author: {
             select: {
@@ -48,6 +72,7 @@ export async function GET(req: Request) {
       pieces = await prisma.piece.findMany({
         where: {
           authorId: user.id,
+          ...revealedFilter,
         },
         include: {
           author: {
@@ -71,7 +96,14 @@ export async function GET(req: Request) {
       });
     }
 
-    return NextResponse.json({ pieces });
+    // The revealed-only picker (invite-a-friend) just needs enough to tell
+    // pieces apart — a revealed piece always has a real title (unlike
+    // drafts, which can be "Untitled"), so no preview text is needed.
+    const serialized = revealedOnly
+      ? pieces.map((p) => ({ id: p.id, title: p.title }))
+      : pieces;
+
+    return NextResponse.json({ pieces: serialized });
   } catch (error: unknown) {
     if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
