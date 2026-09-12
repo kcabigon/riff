@@ -299,6 +299,12 @@ export default function MyRiffsClient({
 
   const drafts = allPieces.filter((p) => !isFinished(p));
   const submittedPieces = allPieces.filter(isFinished);
+  // Gate for the Friends section: show it once there's either an existing
+  // friend to display, or a published/revealed piece to invite with —
+  // drafts don't count (see InviteFriendModal's empty state for the case
+  // where friends exist via a club/riff but no piece is eligible yet).
+  const hasRevealedPiece = allPieces.some(isPieceRevealed);
+  const showFriendsSection = friends.length > 0 || hasRevealedPiece;
   // Whether the "Attach draft" option should show up on riff CTAs — a
   // draft that's never been attached to any riff. Computed once here from
   // data already in memory rather than re-fetched per card.
@@ -601,18 +607,23 @@ export default function MyRiffsClient({
           }}
         >
           {/* Friends — anyone you've shared a club or riff with, plus the
-              "+" tile to invite someone new via a piece. Always shown (not
-              gated on friends.length) so the invite entry point is
-              discoverable before you have any friends yet. */}
-          <SectionColumn maxWidth={FEED_WIDTH}>
-            <SectionHeading text="FRIENDS" color="#01EFFC" width={78} />
-            <div style={{ marginTop: "16px" }}>
-              <FriendsRow
-                friends={friends}
-                onInvite={() => setShowInviteModal(true)}
-              />
-            </div>
-          </SectionColumn>
+              "+" tile to invite someone new via a piece. Shown once there's
+              either an existing friend to display or a revealed piece to
+              invite with — not gated on friends.length alone, so the invite
+              entry point is discoverable as soon as you publish your first
+              piece, even with zero friends yet. */}
+          {showFriendsSection && (
+            <SectionColumn maxWidth={FEED_WIDTH}>
+              <SectionHeading text="FRIENDS" color="#01EFFC" width={78} />
+              <div style={{ marginTop: "16px" }}>
+                <FriendsRow
+                  friends={friends}
+                  onInvite={() => setShowInviteModal(true)}
+                  canInvite={hasRevealedPiece}
+                />
+              </div>
+            </SectionColumn>
+          )}
 
           {/* Unread — revealed riffs with pieces you haven't read yet. Full width
             of the page column (flexes with it — 602px on desktop, whatever's

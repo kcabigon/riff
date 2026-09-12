@@ -96,7 +96,14 @@ export async function GET(req: Request) {
       });
     }
 
-    return NextResponse.json({ pieces });
+    // The revealed-only picker (invite-a-friend) just needs enough to tell
+    // pieces apart — a revealed piece always has a real title (unlike
+    // drafts, which can be "Untitled"), so no preview text is needed.
+    const serialized = revealedOnly
+      ? pieces.map((p) => ({ id: p.id, title: p.title }))
+      : pieces;
+
+    return NextResponse.json({ pieces: serialized });
   } catch (error: unknown) {
     if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
