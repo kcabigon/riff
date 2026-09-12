@@ -425,7 +425,8 @@ export default function ClubPageLayout({
           panel. The photo box itself is untouched — same size/crop as
           desktop — only this header fades from solid black to transparent
           over its own bottom edge, revealing the unmodified photo beneath
-          instead of resizing/recropping it. */}
+          instead of resizing/recropping it. KEEP IN SYNC WITH:
+          JoinClubClient.tsx */}
       {clubBannerImage && isMobile && (
         <div
           style={{
@@ -440,18 +441,71 @@ export default function ClubPageLayout({
               "linear-gradient(to bottom, #000000 calc(100% - 64px), rgba(0, 0, 0, 0) 100%)",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <h1
+          <h1
+            style={{
+              fontFamily: "var(--font-dm-serif-text)",
+              fontSize: "32px",
+              fontWeight: 400,
+              color: "#FFFFFF",
+              margin: 0,
+            }}
+          >
+            {clubName}
+          </h1>
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+            }}
+          >
+            <div
               style={{
-                fontFamily: "var(--font-dm-serif-text)",
-                fontSize: "32px",
-                fontWeight: 400,
-                color: "#FFFFFF",
-                margin: 0,
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "4px 12px",
+                alignItems: "start",
               }}
             >
-              {clubName}
-            </h1>
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 300,
+                  color: "#FFFFFF",
+                  margin: 0,
+                }}
+              >
+                <span style={{ fontWeight: 700 }}>{stats.riffCount}</span> riffs
+              </p>
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 300,
+                  color: "#FFFFFF",
+                  margin: 0,
+                }}
+              >
+                <span style={{ fontWeight: 700 }}>{stats.pieceCount}</span>{" "}
+                pieces
+              </p>
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 300,
+                  color: "#FFFFFF",
+                  margin: 0,
+                }}
+              >
+                <span style={{ fontWeight: 700 }}>
+                  {formatNumber(stats.wordCount)}
+                </span>{" "}
+                words
+              </p>
+            </div>
             <ThreeDotButton
               variant="dark"
               items={
@@ -463,52 +517,6 @@ export default function ClubPageLayout({
               }
               align="right"
             />
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "4px 12px",
-              alignItems: "start",
-            }}
-          >
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 300,
-                color: "#FFFFFF",
-                margin: 0,
-              }}
-            >
-              <span style={{ fontWeight: 700 }}>{stats.riffCount}</span> riffs
-            </p>
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 300,
-                color: "#FFFFFF",
-                margin: 0,
-              }}
-            >
-              <span style={{ fontWeight: 700 }}>{stats.pieceCount}</span> pieces
-            </p>
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 300,
-                color: "#FFFFFF",
-                margin: 0,
-              }}
-            >
-              <span style={{ fontWeight: 700 }}>
-                {formatNumber(stats.wordCount)}
-              </span>{" "}
-              words
-            </p>
           </div>
 
           <AvatarStack
@@ -593,20 +601,74 @@ export default function ClubPageLayout({
                       }
                 }
               >
-                <div
-                  style={{ display: "flex", alignItems: "center", gap: "12px" }}
+                <h1
+                  style={{
+                    fontFamily: "var(--font-dm-serif-text)",
+                    fontSize: "32px",
+                    fontWeight: 400,
+                    color: "#FFFFFF",
+                    margin: 0,
+                  }}
                 >
-                  <h1
+                  {clubName}
+                </h1>
+
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                  }}
+                >
+                  <div
                     style={{
-                      fontFamily: "var(--font-dm-serif-text)",
-                      fontSize: "32px",
-                      fontWeight: 400,
-                      color: "#FFFFFF",
-                      margin: 0,
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "4px 12px",
+                      alignItems: "start",
                     }}
                   >
-                    {clubName}
-                  </h1>
+                    <p
+                      style={{
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "16px",
+                        fontWeight: 300,
+                        color: "#FFFFFF",
+                        margin: 0,
+                      }}
+                    >
+                      <span style={{ fontWeight: 700 }}>{stats.riffCount}</span>{" "}
+                      riffs
+                    </p>
+                    <p
+                      style={{
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "16px",
+                        fontWeight: 300,
+                        color: "#FFFFFF",
+                        margin: 0,
+                      }}
+                    >
+                      <span style={{ fontWeight: 700 }}>
+                        {stats.pieceCount}
+                      </span>{" "}
+                      pieces
+                    </p>
+                    <p
+                      style={{
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "16px",
+                        fontWeight: 300,
+                        color: "#FFFFFF",
+                        margin: 0,
+                      }}
+                    >
+                      <span style={{ fontWeight: 700 }}>
+                        {formatNumber(stats.wordCount)}
+                      </span>{" "}
+                      words
+                    </p>
+                  </div>
                   <ThreeDotButton
                     variant="dark"
                     items={
@@ -618,54 +680,6 @@ export default function ClubPageLayout({
                     }
                     align="right"
                   />
-                </div>
-
-                <div
-                  style={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: "4px 12px",
-                    alignItems: "start",
-                  }}
-                >
-                  <p
-                    style={{
-                      fontFamily: "var(--font-dm-sans)",
-                      fontSize: "16px",
-                      fontWeight: 300,
-                      color: "#FFFFFF",
-                      margin: 0,
-                    }}
-                  >
-                    <span style={{ fontWeight: 700 }}>{stats.riffCount}</span>{" "}
-                    riffs
-                  </p>
-                  <p
-                    style={{
-                      fontFamily: "var(--font-dm-sans)",
-                      fontSize: "16px",
-                      fontWeight: 300,
-                      color: "#FFFFFF",
-                      margin: 0,
-                    }}
-                  >
-                    <span style={{ fontWeight: 700 }}>{stats.pieceCount}</span>{" "}
-                    pieces
-                  </p>
-                  <p
-                    style={{
-                      fontFamily: "var(--font-dm-sans)",
-                      fontSize: "16px",
-                      fontWeight: 300,
-                      color: "#FFFFFF",
-                      margin: 0,
-                    }}
-                  >
-                    <span style={{ fontWeight: 700 }}>
-                      {formatNumber(stats.wordCount)}
-                    </span>{" "}
-                    words
-                  </p>
                 </div>
 
                 <AvatarStack
@@ -710,12 +724,13 @@ export default function ClubPageLayout({
       >
         {/* Club frame — mobile only, shown when no banner image has been
             uploaded. Desktop always gets the banner treatment now (falling
-            back to a default photo below), so this no-banner layout only
-            exists for mobile. Breaks out of the page's padding to go
-            full-bleed with a black band + white text/borders, matching the
-            banner case's header zone — without it, mobile loses the banner
-            overlay's visual separation between the club header and the
-            current riff below it. */}
+            back to a solid black background above), so this no-banner
+            layout only exists for mobile. Breaks out of the page's padding
+            to go full-bleed with a black band + white text/borders,
+            matching the banner case's header zone — without it, mobile
+            loses the banner overlay's visual separation between the club
+            header and the current riff below it. KEEP IN SYNC WITH:
+            JoinClubClient.tsx */}
         {!clubBannerImage && isMobile && (
           <div
             style={{
@@ -733,18 +748,72 @@ export default function ClubPageLayout({
               backgroundColor: "#000000",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <h1
+            <h1
+              style={{
+                fontFamily: "var(--font-dm-serif-text)",
+                fontSize: "32px",
+                fontWeight: 400,
+                color: "#FFFFFF",
+                margin: 0,
+              }}
+            >
+              {clubName}
+            </h1>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+              }}
+            >
+              <div
                 style={{
-                  fontFamily: "var(--font-dm-serif-text)",
-                  fontSize: "32px",
-                  fontWeight: 400,
-                  color: "#FFFFFF",
-                  margin: 0,
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "4px 12px",
+                  alignItems: "start",
                 }}
               >
-                {clubName}
-              </h1>
+                <p
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "16px",
+                    fontWeight: 300,
+                    color: "#FFFFFF",
+                    margin: 0,
+                  }}
+                >
+                  <span style={{ fontWeight: 700 }}>{stats.riffCount}</span>{" "}
+                  riffs
+                </p>
+                <p
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "16px",
+                    fontWeight: 300,
+                    color: "#FFFFFF",
+                    margin: 0,
+                  }}
+                >
+                  <span style={{ fontWeight: 700 }}>{stats.pieceCount}</span>{" "}
+                  pieces
+                </p>
+                <p
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "16px",
+                    fontWeight: 300,
+                    color: "#FFFFFF",
+                    margin: 0,
+                  }}
+                >
+                  <span style={{ fontWeight: 700 }}>
+                    {formatNumber(stats.wordCount)}
+                  </span>{" "}
+                  words
+                </p>
+              </div>
               <ThreeDotButton
                 variant="dark"
                 items={
@@ -756,53 +825,6 @@ export default function ClubPageLayout({
                 }
                 align="right"
               />
-            </div>
-
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "4px 12px",
-                alignItems: "start",
-              }}
-            >
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#FFFFFF",
-                  margin: 0,
-                }}
-              >
-                <span style={{ fontWeight: 700 }}>{stats.riffCount}</span> riffs
-              </p>
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#FFFFFF",
-                  margin: 0,
-                }}
-              >
-                <span style={{ fontWeight: 700 }}>{stats.pieceCount}</span>{" "}
-                pieces
-              </p>
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#FFFFFF",
-                  margin: 0,
-                }}
-              >
-                <span style={{ fontWeight: 700 }}>
-                  {formatNumber(stats.wordCount)}
-                </span>{" "}
-                words
-              </p>
             </div>
 
             <AvatarStack
