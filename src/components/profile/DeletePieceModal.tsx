@@ -19,20 +19,20 @@ export default function DeletePieceModal({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [friendWarning, setFriendWarning] = useState<number | null>(null);
+  const [friendNames, setFriendNames] = useState<string[] | null>(null);
 
   const handleDelete = async () => {
     setIsDeleting(true);
     setError(null);
     try {
       const res = await fetch(
-        `/api/pieces/${pieceId}${friendWarning ? "?force=true" : ""}`,
+        `/api/pieces/${pieceId}${friendNames ? "?force=true" : ""}`,
         { method: "DELETE" }
       );
       if (!res.ok) {
         const data = await res.json();
-        if (res.status === 409 && data.friendCount) {
-          setFriendWarning(data.friendCount);
+        if (res.status === 409 && data.friendNames?.length) {
+          setFriendNames(data.friendNames);
           return;
         }
         setError(data.error ?? "Failed to delete.");
@@ -45,6 +45,13 @@ export default function DeletePieceModal({
     } finally {
       setIsDeleting(false);
     }
+  };
+
+  // "Alice" / "Alice and Bob" / "Alice, Bob, and Carol"
+  const formatNames = (names: string[]) => {
+    if (names.length === 1) return names[0];
+    if (names.length === 2) return `${names[0]} and ${names[1]}`;
+    return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
   };
 
   const footer = (
@@ -78,7 +85,7 @@ export default function DeletePieceModal({
           transition: "none",
         }}
       >
-        {isDeleting ? "Deleting…" : friendWarning ? "Delete anyway" : "Delete"}
+        {isDeleting ? "Deleting…" : friendNames ? "Delete anyway" : "Delete"}
       </button>
     </div>
   );
@@ -107,30 +114,31 @@ export default function DeletePieceModal({
         </strong>
         ? This can&apos;t be undone.
       </p>
-      {friendWarning && (
+      {friendNames && (
         <p
           style={{
             fontFamily: "var(--font-dm-sans)",
-            fontSize: "12px",
+            fontSize: "16px",
             fontWeight: 300,
             color: "#DC2626",
             margin: "12px 0 0 0",
-            lineHeight: 1.5,
+            lineHeight: 1.6,
           }}
         >
-          {friendWarning} friend{friendWarning === 1 ? "" : "s"} joined through
-          this piece — deleting it will end{" "}
-          {friendWarning === 1 ? "that friendship" : "those friendships"}.
+          This piece grants Friend-status to {formatNames(friendNames)}.
+          Deleting it will remove Friend-status and will require a new piece,
+          riff, or club to establish Friend-status again.
         </p>
       )}
       {error && (
         <p
           style={{
             fontFamily: "var(--font-dm-sans)",
-            fontSize: "12px",
+            fontSize: "16px",
             fontWeight: 300,
             color: "#DC2626",
             margin: "12px 0 0 0",
+            lineHeight: 1.6,
           }}
         >
           {error}
