@@ -148,7 +148,7 @@ Last updated: May 16, 2026
 
 - [ ] Collections system (personal, group, circle)
 - [x] My Riffs page (`/my-riffs`): aggregate all club riffs cross-club, tabs for Current (Writing/Reading) and Past (by club), club badge on cards, avatar dropdown nav entry
-- [ ] 🔨 @jarric — Multi-level sharing UI (CLUB, RIFF, INDIVIDUAL, PUBLIC)
+- [ ] 🔨 @jarric — Multi-level sharing UI (CLUB, RIFF, INDIVIDUAL, PUBLIC) — INDIVIDUAL shipped via piece-invite (`feature/friend-invite`: joinPiece flow, `Share.shareType: INDIVIDUAL` now wired up); CLUB/RIFF/PUBLIC sharing UI, a real mutually-exclusive Private tier, and a unified Send modal are next
 - [x] Riff activity feed: post-reveal riff page redesign with Pieces/Feed toggle and comment activity feed
 - [x] Consolidate riff page Pieces/Comment tabs into one scrolling page; per-piece click-to-read replaces bulk mark-read
 - [x] Club page: new-comment indicator on Past Riffs; route pre-reveal club riffs to club page instead of standalone riff page
