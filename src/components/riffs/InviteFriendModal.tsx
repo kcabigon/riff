@@ -16,8 +16,8 @@ interface InviteFriendModalProps {
 const INITIAL_VISIBLE = 3;
 
 // Entry point from the My Riffs Friends row "+" tile — invites always go
-// through a piece (see ShareModal's "Invite a friend" for the same flow
-// triggered from a specific piece's 3-dot menu), so this picks one first.
+// through a piece, so this picks one first (the tile itself only shows
+// once there's an eligible piece — see FriendsRow's canInvite prop).
 // Loading/list styling mirrors DraftChoiceModal's piece picker. No preview
 // text — unlike drafts, a revealed piece always has a real title, which is
 // enough to tell pieces apart.
@@ -126,6 +126,21 @@ export default function InviteFriendModal({ onClose }: InviteFriendModalProps) {
           )}
 
           {error && <p style={errorTextStyle}>{error}</p>}
+
+          {pieces && pieces.length === 0 && !error && (
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "16px",
+                fontWeight: 300,
+                color: "#000000",
+                margin: 0,
+                lineHeight: 1.6,
+              }}
+            >
+              Nothing to invite with right now — refresh and try again.
+            </p>
+          )}
 
           {pieces && pieces.length > 1 && (
             <>

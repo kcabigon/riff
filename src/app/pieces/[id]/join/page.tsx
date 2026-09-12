@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getSession } from "@/lib/auth-utils";
@@ -6,7 +7,9 @@ import { getContentPreview } from "@/lib/riff-utils";
 import { isFriendOf } from "@/lib/friends";
 import PieceJoinClient from "@/components/pieces/PieceJoinClient";
 
-async function getEligiblePiece(pieceId: string) {
+// Wrapped in cache() since generateMetadata and the page body each call
+// this independently — dedupes to one query per request instead of two.
+const getEligiblePiece = cache(async (pieceId: string) => {
   const piece = await prisma.piece.findUnique({
     where: { id: pieceId },
     select: {
@@ -51,7 +54,7 @@ async function getEligiblePiece(pieceId: string) {
   if (!isRevealed) return null;
 
   return piece;
-}
+});
 
 export async function generateMetadata({
   params,

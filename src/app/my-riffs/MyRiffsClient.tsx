@@ -301,8 +301,9 @@ export default function MyRiffsClient({
   const submittedPieces = allPieces.filter(isFinished);
   // Gate for the Friends section: show it once there's either an existing
   // friend to display, or a published/revealed piece to invite with —
-  // drafts don't count (see InviteFriendModal's empty state for the case
-  // where friends exist via a club/riff but no piece is eligible yet).
+  // drafts don't count. A user can have friends (via club/riff) with no
+  // eligible piece yet — the Friends row still shows them, just without
+  // the "+" tile (FriendsRow's canInvite prop, also driven by this flag).
   const hasRevealedPiece = allPieces.some(isPieceRevealed);
   const showFriendsSection = friends.length > 0 || hasRevealedPiece;
   // Whether the "Attach draft" option should show up on riff CTAs — a
