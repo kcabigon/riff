@@ -420,32 +420,164 @@ export default function ClubPageLayout({
         />
       </div>
 
-      {/* Banner — full width, 320px desktop / 200px mobile — KEEP IN SYNC WITH: JoinClubClient.tsx (banner header layout, avatar sizes, maxWidth) */}
-      {clubBannerImage && (
+      {/* Mobile header — overlaps the banner photo (negative margin pulls
+          the photo up underneath it) instead of sitting as a separate
+          panel. The photo box itself is untouched — same size/crop as
+          desktop — only this header fades from solid black to transparent
+          over its own bottom edge, revealing the unmodified photo beneath
+          instead of resizing/recropping it. KEEP IN SYNC WITH:
+          JoinClubClient.tsx */}
+      {clubBannerImage && isMobile && (
+        <div
+          style={{
+            position: "relative",
+            zIndex: 2,
+            marginBottom: "-64px",
+            padding: "24px 24px 88px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+            background:
+              "linear-gradient(to bottom, #000000 calc(100% - 64px), rgba(0, 0, 0, 0) 100%)",
+          }}
+        >
+          <h1
+            style={{
+              fontFamily: "var(--font-dm-serif-text)",
+              fontSize: "32px",
+              fontWeight: 400,
+              color: "#FFFFFF",
+              margin: 0,
+            }}
+          >
+            {clubName}
+          </h1>
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "4px 12px",
+                alignItems: "start",
+              }}
+            >
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 300,
+                  color: "#FFFFFF",
+                  margin: 0,
+                }}
+              >
+                <span style={{ fontWeight: 700 }}>{stats.riffCount}</span> riffs
+              </p>
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 300,
+                  color: "#FFFFFF",
+                  margin: 0,
+                }}
+              >
+                <span style={{ fontWeight: 700 }}>{stats.pieceCount}</span>{" "}
+                pieces
+              </p>
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 300,
+                  color: "#FFFFFF",
+                  margin: 0,
+                }}
+              >
+                <span style={{ fontWeight: 700 }}>
+                  {formatNumber(stats.wordCount)}
+                </span>{" "}
+                words
+              </p>
+            </div>
+            <ThreeDotButton
+              variant="dark"
+              items={
+                isAdmin
+                  ? adminMenuItems
+                  : isCoHost
+                    ? coHostMenuItems
+                    : memberMenuItems
+              }
+              align="right"
+            />
+          </div>
+
+          <AvatarStack
+            users={club.members.map((m) => m.user)}
+            size={40}
+            borderColor="#FFFFFF"
+            onAvatarClick={handleAvatarClick}
+            style={{ overflowX: "auto" }}
+          />
+
+          {clubDescription && (
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "16px",
+                fontWeight: 300,
+                color: "#FFFFFF",
+                margin: 0,
+                lineHeight: "1.4",
+              }}
+            >
+              {clubDescription}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Banner — full width, 320px desktop / 200px mobile — KEEP IN SYNC WITH: JoinClubClient.tsx (banner header layout, avatar sizes, maxWidth). Untouched by the mobile header above (it overlaps via negative margin, not by resizing this box) so the photo's crop matches desktop exactly. On desktop this always renders — falling back to a plain black bg (matching the black-bg convention used on mobile and on profile pages) when there's no uploaded banner — so every club gets the banner treatment instead of branching into a separate no-banner layout. Mobile still branches on whether a real banner was uploaded. */}
+      {(clubBannerImage || !isMobile) && (
         <div
           className="club-banner"
           style={{
             width: "100%",
             height: "320px",
-            backgroundImage: `url(${clubBannerImage})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
+            ...(clubBannerImage
+              ? {
+                  backgroundImage: `url(${clubBannerImage})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }
+              : { backgroundColor: "#000000" }),
             position: "relative",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
           }}
         >
-          {/* Dark overlay + metadata — desktop only */}
+          {/* Dark overlay + metadata — desktop only. Overlay only needed
+              over a real photo; the no-banner fallback is already solid
+              black. */}
           {!isMobile && (
             <>
-              <div
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  backgroundColor: "rgba(0, 0, 0, 0.66)",
-                }}
-              />
+              {clubBannerImage && (
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    backgroundColor: "rgba(0, 0, 0, 0.66)",
+                  }}
+                />
+              )}
               <div
                 style={
                   club.members.length > 9
@@ -469,20 +601,74 @@ export default function ClubPageLayout({
                       }
                 }
               >
-                <div
-                  style={{ display: "flex", alignItems: "center", gap: "12px" }}
+                <h1
+                  style={{
+                    fontFamily: "var(--font-dm-serif-text)",
+                    fontSize: "32px",
+                    fontWeight: 400,
+                    color: "#FFFFFF",
+                    margin: 0,
+                  }}
                 >
-                  <h1
+                  {clubName}
+                </h1>
+
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                  }}
+                >
+                  <div
                     style={{
-                      fontFamily: "var(--font-dm-serif-text)",
-                      fontSize: "32px",
-                      fontWeight: 400,
-                      color: "#FFFFFF",
-                      margin: 0,
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "4px 12px",
+                      alignItems: "start",
                     }}
                   >
-                    {clubName}
-                  </h1>
+                    <p
+                      style={{
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "16px",
+                        fontWeight: 300,
+                        color: "#FFFFFF",
+                        margin: 0,
+                      }}
+                    >
+                      <span style={{ fontWeight: 700 }}>{stats.riffCount}</span>{" "}
+                      riffs
+                    </p>
+                    <p
+                      style={{
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "16px",
+                        fontWeight: 300,
+                        color: "#FFFFFF",
+                        margin: 0,
+                      }}
+                    >
+                      <span style={{ fontWeight: 700 }}>
+                        {stats.pieceCount}
+                      </span>{" "}
+                      pieces
+                    </p>
+                    <p
+                      style={{
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "16px",
+                        fontWeight: 300,
+                        color: "#FFFFFF",
+                        margin: 0,
+                      }}
+                    >
+                      <span style={{ fontWeight: 700 }}>
+                        {formatNumber(stats.wordCount)}
+                      </span>{" "}
+                      words
+                    </p>
+                  </div>
                   <ThreeDotButton
                     variant="dark"
                     items={
@@ -494,54 +680,6 @@ export default function ClubPageLayout({
                     }
                     align="right"
                   />
-                </div>
-
-                <div
-                  style={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: "4px 12px",
-                    alignItems: "start",
-                  }}
-                >
-                  <p
-                    style={{
-                      fontFamily: "var(--font-dm-sans)",
-                      fontSize: "16px",
-                      fontWeight: 300,
-                      color: "#FFFFFF",
-                      margin: 0,
-                    }}
-                  >
-                    <span style={{ fontWeight: 700 }}>{stats.riffCount}</span>{" "}
-                    riffs
-                  </p>
-                  <p
-                    style={{
-                      fontFamily: "var(--font-dm-sans)",
-                      fontSize: "16px",
-                      fontWeight: 300,
-                      color: "#FFFFFF",
-                      margin: 0,
-                    }}
-                  >
-                    <span style={{ fontWeight: 700 }}>{stats.pieceCount}</span>{" "}
-                    pieces
-                  </p>
-                  <p
-                    style={{
-                      fontFamily: "var(--font-dm-sans)",
-                      fontSize: "16px",
-                      fontWeight: 300,
-                      color: "#FFFFFF",
-                      margin: 0,
-                    }}
-                  >
-                    <span style={{ fontWeight: 700 }}>
-                      {formatNumber(stats.wordCount)}
-                    </span>{" "}
-                    words
-                  </p>
                 </div>
 
                 <AvatarStack
@@ -576,111 +714,6 @@ export default function ClubPageLayout({
         </div>
       )}
 
-      {/* Mobile metadata — shown below banner on small screens */}
-      {clubBannerImage && isMobile && (
-        <div
-          style={{
-            padding: "24px 24px 0",
-            display: "flex",
-            flexDirection: "column",
-            gap: "12px",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <h1
-              style={{
-                fontFamily: "var(--font-dm-serif-text)",
-                fontSize: "32px",
-                fontWeight: 400,
-                color: "#000000",
-                margin: 0,
-              }}
-            >
-              {clubName}
-            </h1>
-            <ThreeDotButton
-              variant="light"
-              items={
-                isAdmin
-                  ? adminMenuItems
-                  : isCoHost
-                    ? coHostMenuItems
-                    : memberMenuItems
-              }
-              align="right"
-            />
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "4px 12px",
-              alignItems: "start",
-            }}
-          >
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 300,
-                color: "#000000",
-                margin: 0,
-              }}
-            >
-              <span style={{ fontWeight: 700 }}>{stats.riffCount}</span> riffs
-            </p>
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 300,
-                color: "#000000",
-                margin: 0,
-              }}
-            >
-              <span style={{ fontWeight: 700 }}>{stats.pieceCount}</span> pieces
-            </p>
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 300,
-                color: "#000000",
-                margin: 0,
-              }}
-            >
-              <span style={{ fontWeight: 700 }}>
-                {formatNumber(stats.wordCount)}
-              </span>{" "}
-              words
-            </p>
-          </div>
-
-          <AvatarStack
-            users={club.members.map((m) => m.user)}
-            size={40}
-            onAvatarClick={handleAvatarClick}
-            style={{ overflowX: "auto" }}
-          />
-
-          {clubDescription && (
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 300,
-                color: "#000000",
-                margin: 0,
-                lineHeight: "1.4",
-              }}
-            >
-              {clubDescription}
-            </p>
-          )}
-        </div>
-      )}
-
       {/* Main content — width responsive to club size (680/1000/1240 for 2/3/4+ members), centered */}
       <div
         style={{
@@ -689,30 +722,100 @@ export default function ClubPageLayout({
           padding: "32px 24px 64px",
         }}
       >
-        {/* Club frame — only shown when no banner image */}
-        {!clubBannerImage && (
+        {/* Club frame — mobile only, shown when no banner image has been
+            uploaded. Desktop always gets the banner treatment now (falling
+            back to a solid black background above), so this no-banner
+            layout only exists for mobile. Breaks out of the page's padding
+            to go full-bleed with a black band + white text/borders,
+            matching the banner case's header zone — without it, mobile
+            loses the banner overlay's visual separation between the club
+            header and the current riff below it. KEEP IN SYNC WITH:
+            JoinClubClient.tsx */}
+        {!clubBannerImage && isMobile && (
           <div
             style={{
               display: "flex",
               flexDirection: "column",
               gap: "16px",
               marginBottom: "48px",
+              marginTop: "-32px",
+              marginLeft: "-24px",
+              marginRight: "-24px",
+              paddingTop: "24px",
+              paddingLeft: "24px",
+              paddingRight: "24px",
+              paddingBottom: "24px",
+              backgroundColor: "#000000",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <h1
+            <h1
+              style={{
+                fontFamily: "var(--font-dm-serif-text)",
+                fontSize: "32px",
+                fontWeight: 400,
+                color: "#FFFFFF",
+                margin: 0,
+              }}
+            >
+              {clubName}
+            </h1>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+              }}
+            >
+              <div
                 style={{
-                  fontFamily: "var(--font-dm-serif-text)",
-                  fontSize: "32px",
-                  fontWeight: 400,
-                  color: "#000000",
-                  margin: 0,
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "4px 12px",
+                  alignItems: "start",
                 }}
               >
-                {clubName}
-              </h1>
+                <p
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "16px",
+                    fontWeight: 300,
+                    color: "#FFFFFF",
+                    margin: 0,
+                  }}
+                >
+                  <span style={{ fontWeight: 700 }}>{stats.riffCount}</span>{" "}
+                  riffs
+                </p>
+                <p
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "16px",
+                    fontWeight: 300,
+                    color: "#FFFFFF",
+                    margin: 0,
+                  }}
+                >
+                  <span style={{ fontWeight: 700 }}>{stats.pieceCount}</span>{" "}
+                  pieces
+                </p>
+                <p
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "16px",
+                    fontWeight: 300,
+                    color: "#FFFFFF",
+                    margin: 0,
+                  }}
+                >
+                  <span style={{ fontWeight: 700 }}>
+                    {formatNumber(stats.wordCount)}
+                  </span>{" "}
+                  words
+                </p>
+              </div>
               <ThreeDotButton
-                variant="light"
+                variant="dark"
                 items={
                   isAdmin
                     ? adminMenuItems
@@ -724,58 +827,12 @@ export default function ClubPageLayout({
               />
             </div>
 
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "4px 12px",
-                alignItems: "start",
-              }}
-            >
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#000000",
-                  margin: 0,
-                }}
-              >
-                <span style={{ fontWeight: 700 }}>{stats.riffCount}</span> riffs
-              </p>
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#000000",
-                  margin: 0,
-                }}
-              >
-                <span style={{ fontWeight: 700 }}>{stats.pieceCount}</span>{" "}
-                pieces
-              </p>
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#000000",
-                  margin: 0,
-                }}
-              >
-                <span style={{ fontWeight: 700 }}>
-                  {formatNumber(stats.wordCount)}
-                </span>{" "}
-                words
-              </p>
-            </div>
-
             <AvatarStack
               users={club.members.map((m) => m.user)}
-              size={isMobile ? 40 : 48}
+              size={40}
+              borderColor="#FFFFFF"
               onAvatarClick={handleAvatarClick}
-              style={isMobile ? { overflowX: "auto" } : undefined}
+              style={{ overflowX: "auto" }}
             />
 
             {clubDescription && (
@@ -784,7 +841,7 @@ export default function ClubPageLayout({
                   fontFamily: "var(--font-dm-sans)",
                   fontSize: "16px",
                   fontWeight: 300,
-                  color: "#000000",
+                  color: "#FFFFFF",
                   margin: 0,
                   lineHeight: "normal",
                   maxWidth: "600px",
@@ -897,7 +954,7 @@ export default function ClubPageLayout({
                             style={{
                               display: "inline-block",
                               fontFamily: "var(--font-dm-serif-text)",
-                              fontSize: "24px",
+                              fontSize: "32px",
                               fontWeight: 400,
                               color: "#000000",
                               margin: 0,
@@ -919,7 +976,7 @@ export default function ClubPageLayout({
                               <p
                                 style={{
                                   fontFamily: "var(--font-dm-sans)",
-                                  fontSize: "14px",
+                                  fontSize: "16px",
                                   fontWeight: 300,
                                   color: "#808080",
                                   margin: 0,
@@ -934,7 +991,7 @@ export default function ClubPageLayout({
                             <p
                               style={{
                                 fontFamily: "var(--font-dm-sans)",
-                                fontSize: "14px",
+                                fontSize: "16px",
                                 fontWeight: 300,
                                 color: activeRiff.deadline
                                   ? "#DC2626"
@@ -977,7 +1034,7 @@ export default function ClubPageLayout({
                       {activeRiff.prompt && (
                         <div
                           style={{
-                            marginTop: "16px",
+                            marginTop: "24px",
                             borderLeft: "2px solid #000000",
                             paddingLeft: "16px",
                             maxWidth: "780px",
@@ -1021,7 +1078,7 @@ export default function ClubPageLayout({
                           style={{
                             display: "inline-block",
                             fontFamily: "var(--font-dm-serif-text)",
-                            fontSize: "24px",
+                            fontSize: "32px",
                             fontWeight: 400,
                             color: "#000000",
                             margin: 0,
@@ -1044,7 +1101,7 @@ export default function ClubPageLayout({
                             <p
                               style={{
                                 fontFamily: "var(--font-dm-sans)",
-                                fontSize: "14px",
+                                fontSize: "16px",
                                 fontWeight: 300,
                                 color: "#808080",
                                 margin: 0,
@@ -1059,7 +1116,7 @@ export default function ClubPageLayout({
                           <p
                             style={{
                               fontFamily: "var(--font-dm-sans)",
-                              fontSize: "14px",
+                              fontSize: "16px",
                               fontWeight: 300,
                               color: activeRiff.deadline
                                 ? "#DC2626"
@@ -1089,7 +1146,7 @@ export default function ClubPageLayout({
                         {activeRiff.prompt && (
                           <div
                             style={{
-                              marginTop: "8px",
+                              marginTop: "20px",
                               borderLeft: "2px solid #000000",
                               paddingLeft: "16px",
                               maxWidth: "780px",
@@ -1165,7 +1222,7 @@ export default function ClubPageLayout({
                     };
 
                     return isMobile ? (
-                      <div style={{ marginTop: "24px" }}>
+                      <div style={{ marginTop: "48px" }}>
                         <MobileCardCarousel>
                           {sortedActiveParticipants.map(renderCard)}
                         </MobileCardCarousel>
@@ -1177,7 +1234,7 @@ export default function ClubPageLayout({
                           gridTemplateColumns:
                             "repeat(auto-fill, minmax(280px, 1fr))",
                           gap: "24px",
-                          marginTop: "24px",
+                          marginTop: "48px",
                         }}
                       >
                         {sortedActiveParticipants.map(renderCard)}

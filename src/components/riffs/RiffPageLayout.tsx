@@ -479,20 +479,6 @@ export default function RiffPageLayout({
               isAdmin,
               status: riff.status,
             }) && <RevealRiffButton onClick={handleRevealClick} />}
-
-            {deadlinePassed && riff.deadline && riff.status !== "REVEALED" && (
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "14px",
-                  fontWeight: 700,
-                  color: "#DC2626",
-                  margin: 0,
-                }}
-              >
-                Time&apos;s up!
-              </p>
-            )}
           </div>
         </div>
 
