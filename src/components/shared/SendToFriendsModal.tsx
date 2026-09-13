@@ -34,7 +34,6 @@ export default function SendToFriendsModal({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sentCount, setSentCount] = useState<number | null>(null);
 
   useEffect(() => {
     fetch(`/api/pieces/${pieceId}/send-candidates`)
@@ -123,7 +122,7 @@ export default function SendToFriendsModal({
         setError(data.error ?? "Failed to send.");
         return;
       }
-      setSentCount(data.sentCount ?? selectedIds.size);
+      onClose();
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
@@ -220,20 +219,6 @@ export default function SendToFriendsModal({
                 {preUnchecked.map((friend) => renderFriendRow(friend))}
               </div>
             </div>
-
-            {sentCount !== null && (
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#000000",
-                  margin: 0,
-                }}
-              >
-                Sent to {sentCount} friend{sentCount === 1 ? "" : "s"}.
-              </p>
-            )}
 
             <PrimaryButton
               onClick={handleSend}
