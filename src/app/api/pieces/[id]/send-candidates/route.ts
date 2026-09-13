@@ -5,8 +5,10 @@ import { getFriends } from "@/lib/friends";
 
 // GET /api/pieces/[id]/send-candidates — friends list for the Share modal's
 // "Send to friends" picker, each annotated with whether they've already
-// read this piece via the riff it was submitted through (if any) so the
-// client can pre-deselect them.
+// been made aware of this piece via the riff it was submitted through (if
+// any) — either by reading it, or by belonging to the club/riff that got
+// the automatic "piece submitted" notification when it was submitted — so
+// the client can pre-deselect them and avoid a redundant email.
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -21,7 +23,7 @@ export async function GET(
         authorId: true,
         riffs: {
           where: { submittedAt: { not: null } },
-          select: { riffId: true },
+          select: { riffId: true, riff: { select: { clubId: true } } },
           orderBy: { submittedAt: "desc" },
           take: 1,
         },
@@ -41,19 +43,38 @@ export async function GET(
 
     const friends = await getFriends(user.id);
 
-    const submittedRiffId = piece.riffs[0]?.riffId ?? null;
-    let alreadyReadIds = new Set<string>();
-    if (submittedRiffId) {
+    const submittedRiff = piece.riffs[0] ?? null;
+    let alreadyNotifiedIds = new Set<string>();
+    if (submittedRiff) {
       const reads = await prisma.pieceRead.findMany({
-        where: { pieceId, riffId: submittedRiffId },
+        where: { pieceId, riffId: submittedRiff.riffId },
         select: { userId: true },
       });
-      alreadyReadIds = new Set(reads.map((r) => r.userId));
+      alreadyNotifiedIds = new Set(reads.map((r) => r.userId));
+
+      // The submit route emails every club member (or every riff
+      // participant, for a clubless riff) the moment a piece is
+      // submitted — so those people already know about it whether or
+      // not they've actually opened it.
+      const memberIds = submittedRiff.riff.clubId
+        ? (
+            await prisma.clubMember.findMany({
+              where: { clubId: submittedRiff.riff.clubId },
+              select: { userId: true },
+            })
+          ).map((m) => m.userId)
+        : (
+            await prisma.riffParticipant.findMany({
+              where: { riffId: submittedRiff.riffId },
+              select: { userId: true },
+            })
+          ).map((p) => p.userId);
+      memberIds.forEach((id) => alreadyNotifiedIds.add(id));
     }
 
     const candidates = friends.map((friend) => ({
       ...friend,
-      alreadyRead: alreadyReadIds.has(friend.id),
+      alreadyNotified: alreadyNotifiedIds.has(friend.id),
     }));
 
     return NextResponse.json({ candidates });

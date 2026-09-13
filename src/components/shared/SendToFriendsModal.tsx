@@ -10,7 +10,7 @@ interface SendCandidate {
   name: string | null;
   username: string | null;
   avatarUrl: string | null;
-  alreadyRead: boolean;
+  alreadyNotified: boolean;
 }
 
 interface SendToFriendsModalProps {
@@ -20,9 +20,11 @@ interface SendToFriendsModalProps {
 }
 
 // Email specific existing friends about a piece they already have
-// Friends-tier access to — no access change, just a heads-up. Friends who
-// already read this piece via the riff it was submitted through start
-// unchecked (computed server-side, see /api/pieces/[id]/send-candidates).
+// Friends-tier access to — no access change, just a heads-up. Friends
+// already made aware of this piece via the riff it was submitted through
+// (they read it, or belong to the club/riff that got the automatic
+// submission email) start unchecked (computed server-side, see
+// /api/pieces/[id]/send-candidates).
 export default function SendToFriendsModal({
   pieceId,
   onClose,
@@ -41,7 +43,7 @@ export default function SendToFriendsModal({
         const list: SendCandidate[] = data.candidates ?? [];
         setCandidates(list);
         setSelectedIds(
-          new Set(list.filter((c) => !c.alreadyRead).map((c) => c.id))
+          new Set(list.filter((c) => !c.alreadyNotified).map((c) => c.id))
         );
       })
       .catch(() => setError("Couldn't load your friends."));
