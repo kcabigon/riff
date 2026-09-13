@@ -58,6 +58,56 @@ export default function SendToFriendsModal({
     });
   };
 
+  // Pre-checked friends lead the list; friends already made aware of this
+  // piece trail below a plain divider — no label needed, the grouping (and
+  // checkbox state) speaks for itself. For a piece with no riff, every
+  // friend lands in preChecked and preUnchecked stays empty, so no divider
+  // renders at all.
+  const preChecked = (candidates ?? []).filter((c) => !c.alreadyNotified);
+  const preUnchecked = (candidates ?? []).filter((c) => c.alreadyNotified);
+
+  const renderFriendRow = (friend: SendCandidate) => (
+    <button
+      key={friend.id}
+      onClick={() => toggleFriend(friend.id)}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "12px",
+        width: "100%",
+        border: "none",
+        background: "none",
+        padding: "8px",
+        cursor: "pointer",
+        textAlign: "left",
+      }}
+    >
+      <div
+        style={{
+          width: "16px",
+          height: "16px",
+          border: "2px solid #000000",
+          backgroundColor: selectedIds.has(friend.id) ? "#00FF66" : "#FFFFFF",
+          flexShrink: 0,
+        }}
+      />
+      <Avatar user={friend} size={32} />
+      <span
+        style={{
+          fontFamily: "var(--font-dm-sans)",
+          fontSize: "16px",
+          fontWeight: 300,
+          color: "#000000",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {friend.name || friend.username || "Friend"}
+      </span>
+    </button>
+  );
+
   const handleSend = async () => {
     if (sending || selectedIds.size === 0) return;
     setSending(true);
@@ -160,49 +210,13 @@ export default function SendToFriendsModal({
                   padding: "4px",
                 }}
               >
-                {candidates.map((friend) => (
-                  <button
-                    key={friend.id}
-                    onClick={() => toggleFriend(friend.id)}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "12px",
-                      width: "100%",
-                      border: "none",
-                      background: "none",
-                      padding: "8px",
-                      cursor: "pointer",
-                      textAlign: "left",
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: "16px",
-                        height: "16px",
-                        border: "2px solid #000000",
-                        backgroundColor: selectedIds.has(friend.id)
-                          ? "#00FF66"
-                          : "#FFFFFF",
-                        flexShrink: 0,
-                      }}
-                    />
-                    <Avatar user={friend} size={32} />
-                    <span
-                      style={{
-                        fontFamily: "var(--font-dm-sans)",
-                        fontSize: "16px",
-                        fontWeight: 300,
-                        color: "#000000",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {friend.name || friend.username || "Friend"}
-                    </span>
-                  </button>
-                ))}
+                {preChecked.map((friend) => renderFriendRow(friend))}
+                {preChecked.length > 0 && preUnchecked.length > 0 && (
+                  <div
+                    style={{ borderTop: "1px solid #E6E6E6", margin: "4px" }}
+                  />
+                )}
+                {preUnchecked.map((friend) => renderFriendRow(friend))}
               </div>
             </div>
 
