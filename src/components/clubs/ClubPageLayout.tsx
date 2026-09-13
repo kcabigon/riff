@@ -1516,7 +1516,7 @@ export default function ClubPageLayout({
           if (otherClub) {
             router.push(`/clubs/${otherClub.id}`);
           } else {
-            router.push("/my-riffs");
+            router.push("/home");
           }
         }}
         clubId={club.id}
@@ -1541,7 +1541,7 @@ export default function ClubPageLayout({
           if (otherClub) {
             router.push(`/clubs/${otherClub.id}`);
           } else {
-            router.push("/my-riffs");
+            router.push("/home");
           }
         }}
         clubId={club.id}

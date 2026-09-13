@@ -80,7 +80,7 @@ export default function NavBar({
           {/* Logo — wordmark treatment matches LandingNavBar's icon +
               "Riff" lockup. */}
           <Link
-            href="/my-riffs"
+            href="/home"
             style={{
               display: "flex",
               alignItems: "center",

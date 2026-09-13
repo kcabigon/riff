@@ -19,7 +19,7 @@ export default async function OnboardingPage() {
   });
 
   if (user?.onboardingCompleted) {
-    redirect("/my-riffs");
+    redirect("/home");
   }
 
   // Redirect to appropriate step. CLUB_CHOICE/INVITE are dead steps from the
@@ -29,9 +29,9 @@ export default async function OnboardingPage() {
   const step = user?.onboardingStep || "NAME";
   const stepRoutes = {
     NAME: "/onboarding/name",
-    CLUB_CHOICE: "/my-riffs",
-    INVITE: "/my-riffs",
-    COMPLETED: "/my-riffs",
+    CLUB_CHOICE: "/home",
+    INVITE: "/home",
+    COMPLETED: "/home",
   };
 
   redirect(stepRoutes[step as keyof typeof stepRoutes]);
