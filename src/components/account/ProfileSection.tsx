@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Avatar from "@/components/shared/Avatar";
 import PrimaryButton from "@/components/PrimaryButton";
@@ -27,9 +27,34 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [firstNameError, setFirstNameError] = useState("");
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
+  const toastTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const router = useRouter();
 
+  function showToast(message: string, type: "success" | "error") {
+    if (toastTimeout.current) clearTimeout(toastTimeout.current);
+    setToast({ message, type });
+    if (type === "success") {
+      toastTimeout.current = setTimeout(() => setToast(null), 2000);
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      if (toastTimeout.current) clearTimeout(toastTimeout.current);
+    };
+  }, []);
+
   const handleSave = async () => {
+    if (!firstName.trim()) {
+      setFirstNameError("First name is required");
+      return;
+    }
+    setFirstNameError("");
     setIsSaving(true);
     setSaved(false);
 
@@ -49,9 +74,12 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
         setSaved(true);
         router.refresh();
         setTimeout(() => setSaved(false), 2000);
+        showToast("Saved", "success");
+      } else {
+        showToast("Couldn't save changes", "error");
       }
     } catch {
-      // silent
+      showToast("Couldn't save changes", "error");
     } finally {
       setIsSaving(false);
     }
@@ -163,7 +191,11 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
             </label>
             <TextInput
               value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
+              onChange={(e) => {
+                setFirstName(e.target.value);
+                if (firstNameError) setFirstNameError("");
+              }}
+              error={firstNameError}
             />
           </div>
           <div
@@ -218,6 +250,64 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
           {isSaving ? "Saving..." : saved ? "Saved" : "Save changes"}
         </PrimaryButton>
       </div>
+
+      {toast && (
+        <div
+          style={{
+            position: "fixed",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            zIndex: 60,
+            backgroundColor: "#FFFFFF",
+            border: "2px solid #000000",
+            boxShadow: "4px 4px 0px 0px #000000",
+            padding: "10px 14px",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            whiteSpace: "nowrap",
+          }}
+        >
+          <div
+            style={{
+              width: "8px",
+              height: "8px",
+              borderRadius: "50%",
+              flexShrink: 0,
+              background: toast.type === "success" ? "#00FF66" : "#DC2626",
+            }}
+          />
+          <span
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "12px",
+              fontWeight: 300,
+              color: toast.type === "success" ? "#000000" : "#DC2626",
+            }}
+          >
+            {toast.message}
+          </span>
+          {toast.type === "error" && (
+            <button
+              onClick={() => setToast(null)}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: "0 0 0 4px",
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "16px",
+                color: "#808080",
+                lineHeight: 1,
+                flexShrink: 0,
+              }}
+            >
+              ✕
+            </button>
+          )}
+        </div>
+      )}
     </section>
   );
 }
