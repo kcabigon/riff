@@ -77,6 +77,20 @@ export async function POST(
       );
     }
 
+    // Authors don't "read" their own piece — skip silently so a stray call
+    // (deep link, retry) can't create a self-read row that inflates their
+    // Read-by ring (piecesToRead already excludes their own piece).
+    if (pieceRiff.piece.authorId === user.id) {
+      const readCount = await prisma.pieceRead.count({
+        where: { userId: user.id, riffId },
+      });
+      return NextResponse.json({
+        success: true,
+        readCount,
+        totalPieces: riff._count.pieces,
+      });
+    }
+
     // Upsert PieceRead — update readAt on re-visits so "new comments" resets correctly
     await prisma.pieceRead.upsert({
       where: {

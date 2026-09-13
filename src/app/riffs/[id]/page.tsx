@@ -175,8 +175,19 @@ export default async function RiffPage({
       select: { userId: true, pieceId: true, readAt: true },
     });
     const reads = allReads.filter((r) => r.userId === userId);
+
+    // Exclude self-authored-piece reads before counting — navigating to your
+    // own piece creates a PieceRead row too (upsert route no-ops on new ones,
+    // but old rows may already exist), which would double-count against
+    // piecesToRead below (that already subtracts the author's own piece).
+    // Same pattern as my-riffs/page.tsx and clubs/[id]/page.tsx.
+    const pieceAuthorMap: Record<string, string> = {};
+    for (const p of riff.pieces) {
+      pieceAuthorMap[p.piece.id] = p.piece.authorId;
+    }
     const readCountMap: Record<string, number> = {};
     for (const r of allReads) {
+      if (pieceAuthorMap[r.pieceId] === r.userId) continue;
       readCountMap[r.userId] = (readCountMap[r.userId] ?? 0) + 1;
     }
 
