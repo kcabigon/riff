@@ -51,6 +51,12 @@ interface Riff {
   deadline: string | null;
   createdAt: string;
   creatorId: string;
+  creator: {
+    id: string;
+    name: string | null;
+    username: string | null;
+    avatarUrl: string | null;
+  };
   club: {
     id: string;
     name: string;
@@ -700,6 +706,7 @@ export default function MyRiffsClient({
                         deadline: riff.deadline
                           ? new Date(riff.deadline)
                           : null,
+                        creator: riff.creator,
                         participants: riff.participants,
                         pieces: riff.pieces,
                       }}

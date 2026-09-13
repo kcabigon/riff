@@ -29,6 +29,14 @@ export default async function MyRiffsPage() {
                   moderatorId: true,
                 },
               },
+              creator: {
+                select: {
+                  id: true,
+                  name: true,
+                  username: true,
+                  avatarUrl: true,
+                },
+              },
               participants: {
                 include: {
                   user: {
@@ -127,6 +135,14 @@ export default async function MyRiffsPage() {
               bannerImage: true,
               adminId: true,
               moderatorId: true,
+            },
+          },
+          creator: {
+            select: {
+              id: true,
+              name: true,
+              username: true,
+              avatarUrl: true,
             },
           },
           participants: {
@@ -289,6 +305,7 @@ export default async function MyRiffsPage() {
     deadline: r.deadline ? r.deadline.toISOString() : null,
     createdAt: r.createdAt.toISOString(),
     creatorId: r.creatorId,
+    creator: r.creator,
     club: r.club,
     participants: r.participants,
     pieces: r.pieces.map((p) => ({
@@ -306,6 +323,7 @@ export default async function MyRiffsPage() {
     deadline: r.deadline ? r.deadline.toISOString() : null,
     createdAt: r.createdAt.toISOString(),
     creatorId: r.creatorId,
+    creator: r.creator,
     club: r.club,
     participants: r.participants,
     pieces: r.pieces.map((p) => ({

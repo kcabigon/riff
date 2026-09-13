@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import Toast from "@/components/shared/Toast";
 
 // Custom hook for responsive design
 function useWindowWidth() {
@@ -29,11 +30,20 @@ export default function ShareLinkOptions({
   url,
   shareText,
 }: ShareLinkOptionsProps) {
-  const [copySuccess, setCopySuccess] = useState(false);
-  const [showLinkBox, setShowLinkBox] = useState(false);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
+  const toastTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const windowWidth = useWindowWidth();
   const isMobile = windowWidth < 768;
+
+  useEffect(() => {
+    return () => {
+      if (toastTimeout.current) clearTimeout(toastTimeout.current);
+    };
+  }, []);
 
   // Handler: Send a text
   const handleSendText = async () => {
@@ -57,19 +67,16 @@ export default function ShareLinkOptions({
     window.location.href = `sms:?&body=${smsBody}`;
   };
 
-  // Handler: Generate link to share
-  const handleGenerateLink = () => {
-    setShowLinkBox(true);
-  };
-
-  // Copy to clipboard
-  const copyToClipboard = async () => {
+  // Handler: Generate link to share — copies straight to clipboard,
+  // no intermediate URL-preview step.
+  const handleGenerateLink = async () => {
+    if (toastTimeout.current) clearTimeout(toastTimeout.current);
     try {
       await navigator.clipboard.writeText(url);
-      setCopySuccess(true);
-      setTimeout(() => setCopySuccess(false), 2000);
+      setToast({ message: "Copied", type: "success" });
+      toastTimeout.current = setTimeout(() => setToast(null), 2000);
     } catch {
-      console.error("Failed to copy to clipboard");
+      setToast({ message: "Couldn't copy link", type: "error" });
     }
   };
 
@@ -168,38 +175,12 @@ export default function ShareLinkOptions({
         </button>
       </div>
 
-      {/* Show link box when generated */}
-      {showLinkBox && (
-        <div
-          style={{
-            padding: "12px",
-            background: "#F5F5F5",
-            border: "2px solid #000000",
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
-            wordBreak: "break-all",
-            color: "#000000",
-            display: "flex",
-            flexDirection: "column",
-            gap: "8px",
-          }}
-        >
-          <div>{url}</div>
-          <button
-            onClick={copyToClipboard}
-            style={{
-              padding: "8px 16px",
-              background: "#FFFFFF",
-              border: "2px solid #000000",
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              fontWeight: 300,
-              cursor: "pointer",
-            }}
-          >
-            {copySuccess ? "Copied!" : "Copy Link"}
-          </button>
-        </div>
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onDismiss={toast.type === "error" ? () => setToast(null) : undefined}
+        />
       )}
     </div>
   );

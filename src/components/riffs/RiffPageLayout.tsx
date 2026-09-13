@@ -414,7 +414,7 @@ export default function RiffPageLayout({
                     >
                       <span style={{ color: "#808080" }}>Hosted by</span>{" "}
                       <span style={{ fontWeight: 700 }}>
-                        {riff.creator.name || "a Riff writer"}
+                        {riff.creator.name || "User with no name"}
                       </span>
                     </p>
                   </div>

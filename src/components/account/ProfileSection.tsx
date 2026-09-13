@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Avatar from "@/components/shared/Avatar";
 import PrimaryButton from "@/components/PrimaryButton";
 import TextInput from "@/components/TextInput";
 import ImageUploadModal from "@/components/shared/ImageUploadModal";
+import Toast from "@/components/shared/Toast";
 
 interface ProfileSectionProps {
   user: {
@@ -27,9 +28,34 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [firstNameError, setFirstNameError] = useState("");
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
+  const toastTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const router = useRouter();
 
+  function showToast(message: string, type: "success" | "error") {
+    if (toastTimeout.current) clearTimeout(toastTimeout.current);
+    setToast({ message, type });
+    if (type === "success") {
+      toastTimeout.current = setTimeout(() => setToast(null), 2000);
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      if (toastTimeout.current) clearTimeout(toastTimeout.current);
+    };
+  }, []);
+
   const handleSave = async () => {
+    if (!firstName.trim()) {
+      setFirstNameError("First name is required");
+      return;
+    }
+    setFirstNameError("");
     setIsSaving(true);
     setSaved(false);
 
@@ -49,9 +75,12 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
         setSaved(true);
         router.refresh();
         setTimeout(() => setSaved(false), 2000);
+        showToast("Saved", "success");
+      } else {
+        showToast("Couldn't save changes", "error");
       }
     } catch {
-      // silent
+      showToast("Couldn't save changes", "error");
     } finally {
       setIsSaving(false);
     }
@@ -163,7 +192,11 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
             </label>
             <TextInput
               value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
+              onChange={(e) => {
+                setFirstName(e.target.value);
+                if (firstNameError) setFirstNameError("");
+              }}
+              error={firstNameError}
             />
           </div>
           <div
@@ -218,6 +251,14 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
           {isSaving ? "Saving..." : saved ? "Saved" : "Save changes"}
         </PrimaryButton>
       </div>
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onDismiss={toast.type === "error" ? () => setToast(null) : undefined}
+        />
+      )}
     </section>
   );
 }
