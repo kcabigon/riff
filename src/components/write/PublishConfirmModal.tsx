@@ -63,9 +63,9 @@ export default function PublishConfirmModal({
     <PieceConfirmModal
       {...props}
       onConfirm={() => onConfirm(publishDate)}
-      title="Publish your piece"
-      actionLabel="Publish"
-      doneLabel="Published"
+      title="Finish your piece"
+      actionLabel="Finish"
+      doneLabel="Finished"
       disabled={publishDisabled}
       footerExtra={
         !publishDisabled && (
@@ -73,7 +73,7 @@ export default function PublishConfirmModal({
             {isEditingDate ? (
               <input
                 id="publish-date"
-                aria-label="Published date"
+                aria-label="Finished date"
                 type="date"
                 value={publishDate}
                 max={today}
@@ -92,7 +92,7 @@ export default function PublishConfirmModal({
                 onClick={() => setIsEditingDate(true)}
                 style={editLinkStyle}
               >
-                Edit publish date
+                Edit finish date
               </button>
             )}
           </div>
@@ -108,7 +108,7 @@ export default function PublishConfirmModal({
             margin: 0,
           }}
         >
-          This piece will appear on your profile once published. You can edit it
+          This piece will appear on your profile once finished. You can edit it
           anytime.
         </p>
       }
