@@ -451,13 +451,13 @@ export default function ShareModal({
                 value: "friends",
                 label: "Friends",
                 description:
-                  "All club-mates, riff-mates, and friends can view and comment on this piece.",
+                  "All club-mates, riff-mates, and Friends you've exchanged pieces with, can view and comment on this piece.",
               },
               {
                 value: "public",
                 label: "Public",
                 description:
-                  "Anyone with the link can view, in addition to your friends — no login required.",
+                  "Anyone with the link can view — no login required. No commenting.",
               },
             ]}
             onSelect={(value) =>

@@ -192,7 +192,8 @@ export default function SendToFriendsModal({
                 lineHeight: 1.6,
               }}
             >
-              Let specific friends know about this piece by email.
+              They already have access — this just sends a heads-up email with a
+              link.
             </p>
 
             <div
