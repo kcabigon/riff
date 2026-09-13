@@ -33,11 +33,12 @@ export async function POST(req: Request) {
       );
     }
 
-    // riffId/clubId are only present for comments on a riff-submitted piece —
-    // a standalone published piece has neither
-    if ((riffId && !clubId) || (!riffId && clubId)) {
+    // clubId is only present for comments on a club riff — a clubless (open)
+    // riff has riffId but no clubId, and a standalone published piece has
+    // neither. clubId without riffId never corresponds to a real posting flow.
+    if (!riffId && clubId) {
       return NextResponse.json(
-        { error: "riffId and clubId must be provided together" },
+        { error: "clubId requires riffId" },
         { status: 400 }
       );
     }

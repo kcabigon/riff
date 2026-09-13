@@ -265,7 +265,7 @@ export default async function ReadPage({
       }}
       riffId={validRiffId}
       clubId={clubId}
-      disableReadTracking={validRiffId === null}
+      disableReadTracking={validRiffId === null || userId === piece.author.id}
       currentUser={
         currentUser ?? {
           id: userId,
