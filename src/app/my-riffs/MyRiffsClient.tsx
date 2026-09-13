@@ -390,6 +390,15 @@ export default function MyRiffsClient({
     <div className={expanded ? "card-grid-expanded" : "card-grid-collapsed"}>
       {list.map((piece) => {
         const menuItems: DropdownItem[] = [
+          ...(isPieceRevealed(piece)
+            ? [
+                {
+                  type: "action" as const,
+                  label: "Share",
+                  onClick: () => setShareTarget(piece.id),
+                },
+              ]
+            : []),
           {
             type: "action",
             label: "Edit",
@@ -401,15 +410,6 @@ export default function MyRiffsClient({
                   type: "action" as const,
                   label: "Detach",
                   onClick: () => handleDetach(piece.id, piece.riffs[0].riff.id),
-                },
-              ]
-            : []),
-          ...(isPieceRevealed(piece)
-            ? [
-                {
-                  type: "action" as const,
-                  label: "Share",
-                  onClick: () => setShareTarget(piece.id),
                 },
               ]
             : []),

@@ -68,11 +68,6 @@ export default function PiecesGrid({
   const router = useRouter();
 
   const menuItems = (piece: Piece): DropdownItem[] => [
-    {
-      type: "action",
-      label: "Edit",
-      onClick: () => router.push(`/write/${piece.id}`),
-    },
     ...(piece.isRevealed
       ? [
           {
@@ -82,6 +77,11 @@ export default function PiecesGrid({
           },
         ]
       : []),
+    {
+      type: "action",
+      label: "Edit",
+      onClick: () => router.push(`/write/${piece.id}`),
+    },
     { type: "divider" },
     {
       type: "action",
