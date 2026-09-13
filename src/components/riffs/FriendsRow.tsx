@@ -54,7 +54,7 @@ export default function FriendsRow({
             width: "66px",
           }}
         >
-          <Avatar user={friend} size={56} style={{ cursor: "pointer" }} />
+          <Avatar user={friend} size={64} style={{ cursor: "pointer" }} />
           <span
             style={{
               fontFamily: "var(--font-dm-sans)",
@@ -91,8 +91,8 @@ export default function FriendsRow({
         >
           <div
             style={{
-              width: "56px",
-              height: "56px",
+              width: "64px",
+              height: "64px",
               borderRadius: "64px",
               border: "2px dashed #CCCCCC",
               backgroundColor: "#FFFFFF",

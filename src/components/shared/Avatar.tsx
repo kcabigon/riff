@@ -6,7 +6,7 @@ import AdminBadge from "./AdminBadge";
 
 interface AvatarProps {
   user: AvatarUser;
-  size?: 24 | 32 | 40 | 48 | 56 | 120; // Default: 32
+  size?: 24 | 32 | 40 | 48 | 56 | 64 | 120; // Default: 32
   borderColor?: string; // Default: '#000000' (black)
   tag?: string | null; // Optional label (e.g., "H" for host)
   badge?: "admin" | "moderator" | null; // Optional role badge
@@ -184,6 +184,7 @@ function getTextSize(avatarSize: number): number {
     40: 14,
     48: 16,
     56: 18,
+    64: 20,
     120: 32,
   };
   return sizeMap[avatarSize] || 12;
@@ -196,6 +197,7 @@ function getTagSize(avatarSize: number): number {
     40: 22,
     48: 24,
     56: 26,
+    64: 28,
     120: 36,
   };
   return sizeMap[avatarSize] || 20;
@@ -208,6 +210,7 @@ function getTagTextSize(avatarSize: number): number {
     40: 12,
     48: 12,
     56: 12,
+    64: 12,
     120: 14,
   };
   return sizeMap[avatarSize] || 12;
@@ -220,6 +223,7 @@ function getTagTopOffset(avatarSize: number): number {
     40: -11,
     48: -12,
     56: -13,
+    64: -14,
     120: -18,
   };
   return sizeMap[avatarSize] || -10;

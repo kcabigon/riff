@@ -422,7 +422,7 @@ export default function JoinRiffClient({
             </h2>
 
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <Avatar user={riff.creator} size={56} />
+              <Avatar user={riff.creator} size={64} />
               <div
                 style={{ display: "flex", flexDirection: "column", gap: "2px" }}
               >
