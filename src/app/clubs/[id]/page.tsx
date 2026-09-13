@@ -127,7 +127,7 @@ export default async function ClubPage({
       redirect(`/clubs/${anyMembership.club.id}`);
     }
 
-    redirect("/my-riffs");
+    redirect("/home");
   }
 
   // joinedAt is available from the members list already fetched above

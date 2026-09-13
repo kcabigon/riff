@@ -109,7 +109,7 @@ export default function LandingNavBar({
                   {
                     type: "action",
                     label: "Home",
-                    onClick: () => router.push("/my-riffs"),
+                    onClick: () => router.push("/home"),
                   },
                   {
                     type: "action",
@@ -244,7 +244,7 @@ export default function LandingNavBar({
             <button
               onClick={() => {
                 closeDrawer();
-                router.push("/my-riffs");
+                router.push("/home");
               }}
               style={drawerLinkStyle}
             >

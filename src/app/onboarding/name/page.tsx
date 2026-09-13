@@ -43,7 +43,7 @@ export default function OnboardingNamePage() {
       }
 
       // Success - onboarding is complete, home is My Riffs
-      router.push("/my-riffs");
+      router.push("/home");
     } catch (err: any) {
       console.error("Error saving name:", err);
       setError(err.message || "Something went wrong. Please try again.");

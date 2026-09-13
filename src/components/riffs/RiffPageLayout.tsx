@@ -792,7 +792,7 @@ export default function RiffPageLayout({
           onClose={() => setIsDeleteModalOpen(false)}
           onDeleted={() => {
             setIsDeleteModalOpen(false);
-            router.push(riff.clubId ? `/clubs/${riff.clubId}` : "/my-riffs");
+            router.push(riff.clubId ? `/clubs/${riff.clubId}` : "/home");
           }}
           riffId={riff.id}
           riffTitle={getRiffDisplayTitle(riff, predictedVolumeNumber)}
