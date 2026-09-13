@@ -20,6 +20,7 @@ import CoverImageModal from "@/components/write/CoverImageModal";
 import SubmitConfirmModal from "@/components/write/SubmitConfirmModal";
 import PublishConfirmModal from "@/components/write/PublishConfirmModal";
 import ShareModal from "@/components/profile/ShareModal";
+import Toast from "@/components/shared/Toast";
 import PieceActionCTA from "@/components/write/PieceActionCTA";
 import { convertHeicToJpeg, isHeicFile } from "@/lib/convert-heic";
 import NoiseBackground from "@/components/NoiseBackground";
@@ -677,86 +678,16 @@ export default function WritePage({ piece, hasFriends }: WritePageProps) {
       </div>
 
       {/* Image paste status toast */}
-      {(isUploadingImage || imageError) && (
-        <div
-          style={{
-            position: "fixed",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            zIndex: 60,
-            backgroundColor: "#FFFFFF",
-            border: "2px solid #000000",
-            boxShadow: "4px 4px 0px 0px #000000",
-            padding: "10px 14px",
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {isUploadingImage ? (
-            <>
-              <div
-                style={{
-                  width: "8px",
-                  height: "8px",
-                  borderRadius: "50%",
-                  background: "#EECF01",
-                  animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-                }}
-              />
-              <span
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "12px",
-                  fontWeight: 300,
-                  color: "#000",
-                }}
-              >
-                Uploading image...
-              </span>
-            </>
-          ) : (
-            <>
-              <div
-                style={{
-                  width: "8px",
-                  height: "8px",
-                  borderRadius: "50%",
-                  background: "#DC2626",
-                  flexShrink: 0,
-                }}
-              />
-              <span
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "12px",
-                  fontWeight: 300,
-                  color: "#DC2626",
-                }}
-              >
-                {imageError}
-              </span>
-              <button
-                onClick={() => setImageError(null)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  padding: "0 0 0 4px",
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  color: "#808080",
-                  lineHeight: 1,
-                  flexShrink: 0,
-                }}
-              >
-                ×
-              </button>
-            </>
-          )}
-        </div>
+      {isUploadingImage ? (
+        <Toast message="Uploading image..." type="loading" />
+      ) : (
+        imageError && (
+          <Toast
+            message={imageError}
+            type="error"
+            onDismiss={() => setImageError(null)}
+          />
+        )
       )}
 
       {/* Content area */}

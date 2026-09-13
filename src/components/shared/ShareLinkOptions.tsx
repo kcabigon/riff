@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import Toast from "@/components/shared/Toast";
 
 // Custom hook for responsive design
 function useWindowWidth() {
@@ -29,7 +30,10 @@ export default function ShareLinkOptions({
   url,
   shareText,
 }: ShareLinkOptionsProps) {
-  const [toast, setToast] = useState(false);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
   const toastTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const windowWidth = useWindowWidth();
@@ -66,13 +70,13 @@ export default function ShareLinkOptions({
   // Handler: Generate link to share — copies straight to clipboard,
   // no intermediate URL-preview step.
   const handleGenerateLink = async () => {
+    if (toastTimeout.current) clearTimeout(toastTimeout.current);
     try {
       await navigator.clipboard.writeText(url);
-      if (toastTimeout.current) clearTimeout(toastTimeout.current);
-      setToast(true);
-      toastTimeout.current = setTimeout(() => setToast(false), 2000);
+      setToast({ message: "Copied", type: "success" });
+      toastTimeout.current = setTimeout(() => setToast(null), 2000);
     } catch {
-      console.error("Failed to copy to clipboard");
+      setToast({ message: "Couldn't copy link", type: "error" });
     }
   };
 
@@ -172,43 +176,11 @@ export default function ShareLinkOptions({
       </div>
 
       {toast && (
-        <div
-          style={{
-            position: "fixed",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            zIndex: 60,
-            backgroundColor: "#FFFFFF",
-            border: "2px solid #000000",
-            boxShadow: "4px 4px 0px 0px #000000",
-            padding: "10px 14px",
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-            whiteSpace: "nowrap",
-          }}
-        >
-          <div
-            style={{
-              width: "8px",
-              height: "8px",
-              borderRadius: "50%",
-              flexShrink: 0,
-              background: "#00FF66",
-            }}
-          />
-          <span
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "12px",
-              fontWeight: 300,
-              color: "#000000",
-            }}
-          >
-            Copied
-          </span>
-        </div>
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onDismiss={toast.type === "error" ? () => setToast(null) : undefined}
+        />
       )}
     </div>
   );
