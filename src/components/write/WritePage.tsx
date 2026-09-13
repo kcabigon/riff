@@ -76,9 +76,10 @@ interface WritePageProps {
     publishedAt: string | null;
     riffs: RiffConnection[];
   };
+  hasFriends: boolean;
 }
 
-export default function WritePage({ piece }: WritePageProps) {
+export default function WritePage({ piece, hasFriends }: WritePageProps) {
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "unsaved">(
     "saved"
   );
@@ -1031,6 +1032,7 @@ export default function WritePage({ piece }: WritePageProps) {
           pieceTitle={title}
           isRevealed
           existingShare={null}
+          initialView={hasFriends ? "send" : "invite"}
           onShareCreated={() => {}}
           onShareRevoked={() => {}}
           onClose={() => {

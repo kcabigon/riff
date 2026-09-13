@@ -19,6 +19,7 @@ interface ShareModalProps {
   pieceTitle?: string | null;
   isRevealed: boolean;
   existingShare: PublicShare | null;
+  initialView?: "main" | "invite" | "send";
   onClose: () => void;
   onShareCreated: (share: PublicShare) => void;
   onShareRevoked: () => void;
@@ -300,6 +301,7 @@ export default function ShareModal({
   pieceTitle = null,
   isRevealed,
   existingShare,
+  initialView = "main",
   onClose,
   onShareCreated,
   onShareRevoked,
@@ -308,7 +310,7 @@ export default function ShareModal({
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [view, setView] = useState<"main" | "invite" | "send">("main");
+  const [view, setView] = useState<"main" | "invite" | "send">(initialView);
 
   const isPublic = share !== null;
   const publicDisabled = !isRevealed;
