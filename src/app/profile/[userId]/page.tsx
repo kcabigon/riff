@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
-import { isFriendOf } from "@/lib/friends";
+import { isFriendOf, getFriends } from "@/lib/friends";
 import { getPieceDisplayDate } from "@/lib/riff-utils";
 import ProfilePage from "@/components/profile/ProfilePage";
 
@@ -79,6 +79,12 @@ export default async function ProfilePageRoute({
   const isOwnProfile = currentUserId === userId;
   const viewerHasAccess =
     isOwnProfile || (await isFriendOf(currentUserId, userId));
+
+  // Only the owner can open Share (see PiecesGrid's isOwnProfile gate on
+  // the 3-dot menu), so skip the query entirely when viewing someone else.
+  const hasFriends = isOwnProfile
+    ? (await getFriends(currentUserId)).length > 0
+    : false;
 
   // Fetch pieces by this user — either submitted to a riff, or published
   // standalone (riff-less) — with riff status + club to determine visibility
@@ -159,6 +165,7 @@ export default async function ProfilePageRoute({
       stats={{ pieceCount, totalWordCount }}
       pieces={pieces}
       isOwnProfile={isOwnProfile}
+      hasFriends={hasFriends}
       currentClub={currentClub}
     />
   );

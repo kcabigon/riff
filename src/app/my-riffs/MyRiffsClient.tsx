@@ -571,6 +571,7 @@ export default function MyRiffsClient({
               pieceId={piece.id}
               pieceTitle={piece.title}
               isRevealed={isPieceRevealed(piece)}
+              hasFriends={friends.length > 0}
               existingShare={
                 piece.publicShareId
                   ? {

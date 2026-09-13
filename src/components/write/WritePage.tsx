@@ -1031,6 +1031,7 @@ export default function WritePage({ piece, hasFriends }: WritePageProps) {
           pieceId={piece.id}
           pieceTitle={title}
           isRevealed
+          hasFriends={hasFriends}
           existingShare={null}
           initialView={hasFriends ? "send" : "invite"}
           onShareCreated={() => {}}

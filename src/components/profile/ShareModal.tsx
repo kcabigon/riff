@@ -18,6 +18,7 @@ interface ShareModalProps {
   pieceId: string;
   pieceTitle?: string | null;
   isRevealed: boolean;
+  hasFriends: boolean;
   existingShare: PublicShare | null;
   initialView?: "main" | "invite" | "send";
   onClose: () => void;
@@ -300,6 +301,7 @@ export default function ShareModal({
   pieceId,
   pieceTitle = null,
   isRevealed,
+  hasFriends,
   existingShare,
   initialView = "main",
   onClose,
@@ -423,7 +425,11 @@ export default function ShareModal({
           <div
             style={{ display: "flex", flexDirection: "column", gap: "12px" }}
           >
-            <CTARow label="Send to friends" onClick={() => setView("send")} />
+            <CTARow
+              label="Send to friends"
+              disabled={!hasFriends}
+              onClick={() => setView("send")}
+            />
             <CTARow
               label="Invite a new friend"
               disabled={publicDisabled}
