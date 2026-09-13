@@ -24,13 +24,13 @@ export default async function PostLoginPage() {
     const step = user?.onboardingStep || "NAME";
     const stepRoutes: Record<string, string> = {
       NAME: "/onboarding/name",
-      CLUB_CHOICE: "/my-riffs",
-      INVITE: "/my-riffs",
-      COMPLETED: "/my-riffs",
+      CLUB_CHOICE: "/home",
+      INVITE: "/home",
+      COMPLETED: "/home",
     };
     redirect(stepRoutes[step] || "/onboarding/name");
   }
 
   // Home is My Riffs for everyone, club membership or not.
-  redirect("/my-riffs");
+  redirect("/home");
 }

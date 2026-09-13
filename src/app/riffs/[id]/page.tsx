@@ -180,7 +180,7 @@ export default async function RiffPage({
     // own piece creates a PieceRead row too (upsert route no-ops on new ones,
     // but old rows may already exist), which would double-count against
     // piecesToRead below (that already subtracts the author's own piece).
-    // Same pattern as my-riffs/page.tsx and clubs/[id]/page.tsx.
+    // Same pattern as home/page.tsx and clubs/[id]/page.tsx.
     const pieceAuthorMap: Record<string, string> = {};
     for (const p of riff.pieces) {
       pieceAuthorMap[p.piece.id] = p.piece.authorId;

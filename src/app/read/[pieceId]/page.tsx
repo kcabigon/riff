@@ -283,7 +283,7 @@ export default async function ReadPage({
       backHref={
         !validRiffId
           ? userId === piece.author.id
-            ? "/my-riffs"
+            ? "/home"
             : `/profile/${piece.author.id}`
           : undefined
       }
