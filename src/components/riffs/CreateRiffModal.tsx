@@ -152,7 +152,7 @@ export default function CreateRiffModal({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title={clubId ? "Let's riff" : "Riff with friends"}
+      title={clubId ? "Let's riff" : "Let's riff!"}
     >
       <form onSubmit={handleSubmit}>
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
