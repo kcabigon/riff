@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Modal from "@/components/shared/Modal";
 import Avatar from "@/components/shared/Avatar";
 import PrimaryButton from "@/components/PrimaryButton";
+import BackLink from "@/components/shared/BackLink";
 
 interface SendCandidate {
   id: string;
@@ -230,26 +231,7 @@ export default function SendToFriendsModal({
           </>
         )}
 
-        {onBack && (
-          <div style={{ textAlign: "center" }}>
-            <button
-              onClick={onBack}
-              style={{
-                backgroundColor: "#FFFFFF",
-                border: "none",
-                cursor: "pointer",
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "12px",
-                fontWeight: 300,
-                color: "#808080",
-                padding: "4px 12px",
-                textDecoration: "underline",
-              }}
-            >
-              Back
-            </button>
-          </div>
-        )}
+        {onBack && <BackLink onClick={onBack} />}
       </div>
     </Modal>
   );

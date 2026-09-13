@@ -2,6 +2,7 @@
 
 import Modal from "@/components/shared/Modal";
 import ShareLinkOptions from "@/components/shared/ShareLinkOptions";
+import BackLink from "@/components/shared/BackLink";
 
 interface InvitePieceModalProps {
   pieceId: string;
@@ -44,26 +45,7 @@ export default function InvitePieceModal({
           comment on this piece, and all your other pieces by default.
         </p>
         <ShareLinkOptions url={joinUrl} shareText="Let's riff!" />
-        {onBack && (
-          <div style={{ textAlign: "center" }}>
-            <button
-              onClick={onBack}
-              style={{
-                backgroundColor: "#FFFFFF",
-                border: "none",
-                cursor: "pointer",
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "12px",
-                fontWeight: 300,
-                color: "#808080",
-                padding: "4px 12px",
-                textDecoration: "underline",
-              }}
-            >
-              Back
-            </button>
-          </div>
-        )}
+        {onBack && <BackLink onClick={onBack} />}
       </div>
     </Modal>
   );

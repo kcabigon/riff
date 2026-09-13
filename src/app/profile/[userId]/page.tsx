@@ -80,42 +80,43 @@ export default async function ProfilePageRoute({
   const viewerHasAccess =
     isOwnProfile || (await isFriendOf(currentUserId, userId));
 
-  // Only the owner can open Share (see PiecesGrid's isOwnProfile gate on
-  // the 3-dot menu), so skip the query entirely when viewing someone else.
-  const hasFriends = isOwnProfile
-    ? (await getFriends(currentUserId)).length > 0
-    : false;
-
   // Fetch pieces by this user — either submitted to a riff, or published
-  // standalone (riff-less) — with riff status + club to determine visibility
-  const rawPieces = await prisma.piece.findMany({
-    where: {
-      authorId: userId,
-      OR: [
-        { riffs: { some: { submittedAt: { not: null } } } },
-        { publishedAt: { not: null } },
-      ],
-    },
-    select: {
-      id: true,
-      title: true,
-      coverImage: true,
-      wordCount: true,
-      publishedAt: true,
-      riffs: {
-        where: { submittedAt: { not: null } },
-        select: {
-          submittedAt: true,
-          riff: { select: { status: true } },
+  // standalone (riff-less) — with riff status + club to determine visibility.
+  // Runs alongside the friends check below — independent of each other.
+  const [friends, rawPieces] = await Promise.all([
+    // Only the owner can open Share (see PiecesGrid's isOwnProfile gate on
+    // the 3-dot menu), so skip the query entirely when viewing someone else.
+    isOwnProfile ? getFriends(currentUserId) : Promise.resolve([]),
+    prisma.piece.findMany({
+      where: {
+        authorId: userId,
+        OR: [
+          { riffs: { some: { submittedAt: { not: null } } } },
+          { publishedAt: { not: null } },
+        ],
+      },
+      select: {
+        id: true,
+        title: true,
+        coverImage: true,
+        wordCount: true,
+        publishedAt: true,
+        riffs: {
+          where: { submittedAt: { not: null } },
+          select: {
+            submittedAt: true,
+            riff: { select: { status: true } },
+          },
+        },
+        newShares: {
+          where: { shareType: "PUBLIC" },
+          select: { id: true },
+          take: 1,
         },
       },
-      newShares: {
-        where: { shareType: "PUBLIC" },
-        select: { id: true },
-        take: 1,
-      },
-    },
-  });
+    }),
+  ]);
+  const hasFriends = friends.length > 0;
 
   const latestActivity = (p: (typeof rawPieces)[number]) =>
     p.publishedAt
