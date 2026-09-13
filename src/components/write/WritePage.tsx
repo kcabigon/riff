@@ -635,7 +635,7 @@ export default function WritePage({ piece, hasFriends }: WritePageProps) {
               {piece.riffs.length === 0 && (
                 <PieceActionCTA
                   isDone={isPublished}
-                  label="Cover + Publish"
+                  label="Cover + Finish"
                   isMobile={isMobile}
                   onOpenModal={() => {
                     if (coverImage) {
