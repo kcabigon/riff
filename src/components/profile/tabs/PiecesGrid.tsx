@@ -68,20 +68,20 @@ export default function PiecesGrid({
   const router = useRouter();
 
   const menuItems = (piece: Piece): DropdownItem[] => [
+    ...(piece.isRevealed
+      ? [
+          {
+            type: "action" as const,
+            label: "Share",
+            onClick: () => onShare(piece.id),
+          },
+        ]
+      : []),
     {
       type: "action",
       label: "Edit",
       onClick: () => router.push(`/write/${piece.id}`),
     },
-    ...(piece.isRevealed
-      ? [
-          {
-            type: "action" as const,
-            label: "Access",
-            onClick: () => onShare(piece.id),
-          },
-        ]
-      : []),
     { type: "divider" },
     {
       type: "action",

@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Modal from "@/components/shared/Modal";
 import { CopyIcon, CheckIcon, OpenLinkIcon } from "@/components/shared/icons";
-import IconButton from "@/components/shared/IconButton";
+import InvitePieceModal from "@/components/shared/InvitePieceModal";
+import SendToFriendsModal from "@/components/shared/SendToFriendsModal";
+import Tagline from "@/components/Tagline";
 
 export interface PublicShare {
   id: string;
@@ -13,33 +16,294 @@ export interface PublicShare {
 
 interface ShareModalProps {
   pieceId: string;
+  pieceTitle?: string | null;
   isRevealed: boolean;
+  hasFriends: boolean;
   existingShare: PublicShare | null;
+  initialView?: "main" | "invite" | "send";
   onClose: () => void;
   onShareCreated: (share: PublicShare) => void;
   onShareRevoked: () => void;
 }
 
-function SelectionDot({ selected }: { selected: boolean }) {
+// A row that navigates to a dedicated sub-modal (Google Docs' pattern —
+// the entry modal just lists options, each opens its own screen on
+// intention rather than expanding everything inline). Styled like the
+// app's menu convention (Dropdown/ThreeDotButton) rather than CTAButton —
+// these are disclosure rows, not decisive commit actions, so no heavy
+// shadow, just a border and a hover fill.
+function CTARow({
+  label,
+  disabled,
+  onClick,
+}: {
+  label: string;
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  const [hovered, setHovered] = useState(false);
   return (
-    <div
+    <button
+      disabled={disabled}
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{
-        width: "14px",
-        height: "14px",
-        borderRadius: "64px",
+        width: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: "12px",
+        padding: "16px",
         border: "2px solid #000000",
-        backgroundColor: selected ? "#00FF66" : "#FFFFFF",
-        flexShrink: 0,
-        marginTop: "2px",
+        backgroundColor: hovered && !disabled ? "#F5F5F5" : "#FFFFFF",
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.45 : 1,
+        textAlign: "left",
       }}
-    />
+    >
+      <span
+        style={{
+          fontFamily: "var(--font-dm-sans)",
+          fontSize: "16px",
+          fontWeight: 300,
+        }}
+      >
+        {label}
+      </span>
+      <Image
+        src="/icons/arrow_down.svg"
+        alt=""
+        width={16}
+        height={16}
+        style={{ transform: "rotate(-90deg)", flexShrink: 0 }}
+      />
+    </button>
+  );
+}
+
+// Copy/View are low-stakes, repeatable utility actions rather than a
+// single decisive commit — same reasoning as CTARow above, so they get
+// the same light border + hover-fill treatment instead of a heavy shadow.
+function AccessActionButton({
+  children,
+  onClick,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        flex: 1,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "8px",
+        padding: "10px 16px",
+        border: "2px solid #000000",
+        backgroundColor: hovered ? "#F5F5F5" : "#FFFFFF",
+        cursor: "pointer",
+        fontFamily: "var(--font-dm-sans)",
+        fontSize: "16px",
+        fontWeight: 300,
+        color: "#000000",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+interface AccessOption {
+  value: "friends" | "public";
+  label: string;
+  description: string;
+}
+
+// Custom (not the shared Dropdown) because each option needs its own
+// description line, like the CTA rows above. Opens upward — this sits at
+// the bottom of the modal, and the shared Dropdown's menu isn't portaled,
+// so opening downward here would get clipped by Modal's own
+// overflow-y: auto on the dialog. Trigger styled like the CTA rows above
+// (border + hover fill, no heavy shadow) — it's a disclosure trigger, not
+// a commit action; the menu panel itself keeps the lighter brutal-half
+// shadow that matches the app's other dropdown menus.
+function AccessDropdown({
+  value,
+  options,
+  onSelect,
+}: {
+  value: AccessOption["value"];
+  options: AccessOption[];
+  onSelect: (value: AccessOption["value"]) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [triggerHovered, setTriggerHovered] = useState(false);
+  const [hoveredOption, setHoveredOption] = useState<string | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
+  const current = options.find((o) => o.value === value) ?? options[0];
+
+  useEffect(() => {
+    if (!open) return;
+    const handlePointer = (e: PointerEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", handlePointer);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointer);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button
+        onClick={() => setOpen((prev) => !prev)}
+        onMouseEnter={() => setTriggerHovered(true)}
+        onMouseLeave={() => setTriggerHovered(false)}
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "12px 16px",
+          border: "2px solid #000000",
+          backgroundColor: open || triggerHovered ? "#F5F5F5" : "#FFFFFF",
+          cursor: "pointer",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "16px",
+            fontWeight: 300,
+          }}
+        >
+          {current.label}
+        </span>
+        <Image
+          src="/icons/arrow_down.svg"
+          alt=""
+          width={16}
+          height={16}
+          style={{ transform: open ? "rotate(180deg)" : "none" }}
+        />
+      </button>
+
+      {open && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: "calc(100% + 8px)",
+            left: 0,
+            right: 0,
+            backgroundColor: "#FFFFFF",
+            border: "2px solid #000000",
+            boxShadow: "4px 4px 0px 0px #000000",
+            zIndex: 60,
+          }}
+        >
+          {options.map((option) => {
+            // Friends is the ambient baseline and Public is additive on top
+            // of it (never a replacement), so Friends stays visually
+            // checked even once Public is also active — this hardcodes
+            // that additive relationship rather than treating the two as
+            // mutually exclusive. Revisit once a subtractive Private tier
+            // ships alongside these two.
+            const isSelected =
+              option.value === "friends" || option.value === value;
+            return (
+              <button
+                key={option.value}
+                onClick={() => {
+                  onSelect(option.value);
+                  setOpen(false);
+                }}
+                onMouseEnter={() => setHoveredOption(option.value)}
+                onMouseLeave={() => setHoveredOption(null)}
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: "12px",
+                  width: "100%",
+                  border: "none",
+                  borderBottom:
+                    option === options[options.length - 1]
+                      ? "none"
+                      : "1px solid #E6E6E6",
+                  backgroundColor: isSelected
+                    ? "#F5F5F5"
+                    : hoveredOption === option.value
+                      ? "#F5F5F5"
+                      : "#FFFFFF",
+                  padding: "16px",
+                  cursor: "pointer",
+                  textAlign: "left",
+                }}
+              >
+                <div
+                  style={{
+                    width: "14px",
+                    height: "14px",
+                    borderRadius: "64px",
+                    border: "2px solid #000000",
+                    backgroundColor: isSelected ? "#00FF66" : "#FFFFFF",
+                    flexShrink: 0,
+                    marginTop: "2px",
+                  }}
+                />
+                <div>
+                  <p
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "16px",
+                      fontWeight: 700,
+                      color: "#000000",
+                      margin: "0 0 4px 0",
+                    }}
+                  >
+                    {option.label}
+                  </p>
+                  <p
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "16px",
+                      fontWeight: 300,
+                      color: "#000000",
+                      margin: 0,
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    {option.description}
+                  </p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 
 export default function ShareModal({
   pieceId,
+  pieceTitle = null,
   isRevealed,
+  hasFriends,
   existingShare,
+  initialView = "main",
   onClose,
   onShareCreated,
   onShareRevoked,
@@ -48,10 +312,10 @@ export default function ShareModal({
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [privateHovered, setPrivateHovered] = useState(false);
-  const [publicHovered, setPublicHovered] = useState(false);
+  const [view, setView] = useState<"main" | "invite" | "send">(initialView);
 
   const isPublic = share !== null;
+  const publicDisabled = !isRevealed;
 
   const publicUrl =
     typeof window !== "undefined"
@@ -60,6 +324,10 @@ export default function ShareModal({
 
   const handleMakePublic = async () => {
     if (loading || isPublic) return;
+    if (publicDisabled) {
+      setError("Only revealed pieces can be shared publicly.");
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -82,7 +350,7 @@ export default function ShareModal({
     }
   };
 
-  const handleMakePrivate = async () => {
+  const handleMakeFriendsOnly = async () => {
     if (loading || !share) return;
     setLoading(true);
     setError(null);
@@ -92,7 +360,7 @@ export default function ShareModal({
       });
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error ?? "Failed to make private.");
+        setError(data.error ?? "Failed to update access.");
         return;
       }
       setShare(null);
@@ -118,188 +386,119 @@ export default function ShareModal({
     window.open(publicUrl, "_blank", "noopener,noreferrer");
   };
 
-  const publicDisabled = !isRevealed;
+  if (view === "invite") {
+    return (
+      <InvitePieceModal
+        pieceId={pieceId}
+        pieceTitle={pieceTitle}
+        onClose={onClose}
+        onBack={() => setView("main")}
+      />
+    );
+  }
+
+  if (view === "send") {
+    return (
+      <SendToFriendsModal
+        pieceId={pieceId}
+        onClose={onClose}
+        onBack={() => setView("main")}
+      />
+    );
+  }
 
   return (
-    <Modal isOpen onClose={onClose} title="Piece access" size="sm">
-      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-        {/* Private option */}
-        <button
-          onClick={handleMakePrivate}
-          disabled={loading || !isPublic}
-          onMouseEnter={() => {
-            if (isPublic && !loading) setPrivateHovered(true);
-          }}
-          onMouseLeave={() => setPrivateHovered(false)}
-          style={{
-            display: "flex",
-            alignItems: "flex-start",
-            gap: "12px",
-            width: "100%",
-            border: !isPublic ? "2px solid #000000" : "2px solid #CCCCCC",
-            backgroundColor: "#FFFFFF",
-            padding: "16px",
-            cursor: isPublic && !loading ? "pointer" : "default",
-            textAlign: "left",
-            boxShadow: !isPublic
-              ? "4px 4px 0px 0px #000000"
-              : privateHovered
-                ? "4px 4px 0px 0px #01EFFC"
-                : "none",
-            transition: "none",
-          }}
-        >
-          <SelectionDot selected={!isPublic} />
-          <div>
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 700,
-                color: "#000000",
-                margin: "0 0 4px 0",
-              }}
-            >
-              Friends
-            </p>
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "12px",
-                fontWeight: 300,
-                color: "#000000",
-                margin: 0,
-                lineHeight: 1.5,
-              }}
-            >
-              All club-mates and riff-mates can view and comment on this piece.
-            </p>
+    <Modal isOpen onClose={onClose} title="Share" size="sm">
+      <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+        {/* Send */}
+        <div>
+          <div style={{ marginBottom: "12px" }}>
+            <Tagline
+              text="Send"
+              color="#00FF66"
+              textColor="#000000"
+              fontSize={16}
+              width={64}
+              align="left"
+            />
           </div>
-        </button>
-
-        {/* Public option */}
-        <button
-          onClick={handleMakePublic}
-          disabled={loading || isPublic || publicDisabled}
-          onMouseEnter={() => {
-            if (!isPublic && !loading && !publicDisabled)
-              setPublicHovered(true);
-          }}
-          onMouseLeave={() => setPublicHovered(false)}
-          style={{
-            display: "flex",
-            alignItems: "flex-start",
-            gap: "12px",
-            width: "100%",
-            border: isPublic ? "2px solid #000000" : "2px solid #CCCCCC",
-            backgroundColor: "#FFFFFF",
-            padding: "16px",
-            cursor:
-              !isPublic && !loading && !publicDisabled ? "pointer" : "default",
-            textAlign: "left",
-            boxShadow: isPublic
-              ? "4px 4px 0px 0px #000000"
-              : publicHovered
-                ? "4px 4px 0px 0px #01EFFC"
-                : "none",
-            opacity: publicDisabled ? 0.45 : 1,
-            transition: "none",
-          }}
-        >
-          <SelectionDot selected={isPublic} />
-          <div>
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 700,
-                color: "#000000",
-                margin: "0 0 4px 0",
-              }}
-            >
-              Public
-            </p>
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "12px",
-                fontWeight: 300,
-                color: "#000000",
-                margin: 0,
-                lineHeight: 1.5,
-              }}
-            >
-              {publicDisabled
-                ? "Only revealed pieces can be shared publicly."
-                : "Generate a public link so anyone with the link can view — no login required."}
-            </p>
-          </div>
-        </button>
-
-        {/* URL box — visible when public */}
-        {isPublic && (
           <div
-            style={{
-              border: "2px solid #000000",
-              backgroundColor: "#FFFFFF",
-              padding: "12px 16px",
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-            }}
+            style={{ display: "flex", flexDirection: "column", gap: "12px" }}
           >
-            <span
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "12px",
-                fontWeight: 400,
-                color: "#000000",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                flex: 1,
-              }}
-            >
-              {publicUrl}
-            </span>
-            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-              <IconButton
-                onClick={handleCopy}
-                ariaLabel={copied ? "Link copied" : "Copy link"}
-              >
-                {(color) =>
-                  copied ? (
-                    <CheckIcon color={color} />
-                  ) : (
-                    <CopyIcon color={color} />
-                  )
-                }
-              </IconButton>
-              <IconButton
-                onClick={handleOpen}
-                ariaLabel="Open public page in new tab"
-              >
-                {(color) => <OpenLinkIcon color={color} />}
-              </IconButton>
-            </div>
+            <CTARow
+              label="Send to friends"
+              disabled={!hasFriends}
+              onClick={() => setView("send")}
+            />
+            <CTARow
+              label="Invite a new friend"
+              disabled={publicDisabled}
+              onClick={() => setView("invite")}
+            />
           </div>
-        )}
+        </div>
 
-        {/* Error */}
-        {error && (
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "12px",
-              fontWeight: 300,
-              color: "#DC2626",
-              margin: 0,
-            }}
-          >
-            {error}
-          </p>
-        )}
+        <div style={{ borderTop: "1px solid #E6E6E6" }} />
+
+        {/* Access */}
+        <div>
+          <div style={{ marginBottom: "12px" }}>
+            <Tagline
+              text="Access"
+              color="#01EFFC"
+              textColor="#000000"
+              fontSize={16}
+              width={88}
+              align="left"
+            />
+          </div>
+          <AccessDropdown
+            value={isPublic ? "public" : "friends"}
+            options={[
+              {
+                value: "friends",
+                label: "Friends",
+                description:
+                  "All club-mates, riff-mates, and Friends you've exchanged pieces with, can view and comment on this piece.",
+              },
+              {
+                value: "public",
+                label: "Public",
+                description:
+                  "Anyone with the link can view — no login required. No commenting.",
+              },
+            ]}
+            onSelect={(value) =>
+              value === "public" ? handleMakePublic() : handleMakeFriendsOnly()
+            }
+          />
+
+          {isPublic && (
+            <div style={{ marginTop: "12px", display: "flex", gap: "12px" }}>
+              <AccessActionButton onClick={handleCopy}>
+                {copied ? <CheckIcon /> : <CopyIcon />}
+                {copied ? "Copied" : "Copy"}
+              </AccessActionButton>
+              <AccessActionButton onClick={handleOpen}>
+                <OpenLinkIcon />
+                View
+              </AccessActionButton>
+            </div>
+          )}
+
+          {error && (
+            <p style={{ ...errorTextStyle, marginTop: "8px" }}>{error}</p>
+          )}
+        </div>
       </div>
     </Modal>
   );
 }
+
+const errorTextStyle: React.CSSProperties = {
+  fontFamily: "var(--font-dm-sans)",
+  fontSize: "12px",
+  fontWeight: 300,
+  color: "#DC2626",
+  margin: 0,
+};

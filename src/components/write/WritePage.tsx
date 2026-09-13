@@ -19,6 +19,7 @@ import BackButton from "@/components/BackButton";
 import CoverImageModal from "@/components/write/CoverImageModal";
 import SubmitConfirmModal from "@/components/write/SubmitConfirmModal";
 import PublishConfirmModal from "@/components/write/PublishConfirmModal";
+import ShareModal from "@/components/profile/ShareModal";
 import PieceActionCTA from "@/components/write/PieceActionCTA";
 import { convertHeicToJpeg, isHeicFile } from "@/lib/convert-heic";
 import NoiseBackground from "@/components/NoiseBackground";
@@ -75,9 +76,10 @@ interface WritePageProps {
     publishedAt: string | null;
     riffs: RiffConnection[];
   };
+  hasFriends: boolean;
 }
 
-export default function WritePage({ piece }: WritePageProps) {
+export default function WritePage({ piece, hasFriends }: WritePageProps) {
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "unsaved">(
     "saved"
   );
@@ -87,6 +89,7 @@ export default function WritePage({ piece }: WritePageProps) {
   const [showCoverModal, setShowCoverModal] = useState(false);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [showLinkModal, setShowLinkModal] = useState(false);
   const linkSelectionRef = useRef<{ from: number; to: number } | null>(null);
   const [mediaEmbed, setMediaEmbed] = useState<{
@@ -1005,8 +1008,7 @@ export default function WritePage({ piece }: WritePageProps) {
             }
             setIsPublished(true);
             setShowPublishModal(false);
-            router.push(`/profile/${piece.authorId}`);
-            router.refresh();
+            setShowShareModal(true);
           }}
           publishDisabled={isPublished}
           onCoverAction={() => {
@@ -1021,6 +1023,23 @@ export default function WritePage({ piece }: WritePageProps) {
             id: piece.id,
             title,
             coverImage,
+          }}
+        />
+      )}
+      {showShareModal && (
+        <ShareModal
+          pieceId={piece.id}
+          pieceTitle={title}
+          isRevealed
+          hasFriends={hasFriends}
+          existingShare={null}
+          initialView={hasFriends ? "send" : "invite"}
+          onShareCreated={() => {}}
+          onShareRevoked={() => {}}
+          onClose={() => {
+            setShowShareModal(false);
+            router.push(`/profile/${piece.authorId}`);
+            router.refresh();
           }}
         />
       )}

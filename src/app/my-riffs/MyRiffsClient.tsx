@@ -390,26 +390,26 @@ export default function MyRiffsClient({
     <div className={expanded ? "card-grid-expanded" : "card-grid-collapsed"}>
       {list.map((piece) => {
         const menuItems: DropdownItem[] = [
+          ...(isPieceRevealed(piece)
+            ? [
+                {
+                  type: "action" as const,
+                  label: "Share",
+                  onClick: () => setShareTarget(piece.id),
+                },
+              ]
+            : []),
           {
             type: "action",
             label: "Edit",
             onClick: () => router.push(`/write/${piece.id}`),
           },
-          ...(piece.riffs.length > 0
+          ...(piece.riffs.length > 0 && !isPieceRevealed(piece)
             ? [
                 {
                   type: "action" as const,
                   label: "Detach",
                   onClick: () => handleDetach(piece.id, piece.riffs[0].riff.id),
-                },
-              ]
-            : []),
-          ...(isPieceRevealed(piece)
-            ? [
-                {
-                  type: "action" as const,
-                  label: "Access",
-                  onClick: () => setShareTarget(piece.id),
                 },
               ]
             : []),
@@ -569,7 +569,9 @@ export default function MyRiffsClient({
           return (
             <ShareModal
               pieceId={piece.id}
+              pieceTitle={piece.title}
               isRevealed={isPieceRevealed(piece)}
+              hasFriends={friends.length > 0}
               existingShare={
                 piece.publicShareId
                   ? {

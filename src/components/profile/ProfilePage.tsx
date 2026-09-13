@@ -30,6 +30,7 @@ interface ProfilePageProps {
   };
   pieces: Piece[];
   isOwnProfile: boolean;
+  hasFriends: boolean;
   currentClub: { id: string; name: string } | null;
 }
 
@@ -40,6 +41,7 @@ export default function ProfilePage({
   currentClub,
   pieces: initialPieces,
   isOwnProfile,
+  hasFriends,
 }: ProfilePageProps) {
   const [pieces, setPieces] = useState(initialPieces);
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -86,7 +88,9 @@ export default function ProfilePage({
           return (
             <ShareModal
               pieceId={piece.id}
+              pieceTitle={piece.title}
               isRevealed={piece.isRevealed}
+              hasFriends={hasFriends}
               existingShare={
                 piece.publicShareId
                   ? {

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
+import { getFriends } from "@/lib/friends";
 import WritePage from "@/components/write/WritePage";
 
 export default async function WritePageRoute({
@@ -17,39 +18,42 @@ export default async function WritePageRoute({
 
   const userId = session.user.id;
 
-  const piece = await prisma.piece.findUnique({
-    where: { id: pieceId },
-    select: {
-      id: true,
-      title: true,
-      subtitle: true,
-      currentContent: true,
-      coverImage: true,
-      authorId: true,
-      publishedAt: true,
-      riffs: {
-        include: {
-          riff: {
-            select: {
-              id: true,
-              title: true,
-              prompt: true,
-              deadline: true,
-              clubId: true,
-              status: true,
-              club: {
-                select: {
-                  name: true,
-                  adminId: true,
-                  admin: { select: { firstName: true } },
+  const [piece, friends] = await Promise.all([
+    prisma.piece.findUnique({
+      where: { id: pieceId },
+      select: {
+        id: true,
+        title: true,
+        subtitle: true,
+        currentContent: true,
+        coverImage: true,
+        authorId: true,
+        publishedAt: true,
+        riffs: {
+          include: {
+            riff: {
+              select: {
+                id: true,
+                title: true,
+                prompt: true,
+                deadline: true,
+                clubId: true,
+                status: true,
+                club: {
+                  select: {
+                    name: true,
+                    adminId: true,
+                    admin: { select: { firstName: true } },
+                  },
                 },
               },
             },
           },
         },
       },
-    },
-  });
+    }),
+    getFriends(userId),
+  ]);
 
   if (!piece) {
     redirect("/");
@@ -79,5 +83,5 @@ export default async function WritePageRoute({
     })),
   };
 
-  return <WritePage piece={serializedPiece} />;
+  return <WritePage piece={serializedPiece} hasFriends={friends.length > 0} />;
 }
