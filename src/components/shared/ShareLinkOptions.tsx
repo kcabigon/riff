@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 
 // Custom hook for responsive design
@@ -29,11 +29,17 @@ export default function ShareLinkOptions({
   url,
   shareText,
 }: ShareLinkOptionsProps) {
-  const [copySuccess, setCopySuccess] = useState(false);
-  const [showLinkBox, setShowLinkBox] = useState(false);
+  const [toast, setToast] = useState(false);
+  const toastTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const windowWidth = useWindowWidth();
   const isMobile = windowWidth < 768;
+
+  useEffect(() => {
+    return () => {
+      if (toastTimeout.current) clearTimeout(toastTimeout.current);
+    };
+  }, []);
 
   // Handler: Send a text
   const handleSendText = async () => {
@@ -57,17 +63,14 @@ export default function ShareLinkOptions({
     window.location.href = `sms:?&body=${smsBody}`;
   };
 
-  // Handler: Generate link to share
-  const handleGenerateLink = () => {
-    setShowLinkBox(true);
-  };
-
-  // Copy to clipboard
-  const copyToClipboard = async () => {
+  // Handler: Generate link to share — copies straight to clipboard,
+  // no intermediate URL-preview step.
+  const handleGenerateLink = async () => {
     try {
       await navigator.clipboard.writeText(url);
-      setCopySuccess(true);
-      setTimeout(() => setCopySuccess(false), 2000);
+      if (toastTimeout.current) clearTimeout(toastTimeout.current);
+      setToast(true);
+      toastTimeout.current = setTimeout(() => setToast(false), 2000);
     } catch {
       console.error("Failed to copy to clipboard");
     }
@@ -168,37 +171,43 @@ export default function ShareLinkOptions({
         </button>
       </div>
 
-      {/* Show link box when generated */}
-      {showLinkBox && (
+      {toast && (
         <div
           style={{
-            padding: "12px",
-            background: "#F5F5F5",
+            position: "fixed",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            zIndex: 60,
+            backgroundColor: "#FFFFFF",
             border: "2px solid #000000",
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
-            wordBreak: "break-all",
-            color: "#000000",
+            boxShadow: "4px 4px 0px 0px #000000",
+            padding: "10px 14px",
             display: "flex",
-            flexDirection: "column",
-            gap: "8px",
+            alignItems: "center",
+            gap: "10px",
+            whiteSpace: "nowrap",
           }}
         >
-          <div>{url}</div>
-          <button
-            onClick={copyToClipboard}
+          <div
             style={{
-              padding: "8px 16px",
-              background: "#FFFFFF",
-              border: "2px solid #000000",
+              width: "8px",
+              height: "8px",
+              borderRadius: "50%",
+              flexShrink: 0,
+              background: "#00FF66",
+            }}
+          />
+          <span
+            style={{
               fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
+              fontSize: "12px",
               fontWeight: 300,
-              cursor: "pointer",
+              color: "#000000",
             }}
           >
-            {copySuccess ? "Copied!" : "Copy Link"}
-          </button>
+            Copied
+          </span>
         </div>
       )}
     </div>
