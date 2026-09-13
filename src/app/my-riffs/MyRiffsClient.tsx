@@ -395,7 +395,7 @@ export default function MyRiffsClient({
             label: "Edit",
             onClick: () => router.push(`/write/${piece.id}`),
           },
-          ...(piece.riffs.length > 0
+          ...(piece.riffs.length > 0 && !isPieceRevealed(piece)
             ? [
                 {
                   type: "action" as const,

@@ -240,6 +240,16 @@ export async function DELETE(
       );
     }
 
+    if (
+      submission.riff.status === "REVEALED" ||
+      submission.riff.status === "COMPLETED"
+    ) {
+      return NextResponse.json(
+        { error: "Can't detach a piece from a riff that's already revealed" },
+        { status: 400 }
+      );
+    }
+
     // Delete submission
     await prisma.pieceRiff.delete({
       where: { id: submission.id },
