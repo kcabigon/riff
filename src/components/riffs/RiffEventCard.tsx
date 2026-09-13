@@ -9,7 +9,6 @@ import {
   getSubmittedPieces,
   allPiecesSubmitted,
   isPastDeadline,
-  daysUntil,
 } from "@/lib/riff-utils";
 import RiffCTAButton from "@/components/riffs/RiffCTAButton";
 import RevealRiffButton, {
@@ -43,6 +42,12 @@ interface RiffEventCardProps {
         wordCount: number;
       };
     }>;
+    creator: {
+      id: string;
+      name: string | null;
+      username: string | null;
+      avatarUrl: string | null;
+    };
   };
   club: {
     id: string | null;
@@ -86,15 +91,12 @@ export default function RiffEventCard({
   // submitted, since their own word count stops being the useful number.
   const showSubmittedProgress = isAdmin || hasSubmitted;
   // Clubless riffs have no club name to show in the subtitle slot, so show
-  // the deadline countdown there instead.
-  const daysLeftText = !riff.deadline
-    ? "No deadline"
-    : deadlinePassed
-      ? "Deadline passed"
-      : (() => {
-          const days = daysUntil(riff.deadline as Date);
-          return `${days} ${days === 1 ? "day" : "days"} left`;
-        })();
+  // who's hosting instead — more useful there than a redundant countdown
+  // (the date badge above already covers the deadline).
+  const hostFirstName = riff.creator.name
+    ? riff.creator.name.split(" ")[0]
+    : riff.creator.username || "User with no name";
+  const hostedByText = `Hosted by ${hostFirstName}`;
   const showInviteCta =
     isClubless &&
     isAdmin &&
@@ -284,9 +286,9 @@ export default function RiffEventCard({
                 margin: 0,
               }}
             >
-              {isClubless ? daysLeftText : club.name}
+              {isClubless ? hostedByText : club.name}
             </p>
-            {!isClubless && !riff.deadline && (
+            {!riff.deadline && (
               <p
                 style={{
                   fontFamily: "var(--font-dm-sans)",

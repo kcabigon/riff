@@ -428,7 +428,7 @@ export default function JoinRiffClient({
               >
                 <p style={cardLabelStyle}>Hosted by</p>
                 <p style={cardValueStyle}>
-                  {riff.creator.name || "a Riff writer"}
+                  {riff.creator.name || "User with no name"}
                 </p>
               </div>
             </div>
