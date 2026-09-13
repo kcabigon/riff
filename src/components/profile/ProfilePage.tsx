@@ -86,6 +86,7 @@ export default function ProfilePage({
           return (
             <ShareModal
               pieceId={piece.id}
+              pieceTitle={piece.title}
               isRevealed={piece.isRevealed}
               existingShare={
                 piece.publicShareId

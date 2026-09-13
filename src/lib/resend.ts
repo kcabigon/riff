@@ -543,6 +543,45 @@ export async function sendPieceSubmittedEmail({
   }
 }
 
+// Send section of the Share modal — author picked this specific friend to
+// notify about a piece they already have Friends-tier access to (no join
+// step, straight to /read/[pieceId]).
+export async function sendPieceSharedEmail({
+  email,
+  actorName,
+  pieceTitle,
+  pieceUrl,
+}: {
+  email: string;
+  actorName: string;
+  pieceTitle: string;
+  pieceUrl: string;
+}): Promise<void> {
+  try {
+    const { error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to: email,
+      subject: `${actorName} shared a piece with you`,
+      html: emailShell({
+        title: `${actorName} shared a piece with you`,
+        footerText: `You're receiving this because ${actorName} shared a piece with you on Riff.`,
+        content: `
+          <tr>
+            <td style="padding:40px 40px 16px;">
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${actorName} shared &ldquo;${pieceTitle}&rdquo; with you.</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">Take a look when you get a chance.</p>
+            </td>
+          </tr>
+
+          ${emailButton("Read it", pieceUrl)}`,
+      }),
+    });
+    if (error) console.error("Resend error (pieceShared):", error);
+  } catch (error) {
+    console.error("Error sending piece shared email:", error);
+  }
+}
+
 export async function sendDeadlineChangedEmail({
   email,
   hostName,

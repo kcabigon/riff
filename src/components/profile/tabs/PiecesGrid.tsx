@@ -77,7 +77,7 @@ export default function PiecesGrid({
       ? [
           {
             type: "action" as const,
-            label: "Access",
+            label: "Share",
             onClick: () => onShare(piece.id),
           },
         ]

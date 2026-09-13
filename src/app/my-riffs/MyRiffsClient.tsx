@@ -408,7 +408,7 @@ export default function MyRiffsClient({
             ? [
                 {
                   type: "action" as const,
-                  label: "Access",
+                  label: "Share",
                   onClick: () => setShareTarget(piece.id),
                 },
               ]
@@ -569,6 +569,7 @@ export default function MyRiffsClient({
           return (
             <ShareModal
               pieceId={piece.id}
+              pieceTitle={piece.title}
               isRevealed={isPieceRevealed(piece)}
               existingShare={
                 piece.publicShareId
