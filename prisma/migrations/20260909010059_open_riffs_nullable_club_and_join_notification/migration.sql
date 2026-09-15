@@ -1,0 +1,5 @@
+-- AlterEnum
+ALTER TYPE "NotificationType" ADD VALUE 'RIFF_PARTICIPANT_JOINED';
+
+-- AlterTable
+ALTER TABLE "riffs" ALTER COLUMN "clubId" DROP NOT NULL;

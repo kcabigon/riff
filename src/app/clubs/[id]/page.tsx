@@ -3,7 +3,12 @@ import type { Metadata } from "next";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import ClubPageLayout from "@/components/clubs/ClubPageLayout";
-import { getSubmittedPieces, getTotalWordCount } from "@/lib/riff-utils";
+import {
+  getSubmittedPieces,
+  getTotalWordCount,
+  getContentPreview,
+  isAuthoredBy,
+} from "@/lib/riff-utils";
 
 export async function generateMetadata({
   params,
@@ -23,13 +28,10 @@ export async function generateMetadata({
 
 export default async function ClubPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ welcome?: string }>;
 }) {
   const { id } = await params;
-  const { welcome } = await searchParams;
   const session = await getSession();
 
   if (!session?.user) {
@@ -39,8 +41,10 @@ export default async function ClubPage({
   const userId = session.user.id;
 
   // Fetch club (filtered to clubs the user is a member of), user's clubs dropdown,
-  // and riffs all in parallel. If club is null, user is not a member of this club.
-  const [club, userClubs, riffs] = await Promise.all([
+  // riffs, and whether the user has any standalone draft (for the Attach
+  // Draft option) all in parallel. If club is null, user is not a member of
+  // this club.
+  const [club, userClubs, riffs, standaloneDraftCount] = await Promise.all([
     prisma.club.findFirst({
       where: { id, members: { some: { userId } }, isArchived: false },
       select: {
@@ -95,6 +99,9 @@ export default async function ClubPage({
                 authorId: true,
                 coverImage: true,
                 wordCount: true,
+                createdAt: true,
+                updatedAt: true,
+                currentContent: true,
               },
             },
           },
@@ -103,7 +110,11 @@ export default async function ClubPage({
       },
       orderBy: { createdAt: "desc" },
     }),
+    prisma.piece.count({
+      where: { authorId: userId, riffs: { none: {} }, publishedAt: null },
+    }),
   ]);
+  const hasStandaloneDrafts = standaloneDraftCount > 0;
 
   if (!club) {
     // Club is archived or user is not a member — find another active club
@@ -116,7 +127,7 @@ export default async function ClubPage({
       redirect(`/clubs/${anyMembership.club.id}`);
     }
 
-    redirect("/no-club");
+    redirect("/home");
   }
 
   // joinedAt is available from the members list already fetched above
@@ -135,11 +146,33 @@ export default async function ClubPage({
     0
   );
 
-  // Serialize dates to strings for client component boundary (Prisma returns Date objects)
+  // Serialize dates to strings for client component boundary (Prisma returns Date objects).
+  // Preview text (stripped of HTML, truncated to 500 chars) is only computed
+  // for the viewer's own piece — it's rendered as-is in their own draft card.
+  // Other participants' in-progress previews are faked client-side from
+  // wordCount alone (see ProgressCard's blurredPreviewFiller), so no other
+  // piece's content — full or truncated — is ever shipped pre-reveal.
   const serializeRiff = (r: (typeof riffs)[0]) => ({
     ...r,
     createdAt: r.createdAt.toISOString(),
     deadline: r.deadline ? r.deadline.toISOString() : null,
+    pieces: r.pieces.map((pr) => ({
+      ...pr,
+      submittedAt: pr.submittedAt ? pr.submittedAt.toISOString() : null,
+      piece: {
+        id: pr.piece.id,
+        title: pr.piece.title,
+        authorId: pr.piece.authorId,
+        coverImage: pr.piece.coverImage,
+        wordCount: pr.piece.wordCount,
+        createdAt: pr.piece.createdAt.toISOString(),
+        updatedAt: pr.piece.updatedAt.toISOString(),
+        preview:
+          pr.piece.authorId === userId
+            ? getContentPreview(pr.piece.currentContent, 500)
+            : "",
+      },
+    })),
   });
 
   // Separate riffs by status
@@ -172,57 +205,71 @@ export default async function ClubPage({
   // would collide with the old +1 hack and prematurely move the riff to Past Riffs.
   const revealedRiffIds = revealedRiffs.map((r) => r.id);
   let readCounts: Record<string, number> = {};
+  // Per-piece read state — needed for the "Unread" badge on individual piece
+  // cards in the Current Read grid (readCounts above is riff-level only).
+  let readPieceIds: string[] = [];
   if (revealedRiffIds.length > 0) {
     const ownPieceIds = revealedRiffs.flatMap((r) =>
       r.pieces
         .filter((p) => p.piece.authorId === userId && p.submittedAt !== null)
         .map((p) => p.piece.id)
     );
-    const readGroups = await prisma.pieceRead.groupBy({
-      by: ["riffId"],
-      where: {
-        userId,
-        riffId: { in: revealedRiffIds },
-        ...(ownPieceIds.length > 0 && { pieceId: { notIn: ownPieceIds } }),
-      },
-      _count: { pieceId: true },
+    const reads = await prisma.pieceRead.findMany({
+      where: { userId, riffId: { in: revealedRiffIds } },
+      select: { riffId: true, pieceId: true },
     });
-    readCounts = Object.fromEntries(
-      readGroups.map((g) => [g.riffId, g._count.pieceId])
-    );
+    readPieceIds = reads.map((r) => r.pieceId);
+    const countableReads =
+      ownPieceIds.length > 0
+        ? reads.filter((r) => !ownPieceIds.includes(r.pieceId))
+        : reads;
+    readCounts = countableReads.reduce<Record<string, number>>((acc, r) => {
+      acc[r.riffId] = (acc[r.riffId] || 0) + 1;
+      return acc;
+    }, {});
+  }
+
+  // New comment activity for Past Riffs — batched across every riff that
+  // can end up there (COMPLETED + pre-join REVEALED + post-join REVEALED,
+  // since the final Past Riffs list is a client-side union and we don't
+  // know which subset of post-join revealed riffs will migrate in until
+  // isFullyReadForUser runs client-side). Same PieceRead(readAt) + Comment
+  // compare-and-count mechanic as hasNewCommentsMap in
+  // src/app/riffs/[id]/page.tsx, aggregated per-riff instead of per-piece.
+  const pastEligibleRiffIds = [
+    ...completedRiffs,
+    ...pastRevealedRiffs,
+    ...revealedRiffs,
+  ].map((r) => r.id);
+  let newCommentCounts: Record<string, number> = {};
+  if (pastEligibleRiffIds.length > 0) {
+    const [pastReads, pastComments] = await Promise.all([
+      prisma.pieceRead.findMany({
+        where: { userId, riffId: { in: pastEligibleRiffIds } },
+        select: { riffId: true, pieceId: true, readAt: true },
+      }),
+      prisma.comment.findMany({
+        where: { riffId: { in: pastEligibleRiffIds } },
+        select: {
+          riffId: true,
+          pieceId: true,
+          createdAt: true,
+          authorId: true,
+        },
+      }),
+    ]);
+    const readAtByPiece = new Map(pastReads.map((r) => [r.pieceId, r.readAt]));
+    newCommentCounts = pastComments.reduce<Record<string, number>>((acc, c) => {
+      if (isAuthoredBy(c, userId)) return acc;
+      const readAt = readAtByPiece.get(c.pieceId);
+      if (readAt && c.riffId && c.createdAt > readAt) {
+        acc[c.riffId] = (acc[c.riffId] || 0) + 1;
+      }
+      return acc;
+    }, {});
   }
 
   const isAdmin = club.adminId === userId;
-
-  // avatarDone is free — avatarUrl is already in the members select
-  const avatarDone = !!club.members.find((m) => m.userId === userId)?.user
-    .avatarUrl;
-
-  // Onboarding completion — admin and member queries are mutually exclusive
-  const currentClubGraduated = riffCount > 0 && club.members.length > 1;
-  let userOnboardingComplete = !isAdmin || currentClubGraduated;
-  let userMemberOnboardingComplete = isAdmin; // admins never see member section
-
-  if (isAdmin && !currentClubGraduated) {
-    // Short-circuit failed — check if user has graduated on any other admin club
-    const graduated = await prisma.club.findFirst({
-      where: {
-        adminId: userId,
-        isArchived: false,
-        riffs: { some: {} },
-        members: { some: { userId: { not: userId } } },
-      },
-      select: { id: true },
-    });
-    userOnboardingComplete = graduated !== null;
-  } else if (!isAdmin) {
-    // Member: graduated once they've submitted a piece to a riff
-    const anySubmission = await prisma.pieceRiff.findFirst({
-      where: { piece: { authorId: userId }, submittedAt: { not: null } },
-      select: { pieceId: true },
-    });
-    userMemberOnboardingComplete = anySubmission !== null;
-  }
 
   // Update lastActiveClubId (fire-and-forget, non-blocking)
   prisma.user
@@ -242,15 +289,12 @@ export default async function ClubPage({
       revealedRiffs={revealedRiffs}
       pastRevealedRiffs={pastRevealedRiffs}
       readCounts={readCounts}
+      readPieceIds={readPieceIds}
+      newCommentCounts={newCommentCounts}
       completedRiffs={completedRiffs}
       stats={{ riffCount, pieceCount, wordCount }}
       predictedVolumeNumber={predictedVolumeNumber}
-      userOnboardingComplete={userOnboardingComplete}
-      userMemberOnboardingComplete={userMemberOnboardingComplete}
-      avatarDone={avatarDone}
-      initialWelcome={
-        welcome === "host" || welcome === "member" ? welcome : undefined
-      }
+      hasStandaloneDrafts={hasStandaloneDrafts}
     />
   );
 }

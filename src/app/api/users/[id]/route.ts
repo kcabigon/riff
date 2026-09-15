@@ -19,6 +19,16 @@ export async function PATCH(
     const body = await req.json();
     const { firstName, lastName, bio, avatarUrl } = body;
 
+    // First name can't be cleared — it's the fallback source for initials
+    // and "Hosted by" display. Last name has no such dependency and stays
+    // freely editable/clearable.
+    if (firstName !== undefined && !firstName.trim()) {
+      return NextResponse.json(
+        { error: "First name is required" },
+        { status: 400 }
+      );
+    }
+
     const data: Record<string, any> = {};
     if (firstName !== undefined) data.firstName = firstName;
     if (lastName !== undefined) data.lastName = lastName;

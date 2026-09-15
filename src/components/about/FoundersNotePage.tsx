@@ -119,7 +119,7 @@ const COMMENTS: SidebarComment[] = [
       {
         author: "Chris",
         avatarSrc: "/images/about/founderAvatars/chris-avatar.jpeg",
-        text: "had no idea jarric was gay",
+        text: "what a way to come out of the closet",
       },
     ],
   },
@@ -146,12 +146,6 @@ const COMMENTS: SidebarComment[] = [
         text: "down",
       },
     ],
-  },
-  {
-    id: "highlight-11",
-    author: "Kyle",
-    avatarSrc: "/images/about/founderAvatars/kyle-avatar.jpg",
-    text: "jarric thinks this is his life mission",
   },
   {
     id: "highlight-12",
@@ -267,7 +261,7 @@ export default function FoundersNotePage() {
               lineHeight: 1.2,
             }}
           >
-            For Friends, By Friends
+            Write For Friends, Not For the Internet
           </h1>
 
           {/* Author + metadata */}
@@ -310,7 +304,9 @@ export default function FoundersNotePage() {
           </div>
 
           {/* Body */}
-          <p style={bodyStyle}>We built a writing app but not for writers.</p>
+          <p style={bodyStyle}>
+            We built a writing app but not for &ldquo;writers.&rdquo;
+          </p>
 
           <p style={bodyStyle}>
             We&apos;re not writers in the{" "}
@@ -320,10 +316,10 @@ export default function FoundersNotePage() {
               onActivate={handleActivate}
               isActive={activeCommentId === "highlight-1"}
             >
-              have a blog
+              <em>have a blog</em>
             </FakeCommentHighlight>
-            , grow an audience, make money from our writing sense. We&apos;re
-            just friends who{" "}
+            <em>, grow an audience, make money from our writing</em> sense.
+            We&apos;re just friends who{" "}
             <FakeCommentHighlight
               comments={commentFor("highlight-2")}
               commentId="highlight-2"
@@ -332,9 +328,9 @@ export default function FoundersNotePage() {
             >
               want to be creative
             </FakeCommentHighlight>{" "}
-            and like to get a few laughs out of each other. We had this crazy
-            idea, what if the five of us wrote something and just shared them
-            with each other? Two weeks later, we shared five personal essays{" "}
+            and get a few laughs out of each other. We had this crazy idea, what
+            if the five of us wrote something and just shared them with each
+            other? Two weeks later, we shared five personal essays{" "}
             <FakeCommentHighlight
               comments={commentFor("highlight-3")}
               commentId="highlight-3"
@@ -366,19 +362,18 @@ export default function FoundersNotePage() {
           </p>
 
           <p style={bodyStyle}>
-            We were instantly hooked on writing with friends because it
-            wasn&apos;t just{" "}
+            We were instantly hooked, and not just on{" "}
             <FakeCommentHighlight
               comments={commentFor("highlight-6")}
               commentId="highlight-6"
               onActivate={handleActivate}
               isActive={activeCommentId === "highlight-6"}
             >
-              about the writing
+              the writing
             </FakeCommentHighlight>
-            . It was about the conversations sparked by the writing, the stories
-            and perspectives that never came up in the routine of our
-            relationships, and the{" "}
+            . It was the conversations sparked by it, the stories and
+            perspectives that never came up in the routine of our relationships,
+            the{" "}
             <FakeCommentHighlight
               comments={commentFor("highlight-7")}
               commentId="highlight-7"
@@ -387,17 +382,22 @@ export default function FoundersNotePage() {
             >
               deeper discovery of people we thought we already knew so well
             </FakeCommentHighlight>
-            . &ldquo;Welcome to Write Club,&rdquo; we said when other friends
-            wanted to join in.{" "}
+            . None of that happens when you&apos;re writing for strangers. But
+            it happens when you&apos;re writing for people who already know you.
+          </p>
+
+          <p style={bodyStyle}>
+            &ldquo;Welcome to Write Club,&rdquo; we said when other friends
+            wanted to join in. A write club —{" "}
             <FakeCommentHighlight
               comments={commentFor("highlight-9")}
               commentId="highlight-9"
               onActivate={handleActivate}
               isActive={activeCommentId === "highlight-9"}
             >
-              Like a book club but for writing
-            </FakeCommentHighlight>{" "}
-            — the writing a{" "}
+              like a book club, but for writing
+            </FakeCommentHighlight>
+            . The writing is just the{" "}
             <FakeCommentHighlight
               comments={commentFor("highlight-10")}
               commentId="highlight-10"
@@ -405,8 +405,22 @@ export default function FoundersNotePage() {
               isActive={activeCommentId === "highlight-10"}
             >
               reason to gather
+            </FakeCommentHighlight>
+            , and a way to riff with friends. Eight of us do it now, sharing
+            something roughly every month, going on two years and over 100,000
+            words shared. We started in Google Docs and email threads.
+            Eventually we built{" "}
+            <FakeCommentHighlight
+              comments={commentFor("highlight-12")}
+              commentId="highlight-12"
+              onActivate={handleActivate}
+              isActive={activeCommentId === "highlight-12"}
+            >
+              ourselves
             </FakeCommentHighlight>{" "}
-            and a way to riff with friends.
+            something better, a space where reveals happen all at once,
+            commenting feels like our group chat, a home for everything
+            we&apos;ve written so far.
           </p>
 
           {/* GIF */}
@@ -425,51 +439,27 @@ export default function FoundersNotePage() {
             <strong>
               <em>Riff</em>
             </strong>{" "}
-            is not for writers but for friends. Built by friends, a{" "}
-            <FakeCommentHighlight
-              comments={commentFor("highlight-11")}
-              commentId="highlight-11"
-              onActivate={handleActivate}
-              isActive={activeCommentId === "highlight-11"}
-            >
-              passion project
-            </FakeCommentHighlight>{" "}
-            <FakeCommentHighlight
-              comments={commentFor("highlight-12")}
-              commentId="highlight-12"
-              onActivate={handleActivate}
-              isActive={activeCommentId === "highlight-12"}
-            >
-              for ourselves
-            </FakeCommentHighlight>
-            . And if writing, storytelling, and riffing with your friends sounds
-            like your thing, then{" "}
+            is not for writers, it&apos;s for friends. If this sounds{" "}
             <FakeCommentHighlight
               comments={commentFor("highlight-13")}
               commentId="highlight-13"
               onActivate={handleActivate}
               isActive={activeCommentId === "highlight-13"}
             >
-              this is for you
+              cool
             </FakeCommentHighlight>
-            .
+            , sign up, poke around, then hit up a friend and say{" "}
+            <Link
+              href="/auth/post-login"
+              style={{
+                color: "#000000",
+                textDecoration: "underline",
+                textUnderlineOffset: "3px",
+              }}
+            >
+              Let&apos;s riff!
+            </Link>
           </p>
-
-          {/* CTA */}
-          <Link
-            href="/auth/post-login"
-            style={{
-              display: "inline-block",
-              fontFamily: "var(--font-playfair), serif",
-              fontSize: "18px",
-              color: "#000000",
-              textDecoration: "underline",
-              textUnderlineOffset: "3px",
-              margin: "1em 0 0 0",
-            }}
-          >
-            Let&apos;s riff!
-          </Link>
         </div>
 
         {/* Sidebar — desktop only, hidden when no comments */}

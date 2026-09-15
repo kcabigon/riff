@@ -7,8 +7,8 @@ import "@/app/write/[pieceId]/editor.css";
 
 interface CommentData {
   id: string;
-  selectionStart: number;
-  selectionEnd: number;
+  selectionStart: number | null;
+  selectionEnd: number | null;
   selectedText: string;
   authorId: string;
 }
@@ -200,7 +200,7 @@ export default function ReadOnlyEditor({
       .map((c) => ({
         id: c.id,
         selectedText: c.selectedText,
-        selectionStart: c.selectionStart,
+        selectionStart: c.selectionStart!,
         isActive: activeHighlightIds.includes(c.id),
         isPending: false,
         color: authorColors[c.authorId] || AUTHOR_COLORS[0],

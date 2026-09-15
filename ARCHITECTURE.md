@@ -1,6 +1,6 @@
 # Riff — Architecture & Project Reference
 
-**Last Updated**: May 18, 2026
+**Last Updated**: April 30, 2026
 
 This file is the single source of truth for project context. The `/letsriff` slash command reads this automatically at the start of each session.
 
@@ -14,7 +14,7 @@ A private essay-sharing platform for creative communities. Users create **clubs*
 
 ---
 
-## Current State (May 18, 2026)
+## Current State (April 30, 2026)
 
 ### What's Working
 - Landing page + About page
@@ -34,9 +34,6 @@ A private essay-sharing platform for creative communities. Users create **clubs*
 - Mandatory riff deadlines with live day countdown
 - Redesigned navbar, club dropdown, and sign-in email
 - Avatar system with admin badges
-- Paste-to-insert (images auto-upload, YouTube auto-embed, Spotify confirm modal)
-- Founders note about page with fake comment highlights
-- Mobile commenting with keyboard-aware compose modal
 - Mobile responsive across all views
 - Image uploads via Supabase Storage (persistent across deploys)
 - Public piece sharing — `/p/[pieceId]` for readers without club access
@@ -48,12 +45,6 @@ A private essay-sharing platform for creative communities. Users create **clubs*
 - Badge shared component (Public, New Comments, etc.)
 - ThreeDotButton shared component (dark/light variants)
 - DestructiveButton shared component
-- Email preferences (notification + marketing toggles in settings, unsubscribe link in emails)
-- Terms of Service page
-- Landing page detects logged-in users (avatar + dropdown navigation)
-- Deprecated Circle architecture fully removed (schema + routes)
-- Welcome tutorial (animated walkthrough with swipe navigation, mobile + desktop)
-- Admin analytics dashboard (`/admin`, Kyle-only)
 
 ---
 
@@ -74,9 +65,6 @@ src/app/
 ├── write/[pieceId]/page.tsx   # Draft editor
 ├── profile/[userId]/page.tsx  # User profile
 ├── no-club/page.tsx           # Holding page for users without a club
-├── terms/page.tsx             # Terms of Service
-├── welcome/page.tsx           # Welcome tutorial (animated walkthrough)
-├── admin/page.tsx             # Admin analytics dashboard (Kyle-only)
 └── onboarding/                # Onboarding flow (name, club-choice, create-club, banner)
 ```
 
@@ -91,11 +79,10 @@ src/app/api/
 ├── pieces/[id]/shares/        # Public share management
 ├── comments/                  # List + create (with selection anchor)
 ├── notifications/             # List, mark read, unread count
-├── cron/daily-comment-notifications/  # Vercel Cron — daily comment digest emails
-├── users/me/                  # Current user, update, delete, export (docx/zip), email preferences
+├── cron/daily-notifications/  # Vercel Cron — comment digest + engagement reminders (merged)
+├── users/me/                  # Current user, update, delete, export (docx/zip)
 ├── users/[id]/                # User profile data
-├── upload/image/              # Image upload (auth required, 5MB max)
-└── admin/stats/               # Admin engagement stats (Kyle-only)
+└── upload/image/              # Image upload (auth required, 5MB max)
 ```
 
 ### Components
@@ -106,23 +93,19 @@ src/components/
 │                  # Badge, ThreeDotButton
 ├── clubs/         # ClubPageLayout, NavBar, ClubDropdown, AvatarDropdown, ClubSettingsModal,
 │                  # DeleteClubConfirmModal, ConversionModal
-├── riffs/         # RiffCard, RiffCTAButton, RiffPageLayout, CreateRiffModal, EditRiffModal,
+├── riffs/         # RiffCTAButton, RiffPageLayout, CreateRiffModal, EditRiffModal,
 │                  # DeleteRiffConfirmModal, RevealCelebration, RevealConfirmModal, PieceCard,
 │                  # CompletedRiffCard, ReadyToRevealCard, MosaicCollage, ProgressCard,
-│                  # RiffFormFields, ContributionStrip, EmptyRiffState, CountdownTimer,
-│                  # RevealRiffButton
+│                  # RiffFormFields, ContributionStrip, EmptyRiffState
 ├── read/          # ReadPageLayout, ReadOnlyEditor, ReadToggle, ReadingProgress,
-│                  # CommentAnchor, CommentPopover, CommentSidebar, CommentModal,
-│                  # CommentComposeModal, CommentButton
+│                  # CommentAnchor, CommentPopover, CommentSidebar, CommentDrawer, CommentButton
 ├── profile/       # ProfilePage, ProfileHeader, ProfileSection tabs, DeletePieceModal,
 │                  # MyStatsModal, ShareModal
 ├── notifications/ # NotificationBell, NotificationPanel, NotificationItem
-├── settings/      # SettingsPage, ProfileSection, EmailSection, DataSection, DeleteAccountConfirmModal
-├── admin/         # AdminDashboard, StatCard, RiffStatusBar
-├── about/         # FoundersNotePage, FakeCommentHighlight
-├── write/         # WritePage, CoverImageModal, SubmitConfirmModal, EmbedModal, MediaEmbedModal,
-│                  # LinkPopover, ResizableImageView, toolbar/StickyToolbar, toolbar/ToolbarButton,
-│                  # toolbar/toolbarButtons, toolbar/FontControl
+├── settings/      # SettingsPage, ProfileSection, DataSection, DeleteAccountConfirmModal
+├── about/         # AboutPage
+├── write/         # WritePage, CoverImageModal, SubmitConfirmModal, EmbedModal, LinkPopover,
+│                  # ResizableImageView, toolbar/StickyToolbar, toolbar/ToolbarButton, toolbar/toolbarButtons, toolbar/FontControl
 ├── editor/        # TiptapEditor, EditorToolbar, extensions/Spotify, extensions/sharedExtensions
 ├── PrimaryButton.tsx, SecondaryButton.tsx, CTAButton.tsx, DestructiveButton.tsx
 └── TextInput.tsx, BackButton.tsx, CloseButton.tsx, NoiseBackground.tsx, Tagline.tsx
@@ -149,8 +132,6 @@ src/lib/
 ├── notifications.ts           # createNotification, notifyClubMembers, notifyRiffParticipants
 ├── tiptap-to-docx.ts          # Convert Tiptap JSON to .docx (used by export route)
 ├── whatsNextGuard.ts          # WhatsNext modal suppression logic
-├── constants.ts               # Shared constants (club name/description max lengths)
-├── timeAgo.ts                 # Relative time formatting (e.g., "3 days ago")
 └── supabase.ts                # Supabase admin client (Storage uploads)
 ```
 

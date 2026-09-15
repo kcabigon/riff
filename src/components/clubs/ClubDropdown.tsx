@@ -1,19 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Dropdown from "@/components/shared/Dropdown";
 import type { DropdownItem } from "@/components/shared/Dropdown";
+import CreatePillButton from "./CreatePillButton";
 
 interface ClubDropdownProps {
   clubs: Array<{
     id: string;
     name: string;
   }>;
-  currentClub: {
-    id: string;
-    name: string;
-  };
   isOpen: boolean;
   onToggle: () => void;
   onClose: () => void;
@@ -21,20 +17,22 @@ interface ClubDropdownProps {
 
 export default function ClubDropdown({
   clubs,
-  currentClub,
   isOpen,
   onToggle,
   onClose,
 }: ClubDropdownProps) {
-  const [isHovered, setIsHovered] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
 
   const items: DropdownItem[] = [
     ...clubs.map(
       (club): DropdownItem => ({
         type: "action",
         label: club.name,
-        active: club.id === currentClub.id,
+        // Bold means "the club page you're currently on" — only meaningful
+        // when you're actually viewing a club page. Elsewhere (e.g. Home),
+        // no club matches the path, so nothing is bolded.
+        active: pathname === `/clubs/${club.id}`,
         onClick: () => router.push(`/clubs/${club.id}`),
       })
     ),
@@ -47,7 +45,7 @@ export default function ClubDropdown({
         <img src="/icons/add.svg" alt="" width={16} height={16} />
       ),
       onClick: () => {
-        sessionStorage.setItem("pendingClubFrom", `/clubs/${currentClub.id}`);
+        sessionStorage.setItem("pendingClubFrom", pathname);
         router.push("/onboarding/create-club");
       },
     },
@@ -56,48 +54,16 @@ export default function ClubDropdown({
   return (
     <Dropdown
       trigger={
-        <button
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-          style={{
-            backgroundColor: "#000000",
-            border: "2px solid #FFFFFF",
-            boxShadow:
-              isHovered || isOpen
-                ? "4px 4px 0px 0px #01EFFC"
-                : "4px 4px 0px 0px #00FF66",
-            padding: "8px 12px",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            cursor: "pointer",
-            transition: "none",
-          }}
-        >
-          <span
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              fontWeight: 300,
-              color: "#FFFFFF",
-              transition: "none",
-            }}
-          >
-            My Clubs
-          </span>
-
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/icons/arrow_down.svg"
-            alt=""
-            width={16}
-            height={16}
-            style={{ filter: "invert(1)" }}
-          />
-        </button>
+        <CreatePillButton
+          label="My Clubs"
+          icon="chevron"
+          forceActive={isOpen}
+          reverseShadow
+          compactOnMobile
+        />
       }
       items={items}
-      align="left"
+      align="right"
       minWidth={200}
       isOpen={isOpen}
       onToggle={onToggle}

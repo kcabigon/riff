@@ -64,15 +64,15 @@ export default async function DevSignInPage() {
         {
           label: "Scenario 1: Fresh onboarding",
           description:
-            "Start here to test the full onboarding flow from scratch (name → club choice → create club → banner → invite).",
+            "Start here to test the full onboarding flow from scratch (name → home).",
           email: "fresh@test.local",
           userName: "Fresh User",
           redirect: "/onboarding",
         },
         {
-          label: "Scenario 2: Resume onboarding",
+          label: "Scenario 2: Stale mid-flow user",
           description:
-            "Onboarding resumes at the club-choice step (name already set).",
+            "Simulates a user parked mid-flow from the old club-first onboarding (name set, never finished). Confirms they land safely on My Riffs instead of a dead page.",
           email: "midway@test.local",
           userName: "Midway User",
           redirect: "/onboarding",
@@ -135,9 +135,8 @@ export default async function DevSignInPage() {
         ...(soloClubId
           ? [
               {
-                label: "Scenario 9: Empty club (onboarding checklist)",
-                description:
-                  "Brand new club with no riffs or other members. Tests the admin onboarding checklist and prompt library.",
+                label: "Scenario 9: Empty club",
+                description: "Brand new club with no riffs or other members.",
                 email: "writer@test.local",
                 userName: "Writer (Host)",
                 redirect: `/clubs/${soloClubId}`,
