@@ -256,7 +256,7 @@ function Hero({
                 boxShadow: "4px 4px 0px 0px #000000",
               }}
             >
-              Let&apos;s do this
+              Let&apos;s riff
             </motion.button>
           </motion.div>
         </div>

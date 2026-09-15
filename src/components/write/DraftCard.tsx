@@ -34,6 +34,13 @@ export default function DraftCard({ piece, onClick }: DraftCardProps) {
         transition: "box-shadow 0.1s ease",
         cursor: "pointer",
         padding: "20px",
+        // Query container so the preview's font-size (cqi, below) scales
+        // with this card's own rendered width — the same card renders at
+        // very different widths across contexts (My Riffs grid, a full-
+        // width mobile carousel slide), and a fixed px size that fills one
+        // badly underfills or overflows the other. See ProgressCard's
+        // blurred-filler card for the same fix and fuller rationale.
+        containerType: "inline-size",
       }}
     >
       <h4
@@ -64,7 +71,10 @@ export default function DraftCard({ piece, onClick }: DraftCardProps) {
         <p
           style={{
             fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
+            // 16px at the ~280px reference card width, scaling with the
+            // container's own inline size everywhere else — see the
+            // containerType comment above.
+            fontSize: "clamp(13px, 5.7cqi, 20px)",
             fontWeight: 300,
             color: "#000000",
             lineHeight: 1.5,

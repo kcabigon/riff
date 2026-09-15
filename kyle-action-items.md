@@ -91,4 +91,4 @@ jamReads JamRead[]
 
 ## 5. Set `CRON_SECRET` in Vercel project settings
 
-Required for the daily comment digest cron (`/api/cron/daily-comment-notifications`) from PR #59 to work in production. Derek flagged this in the PR notes.
+Required for the daily notifications cron (`/api/cron/daily-notifications`) — originally set up for the comment digest from PR #59, now also gates the engagement-reminders job merged into the same route. Derek flagged this in the PR notes.

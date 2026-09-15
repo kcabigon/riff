@@ -79,7 +79,7 @@ src/app/api/
 ├── pieces/[id]/shares/        # Public share management
 ├── comments/                  # List + create (with selection anchor)
 ├── notifications/             # List, mark read, unread count
-├── cron/daily-comment-notifications/  # Vercel Cron — daily comment digest emails
+├── cron/daily-notifications/  # Vercel Cron — comment digest + engagement reminders (merged)
 ├── users/me/                  # Current user, update, delete, export (docx/zip)
 ├── users/[id]/                # User profile data
 └── upload/image/              # Image upload (auth required, 5MB max)
@@ -93,10 +93,10 @@ src/components/
 │                  # Badge, ThreeDotButton
 ├── clubs/         # ClubPageLayout, NavBar, ClubDropdown, AvatarDropdown, ClubSettingsModal,
 │                  # DeleteClubConfirmModal, ConversionModal
-├── riffs/         # RiffCard, RiffCTAButton, RiffPageLayout, CreateRiffModal, EditRiffModal,
+├── riffs/         # RiffCTAButton, RiffPageLayout, CreateRiffModal, EditRiffModal,
 │                  # DeleteRiffConfirmModal, RevealCelebration, RevealConfirmModal, PieceCard,
 │                  # CompletedRiffCard, ReadyToRevealCard, MosaicCollage, ProgressCard,
-│                  # RiffFormFields, ContributionStrip, EmptyRiffState, CountdownTimer
+│                  # RiffFormFields, ContributionStrip, EmptyRiffState
 ├── read/          # ReadPageLayout, ReadOnlyEditor, ReadToggle, ReadingProgress,
 │                  # CommentAnchor, CommentPopover, CommentSidebar, CommentDrawer, CommentButton
 ├── profile/       # ProfilePage, ProfileHeader, ProfileSection tabs, DeletePieceModal,

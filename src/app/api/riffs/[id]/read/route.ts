@@ -41,16 +41,27 @@ export async function POST(
       );
     }
 
-    // Validate user is a club member
-    const member = await prisma.clubMember.findFirst({
-      where: {
-        clubId: riff.clubId,
-        userId: user.id,
-      },
-    });
+    // Club riffs: must be a club member. Clubless riffs: must be a participant.
+    if (riff.clubId) {
+      const member = await prisma.clubMember.findFirst({
+        where: {
+          clubId: riff.clubId,
+          userId: user.id,
+        },
+      });
 
-    if (!member) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      if (!member) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    } else {
+      const participant = await prisma.riffParticipant.findUnique({
+        where: { riffId_userId: { riffId, userId: user.id } },
+        select: { id: true },
+      });
+
+      if (!participant) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
     }
 
     // Validate piece belongs to this riff
@@ -64,6 +75,20 @@ export async function POST(
         { error: "Piece does not belong to this riff" },
         { status: 400 }
       );
+    }
+
+    // Authors don't "read" their own piece — skip silently so a stray call
+    // (deep link, retry) can't create a self-read row that inflates their
+    // Read-by ring (piecesToRead already excludes their own piece).
+    if (pieceRiff.piece.authorId === user.id) {
+      const readCount = await prisma.pieceRead.count({
+        where: { userId: user.id, riffId },
+      });
+      return NextResponse.json({
+        success: true,
+        readCount,
+        totalPieces: riff._count.pieces,
+      });
     }
 
     // Upsert PieceRead — update readAt on re-visits so "new comments" resets correctly

@@ -199,32 +199,40 @@ export default function JoinClubClient({
         <LandingNavBar sticky />
       )}
 
-      {/* Banner — KEEP IN SYNC WITH: ClubPageLayout.tsx (banner header layout, avatar sizes, maxWidth) */}
-      {club.bannerImage && (
+      {/* Banner — full width, 320px desktop / 200px mobile — KEEP IN SYNC WITH: ClubPageLayout.tsx (banner header layout, avatar sizes, maxWidth). On desktop this always renders, falling back to a solid black background (matching the black-bg convention used on mobile and on profile pages) when there's no uploaded banner, so every club gets the banner treatment instead of a separate no-banner layout. Mobile still branches on whether a real banner was uploaded. */}
+      {(club.bannerImage || !isMobile) && (
         <div
           className="club-banner"
           style={{
             width: "100%",
             height: "320px",
-            backgroundImage: `url(${club.bannerImage})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
+            ...(club.bannerImage
+              ? {
+                  backgroundImage: `url(${club.bannerImage})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }
+              : { backgroundColor: "#000000" }),
             position: "relative",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
           }}
         >
-          {/* Dark overlay + metadata — desktop only */}
+          {/* Dark overlay + metadata — desktop only. Overlay only needed
+              over a real photo; the no-banner fallback is already solid
+              black. */}
           {!isMobile && (
             <>
-              <div
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  backgroundColor: "rgba(0, 0, 0, 0.66)",
-                }}
-              />
+              {club.bannerImage && (
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    backgroundColor: "rgba(0, 0, 0, 0.66)",
+                  }}
+                />
+              )}
               <div
                 style={
                   club.members.length > 9
@@ -315,14 +323,25 @@ export default function JoinClubClient({
         </div>
       )}
 
-      {/* Mobile metadata — shown below banner on small screens */}
+      {/* Mobile header — overlaps the banner photo (negative margin pulls
+          the photo up underneath it) instead of sitting as a separate
+          panel. The photo box itself is untouched — same size/crop as
+          desktop — only this header fades from solid black to transparent
+          over its own bottom edge, revealing the unmodified photo beneath
+          instead of resizing/recropping it. KEEP IN SYNC WITH:
+          ClubPageLayout.tsx */}
       {club.bannerImage && isMobile && (
         <div
           style={{
-            padding: "24px 24px 0",
+            position: "relative",
+            zIndex: 2,
+            marginBottom: "-64px",
+            padding: "24px 24px 88px",
             display: "flex",
             flexDirection: "column",
             gap: "12px",
+            background:
+              "linear-gradient(to bottom, #000000 calc(100% - 64px), rgba(0, 0, 0, 0) 100%)",
           }}
         >
           <h1
@@ -330,7 +349,7 @@ export default function JoinClubClient({
               fontFamily: "var(--font-dm-serif-text)",
               fontSize: "32px",
               fontWeight: 400,
-              color: "#000000",
+              color: "#FFFFFF",
               margin: 0,
             }}
           >
@@ -345,13 +364,13 @@ export default function JoinClubClient({
               alignItems: "start",
             }}
           >
-            <p style={statStyle("#000000")}>
+            <p style={statStyle("#FFFFFF")}>
               <span style={{ fontWeight: 700 }}>{stats.riffCount}</span> riffs
             </p>
-            <p style={statStyle("#000000")}>
+            <p style={statStyle("#FFFFFF")}>
               <span style={{ fontWeight: 700 }}>{stats.pieceCount}</span> pieces
             </p>
-            <p style={statStyle("#000000")}>
+            <p style={statStyle("#FFFFFF")}>
               <span style={{ fontWeight: 700 }}>
                 {formatNumber(stats.wordCount)}
               </span>{" "}
@@ -362,6 +381,7 @@ export default function JoinClubClient({
           <AvatarStack
             users={club.members.map((m) => m.user)}
             size={40}
+            borderColor="#FFFFFF"
             style={{ overflowX: "auto" }}
           />
 
@@ -371,7 +391,7 @@ export default function JoinClubClient({
                 fontFamily: "var(--font-dm-sans)",
                 fontSize: "16px",
                 fontWeight: 300,
-                color: "#000000",
+                color: "#FFFFFF",
                 margin: 0,
                 lineHeight: "1.4",
               }}
@@ -390,14 +410,28 @@ export default function JoinClubClient({
           padding: "64px 24px 64px",
         }}
       >
-        {/* No-banner header */}
-        {!club.bannerImage && (
+        {/* No-banner header — mobile only, shown when no banner image has
+            been uploaded. Desktop always gets the banner treatment above
+            (falling back to a solid black background), so this no-banner
+            layout only exists for mobile. Breaks out of the page's padding
+            to go full-bleed with a black band + white text/borders,
+            matching the banner case's header zone. KEEP IN SYNC WITH:
+            ClubPageLayout.tsx */}
+        {!club.bannerImage && isMobile && (
           <div
             style={{
               display: "flex",
               flexDirection: "column",
               gap: "16px",
               marginBottom: "48px",
+              marginTop: "-64px",
+              marginLeft: "-24px",
+              marginRight: "-24px",
+              paddingTop: "24px",
+              paddingLeft: "24px",
+              paddingRight: "24px",
+              paddingBottom: "24px",
+              backgroundColor: "#000000",
             }}
           >
             <h1
@@ -405,7 +439,7 @@ export default function JoinClubClient({
                 fontFamily: "var(--font-dm-serif-text)",
                 fontSize: "32px",
                 fontWeight: 400,
-                color: "#000000",
+                color: "#FFFFFF",
                 margin: 0,
               }}
             >
@@ -420,14 +454,14 @@ export default function JoinClubClient({
                 alignItems: "start",
               }}
             >
-              <p style={statStyle("#000000")}>
+              <p style={statStyle("#FFFFFF")}>
                 <span style={{ fontWeight: 700 }}>{stats.riffCount}</span> riffs
               </p>
-              <p style={statStyle("#000000")}>
+              <p style={statStyle("#FFFFFF")}>
                 <span style={{ fontWeight: 700 }}>{stats.pieceCount}</span>{" "}
                 pieces
               </p>
-              <p style={statStyle("#000000")}>
+              <p style={statStyle("#FFFFFF")}>
                 <span style={{ fontWeight: 700 }}>
                   {formatNumber(stats.wordCount)}
                 </span>{" "}
@@ -437,8 +471,9 @@ export default function JoinClubClient({
 
             <AvatarStack
               users={club.members.map((m) => m.user)}
-              size={isMobile ? 40 : 48}
-              style={isMobile ? { overflowX: "auto" } : undefined}
+              size={40}
+              borderColor="#FFFFFF"
+              style={{ overflowX: "auto" }}
             />
 
             {club.description && (
@@ -447,7 +482,7 @@ export default function JoinClubClient({
                   fontFamily: "var(--font-dm-sans)",
                   fontSize: "16px",
                   fontWeight: 300,
-                  color: "#000000",
+                  color: "#FFFFFF",
                   margin: 0,
                   lineHeight: "normal",
                   maxWidth: "600px",

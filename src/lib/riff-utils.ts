@@ -26,14 +26,58 @@ export function getSubmittedPieces<
   return pieces.filter((p) => p.submittedAt !== null);
 }
 
-// Returns true if every participant has submitted a piece.
-export function allPiecesSubmitted(
-  pieces: { submittedAt: string | Date | null }[],
-  participantCount: number
+// Returns true if the given piece was authored by the given user — the
+// recurring "is this mine" check threaded through riff-page read tracking,
+// badges, and comments (own pieces skip the Unread badge, never get a
+// PieceRead row from normal viewing, and are excluded from ring
+// denominators and "have you read anything" checks).
+export function isAuthoredBy(
+  piece: { authorId: string },
+  userId: string
 ): boolean {
+  return piece.authorId === userId;
+}
+
+// A riff participant's read/comment activity, used for the "Read by" strip.
+export interface RiffContributor {
+  user: { id: string; name: string | null; avatarUrl: string | null };
+  readCount: number;
+  commentCount: number;
+  // Submitted pieces minus the contributor's own, if they submitted one —
+  // see piecesToRead computation in src/app/riffs/[id]/page.tsx.
+  piecesToRead: number;
+}
+
+// Returns true if every participant who has actually started writing
+// (wordCount > 0) has submitted a piece. Participants who joined but never
+// wrote anything (e.g. clicked "New draft" and abandoned it) don't count —
+// otherwise a single abandoned 0-word draft would block early reveal.
+//
+// Checked per-participant rather than by comparing aggregate counts: a
+// count comparison can false-positive if someone submits a 0-word piece
+// (nothing blocks that) — it would pad the submitted count without ever
+// appearing in the started-participants count, letting the two numbers
+// coincidentally match while a real, actively-writing participant still
+// hasn't submitted.
+export function allPiecesSubmitted<T extends { user: { id: string } }>(
+  participants: T[],
+  pieces: {
+    submittedAt: string | Date | null;
+    piece: { authorId: string; wordCount: number };
+  }[]
+): boolean {
+  const startedParticipants = participants.filter((p) =>
+    pieces.some(
+      (pr) => pr.piece.authorId === p.user.id && pr.piece.wordCount > 0
+    )
+  );
   return (
-    participantCount > 0 &&
-    getSubmittedPieces(pieces).length >= participantCount
+    startedParticipants.length > 0 &&
+    startedParticipants.every((p) =>
+      pieces.some(
+        (pr) => pr.piece.authorId === p.user.id && pr.submittedAt !== null
+      )
+    )
   );
 }
 
@@ -47,6 +91,37 @@ export function isPastDeadline(deadline: string | Date | null): boolean {
 export function toEndOfDay(dateString: string): string {
   const [year, month, day] = dateString.split("-").map(Number);
   return new Date(year, month - 1, day, 23, 59, 59, 999).toISOString();
+}
+
+// Inverse of toEndOfDay — extracts the LOCAL calendar date (YYYY-MM-DD) from
+// a stored deadline, for pre-filling a <input type="date">. Must read local
+// date components, not toISOString()'s UTC date: an end-of-day deadline
+// (23:59:59.999 local) crosses into the next UTC calendar day for any
+// timezone behind UTC, which would silently shift the date forward by one
+// every time it round-trips through toEndOfDay again on save.
+export function toLocalDateInputValue(date: string | Date): string {
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+// Returns the date to show for a piece — the latest riff submission, or
+// (for riff-less pieces) when it was published standalone. Submission
+// always wins over publishedAt when both are somehow present.
+export function getPieceDisplayDate(
+  publishedAt: string | Date | null,
+  submittedAts: (string | Date | null)[]
+): string | null {
+  const submittedTimes = submittedAts
+    .filter((d): d is string | Date => d !== null)
+    .map((d) => new Date(d).getTime());
+
+  if (submittedTimes.length > 0) {
+    return new Date(Math.max(...submittedTimes)).toISOString();
+  }
+  return publishedAt ? new Date(publishedAt).toISOString() : null;
 }
 
 // Formats a date as "Jan 15" (short month + day, no year).

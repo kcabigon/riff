@@ -24,8 +24,8 @@ import { ReplyData } from "./ReplyThread";
 interface CommentData {
   id: string;
   content: string;
-  selectionStart: number;
-  selectionEnd: number;
+  selectionStart: number | null;
+  selectionEnd: number | null;
   selectedText: string;
   authorId: string;
   createdAt: string;
@@ -51,10 +51,11 @@ interface ReadPageLayoutProps {
     wordCount: number;
     readLengthMin: number;
     submittedAt: string | null;
+    publishedAt: string | null;
     author: CommentAuthor;
   };
-  riffId: string;
-  clubId: string;
+  riffId: string | null;
+  clubId: string | null;
   currentUser: CommentAuthor;
   initialComments: CommentData[];
   isAlreadyRead: boolean;
@@ -160,7 +161,9 @@ export default function ReadPageLayout({
       const full: CommentData = { ...comment, replies: comment.replies ?? [] };
       setComments((prev) => {
         const updated = [...prev, full];
-        return updated.sort((a, b) => a.selectionStart - b.selectionStart);
+        return updated.sort(
+          (a, b) => (a.selectionStart ?? 0) - (b.selectionStart ?? 0)
+        );
       });
       setActiveHighlightIds([full.id]);
       setPendingSelection(null);
@@ -501,10 +504,12 @@ export default function ReadPageLayout({
               }}
             >
               {readMinutes} min read
-              {piece.submittedAt && (
+              {(piece.submittedAt || piece.publishedAt) && (
                 <>
                   {" \u2022 "}
-                  {formatSubmittedDate(piece.submittedAt)}
+                  {formatSubmittedDate(
+                    (piece.submittedAt ?? piece.publishedAt) as string
+                  )}
                 </>
               )}
             </p>
