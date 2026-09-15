@@ -9,6 +9,8 @@ const ACCENTS = ["#00FF66", "#01EFFC", "#EECF01", "#C01582", "#955CB5"];
 
 // Per-month theming — colors the month pill (bg + text) and that month's card shadows.
 const MONTH_THEMES: Record<string, { color: string; pillText: string }> = {
+  "September 2026": { color: "#EECF01", pillText: "#000000" }, // brand yellow
+  "August 2026": { color: "#C01582", pillText: "#FFFFFF" }, // brand magenta
   "June 2026": { color: "#00FF66", pillText: "#000000" }, // brand green
   "May 2026": { color: "#01EFFC", pillText: "#000000" }, // brand cyan
 };
@@ -24,6 +26,104 @@ interface Release {
 
 // Shipped to production since mid-May 2026. End-user-facing only.
 const RELEASES: Release[] = [
+  {
+    date: "September 2026",
+    title: "No club? No problem.",
+    body: "You don't need a club to riff anymore. Start a riff, share the invite link with whoever you want, and they can join, write, and read along. Clubs are still here for your regular crew.",
+    credit: "Built by Jarric.",
+    creditEmoji: "🛠️",
+  },
+  {
+    date: "September 2026",
+    title: "Read your friends (their writing, we mean).",
+    body: "Anyone you've shared a club or a riff with is now a friend, and friends can read and comment on each other's revealed pieces. Want someone new in the mix? Invite them through a piece. Once they join, you're friends.",
+    credit: "Jarric again.",
+    creditEmoji: "🛠️",
+  },
+  {
+    date: "September 2026",
+    title: "Share it. Send it.",
+    body: "Sharing now lives in one Share modal. Pick who can see a piece, copy or open its link, or Send it straight to specific friends in their inbox.",
+    credit: "Also Jarric. Does he sleep?",
+    creditEmoji: "😴",
+  },
+  {
+    date: "September 2026",
+    title: "Not everything needs a riff.",
+    body: "Wrote something on your own? Hit Finish to publish it without a riff. You can even set the publish date, for that essay you actually wrote back in March.",
+    credit: "Kyle and Jarric teamed up on this one.",
+    creditEmoji: "🤝",
+  },
+  {
+    date: "September 2026",
+    title: "One riff, one scroll.",
+    body: "A riff is now one scrolling page: who's writing, who's done, and every comment and reply as it happens. Club pages got a matching grid, and starting or picking a draft works the same way everywhere.",
+    credit: "Built by Jarric.",
+    creditEmoji: "🛠️",
+  },
+  {
+    date: "September 2026",
+    title: "Welcome home.",
+    body: "My Riffs is now just Home. New folks go straight from their email to their name to Home, no detours. And there's a Let's Riff button waiting in the navbar on every page.",
+    credit: "Built by Jarric.",
+    creditEmoji: "🏠",
+  },
+  {
+    date: "September 2026",
+    title: "Small fixes, big feelings",
+    body: "Editing a riff no longer quietly moves its deadline. Comments stay attached to the right words when the author edits a piece. Past Riffs stopped showing empty riffs, read rings count correctly, and you'll get a little confirmation when you copy a link.",
+    credit: "Jarric did most of these. Derek wrangled the comments.",
+    creditEmoji: "🛠️",
+  },
+  {
+    date: "August 2026",
+    title: "All your riffs, one feed.",
+    body: "Every riff you're in, across every club, on one page: what's due, what's ready to reveal, your drafts, your pieces, and which friends have been writing lately.",
+    credit: "Built by Jarric.",
+    creditEmoji: "🛠️",
+  },
+  {
+    date: "August 2026",
+    title: "Who read it?",
+    body: "Riff pages got an activity feed with threaded comments, plus a Read by strip with little progress rings so you can see who's gotten through everyone's pieces.",
+    credit: "Built by Jarric.",
+    creditEmoji: "👀",
+  },
+  {
+    date: "August 2026",
+    title: "Profiles with personality",
+    body: "Profiles got a proper hero section with a bigger avatar, a few stats about your writing, and a bio you write yourself. Add yours from Account.",
+    credit: "Built by Jarric.",
+    creditEmoji: "🛠️",
+  },
+  {
+    date: "August 2026",
+    title: "Hosting, shared",
+    body: "Hosts can add a co-host to help run the club, or hand the whole thing off to someone else. And if a club isn't for you anymore, you can leave it.",
+    credit: "Built by Jarric.",
+    creditEmoji: "🛠️",
+  },
+  {
+    date: "August 2026",
+    title: "A gentle nudge",
+    body: "Riff now sends a friendly email when a deadline's coming up, when you've joined a riff but haven't started writing, or when your club has a riff you haven't joined yet. You can turn emails off anytime in Account.",
+    credit: "Built by Chris.",
+    creditEmoji: "🛠️",
+  },
+  {
+    date: "August 2026",
+    title: "The fine print, fixed",
+    body: "Notifications take you to the right place now. The About page got a rewrite. Read pages keep it simple with just the reading time and date. And the submit button says “Cover + Submit,” so you know what's coming.",
+    credit: "Team effort from Derek, Jarric, and Kyle.",
+    creditEmoji: "🙌",
+  },
+  {
+    date: "June 2026",
+    title: "Riff in motion (beta)",
+    body: "We're experimenting with reading as an experience: an essay broken into beats, with music and motion, and you tap to move forward. It's live on one piece for now, so keep an eye out for the Riff in motion button.",
+    credit: "Kyle went a little overboard on this one.",
+    creditEmoji: "🎬",
+  },
   {
     date: "June 2026",
     title: "Comments, now in stereo.",
