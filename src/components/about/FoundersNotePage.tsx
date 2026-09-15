@@ -496,6 +496,13 @@ export default function FoundersNotePage() {
           >
             Contact us
           </a>
+          {" · "}
+          <Link
+            href="/release-notes"
+            style={{ color: "#808080", textDecoration: "underline" }}
+          >
+            What&apos;s new
+          </Link>
         </p>
       </div>
     </div>
