@@ -34,8 +34,8 @@ const RELEASES: Release[] = [
     creditEmoji: "🛠️",
     image: {
       src: "/whats-new/riff-invite.webp",
-      alt: "An invite page for an open riff with a Let’s riff button",
-      maxWidth: 520,
+      alt: "An open riff invite card with the host, deadline, prompt, and a Let’s riff button",
+      maxWidth: 440,
     },
   },
   {
@@ -44,6 +44,10 @@ const RELEASES: Release[] = [
     body: "Anyone you've shared a club or a riff with is now a friend, and friends can read and comment on each other's revealed pieces. Want someone new in the mix? Invite them through a piece. Once they join, you're friends.",
     credit: "Jarric again.",
     creditEmoji: "🛠️",
+    image: {
+      src: "/whats-new/friends-row.webp",
+      alt: "The Friends row on Home, a horizontal scroll of friends' avatars",
+    },
   },
   {
     date: "September 2026",
@@ -125,7 +129,7 @@ const RELEASES: Release[] = [
     creditEmoji: "🛠️",
     image: {
       src: "/whats-new/profile.webp",
-      alt: "A profile page with avatar, bio, stats, and piece covers",
+      alt: "A full profile page with the hero avatar, bio, stats, and a grid of piece covers",
     },
   },
   {
