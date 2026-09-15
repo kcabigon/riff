@@ -32,6 +32,11 @@ const RELEASES: Release[] = [
     body: "You don't need a club to riff anymore. Start a riff, share the invite link with whoever you want, and they can join, write, and read along. Clubs are still here for your regular crew.",
     credit: "Built by Jarric.",
     creditEmoji: "🛠️",
+    image: {
+      src: "/whats-new/riff-invite.webp",
+      alt: "An invite page for an open riff with a Let’s riff button",
+      maxWidth: 520,
+    },
   },
   {
     date: "September 2026",
@@ -46,6 +51,11 @@ const RELEASES: Release[] = [
     body: "Sharing now lives in one Share modal. Pick who can see a piece, copy or open its link, or Send it straight to specific friends in their inbox.",
     credit: "Also Jarric. Does he sleep?",
     creditEmoji: "😴",
+    image: {
+      src: "/whats-new/share-modal.webp",
+      alt: "The Share modal with Send to friends, Invite a new friend, and access options",
+      maxWidth: 360,
+    },
   },
   {
     date: "September 2026",
@@ -53,6 +63,11 @@ const RELEASES: Release[] = [
     body: "Wrote something on your own? Hit Finish to publish it without a riff. You can even set the publish date, for that essay you actually wrote back in March.",
     credit: "Kyle and Jarric teamed up on this one.",
     creditEmoji: "🤝",
+    image: {
+      src: "/whats-new/finish.webp",
+      alt: "The Finish your piece modal with a cover preview and an editable finish date",
+      maxWidth: 360,
+    },
   },
   {
     date: "September 2026",
@@ -60,6 +75,10 @@ const RELEASES: Release[] = [
     body: "A riff is now one scrolling page: who's writing, who's done, and every comment and reply as it happens. Club pages got a matching grid, and starting or picking a draft works the same way everywhere.",
     credit: "Built by Jarric.",
     creditEmoji: "🛠️",
+    image: {
+      src: "/whats-new/riff-page.webp",
+      alt: "A revealed riff page with the prompt, piece covers, and the Read by strip",
+    },
   },
   {
     date: "September 2026",
@@ -81,6 +100,11 @@ const RELEASES: Release[] = [
     body: "Every riff you're in, across every club, on one page: what's due, what's ready to reveal, your drafts, your pieces, and which friends have been writing lately.",
     credit: "Built by Jarric.",
     creditEmoji: "🛠️",
+    image: {
+      src: "/whats-new/home-feed.webp",
+      alt: "Current riffs on the Home feed",
+      maxWidth: 520,
+    },
   },
   {
     date: "August 2026",
@@ -88,6 +112,10 @@ const RELEASES: Release[] = [
     body: "Riff pages got an activity feed with threaded comments, plus a Read by strip with little progress rings so you can see who's gotten through everyone's pieces.",
     credit: "Built by Jarric.",
     creditEmoji: "👀",
+    image: {
+      src: "/whats-new/activity-feed.webp",
+      alt: "The riff activity feed with threaded comments and the Read by strip",
+    },
   },
   {
     date: "August 2026",
@@ -95,6 +123,10 @@ const RELEASES: Release[] = [
     body: "Profiles got a proper hero section with a bigger avatar, a few stats about your writing, and a bio you write yourself. Add yours from Account.",
     credit: "Built by Jarric.",
     creditEmoji: "🛠️",
+    image: {
+      src: "/whats-new/profile.webp",
+      alt: "A profile page with avatar, bio, stats, and piece covers",
+    },
   },
   {
     date: "August 2026",
