@@ -33,29 +33,32 @@ export async function runCommentNotifications(): Promise<{
     orderBy: { createdAt: "asc" },
   });
 
-  // Threads touched by a new reply. Replies are flat (one level), so a
-  // reply's parentId is always the thread's top-level comment.
-  const threadIds = [
-    ...new Set(
-      comments
-        .filter((comment) => comment.parentId !== null)
-        .map((comment) => comment.parentId as string)
-    ),
-  ];
+  // Threads touched by a new reply, keyed by the comment each reply hangs off.
+  // The UI only ever posts replies against a top-level comment, but the API
+  // doesn't enforce that, so a parent here may itself be a reply.
+  const threadIds = new Set(
+    comments
+      .filter((comment) => comment.parentId !== null)
+      .map((comment) => comment.parentId as string)
+  );
 
   // Everyone already in those threads — the starter plus every replier, over
   // the thread's whole history, not just the last 24h. One query, not one per
   // thread.
   const threadParticipants = new Map<string, Set<string>>();
-  if (threadIds.length > 0) {
+  if (threadIds.size > 0) {
+    const ids = [...threadIds];
     const threadComments = await prisma.comment.findMany({
-      where: {
-        OR: [{ id: { in: threadIds } }, { parentId: { in: threadIds } }],
-      },
+      where: { OR: [{ id: { in: ids } }, { parentId: { in: ids } }] },
       select: { id: true, parentId: true, authorId: true },
     });
     for (const comment of threadComments) {
-      const threadId = comment.parentId ?? comment.id;
+      // A comment matched by its own id is the thread root, even when it has a
+      // parent of its own. Keying off parentId first would file it under its
+      // grandparent and orphan the whole thread, silently notifying no one.
+      const threadId = threadIds.has(comment.id)
+        ? comment.id
+        : (comment.parentId as string);
       const participants =
         threadParticipants.get(threadId) ?? new Set<string>();
       participants.add(comment.authorId);
