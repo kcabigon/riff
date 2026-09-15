@@ -55,9 +55,7 @@ export default function OnboardingCreateClubPage() {
         >
           <BackButton
             onClick={() => {
-              const from =
-                sessionStorage.getItem("pendingClubFrom") ??
-                "/onboarding/club-choice";
+              const from = sessionStorage.getItem("pendingClubFrom") ?? "/home";
               sessionStorage.removeItem("pendingClubFrom");
               router.push(from);
             }}

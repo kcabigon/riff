@@ -3,7 +3,12 @@ import type { Metadata } from "next";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import RiffPageLayout from "@/components/riffs/RiffPageLayout";
-import { getSubmittedPieces } from "@/lib/riff-utils";
+import {
+  getSubmittedPieces,
+  getContentPreview,
+  isAuthoredBy,
+  type RiffContributor,
+} from "@/lib/riff-utils";
 
 export async function generateMetadata({
   params,
@@ -35,8 +40,9 @@ export default async function RiffPage({
 
   const userId = session.user.id;
 
-  // Fetch user profile and all their clubs in parallel (for nav)
-  const [navUser, userClubs] = await Promise.all([
+  // Fetch user profile, all their clubs (for nav), and whether they have any
+  // standalone draft (for the Attach Draft option) in parallel
+  const [navUser, userClubs, standaloneDraftCount] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
       select: { id: true, name: true, username: true, avatarUrl: true },
@@ -46,7 +52,11 @@ export default async function RiffPage({
       select: { id: true, name: true },
       orderBy: { updatedAt: "desc" },
     }),
+    prisma.piece.count({
+      where: { authorId: userId, riffs: { none: {} }, publishedAt: null },
+    }),
   ]);
+  const hasStandaloneDrafts = standaloneDraftCount > 0;
 
   // Fetch riff with full data
   const riff = await prisma.riff.findUnique({
@@ -106,11 +116,14 @@ export default async function RiffPage({
   }
 
   // Verify user is a club member OR a riff participant + predicted volume number in parallel
+  // (clubless riffs have no members to check and no per-club volume sequence)
   const [member, predictedVolumeNumber] = await Promise.all([
-    prisma.clubMember.findFirst({
-      where: { clubId: riff.clubId, userId },
-    }),
-    riff.status === "ACTIVE"
+    riff.clubId
+      ? prisma.clubMember.findFirst({
+          where: { clubId: riff.clubId, userId },
+        })
+      : Promise.resolve(null),
+    riff.status === "ACTIVE" && riff.clubId
       ? prisma.riff
           .count({
             where: {
@@ -131,10 +144,12 @@ export default async function RiffPage({
   const hasSubmitted = riff.pieces.some(
     (p) => p.piece.authorId === userId && p.submittedAt !== null
   );
-  const isAdmin =
-    riff.club.adminId === userId || riff.club.moderatorId === userId;
+  // Clubless riffs have no admin — the creator holds host powers
+  const isAdmin = riff.club
+    ? riff.club.adminId === userId || riff.club.moderatorId === userId
+    : riff.creatorId === userId;
   const canDeleteRiff =
-    riff.club.adminId === userId || riff.creatorId === userId;
+    riff.club?.adminId === userId || riff.creatorId === userId;
 
   // ID of the user's unsubmitted piece — needed for late submission on revealed riffs
   const draftPieceId =
@@ -142,28 +157,43 @@ export default async function RiffPage({
       (p) => p.piece.authorId === userId && p.submittedAt === null
     )?.piece.id ?? null;
 
+  // Computed once, reused for both the header's totalPieces prop and the
+  // Read-by ring denominators below — same filter, one source of truth.
+  const submittedPieces = getSubmittedPieces(riff.pieces);
+
   // Fetch read data and compute per-piece flags for REVEALED riffs
   let readPieceIds: string[] = [];
   let isFirstReveal = false;
   const hasNewCommentsMap: Record<string, boolean> = {};
-  let contributionData: Array<{
-    user: { id: string; name: string | null; avatarUrl: string | null };
-    readCount: number;
-    commentCount: number;
-  }> = [];
+  let contributionData: RiffContributor[] = [];
   if (riff.status === "REVEALED") {
-    // Fetch read records with readAt timestamps
-    const reads = await prisma.pieceRead.findMany({
-      where: { userId, riffId: id },
-      select: { pieceId: true, readAt: true },
+    // One PieceRead fetch for the whole riff — derives both the viewer's
+    // own per-piece readAt map and every member's total read count, instead
+    // of a separate findMany + groupBy round-trip for each.
+    const allReads = await prisma.pieceRead.findMany({
+      where: { riffId: id },
+      select: { userId: true, pieceId: true, readAt: true },
     });
-    const readAtMap: Record<string, Date> = Object.fromEntries(
-      reads.map((r) => [r.pieceId, r.readAt])
-    );
+    const reads = allReads.filter((r) => r.userId === userId);
+
+    // Exclude self-authored-piece reads before counting — navigating to your
+    // own piece creates a PieceRead row too (upsert route no-ops on new ones,
+    // but old rows may already exist), which would double-count against
+    // piecesToRead below (that already subtracts the author's own piece).
+    // Same pattern as home/page.tsx and clubs/[id]/page.tsx.
+    const pieceAuthorMap: Record<string, string> = {};
+    for (const p of riff.pieces) {
+      pieceAuthorMap[p.piece.id] = p.piece.authorId;
+    }
+    const readCountMap: Record<string, number> = {};
+    for (const r of allReads) {
+      if (pieceAuthorMap[r.pieceId] === r.userId) continue;
+      readCountMap[r.userId] = (readCountMap[r.userId] ?? 0) + 1;
+    }
 
     // Own pieces always treated as read — no Unread badge on your own work
     const ownPieceIds = riff.pieces
-      .filter((p) => p.piece.authorId === userId)
+      .filter((p) => isAuthoredBy(p.piece, userId))
       .map((p) => p.piece.id);
     readPieceIds = [
       ...new Set([...reads.map((r) => r.pieceId), ...ownPieceIds]),
@@ -173,44 +203,50 @@ export default async function RiffPage({
     // new members browsing past riffs) should not see the "moment you've been waiting for" modal
     isFirstReveal = !isAdmin && reads.length === 0 && isJoined;
 
-    // Fetch all comment timestamps for this riff in one query
-    // Exclude the current user's own comments — leaving a comment shouldn't
-    // trigger a "New" badge on your own piece
-    const comments = await prisma.comment.findMany({
-      where: { riffId: id, authorId: { not: userId } },
-      select: { pieceId: true, createdAt: true },
+    // One Comment fetch for the whole riff — derives both the "new since
+    // you last read it" flags and every author's total comment count.
+    const allComments = await prisma.comment.findMany({
+      where: { riffId: id },
+      select: { pieceId: true, createdAt: true, authorId: true },
     });
+    const commentCountMap: Record<string, number> = {};
+    for (const c of allComments) {
+      commentCountMap[c.authorId] = (commentCountMap[c.authorId] ?? 0) + 1;
+    }
 
-    // For each piece the user has read, check if any comment is newer than readAt
+    // For each piece the user has read, check if any comment is newer than
+    // readAt — excludes the viewer's own comments, since leaving one
+    // shouldn't trigger a "New" badge on your own piece.
     for (const { pieceId: pid, readAt } of reads) {
-      hasNewCommentsMap[pid] = comments.some(
-        (c) => c.pieceId === pid && c.createdAt > readAt
+      hasNewCommentsMap[pid] = allComments.some(
+        (c) =>
+          c.authorId !== userId && c.pieceId === pid && c.createdAt > readAt
       );
     }
 
-    // Contribution strip data
-    const clubMembers = await prisma.clubMember.findMany({
-      where: { clubId: riff.clubId },
-      select: { user: { select: { id: true, name: true, avatarUrl: true } } },
-    });
+    // Contribution strip data — club members for club riffs, participants for clubless
+    const clubMembers = riff.clubId
+      ? await prisma.clubMember.findMany({
+          where: { clubId: riff.clubId },
+          select: {
+            user: { select: { id: true, name: true, avatarUrl: true } },
+          },
+        })
+      : riff.participants.map((p) => ({
+          user: {
+            id: p.user.id,
+            name: p.user.name,
+            avatarUrl: p.user.avatarUrl,
+          },
+        }));
 
-    const readGroups = await prisma.pieceRead.groupBy({
-      by: ["userId"],
-      where: { riffId: id },
-      _count: { pieceId: true },
-    });
-
-    const commentGroups = await prisma.comment.groupBy({
-      by: ["authorId"],
-      where: { riffId: id },
-      _count: { id: true },
-    });
-
-    const readCountMap: Record<string, number> = Object.fromEntries(
-      readGroups.map((g) => [g.userId, g._count.pieceId])
-    );
-    const commentCountMap: Record<string, number> = Object.fromEntries(
-      commentGroups.map((g) => [g.authorId, g._count.id])
+    // Own pieces never get a PieceRead row from normal viewing, so a piece's
+    // author can never reach a full ring against the riff-wide total. Shrink
+    // their personal denominator by 1 instead of inflating the numerator —
+    // "have you read everyone else's piece" rather than "did you read your
+    // own too", which needs no synthetic read-row bookkeeping.
+    const submittedPieceAuthorIds = new Set(
+      submittedPieces.map((p) => p.piece.authorId)
     );
 
     contributionData = clubMembers
@@ -218,6 +254,11 @@ export default async function RiffPage({
         user: m.user,
         readCount: readCountMap[m.user.id] ?? 0,
         commentCount: commentCountMap[m.user.id] ?? 0,
+        piecesToRead: Math.max(
+          submittedPieces.length -
+            (submittedPieceAuthorIds.has(m.user.id) ? 1 : 0),
+          0
+        ),
       }))
       .filter((m) => m.readCount >= 1)
       .sort((a, b) =>
@@ -247,6 +288,14 @@ export default async function RiffPage({
           updatedAt: pr.piece.updatedAt.toISOString(),
           commentCount: pr.piece._count?.comments ?? 0,
           _count: undefined,
+          // Plain-text preview — only computed (and only sent) for the
+          // viewer's own unsubmitted piece, same privacy rule as the club
+          // page: other participants' previews are faked client-side from
+          // wordCount alone (see ProgressCard's blurredPreviewFiller).
+          preview:
+            pr.piece.authorId === userId
+              ? getContentPreview(pr.piece.currentContent, 500)
+              : "",
         },
       })),
   };
@@ -264,12 +313,15 @@ export default async function RiffPage({
       readPieceIds={readPieceIds}
       hasNewCommentsMap={hasNewCommentsMap}
       contributionData={contributionData}
-      totalPieces={getSubmittedPieces(riff.pieces).length}
-      navUser={navUser}
+      totalPieces={submittedPieces.length}
+      navUser={
+        navUser ?? { id: userId, name: null, username: null, avatarUrl: null }
+      }
       userClubs={userClubs}
-      hostFirstName={riff.club.admin?.firstName ?? null}
+      hostFirstName={riff.club?.admin?.firstName ?? null}
       isFirstReveal={isFirstReveal}
       predictedVolumeNumber={predictedVolumeNumber}
+      hasStandaloneDrafts={hasStandaloneDrafts}
     />
   );
 }

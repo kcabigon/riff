@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
+import { NotificationType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
+import {
+  createNotification,
+  notifyRiffParticipants,
+} from "@/lib/notifications";
 
 // POST /api/riffs/[id]/participants - Join a riff (opt-in)
 export async function POST(
@@ -30,19 +35,22 @@ export async function POST(
       );
     }
 
-    // Check if user is a club member
-    const member = await prisma.clubMember.findFirst({
-      where: {
-        clubId: riff.clubId,
-        userId: user.id,
-      },
-    });
+    // Club riffs: must be a club member. Clubless (open) riffs have no gate —
+    // the riff link is the invitation; any authenticated user can join.
+    if (riff.clubId) {
+      const member = await prisma.clubMember.findFirst({
+        where: {
+          clubId: riff.clubId,
+          userId: user.id,
+        },
+      });
 
-    if (!member) {
-      return NextResponse.json(
-        { error: "You must be a club member to join this riff" },
-        { status: 403 }
-      );
+      if (!member) {
+        return NextResponse.json(
+          { error: "You must be a club member to join this riff" },
+          { status: 403 }
+        );
+      }
     }
 
     // Check if already a participant
@@ -74,6 +82,31 @@ export async function POST(
         },
       },
     });
+
+    // Clubless riffs: tell existing participants + the creator someone joined
+    // (in-app only, no email). Club-riff joins fire nothing today — unchanged.
+    if (!riff.clubId) {
+      try {
+        await notifyRiffParticipants(
+          riffId,
+          NotificationType.RIFF_PARTICIPANT_JOINED,
+          user.id
+        );
+        const creatorIsParticipant = riff.participants.some(
+          (p) => p.userId === riff.creatorId
+        );
+        if (!creatorIsParticipant) {
+          await createNotification({
+            type: NotificationType.RIFF_PARTICIPANT_JOINED,
+            recipientId: riff.creatorId,
+            actorId: user.id,
+            riffId,
+          });
+        }
+      } catch (err) {
+        console.error("[notification error] riff participant joined:", err);
+      }
+    }
 
     return NextResponse.json(
       {

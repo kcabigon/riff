@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Avatar from "@/components/shared/Avatar";
 import Badge from "@/components/shared/Badge";
 
@@ -66,18 +67,16 @@ export default function PieceCard({
         backgroundColor: imageUrl ? undefined : placeholderColor,
       }}
     >
-      {/* Cover image */}
+      {/* Cover image — next/image gives automatic resizing/caching and lazy
+          loads by default, so cards outside the viewport (e.g. further down
+          a long Past Riffs list) don't fetch until scrolled near. */}
       {imageUrl && (
-        <img
+        <Image
           src={imageUrl}
           alt=""
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-          }}
+          fill
+          sizes="(max-width: 767px) 90vw, 280px"
+          style={{ objectFit: "cover" }}
         />
       )}
 
@@ -143,12 +142,12 @@ export default function PieceCard({
         </h4>
       </div>
 
-      {/* Optional label — same position as ProgressCard activity text */}
+      {/* Optional label — sits above the avatar when one is shown, otherwise flush at the bottom */}
       {label && (
         <div
           style={{
             position: "absolute",
-            bottom: "56px",
+            bottom: piece.author ? "56px" : "16px",
             left: 0,
             right: 0,
             display: "flex",
@@ -159,7 +158,7 @@ export default function PieceCard({
           <p
             style={{
               fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
+              fontSize: "12px",
               fontWeight: 300,
               color: "rgba(255, 255, 255, 0.7)",
               margin: 0,

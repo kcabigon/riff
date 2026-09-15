@@ -94,7 +94,7 @@ export interface ClubMember {
 
 export interface Riff {
   id: RiffId;
-  clubId: ClubId;
+  clubId: ClubId | null; // null = clubless (open) riff, joined via link
   creatorId: UserId;
   title: string | null;
   prompt?: string;
@@ -400,7 +400,11 @@ export enum NotificationType {
   RIFF_STARTED = "RIFF_STARTED",
   RIFF_DEADLINE_APPROACHING = "RIFF_DEADLINE_APPROACHING",
   RIFF_COMPLETED = "RIFF_COMPLETED",
+  RIFF_DEADLINE_CHANGED = "RIFF_DEADLINE_CHANGED",
+  ALL_PIECES_SUBMITTED = "ALL_PIECES_SUBMITTED",
   PIECE_SUBMITTED_TO_RIFF = "PIECE_SUBMITTED_TO_RIFF",
+  CLUB_MEMBER_JOINED = "CLUB_MEMBER_JOINED",
+  RIFF_PARTICIPANT_JOINED = "RIFF_PARTICIPANT_JOINED",
 
   // Comment notifications
   NEW_COMMENT = "NEW_COMMENT",
@@ -463,7 +467,7 @@ export interface InviteToClubInput {
 }
 
 export interface CreateRiffInput {
-  clubId: ClubId;
+  clubId?: ClubId; // omit for clubless (open) riffs
   title?: string;
   prompt?: string;
   deadline?: Date;
@@ -559,7 +563,7 @@ export interface CreateCommentInput {
   content: string;
   pieceId: PieceId;
   riffId: RiffId; // required — all comments are riff-scoped
-  clubId: ClubId; // required — all comments are club-scoped
+  clubId: ClubId | null; // null for clubless (open) riffs
   selectionStart: number; // required — all comments must be anchored
   selectionEnd: number; // required
   selectedText: string; // required

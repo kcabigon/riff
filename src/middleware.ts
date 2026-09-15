@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 // Routes that require authentication
 const protectedPrefixes = [
+  "/home",
   "/clubs",
   "/riffs",
   "/write",
@@ -10,13 +11,13 @@ const protectedPrefixes = [
   "/account",
   "/onboarding",
   "/auth/post-login",
-  "/no-club",
   "/admin",
 ];
 
 function isProtectedRoute(pathname: string): boolean {
-  // Club join pages are publicly accessible without auth
+  // Club and riff join pages are publicly accessible without auth
   if (/^\/clubs\/[^/]+\/join$/.test(pathname)) return false;
+  if (/^\/riffs\/[^/]+\/join$/.test(pathname)) return false;
   return protectedPrefixes.some(
     (prefix) => pathname === prefix || pathname.startsWith(prefix + "/")
   );

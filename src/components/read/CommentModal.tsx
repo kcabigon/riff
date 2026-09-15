@@ -12,8 +12,8 @@ import { CommentAuthor } from "@/types";
 interface CommentData {
   id: string;
   content: string;
-  selectionStart: number;
-  selectionEnd: number;
+  selectionStart: number | null;
+  selectionEnd: number | null;
   selectedText: string;
   authorId: string;
   createdAt: string;
@@ -27,8 +27,8 @@ interface CommentModalProps {
   currentUserId: string;
   currentUser: CommentAuthor;
   pieceId: string;
-  riffId: string;
-  clubId: string;
+  riffId: string | null;
+  clubId: string | null;
   authorColorMap: Record<string, string>;
   onClose: () => void;
   onDelete: (commentId: string) => void;

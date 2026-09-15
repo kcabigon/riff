@@ -38,7 +38,8 @@ export async function PATCH(req: Request) {
         lastName: lastName.trim(),
         name: `${firstName.trim()} ${lastName.trim()}`, // Full name for compatibility
         username: username,
-        onboardingStep: "CLUB_CHOICE", // Progress to next step
+        onboardingStep: "COMPLETED",
+        onboardingCompleted: true,
       },
       select: {
         id: true,
@@ -46,6 +47,7 @@ export async function PATCH(req: Request) {
         lastName: true,
         username: true,
         onboardingStep: true,
+        onboardingCompleted: true,
       },
     });
 

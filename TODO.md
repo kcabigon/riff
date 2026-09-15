@@ -138,7 +138,7 @@ Last updated: May 16, 2026
 
 - [x] Welcome tutorial: mobile-optimized version (portrait layout, swipe navigation)
 - [x] Engagement reminders v1: deadline-approaching (cadence scales with time left), remember-to-write (joined, no draft), join-riff-nudge (club member hasn't joined active riff) — all email-only via new `/api/cron/engagement-reminders`, rotating joke copy per reminder type. Cut from scope: club-invite tracking for non-members (no data model for it today) and a "someone started writing" social ping (unproven value, revisit only if the above don't move completion rate enough)
-- [ ] Notification emails via Resend — new comment digest (already covered by existing `daily-comment-notifications` cron; deadline-approaching now covered by engagement reminders above)
+- [ ] Notification emails via Resend — new comment digest (already covered by `daily-notifications` cron; deadline-approaching also covered by the same cron, formerly a separate `engagement-reminders` job)
 - [ ] Toast notifications replacing `console.error` catches
 - [ ] Onboarding page refinements (create-club, join-club pages)
 
@@ -148,8 +148,10 @@ Last updated: May 16, 2026
 
 - [ ] Collections system (personal, group, circle)
 - [x] My Riffs page (`/my-riffs`): aggregate all club riffs cross-club, tabs for Current (Writing/Reading) and Past (by club), club badge on cards, avatar dropdown nav entry
-- [ ] 🔨 @jarric — Multi-level sharing UI (CLUB, RIFF, INDIVIDUAL, PUBLIC)
+- [ ] 🔨 @jarric — Multi-level sharing UI (CLUB, RIFF, INDIVIDUAL, PUBLIC) — INDIVIDUAL shipped via piece-invite (`feature/friend-invite`: joinPiece flow, `Share.shareType: INDIVIDUAL` now wired up); unified Share modal (Access dropdown + Send section: invite a new friend or email existing friends) shipped via `feature/share-modal-send`; a real mutually-exclusive Private tier is next
 - [x] Riff activity feed: post-reveal riff page redesign with Pieces/Feed toggle and comment activity feed
+- [x] Consolidate riff page Pieces/Comment tabs into one scrolling page; per-piece click-to-read replaces bulk mark-read
+- [x] Club page: new-comment indicator on Past Riffs; route pre-reveal club riffs to club page instead of standalone riff page
 - [ ] Permission helpers / reusable middleware
 - [ ] Refactor editor: extract shared tiptap logic into `useRiffEditor` hook + unified `EditorToolbar`
 

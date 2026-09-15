@@ -103,21 +103,40 @@ export async function PATCH(
       for (const comment of comments) {
         if (!comment.selectedText) continue;
 
-        const newIndex = currentContent.indexOf(comment.selectedText);
+        // Image comments use a placeholder "[Image]" that never appears in the
+        // HTML, so text-matching will always fail. Skip them — the frontend
+        // uses a position-based heuristic to anchor image comments instead.
+        if (comment.selectedText === "[Image]") continue;
 
-        if (newIndex === -1) {
-          // Text was deleted — remove comment (Google Docs behavior)
-          await prisma.comment.delete({ where: { id: comment.id } });
-        } else if (
-          comment.selectionStart !== null &&
-          newIndex !== comment.selectionStart
-        ) {
-          // Text moved — update anchors
+        // Count all occurrences of selectedText in the new content
+        const occurrences: number[] = [];
+        let searchFrom = 0;
+        while (true) {
+          const idx = currentContent.indexOf(comment.selectedText, searchFrom);
+          if (idx === -1) break;
+          occurrences.push(idx);
+          searchFrom = idx + 1;
+        }
+
+        if (occurrences.length === 1) {
+          // Unique passage — safe to re-anchor
+          const newIndex = occurrences[0];
+          if (comment.selectionStart !== newIndex) {
+            await prisma.comment.update({
+              where: { id: comment.id },
+              data: {
+                selectionStart: newIndex,
+                selectionEnd: newIndex + comment.selectedText.length,
+              },
+            });
+          }
+        } else if (comment.selectionStart !== null) {
+          // 0 occurrences (deleted) or 2+ (ambiguous) — unanchor, preserve quote
           await prisma.comment.update({
             where: { id: comment.id },
             data: {
-              selectionStart: newIndex,
-              selectionEnd: newIndex + comment.selectedText.length,
+              selectionStart: null,
+              selectionEnd: null,
             },
           });
         }

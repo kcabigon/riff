@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import CountdownTimer from "./CountdownTimer";
 import PieceCard from "./PieceCard";
 import RevealConfirmModal from "./RevealConfirmModal";
 import EditRiffModal from "./EditRiffModal";
 import DeleteRiffConfirmModal from "./DeleteRiffConfirmModal";
+import Modal from "@/components/shared/Modal";
+import ShareLinkOptions from "@/components/shared/ShareLinkOptions";
 import NavBar from "@/components/clubs/NavBar";
 import RevealCelebration from "./RevealCelebration";
 import {
@@ -16,10 +17,13 @@ import {
   isPastDeadline,
   formatDateShort,
   formatDateLong,
+  daysUntil,
   getSubmittedParticipants,
   getWaitingParticipants,
+  isAuthoredBy,
+  type RiffContributor,
 } from "@/lib/riff-utils";
-import RiffCTAButton from "@/components/riffs/RiffCTAButton";
+import DraftChoiceTrigger from "@/components/riffs/DraftChoiceTrigger";
 import RevealRiffButton, {
   shouldShowReveal,
 } from "@/components/riffs/RevealRiffButton";
@@ -30,6 +34,8 @@ import type { DropdownItem } from "@/components/shared/Dropdown";
 import ActivityFeed from "@/components/riffs/ActivityFeed";
 import ReadByStrip from "@/components/riffs/ReadByStrip";
 import PrimaryButton from "@/components/PrimaryButton";
+import CTAButton from "@/components/CTAButton";
+import Avatar from "@/components/shared/Avatar";
 
 interface RiffPageLayoutProps {
   riff: {
@@ -41,8 +47,8 @@ interface RiffPageLayoutProps {
     status: string;
     createdAt: string;
     updatedAt?: string;
-    clubId: string;
-    club: { id: string; name: string };
+    clubId: string | null;
+    club: { id: string; name: string } | null;
     creator: {
       id: string;
       name: string | null;
@@ -67,6 +73,7 @@ interface RiffPageLayoutProps {
         coverImage?: string | null;
         updatedAt?: string;
         commentCount?: number;
+        preview?: string;
         author?: {
           id: string;
           name: string | null;
@@ -81,21 +88,18 @@ interface RiffPageLayoutProps {
   isJoined: boolean;
   hasDraft: boolean;
   hasSubmitted: boolean;
+  hasStandaloneDrafts: boolean;
   draftPieceId?: string | null;
-  navUser?: {
+  navUser: {
     id: string;
     name: string | null;
     username: string | null;
     avatarUrl: string | null;
-  } | null;
+  };
   userClubs?: Array<{ id: string; name: string }>;
   readPieceIds?: string[];
   hasNewCommentsMap?: Record<string, boolean>;
-  contributionData?: Array<{
-    user: { id: string; name: string | null; avatarUrl: string | null };
-    readCount: number;
-    commentCount: number;
-  }>;
+  contributionData?: RiffContributor[];
   totalPieces?: number;
   onReveal?: () => void;
   hostFirstName?: string | null;
@@ -111,6 +115,7 @@ export default function RiffPageLayout({
   isJoined: initialIsJoined,
   hasDraft,
   hasSubmitted,
+  hasStandaloneDrafts,
   draftPieceId,
   navUser,
   userClubs = [],
@@ -128,21 +133,32 @@ export default function RiffPageLayout({
   const { revealRiff, isRevealing } = useRevealRiff();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
-  const [viewMode, setViewMode] = useState<"read" | "comment">("read");
   const [badgeMap, setBadgeMap] =
     useState<Record<string, boolean>>(hasNewCommentsMap);
   const router = useRouter();
 
-  const switchToComment = () => {
-    setViewMode("comment");
-    setBadgeMap({});
+  const markPieceCommentsRead = (pieceId: string) => {
+    setBadgeMap((prev) => ({ ...prev, [pieceId]: false }));
+    fetch(`/api/riffs/${riff.id}/read`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pieceId }),
+    }).catch(() => {});
   };
+
+  const [markAllReadSignal, setMarkAllReadSignal] = useState(0);
+  const markAllCommentsRead = () => {
+    setBadgeMap({});
+    setMarkAllReadSignal((n) => n + 1);
+    fetch(`/api/riffs/${riff.id}/mark-read`, { method: "POST" }).catch(
+      () => {}
+    );
+  };
+  const hasUnreadComments = Object.values(badgeMap).some(Boolean);
   const deadlinePassed = isPastDeadline(riff.deadline);
-  const piecesAllSubmitted = allPiecesSubmitted(
-    riff.pieces,
-    riff.participants.length
-  );
+  const piecesAllSubmitted = allPiecesSubmitted(riff.participants, riff.pieces);
   const submittedUsers = getSubmittedParticipants(
     riff.participants,
     riff.pieces
@@ -166,29 +182,51 @@ export default function RiffPageLayout({
     }
   };
 
-  const existingPieceId =
-    riff.pieces.find((p) => p.piece.authorId === currentUserId)?.piece.id ??
-    null;
   const totalWords = riff.pieces.reduce(
     (sum, p) => sum + (p.piece.wordCount || 0),
     0
   );
+  // Independent of contributionData, which is filtered to members who've
+  // read at least one piece (for the Read-by strip) — sourcing this from
+  // the pieces directly means the heading total can't silently undercount
+  // if someone's commentCount ever outpaced their readCount.
+  const totalComments = riff.pieces.reduce(
+    (sum, p) => sum + (p.piece.commentCount ?? 0),
+    0
+  );
+
+  // The viewer always gets a slot in the progress grid, even before
+  // joining — mirrors the same check inside the grid render below, hoisted
+  // here so the page width can respond to it too.
+  const viewerInParticipants = riff.participants.some(
+    (p) => p.user.id === currentUserId
+  );
+  const participantCount = viewerInParticipants
+    ? riff.participants.length
+    : riff.participants.length + 1;
+
+  // Main content width responsive to participant count, mirroring club
+  // page's club-size tiering (680/1000/1240 for 2/3/4+) — grows as more
+  // people join the riff instead of staying fixed.
+  const desktopContentWidth =
+    participantCount <= 2 ? 680 : participantCount === 3 ? 1000 : 1240;
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
       {/* Nav bar */}
-      {navUser && (
-        <NavBar
-          user={navUser}
-          clubs={userClubs}
-          currentClub={{ id: riff.clubId, name: riff.club.name }}
-        />
-      )}
+      <NavBar
+        user={navUser}
+        clubs={userClubs}
+        currentClub={
+          riff.club ? { id: riff.club.id, name: riff.club.name } : undefined
+        }
+      />
 
-      {/* Main content */}
+      {/* Main content — width responsive to participant count (680/1000/1240
+          for 2/3/4+ people), centered */}
       <div
         style={{
-          maxWidth: "1000px",
+          maxWidth: `${desktopContentWidth}px`,
           margin: "0 auto",
           padding: "32px 24px 64px",
         }}
@@ -245,16 +283,51 @@ export default function RiffPageLayout({
                     margin: 0,
                   }}
                 >
-                  {deadlinePassed && riff.status !== "REVEALED"
-                    ? "Deadline passed"
-                    : riff.status === "REVEALED"
-                      ? riff.updatedAt
-                        ? `Revealed ${formatDateShort(riff.updatedAt)}`
-                        : "Revealed"
-                      : riff.deadline
-                        ? `Deadline: ${formatDateLong(riff.deadline)}`
-                        : "No deadline"}
+                  {deadlinePassed && riff.status !== "REVEALED" ? (
+                    "Deadline passed"
+                  ) : riff.status === "REVEALED" ? (
+                    riff.updatedAt ? (
+                      <>
+                        Revealed:{" "}
+                        <span style={{ color: "#000000" }}>
+                          {formatDateShort(riff.updatedAt)}
+                        </span>
+                        {" · "}
+                        Words:{" "}
+                        <span style={{ color: "#000000" }}>
+                          {totalWords.toLocaleString()}
+                        </span>
+                      </>
+                    ) : (
+                      "Revealed"
+                    )
+                  ) : riff.deadline ? (
+                    `Deadline: ${formatDateLong(riff.deadline)}`
+                  ) : (
+                    "No deadline"
+                  )}
                 </p>
+                {!deadlinePassed &&
+                  riff.status !== "REVEALED" &&
+                  riff.deadline && <span style={{ color: "#808080" }}>·</span>}
+                {!deadlinePassed &&
+                  riff.status !== "REVEALED" &&
+                  riff.deadline && (
+                    <p
+                      style={{
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "16px",
+                        fontWeight: 300,
+                        color: "#DC2626",
+                        margin: 0,
+                      }}
+                    >
+                      {(() => {
+                        const days = daysUntil(new Date(riff.deadline));
+                        return `${days} ${days === 1 ? "day" : "days"} left`;
+                      })()}
+                    </p>
+                  )}
                 {isAdmin &&
                   riff.status !== "REVEALED" &&
                   (() => {
@@ -264,7 +337,20 @@ export default function RiffPageLayout({
                         label: "Edit riff",
                         onClick: () => setIsEditModalOpen(true),
                       },
-                      ...(riff.status === "ACTIVE"
+                      // Only clubless riffs are invited-by-link — club riffs
+                      // invite people to the club itself, from the club page.
+                      ...(!riff.club && riff.status === "ACTIVE"
+                        ? [
+                            {
+                              type: "action" as const,
+                              label: "Invite friends",
+                              onClick: () => setIsInviteModalOpen(true),
+                            },
+                          ]
+                        : []),
+                      // Force-reveal only makes sense once someone has
+                      // actually submitted something.
+                      ...(riff.status === "ACTIVE" && totalPieces > 0
                         ? [
                             {
                               type: "action" as const,
@@ -296,26 +382,58 @@ export default function RiffPageLayout({
               </div>
             </div>
 
-            {/* Prompt */}
-            {riff.prompt && (
+            {/* Hosted by (clubless riffs only) + prompt — shared accent border,
+                since the prompt is effectively a note from the host. */}
+            {(!riff.club || riff.prompt) && (
               <div
                 style={{
                   borderLeft: "2px solid #000000",
                   paddingLeft: "16px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "16px",
                 }}
               >
-                <p
-                  style={{
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "16px",
-                    fontWeight: 300,
-                    color: "#000000",
-                    margin: 0,
-                    lineHeight: 1.5,
-                  }}
-                >
-                  {riff.prompt}
-                </p>
+                {!riff.club && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                    }}
+                  >
+                    <Avatar user={riff.creator} size={32} />
+                    <p
+                      style={{
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "16px",
+                        fontWeight: 300,
+                        color: "#000000",
+                        margin: 0,
+                      }}
+                    >
+                      <span style={{ color: "#808080" }}>Hosted by</span>{" "}
+                      <span style={{ fontWeight: 700 }}>
+                        {riff.creator.name || "User with no name"}
+                      </span>
+                    </p>
+                  </div>
+                )}
+
+                {riff.prompt && (
+                  <p
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "16px",
+                      fontWeight: 300,
+                      color: "#000000",
+                      margin: 0,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {riff.prompt}
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -341,116 +459,17 @@ export default function RiffPageLayout({
                 </PrimaryButton>
               )}
 
-            {riff.status === "REVEALED" && (
-              <div
-                style={{
-                  display: "inline-flex",
-                  border: "2px solid #000000",
-                  overflow: "hidden",
-                }}
-              >
-                {(["read", "comment"] as const).map((mode, i) => (
-                  <button
-                    key={mode}
-                    onClick={() =>
-                      mode === "comment" ? switchToComment() : setViewMode(mode)
-                    }
-                    style={{
-                      backgroundColor:
-                        viewMode === mode ? "#000000" : "#FFFFFF",
-                      border: "none",
-                      borderLeft: i > 0 ? "2px solid #000000" : "none",
-                      cursor: "pointer",
-                      fontFamily: "var(--font-dm-sans)",
-                      fontSize: "14px",
-                      fontWeight: 400,
-                      color: viewMode === mode ? "#FFFFFF" : "#000000",
-                      padding: "6px 16px",
-                      textTransform: "capitalize",
-                      transition:
-                        "background-color 0.15s ease, color 0.15s ease",
-                    }}
-                  >
-                    {mode}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {riff.status === "REVEALED" &&
-              (() => {
-                const totalReads = contributionData.reduce(
-                  (sum, m) => sum + m.readCount,
-                  0
-                );
-                const totalComments = contributionData.reduce(
-                  (sum, m) => sum + m.commentCount,
-                  0
-                );
-                const revealStats = [
-                  {
-                    value: riff.pieces.length,
-                    label: riff.pieces.length === 1 ? "Piece" : "Pieces",
-                  },
-                  { value: totalWords.toLocaleString(), label: "Words" },
-                  {
-                    value: totalReads,
-                    label: totalReads === 1 ? "Read" : "Reads",
-                  },
-                  {
-                    value: totalComments,
-                    label: totalComments === 1 ? "Comment" : "Comments",
-                  },
-                ];
-                return (
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "12px",
-                      lineHeight: "normal",
-                    }}
-                  >
-                    {revealStats.map((stat, i) => (
-                      <div
-                        // eslint-disable-next-line react/no-array-index-key -- static stat tiles; length and order are stable
-                        key={i}
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <p
-                          style={{
-                            fontFamily: "var(--font-dm-sans)",
-                            fontSize: "16px",
-                            fontWeight: 700,
-                            lineHeight: "normal",
-                            color: "#000000",
-                            margin: 0,
-                          }}
-                        >
-                          {stat.value}
-                        </p>
-                        <p
-                          style={{
-                            fontFamily: "var(--font-dm-sans)",
-                            fontSize: "12px",
-                            fontWeight: 300,
-                            lineHeight: "normal",
-                            color: "#000000",
-                            margin: 0,
-                          }}
-                        >
-                          {stat.label}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })()}
+            {/* Prominent while it's just the host — once someone else joins,
+                friends have presumably been invited, so the action recedes
+                into the 3-dot menu instead of staying front and center. */}
+            {!riff.club &&
+              isAdmin &&
+              riff.status === "ACTIVE" &&
+              riff.participants.length <= 1 && (
+                <CTAButton onClick={() => setIsInviteModalOpen(true)}>
+                  Invite friends
+                </CTAButton>
+              )}
 
             {shouldShowReveal({
               deadlinePassed,
@@ -459,44 +478,15 @@ export default function RiffPageLayout({
               piecesAllSubmitted,
               isAdmin,
               status: riff.status,
-            }) ? (
-              <RevealRiffButton onClick={handleRevealClick} />
-            ) : riff.status !== "REVEALED" ? (
-              <RiffCTAButton
-                riffId={riff.id}
-                isJoined={isJoined}
-                hasDraft={hasDraft}
-                hasSubmitted={hasSubmitted}
-                existingPieceId={existingPieceId}
-              />
-            ) : null}
-
-            {isJoined &&
-              riff.deadline &&
-              !deadlinePassed &&
-              riff.status !== "REVEALED" && (
-                <CountdownTimer deadline={new Date(riff.deadline)} />
-              )}
-            {deadlinePassed && riff.deadline && riff.status !== "REVEALED" && (
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "14px",
-                  fontWeight: 700,
-                  color: "#DC2626",
-                  margin: 0,
-                }}
-              >
-                Time&apos;s up!
-              </p>
-            )}
+            }) && <RevealRiffButton onClick={handleRevealClick} />}
           </div>
         </div>
 
-        {/* Revealed riff content — Pieces or Feed */}
+        {/* Revealed riff content — pieces, read-by strip, and comment activity
+            all flow on one page instead of behind a tab toggle */}
         {riff.status === "REVEALED" && (
           <div style={{ marginTop: "48px" }}>
-            {viewMode === "read" && riff.pieces.length > 0 && (
+            {riff.pieces.length > 0 && (
               <div
                 style={{
                   display: "grid",
@@ -521,7 +511,7 @@ export default function RiffPageLayout({
                     }}
                     isRead={readPieceIds.includes(pieceRiff.piece.id)}
                     hasNewComments={badgeMap[pieceRiff.piece.id] ?? false}
-                    isOwnPiece={pieceRiff.piece.authorId === currentUserId}
+                    isOwnPiece={isAuthoredBy(pieceRiff.piece, currentUserId)}
                     onClick={() =>
                       router.push(`/read/${pieceRiff.piece.id}?riff=${riff.id}`)
                     }
@@ -530,45 +520,101 @@ export default function RiffPageLayout({
               </div>
             )}
 
-            {viewMode === "read" && contributionData.length > 0 && (
+            {contributionData.length > 0 && (
               <ReadByStrip
                 members={contributionData}
                 totalPieces={totalPieces}
               />
             )}
 
-            {viewMode === "comment" && (
-              <ActivityFeed
-                riffId={riff.id}
-                clubId={riff.clubId}
-                currentUser={navUser}
-                readPieces={
-                  (readPieceIds ?? [])
-                    .map((id) => {
-                      const match = riff.pieces.find((p) => p.piece.id === id);
-                      return match
-                        ? {
-                            id: match.piece.id,
-                            title: match.piece.title,
-                            coverImage: match.piece.coverImage ?? null,
-                          }
-                        : null;
-                    })
-                    .filter(Boolean) as Array<{
-                    id: string;
-                    title: string;
-                    coverImage: string | null;
-                  }>
-                }
-                totalPieceCount={riff.pieces.length}
-              />
-            )}
+            <div
+              style={{
+                marginTop: "48px",
+                paddingTop: "32px",
+                borderTop: "1px solid #E6E6E6",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <h3
+                  style={{
+                    fontFamily: "var(--font-dm-serif-text)",
+                    fontSize: "20px",
+                    fontWeight: 400,
+                    color: "#000000",
+                    margin: 0,
+                  }}
+                >
+                  Comments ({totalComments})
+                </h3>
+                {hasUnreadComments && (
+                  <button
+                    onClick={markAllCommentsRead}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "12px",
+                      fontWeight: 300,
+                      color: "#808080",
+                      padding: 0,
+                      textDecoration: "underline",
+                    }}
+                  >
+                    Mark all read
+                  </button>
+                )}
+              </div>
+              <div style={{ marginTop: "8px" }}>
+                <ActivityFeed
+                  riffId={riff.id}
+                  clubId={riff.clubId}
+                  currentUser={navUser}
+                  onMarkPieceRead={markPieceCommentsRead}
+                  markAllReadSignal={markAllReadSignal}
+                  readPieces={
+                    (readPieceIds ?? [])
+                      .map((id) => {
+                        const match = riff.pieces.find(
+                          (p) => p.piece.id === id
+                        );
+                        // Own pieces are always counted as "read" (no
+                        // PieceRead row needed — you don't need to "read"
+                        // your own work), but that shouldn't count toward
+                        // "have you actually read anything" for the empty
+                        // comment-feed message below, or a viewer who's only
+                        // submitted their own piece gets told there are "no
+                        // comments on pieces you've read" instead of being
+                        // nudged to go read something.
+                        return match &&
+                          !isAuthoredBy(match.piece, currentUserId)
+                          ? {
+                              id: match.piece.id,
+                              title: match.piece.title,
+                              coverImage: match.piece.coverImage ?? null,
+                            }
+                          : null;
+                      })
+                      .filter(Boolean) as Array<{
+                      id: string;
+                      title: string;
+                      coverImage: string | null;
+                    }>
+                  }
+                />
+              </div>
+            </div>
           </div>
         )}
 
         {/* Progress view for non-revealed riffs */}
         {riff.status !== "REVEALED" &&
-          riff.participants.length > 0 &&
           (() => {
             // Build a map from authorId → piece data for quick lookup
             const pieceByAuthor = Object.fromEntries(
@@ -581,12 +627,24 @@ export default function RiffPageLayout({
                   updatedAt: pr.piece.updatedAt ?? new Date().toISOString(),
                   submittedAt: pr.submittedAt,
                   coverImage: pr.piece.coverImage,
+                  preview: pr.piece.preview,
                 },
               ])
             );
 
-            // Sort: submitted (0) → in-progress (1) → not-started (2)
-            const sorted = [...riff.participants].sort((a, b) => {
+            // The viewer always gets a slot, even before joining — joining
+            // now only ever happens as a side effect of picking New/Attach
+            // draft on their own card. (viewerInParticipants is hoisted
+            // above so the page width can respond to it too.)
+            const participantsForGrid = viewerInParticipants
+              ? riff.participants
+              : [...riff.participants, { user: navUser }];
+
+            // Viewer's own card always leads, then: submitted (0) →
+            // in-progress (1) → not-started (2).
+            const sorted = [...participantsForGrid].sort((a, b) => {
+              if (a.user.id === currentUserId) return -1;
+              if (b.user.id === currentUserId) return 1;
               const pa = pieceByAuthor[a.user.id];
               const pb = pieceByAuthor[b.user.id];
               const tierA = !pa ? 2 : pa.submittedAt ? 0 : 1;
@@ -617,13 +675,50 @@ export default function RiffPageLayout({
                     gap: "24px",
                   }}
                 >
-                  {sorted.map((p) => (
-                    <ProgressCard
-                      key={p.user.id}
-                      user={p.user}
-                      piece={pieceByAuthor[p.user.id] ?? null}
-                    />
-                  ))}
+                  {sorted.map((p) => {
+                    const piece = pieceByAuthor[p.user.id] ?? null;
+                    const isOwnUser = p.user.id === currentUserId;
+
+                    if (isOwnUser && !piece) {
+                      return (
+                        <DraftChoiceTrigger
+                          key={p.user.id}
+                          riffId={riff.id}
+                          hasStandaloneDrafts={hasStandaloneDrafts}
+                          renderTrigger={(onClick) => (
+                            <ProgressCard
+                              user={p.user}
+                              piece={null}
+                              onClick={onClick}
+                            />
+                          )}
+                        />
+                      );
+                    }
+
+                    if (isOwnUser) {
+                      return (
+                        <ProgressCard
+                          key={p.user.id}
+                          user={p.user}
+                          piece={piece}
+                          onClick={
+                            piece && piece.submittedAt === null
+                              ? () => router.push(`/write/${piece.id}`)
+                              : undefined
+                          }
+                        />
+                      );
+                    }
+
+                    return (
+                      <ProgressCard
+                        key={p.user.id}
+                        user={p.user}
+                        piece={piece}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             );
@@ -697,11 +792,25 @@ export default function RiffPageLayout({
           onClose={() => setIsDeleteModalOpen(false)}
           onDeleted={() => {
             setIsDeleteModalOpen(false);
-            router.push(`/clubs/${riff.clubId}`);
+            router.push(riff.clubId ? `/clubs/${riff.clubId}` : "/home");
           }}
           riffId={riff.id}
           riffTitle={getRiffDisplayTitle(riff, predictedVolumeNumber)}
         />
+      )}
+
+      {/* Invite Friends Modal (clubless riffs only) */}
+      {isInviteModalOpen && (
+        <Modal
+          isOpen={isInviteModalOpen}
+          onClose={() => setIsInviteModalOpen(false)}
+          title="Invite friends"
+        >
+          <ShareLinkOptions
+            url={`${typeof window !== "undefined" ? window.location.origin : ""}/riffs/${riff.id}/join`}
+            shareText="Let's riff!"
+          />
+        </Modal>
       )}
 
       <style>{`

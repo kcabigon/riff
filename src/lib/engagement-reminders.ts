@@ -25,6 +25,7 @@ async function fetchActiveRiffs() {
       createdAt: true,
       club: {
         select: {
+          id: true,
           name: true,
           members: {
             select: {
@@ -49,6 +50,13 @@ async function fetchActiveRiffs() {
 }
 
 type ActiveRiff = Awaited<ReturnType<typeof fetchActiveRiffs>>[number];
+
+// All riffs here are ACTIVE (pre-reveal) by construction, from
+// fetchActiveRiffs — a club riff's home while it's being written is the
+// club page, not the standalone one.
+function riffPath(riff: ActiveRiff): string {
+  return riff.club ? `/clubs/${riff.club.id}` : `/riffs/${riff.id}`;
+}
 
 // Notification rows are used purely as an internal send-log here: created with
 // isRead: true so they can never surface in the bell/panel (both the list and
@@ -144,14 +152,14 @@ export async function runDeadlineApproachingCheck(
     const enabled = await batchRemindersEnabled(
       eligible.map((p) => p.user.email)
     );
-    const riffTitle = riff.title || riff.club.name;
+    const riffTitle = riff.title || riff.club?.name || "your riff";
 
     for (const p of eligible.filter((p) => enabled.has(p.user.email))) {
       await sendDeadlineApproachingEmail({
         email: p.user.email,
         riffTitle,
-        clubName: riff.club.name,
-        riffUrl: `${baseUrl}/riffs/${riff.id}`,
+        clubName: riff.club?.name ?? riffTitle,
+        riffUrl: `${baseUrl}${riffPath(riff)}`,
         deadline,
         daysRemaining,
       });
@@ -199,15 +207,15 @@ export async function runRememberToWriteCheck(
     const enabled = await batchRemindersEnabled(
       eligible.map((p) => p.user.email)
     );
-    const riffTitle = riff.title || riff.club.name;
+    const riffTitle = riff.title || riff.club?.name || "your riff";
 
     for (const p of eligible.filter((p) => enabled.has(p.user.email))) {
       const variantIndex = history.get(`${riff.id}:${p.userId}`)?.count ?? 0;
       await sendRememberToWriteEmail({
         email: p.user.email,
         riffTitle,
-        clubName: riff.club.name,
-        riffUrl: `${baseUrl}/riffs/${riff.id}`,
+        clubName: riff.club?.name ?? riffTitle,
+        riffUrl: `${baseUrl}${riffPath(riff)}`,
         variantIndex,
       });
       await logSend(NotificationType.RIFF_STARTED, riff.id, p.userId);
@@ -238,7 +246,8 @@ export async function runJoinRiffNudgeCheck(
 
   for (const riff of active) {
     const participantIds = new Set(riff.participants.map((p) => p.userId));
-    const nonMembers = riff.club.members.filter(
+    // Clubless riffs have no club members to nudge — the join link handles invites
+    const nonMembers = (riff.club?.members ?? []).filter(
       (m) => !participantIds.has(m.userId)
     );
     if (nonMembers.length === 0) continue;
@@ -252,15 +261,15 @@ export async function runJoinRiffNudgeCheck(
     const enabled = await batchRemindersEnabled(
       eligible.map((m) => m.user.email)
     );
-    const riffTitle = riff.title || riff.club.name;
+    const riffTitle = riff.title || riff.club?.name || "your riff";
 
     for (const m of eligible.filter((m) => enabled.has(m.user.email))) {
       const variantIndex = history.get(`${riff.id}:${m.userId}`)?.count ?? 0;
       await sendJoinRiffNudgeEmail({
         email: m.user.email,
         riffTitle,
-        clubName: riff.club.name,
-        riffUrl: `${baseUrl}/riffs/${riff.id}`,
+        clubName: riff.club?.name ?? riffTitle,
+        riffUrl: `${baseUrl}${riffPath(riff)}`,
         variantIndex,
       });
       await logSend(NotificationType.RIFF_INVITATION, riff.id, m.userId);

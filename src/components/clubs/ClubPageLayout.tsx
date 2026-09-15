@@ -4,16 +4,24 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import NavBar from "@/components/clubs/NavBar";
 import AvatarStack from "@/components/shared/AvatarStack";
-import RiffCard from "@/components/riffs/RiffCard";
+import MobileCardCarousel from "@/components/shared/MobileCardCarousel";
 import EmptyRiffState from "@/components/riffs/EmptyRiffState";
-import CompletedRiffCard from "@/components/riffs/CompletedRiffCard";
+import ProgressCard from "@/components/riffs/ProgressCard";
+import PieceCard from "@/components/riffs/PieceCard";
+import DraftChoiceTrigger from "@/components/riffs/DraftChoiceTrigger";
+import RevealRiffButton, {
+  shouldShowReveal,
+} from "@/components/riffs/RevealRiffButton";
+import SectionHeading from "@/components/shared/SectionHeading";
 import CreateRiffModal from "@/components/riffs/CreateRiffModal";
+import EditRiffModal from "@/components/riffs/EditRiffModal";
+import DeleteRiffConfirmModal from "@/components/riffs/DeleteRiffConfirmModal";
 import RevealConfirmModal from "@/components/riffs/RevealConfirmModal";
-import ReadyToRevealCard from "@/components/riffs/ReadyToRevealCard";
 import ClubSettingsModal from "@/components/clubs/ClubSettingsModal";
-import InviteOptions from "@/components/clubs/InviteOptions";
+import ShareLinkOptions from "@/components/shared/ShareLinkOptions";
 import CloseButton from "@/components/CloseButton";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
+import type { DropdownItem } from "@/components/shared/Dropdown";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import { useRevealRiff } from "@/hooks/useRevealRiff";
@@ -22,14 +30,17 @@ import {
   getSubmittedPieces,
   hasUnreadPieces,
   isRiffFullyRead,
+  isPastDeadline,
   getWaitingParticipants,
   getSubmittedParticipants,
+  allPiecesSubmitted,
+  daysUntil,
+  formatDateLong,
 } from "@/lib/riff-utils";
 import DeleteClubConfirmModal from "@/components/clubs/DeleteClubConfirmModal";
 import LeaveClubConfirmModal from "@/components/clubs/LeaveClubConfirmModal";
 import TransferHostModal from "@/components/clubs/TransferHostModal";
 import AssignCoHostModal from "@/components/clubs/AssignCoHostModal";
-import GettingStartedSection from "@/components/tutorial/GettingStartedSection";
 
 interface ClubMember {
   user: {
@@ -48,6 +59,12 @@ interface RiffPiece {
     authorId: string;
     coverImage?: string | null;
     wordCount: number;
+    createdAt: string;
+    updatedAt: string;
+    // Plain-text preview, truncated to 500 chars — only populated for the
+    // viewer's own piece (see page.tsx's serializer); "" for everyone else's,
+    // since ProgressCard fakes their blurred preview from wordCount alone.
+    preview: string;
   };
 }
 
@@ -95,18 +112,87 @@ interface ClubPageLayoutProps {
   revealedRiffs: Riff[];
   pastRevealedRiffs: Riff[];
   readCounts: Record<string, number>;
+  readPieceIds: string[];
+  newCommentCounts: Record<string, number>;
   completedRiffs: Riff[];
   stats: {
     riffCount: number;
     pieceCount: number;
     wordCount: number;
   };
-  userOnboardingComplete: boolean;
-  userMemberOnboardingComplete: boolean;
-  avatarDone: boolean;
-  initialWelcome?: "host" | "member";
   predictedVolumeNumber?: number;
+  hasStandaloneDrafts: boolean;
 }
+
+// Groups a riff's pieces by author id for quick per-participant lookup.
+// submittedAt is narrowed to string here — pieces reaching this client
+// component are always pre-serialized by the server (see page.tsx).
+const pieceByAuthor = (
+  riff: Riff
+): Record<
+  string,
+  RiffPiece["piece"] & {
+    submittedAt: string | null;
+  }
+> =>
+  Object.fromEntries(
+    riff.pieces.map((pr) => [
+      pr.piece.authorId,
+      { ...pr.piece, submittedAt: pr.submittedAt as string | null },
+    ])
+  );
+
+// Every participant gets a card — sort so submitted rises above in-progress
+// above not-started, matching the individual riff page's ordering.
+const sortedParticipants = (
+  participants: RiffParticipant[],
+  authorPieces: Record<
+    string,
+    RiffPiece["piece"] & {
+      submittedAt: string | null;
+    }
+  >
+) =>
+  [...participants].sort((a, b) => {
+    const pa = authorPieces[a.user.id];
+    const pb = authorPieces[b.user.id];
+    const tierA = !pa ? 2 : pa.submittedAt ? 0 : 1;
+    const tierB = !pb ? 2 : pb.submittedAt ? 0 : 1;
+    if (tierA !== tierB) return tierA - tierB;
+    if (tierA === 0)
+      return (
+        new Date(pb.submittedAt!).getTime() -
+        new Date(pa.submittedAt!).getTime()
+      );
+    if (tierA === 1)
+      return (
+        new Date(pb.updatedAt).getTime() - new Date(pa.updatedAt).getTime()
+      );
+    return 0;
+  });
+
+// Current Riff grid only — same tiering as `sortedParticipants` (submitted
+// → in-progress → not-started, matching the individual riff page's grid),
+// but with the viewer's own card always pulled to the front regardless of
+// their own progress.
+const sortedByProgress = (
+  participants: RiffParticipant[],
+  authorPieces: Record<
+    string,
+    RiffPiece["piece"] & {
+      submittedAt: string | null;
+    }
+  >,
+  currentUserId: string
+) => {
+  const sorted = sortedParticipants(participants, authorPieces);
+  const ownIndex = sorted.findIndex((p) => p.user.id === currentUserId);
+  if (ownIndex > 0) {
+    const [own] = sorted.splice(ownIndex, 1);
+    sorted.unshift(own);
+  }
+  return sorted;
+};
 
 export default function ClubPageLayout({
   club,
@@ -117,13 +203,12 @@ export default function ClubPageLayout({
   revealedRiffs,
   pastRevealedRiffs,
   readCounts,
+  readPieceIds,
+  newCommentCounts,
   completedRiffs,
   stats,
-  userOnboardingComplete,
-  userMemberOnboardingComplete,
-  avatarDone,
-  initialWelcome,
   predictedVolumeNumber,
+  hasStandaloneDrafts,
 }: ClubPageLayoutProps) {
   const router = useRouter();
   const [clubName, setClubName] = useState(club.name);
@@ -131,6 +216,8 @@ export default function ClubPageLayout({
   const [clubBannerImage, setClubBannerImage] = useState(club.bannerImage);
   const [isCreateRiffModalOpen, setIsCreateRiffModalOpen] = useState(false);
   const [isRevealModalOpen, setIsRevealModalOpen] = useState(false);
+  const [isEditRiffModalOpen, setIsEditRiffModalOpen] = useState(false);
+  const [isDeleteRiffModalOpen, setIsDeleteRiffModalOpen] = useState(false);
   const { revealRiff, isRevealing } = useRevealRiff();
   const [isClubDetailsModalOpen, setIsClubDetailsModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
@@ -138,9 +225,6 @@ export default function ClubPageLayout({
   const [isLeaveClubModalOpen, setIsLeaveClubModalOpen] = useState(false);
   const [isTransferHostModalOpen, setIsTransferHostModalOpen] = useState(false);
   const [isAssignCoHostModalOpen, setIsAssignCoHostModalOpen] = useState(false);
-  const [currentActiveRiff, setCurrentActiveRiff] = useState<Riff | null>(
-    activeRiff
-  );
   const handleAvatarClick = useProfileNavigation();
   const isMobile = useIsMobile();
 
@@ -226,10 +310,30 @@ export default function ClubPageLayout({
   const hasUnreadForUser = (riff: Riff) =>
     hasUnreadPieces(riff.id, readCounts, otherSubmittedCount(riff));
 
-  const handleRiffCreated = useCallback((_riffId: string) => {
+  // A piece is unread when it's someone else's submitted work the current
+  // user hasn't opened yet — drives the per-card "Unread" badge.
+  const isPieceUnread = (piece: { id: string; authorId: string }) =>
+    piece.authorId !== currentUserId && !readPieceIds.includes(piece.id);
+
+  // Past Riffs — COMPLETED + pre-join REVEALED + fully-read REVEALED riffs,
+  // excluding any with no submitted pieces (e.g. the sole submission was deleted).
+  const pastRiffs = [
+    ...completedRiffs,
+    ...pastRevealedRiffs,
+    ...revealedRiffs.filter(isFullyReadForUser),
+  ]
+    .filter((riff) => getSubmittedPieces(riff.pieces).length > 0)
+    .sort((a, b) => {
+      if (a.volumeNumber != null && b.volumeNumber != null) {
+        return b.volumeNumber - a.volumeNumber;
+      }
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+
+  const handleRiffCreated = useCallback(() => {
     setIsCreateRiffModalOpen(false);
     router.refresh();
-  }, []);
+  }, [router]);
 
   // Handle reveal confirmation
   const handleRevealConfirm = useCallback(async () => {
@@ -245,13 +349,16 @@ export default function ClubPageLayout({
   const isJoined = activeRiff
     ? activeRiff.participants.some((p) => p.user.id === currentUserId)
     : false;
-  const hasDraft = activeRiff
-    ? activeRiff.pieces.some((p) => p.piece.authorId === currentUserId)
-    : false;
   const hasSubmitted = activeRiff
     ? activeRiff.pieces.some(
         (p) => p.piece.authorId === currentUserId && p.submittedAt !== null
       )
+    : false;
+  const deadlinePassed = activeRiff
+    ? isPastDeadline(activeRiff.deadline)
+    : false;
+  const piecesAllSubmitted = activeRiff
+    ? allPiecesSubmitted(activeRiff.participants, activeRiff.pieces)
     : false;
 
   // Format word count with commas
@@ -259,12 +366,36 @@ export default function ClubPageLayout({
     return n.toLocaleString();
   };
 
-  // Getting Started — host: shown until graduated on any admin club
-  //                 — member: shown until they've submitted a piece anywhere
-  const step1Done = stats.riffCount > 0 || activeRiff !== null;
-  const step2Done = club.members.length > 1;
-  const showGettingStarted = isAdmin && !userOnboardingComplete;
-  const showMemberGettingStarted = !isAdmin && !userMemberOnboardingComplete;
+  // Card-grid layout responsive to club size — sized so cards land close to
+  // their natural ~280-300px width whether the club has 2, 3, or 4+ members,
+  // instead of a fixed-width container stretching 2 cards across the row or
+  // leaving a big empty gap.
+  const memberCount = club.members.length;
+  const desktopContentWidth =
+    memberCount <= 2 ? 680 : memberCount === 3 ? 1000 : 1240;
+  // Matches the width a card lands at inside the wrapping grid above, so
+  // fixed-width cards in the horizontally-scrolling Past Riffs rows look the
+  // same size as the Current Riff grid at the same club size.
+  const desktopCardWidth =
+    memberCount <= 2 ? 304 : memberCount === 3 ? 301 : 280;
+
+  const activeAuthorPieces = activeRiff ? pieceByAuthor(activeRiff) : {};
+  // A not-yet-joined club member still gets a slot in the grid — joining now
+  // only ever happens as a side effect of picking New/Attach draft, so there's
+  // no separate "join" step to gate the card on. Sourced from club
+  // membership rather than a real RiffParticipant row.
+  const viewerMember = club.members.find((m) => m.user.id === currentUserId);
+  const activeParticipantsForGrid =
+    activeRiff && !isJoined && viewerMember
+      ? [...activeRiff.participants, { user: viewerMember.user }]
+      : (activeRiff?.participants ?? []);
+  const sortedActiveParticipants = activeRiff
+    ? sortedByProgress(
+        activeParticipantsForGrid,
+        activeAuthorPieces,
+        currentUserId
+      )
+    : [];
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
@@ -281,35 +412,172 @@ export default function ClubPageLayout({
           }
           clubs={userClubs}
           currentClub={{ id: club.id, name: clubName }}
+          onNewRiff={
+            (isAdmin || isCoHost) && !activeRiff
+              ? () => setIsCreateRiffModalOpen(true)
+              : undefined
+          }
         />
       </div>
 
-      {/* Banner — full width, 320px desktop / 200px mobile — KEEP IN SYNC WITH: JoinClubClient.tsx (banner header layout, avatar sizes, maxWidth) */}
-      {clubBannerImage && (
+      {/* Mobile header — overlaps the banner photo (negative margin pulls
+          the photo up underneath it) instead of sitting as a separate
+          panel. The photo box itself is untouched — same size/crop as
+          desktop — only this header fades from solid black to transparent
+          over its own bottom edge, revealing the unmodified photo beneath
+          instead of resizing/recropping it. KEEP IN SYNC WITH:
+          JoinClubClient.tsx */}
+      {clubBannerImage && isMobile && (
+        <div
+          style={{
+            position: "relative",
+            zIndex: 2,
+            marginBottom: "-64px",
+            padding: "24px 24px 88px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+            background:
+              "linear-gradient(to bottom, #000000 calc(100% - 64px), rgba(0, 0, 0, 0) 100%)",
+          }}
+        >
+          <h1
+            style={{
+              fontFamily: "var(--font-dm-serif-text)",
+              fontSize: "32px",
+              fontWeight: 400,
+              color: "#FFFFFF",
+              margin: 0,
+            }}
+          >
+            {clubName}
+          </h1>
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "4px 12px",
+                alignItems: "start",
+              }}
+            >
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 300,
+                  color: "#FFFFFF",
+                  margin: 0,
+                }}
+              >
+                <span style={{ fontWeight: 700 }}>{stats.riffCount}</span> riffs
+              </p>
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 300,
+                  color: "#FFFFFF",
+                  margin: 0,
+                }}
+              >
+                <span style={{ fontWeight: 700 }}>{stats.pieceCount}</span>{" "}
+                pieces
+              </p>
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 300,
+                  color: "#FFFFFF",
+                  margin: 0,
+                }}
+              >
+                <span style={{ fontWeight: 700 }}>
+                  {formatNumber(stats.wordCount)}
+                </span>{" "}
+                words
+              </p>
+            </div>
+            <ThreeDotButton
+              variant="dark"
+              items={
+                isAdmin
+                  ? adminMenuItems
+                  : isCoHost
+                    ? coHostMenuItems
+                    : memberMenuItems
+              }
+              align="right"
+            />
+          </div>
+
+          <AvatarStack
+            users={club.members.map((m) => m.user)}
+            size={40}
+            borderColor="#FFFFFF"
+            onAvatarClick={handleAvatarClick}
+            style={{ overflowX: "auto" }}
+          />
+
+          {clubDescription && (
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "16px",
+                fontWeight: 300,
+                color: "#FFFFFF",
+                margin: 0,
+                lineHeight: "1.4",
+              }}
+            >
+              {clubDescription}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Banner — full width, 320px desktop / 200px mobile — KEEP IN SYNC WITH: JoinClubClient.tsx (banner header layout, avatar sizes, maxWidth). Untouched by the mobile header above (it overlaps via negative margin, not by resizing this box) so the photo's crop matches desktop exactly. On desktop this always renders — falling back to a plain black bg (matching the black-bg convention used on mobile and on profile pages) when there's no uploaded banner — so every club gets the banner treatment instead of branching into a separate no-banner layout. Mobile still branches on whether a real banner was uploaded. */}
+      {(clubBannerImage || !isMobile) && (
         <div
           className="club-banner"
           style={{
             width: "100%",
             height: "320px",
-            backgroundImage: `url(${clubBannerImage})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
+            ...(clubBannerImage
+              ? {
+                  backgroundImage: `url(${clubBannerImage})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }
+              : { backgroundColor: "#000000" }),
             position: "relative",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
           }}
         >
-          {/* Dark overlay + metadata — desktop only */}
+          {/* Dark overlay + metadata — desktop only. Overlay only needed
+              over a real photo; the no-banner fallback is already solid
+              black. */}
           {!isMobile && (
             <>
-              <div
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  backgroundColor: "rgba(0, 0, 0, 0.66)",
-                }}
-              />
+              {clubBannerImage && (
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    backgroundColor: "rgba(0, 0, 0, 0.66)",
+                  }}
+                />
+              )}
               <div
                 style={
                   club.members.length > 9
@@ -333,20 +601,74 @@ export default function ClubPageLayout({
                       }
                 }
               >
-                <div
-                  style={{ display: "flex", alignItems: "center", gap: "12px" }}
+                <h1
+                  style={{
+                    fontFamily: "var(--font-dm-serif-text)",
+                    fontSize: "32px",
+                    fontWeight: 400,
+                    color: "#FFFFFF",
+                    margin: 0,
+                  }}
                 >
-                  <h1
+                  {clubName}
+                </h1>
+
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                  }}
+                >
+                  <div
                     style={{
-                      fontFamily: "var(--font-dm-serif-text)",
-                      fontSize: "32px",
-                      fontWeight: 400,
-                      color: "#FFFFFF",
-                      margin: 0,
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "4px 12px",
+                      alignItems: "start",
                     }}
                   >
-                    {clubName}
-                  </h1>
+                    <p
+                      style={{
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "16px",
+                        fontWeight: 300,
+                        color: "#FFFFFF",
+                        margin: 0,
+                      }}
+                    >
+                      <span style={{ fontWeight: 700 }}>{stats.riffCount}</span>{" "}
+                      riffs
+                    </p>
+                    <p
+                      style={{
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "16px",
+                        fontWeight: 300,
+                        color: "#FFFFFF",
+                        margin: 0,
+                      }}
+                    >
+                      <span style={{ fontWeight: 700 }}>
+                        {stats.pieceCount}
+                      </span>{" "}
+                      pieces
+                    </p>
+                    <p
+                      style={{
+                        fontFamily: "var(--font-dm-sans)",
+                        fontSize: "16px",
+                        fontWeight: 300,
+                        color: "#FFFFFF",
+                        margin: 0,
+                      }}
+                    >
+                      <span style={{ fontWeight: 700 }}>
+                        {formatNumber(stats.wordCount)}
+                      </span>{" "}
+                      words
+                    </p>
+                  </div>
                   <ThreeDotButton
                     variant="dark"
                     items={
@@ -358,54 +680,6 @@ export default function ClubPageLayout({
                     }
                     align="right"
                   />
-                </div>
-
-                <div
-                  style={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: "4px 12px",
-                    alignItems: "start",
-                  }}
-                >
-                  <p
-                    style={{
-                      fontFamily: "var(--font-dm-sans)",
-                      fontSize: "16px",
-                      fontWeight: 300,
-                      color: "#FFFFFF",
-                      margin: 0,
-                    }}
-                  >
-                    <span style={{ fontWeight: 700 }}>{stats.riffCount}</span>{" "}
-                    riffs
-                  </p>
-                  <p
-                    style={{
-                      fontFamily: "var(--font-dm-sans)",
-                      fontSize: "16px",
-                      fontWeight: 300,
-                      color: "#FFFFFF",
-                      margin: 0,
-                    }}
-                  >
-                    <span style={{ fontWeight: 700 }}>{stats.pieceCount}</span>{" "}
-                    pieces
-                  </p>
-                  <p
-                    style={{
-                      fontFamily: "var(--font-dm-sans)",
-                      fontSize: "16px",
-                      fontWeight: 300,
-                      color: "#FFFFFF",
-                      margin: 0,
-                    }}
-                  >
-                    <span style={{ fontWeight: 700 }}>
-                      {formatNumber(stats.wordCount)}
-                    </span>{" "}
-                    words
-                  </p>
                 </div>
 
                 <AvatarStack
@@ -440,143 +714,108 @@ export default function ClubPageLayout({
         </div>
       )}
 
-      {/* Mobile metadata — shown below banner on small screens */}
-      {clubBannerImage && isMobile && (
-        <div
-          style={{
-            padding: "24px 24px 0",
-            display: "flex",
-            flexDirection: "column",
-            gap: "12px",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <h1
-              style={{
-                fontFamily: "var(--font-dm-serif-text)",
-                fontSize: "32px",
-                fontWeight: 400,
-                color: "#000000",
-                margin: 0,
-              }}
-            >
-              {clubName}
-            </h1>
-            <ThreeDotButton
-              variant="light"
-              items={
-                isAdmin
-                  ? adminMenuItems
-                  : isCoHost
-                    ? coHostMenuItems
-                    : memberMenuItems
-              }
-              align="right"
-            />
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "4px 12px",
-              alignItems: "start",
-            }}
-          >
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 300,
-                color: "#000000",
-                margin: 0,
-              }}
-            >
-              <span style={{ fontWeight: 700 }}>{stats.riffCount}</span> riffs
-            </p>
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 300,
-                color: "#000000",
-                margin: 0,
-              }}
-            >
-              <span style={{ fontWeight: 700 }}>{stats.pieceCount}</span> pieces
-            </p>
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 300,
-                color: "#000000",
-                margin: 0,
-              }}
-            >
-              <span style={{ fontWeight: 700 }}>
-                {formatNumber(stats.wordCount)}
-              </span>{" "}
-              words
-            </p>
-          </div>
-
-          <AvatarStack
-            users={club.members.map((m) => m.user)}
-            size={40}
-            onAvatarClick={handleAvatarClick}
-            style={{ overflowX: "auto" }}
-          />
-
-          {clubDescription && (
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "16px",
-                fontWeight: 300,
-                color: "#000000",
-                margin: 0,
-                lineHeight: "1.4",
-              }}
-            >
-              {clubDescription}
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Main content — max-width 1000px, centered */}
+      {/* Main content — width responsive to club size (680/1000/1240 for 2/3/4+ members), centered */}
       <div
         style={{
-          maxWidth: "1000px",
+          maxWidth: `${desktopContentWidth}px`,
           margin: "0 auto",
           padding: "32px 24px 64px",
         }}
       >
-        {/* Club frame — only shown when no banner image */}
-        {!clubBannerImage && (
+        {/* Club frame — mobile only, shown when no banner image has been
+            uploaded. Desktop always gets the banner treatment now (falling
+            back to a solid black background above), so this no-banner
+            layout only exists for mobile. Breaks out of the page's padding
+            to go full-bleed with a black band + white text/borders,
+            matching the banner case's header zone — without it, mobile
+            loses the banner overlay's visual separation between the club
+            header and the current riff below it. KEEP IN SYNC WITH:
+            JoinClubClient.tsx */}
+        {!clubBannerImage && isMobile && (
           <div
             style={{
               display: "flex",
               flexDirection: "column",
               gap: "16px",
               marginBottom: "48px",
+              marginTop: "-32px",
+              marginLeft: "-24px",
+              marginRight: "-24px",
+              paddingTop: "24px",
+              paddingLeft: "24px",
+              paddingRight: "24px",
+              paddingBottom: "24px",
+              backgroundColor: "#000000",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <h1
+            <h1
+              style={{
+                fontFamily: "var(--font-dm-serif-text)",
+                fontSize: "32px",
+                fontWeight: 400,
+                color: "#FFFFFF",
+                margin: 0,
+              }}
+            >
+              {clubName}
+            </h1>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+              }}
+            >
+              <div
                 style={{
-                  fontFamily: "var(--font-dm-serif-text)",
-                  fontSize: "32px",
-                  fontWeight: 400,
-                  color: "#000000",
-                  margin: 0,
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "4px 12px",
+                  alignItems: "start",
                 }}
               >
-                {clubName}
-              </h1>
+                <p
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "16px",
+                    fontWeight: 300,
+                    color: "#FFFFFF",
+                    margin: 0,
+                  }}
+                >
+                  <span style={{ fontWeight: 700 }}>{stats.riffCount}</span>{" "}
+                  riffs
+                </p>
+                <p
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "16px",
+                    fontWeight: 300,
+                    color: "#FFFFFF",
+                    margin: 0,
+                  }}
+                >
+                  <span style={{ fontWeight: 700 }}>{stats.pieceCount}</span>{" "}
+                  pieces
+                </p>
+                <p
+                  style={{
+                    fontFamily: "var(--font-dm-sans)",
+                    fontSize: "16px",
+                    fontWeight: 300,
+                    color: "#FFFFFF",
+                    margin: 0,
+                  }}
+                >
+                  <span style={{ fontWeight: 700 }}>
+                    {formatNumber(stats.wordCount)}
+                  </span>{" "}
+                  words
+                </p>
+              </div>
               <ThreeDotButton
-                variant="light"
+                variant="dark"
                 items={
                   isAdmin
                     ? adminMenuItems
@@ -588,58 +827,12 @@ export default function ClubPageLayout({
               />
             </div>
 
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "4px 12px",
-                alignItems: "start",
-              }}
-            >
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#000000",
-                  margin: 0,
-                }}
-              >
-                <span style={{ fontWeight: 700 }}>{stats.riffCount}</span> riffs
-              </p>
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#000000",
-                  margin: 0,
-                }}
-              >
-                <span style={{ fontWeight: 700 }}>{stats.pieceCount}</span>{" "}
-                pieces
-              </p>
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#000000",
-                  margin: 0,
-                }}
-              >
-                <span style={{ fontWeight: 700 }}>
-                  {formatNumber(stats.wordCount)}
-                </span>{" "}
-                words
-              </p>
-            </div>
-
             <AvatarStack
               users={club.members.map((m) => m.user)}
-              size={isMobile ? 40 : 48}
+              size={40}
+              borderColor="#FFFFFF"
               onAvatarClick={handleAvatarClick}
-              style={isMobile ? { overflowX: "auto" } : undefined}
+              style={{ overflowX: "auto" }}
             />
 
             {clubDescription && (
@@ -648,7 +841,7 @@ export default function ClubPageLayout({
                   fontFamily: "var(--font-dm-sans)",
                   fontSize: "16px",
                   fontWeight: 300,
-                  color: "#000000",
+                  color: "#FFFFFF",
                   margin: 0,
                   lineHeight: "normal",
                   maxWidth: "600px",
@@ -660,195 +853,628 @@ export default function ClubPageLayout({
           </div>
         )}
 
-        {/* Getting Started — host onboarding checklist, shown until both steps complete */}
-        {showGettingStarted && (
-          <GettingStartedSection
-            variant="host"
-            clubId={club.id}
-            userId={currentUserId}
-            clubName={clubName}
-            step1Done={step1Done}
-            step2Done={step2Done}
-            onStartRiff={() => setIsCreateRiffModalOpen(true)}
-            onInvite={() => setIsInviteModalOpen(true)}
-          />
-        )}
-
-        {showMemberGettingStarted && (
-          <GettingStartedSection
-            variant="member"
-            clubId={club.id}
-            userId={currentUserId}
-            clubName={clubName}
-            activeRiffId={activeRiff?.id ?? null}
-            avatarDone={avatarDone}
-          />
-        )}
-
-        {/* Current Read section — shown above Current Riff when there are unread revealed riffs */}
-        {(() => {
-          const unfinishedRevealed = revealedRiffs.filter(hasUnreadForUser);
-          if (unfinishedRevealed.length === 0) return null;
-          return (
-            <div style={{ marginBottom: "48px" }}>
-              <h2
-                style={{
-                  fontFamily: "var(--font-dm-serif-text)",
-                  fontSize: "24px",
-                  fontWeight: 400,
-                  color: "#000000",
-                  margin: "0 0 16px 0",
-                }}
-              >
-                Current Read
-              </h2>
-
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "32px",
-                }}
-              >
-                {unfinishedRevealed.map((riff) => (
-                  <ReadyToRevealCard
-                    key={riff.id}
-                    riff={riff}
-                    readCount={readCounts[riff.id] || 0}
-                    totalPieces={otherSubmittedCount(riff)}
-                  />
-                ))}
-              </div>
-            </div>
-          );
-        })()}
-
-        {/* Current Riff section — hidden for members when there's a current read and no active riff;
-            also hidden for admin when Getting Started is active and there's no real riff to show */}
+        {/* Current Riff section — with no active riff, admins/co-hosts get
+            an empty body now that the start-a-riff CTA lives in the nav bar
+            instead, so the section (heading included) always hides for them
+            rather than showing over nothing. Regular members still get a
+            meaningful "host will start soon" body, so it stays open for them
+            unless there's a current read to prioritize instead. */}
         {(() => {
           const hasCurrentRead = revealedRiffs.some(hasUnreadForUser);
-          if (showGettingStarted && !activeRiff) return null;
           const showSection =
-            activeRiff || isAdmin || isCoHost || !hasCurrentRead;
+            activeRiff || (!isAdmin && !isCoHost && !hasCurrentRead);
           if (!showSection) return null;
 
           const hostName =
             club.members.find((m) => m.user.id === club.adminId)?.user.name ??
             null;
 
+          const showReveal = activeRiff
+            ? shouldShowReveal({
+                deadlinePassed,
+                isJoined,
+                hasSubmitted,
+                piecesAllSubmitted,
+                isAdmin: isAdmin || isCoHost,
+                status: activeRiff.status,
+              })
+            : false;
+
+          // Same menu as the individual riff page's 3-dot (RiffPageLayout).
+          // canDeleteRiff mirrors the riff page's stricter gate (club admin
+          // or the riff's own creator — not just any co-host).
+          const canDeleteRiff =
+            isAdmin || activeRiff?.creator.id === currentUserId;
+          const riffMenuItems: DropdownItem[] = activeRiff
+            ? [
+                {
+                  type: "action",
+                  label: "Edit riff",
+                  onClick: () => setIsEditRiffModalOpen(true),
+                },
+                // Looser than the RevealRiffButton's shouldShowReveal gate —
+                // matches the standalone riff page's "Reveal now" menu item,
+                // which only needs at least one submission, independent of
+                // deadline/all-submitted.
+                ...(activeRiff.status === "ACTIVE" &&
+                getSubmittedPieces(activeRiff.pieces).length > 0
+                  ? [
+                      {
+                        type: "action" as const,
+                        label: "Reveal now",
+                        onClick: () => setIsRevealModalOpen(true),
+                      },
+                    ]
+                  : []),
+                ...(canDeleteRiff
+                  ? ([
+                      { type: "divider" },
+                      {
+                        type: "action",
+                        label: "Delete riff",
+                        color: "#DC2626",
+                        onClick: () => setIsDeleteRiffModalOpen(true),
+                      },
+                    ] as DropdownItem[])
+                  : []),
+              ]
+            : [];
+
           return (
-            <div style={{ marginBottom: "48px" }}>
-              <h2
-                style={{
-                  fontFamily: "var(--font-dm-serif-text)",
-                  fontSize: "24px",
-                  fontWeight: 400,
-                  color: "#000000",
-                  margin: "0 0 16px 0",
-                }}
-              >
-                Current Riff
-              </h2>
+            <div style={{ marginBottom: "56px" }}>
+              <SectionHeading text="CURRENT RIFF" color="#00FF66" width={121} />
 
               {activeRiff ? (
-                <RiffCard
-                  riff={{
-                    id: activeRiff.id,
-                    title: activeRiff.title,
-                    volumeNumber: activeRiff.volumeNumber,
-                    status: activeRiff.status,
-                    prompt: activeRiff.prompt,
-                    deadline: activeRiff.deadline
-                      ? new Date(activeRiff.deadline)
-                      : null,
-                    createdAt: new Date(activeRiff.createdAt),
-                    participants: activeRiff.participants,
-                    pieces: activeRiff.pieces,
-                  }}
-                  isJoined={isJoined}
-                  hasDraft={hasDraft}
-                  hasSubmitted={hasSubmitted}
-                  currentUserId={currentUserId}
-                  isAdmin={isAdmin || isCoHost}
-                  onReveal={() => setIsRevealModalOpen(true)}
-                  predictedVolumeNumber={predictedVolumeNumber}
-                />
+                <>
+                  {/* Desktop stacks the prompt into the same column as the
+                      title/days-left, right-aligning the CTA across from it —
+                      mobile keeps title/days-left on their own row, with the
+                      prompt as its own line below. */}
+                  {isMobile ? (
+                    <>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "12px",
+                          marginTop: "16px",
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "4px",
+                            flex: 1,
+                            minWidth: 0,
+                          }}
+                        >
+                          <h2
+                            style={{
+                              display: "inline-block",
+                              fontFamily: "var(--font-dm-serif-text)",
+                              fontSize: "32px",
+                              fontWeight: 400,
+                              color: "#000000",
+                              margin: 0,
+                            }}
+                          >
+                            {getRiffDisplayTitle(
+                              activeRiff,
+                              predictedVolumeNumber
+                            )}
+                          </h2>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                            }}
+                          >
+                            {!deadlinePassed && activeRiff.deadline && (
+                              <p
+                                style={{
+                                  fontFamily: "var(--font-dm-sans)",
+                                  fontSize: "16px",
+                                  fontWeight: 300,
+                                  color: "#808080",
+                                  margin: 0,
+                                }}
+                              >
+                                Deadline: {formatDateLong(activeRiff.deadline)}
+                              </p>
+                            )}
+                            {!deadlinePassed && activeRiff.deadline && (
+                              <span style={{ color: "#808080" }}>·</span>
+                            )}
+                            <p
+                              style={{
+                                fontFamily: "var(--font-dm-sans)",
+                                fontSize: "16px",
+                                fontWeight: 300,
+                                color: activeRiff.deadline
+                                  ? "#DC2626"
+                                  : "#808080",
+                                margin: 0,
+                              }}
+                            >
+                              {deadlinePassed
+                                ? "Deadline passed"
+                                : activeRiff.deadline
+                                  ? (() => {
+                                      const days = daysUntil(
+                                        new Date(activeRiff.deadline)
+                                      );
+                                      return `${days} ${days === 1 ? "day" : "days"} left`;
+                                    })()
+                                  : "No deadline"}
+                            </p>
+                            {(isAdmin || isCoHost) && (
+                              <ThreeDotButton
+                                variant="light"
+                                items={riffMenuItems}
+                                align="left"
+                              />
+                            )}
+                          </div>
+                        </div>
+
+                        {showReveal && (
+                          <RevealRiffButton
+                            onClick={() => setIsRevealModalOpen(true)}
+                          />
+                        )}
+                      </div>
+
+                      {/* Prompt row — own line below, when the riff was
+                          created with one. Capped to a readable line length
+                          instead of spanning the full (up to 1240px) grid
+                          width. */}
+                      {activeRiff.prompt && (
+                        <div
+                          style={{
+                            marginTop: "24px",
+                            borderLeft: "2px solid #000000",
+                            paddingLeft: "16px",
+                            maxWidth: "780px",
+                          }}
+                        >
+                          <p
+                            style={{
+                              fontFamily: "var(--font-dm-sans)",
+                              fontSize: "16px",
+                              fontWeight: 300,
+                              color: "#000000",
+                              margin: 0,
+                              lineHeight: 1.5,
+                            }}
+                          >
+                            {activeRiff.prompt}
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        justifyContent: "space-between",
+                        gap: "24px",
+                        marginTop: "16px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "4px",
+                          flex: 1,
+                          minWidth: 0,
+                        }}
+                      >
+                        <h2
+                          style={{
+                            display: "inline-block",
+                            fontFamily: "var(--font-dm-serif-text)",
+                            fontSize: "32px",
+                            fontWeight: 400,
+                            color: "#000000",
+                            margin: 0,
+                          }}
+                        >
+                          {getRiffDisplayTitle(
+                            activeRiff,
+                            predictedVolumeNumber
+                          )}
+                        </h2>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          {!deadlinePassed && activeRiff.deadline && (
+                            <p
+                              style={{
+                                fontFamily: "var(--font-dm-sans)",
+                                fontSize: "16px",
+                                fontWeight: 300,
+                                color: "#808080",
+                                margin: 0,
+                              }}
+                            >
+                              Deadline: {formatDateLong(activeRiff.deadline)}
+                            </p>
+                          )}
+                          {!deadlinePassed && activeRiff.deadline && (
+                            <span style={{ color: "#808080" }}>·</span>
+                          )}
+                          <p
+                            style={{
+                              fontFamily: "var(--font-dm-sans)",
+                              fontSize: "16px",
+                              fontWeight: 300,
+                              color: activeRiff.deadline
+                                ? "#DC2626"
+                                : "#808080",
+                              margin: 0,
+                            }}
+                          >
+                            {deadlinePassed
+                              ? "Deadline passed"
+                              : activeRiff.deadline
+                                ? (() => {
+                                    const days = daysUntil(
+                                      new Date(activeRiff.deadline)
+                                    );
+                                    return `${days} ${days === 1 ? "day" : "days"} left`;
+                                  })()
+                                : "No deadline"}
+                          </p>
+                          {(isAdmin || isCoHost) && (
+                            <ThreeDotButton
+                              variant="light"
+                              items={riffMenuItems}
+                              align="left"
+                            />
+                          )}
+                        </div>
+                        {activeRiff.prompt && (
+                          <div
+                            style={{
+                              marginTop: "20px",
+                              borderLeft: "2px solid #000000",
+                              paddingLeft: "16px",
+                              maxWidth: "780px",
+                            }}
+                          >
+                            <p
+                              style={{
+                                fontFamily: "var(--font-dm-sans)",
+                                fontSize: "16px",
+                                fontWeight: 300,
+                                color: "#000000",
+                                margin: 0,
+                                lineHeight: 1.5,
+                              }}
+                            >
+                              {activeRiff.prompt}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      <div style={{ flexShrink: 0 }}>
+                        {showReveal && (
+                          <RevealRiffButton
+                            onClick={() => setIsRevealModalOpen(true)}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {(() => {
+                    // Own card always leads (sortedActiveParticipants
+                    // guarantees it), whether not-started, in-progress, or
+                    // submitted — this is the single card-render path shared
+                    // by both the mobile carousel and the desktop grid below.
+                    const renderCard = (p: RiffParticipant) => {
+                      const piece = activeAuthorPieces[p.user.id] ?? null;
+                      const isOwnUser = p.user.id === currentUserId;
+                      const isOwnDraft =
+                        isOwnUser && piece && piece.submittedAt === null;
+                      const isOwnNotStarted = isOwnUser && !piece;
+
+                      if (isOwnNotStarted) {
+                        return (
+                          <DraftChoiceTrigger
+                            key={p.user.id}
+                            riffId={activeRiff.id}
+                            hasStandaloneDrafts={hasStandaloneDrafts}
+                            renderTrigger={(onClick) => (
+                              <ProgressCard
+                                user={p.user}
+                                piece={null}
+                                onClick={onClick}
+                              />
+                            )}
+                          />
+                        );
+                      }
+
+                      return (
+                        <ProgressCard
+                          key={p.user.id}
+                          user={p.user}
+                          piece={piece}
+                          onClick={
+                            isOwnDraft
+                              ? () => router.push(`/write/${piece.id}`)
+                              : undefined
+                          }
+                        />
+                      );
+                    };
+
+                    return isMobile ? (
+                      <div style={{ marginTop: "48px" }}>
+                        <MobileCardCarousel>
+                          {sortedActiveParticipants.map(renderCard)}
+                        </MobileCardCarousel>
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns:
+                            "repeat(auto-fill, minmax(280px, 1fr))",
+                          gap: "24px",
+                          marginTop: "48px",
+                        }}
+                      >
+                        {sortedActiveParticipants.map(renderCard)}
+                      </div>
+                    );
+                  })()}
+                </>
               ) : (
-                <EmptyRiffState
-                  onStartNewRiff={() => setIsCreateRiffModalOpen(true)}
-                  isAdmin={isAdmin || isCoHost}
-                  hostName={hostName}
-                />
+                <div style={{ marginTop: "24px" }}>
+                  <EmptyRiffState
+                    isAdmin={isAdmin || isCoHost}
+                    hostName={hostName}
+                  />
+                </div>
               )}
             </div>
           );
         })()}
 
-        {/* Past Riffs section — includes COMPLETED + pre-join REVEALED + fully-read REVEALED riffs */}
+        {/* Current Read section — revealed riffs the user hasn't fully read yet */}
         {(() => {
-          const fullyReadRevealed = revealedRiffs.filter(isFullyReadForUser);
-          const allPast = [
-            ...completedRiffs,
-            ...pastRevealedRiffs,
-            ...fullyReadRevealed,
-          ];
-          return allPast.length > 0;
-        })() && (
+          const unfinishedRevealed = revealedRiffs.filter(hasUnreadForUser);
+          if (unfinishedRevealed.length === 0) return null;
+
+          return (
+            <div style={{ marginBottom: "56px" }}>
+              <SectionHeading text="CURRENT READ" color="#01EFFC" width={140} />
+
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "32px",
+                  marginTop: "16px",
+                }}
+              >
+                {unfinishedRevealed.map((riff) => {
+                  const authorPieces = pieceByAuthor(riff);
+                  // Unread pieces lead here instead of the viewer's own —
+                  // stable sort preserves sortedParticipants' tier/recency
+                  // order within each unread/read group.
+                  const piecesToShow = sortedParticipants(
+                    riff.participants,
+                    authorPieces
+                  )
+                    .filter((p) => authorPieces[p.user.id]?.submittedAt)
+                    .sort(
+                      (a, b) =>
+                        Number(!isPieceUnread(authorPieces[a.user.id])) -
+                        Number(!isPieceUnread(authorPieces[b.user.id]))
+                    );
+
+                  const renderCard = (p: RiffParticipant) => {
+                    const piece = authorPieces[p.user.id];
+                    return (
+                      <PieceCard
+                        key={p.user.id}
+                        piece={{
+                          id: piece.id,
+                          title: piece.title,
+                          coverImage: piece.coverImage,
+                          wordCount: piece.wordCount,
+                          author: p.user,
+                        }}
+                        isRead={!isPieceUnread(piece)}
+                        isOwnPiece={p.user.id === currentUserId}
+                        onClick={() =>
+                          router.push(`/read/${piece.id}?riff=${riff.id}`)
+                        }
+                      />
+                    );
+                  };
+
+                  return (
+                    <div key={riff.id}>
+                      <h3
+                        onClick={() => router.push(`/riffs/${riff.id}`)}
+                        className="riff-row-link"
+                        style={{
+                          cursor: "pointer",
+                          display: "inline-block",
+                          fontFamily: "var(--font-dm-serif-text)",
+                          fontSize: "20px",
+                          fontWeight: 400,
+                          color: "#000000",
+                          margin: "0 0 12px 0",
+                        }}
+                      >
+                        {getRiffDisplayTitle(riff)}
+                      </h3>
+                      {isMobile ? (
+                        <MobileCardCarousel>
+                          {piecesToShow.map(renderCard)}
+                        </MobileCardCarousel>
+                      ) : (
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns:
+                              "repeat(auto-fill, minmax(280px, 1fr))",
+                            gap: "24px",
+                          }}
+                        >
+                          {piecesToShow.map(renderCard)}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Past Riffs section — includes COMPLETED + pre-join REVEALED + fully-read REVEALED riffs */}
+        {pastRiffs.length > 0 && (
           <div>
-            <h2
-              style={{
-                fontFamily: "var(--font-dm-serif-text)",
-                fontSize: "24px",
-                fontWeight: 400,
-                color: "#000000",
-                margin: "0 0 16px 0",
-              }}
-            >
-              Past Riffs
-            </h2>
+            <SectionHeading text="PAST RIFFS" color="#955CB5" width={96} />
 
             <div
               style={{
                 display: "flex",
-                flexDirection: "row",
-                gap: "40px",
-                overflowX: "auto",
-                paddingBottom: "16px",
+                flexDirection: "column",
+                gap: "32px",
+                marginTop: "16px",
               }}
             >
-              {[
-                ...completedRiffs,
-                ...pastRevealedRiffs,
-                ...revealedRiffs.filter(isFullyReadForUser),
-              ]
-                .sort((a, b) => {
-                  if (a.volumeNumber != null && b.volumeNumber != null) {
-                    return b.volumeNumber - a.volumeNumber;
-                  }
-                  return (
-                    new Date(b.createdAt).getTime() -
-                    new Date(a.createdAt).getTime()
+              {pastRiffs.map((riff) => {
+                const authorPieces = pieceByAuthor(riff);
+                // Own piece leads — stable sort preserves the existing
+                // submitted-recency order for everyone else.
+                const piecesToShow = sortedParticipants(
+                  riff.participants,
+                  authorPieces
+                )
+                  .filter((p) => authorPieces[p.user.id]?.submittedAt)
+                  .sort(
+                    (a, b) =>
+                      Number(b.user.id === currentUserId) -
+                      Number(a.user.id === currentUserId)
                   );
-                })
-                .map((riff) => (
-                  <CompletedRiffCard
-                    key={riff.id}
-                    riff={{
-                      id: riff.id,
-                      title: riff.title,
-                      volumeNumber: riff.volumeNumber,
-                      status: riff.status,
-                      createdAt: new Date(riff.createdAt),
-                      deadline: riff.deadline ? new Date(riff.deadline) : null,
-                    }}
-                    pieces={getSubmittedPieces(riff.pieces).map((p) => ({
-                      id: p.piece.id,
-                      title: p.piece.title,
-                      coverImage: p.piece.coverImage,
-                      wordCount: p.piece.wordCount,
-                    }))}
-                  />
-                ))}
+
+                const renderCard = (p: RiffParticipant) => {
+                  const piece = authorPieces[p.user.id];
+                  return (
+                    <PieceCard
+                      key={p.user.id}
+                      piece={{
+                        id: piece.id,
+                        title: piece.title,
+                        coverImage: piece.coverImage,
+                        wordCount: piece.wordCount,
+                        author: p.user,
+                      }}
+                      // Past Riffs is fully-read riffs only, by definition.
+                      isRead={true}
+                      isOwnPiece={p.user.id === currentUserId}
+                      onClick={() =>
+                        router.push(`/read/${piece.id}?riff=${riff.id}`)
+                      }
+                    />
+                  );
+                };
+
+                const newComments = newCommentCounts[riff.id] ?? 0;
+
+                return (
+                  <div key={riff.id}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        margin: "0 0 12px 0",
+                      }}
+                    >
+                      <h3
+                        onClick={() => router.push(`/riffs/${riff.id}`)}
+                        className="riff-row-link"
+                        style={{
+                          cursor: "pointer",
+                          display: "inline-block",
+                          fontFamily: "var(--font-dm-serif-text)",
+                          fontSize: "20px",
+                          fontWeight: 400,
+                          color: "#000000",
+                          margin: 0,
+                        }}
+                      >
+                        {getRiffDisplayTitle(riff)}
+                      </h3>
+                      {newComments > 0 && (
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          style={{ flexShrink: 0 }}
+                        >
+                          <title>{`${newComments} new ${newComments === 1 ? "comment" : "comments"}`}</title>
+                          <path
+                            d="M2 3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H6l-3 3v-3H3a1 1 0 0 1-1-1V3z"
+                            fill="#01EFFC"
+                            stroke="#000000"
+                            strokeWidth="1.2"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      )}
+                    </div>
+                    {isMobile ? (
+                      <MobileCardCarousel>
+                        {piecesToShow.map(renderCard)}
+                      </MobileCardCarousel>
+                    ) : (
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "row",
+                          gap: "24px",
+                          overflowX: "auto",
+                          paddingBottom: "8px",
+                        }}
+                      >
+                        {piecesToShow.map((p) => (
+                          <div
+                            key={p.user.id}
+                            style={{
+                              width: `${desktopCardWidth}px`,
+                              flexShrink: 0,
+                            }}
+                          >
+                            {renderCard(p)}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
@@ -859,6 +1485,9 @@ export default function ClubPageLayout({
           .club-banner {
             height: 200px !important;
           }
+        }
+        .riff-row-link:hover {
+          text-decoration: underline;
         }
       `}</style>
 
@@ -887,7 +1516,7 @@ export default function ClubPageLayout({
           if (otherClub) {
             router.push(`/clubs/${otherClub.id}`);
           } else {
-            router.push("/no-club");
+            router.push("/home");
           }
         }}
         clubId={club.id}
@@ -912,7 +1541,7 @@ export default function ClubPageLayout({
           if (otherClub) {
             router.push(`/clubs/${otherClub.id}`);
           } else {
-            router.push("/no-club");
+            router.push("/home");
           }
         }}
         clubId={club.id}
@@ -986,10 +1615,9 @@ export default function ClubPageLayout({
               </h2>
               <CloseButton onClick={() => setIsInviteModalOpen(false)} />
             </div>
-            <InviteOptions
-              clubId={club.id}
-              clubName={clubName}
-              inviteUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/clubs/${club.id}/join`}
+            <ShareLinkOptions
+              url={`${typeof window !== "undefined" ? window.location.origin : ""}/clubs/${club.id}/join`}
+              shareText={`Join ${clubName} on Riff!`}
             />
           </div>
         </div>
@@ -1024,6 +1652,38 @@ export default function ClubPageLayout({
               .length
           }
           totalParticipants={activeRiff.participants.length}
+        />
+      )}
+
+      {/* Edit Riff Modal */}
+      {activeRiff && isEditRiffModalOpen && (
+        <EditRiffModal
+          isOpen={isEditRiffModalOpen}
+          onClose={() => setIsEditRiffModalOpen(false)}
+          onUpdated={() => {
+            setIsEditRiffModalOpen(false);
+            router.refresh();
+          }}
+          riff={{
+            id: activeRiff.id,
+            title: activeRiff.title,
+            prompt: activeRiff.prompt,
+            deadline: activeRiff.deadline,
+          }}
+        />
+      )}
+
+      {/* Delete Riff Modal */}
+      {activeRiff && isDeleteRiffModalOpen && (
+        <DeleteRiffConfirmModal
+          isOpen={isDeleteRiffModalOpen}
+          onClose={() => setIsDeleteRiffModalOpen(false)}
+          onDeleted={() => {
+            setIsDeleteRiffModalOpen(false);
+            router.refresh();
+          }}
+          riffId={activeRiff.id}
+          riffTitle={getRiffDisplayTitle(activeRiff, predictedVolumeNumber)}
         />
       )}
     </div>

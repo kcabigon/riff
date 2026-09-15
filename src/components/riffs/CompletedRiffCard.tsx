@@ -44,7 +44,12 @@ export default function CompletedRiffCard({
         width: "100%",
         transform: "translateY(-50%)",
         backgroundColor: "#000000",
-        padding: "12px 20px",
+        // Scales with the card's own rendered width (via containerType on
+        // cardStyle) instead of the viewport, so the band stays proportional
+        // whether the card lands at 2-col, 3-col, or mobile 1-col width.
+        // Ratios are tuned so a 320px card (the desktop cap) matches the
+        // original fixed 12px/20px padding.
+        padding: "clamp(8px, 3.5cqw, 12px) clamp(14px, 6cqw, 20px)",
         zIndex: 1,
         boxSizing: "border-box",
       }}
@@ -52,7 +57,7 @@ export default function CompletedRiffCard({
       <p
         style={{
           fontFamily: "var(--font-dm-serif-text)",
-          fontSize: "20px",
+          fontSize: "clamp(16px, 6cqw, 20px)",
           fontWeight: 400,
           color: "#FFFFFF",
           margin: 0,
@@ -77,6 +82,7 @@ export default function CompletedRiffCard({
     cursor: "pointer",
     overflow: "hidden",
     transition: "none",
+    containerType: "inline-size" as const,
   };
 
   // If no pieces, show a plain placeholder

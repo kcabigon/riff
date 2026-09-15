@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
+import { getFriends } from "@/lib/friends";
 import WritePage from "@/components/write/WritePage";
 
 export default async function WritePageRoute({
@@ -17,37 +18,42 @@ export default async function WritePageRoute({
 
   const userId = session.user.id;
 
-  const piece = await prisma.piece.findUnique({
-    where: { id: pieceId },
-    select: {
-      id: true,
-      title: true,
-      subtitle: true,
-      currentContent: true,
-      coverImage: true,
-      authorId: true,
-      riffs: {
-        include: {
-          riff: {
-            select: {
-              id: true,
-              title: true,
-              prompt: true,
-              deadline: true,
-              clubId: true,
-              club: {
-                select: {
-                  name: true,
-                  adminId: true,
-                  admin: { select: { firstName: true } },
+  const [piece, friends] = await Promise.all([
+    prisma.piece.findUnique({
+      where: { id: pieceId },
+      select: {
+        id: true,
+        title: true,
+        subtitle: true,
+        currentContent: true,
+        coverImage: true,
+        authorId: true,
+        publishedAt: true,
+        riffs: {
+          include: {
+            riff: {
+              select: {
+                id: true,
+                title: true,
+                prompt: true,
+                deadline: true,
+                clubId: true,
+                status: true,
+                club: {
+                  select: {
+                    name: true,
+                    adminId: true,
+                    admin: { select: { firstName: true } },
+                  },
                 },
               },
             },
           },
         },
       },
-    },
-  });
+    }),
+    getFriends(userId),
+  ]);
 
   if (!piece) {
     redirect("/");
@@ -63,16 +69,19 @@ export default async function WritePageRoute({
     subtitle: piece.subtitle,
     currentContent: piece.currentContent,
     coverImage: piece.coverImage,
+    authorId: piece.authorId,
+    publishedAt: piece.publishedAt ? piece.publishedAt.toISOString() : null,
     riffs: piece.riffs.map((pr) => ({
       id: pr.riff.id,
       title: pr.riff.title,
       prompt: pr.riff.prompt,
       deadline: pr.riff.deadline ? pr.riff.deadline.toISOString() : null,
       clubId: pr.riff.clubId,
-      clubName: pr.riff.club.name,
+      status: pr.riff.status,
+      clubName: pr.riff.club?.name ?? pr.riff.title ?? "",
       submittedAt: pr.submittedAt ? pr.submittedAt.toISOString() : null,
     })),
   };
 
-  return <WritePage piece={serializedPiece} />;
+  return <WritePage piece={serializedPiece} hasFriends={friends.length > 0} />;
 }
