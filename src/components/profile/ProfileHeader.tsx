@@ -73,7 +73,7 @@ export default function ProfileHeader({
         style={{
           maxWidth: "720px",
           margin: "0 auto",
-          padding: isMobile ? "12px 24px 20px" : "32px 24px 40px",
+          padding: isMobile ? "12px 24px 20px" : "12px 24px 40px",
           display: "flex",
           flexDirection: isMobile ? "column" : "row",
           alignItems: isMobile ? "stretch" : "center",
