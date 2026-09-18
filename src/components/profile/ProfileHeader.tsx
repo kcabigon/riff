@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import NavBar from "@/components/clubs/NavBar";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import Avatar from "@/components/shared/Avatar";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 
 interface ProfileHeaderProps {
   profileUser: {
@@ -38,6 +39,7 @@ export default function ProfileHeader({
   stats,
 }: ProfileHeaderProps) {
   const router = useRouter();
+  const isMobile = useIsMobile();
 
   const firstName =
     profileUser.firstName ||
@@ -71,80 +73,165 @@ export default function ProfileHeader({
         style={{
           maxWidth: "720px",
           margin: "0 auto",
-          padding: "32px 24px 40px",
+          padding: isMobile ? "12px 24px 20px" : "32px 24px 40px",
           display: "flex",
-          alignItems: "center",
-          gap: "24px",
-          flexWrap: "wrap",
+          flexDirection: isMobile ? "column" : "row",
+          alignItems: isMobile ? "stretch" : "center",
+          gap: isMobile ? "12px" : "24px",
+          flexWrap: isMobile ? "nowrap" : "wrap",
         }}
       >
-        {/* Avatar */}
-        <Avatar
-          size={120}
-          borderColor="#FFFFFF"
-          user={{
-            id: profileUser.id,
-            name: displayName || null,
-            username: profileUser.username,
-            avatarUrl: profileUser.avatarUrl,
+        {/* Avatar + Name row */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: isMobile ? "16px" : "24px",
           }}
-        />
+        >
+          <Avatar
+            size={isMobile ? 64 : 120}
+            borderColor="#FFFFFF"
+            user={{
+              id: profileUser.id,
+              name: displayName || null,
+              username: profileUser.username,
+              avatarUrl: profileUser.avatarUrl,
+            }}
+          />
 
-        {/* Name + Bio + Stats */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <h1
+          {!isMobile && (
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "8px" }}
+            >
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "8px" }}
+              >
+                <h1
+                  style={{
+                    fontFamily: "var(--font-dm-serif-text)",
+                    fontSize: "32px",
+                    fontWeight: 400,
+                    color: "#FFFFFF",
+                    margin: 0,
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {displayName || "Anonymous"}
+                </h1>
+                {isOwnProfile && (
+                  <ThreeDotButton
+                    variant="dark"
+                    align="right"
+                    items={[
+                      {
+                        type: "action",
+                        label: "Edit info",
+                        onClick: () => router.push("/account"),
+                      },
+                    ]}
+                  />
+                )}
+              </div>
+
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 300,
+                  color: "#FFFFFF",
+                  margin: 0,
+                  lineHeight: 1.4,
+                  maxWidth: "400px",
+                }}
+              >
+                {bioText}
+              </p>
+              <span
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "12px",
+                  fontWeight: 300,
+                  color: "#808080",
+                  lineHeight: 1.4,
+                }}
+              >
+                {statsLine}
+              </span>
+            </div>
+          )}
+
+          {isMobile && (
+            <div
               style={{
-                fontFamily: "var(--font-dm-serif-text)",
-                fontSize: "32px",
-                fontWeight: 400,
-                color: "#FFFFFF",
-                margin: 0,
-                lineHeight: 1.2,
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                minWidth: 0,
+                flex: 1,
               }}
             >
-              {displayName || "Anonymous"}
-            </h1>
-            {isOwnProfile && (
-              <ThreeDotButton
-                variant="dark"
-                align="right"
-                items={[
-                  {
-                    type: "action",
-                    label: "Edit info",
-                    onClick: () => router.push("/account"),
-                  },
-                ]}
-              />
-            )}
-          </div>
-
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              color: "#FFFFFF",
-              margin: 0,
-              lineHeight: 1.4,
-              maxWidth: "400px",
-            }}
-          >
-            {bioText}
-          </p>
-          <span
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "12px",
-              fontWeight: 300,
-              color: "#808080",
-              lineHeight: 1.4,
-            }}
-          >
-            {statsLine}
-          </span>
+              <h1
+                style={{
+                  fontFamily: "var(--font-dm-serif-text)",
+                  fontSize: "24px",
+                  fontWeight: 400,
+                  color: "#FFFFFF",
+                  margin: 0,
+                  lineHeight: 1.2,
+                  minWidth: 0,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {displayName || "Anonymous"}
+              </h1>
+              {isOwnProfile && (
+                <ThreeDotButton
+                  variant="dark"
+                  align="right"
+                  items={[
+                    {
+                      type: "action",
+                      label: "Edit info",
+                      onClick: () => router.push("/account"),
+                    },
+                  ]}
+                />
+              )}
+            </div>
+          )}
         </div>
+
+        {/* Bio + Stats — full width below on mobile, wraps normally */}
+        {isMobile && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "16px",
+                fontWeight: 300,
+                color: "#FFFFFF",
+                margin: 0,
+                lineHeight: 1.4,
+              }}
+            >
+              {bioText}
+            </p>
+            <span
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "12px",
+                fontWeight: 300,
+                color: "#808080",
+                lineHeight: 1.4,
+              }}
+            >
+              {statsLine}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
