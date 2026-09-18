@@ -72,7 +72,7 @@ Last updated: May 16, 2026
 - [x] Cover image: test all three fallbacks end-to-end (explicit cover → first content image → placeholder color) with correct overlay + white title
 
 ### Profile Page
-- [ ] 🔨 @jarric — Mobile UI fixes: Friends section and profile page
+- [x] Mobile UI fixes: Friends section and profile page
 - [x] Change tab order to: Drafts, Pieces, Collections
 - [ ] Drafts list not updating immediately after new piece is created
 - [x] Add way to get back to club page from profile (BackButton using lastActiveClubId)
