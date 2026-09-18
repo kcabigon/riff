@@ -27,8 +27,17 @@ export async function generateMetadata({
     return {
       title,
       description: riff.prompt,
-      openGraph: { title, description: riff.prompt },
-      twitter: { card: "summary", title, description: riff.prompt },
+      openGraph: {
+        title,
+        description: riff.prompt,
+        images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title,
+        description: riff.prompt,
+        images: ["/og-image.png"],
+      },
     };
   }
 
