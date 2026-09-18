@@ -174,15 +174,12 @@ export default function ProfileHeader({
               <h1
                 style={{
                   fontFamily: "var(--font-dm-serif-text)",
-                  fontSize: "24px",
+                  fontSize: "32px",
                   fontWeight: 400,
                   color: "#FFFFFF",
                   margin: 0,
                   lineHeight: 1.2,
                   minWidth: 0,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
                 }}
               >
                 {displayName || "Anonymous"}
