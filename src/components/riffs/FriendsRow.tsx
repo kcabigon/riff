@@ -31,13 +31,17 @@ export default function FriendsRow({
 
   return (
     <>
-      {/* Mobile-only: bleed the right edge to the screen edge (Instagram
-          Stories-style) while keeping the left gutter matching the page's
-          24px side padding. Desktop keeps the row fully inset. */}
+      {/* Mobile-only: bleed the container to the true screen edge on both
+          sides (Instagram Stories-style) so overscroll doesn't reveal a
+          mismatched gap on the left; padding-left re-adds the 24px gutter
+          so the resting position still matches the page's side padding.
+          Desktop keeps the row fully inset. */}
       <style>{`
         @media (max-width: 767px) {
           .friends-row-scroll {
+            margin-left: -24px;
             margin-right: -24px;
+            padding-left: 24px;
           }
         }
       `}</style>
