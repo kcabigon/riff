@@ -16,7 +16,7 @@ import NavBar from "@/components/clubs/NavBar";
 import TextInput from "@/components/TextInput";
 import PrimaryButton from "@/components/PrimaryButton";
 import Avatar from "@/components/shared/Avatar";
-import NoiseBackground from "@/components/NoiseBackground";
+import { noiseTileStyle } from "@/components/NoiseBackground";
 import Tagline from "@/components/Tagline";
 import { getRiffDisplayTitle } from "@/lib/riff-utils";
 
@@ -281,15 +281,18 @@ export default function JoinRiffClient({
   };
 
   return (
+    // Tiled noise, not cover: cover scales one big feTurbulence filter to the
+    // whole page, and on a tall page at phone DPR the raster area blows past
+    // mobile Safari's filter limit, so Safari silently drops the filter and
+    // paints plain white. Tiling rasterizes once at its natural size.
     <div
       style={{
         position: "relative",
         overflow: "hidden",
         minHeight: "100vh",
-        backgroundColor: "#FFFFFF",
+        ...noiseTileStyle,
       }}
     >
-      <NoiseBackground fillMode="cover" />
       {isLoggedIn && user ? (
         <div style={{ position: "sticky", top: 0, zIndex: 50 }}>
           <NavBar

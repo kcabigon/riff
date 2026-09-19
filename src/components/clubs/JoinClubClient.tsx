@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { noiseTileStyle } from "@/components/NoiseBackground";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import AvatarStack from "@/components/shared/AvatarStack";
@@ -181,7 +182,13 @@ export default function JoinClubClient({
   };
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
+    <div
+      style={{
+        position: "relative",
+        minHeight: "100vh",
+        ...noiseTileStyle,
+      }}
+    >
       {isLoggedIn && user ? (
         <div style={{ position: "sticky", top: 0, zIndex: 50 }}>
           <NavBar

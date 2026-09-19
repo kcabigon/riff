@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { noiseTileStyle } from "@/components/NoiseBackground";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Image from "next/image";
@@ -171,7 +172,13 @@ export default function PieceJoinClient({
   };
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
+    <div
+      style={{
+        position: "relative",
+        minHeight: "100vh",
+        ...noiseTileStyle,
+      }}
+    >
       <div
         style={{
           borderBottom: "1px solid #E6E6E6",
