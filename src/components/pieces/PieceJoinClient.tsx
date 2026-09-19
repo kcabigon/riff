@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { noiseTileStyle } from "@/components/NoiseBackground";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Image from "next/image";
@@ -172,11 +171,13 @@ export default function PieceJoinClient({
   };
 
   return (
+    // Plain white on purpose: the piece preview below fades out with a white
+    // linear-gradient, and noise behind it makes the text unreadable.
     <div
       style={{
         position: "relative",
         minHeight: "100vh",
-        ...noiseTileStyle,
+        backgroundColor: "#FFFFFF",
       }}
     >
       <div
