@@ -102,8 +102,24 @@ export default function NoiseBackground({
     );
   }
 
-  // For tile mode, use CSS background with the SVG as a data URL
-  const svgDataUrl = `data:image/svg+xml,${encodeURIComponent(`
+  return (
+    <div
+      className={className}
+      style={{
+        position: "absolute",
+        inset: 0,
+        width: "100%",
+        height: "100%",
+        zIndex: 0,
+        ...noiseTileStyle,
+        ...style,
+      }}
+    />
+  );
+}
+
+// For tile mode, use CSS background with the SVG as a data URL
+const svgDataUrl = `data:image/svg+xml,${encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" width="1438" height="1024" viewBox="0 0 1438 1024" fill="none">
       <g filter="url(#filter0_n_686_2149)">
         <rect width="1440" height="1024" fill="white"/>
@@ -129,21 +145,15 @@ export default function NoiseBackground({
     </svg>
   `)}`;
 
-  return (
-    <div
-      className={className}
-      style={{
-        position: "absolute",
-        inset: 0,
-        width: "100%",
-        height: "100%",
-        zIndex: 0,
-        backgroundImage: `url("${svgDataUrl}")`,
-        backgroundRepeat: "repeat",
-        backgroundSize: "1438px 1024px",
-        backgroundColor: "#FFFFFF",
-        ...style,
-      }}
-    />
-  );
-}
+/**
+ * The tiled noise as plain background properties, for spreading straight into a
+ * container's own `style`. Preferred for full-page backgrounds: it paints behind
+ * the container's content with no extra element and no stacking-order juggling,
+ * and it never scales the filter (see the cover-mode note above).
+ */
+export const noiseTileStyle: CSSProperties = {
+  backgroundImage: `url("${svgDataUrl}")`,
+  backgroundRepeat: "repeat",
+  backgroundSize: "1438px 1024px",
+  backgroundColor: "#FFFFFF",
+};
