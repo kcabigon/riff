@@ -60,6 +60,7 @@ interface ReadPageLayoutProps {
   initialComments: CommentData[];
   isAlreadyRead: boolean;
   startInRiffMode?: boolean;
+  targetCommentId?: string;
   previousPiece?: { id: string; title: string } | null;
   nextPiece?: { id: string; title: string } | null;
   fromProfileUserId?: string;
@@ -78,6 +79,7 @@ export default function ReadPageLayout({
   initialComments,
   isAlreadyRead,
   startInRiffMode,
+  targetCommentId,
   fromProfileUserId,
   backHref,
   disableCommentCompose,
@@ -91,6 +93,7 @@ export default function ReadPageLayout({
   const contentColumnRef = useRef<HTMLDivElement>(null);
   const [markedRead, setMarkedRead] = useState(isAlreadyRead);
   const hasCalledReadApi = useRef(false);
+  const hasNavigatedToComment = useRef(false);
   // Always start in read mode — activate riff mode only after the editor is
   // ready so marks are in the DOM before the sidebar mounts (prevents all
   // comment cards stacking at top:0 on notification deep-link nav).
@@ -174,6 +177,41 @@ export default function ReadPageLayout({
   const handleEditorReady = useCallback(() => {
     if (startInRiffMode) setIsRiffMode(true);
   }, [startInRiffMode]);
+
+  // A reply is rendered within its parent comment card, while the highlighted
+  // text lives on that parent. Resolve either notification type to the parent
+  // and scroll there once the editor has rendered its comment marks.
+  useEffect(() => {
+    if (!targetCommentId || !isRiffMode || hasNavigatedToComment.current) {
+      return;
+    }
+
+    const target = comments.find(
+      (comment) =>
+        comment.id === targetCommentId ||
+        comment.replies.some((reply) => reply.id === targetCommentId)
+    );
+    if (!target) return;
+
+    hasNavigatedToComment.current = true;
+    setActiveHighlightIds([target.id]);
+    const timer = window.setTimeout(() => {
+      // Text comments use a mark, image comments use the image itself, and
+      // comments whose source text has changed live in the sidebar. Each
+      // selector leads to the same parent comment.
+      document
+        .querySelector(
+          [
+            `mark[data-comment-id="${target.id}"]`,
+            `img[data-comment-id="${target.id}"]`,
+            `[data-sidebar-comment-id="${target.id}"]`,
+          ].join(", ")
+        )
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 150);
+
+    return () => window.clearTimeout(timer);
+  }, [comments, isRiffMode, targetCommentId]);
 
   const handleClearHighlight = useCallback(() => setActiveHighlightIds([]), []);
 

@@ -19,6 +19,7 @@ interface NotificationData {
     volumeNumber: number | null;
   } | null;
   piece: { id: string; title: string } | null;
+  commentId: string | null;
   commentCount?: number;
 }
 

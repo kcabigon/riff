@@ -763,7 +763,7 @@ export async function sendDeadlineApproachingEmail({
   riffUrl: string;
   deadline: Date;
   daysRemaining: number;
-}): Promise<void> {
+}): Promise<boolean> {
   const deadlineStr = deadline.toLocaleDateString("en-US", {
     month: "long",
     day: "numeric",
@@ -801,9 +801,14 @@ export async function sendDeadlineApproachingEmail({
           ${emailButton("Finish your piece", riffUrl)}`,
       }),
     });
-    if (error) console.error("Resend error (deadlineApproaching):", error);
+    if (error) {
+      console.error("Resend error (deadlineApproaching):", error);
+      return false;
+    }
+    return true;
   } catch (error) {
     console.error("Error sending deadline approaching email:", error);
+    return false;
   }
 }
 
@@ -819,7 +824,7 @@ export async function sendRememberToWriteEmail({
   clubName: string;
   riffUrl: string;
   variantIndex: number;
-}): Promise<void> {
+}): Promise<boolean> {
   const variant = REMEMBER_TO_WRITE_VARIANTS[
     variantIndex % REMEMBER_TO_WRITE_VARIANTS.length
   ](clubName, riffTitle);
@@ -843,9 +848,14 @@ export async function sendRememberToWriteEmail({
           ${emailButton("Start writing", riffUrl)}`,
       }),
     });
-    if (error) console.error("Resend error (rememberToWrite):", error);
+    if (error) {
+      console.error("Resend error (rememberToWrite):", error);
+      return false;
+    }
+    return true;
   } catch (error) {
     console.error("Error sending remember to write email:", error);
+    return false;
   }
 }
 
@@ -861,7 +871,7 @@ export async function sendJoinRiffNudgeEmail({
   clubName: string;
   riffUrl: string;
   variantIndex: number;
-}): Promise<void> {
+}): Promise<boolean> {
   const variant = JOIN_RIFF_NUDGE_VARIANTS[
     variantIndex % JOIN_RIFF_NUDGE_VARIANTS.length
   ](clubName, riffTitle);
@@ -885,9 +895,14 @@ export async function sendJoinRiffNudgeEmail({
           ${emailButton("Let's riff", riffUrl)}`,
       }),
     });
-    if (error) console.error("Resend error (joinRiffNudge):", error);
+    if (error) {
+      console.error("Resend error (joinRiffNudge):", error);
+      return false;
+    }
+    return true;
   } catch (error) {
     console.error("Error sending join riff nudge email:", error);
+    return false;
   }
 }
 
@@ -969,39 +984,55 @@ export async function sendHostTransferredEmail({
   }
 }
 
+// One digest per recipient per piece, covering both kinds of activity:
+// comments left on a piece you wrote, and replies in a thread you're part of
+// (which may be on someone else's piece). Either count can be zero, but the
+// caller never sends when both are.
 export async function sendCommentNotificationEmail({
   email,
   pieceTitle,
   commentCount,
+  replyCount,
   pieceUrl,
 }: {
   email: string;
   pieceTitle: string;
   commentCount: number;
+  replyCount: number;
   pieceUrl: string;
 }): Promise<void> {
-  const commentLabel =
-    commentCount === 1
-      ? "1 new comment was left for you in the last 24 hours."
-      : `${commentCount} new comments were left for you in the last 24 hours.`;
+  const parts = [
+    commentCount > 0 &&
+      `${commentCount} new comment${commentCount === 1 ? "" : "s"} on your piece`,
+    replyCount > 0 &&
+      `${replyCount} new ${replyCount === 1 ? "reply" : "replies"} to your comments`,
+  ].filter((part): part is string => Boolean(part));
+
+  const headline =
+    replyCount > 0 && commentCount === 0 ? "New replies" : "New comments";
+  const subject = `${headline} on "${pieceTitle}"`;
+  const footerText =
+    commentCount > 0
+      ? `You're receiving this because someone commented on your writing on Riff.`
+      : `You're receiving this because you're part of the conversation on Riff.`;
 
   try {
     const { error } = await getResend().emails.send({
       from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
       to: email,
-      subject: `New comments on "${pieceTitle}"`,
+      subject,
       html: emailShell({
-        title: `New comments on "${pieceTitle}"`,
-        footerText: `You're receiving this because someone commented on your writing on Riff.`,
+        title: subject,
+        footerText,
         content: `
           <tr>
             <td style="padding:40px 40px 16px;">
-              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">New comments on "${pieceTitle}".</h1>
-              <p style="margin:0 0 16px 0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${commentLabel}</p>
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${headline} on "${pieceTitle}".</h1>
+              <p style="margin:0 0 16px 0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${parts.join(" and ")} in the last 24 hours.</p>
             </td>
           </tr>
 
-          ${emailButton("View comments", pieceUrl)}`,
+          ${emailButton("View the conversation", pieceUrl)}`,
       }),
     });
     if (error) console.error("Resend error (commentNotification):", error);
