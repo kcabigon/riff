@@ -375,7 +375,7 @@ export default function RiffPageLayout({
                       <ThreeDotButton
                         variant="light"
                         items={items}
-                        align="left"
+                        align="right"
                       />
                     );
                   })()}
