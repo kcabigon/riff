@@ -325,11 +325,18 @@ export default function MyRiffsClient({
     ? pastRiffs
     : pastRiffs.slice(0, PAST_RIFFS_CAP);
 
+  // A draft that was created but never written in doesn't count as having
+  // done anything yet. Tapping "Write something" on the empty state creates
+  // exactly this, so counting it would tear down the three cards the moment
+  // a new user tried one of them — leaving nothing to come back to.
+  const isUntouchedDraft = (piece: WritingPiece) =>
+    piece.wordCount === 0 && piece.title === "Untitled";
+
   const isEmpty =
     friends.length === 0 &&
     readingRiffs.length === 0 &&
     currentRiffs.length === 0 &&
-    drafts.length === 0 &&
+    drafts.every(isUntouchedDraft) &&
     submittedPieces.length === 0 &&
     pastRiffs.length === 0;
 
