@@ -99,18 +99,11 @@ const eslintConfig = [
   },
   // Intentional non-palette use. These files don't follow the brand design
   // system because their purpose requires it:
-  //   - test-*/page.tsx and dev-signin: dev sandbox pages, not shipped to users
+  //   - dev-signin: dev sandbox page, not shipped to users
   //   - resend.ts: email HTML templates (email clients require inline hex)
   //   - leaderboard: intentional dark theme distinct from the rest of the app
   {
     files: [
-      "src/app/test-editor/**",
-      "src/app/test-editor-v2/**",
-      "src/app/test-editor-v3/**",
-      "src/app/test-auth/**",
-      "src/app/test-avatar-stack/**",
-      "src/app/test-club-view/**",
-      "src/app/test-clubs-api/**",
       "src/app/dev-signin/**",
       "src/lib/resend.ts",
       "src/components/leaderboard/**",

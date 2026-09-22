@@ -31,7 +31,7 @@ function CheckEmailContent() {
         redirect: false,
         callbackUrl: "/auth/post-login",
       });
-      if (result?.error) {
+      if (!result?.ok || result.error) {
         setError("Could not resend the email. Please try again.");
       } else {
         setSent(true);
