@@ -117,6 +117,7 @@ Last updated: May 16, 2026
 
 ### Friends
 - [x] @derek — Fix localhost URL fallbacks: change all `http://localhost:3000` fallbacks to `https://letsriff.app` in API routes (`src/app/api/riffs/[id]/route.ts`, `src/app/api/clubs/[id]/join/route.ts`, `src/lib/env.ts`)
+- [ ] Tailwind is inert — preflight and utilities never run. `globals.css` uses the v3 directives (`@tailwind base/components/utilities`) while the installed Tailwind is v4, where the entry point is `@import "tailwindcss"`. Compiled output is 2,244 bytes: no base styles, no utilities. This is what let the iOS system-blue button text through (#273 patched the symptom, not the cause), and other browser defaults are still unreset app-wide. Either wire it up properly — expect a visual diff on every page, so it needs its own branch and a page-by-page pass — or drop the dependency, since the app is styled inline throughout.
 - [ ] @jarric — Error & 404 pages: create branded `src/app/error.tsx` and `src/app/not-found.tsx` matching the app's design system
 - [x] @derek — Security headers: add `headers()` function to `next.config.ts` with `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Strict-Transport-Security`, `Referrer-Policy`
 - [ ] @chris — Remove test pages: delete or gate `/test-*` pages behind `NODE_ENV !== "production"` check
