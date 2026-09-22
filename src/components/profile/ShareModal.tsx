@@ -67,6 +67,7 @@ function CTARow({
           fontFamily: "var(--font-dm-sans)",
           fontSize: "16px",
           fontWeight: 300,
+          color: "#000000",
         }}
       >
         {label}
@@ -188,6 +189,7 @@ function AccessDropdown({
             fontFamily: "var(--font-dm-sans)",
             fontSize: "16px",
             fontWeight: 300,
+            color: "#000000",
           }}
         >
           {current.label}
