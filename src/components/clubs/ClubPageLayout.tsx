@@ -865,6 +865,32 @@ export default function ClubPageLayout({
           </div>
         )}
 
+        {/* Host-only empty state — with no active riff, the Current Riff
+            section below hides entirely for admins/co-hosts (see its own
+            comment), which otherwise leaves a brand-new host staring at a
+            blank page. A club with just its creator has one obvious next
+            step, so put it front and center instead of behind the 3-dot
+            menu's "Invite friends" modal. */}
+        {isAdmin && memberCount === 1 && (
+          <div
+            style={{
+              marginBottom: "56px",
+              backgroundColor: "#FFFFFF",
+              border: "2px solid #000000",
+              padding: "32px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "24px",
+            }}
+          >
+            <SectionHeading text="INVITE FRIENDS" color="#00FF66" width={140} />
+            <ShareLinkOptions
+              url={`${typeof window !== "undefined" ? window.location.origin : ""}/clubs/${club.id}/join`}
+              shareText={`Join ${clubName} on Riff!`}
+            />
+          </div>
+        )}
+
         {/* Current Riff section — with no active riff, admins/co-hosts get
             an empty body now that the start-a-riff CTA lives in the nav bar
             instead, so the section (heading included) always hides for them
