@@ -443,9 +443,18 @@ export default function OnboardingCreateClubPage() {
                     onSelect={setCadence}
                   />
 
-                  <PrimaryButton type="submit">
-                    Cool, what&apos;s next?
-                  </PrimaryButton>
+                  <span
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "12px",
+                      fontWeight: 300,
+                      color: "#9C9C9C",
+                      textAlign: "center",
+                    }}
+                  >
+                    Riffs run on repeat. You can adjust this later.
+                  </span>
+                  <PrimaryButton type="submit">Almost there...</PrimaryButton>
                   <OnboardingProgress
                     currentStep={2}
                     totalSteps={TOTAL_STEPS}
