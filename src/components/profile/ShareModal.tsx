@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import Modal from "@/components/shared/Modal";
+import ActionRow from "@/components/shared/ActionRow";
 import { CopyIcon, CheckIcon, OpenLinkIcon } from "@/components/shared/icons";
 import InvitePieceModal from "@/components/shared/InvitePieceModal";
 import SendToFriendsModal from "@/components/shared/SendToFriendsModal";
@@ -26,65 +26,9 @@ interface ShareModalProps {
   onShareRevoked: () => void;
 }
 
-// A row that navigates to a dedicated sub-modal (Google Docs' pattern —
-// the entry modal just lists options, each opens its own screen on
-// intention rather than expanding everything inline). Styled like the
-// app's menu convention (Dropdown/ThreeDotButton) rather than CTAButton —
-// these are disclosure rows, not decisive commit actions, so no heavy
-// shadow, just a border and a hover fill.
-function CTARow({
-  label,
-  disabled,
-  onClick,
-}: {
-  label: string;
-  disabled?: boolean;
-  onClick: () => void;
-}) {
-  const [hovered, setHovered] = useState(false);
-  return (
-    <button
-      disabled={disabled}
-      onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        width: "100%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: "12px",
-        padding: "16px",
-        border: "2px solid #000000",
-        backgroundColor: hovered && !disabled ? "#F5F5F5" : "#FFFFFF",
-        cursor: disabled ? "not-allowed" : "pointer",
-        opacity: disabled ? 0.45 : 1,
-        textAlign: "left",
-      }}
-    >
-      <span
-        style={{
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "16px",
-          fontWeight: 300,
-        }}
-      >
-        {label}
-      </span>
-      <Image
-        src="/icons/arrow_down.svg"
-        alt=""
-        width={16}
-        height={16}
-        style={{ transform: "rotate(-90deg)", flexShrink: 0 }}
-      />
-    </button>
-  );
-}
-
 // Copy/View are low-stakes, repeatable utility actions rather than a
-// single decisive commit — same reasoning as CTARow above, so they get
-// the same light border + hover-fill treatment instead of a heavy shadow.
+// single decisive commit — same reasoning as ActionRow, so they get the
+// same light border + hover-fill treatment instead of a heavy shadow.
 function AccessActionButton({
   children,
   onClick,
@@ -126,13 +70,12 @@ interface AccessOption {
 }
 
 // Custom (not the shared Dropdown) because each option needs its own
-// description line, like the CTA rows above. Opens upward — this sits at
+// description line, unlike a plain ActionRow. Opens upward — this sits at
 // the bottom of the modal, and the shared Dropdown's menu isn't portaled,
 // so opening downward here would get clipped by Modal's own
-// overflow-y: auto on the dialog. Trigger styled like the CTA rows above
-// (border + hover fill, no heavy shadow) — it's a disclosure trigger, not
-// a commit action; the menu panel itself keeps the lighter brutal-half
-// shadow that matches the app's other dropdown menus.
+// overflow-y: auto on the dialog. The trigger is an ActionRow — it's a
+// disclosure trigger, not a commit action; the menu panel itself keeps the
+// lighter brutal-half shadow that matches the app's other dropdown menus.
 function AccessDropdown({
   value,
   options,
@@ -143,7 +86,6 @@ function AccessDropdown({
   onSelect: (value: AccessOption["value"]) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [triggerHovered, setTriggerHovered] = useState(false);
   const [hoveredOption, setHoveredOption] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const current = options.find((o) => o.value === value) ?? options[0];
@@ -168,38 +110,12 @@ function AccessDropdown({
 
   return (
     <div ref={ref} style={{ position: "relative" }}>
-      <button
+      <ActionRow
+        label={current.label}
         onClick={() => setOpen((prev) => !prev)}
-        onMouseEnter={() => setTriggerHovered(true)}
-        onMouseLeave={() => setTriggerHovered(false)}
-        style={{
-          width: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "12px 16px",
-          border: "2px solid #000000",
-          backgroundColor: open || triggerHovered ? "#F5F5F5" : "#FFFFFF",
-          cursor: "pointer",
-        }}
-      >
-        <span
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
-            fontWeight: 300,
-          }}
-        >
-          {current.label}
-        </span>
-        <Image
-          src="/icons/arrow_down.svg"
-          alt=""
-          width={16}
-          height={16}
-          style={{ transform: open ? "rotate(180deg)" : "none" }}
-        />
-      </button>
+        arrow="expand"
+        active={open}
+      />
 
       {open && (
         <div
@@ -425,12 +341,12 @@ export default function ShareModal({
           <div
             style={{ display: "flex", flexDirection: "column", gap: "12px" }}
           >
-            <CTARow
+            <ActionRow
               label="Send to friends"
               disabled={!hasFriends}
               onClick={() => setView("send")}
             />
-            <CTARow
+            <ActionRow
               label="Invite a new friend"
               disabled={publicDisabled}
               onClick={() => setView("invite")}
