@@ -19,7 +19,7 @@ import PrimaryButton from "@/components/PrimaryButton";
 import OnboardingProgress from "@/components/onboarding/OnboardingProgress";
 import ImageUploadFlow from "@/components/shared/ImageUploadFlow";
 import type { ImageUploadFlowHandle } from "@/components/shared/ImageUploadFlow";
-import CadenceOptionCard from "@/components/clubs/CadenceOptionCard";
+import CadenceOptionList from "@/components/clubs/CadenceOptionList";
 import {
   CREATION_CADENCE_OPTIONS,
   DEFAULT_CADENCE,
@@ -320,7 +320,6 @@ export default function OnboardingCreateClubPage() {
               flexDirection: "column",
               gap: "24px",
               textAlign: "left",
-              overflow: "hidden",
             }}
           >
             <div style={{ width: "100%", display: "flex" }}>
@@ -432,28 +431,17 @@ export default function OnboardingCreateClubPage() {
                 >
                   <Tagline
                     text="Riff cadence"
-                    color="#00FF66"
+                    color="#EECF01"
                     width={104}
                     textColor="#000000"
                     fontSize={16}
                   />
 
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "12px",
-                    }}
-                  >
-                    {CREATION_CADENCE_OPTIONS.map((option) => (
-                      <CadenceOptionCard
-                        key={option.value}
-                        option={option}
-                        selected={cadence === option.value}
-                        onSelect={() => setCadence(option.value)}
-                      />
-                    ))}
-                  </div>
+                  <CadenceOptionList
+                    value={cadence}
+                    options={CREATION_CADENCE_OPTIONS}
+                    onSelect={setCadence}
+                  />
 
                   <PrimaryButton type="submit">
                     Cool, what&apos;s next?

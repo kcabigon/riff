@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Modal from "@/components/shared/Modal";
 import PrimaryButton from "@/components/PrimaryButton";
-import CadenceOptionCard from "@/components/clubs/CadenceOptionCard";
+import CadenceDropdown from "@/components/clubs/CadenceDropdown";
 import {
   CADENCE_OPTIONS,
   PAUSED_CADENCE_OPTION,
@@ -46,37 +46,28 @@ export default function ClubCadenceModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Riff cadence" size="sm">
       <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-        <div
+        <span
           style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "16px",
+            fontWeight: 300,
+            lineHeight: 1.6,
+            color: "#9C9C9C",
             backgroundColor: "#FFFFFF",
-            border: "2px solid #000000",
-            padding: "16px",
+            padding: "2px 8px",
+            alignSelf: "flex-start",
           }}
         >
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              color: "#000000",
-              margin: 0,
-              lineHeight: 1.6,
-            }}
-          >
-            How often this club gets a new riff. Change it anytime.
-          </p>
-        </div>
+          Your club always has a riff running — this sets how long each one
+          lasts before it reveals. Change it anytime.
+        </span>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-          {ALL_OPTIONS.map((option) => (
-            <CadenceOptionCard
-              key={option.value}
-              option={option}
-              selected={selected === option.value}
-              onSelect={() => setSelected(option.value)}
-            />
-          ))}
-        </div>
+        <CadenceDropdown
+          value={selected}
+          options={ALL_OPTIONS}
+          onSelect={setSelected}
+          openUp
+        />
 
         <PrimaryButton
           type="button"
