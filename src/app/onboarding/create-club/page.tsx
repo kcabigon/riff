@@ -354,9 +354,9 @@ export default function OnboardingCreateClubPage() {
                     }}
                   >
                     <Tagline
-                      text="Club name"
+                      text="Who we are..."
                       color="#C01582"
-                      width={94}
+                      width={116}
                       textColor="#FFFFFF"
                       fontSize={16}
                     />
@@ -381,9 +381,9 @@ export default function OnboardingCreateClubPage() {
                     }}
                   >
                     <Tagline
-                      text="Description"
+                      text="What we're about..."
                       color="#955CB5"
-                      width={100}
+                      width={156}
                       textColor="#FFFFFF"
                       fontSize={16}
                     />
@@ -430,9 +430,9 @@ export default function OnboardingCreateClubPage() {
                   }}
                 >
                   <Tagline
-                    text="Riff cadence"
+                    text="How often we riff..."
                     color="#EECF01"
-                    width={104}
+                    width={162}
                     textColor="#000000"
                     fontSize={16}
                   />
@@ -477,10 +477,10 @@ export default function OnboardingCreateClubPage() {
                     }}
                   >
                     <Tagline
-                      text="Let's make it your own"
+                      text="This is our vibe..."
                       color="#01EFFC"
                       textColor="#000000"
-                      width={176}
+                      width={156}
                       fontSize={16}
                     />
                     <ImageUploadFlow
