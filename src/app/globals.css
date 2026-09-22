@@ -26,22 +26,6 @@
     color: var(--foreground);
     background: var(--background);
   }
-
-  /* Form controls don't inherit colour from their parent — they fall back to
-     the user agent's own styling, which on iOS means system-blue text.
-     Tailwind's preflight normally handles this, but the v3 directives above
-     are inert under the installed Tailwind v4, so nothing was normalising it.
-     Anything that wants a different colour sets it inline, which still wins.
-
-     Colour only, deliberately: body sets no font-family (layout.tsx applies
-     font *variables*, not a family), so `font-family: inherit` here would
-     hand every control Times instead of the UA's system font. */
-  button,
-  input,
-  select,
-  textarea {
-    color: inherit;
-  }
 }
 
 :root {
