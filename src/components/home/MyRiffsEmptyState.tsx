@@ -48,8 +48,8 @@ const PANELS: Panel[] = [
   },
   {
     id: "club",
-    heading: "Riff with friends.",
-    body: "Name your group and write every month.",
+    heading: "Riffs on repeat.",
+    body: "Name your crew and riff every month.",
     cta: "Start a club",
     accentColor: "#EECF01",
     rotate: -2,
