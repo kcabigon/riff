@@ -19,36 +19,44 @@ export interface CadenceOption {
   value: CadenceValue;
   label: string;
   description: string;
+  // Only set on the interval options (Weekly..Quarterly) — Manual/Paused
+  // have no fixed duration, so there's nothing to seed a deadline with.
+  days?: number;
 }
 
 const WEEKLY: CadenceOption = {
   value: "WEEKLY",
   label: "Weekly",
   description: "7 day riffs",
+  days: 7,
 };
 
 const BIWEEKLY: CadenceOption = {
   value: "BIWEEKLY",
   label: "Bi-weekly",
   description: "14 day riffs",
+  days: 14,
 };
 
 const MONTHLY: CadenceOption = {
   value: "MONTHLY",
   label: "Monthly",
   description: "30 day riffs",
+  days: 30,
 };
 
 const BIMONTHLY: CadenceOption = {
   value: "BIMONTHLY",
   label: "Bi-monthly",
   description: "60 day riffs",
+  days: 60,
 };
 
 const QUARTERLY: CadenceOption = {
   value: "QUARTERLY",
   label: "Quarterly",
   description: "90 day riffs",
+  days: 90,
 };
 
 const PAUSED: CadenceOption = {
@@ -102,4 +110,11 @@ export function cadenceStorageKey(clubId: string) {
 
 export function getCadenceLabel(value: CadenceValue): string {
   return CADENCE_OPTIONS.find((o) => o.value === value)?.label ?? "Bi-weekly";
+}
+
+// Days until the chosen cadence's first deadline, or null for Manual/Paused
+// (no fixed interval to seed one). Used to give a newly created club's first
+// riff a real deadline at club-creation time.
+export function getCadenceDays(value: CadenceValue): number | null {
+  return CADENCE_OPTIONS.find((o) => o.value === value)?.days ?? null;
 }
