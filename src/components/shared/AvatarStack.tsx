@@ -9,6 +9,9 @@ interface AvatarStackProps {
   size?: 24 | 32 | 40 | 48; // Default: 32
   borderColor?: string; // Default: '#000000'
   onAvatarClick?: (userId: string) => void;
+  // Appends a trailing dashed "+" tile to the stack, same treatment as
+  // FriendsRow's invite tile. Omit to render the stack with no add action.
+  onAddClick?: () => void;
   className?: string;
   style?: CSSProperties;
 }
@@ -34,17 +37,14 @@ export default function AvatarStack({
   size = 32,
   borderColor = "#000000",
   onAvatarClick,
+  onAddClick,
   className = "",
   style = {},
 }: AvatarStackProps) {
-  if (users.length === 0) {
-    return null;
-  }
-
   // Filter out any undefined/null users for safety
   const validUsers = users.filter((user) => user != null);
 
-  if (validUsers.length === 0) {
+  if (validUsers.length === 0 && !onAddClick) {
     return null;
   }
 
@@ -73,6 +73,47 @@ export default function AvatarStack({
           }}
         />
       ))}
+      {onAddClick &&
+        (() => {
+          // Matches FriendsRow's invite tile on a white/light backdrop
+          // (light gray dashed + white fill). On a dark backdrop (banner
+          // photo/overlay, borderColor passed as white to match the other
+          // avatars' borders there) that same white fill read as a stark
+          // solid blob next to real photos — swapped for a transparent
+          // "empty slot" treatment with a white dashed border instead.
+          const onDark = borderColor.toUpperCase() === "#FFFFFF";
+          return (
+            <button
+              type="button"
+              onClick={onAddClick}
+              aria-label="Invite friends"
+              style={{
+                width: `${size}px`,
+                height: `${size}px`,
+                borderRadius: `${size}px`,
+                border: onDark
+                  ? "2px dashed rgba(255, 255, 255, 0.7)"
+                  : "2px dashed #CCCCCC",
+                backgroundColor: onDark ? "transparent" : "#FFFFFF",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: `${Math.round(size * 0.375)}px`,
+                fontWeight: 300,
+                color: onDark ? "#FFFFFF" : "#CCCCCC",
+                lineHeight: "normal",
+                padding: 0,
+                cursor: "pointer",
+                flexShrink: 0,
+                marginRight: "-4px",
+                zIndex: validUsers.length,
+              }}
+            >
+              +
+            </button>
+          );
+        })()}
     </div>
   );
 }
