@@ -1,16 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
-import Image from "next/image";
-import {
-  motion,
-  useReducedMotion,
-  useMotionValue,
-  useTransform,
-  useSpring,
-} from "framer-motion";
 import LandingNavBar from "@/components/LandingNavBar";
 import NavBar from "@/components/clubs/NavBar";
 import TextInput from "@/components/TextInput";
@@ -18,32 +10,8 @@ import PrimaryButton from "@/components/PrimaryButton";
 import Avatar from "@/components/shared/Avatar";
 import { noiseTileStyle } from "@/components/NoiseBackground";
 import Tagline from "@/components/Tagline";
+import BrushWordHero from "@/components/shared/BrushWordHero";
 import { getRiffDisplayTitle } from "@/lib/riff-utils";
-
-// Ported from LandingClientPage's hero — same brush-reveal ease, same
-// rise-and-fade word treatment, so this line matches the landing page exactly.
-const BRUSH_EASE: [number, number, number, number] = [0.4, 0, 0.1, 1];
-
-function TextWord({
-  children,
-  delay,
-  dur,
-}: {
-  children: React.ReactNode;
-  delay: number;
-  dur: number;
-}) {
-  return (
-    <motion.span
-      className="jrhero-text-word"
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: dur, delay, ease: "easeOut" }}
-    >
-      {children}
-    </motion.span>
-  );
-}
 
 type JoinStep = "email" | "check-email" | "name" | "join";
 
@@ -85,79 +53,6 @@ export default function JoinRiffClient({
   lastActiveClubId,
 }: JoinRiffClientProps) {
   const router = useRouter();
-  const reducedMotion = useReducedMotion();
-  const heroRef = useRef<HTMLDivElement | null>(null);
-  const [riffRevealed, setRiffRevealed] = useState(false);
-
-  // Mouse parallax — normalized cursor position [-1, 1] across the hero.
-  // Same spring config as the landing page's hero.
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-  const smoothX = useSpring(mouseX, { stiffness: 60, damping: 18, mass: 0.6 });
-  const smoothY = useSpring(mouseY, { stiffness: 60, damping: 18, mass: 0.6 });
-  const par = reducedMotion ? 4 : 18;
-  const riffX = useTransform(smoothX, [-1, 1], [-par, par]);
-  const riffY = useTransform(smoothY, [-1, 1], [-par * 0.55, par * 0.55]);
-
-  // Desktop-only, gated on "real mouse present" — same as the landing page.
-  useEffect(() => {
-    const el = heroRef.current;
-    if (!el) return;
-    const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
-    let cleanupListener: (() => void) | null = null;
-
-    const attach = () => {
-      const handle = (e: MouseEvent) => {
-        const rect = el.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-        const y = ((e.clientY - rect.top) / rect.height) * 2 - 1;
-        mouseX.set(Math.max(-1, Math.min(1, x)));
-        mouseY.set(Math.max(-1, Math.min(1, y)));
-      };
-      window.addEventListener("mousemove", handle);
-      cleanupListener = () => window.removeEventListener("mousemove", handle);
-    };
-
-    const detach = () => {
-      cleanupListener?.();
-      cleanupListener = null;
-      mouseX.set(0);
-      mouseY.set(0);
-    };
-
-    if (mq.matches) attach();
-    const onChange = (e: MediaQueryListEvent) => {
-      if (e.matches) attach();
-      else detach();
-    };
-    mq.addEventListener("change", onChange);
-
-    return () => {
-      mq.removeEventListener("change", onChange);
-      detach();
-    };
-  }, [mouseX, mouseY]);
-
-  const amp = reducedMotion ? 0.25 : 1;
-  const idleRiff = {
-    rotate: [0, 1.5 * amp, 0, -1.5 * amp, 0],
-    y: [0, -6 * amp, 0, 6 * amp, 0],
-  };
-  const idleLoopRiff = {
-    duration: reducedMotion ? 9 : 5.5,
-    repeat: Infinity,
-    ease: "easeInOut" as const,
-    delay: 1.4,
-  };
-  const HERO_SEQ = reducedMotion
-    ? {
-        riff: { delay: 0.1, dur: 0.5 },
-        withFriends: { delay: 0.55, dur: 0.35 },
-      }
-    : {
-        riff: { delay: 0.15, dur: 0.95 },
-        withFriends: { delay: 0.95, dur: 0.55 },
-      };
 
   const getInitialStep = (): JoinStep => {
     if (!isLoggedIn) return "email";
@@ -312,7 +207,6 @@ export default function JoinRiffClient({
 
       {/* Hero — full-bleed textured invite framing */}
       <div
-        ref={heroRef}
         className="join-hero"
         style={{
           position: "relative",
@@ -341,53 +235,7 @@ export default function JoinRiffClient({
             fontWeight={700}
           />
 
-          {/* Ported from the landing page hero, line 1 only ("Riff with
-              friends.") — same brush-reveal art, offsets, and idle drift. */}
-          <div className="jrhero-frame" style={{ margin: "20px 0 0 0" }}>
-            <h1 className="jrhero-line">
-              <motion.span
-                className="jrhero-word-riff"
-                style={{ x: riffX, y: riffY }}
-              >
-                Riff
-                <motion.div
-                  className="jrhero-word-svg-wrap"
-                  initial={{ clipPath: "inset(0 100% 0 0)" }}
-                  animate={{ clipPath: "inset(0 0% 0 0)" }}
-                  transition={{
-                    duration: HERO_SEQ.riff.dur,
-                    ease: BRUSH_EASE,
-                    delay: HERO_SEQ.riff.delay,
-                  }}
-                  onAnimationComplete={() => setRiffRevealed(true)}
-                  data-revealed={riffRevealed || undefined}
-                >
-                  <motion.div animate={idleRiff} transition={idleLoopRiff}>
-                    <Image
-                      src="/images/landing/riff_lp.webp"
-                      alt=""
-                      width={612}
-                      height={520}
-                      priority
-                      className="jrhero-word-svg"
-                    />
-                  </motion.div>
-                </motion.div>
-              </motion.span>{" "}
-              <TextWord
-                delay={HERO_SEQ.withFriends.delay}
-                dur={HERO_SEQ.withFriends.dur}
-              >
-                with
-              </TextWord>{" "}
-              <TextWord
-                delay={HERO_SEQ.withFriends.delay}
-                dur={HERO_SEQ.withFriends.dur}
-              >
-                friends.
-              </TextWord>
-            </h1>
-          </div>
+          <BrushWordHero word="riff" className="jrhero-frame" />
 
           {/* Riff details card — pulled up to overlap the bottom of the
               brush art, which is much taller than the text line it sits on
@@ -670,58 +518,10 @@ export default function JoinRiffClient({
       </div>
 
       <style>{`
-        /* Ported from LandingClientPage's hero CSS — the transparent-text +
-           absolutely-positioned brush-art overlay technique, scoped to just
-           the "Riff" word since this page only needs line 1. */
-        .jrhero-word-riff {
-          position: relative;
-          display: inline-block;
-          color: transparent;
-          z-index: -1;
-        }
-        .jrhero-text-word {
-          display: inline-block;
-        }
-        .jrhero-word-svg-wrap {
-          position: absolute;
-          height: auto;
-          pointer-events: none;
-          user-select: none;
-          overflow: visible;
-          z-index: -1;
-          will-change: transform, clip-path;
-          top: 24px;
-          left: -445px;
-          width: 612px;
-        }
-        .jrhero-word-svg-wrap[data-revealed] {
-          clip-path: none !important;
-          will-change: auto;
-        }
-        .jrhero-word-svg {
-          display: block;
-          width: 100%;
-          height: auto;
-        }
+        /* Riff word/brush-art treatment lives in BrushWordHero now — this
+           page only adds its own spacing around that shared frame. */
         .jrhero-frame {
-          position: relative;
-          width: 898px;
-          max-width: 100%;
-          /* The brush art is absolutely positioned and doesn't contribute to
-             flow height on its own — reserve room for its full bleed (top
-             offset + rendered height) so .join-hero's overflow:hidden
-             doesn't truncate it, and so the noise background (which sizes
-             to .join-hero) covers the whole thing too. */
-          height: 640px;
-        }
-        .jrhero-line {
-          margin: 0;
-          font-family: var(--font-dm-serif-text);
-          font-size: 96px;
-          line-height: 132px;
-          font-weight: 400;
-          color: #000000;
-          text-align: left;
+          margin: 20px 0 0 0;
         }
         .jrhero-card {
           margin-top: -460px;
@@ -729,19 +529,6 @@ export default function JoinRiffClient({
         @media (max-width: 767px) {
           .join-hero {
             padding: 48px 24px 64px !important;
-          }
-          .jrhero-frame {
-            height: 480px;
-          }
-          .jrhero-line {
-            font-size: clamp(56px, 18vw, 72px);
-            line-height: 1.375;
-            text-align: center;
-          }
-          .jrhero-word-svg-wrap {
-            top: 16px;
-            left: -342px;
-            width: 463px;
           }
           .jrhero-card {
             margin-top: -240px;

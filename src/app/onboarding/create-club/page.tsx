@@ -1,16 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef, FormEvent } from "react";
+import { useState, useRef, FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
-import {
-  motion,
-  AnimatePresence,
-  useReducedMotion,
-  useMotionValue,
-  useTransform,
-  useSpring,
-} from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { noiseTileStyle } from "@/components/NoiseBackground";
 import TextInput from "@/components/TextInput";
 import Tagline from "@/components/Tagline";
@@ -20,6 +12,7 @@ import OnboardingProgress from "@/components/onboarding/OnboardingProgress";
 import ImageUploadFlow from "@/components/shared/ImageUploadFlow";
 import type { ImageUploadFlowHandle } from "@/components/shared/ImageUploadFlow";
 import CadenceOptionList from "@/components/clubs/CadenceOptionList";
+import BrushWordHero from "@/components/shared/BrushWordHero";
 import {
   CREATION_CADENCE_OPTIONS,
   DEFAULT_CADENCE,
@@ -34,32 +27,6 @@ export const dynamic = "force-dynamic";
 
 const TOTAL_STEPS = 3;
 
-// Ported from LandingClientPage's hero — same brush-reveal ease, same
-// rise-and-fade word treatment, scoped to just "write club" (mirrors how
-// JoinRiffClient ported just "Riff" for the join-riff page).
-const BRUSH_EASE: [number, number, number, number] = [0.4, 0, 0.1, 1];
-
-function TextWord({
-  children,
-  delay,
-  dur,
-}: {
-  children: React.ReactNode;
-  delay: number;
-  dur: number;
-}) {
-  return (
-    <motion.span
-      className="cchero-text-word"
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: dur, delay, ease: "easeOut" }}
-    >
-      {children}
-    </motion.span>
-  );
-}
-
 export default function OnboardingCreateClubPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
@@ -70,85 +37,6 @@ export default function OnboardingCreateClubPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const uploadFlowRef = useRef<ImageUploadFlowHandle>(null);
-  const reducedMotion = useReducedMotion();
-  const heroRef = useRef<HTMLDivElement | null>(null);
-  const [writeclubRevealed, setWriteclubRevealed] = useState(false);
-
-  // Mouse parallax — normalized cursor position [-1, 1] across the hero.
-  // Same spring config as the landing page's hero; inverted sign vs the
-  // "Riff" word on the join-riff page, matching the landing page's own
-  // writeclub transform.
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-  const smoothX = useSpring(mouseX, { stiffness: 60, damping: 18, mass: 0.6 });
-  const smoothY = useSpring(mouseY, { stiffness: 60, damping: 18, mass: 0.6 });
-  const par = reducedMotion ? 4 : 18;
-  const writeclubX = useTransform(smoothX, [-1, 1], [par, -par]);
-  const writeclubY = useTransform(smoothY, [-1, 1], [par * 0.55, -par * 0.55]);
-
-  // Desktop-only, gated on "real mouse present" — same as the landing page.
-  useEffect(() => {
-    const el = heroRef.current;
-    if (!el) return;
-    const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
-    let cleanupListener: (() => void) | null = null;
-
-    const attach = () => {
-      const handle = (e: MouseEvent) => {
-        const rect = el.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-        const y = ((e.clientY - rect.top) / rect.height) * 2 - 1;
-        mouseX.set(Math.max(-1, Math.min(1, x)));
-        mouseY.set(Math.max(-1, Math.min(1, y)));
-      };
-      window.addEventListener("mousemove", handle);
-      cleanupListener = () => window.removeEventListener("mousemove", handle);
-    };
-
-    const detach = () => {
-      cleanupListener?.();
-      cleanupListener = null;
-      mouseX.set(0);
-      mouseY.set(0);
-    };
-
-    if (mq.matches) attach();
-    const onChange = (e: MediaQueryListEvent) => {
-      if (e.matches) attach();
-      else detach();
-    };
-    mq.addEventListener("change", onChange);
-
-    return () => {
-      mq.removeEventListener("change", onChange);
-      detach();
-    };
-  }, [mouseX, mouseY]);
-
-  const amp = reducedMotion ? 0.25 : 1;
-  // Mirrored from the landing page's idleRiff — writeclub drifts the
-  // opposite direction so the two words don't move in lockstep.
-  const idleWriteclub = {
-    rotate: [0, -1.5 * amp, 0, 1.5 * amp, 0],
-    y: [0, 6 * amp, 0, -6 * amp, 0],
-  };
-  const idleLoopWriteclub = {
-    duration: reducedMotion ? 10 : 6,
-    repeat: Infinity,
-    ease: "easeInOut" as const,
-    delay: 1.7,
-  };
-  const HERO_SEQ = reducedMotion
-    ? {
-        startA: { delay: 0.9, dur: 0.35 },
-        writeclub: { delay: 1.2, dur: 0.5 },
-        period: { delay: 1.45, dur: 0.3 },
-      }
-    : {
-        startA: { delay: 1.5, dur: 0.55 },
-        writeclub: { delay: 1.95, dur: 0.95 },
-        period: { delay: 2.45, dur: 0.45 },
-      };
 
   const handleBack = () => {
     if (step > 1) {
@@ -278,12 +166,11 @@ export default function OnboardingCreateClubPage() {
           "Start a write club." line. Renders once for the whole flow — only
           the card below swaps per step, so the reveal never replays. */}
       <div
-        ref={heroRef}
         className="cchero-hero"
         style={{
           position: "relative",
           overflow: "hidden",
-          padding: "24px 24px 96px",
+          padding: "64px 24px 96px",
         }}
       >
         <div
@@ -298,51 +185,7 @@ export default function OnboardingCreateClubPage() {
             textAlign: "center",
           }}
         >
-          <div className="cchero-frame" style={{ margin: "0" }}>
-            <h1 className="cchero-line">
-              <TextWord delay={HERO_SEQ.startA.delay} dur={HERO_SEQ.startA.dur}>
-                Start
-              </TextWord>{" "}
-              <TextWord delay={HERO_SEQ.startA.delay} dur={HERO_SEQ.startA.dur}>
-                a
-              </TextWord>{" "}
-              <motion.span
-                className="cchero-word-writeclub"
-                style={{ x: writeclubX, y: writeclubY }}
-              >
-                write club
-                <motion.div
-                  className="cchero-word-svg-wrap"
-                  initial={{ clipPath: "inset(0 0 0 100%)" }}
-                  animate={{ clipPath: "inset(0 0 0 0%)" }}
-                  transition={{
-                    duration: HERO_SEQ.writeclub.dur,
-                    ease: BRUSH_EASE,
-                    delay: HERO_SEQ.writeclub.delay,
-                  }}
-                  onAnimationComplete={() => setWriteclubRevealed(true)}
-                  data-revealed={writeclubRevealed || undefined}
-                >
-                  <motion.div
-                    animate={idleWriteclub}
-                    transition={idleLoopWriteclub}
-                  >
-                    <Image
-                      src="/images/landing/write_club_lp.webp"
-                      alt=""
-                      width={847}
-                      height={492}
-                      priority
-                      className="cchero-word-svg"
-                    />
-                  </motion.div>
-                </motion.div>
-              </motion.span>
-              <TextWord delay={HERO_SEQ.period.delay} dur={HERO_SEQ.period.dur}>
-                .
-              </TextWord>
-            </h1>
-          </div>
+          <BrushWordHero word="writeclub" className="cchero-frame" />
 
           {/* Club details card — pulled up to overlap the bottom of the
               brush art, same technique as JoinRiffClient's .jrhero-card.
@@ -578,77 +421,14 @@ export default function OnboardingCreateClubPage() {
       </div>
 
       <style>{`
-        /* Ported from LandingClientPage's hero CSS (writeclub variant) — the
-           transparent-text + absolutely-positioned brush-art overlay
-           technique, scoped to just the "write club" word since this page
-           only needs one line. Positioning values (top/left/width) match
-           the landing page's own .word-svg-wrap-writeclub rules. */
-        .cchero-word-writeclub {
-          position: relative;
-          display: inline-block;
-          color: transparent;
-          z-index: -1;
-        }
-        .cchero-text-word {
-          display: inline-block;
-        }
-        .cchero-word-svg-wrap {
-          position: absolute;
-          height: auto;
-          pointer-events: none;
-          user-select: none;
-          overflow: visible;
-          z-index: -1;
-          will-change: transform, clip-path;
-          top: 24px;
-          left: 0;
-          width: 847px;
-        }
-        .cchero-word-svg-wrap[data-revealed] {
-          clip-path: none !important;
-          will-change: auto;
-        }
-        .cchero-word-svg {
-          display: block;
-          width: 100%;
-          height: auto;
-        }
-        .cchero-frame {
-          position: relative;
-          width: 940px;
-          max-width: 100%;
-          /* Reserve room for the art's full bleed (top offset + rendered
-             height) so .cchero-hero's overflow:hidden doesn't truncate it. */
-          height: 600px;
-        }
-        .cchero-line {
-          margin: 0;
-          font-family: var(--font-dm-serif-text);
-          font-size: 96px;
-          line-height: 132px;
-          font-weight: 400;
-          color: #000000;
-          text-align: left;
-        }
+        /* "write club" word/brush-art treatment lives in BrushWordHero now —
+           this page only adds its own spacing around that shared frame. */
         .cchero-card {
           margin-top: -420px;
         }
         @media (max-width: 767px) {
           .cchero-hero {
-            padding: 16px 24px 64px !important;
-          }
-          .cchero-frame {
-            height: 440px;
-          }
-          .cchero-line {
-            font-size: clamp(56px, 18vw, 72px);
-            line-height: 1.375;
-            text-align: center;
-          }
-          .cchero-word-svg-wrap {
-            top: 16px;
-            left: 0;
-            width: 635px;
+            padding: 48px 24px 64px !important;
           }
           .cchero-card {
             margin-top: -200px;
