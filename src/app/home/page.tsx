@@ -1,9 +1,21 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
-import { getContentPreview } from "@/lib/riff-utils";
 import { getFriends } from "@/lib/friends";
+import {
+  getPiecesPage,
+  getCompletedRiffsPage,
+  RIFF_INCLUDE,
+  serializeRiff,
+} from "@/lib/home-data";
 import MyRiffsClient from "./MyRiffsClient";
+
+// Matches MyRiffsClient's DRAFTS_CAP/PIECES_CAP/PAST_RIFFS_CAP — only this
+// many of each are fetched up front; "View all" fetches the rest from
+// /api/home/pieces and /api/home/past-riffs (see src/lib/home-data.ts).
+const DRAFTS_CAP = 2;
+const PIECES_CAP = 2;
+const PAST_RIFFS_CAP = 2;
 
 export default async function MyRiffsPage() {
   const session = await getSession();
@@ -13,181 +25,88 @@ export default async function MyRiffsPage() {
 
   const userId = session.user.id;
 
-  const [participations, userClubs, user, rawFriends, pieces, joinableRiffs] =
-    await Promise.all([
-      prisma.riffParticipant.findMany({
-        where: { userId },
-        include: {
-          riff: {
-            include: {
-              club: {
-                select: {
-                  id: true,
-                  name: true,
-                  bannerImage: true,
-                  adminId: true,
-                  moderatorId: true,
-                },
-              },
-              creator: {
-                select: {
-                  id: true,
-                  name: true,
-                  username: true,
-                  avatarUrl: true,
-                },
-              },
-              participants: {
-                include: {
-                  user: {
-                    select: {
-                      id: true,
-                      name: true,
-                      username: true,
-                      avatarUrl: true,
-                    },
-                  },
-                },
-              },
-              pieces: {
-                include: {
-                  piece: {
-                    select: {
-                      id: true,
-                      title: true,
-                      authorId: true,
-                      coverImage: true,
-                      wordCount: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      }),
-      prisma.club.findMany({
-        where: { members: { some: { userId } }, isArchived: false },
-        select: { id: true, name: true },
-        orderBy: { updatedAt: "desc" },
-      }),
-      prisma.user.findUnique({
-        where: { id: userId },
-        select: {
-          id: true,
-          name: true,
-          username: true,
-          avatarUrl: true,
-          lastActiveClubId: true,
-        },
-      }),
-      // Friends — clubmates in active clubs, unioned with riffmates (covers
-      // people you've written alongside even if you're no longer in the same club).
-      getFriends(userId),
-      // Pieces the user has authored — powers the Drafts and Pieces sections.
-      prisma.piece.findMany({
-        where: { authorId: userId },
-        select: {
-          id: true,
-          title: true,
-          coverImage: true,
-          currentContent: true,
-          wordCount: true,
-          createdAt: true,
-          updatedAt: true,
-          publishedAt: true,
-          riffs: {
-            select: {
-              submittedAt: true,
-              riff: {
-                select: {
-                  id: true,
-                  title: true,
-                  volumeNumber: true,
-                  status: true,
-                  deadline: true,
-                  club: { select: { id: true, name: true } },
-                },
-              },
-            },
-          },
-          newShares: {
-            where: { shareType: "PUBLIC" },
-            select: { id: true },
-            take: 1,
-          },
-        },
-        orderBy: { updatedAt: "desc" },
-      }),
-      // Active riffs in the user's clubs they haven't joined yet — powers
-      // the "join" CTA in the Current Riffs section.
-      prisma.riff.findMany({
-        where: {
-          status: "ACTIVE",
-          club: { members: { some: { userId } }, isArchived: false },
-          participants: { none: { userId } },
-        },
-        include: {
-          club: {
-            select: {
-              id: true,
-              name: true,
-              bannerImage: true,
-              adminId: true,
-              moderatorId: true,
-            },
-          },
-          creator: {
-            select: {
-              id: true,
-              name: true,
-              username: true,
-              avatarUrl: true,
-            },
-          },
-          participants: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                  username: true,
-                  avatarUrl: true,
-                },
-              },
-            },
-          },
-          pieces: {
-            include: {
-              piece: {
-                select: {
-                  id: true,
-                  title: true,
-                  authorId: true,
-                  coverImage: true,
-                  wordCount: true,
-                },
-              },
-            },
-          },
-        },
-      }),
-    ]);
+  const [
+    participations,
+    userClubs,
+    user,
+    rawFriends,
+    draftsPage,
+    submittedPage,
+    pastRiffsPage,
+    standaloneDraftCount,
+    joinableRiffs,
+  ] = await Promise.all([
+    // ACTIVE + REVEALED only — this set stays naturally small (people tend
+    // to read soon after reveal), so it's fetched in full. COMPLETED riffs
+    // are the unbounded-growth bucket and are paginated separately below
+    // (pastRiffsPage) — see the comment on getCompletedRiffsPage.
+    prisma.riffParticipant.findMany({
+      where: { userId, riff: { status: { not: "COMPLETED" } } },
+      include: { riff: { include: RIFF_INCLUDE } },
+    }),
+    prisma.club.findMany({
+      where: { members: { some: { userId } }, isArchived: false },
+      select: { id: true, name: true },
+      orderBy: { updatedAt: "desc" },
+    }),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        username: true,
+        avatarUrl: true,
+        lastActiveClubId: true,
+      },
+    }),
+    // Friends — clubmates in active clubs, unioned with riffmates (covers
+    // people you've written alongside even if you're no longer in the same club).
+    getFriends(userId),
+    // Drafts and Pieces sections — capped up front, "View all" fetches more.
+    getPiecesPage(userId, "draft", { limit: DRAFTS_CAP }),
+    getPiecesPage(userId, "submitted", { limit: PIECES_CAP }),
+    getCompletedRiffsPage(userId, { limit: PAST_RIFFS_CAP }),
+    // Whether the "Attach draft" option should show up on riff CTAs — needs
+    // the user's *total* standalone-draft count, not just the capped page
+    // above, so it's its own cheap count query (same pattern as
+    // clubs/[id]/page.tsx and riffs/[id]/page.tsx).
+    prisma.piece.count({
+      where: { authorId: userId, riffs: { none: {} }, publishedAt: null },
+    }),
+    // Active riffs in the user's clubs they haven't joined yet — powers
+    // the "join" CTA in the Current Riffs section.
+    prisma.riff.findMany({
+      where: {
+        status: "ACTIVE",
+        club: { members: { some: { userId } }, isArchived: false },
+        participants: { none: { userId } },
+      },
+      include: RIFF_INCLUDE,
+    }),
+  ]);
 
   if (!user) redirect("/login");
 
-  const riffs = participations.map((p) => p.riff);
-  const riffIds = riffs.map((r) => r.id);
+  // Raw (non-serialized) — used for internal computation below, exactly
+  // like the pre-pagination version of this page did. Only ACTIVE/REVEALED,
+  // which is what every one of these computations actually needs (COMPLETED
+  // riffs never factor into read counts or predicted volume numbers).
+  const activeAndRevealedRiffs = participations.map((p) => p.riff);
+  const riffIds = activeAndRevealedRiffs.map((r) => r.id);
 
   const friendIds = rawFriends.map((f) => f.id);
+
+  const ownPieces = [...draftsPage.pieces, ...submittedPage.pieces];
 
   // For active riffs, compute predictedVolumeNumber per club (count of REVEALED+COMPLETED riffs + 1)
   // Clubless riffs are filtered out — they have no per-club volume sequence
   const activeClubIds = [
     ...new Set(
       [
-        ...riffs.filter((r) => r.status === "ACTIVE").map((r) => r.clubId),
-        ...pieces
+        ...activeAndRevealedRiffs
+          .filter((r) => r.status === "ACTIVE")
+          .map((r) => r.clubId),
+        ...ownPieces
           .flatMap((p) => p.riffs)
           .filter((pr) => pr.riff.status === "ACTIVE")
           .map((pr) => pr.riff.club?.id ?? null),
@@ -200,7 +119,7 @@ export default async function MyRiffsPage() {
   // every *other* participant's piece has been read. Viewing your own piece
   // creates a PieceRead record too, which would otherwise inflate the count
   // and prematurely move the riff to Past Riffs. Mirrors the club page.
-  const ownPieceIds = riffs.flatMap((r) =>
+  const ownPieceIds = activeAndRevealedRiffs.flatMap((r) =>
     r.pieces
       .filter((p) => p.piece.authorId === userId && p.submittedAt !== null)
       .map((p) => p.piece.id)
@@ -296,74 +215,31 @@ export default async function MyRiffsPage() {
     })
     .map(({ friend }) => friend);
 
-  const serializedRiffs = riffs.map((r) => ({
-    id: r.id,
-    title: r.title,
-    volumeNumber: r.volumeNumber,
-    status: r.status,
-    prompt: r.prompt,
-    deadline: r.deadline ? r.deadline.toISOString() : null,
-    createdAt: r.createdAt.toISOString(),
-    creatorId: r.creatorId,
-    creator: r.creator,
-    club: r.club,
-    participants: r.participants,
-    pieces: r.pieces.map((p) => ({
-      submittedAt: p.submittedAt ? p.submittedAt.toISOString() : null,
-      piece: p.piece,
-    })),
-  }));
-
-  const serializedJoinableRiffs = joinableRiffs.map((r) => ({
-    id: r.id,
-    title: r.title,
-    volumeNumber: r.volumeNumber,
-    status: r.status,
-    prompt: r.prompt,
-    deadline: r.deadline ? r.deadline.toISOString() : null,
-    createdAt: r.createdAt.toISOString(),
-    creatorId: r.creatorId,
-    creator: r.creator,
-    club: r.club,
-    participants: r.participants,
-    pieces: r.pieces.map((p) => ({
-      submittedAt: p.submittedAt ? p.submittedAt.toISOString() : null,
-      piece: p.piece,
-    })),
-  }));
-
-  const serializedPieces = pieces.map((p) => ({
-    id: p.id,
-    title: p.title,
-    coverImage: p.coverImage,
-    preview: getContentPreview(p.currentContent, 500),
-    wordCount: p.wordCount,
-    createdAt: p.createdAt.toISOString(),
-    updatedAt: p.updatedAt.toISOString(),
-    publishedAt: p.publishedAt ? p.publishedAt.toISOString() : null,
-    riffs: p.riffs.map((pr) => ({
-      submittedAt: pr.submittedAt ? pr.submittedAt.toISOString() : null,
-      riff: {
-        ...pr.riff,
-        deadline: pr.riff.deadline ? pr.riff.deadline.toISOString() : null,
-      },
-    })),
-    isPublic: p.newShares.length > 0,
-    publicShareId: p.newShares[0]?.id ?? null,
-  }));
+  const riffs = [
+    ...activeAndRevealedRiffs.map(serializeRiff),
+    ...pastRiffsPage.riffs,
+  ];
+  const serializedJoinableRiffs = joinableRiffs.map(serializeRiff);
 
   return (
     <MyRiffsClient
       user={user}
       userClubs={userClubs}
       currentClub={currentClub}
-      riffs={serializedRiffs}
+      riffs={riffs}
       currentUserId={userId}
       readCounts={readCounts}
       predictedVolumeByClub={predictedVolumeByClub}
       friends={friends}
-      pieces={serializedPieces}
+      pieces={ownPieces}
       joinableRiffs={serializedJoinableRiffs}
+      hasStandaloneDrafts={standaloneDraftCount > 0}
+      hasMoreDrafts={draftsPage.hasMore}
+      draftsCursor={draftsPage.nextCursor}
+      hasMoreSubmitted={submittedPage.hasMore}
+      submittedCursor={submittedPage.nextCursor}
+      hasMorePastRiffs={pastRiffsPage.hasMore}
+      pastRiffsCursor={pastRiffsPage.nextCursor}
     />
   );
 }
