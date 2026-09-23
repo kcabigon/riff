@@ -238,6 +238,16 @@ export default function ClubPageLayout({
     },
     {
       type: "action" as const,
+      label: "Riff cadence",
+      // Editing cadence after creation isn't wired up yet — it needs the
+      // Cadence field on Club (Kyle's schema proposal) to have anywhere
+      // real to persist to. Disabled rather than removed so the entry
+      // point is ready once that lands.
+      disabled: true,
+      onClick: () => {},
+    },
+    {
+      type: "action" as const,
       label: "Invite friends",
       onClick: () => setIsInviteModalOpen(true),
     },
@@ -266,6 +276,12 @@ export default function ClubPageLayout({
       type: "action" as const,
       label: "Club details",
       onClick: () => setIsClubDetailsModalOpen(true),
+    },
+    {
+      type: "action" as const,
+      label: "Riff cadence",
+      disabled: true,
+      onClick: () => {},
     },
     {
       type: "action" as const,
@@ -524,6 +540,11 @@ export default function ClubPageLayout({
             size={40}
             borderColor="#FFFFFF"
             onAvatarClick={handleAvatarClick}
+            onAddClick={
+              isAdmin && memberCount === 1
+                ? () => setIsInviteModalOpen(true)
+                : undefined
+            }
             style={{ overflowX: "auto" }}
           />
 
@@ -687,6 +708,11 @@ export default function ClubPageLayout({
                   size={48}
                   borderColor="#FFFFFF"
                   onAvatarClick={handleAvatarClick}
+                  onAddClick={
+                    isAdmin && memberCount === 1
+                      ? () => setIsInviteModalOpen(true)
+                      : undefined
+                  }
                 />
 
                 {clubDescription && (
@@ -832,6 +858,11 @@ export default function ClubPageLayout({
               size={40}
               borderColor="#FFFFFF"
               onAvatarClick={handleAvatarClick}
+              onAddClick={
+                isAdmin && memberCount === 1
+                  ? () => setIsInviteModalOpen(true)
+                  : undefined
+              }
               style={{ overflowX: "auto" }}
             />
 
