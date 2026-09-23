@@ -147,7 +147,7 @@ Last updated: May 16, 2026
 
 ## Backlog (nice to have)
 
-- [ ] 🔨 @jarric — Club Cadence: new club creation flow + settings UI for recurring riff cadence (weekly/bi-weekly/monthly/quarterly/paused) — mockup only, no schema field yet
+- [ ] 🔨 @jarric — Club Cadence: creation flow picks a cadence and seeds a real first riff — shipped. Still open: persisting `Cadence` on Club (schema proposal handed to Kyle) and wiring up the disabled "Riff cadence" settings item once it lands
 - [ ] Collections system (personal, group, circle)
 - [x] My Riffs page (`/my-riffs`): aggregate all club riffs cross-club, tabs for Current (Writing/Reading) and Past (by club), club badge on cards, avatar dropdown nav entry
 - [ ] 🔨 @jarric — Multi-level sharing UI (CLUB, RIFF, INDIVIDUAL, PUBLIC) — INDIVIDUAL shipped via piece-invite (`feature/friend-invite`: joinPiece flow, `Share.shareType: INDIVIDUAL` now wired up); unified Share modal (Access dropdown + Send section: invite a new friend or email existing friends) shipped via `feature/share-modal-send`; a real mutually-exclusive Private tier is next

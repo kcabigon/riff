@@ -1,10 +1,12 @@
-// Club Cadence — UI mockup only. No `Cadence` field exists on the Club model
-// yet, so selections are stored in localStorage rather than persisted via API.
-// See TODO.md "Club Cadence" item.
+// Club Cadence — the creation-time picker (Weekly/Bi-weekly/Monthly) is real:
+// it seeds a new club's first riff with a real deadline. Editing cadence
+// after creation is not wired up yet (the "Riff cadence" 3-dot item is
+// disabled) since that needs a persisted `Cadence` field on Club, which
+// doesn't exist yet. See TODO.md "Club Cadence" item.
 //
 // Value names match the confirmed ClubCadence Prisma enum in the schema
-// proposal handed to Kyle, so promoting this file to the real API is a
-// storage-layer swap (localStorage -> fetch), not a value remapping.
+// proposal handed to Kyle, so wiring up editing later is additive, not a
+// value remapping.
 
 export type CadenceValue =
   | "WEEKLY"
@@ -72,45 +74,31 @@ const MANUAL: CadenceOption = {
 };
 
 // Shown when creating a new club — kept to the three most common paces.
-// Bimonthly, Quarterly, Paused, and Manual are settings-only: none of them
-// make sense as a first choice for a club that hasn't written anything yet.
+// Bimonthly, Quarterly, Paused, and Manual are reserved for a future
+// settings UI (currently disabled — see the module comment above); none of
+// them make sense as a first choice for a club that hasn't written anything
+// yet anyway.
 export const CREATION_CADENCE_OPTIONS: CadenceOption[] = [
   WEEKLY,
   BIWEEKLY,
   MONTHLY,
 ];
 
-// Interval-based options, ordered short to long.
-export const CADENCE_INTERVAL_OPTIONS: CadenceOption[] = [
+// Full set, matching the confirmed enum — used only as getCadenceDays'
+// lookup table. Editing cadence isn't reachable in the UI yet, so only the
+// three CREATION_CADENCE_OPTIONS values above are ever actually looked up
+// today; the rest just keep this table complete for when that lands.
+const CADENCE_OPTIONS: CadenceOption[] = [
   WEEKLY,
   BIWEEKLY,
   MONTHLY,
   BIMONTHLY,
   QUARTERLY,
-];
-
-// Not really a cadence at all — no automatic interval. Broken out as their
-// own "Other" group in the settings modal rather than mixed in with the
-// intervals above. Manual first — it's the more likely pick of the two
-// (Paused is a full stop, Manual just means "I'll drive").
-export const CADENCE_OTHER_OPTIONS: CadenceOption[] = [MANUAL, PAUSED];
-
-// Full flat set — for lookups (getCadenceLabel) and anywhere grouping
-// doesn't matter. Shown in the "Riff cadence" settings modal (grouped).
-export const CADENCE_OPTIONS: CadenceOption[] = [
-  ...CADENCE_INTERVAL_OPTIONS,
-  ...CADENCE_OTHER_OPTIONS,
+  MANUAL,
+  PAUSED,
 ];
 
 export const DEFAULT_CADENCE: CadenceValue = "BIWEEKLY";
-
-export function cadenceStorageKey(clubId: string) {
-  return `club-cadence-mock:${clubId}`;
-}
-
-export function getCadenceLabel(value: CadenceValue): string {
-  return CADENCE_OPTIONS.find((o) => o.value === value)?.label ?? "Bi-weekly";
-}
 
 // Days until the chosen cadence's first deadline, or null for Manual/Paused
 // (no fixed interval to seed one). Used to give a newly created club's first

@@ -24,7 +24,6 @@ import {
   CREATION_CADENCE_OPTIONS,
   DEFAULT_CADENCE,
   CadenceValue,
-  cadenceStorageKey,
   getCadenceDays,
 } from "@/lib/cadence";
 import { toEndOfDay, toLocalDateInputValue } from "@/lib/riff-utils";
@@ -207,16 +206,15 @@ export default function OnboardingCreateClubPage() {
         body: JSON.stringify({ clubId: clubId }),
       });
 
-      // No Cadence field on Club yet — mockup only, stored client-side so
-      // the "Riff cadence" settings modal can reflect what was picked here.
-      localStorage.setItem(cadenceStorageKey(clubId), cadence);
-
       // The first riff is real, not mocked — a new club should never land
       // the host on an empty page. Deadline is seeded directly from the
       // chosen cadence's day count (no Cadence field needed for this one-off
       // creation; only the *next* riff after this one needs the schema).
       // Best-effort: club creation itself already succeeded, so a hiccup
-      // here shouldn't block the host from reaching their new club.
+      // here shouldn't block the host from reaching their new club. Tried
+      // twice — create and activate are two separate requests (not one
+      // transaction), so a transient blip between them is the realistic
+      // failure mode, and a second attempt covers it cheaply.
       try {
         const cadenceDays = getCadenceDays(cadence);
         if (cadenceDays) {
@@ -224,19 +222,29 @@ export default function OnboardingCreateClubPage() {
           deadlineDate.setDate(deadlineDate.getDate() + cadenceDays);
           const deadline = toEndOfDay(toLocalDateInputValue(deadlineDate));
 
-          const riffResponse = await fetch(`/api/clubs/${clubId}/riffs`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ deadline }),
-          });
+          const createAndActivateRiff = async () => {
+            const riffResponse = await fetch(`/api/clubs/${clubId}/riffs`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ deadline }),
+            });
+            if (!riffResponse.ok) return false;
 
-          if (riffResponse.ok) {
             const { riff } = await riffResponse.json();
-            await fetch(`/api/riffs/${riff.id}`, {
+            const activateResponse = await fetch(`/api/riffs/${riff.id}`, {
               method: "PATCH",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ status: "ACTIVE" }),
             });
+            return activateResponse.ok;
+          };
+
+          const succeeded =
+            (await createAndActivateRiff()) || (await createAndActivateRiff());
+          if (!succeeded) {
+            console.error(
+              "Failed to create first riff for new club after retry"
+            );
           }
         }
       } catch (riffErr) {

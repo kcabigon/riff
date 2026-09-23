@@ -9,6 +9,8 @@ interface DropdownActionItem {
   label: string;
   icon?: ReactNode;
   active?: boolean;
+  /** Grays out the item and ignores clicks — for actions that are temporarily unavailable rather than removed. */
+  disabled?: boolean;
   color?: string;
   backgroundColor?: string;
   /** Render the label in a specific typeface (e.g. a font picker). Defaults to DM Sans. */
@@ -136,6 +138,7 @@ export default function Dropdown({
                 // eslint-disable-next-line react/no-array-index-key -- dropdown items are stable during their visible lifetime
                 key={`item-${i}`}
                 onClick={() => {
+                  if (item.disabled) return;
                   item.onClick();
                   handleClose();
                 }}
@@ -151,11 +154,15 @@ export default function Dropdown({
                   fontFamily: item.labelFontFamily || "var(--font-dm-sans)",
                   fontSize: "14px",
                   fontWeight: item.active ? 700 : 300,
-                  color: item.color || "#000000",
-                  cursor: item.active ? "default" : "pointer",
+                  color: item.disabled ? "#CCCCCC" : item.color || "#000000",
+                  cursor: item.disabled
+                    ? "not-allowed"
+                    : item.active
+                      ? "default"
+                      : "pointer",
                 }}
                 onMouseEnter={(e) => {
-                  if (!item.active) {
+                  if (!item.active && !item.disabled) {
                     e.currentTarget.style.backgroundColor =
                       item.backgroundColor || "#F5F5F5";
                   }

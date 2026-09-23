@@ -41,7 +41,6 @@ import DeleteClubConfirmModal from "@/components/clubs/DeleteClubConfirmModal";
 import LeaveClubConfirmModal from "@/components/clubs/LeaveClubConfirmModal";
 import TransferHostModal from "@/components/clubs/TransferHostModal";
 import AssignCoHostModal from "@/components/clubs/AssignCoHostModal";
-import ClubCadenceModal from "@/components/clubs/ClubCadenceModal";
 
 interface ClubMember {
   user: {
@@ -226,7 +225,6 @@ export default function ClubPageLayout({
   const [isLeaveClubModalOpen, setIsLeaveClubModalOpen] = useState(false);
   const [isTransferHostModalOpen, setIsTransferHostModalOpen] = useState(false);
   const [isAssignCoHostModalOpen, setIsAssignCoHostModalOpen] = useState(false);
-  const [isCadenceModalOpen, setIsCadenceModalOpen] = useState(false);
   const handleAvatarClick = useProfileNavigation();
   const isMobile = useIsMobile();
 
@@ -241,7 +239,12 @@ export default function ClubPageLayout({
     {
       type: "action" as const,
       label: "Riff cadence",
-      onClick: () => setIsCadenceModalOpen(true),
+      // Editing cadence after creation isn't wired up yet — it needs the
+      // Cadence field on Club (Kyle's schema proposal) to have anywhere
+      // real to persist to. Disabled rather than removed so the entry
+      // point is ready once that lands.
+      disabled: true,
+      onClick: () => {},
     },
     {
       type: "action" as const,
@@ -277,7 +280,8 @@ export default function ClubPageLayout({
     {
       type: "action" as const,
       label: "Riff cadence",
-      onClick: () => setIsCadenceModalOpen(true),
+      disabled: true,
+      onClick: () => {},
     },
     {
       type: "action" as const,
@@ -1592,12 +1596,6 @@ export default function ClubPageLayout({
             (m) => m.user.id !== currentUserId && m.user.id !== club.moderatorId
           )
           .map((m) => ({ id: m.user.id, name: m.user.name }))}
-      />
-
-      <ClubCadenceModal
-        isOpen={isCadenceModalOpen}
-        onClose={() => setIsCadenceModalOpen(false)}
-        clubId={club.id}
       />
 
       {/* Invite Friends Modal */}
