@@ -432,7 +432,7 @@ Quarterly or annual, club-wide: volumes completed, total words, participation st
 
 ## 7. Copy & voice
 
-PR #209 already set the bar correctly: **movie/song reference as the subject hook, plain and specific body, one clear CTA.** ("Great Scott — Vol. 4 closes in 5 days.") Keep it, and formalize it.
+Use a plain, specific subject and body with one clear CTA for deadline reminders.
 
 Rules:
 1. **Multiple variants per notification, rotated by send number.** A repeat nudge must never repeat the same joke — that's what makes recurring email feel automated.

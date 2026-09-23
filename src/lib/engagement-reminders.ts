@@ -138,9 +138,16 @@ export async function runDeadlineApproachingCheck(
   for (const riff of withDeadline) {
     const deadline = riff.deadline as Date;
     const daysRemaining = daysUntil(deadline);
+    // There is intentionally no reminder in the 3–7 day tier.
+    if (daysRemaining >= 3 && daysRemaining <= 7) continue;
+
     const cutoff = new Date(
       now.getTime() - deadlineReminderLookbackDays(daysRemaining) * DAY_MS
     );
+    // Once the urgent window opens, one reminder per recipient/riff is enough.
+    // Existing send logs do not store which copy variant was used, so compare
+    // the last send to the start of that window instead.
+    const urgentWindowStart = new Date(deadline.getTime() - 3 * DAY_MS);
 
     const submittedAuthorIds = new Set(
       riff.pieces
@@ -154,6 +161,9 @@ export async function runDeadlineApproachingCheck(
 
     const eligible = waiting.filter((p) => {
       const lastSent = history.get(`${riff.id}:${p.userId}`)?.lastSentAt;
+      if (daysRemaining < 3) {
+        return !lastSent || lastSent < urgentWindowStart;
+      }
       return !lastSent || lastSent < cutoff;
     });
     if (eligible.length === 0) continue;
