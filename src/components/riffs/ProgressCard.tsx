@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Avatar from "@/components/shared/Avatar";
 import DraftCard from "@/components/write/DraftCard";
 import { relativeTime } from "@/lib/timeAgo";
@@ -162,16 +163,12 @@ export default function ProgressCard({
       >
         {/* Cover image */}
         {piece.coverImage && (
-          <img
+          <Image
             src={piece.coverImage}
             alt=""
-            style={{
-              position: "absolute",
-              inset: 0,
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-            }}
+            fill
+            sizes="(max-width: 767px) 90vw, 280px"
+            style={{ objectFit: "cover" }}
           />
         )}
 

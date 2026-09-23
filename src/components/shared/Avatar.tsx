@@ -1,6 +1,7 @@
 "use client";
 
 import { CSSProperties } from "react";
+import Image from "next/image";
 import { AvatarUser } from "@/types";
 import AdminBadge from "./AdminBadge";
 
@@ -108,9 +109,11 @@ export default function Avatar({
       {/* Inner wrapper: circular clip for photo or initials */}
       <div style={innerStyle}>
         {user.avatarUrl ? (
-          <img
+          <Image
             src={user.avatarUrl}
             alt={getTooltipText()}
+            width={size}
+            height={size}
             style={{
               width: "100%",
               height: "100%",
