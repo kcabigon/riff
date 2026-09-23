@@ -9,8 +9,10 @@ interface CadenceOptionListProps {
   onSelect: (value: CadenceValue) => void;
 }
 
-// Same row styling as CadenceDropdown's expanded menu (radio circle + label,
-// bordered container), just permanently visible instead of behind a trigger.
+// Modeled on ShareModal's AccessDropdown row styling (radio circle + label,
+// bordered container), permanently visible rather than behind a trigger —
+// avoids a popover's absolute-positioned menu getting clipped by an
+// ancestor's overflow (e.g. Modal's overflow-y: auto).
 export default function CadenceOptionList({
   value,
   options,
@@ -37,8 +39,8 @@ export default function CadenceOptionList({
             onMouseLeave={() => setHoveredOption(null)}
             style={{
               display: "flex",
-              alignItems: "center",
-              gap: "12px",
+              alignItems: "baseline",
+              gap: "8px",
               width: "100%",
               border: "none",
               borderBottom:
@@ -58,9 +60,10 @@ export default function CadenceOptionList({
                 width: "12px",
                 height: "12px",
                 borderRadius: "64px",
-                border: "2px solid #000000",
+                border: "1px solid #000000",
                 backgroundColor: isSelected ? "#00FF66" : "#FFFFFF",
                 flexShrink: 0,
+                alignSelf: "center",
               }}
             />
             <span
@@ -72,6 +75,16 @@ export default function CadenceOptionList({
               }}
             >
               {option.label}
+            </span>
+            <span
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "12px",
+                fontWeight: 300,
+                color: "#808080",
+              }}
+            >
+              &middot; {option.description}
             </span>
           </button>
         );

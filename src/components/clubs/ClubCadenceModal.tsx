@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import Modal from "@/components/shared/Modal";
 import PrimaryButton from "@/components/PrimaryButton";
-import CadenceDropdown from "@/components/clubs/CadenceDropdown";
+import Tagline from "@/components/Tagline";
+import CadenceOptionList from "@/components/clubs/CadenceOptionList";
 import {
-  CADENCE_OPTIONS,
-  PAUSED_CADENCE_OPTION,
+  CADENCE_INTERVAL_OPTIONS,
+  CADENCE_OTHER_OPTIONS,
   DEFAULT_CADENCE,
   cadenceStorageKey,
   CadenceValue,
@@ -17,8 +18,6 @@ interface ClubCadenceModalProps {
   onClose: () => void;
   clubId: string;
 }
-
-const ALL_OPTIONS = [...CADENCE_OPTIONS, PAUSED_CADENCE_OPTION];
 
 export default function ClubCadenceModal({
   isOpen,
@@ -46,28 +45,37 @@ export default function ClubCadenceModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Riff cadence" size="sm">
       <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-        <span
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
-            fontWeight: 300,
-            lineHeight: 1.6,
-            color: "#9C9C9C",
-            backgroundColor: "#FFFFFF",
-            padding: "2px 8px",
-            alignSelf: "flex-start",
-          }}
-        >
-          Your club always has a riff running — this sets how long each one
-          lasts before it reveals. Change it anytime.
-        </span>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          <Tagline
+            text="Automatic"
+            color="#01EFFC"
+            textColor="#000000"
+            fontSize={16}
+            width={94}
+            align="left"
+          />
+          <CadenceOptionList
+            value={selected}
+            options={CADENCE_INTERVAL_OPTIONS}
+            onSelect={setSelected}
+          />
+        </div>
 
-        <CadenceDropdown
-          value={selected}
-          options={ALL_OPTIONS}
-          onSelect={setSelected}
-          openUp
-        />
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          <Tagline
+            text="Other"
+            color="#955CB5"
+            textColor="#000000"
+            fontSize={16}
+            width={68}
+            align="left"
+          />
+          <CadenceOptionList
+            value={selected}
+            options={CADENCE_OTHER_OPTIONS}
+            onSelect={setSelected}
+          />
+        </div>
 
         <PrimaryButton
           type="button"

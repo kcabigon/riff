@@ -240,6 +240,11 @@ export default function ClubPageLayout({
     },
     {
       type: "action" as const,
+      label: "Riff cadence",
+      onClick: () => setIsCadenceModalOpen(true),
+    },
+    {
+      type: "action" as const,
       label: "Invite friends",
       onClick: () => setIsInviteModalOpen(true),
     },
@@ -247,11 +252,6 @@ export default function ClubPageLayout({
       type: "action" as const,
       label: "Assign co-host",
       onClick: () => setIsAssignCoHostModalOpen(true),
-    },
-    {
-      type: "action" as const,
-      label: "Riff cadence",
-      onClick: () => setIsCadenceModalOpen(true),
     },
     { type: "divider" as const },
     {
@@ -276,13 +276,13 @@ export default function ClubPageLayout({
     },
     {
       type: "action" as const,
-      label: "Invite friends",
-      onClick: () => setIsInviteModalOpen(true),
+      label: "Riff cadence",
+      onClick: () => setIsCadenceModalOpen(true),
     },
     {
       type: "action" as const,
-      label: "Riff cadence",
-      onClick: () => setIsCadenceModalOpen(true),
+      label: "Invite friends",
+      onClick: () => setIsInviteModalOpen(true),
     },
     { type: "divider" as const },
     {
