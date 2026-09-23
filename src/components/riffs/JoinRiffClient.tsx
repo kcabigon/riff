@@ -419,7 +419,6 @@ export default function JoinRiffClient({
                       error={error ?? undefined}
                       disabled={loading}
                       required
-                      autoFocus
                       autoComplete="email"
                     />
                     <PrimaryButton type="submit" loading={loading}>
@@ -476,7 +475,6 @@ export default function JoinRiffClient({
                       onChange={(e) => setFirstName(e.target.value)}
                       disabled={loading}
                       required
-                      autoFocus
                     />
                     <TextInput
                       type="text"
