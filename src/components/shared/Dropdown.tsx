@@ -148,13 +148,15 @@ export default function Dropdown({
                   gap: "8px",
                   width: "100%",
                   textAlign: "left",
-                  background: item.backgroundColor || "none",
+                  background: item.disabled
+                    ? "#E6E6E6"
+                    : item.backgroundColor || "none",
                   border: "none",
                   padding: size === "sm" ? "8px 12px" : "12px 16px",
                   fontFamily: item.labelFontFamily || "var(--font-dm-sans)",
                   fontSize: "14px",
                   fontWeight: item.active ? 700 : 300,
-                  color: item.disabled ? "#CCCCCC" : item.color || "#000000",
+                  color: item.disabled ? "#9C9C9C" : item.color || "#000000",
                   cursor: item.disabled
                     ? "not-allowed"
                     : item.active

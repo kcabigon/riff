@@ -82,6 +82,10 @@ export default function AvatarStack({
           // solid blob next to real photos — swapped for a transparent
           // "empty slot" treatment with a white dashed border instead.
           const onDark = borderColor.toUpperCase() === "#FFFFFF";
+          // Fixed, on-scale sizes (design system: 12px Small / 16px Body)
+          // rather than a computed ratio — a "+" glyph doesn't need to
+          // scale precisely with the circle to read clearly at any size.
+          const glyphSize = size <= 32 ? 12 : 16;
           return (
             <button
               type="button"
@@ -90,7 +94,7 @@ export default function AvatarStack({
               style={{
                 width: `${size}px`,
                 height: `${size}px`,
-                borderRadius: `${size}px`,
+                borderRadius: "64px",
                 border: onDark
                   ? "2px dashed rgba(255, 255, 255, 0.7)"
                   : "2px dashed #CCCCCC",
@@ -99,7 +103,7 @@ export default function AvatarStack({
                 alignItems: "center",
                 justifyContent: "center",
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: `${Math.round(size * 0.375)}px`,
+                fontSize: `${glyphSize}px`,
                 fontWeight: 300,
                 color: onDark ? "#FFFFFF" : "#CCCCCC",
                 lineHeight: "normal",
