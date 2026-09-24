@@ -359,8 +359,9 @@ export default function CreateRiffOverlay({
                         margin: "0 0 8px 0",
                       }}
                     >
-                      Writers have until this date to submit. You can reveal
-                      early or move the date later.
+                      The goal of a riff is to reveal together. Writers should
+                      submit their piece before this date. Don&apos;t worry, you
+                      can reveal early or change the date later if you want to.
                     </p>
                     <TextInput
                       type="date"
