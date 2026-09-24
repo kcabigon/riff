@@ -73,19 +73,12 @@ export default function CreateRiffClient() {
     setLoading(true);
     setError("");
 
-    if (!title.trim()) {
-      setError("Please name your riff");
-      setLoading(false);
-      setStep(1);
-      return;
-    }
-
     try {
       const createRes = await fetch("/api/riffs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: title.trim(),
+          title: title.trim() || "Let's riff",
           prompt: prompt.trim() || null,
           deadline: toEndOfDay(deadline),
         }),
@@ -197,11 +190,6 @@ export default function CreateRiffClient() {
                   transition={{ duration: 0.2, ease: "easeOut" }}
                   onSubmit={(e) => {
                     e.preventDefault();
-                    if (!title.trim()) {
-                      setError("Please name your riff");
-                      return;
-                    }
-                    setError("");
                     setStep(2);
                   }}
                   style={{
@@ -243,11 +231,10 @@ export default function CreateRiffClient() {
                     <TextInput
                       type="text"
                       name="title"
-                      placeholder="e.g. Summer Stories"
+                      placeholder="Let's riff"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                       autoFocus
-                      required
                       maxLength={200}
                     />
                   </div>
