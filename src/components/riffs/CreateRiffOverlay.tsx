@@ -11,12 +11,10 @@ import ShareLinkOptions from "@/components/shared/ShareLinkOptions";
 import BrushWordHero from "@/components/shared/BrushWordHero";
 import FullScreenOverlay from "@/components/shared/FullScreenOverlay";
 import TemplatePicker from "./TemplatePicker";
-import { RIFF_TEMPLATES } from "@/lib/riff-templates";
+import { QUICK_START } from "@/lib/riff-quick-start";
 import { createAndActivateRiff, toEndOfDay } from "@/lib/riff-utils";
 
 const TOTAL_STEPS = 3;
-// Slot 0 is the blank "Custom" state; slots 1..N are RIFF_TEMPLATES.
-const TEMPLATE_SLOT_COUNT = RIFF_TEMPLATES.length + 1;
 
 function getDefaultDeadline() {
   const d = new Date();
@@ -39,7 +37,7 @@ export default function CreateRiffOverlay({
   const [title, setTitle] = useState("");
   const [prompt, setPrompt] = useState("");
   const [deadline, setDeadline] = useState(getDefaultDeadline);
-  const [templateIndex, setTemplateIndex] = useState(0);
+  const [isQuickStartApplied, setIsQuickStartApplied] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [createdRiffId, setCreatedRiffId] = useState<string | null>(null);
@@ -49,7 +47,7 @@ export default function CreateRiffOverlay({
     setTitle("");
     setPrompt("");
     setDeadline(getDefaultDeadline());
-    setTemplateIndex(0);
+    setIsQuickStartApplied(false);
     setLoading(false);
     setError("");
     setCreatedRiffId(null);
@@ -67,19 +65,16 @@ export default function CreateRiffOverlay({
       )
     : null;
 
-  const goToNextTemplate = () => {
-    const wrapped = (templateIndex + 1) % TEMPLATE_SLOT_COUNT;
-    setTemplateIndex(wrapped);
-
-    if (wrapped === 0) {
+  const toggleQuickStart = () => {
+    if (isQuickStartApplied) {
       setTitle("");
       setPrompt("");
+      setIsQuickStartApplied(false);
       return;
     }
-
-    const template = RIFF_TEMPLATES[wrapped - 1];
-    setTitle(template.title);
-    setPrompt(template.prompt);
+    setTitle(QUICK_START.title);
+    setPrompt(QUICK_START.prompt);
+    setIsQuickStartApplied(true);
   };
 
   const handleBack = () => {
@@ -228,9 +223,8 @@ export default function CreateRiffOverlay({
                         fontSize={16}
                       />
                       <TemplatePicker
-                        activeIndex={templateIndex}
-                        count={RIFF_TEMPLATES.length}
-                        onNext={goToNextTemplate}
+                        active={isQuickStartApplied}
+                        onToggle={toggleQuickStart}
                       />
                     </div>
                     <TextInput
@@ -321,9 +315,9 @@ export default function CreateRiffOverlay({
                         margin: "0 0 8px 0",
                       }}
                     >
-                      The goal of a riff is to reveal together. Writers should
-                      submit their piece before this date. Don&apos;t worry, you
-                      can reveal early or change the date later if you want to.
+                      The goal of a riff is to reveal together on or before this
+                      date. Don&apos;t worry, you can change this date later if
+                      you want to.
                     </p>
                     <TextInput
                       type="date"
