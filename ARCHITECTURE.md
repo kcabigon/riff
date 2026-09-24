@@ -61,7 +61,7 @@ A private essay-sharing platform for creative communities. People write together
 - Emails: magic link, riff created/revealed, member joined, piece submitted/shared, deadline changed/approaching, all pieces submitted, co-host/host transfer, daily comment digest, engagement reminders (remember-to-write, join-riff nudge)
 
 **Internal**
-- Admin analytics dashboard (`/admin`) and leaderboard (`/leaderboard`) — Kyle only
+- Admin analytics dashboard (`/admin`) — Kyle and Chris; leaderboard (`/leaderboard`) — Kyle only
 - Release notes page (`/release-notes`) — built but hidden/unlinked
 
 ### Known Gaps / In Progress
@@ -94,7 +94,7 @@ src/app/
 ├── write/[pieceId]/              # Draft editor
 ├── profile/[userId]/             # User profile
 ├── account/                      # Account settings
-├── admin/, leaderboard/          # Kyle-only internal pages
+├── admin/, leaderboard/          # Admin: Kyle + Chris; leaderboard: Kyle only
 ├── release-notes/                # Hidden
 └── dev-signin/, test-*/          # Dev-only sandboxes (not linked)
 ```
@@ -119,7 +119,7 @@ src/app/api/
 ├── users/me/                     # current user, update, delete, export, email-preferences, admin-clubs
 ├── users/[id]/                   # public profile data
 ├── upload/image/                 # Image upload (auth required, 5MB max)
-├── admin/stats, leaderboard      # Kyle-only
+├── admin/stats, leaderboard      # Admin stats: Kyle + Chris; leaderboard: Kyle only
 └── dev/set-user                  # Dev-only user switching
 ```
 
