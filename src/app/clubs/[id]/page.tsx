@@ -101,7 +101,6 @@ export default async function ClubPage({
                 wordCount: true,
                 createdAt: true,
                 updatedAt: true,
-                currentContent: true,
               },
             },
           },
@@ -134,6 +133,27 @@ export default async function ClubPage({
   const memberJoinedAt = club.members.find(
     (m) => m.userId === userId
   )!.joinedAt;
+
+  // Content (full Tiptap JSON) is deliberately not selected on the riffs
+  // query above — pulling every member's full essay content across the
+  // club's entire history just to build the viewer's own preview (below)
+  // was wasted DB I/O on every club page load. Fetch it only for the
+  // viewer's own pieces, batched in one query.
+  const ownPieceIds = riffs.flatMap((r) =>
+    r.pieces
+      .filter((pr) => pr.piece.authorId === userId)
+      .map((pr) => pr.piece.id)
+  );
+  const ownPieceContents =
+    ownPieceIds.length > 0
+      ? await prisma.piece.findMany({
+          where: { id: { in: ownPieceIds } },
+          select: { id: true, currentContent: true },
+        })
+      : [];
+  const ownPieceContentById = new Map(
+    ownPieceContents.map((p) => [p.id, p.currentContent])
+  );
 
   // Compute stats
   const riffCount = riffs.length;
@@ -169,7 +189,7 @@ export default async function ClubPage({
         updatedAt: pr.piece.updatedAt.toISOString(),
         preview:
           pr.piece.authorId === userId
-            ? getContentPreview(pr.piece.currentContent, 500)
+            ? getContentPreview(ownPieceContentById.get(pr.piece.id) ?? "", 500)
             : "",
       },
     })),
