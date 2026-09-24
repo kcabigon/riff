@@ -6,9 +6,11 @@ import Dropdown from "@/components/shared/Dropdown";
 import type { DropdownItem } from "@/components/shared/Dropdown";
 import { useDraftCreation } from "@/hooks/useDraftCreation";
 import CreatePillButton from "./CreatePillButton";
+import CreateRiffOverlay from "@/components/riffs/CreateRiffOverlay";
 
 export default function CreateDropdown() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isRiffOverlayOpen, setIsRiffOverlayOpen] = useState(false);
   const { createDraft, isCreating } = useDraftCreation();
   const router = useRouter();
   const pathname = usePathname();
@@ -22,10 +24,7 @@ export default function CreateDropdown() {
     {
       type: "action",
       label: "New riff",
-      onClick: () => {
-        sessionStorage.setItem("pendingRiffFrom", pathname);
-        router.push("/riffs/new");
-      },
+      onClick: () => setIsRiffOverlayOpen(true),
     },
     {
       type: "action",
@@ -38,21 +37,31 @@ export default function CreateDropdown() {
   ];
 
   return (
-    <Dropdown
-      trigger={
-        <CreatePillButton
-          label="Create"
-          icon="plus"
-          iconLeading
-          forceActive={isOpen}
-        />
-      }
-      items={items}
-      align="left"
-      minWidth={200}
-      isOpen={isOpen}
-      onToggle={() => setIsOpen((o) => !o)}
-      onClose={() => setIsOpen(false)}
-    />
+    <>
+      <Dropdown
+        trigger={
+          <CreatePillButton
+            label="Create"
+            icon="plus"
+            iconLeading
+            forceActive={isOpen}
+          />
+        }
+        items={items}
+        align="left"
+        minWidth={200}
+        isOpen={isOpen}
+        onToggle={() => setIsOpen((o) => !o)}
+        onClose={() => setIsOpen(false)}
+      />
+      <CreateRiffOverlay
+        isOpen={isRiffOverlayOpen}
+        onClose={() => setIsRiffOverlayOpen(false)}
+        onCreated={(riffId) => {
+          setIsRiffOverlayOpen(false);
+          router.push(`/riffs/${riffId}`);
+        }}
+      />
+    </>
   );
 }

@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import NoiseBackground from "@/components/NoiseBackground";
 import CTAButton from "@/components/CTAButton";
+import CreateRiffOverlay from "@/components/riffs/CreateRiffOverlay";
 
 interface Panel {
   id: "write" | "riff" | "club";
@@ -88,11 +89,7 @@ export default function MyRiffsEmptyState({
   const [hoveredPanelId, setHoveredPanelId] = useState<Panel["id"] | null>(
     null
   );
-
-  const handleStartRiff = () => {
-    sessionStorage.setItem("pendingRiffFrom", pathname);
-    router.push("/riffs/new");
-  };
+  const [isRiffOverlayOpen, setIsRiffOverlayOpen] = useState(false);
 
   const handleStartClub = () => {
     sessionStorage.setItem("pendingClubFrom", pathname);
@@ -347,7 +344,7 @@ export default function MyRiffsEmptyState({
                 {panel.id === "riff" && (
                   <CTAButton
                     accentColor={panel.accentColor}
-                    onClick={handleStartRiff}
+                    onClick={() => setIsRiffOverlayOpen(true)}
                     style={panelButtonStyle}
                   >
                     {panel.cta}
@@ -391,6 +388,15 @@ export default function MyRiffsEmptyState({
           }
         }
       `}</style>
+
+      <CreateRiffOverlay
+        isOpen={isRiffOverlayOpen}
+        onClose={() => setIsRiffOverlayOpen(false)}
+        onCreated={(riffId) => {
+          setIsRiffOverlayOpen(false);
+          router.push(`/riffs/${riffId}`);
+        }}
+      />
     </div>
   );
 }
