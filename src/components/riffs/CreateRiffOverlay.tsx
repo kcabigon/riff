@@ -1,17 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { noiseTileStyle } from "@/components/NoiseBackground";
 import TextInput from "@/components/TextInput";
 import Tagline from "@/components/Tagline";
 import BackButton from "@/components/BackButton";
-import CloseButton from "@/components/CloseButton";
 import PrimaryButton from "@/components/PrimaryButton";
 import OnboardingProgress from "@/components/onboarding/OnboardingProgress";
 import ShareLinkOptions from "@/components/shared/ShareLinkOptions";
 import BrushWordHero from "@/components/shared/BrushWordHero";
+import FullScreenOverlay from "@/components/shared/FullScreenOverlay";
 import TemplatePicker from "./TemplatePicker";
 import { RIFF_TEMPLATES } from "@/lib/riff-templates";
 import { createAndActivateRiff, toEndOfDay } from "@/lib/riff-utils";
@@ -45,7 +43,6 @@ export default function CreateRiffOverlay({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [createdRiffId, setCreatedRiffId] = useState<string | null>(null);
-  const previousFocusRef = useRef<HTMLElement | null>(null);
 
   const reset = () => {
     setStep(1);
@@ -58,32 +55,10 @@ export default function CreateRiffOverlay({
     setCreatedRiffId(null);
   };
 
-  const handleClose = useCallback(() => {
+  const handleClose = () => {
     reset();
     onClose();
-  }, [onClose]);
-
-  // Same ESC-to-close + scroll lock + focus restore technique as Modal —
-  // this is a full-screen takeover, not a routed page, so it needs to
-  // behave like a dismissable overlay even though it fills the viewport.
-  useEffect(() => {
-    if (!isOpen) return;
-
-    previousFocusRef.current = document.activeElement as HTMLElement;
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") handleClose();
-    };
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.body.style.overflow = originalOverflow;
-      document.removeEventListener("keydown", handleKeyDown);
-      previousFocusRef.current?.focus();
-    };
-  }, [isOpen, handleClose]);
+  };
 
   const daysUntilDeadline = deadline
     ? Math.round(
@@ -157,25 +132,12 @@ export default function CreateRiffOverlay({
     ? `${typeof window !== "undefined" ? window.location.origin : ""}/riffs/${createdRiffId}/join`
     : "";
 
-  // Portaled to document.body — same reasoning as Modal: guarantees this
-  // sits above everything regardless of where it's triggered from.
-  return createPortal(
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Create a riff"
-      style={{
-        position: "fixed",
-        inset: 0,
-        overflowY: "auto",
-        zIndex: 100,
-        ...noiseTileStyle,
-      }}
+  return (
+    <FullScreenOverlay
+      isOpen={isOpen}
+      onClose={handleClose}
+      ariaLabel="Create a riff"
     >
-      <div style={{ position: "fixed", top: "24px", right: "24px", zIndex: 2 }}>
-        <CloseButton onClick={handleClose} />
-      </div>
-
       {/* Hero — renders once for the whole flow, same technique as the
           create-club onboarding page; only the card below swaps per step. */}
       <div
@@ -445,8 +407,7 @@ export default function CreateRiffOverlay({
           }
         }
       `}</style>
-    </div>,
-    document.body
+    </FullScreenOverlay>
   );
 }
 

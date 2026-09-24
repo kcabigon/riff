@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import NoiseBackground from "@/components/NoiseBackground";
 import CTAButton from "@/components/CTAButton";
 import CreateRiffOverlay from "@/components/riffs/CreateRiffOverlay";
+import CreateClubOverlay from "@/components/clubs/CreateClubOverlay";
 
 interface Panel {
   id: "write" | "riff" | "club";
@@ -85,16 +86,11 @@ export default function MyRiffsEmptyState({
   isCreatingDraft,
 }: MyRiffsEmptyStateProps) {
   const router = useRouter();
-  const pathname = usePathname();
   const [hoveredPanelId, setHoveredPanelId] = useState<Panel["id"] | null>(
     null
   );
   const [isRiffOverlayOpen, setIsRiffOverlayOpen] = useState(false);
-
-  const handleStartClub = () => {
-    sessionStorage.setItem("pendingClubFrom", pathname);
-    router.push("/onboarding/create-club");
-  };
+  const [isClubOverlayOpen, setIsClubOverlayOpen] = useState(false);
 
   return (
     <div
@@ -354,7 +350,7 @@ export default function MyRiffsEmptyState({
                 {panel.id === "club" && (
                   <CTAButton
                     accentColor={panel.accentColor}
-                    onClick={handleStartClub}
+                    onClick={() => setIsClubOverlayOpen(true)}
                     style={panelButtonStyle}
                   >
                     {panel.cta}
@@ -395,6 +391,14 @@ export default function MyRiffsEmptyState({
         onCreated={(riffId) => {
           setIsRiffOverlayOpen(false);
           router.push(`/riffs/${riffId}`);
+        }}
+      />
+      <CreateClubOverlay
+        isOpen={isClubOverlayOpen}
+        onClose={() => setIsClubOverlayOpen(false)}
+        onCreated={(clubId) => {
+          setIsClubOverlayOpen(false);
+          router.push(`/clubs/${clubId}?welcome=host`);
         }}
       />
     </div>

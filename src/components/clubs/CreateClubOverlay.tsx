@@ -1,9 +1,7 @@
 "use client";
 
-import { useState, useRef, FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useRef, useState, FormEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { noiseTileStyle } from "@/components/NoiseBackground";
 import TextInput from "@/components/TextInput";
 import Tagline from "@/components/Tagline";
 import BackButton from "@/components/BackButton";
@@ -11,24 +9,35 @@ import PrimaryButton from "@/components/PrimaryButton";
 import OnboardingProgress from "@/components/onboarding/OnboardingProgress";
 import ImageUploadFlow from "@/components/shared/ImageUploadFlow";
 import type { ImageUploadFlowHandle } from "@/components/shared/ImageUploadFlow";
-import CadenceOptionList from "@/components/clubs/CadenceOptionList";
+import FullScreenOverlay from "@/components/shared/FullScreenOverlay";
 import BrushWordHero from "@/components/shared/BrushWordHero";
+import CadenceOptionList from "./CadenceOptionList";
 import {
   CREATION_CADENCE_OPTIONS,
   DEFAULT_CADENCE,
   CadenceValue,
   getCadenceDays,
 } from "@/lib/cadence";
-import { toEndOfDay, toLocalDateInputValue } from "@/lib/riff-utils";
-
+import {
+  createAndActivateRiff,
+  toEndOfDay,
+  toLocalDateInputValue,
+} from "@/lib/riff-utils";
 import { CLUB_NAME_MAX, DESCRIPTION_MAX } from "@/lib/constants";
-
-export const dynamic = "force-dynamic";
 
 const TOTAL_STEPS = 3;
 
-export default function OnboardingCreateClubPage() {
-  const router = useRouter();
+interface CreateClubOverlayProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onCreated: (clubId: string) => void;
+}
+
+export default function CreateClubOverlay({
+  isOpen,
+  onClose,
+  onCreated,
+}: CreateClubOverlayProps) {
   const [step, setStep] = useState(1);
   const [clubName, setClubName] = useState("");
   const [description, setDescription] = useState("");
@@ -38,14 +47,27 @@ export default function OnboardingCreateClubPage() {
   const [error, setError] = useState("");
   const uploadFlowRef = useRef<ImageUploadFlowHandle>(null);
 
+  const reset = () => {
+    setStep(1);
+    setClubName("");
+    setDescription("");
+    setCadence(DEFAULT_CADENCE);
+    setBannerImage("");
+    setLoading(false);
+    setError("");
+  };
+
+  const handleClose = () => {
+    reset();
+    onClose();
+  };
+
   const handleBack = () => {
     if (step > 1) {
       setStep((s) => s - 1);
       return;
     }
-    const from = sessionStorage.getItem("pendingClubFrom") ?? "/home";
-    sessionStorage.removeItem("pendingClubFrom");
-    router.push(from);
+    handleClose();
   };
 
   const handleCreate = async (e: FormEvent<HTMLFormElement>) => {
@@ -99,10 +121,7 @@ export default function OnboardingCreateClubPage() {
       // chosen cadence's day count (no Cadence field needed for this one-off
       // creation; only the *next* riff after this one needs the schema).
       // Best-effort: club creation itself already succeeded, so a hiccup
-      // here shouldn't block the host from reaching their new club. Tried
-      // twice — create and activate are two separate requests (not one
-      // transaction), so a transient blip between them is the realistic
-      // failure mode, and a second attempt covers it cheaply.
+      // here shouldn't block the host from reaching their new club.
       try {
         const cadenceDays = getCadenceDays(cadence);
         if (cadenceDays) {
@@ -110,26 +129,16 @@ export default function OnboardingCreateClubPage() {
           deadlineDate.setDate(deadlineDate.getDate() + cadenceDays);
           const deadline = toEndOfDay(toLocalDateInputValue(deadlineDate));
 
-          const createAndActivateRiff = async () => {
-            const riffResponse = await fetch(`/api/clubs/${clubId}/riffs`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ deadline }),
+          let result = await createAndActivateRiff(
+            `/api/clubs/${clubId}/riffs`,
+            { deadline }
+          );
+          if (!result.ok) {
+            result = await createAndActivateRiff(`/api/clubs/${clubId}/riffs`, {
+              deadline,
             });
-            if (!riffResponse.ok) return false;
-
-            const { riff } = await riffResponse.json();
-            const activateResponse = await fetch(`/api/riffs/${riff.id}`, {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ status: "ACTIVE" }),
-            });
-            return activateResponse.ok;
-          };
-
-          const succeeded =
-            (await createAndActivateRiff()) || (await createAndActivateRiff());
-          if (!succeeded) {
+          }
+          if (!result.ok) {
             console.error(
               "Failed to create first riff for new club after retry"
             );
@@ -139,10 +148,9 @@ export default function OnboardingCreateClubPage() {
         console.error("Error creating first riff for new club:", riffErr);
       }
 
-      sessionStorage.removeItem("pendingClubFrom");
-
-      // Redirect to club page — What's Next modal fires via ?welcome=host
-      router.push(`/clubs/${clubId}?welcome=host`);
+      const createdClubId = clubId;
+      reset();
+      onCreated(createdClubId);
     } catch (err: any) {
       console.error("Error creating club:", err);
       setError(err.message || "Something went wrong. Please try again.");
@@ -150,17 +158,13 @@ export default function OnboardingCreateClubPage() {
     }
   };
 
+  if (!isOpen) return null;
+
   return (
-    // Tiled noise, not cover — see NoiseBackground.tsx: tiling rasterizes
-    // once at its natural size instead of re-rasterizing a live filter on
-    // every resize (mobile keyboard open/close, URL bar collapse, etc.).
-    <div
-      style={{
-        position: "relative",
-        overflow: "hidden",
-        minHeight: "100vh",
-        ...noiseTileStyle,
-      }}
+    <FullScreenOverlay
+      isOpen={isOpen}
+      onClose={handleClose}
+      ariaLabel="Create a club"
     >
       {/* Hero — full-bleed brush-reveal hero, ported from the landing page's
           "Start a write club." line. Renders once for the whole flow — only
@@ -188,8 +192,7 @@ export default function OnboardingCreateClubPage() {
           <BrushWordHero word="writeclub" className="cchero-frame" />
 
           {/* Club details card — pulled up to overlap the bottom of the
-              brush art, same technique as JoinRiffClient's .jrhero-card.
-              Content swaps per step; the card itself stays put. */}
+              brush art. Content swaps per step; the card itself stays put. */}
           <div
             className="cchero-card"
             style={{
@@ -421,8 +424,6 @@ export default function OnboardingCreateClubPage() {
       </div>
 
       <style>{`
-        /* "write club" word/brush-art treatment lives in BrushWordHero now —
-           this page only adds its own spacing around that shared frame. */
         .cchero-card {
           margin-top: -420px;
         }
@@ -435,6 +436,6 @@ export default function OnboardingCreateClubPage() {
           }
         }
       `}</style>
-    </div>
+    </FullScreenOverlay>
   );
 }

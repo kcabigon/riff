@@ -1,19 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Dropdown from "@/components/shared/Dropdown";
 import type { DropdownItem } from "@/components/shared/Dropdown";
 import { useDraftCreation } from "@/hooks/useDraftCreation";
 import CreatePillButton from "./CreatePillButton";
 import CreateRiffOverlay from "@/components/riffs/CreateRiffOverlay";
+import CreateClubOverlay from "./CreateClubOverlay";
 
 export default function CreateDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const [isRiffOverlayOpen, setIsRiffOverlayOpen] = useState(false);
+  const [isClubOverlayOpen, setIsClubOverlayOpen] = useState(false);
   const { createDraft, isCreating } = useDraftCreation();
   const router = useRouter();
-  const pathname = usePathname();
 
   const items: DropdownItem[] = [
     {
@@ -29,10 +30,7 @@ export default function CreateDropdown() {
     {
       type: "action",
       label: "New club",
-      onClick: () => {
-        sessionStorage.setItem("pendingClubFrom", pathname);
-        router.push("/onboarding/create-club");
-      },
+      onClick: () => setIsClubOverlayOpen(true),
     },
   ];
 
@@ -60,6 +58,14 @@ export default function CreateDropdown() {
         onCreated={(riffId) => {
           setIsRiffOverlayOpen(false);
           router.push(`/riffs/${riffId}`);
+        }}
+      />
+      <CreateClubOverlay
+        isOpen={isClubOverlayOpen}
+        onClose={() => setIsClubOverlayOpen(false)}
+        onCreated={(clubId) => {
+          setIsClubOverlayOpen(false);
+          router.push(`/clubs/${clubId}?welcome=host`);
         }}
       />
     </>
