@@ -254,7 +254,7 @@ export default function CreateRiffOverlay({
                     <TextInput
                       type="text"
                       name="title"
-                      placeholder="Let's riff"
+                      placeholder="Ex. Summer Stories"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                       autoFocus
