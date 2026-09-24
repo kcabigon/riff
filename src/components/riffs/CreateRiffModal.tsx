@@ -5,7 +5,7 @@ import Modal from "@/components/shared/Modal";
 import RiffFormFields from "./RiffFormFields";
 import PrimaryButton from "@/components/PrimaryButton";
 import ShareLinkOptions from "@/components/shared/ShareLinkOptions";
-import { toEndOfDay } from "@/lib/riff-utils";
+import { createAndActivateRiff, toEndOfDay } from "@/lib/riff-utils";
 
 interface CreateRiffModalProps {
   /** Omit for a clubless (open) riff — invited by link instead of tied to a club. */
@@ -72,38 +72,17 @@ export default function CreateRiffModal({
     }
 
     try {
-      // Step 1: Create riff (starts as DRAFT)
-      const createRes = await fetch(
+      const result = await createAndActivateRiff(
         clubId ? `/api/clubs/${clubId}/riffs` : `/api/riffs`,
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            title: title.trim() || null,
-            prompt: prompt.trim() || null,
-            deadline: deadline ? toEndOfDay(deadline) : null,
-          }),
+          title: title.trim() || null,
+          prompt: prompt.trim() || null,
+          deadline: deadline ? toEndOfDay(deadline) : null,
         }
       );
 
-      if (!createRes.ok) {
-        const data = await createRes.json();
-        setError(data.error || "Failed to create riff");
-        setIsSubmitting(false);
-        return;
-      }
-
-      const { riff } = await createRes.json();
-
-      // Step 2: Activate the riff immediately
-      const activateRes = await fetch(`/api/riffs/${riff.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "ACTIVE" }),
-      });
-
-      if (!activateRes.ok) {
-        setError("Riff created but failed to activate. Please try again.");
+      if (!result.ok) {
+        setError(result.error);
         setIsSubmitting(false);
         return;
       }
@@ -113,10 +92,10 @@ export default function CreateRiffModal({
       if (clubId) {
         // Club riffs land back on the club page immediately — no invite step.
         reset();
-        onCreated(riff.id);
+        onCreated(result.riffId);
       } else {
         // Clubless riffs: show the invite link before handing off.
-        setCreatedRiffId(riff.id);
+        setCreatedRiffId(result.riffId);
         setStep("invite");
       }
     } catch (err) {

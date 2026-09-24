@@ -18,7 +18,7 @@ export default function TemplatePicker({
   onNext,
 }: TemplatePickerProps) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
       {activeIndex === 0 ? (
         <button
           type="button"
@@ -37,7 +37,7 @@ export default function TemplatePicker({
           Need ideas? 💡
         </button>
       ) : (
-        <div style={{ display: "flex", gap: "6px" }}>
+        <div style={{ display: "flex", gap: "4px" }}>
           {Array.from({ length: count }).map((_, index) => (
             <div
               // eslint-disable-next-line react/no-array-index-key -- static list; length and order are stable

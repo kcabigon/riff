@@ -13,7 +13,7 @@ import ShareLinkOptions from "@/components/shared/ShareLinkOptions";
 import BrushWordHero from "@/components/shared/BrushWordHero";
 import TemplatePicker from "./TemplatePicker";
 import { RIFF_TEMPLATES } from "@/lib/riff-templates";
-import { toEndOfDay } from "@/lib/riff-utils";
+import { createAndActivateRiff, toEndOfDay } from "@/lib/riff-utils";
 
 const TOTAL_STEPS = 3;
 // Slot 0 is the blank "Custom" state; slots 1..N are RIFF_TEMPLATES.
@@ -74,39 +74,20 @@ export default function CreateRiffClient() {
     setError("");
 
     try {
-      const createRes = await fetch("/api/riffs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: title.trim() || "Let's riff",
-          prompt: prompt.trim() || null,
-          deadline: toEndOfDay(deadline),
-        }),
+      const result = await createAndActivateRiff("/api/riffs", {
+        title: title.trim() || "Let's riff",
+        prompt: prompt.trim() || null,
+        deadline: toEndOfDay(deadline),
       });
 
-      if (!createRes.ok) {
-        const data = await createRes.json();
-        setError(data.error || "Failed to create riff");
-        setLoading(false);
-        return;
-      }
-
-      const { riff } = await createRes.json();
-
-      const activateRes = await fetch(`/api/riffs/${riff.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "ACTIVE" }),
-      });
-
-      if (!activateRes.ok) {
-        setError("Riff created but failed to activate. Please try again.");
+      if (!result.ok) {
+        setError(result.error);
         setLoading(false);
         return;
       }
 
       sessionStorage.removeItem("pendingRiffFrom");
-      setCreatedRiffId(riff.id);
+      setCreatedRiffId(result.riffId);
       setLoading(false);
       setStep(3);
     } catch (err) {
