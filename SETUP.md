@@ -40,15 +40,14 @@ You can also check `.env.example` to see what variables are needed.
 npm install
 ```
 
-## Step 4: Set Up the Database
+## Step 4: Generate the Database Client
 
 ```bash
 # Generate the database client
 npx prisma generate
-
-# Apply database migrations
-npm run db:migrate:dev
 ```
+
+Local development and staging use one shared database. Kyle applies migrations once for the team; you do not need to run a migration during setup.
 
 ## Step 5: Verify Everything Works
 
@@ -96,7 +95,8 @@ This loads the project context and gets you oriented. It's the best way to start
 
 ### Database errors
 - Make sure the `DATABASE_URL` in `.env.development` is correct
-- Try `npm run db:migrate:dev` to apply any new migrations
+- Run `npx prisma generate` after pulling a schema change
+- If the error remains, contact Kyle to check the shared database. Do not run a migration or accept a reset prompt
 
 ### Something else is broken
 Hit up Kyle. He's awesome and knows everything.
