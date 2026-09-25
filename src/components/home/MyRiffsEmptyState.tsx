@@ -1,10 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import NoiseBackground from "@/components/NoiseBackground";
 import CTAButton from "@/components/CTAButton";
+import {
+  useCreationOverlay,
+  riffCreatedPath,
+  clubCreatedPath,
+} from "@/hooks/useCreationOverlay";
 import CreateRiffOverlay from "@/components/riffs/CreateRiffOverlay";
 import CreateClubOverlay from "@/components/clubs/CreateClubOverlay";
 
@@ -85,12 +89,11 @@ export default function MyRiffsEmptyState({
   onStartWriting,
   isCreatingDraft,
 }: MyRiffsEmptyStateProps) {
-  const router = useRouter();
   const [hoveredPanelId, setHoveredPanelId] = useState<Panel["id"] | null>(
     null
   );
-  const [isRiffOverlayOpen, setIsRiffOverlayOpen] = useState(false);
-  const [isClubOverlayOpen, setIsClubOverlayOpen] = useState(false);
+  const riffOverlay = useCreationOverlay(riffCreatedPath);
+  const clubOverlay = useCreationOverlay(clubCreatedPath);
 
   return (
     <div
@@ -340,7 +343,7 @@ export default function MyRiffsEmptyState({
                 {panel.id === "riff" && (
                   <CTAButton
                     accentColor={panel.accentColor}
-                    onClick={() => setIsRiffOverlayOpen(true)}
+                    onClick={riffOverlay.open}
                     style={panelButtonStyle}
                   >
                     {panel.cta}
@@ -350,7 +353,7 @@ export default function MyRiffsEmptyState({
                 {panel.id === "club" && (
                   <CTAButton
                     accentColor={panel.accentColor}
-                    onClick={() => setIsClubOverlayOpen(true)}
+                    onClick={clubOverlay.open}
                     style={panelButtonStyle}
                   >
                     {panel.cta}
@@ -386,20 +389,14 @@ export default function MyRiffsEmptyState({
       `}</style>
 
       <CreateRiffOverlay
-        isOpen={isRiffOverlayOpen}
-        onClose={() => setIsRiffOverlayOpen(false)}
-        onCreated={(riffId) => {
-          setIsRiffOverlayOpen(false);
-          router.push(`/riffs/${riffId}`);
-        }}
+        isOpen={riffOverlay.isOpen}
+        onClose={riffOverlay.close}
+        onCreated={riffOverlay.onCreated}
       />
       <CreateClubOverlay
-        isOpen={isClubOverlayOpen}
-        onClose={() => setIsClubOverlayOpen(false)}
-        onCreated={(clubId) => {
-          setIsClubOverlayOpen(false);
-          router.push(`/clubs/${clubId}?welcome=host`);
-        }}
+        isOpen={clubOverlay.isOpen}
+        onClose={clubOverlay.close}
+        onCreated={clubOverlay.onCreated}
       />
     </div>
   );

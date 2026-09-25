@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Dropdown from "@/components/shared/Dropdown";
 import type { DropdownItem } from "@/components/shared/Dropdown";
+import {
+  useCreationOverlay,
+  clubCreatedPath,
+} from "@/hooks/useCreationOverlay";
 import CreatePillButton from "./CreatePillButton";
 import CreateClubOverlay from "./CreateClubOverlay";
 
@@ -25,7 +28,7 @@ export default function ClubDropdown({
 }: ClubDropdownProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [isClubOverlayOpen, setIsClubOverlayOpen] = useState(false);
+  const clubOverlay = useCreationOverlay(clubCreatedPath);
 
   const items: DropdownItem[] = [
     ...clubs.map(
@@ -47,7 +50,7 @@ export default function ClubDropdown({
         // eslint-disable-next-line @next/next/no-img-element
         <img src="/icons/add.svg" alt="" width={16} height={16} />
       ),
-      onClick: () => setIsClubOverlayOpen(true),
+      onClick: clubOverlay.open,
     },
   ];
 
@@ -71,12 +74,9 @@ export default function ClubDropdown({
         onClose={onClose}
       />
       <CreateClubOverlay
-        isOpen={isClubOverlayOpen}
-        onClose={() => setIsClubOverlayOpen(false)}
-        onCreated={(clubId) => {
-          setIsClubOverlayOpen(false);
-          router.push(`/clubs/${clubId}?welcome=host`);
-        }}
+        isOpen={clubOverlay.isOpen}
+        onClose={clubOverlay.close}
+        onCreated={clubOverlay.onCreated}
       />
     </>
   );

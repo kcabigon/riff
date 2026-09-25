@@ -4,13 +4,13 @@ import { useRef, useState, FormEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import TextInput from "@/components/TextInput";
 import Tagline from "@/components/Tagline";
-import BackButton from "@/components/BackButton";
 import PrimaryButton from "@/components/PrimaryButton";
 import OnboardingProgress from "@/components/onboarding/OnboardingProgress";
 import ImageUploadFlow from "@/components/shared/ImageUploadFlow";
 import type { ImageUploadFlowHandle } from "@/components/shared/ImageUploadFlow";
-import FullScreenOverlay from "@/components/shared/FullScreenOverlay";
-import BrushWordHero from "@/components/shared/BrushWordHero";
+import HeroCardOverlay from "@/components/shared/HeroCardOverlay";
+import OverlayStepHeader from "@/components/shared/OverlayStepHeader";
+import FormErrorText from "@/components/shared/FormErrorText";
 import CadenceOptionList from "./CadenceOptionList";
 import {
   CREATION_CADENCE_OPTIONS,
@@ -161,305 +161,193 @@ export default function CreateClubOverlay({
   if (!isOpen) return null;
 
   return (
-    <FullScreenOverlay
+    <HeroCardOverlay
       isOpen={isOpen}
       onClose={handleClose}
       ariaLabel="Create a club"
+      word="writeclub"
+      cardOverlap={{ desktop: 420, mobile: 200 }}
     >
-      {/* Hero — full-bleed brush-reveal hero, ported from the landing page's
-          "Start a write club." line. Renders once for the whole flow — only
-          the card below swaps per step, so the reveal never replays. */}
-      <div
-        className="cchero-hero"
-        style={{
-          position: "relative",
-          overflow: "hidden",
-          padding: "64px 24px 96px",
-        }}
-      >
-        <div
-          style={{
-            position: "relative",
-            zIndex: 1,
-            maxWidth: "840px",
-            margin: "0 auto",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            textAlign: "center",
-          }}
-        >
-          <BrushWordHero word="writeclub" className="cchero-frame" />
+      <OverlayStepHeader
+        heading={step === 1 ? "We write on repeat." : undefined}
+        onBack={step > 1 ? handleBack : undefined}
+      />
 
-          {/* Club details card — pulled up to overlap the bottom of the
-              brush art. Content swaps per step; the card itself stays put. */}
-          <div
-            className="cchero-card"
+      <AnimatePresence mode="wait" initial={false}>
+        {step === 1 && (
+          <motion.form
+            key="step-1"
+            initial={{ opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -16 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            onSubmit={(e) => {
+              e.preventDefault();
+              setStep(2);
+            }}
             style={{
-              position: "relative",
-              zIndex: 1,
               width: "100%",
-              maxWidth: "560px",
-              backgroundColor: "#FFFFFF",
-              border: "2px solid #000000",
-              boxShadow: "8px 8px 0px 0px #000000",
-              padding: "32px",
               display: "flex",
               flexDirection: "column",
               gap: "24px",
-              textAlign: "left",
             }}
           >
-            {step === 1 ? (
-              <div
-                style={{
-                  width: "100%",
-                  height: "32px",
-                  display: "flex",
-                  alignItems: "center",
-                }}
-              >
-                <h1
-                  style={{
-                    fontFamily: "var(--font-dm-serif-text)",
-                    fontSize: "24px",
-                    fontWeight: 400,
-                    lineHeight: "32px",
-                    color: "#000000",
-                    margin: 0,
-                  }}
-                >
-                  We write on repeat.
-                </h1>
-              </div>
-            ) : (
-              <div style={{ width: "100%", display: "flex" }}>
-                <BackButton onClick={handleBack} />
-              </div>
-            )}
+            <div
+              style={{
+                width: "100%",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+              }}
+            >
+              <Tagline
+                text="Who we are..."
+                color="#C01582"
+                width={116}
+                textColor="#FFFFFF"
+                fontSize={16}
+              />
+              <TextInput
+                type="text"
+                name="clubName"
+                placeholder="Dead Poets Society"
+                value={clubName}
+                onChange={(e) => setClubName(e.target.value)}
+                autoFocus
+                maxLength={CLUB_NAME_MAX}
+                error={clubName.length >= CLUB_NAME_MAX ? " " : undefined}
+              />
+            </div>
 
-            <AnimatePresence mode="wait" initial={false}>
-              {step === 1 && (
-                <motion.form
-                  key="step-1"
-                  initial={{ opacity: 0, x: 16 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -16 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    setStep(2);
-                  }}
-                  style={{
-                    width: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "24px",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: "100%",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "8px",
-                    }}
-                  >
-                    <Tagline
-                      text="Who we are..."
-                      color="#C01582"
-                      width={116}
-                      textColor="#FFFFFF"
-                      fontSize={16}
-                    />
-                    <TextInput
-                      type="text"
-                      name="clubName"
-                      placeholder="Dead Poets Society"
-                      value={clubName}
-                      onChange={(e) => setClubName(e.target.value)}
-                      autoFocus
-                      maxLength={CLUB_NAME_MAX}
-                      error={clubName.length >= CLUB_NAME_MAX ? " " : undefined}
-                    />
-                  </div>
+            <div
+              style={{
+                width: "100%",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+              }}
+            >
+              <Tagline
+                text="What we're about..."
+                color="#955CB5"
+                width={156}
+                textColor="#FFFFFF"
+                fontSize={16}
+              />
+              <TextInput
+                multiline
+                rows={3}
+                name="description"
+                placeholder="We don't read and write poetry because it's cute. We read and write poetry because..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                maxLength={DESCRIPTION_MAX}
+                error={description.length >= DESCRIPTION_MAX ? " " : undefined}
+              />
+            </div>
 
-                  <div
-                    style={{
-                      width: "100%",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "8px",
-                    }}
-                  >
-                    <Tagline
-                      text="What we're about..."
-                      color="#955CB5"
-                      width={156}
-                      textColor="#FFFFFF"
-                      fontSize={16}
-                    />
-                    <TextInput
-                      multiline
-                      rows={3}
-                      name="description"
-                      placeholder="We don't read and write poetry because it's cute. We read and write poetry because..."
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      maxLength={DESCRIPTION_MAX}
-                      error={
-                        description.length >= DESCRIPTION_MAX ? " " : undefined
-                      }
-                    />
-                  </div>
+            <PrimaryButton type="submit">Cool, what&apos;s next?</PrimaryButton>
+            <OnboardingProgress currentStep={1} totalSteps={TOTAL_STEPS} />
+          </motion.form>
+        )}
 
-                  <PrimaryButton type="submit">
-                    Cool, what&apos;s next?
-                  </PrimaryButton>
-                  <OnboardingProgress
-                    currentStep={1}
-                    totalSteps={TOTAL_STEPS}
-                  />
-                </motion.form>
-              )}
+        {step === 2 && (
+          <motion.form
+            key="step-2"
+            initial={{ opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -16 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            onSubmit={(e) => {
+              e.preventDefault();
+              setStep(3);
+            }}
+            style={{
+              width: "100%",
+              display: "flex",
+              flexDirection: "column",
+              gap: "24px",
+            }}
+          >
+            <Tagline
+              text="How often we riff..."
+              color="#EECF01"
+              width={162}
+              textColor="#000000"
+              fontSize={16}
+            />
 
-              {step === 2 && (
-                <motion.form
-                  key="step-2"
-                  initial={{ opacity: 0, x: 16 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -16 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    setStep(3);
-                  }}
-                  style={{
-                    width: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "24px",
-                  }}
-                >
-                  <Tagline
-                    text="How often we riff..."
-                    color="#EECF01"
-                    width={162}
-                    textColor="#000000"
-                    fontSize={16}
-                  />
+            <CadenceOptionList
+              value={cadence}
+              options={CREATION_CADENCE_OPTIONS}
+              onSelect={setCadence}
+            />
 
-                  <CadenceOptionList
-                    value={cadence}
-                    options={CREATION_CADENCE_OPTIONS}
-                    onSelect={setCadence}
-                  />
+            <span
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "12px",
+                fontWeight: 300,
+                color: "#9C9C9C",
+                textAlign: "center",
+              }}
+            >
+              Riffs run on repeat. You can adjust this later.
+            </span>
+            <PrimaryButton type="submit">Almost there...</PrimaryButton>
+            <OnboardingProgress currentStep={2} totalSteps={TOTAL_STEPS} />
+          </motion.form>
+        )}
 
-                  <span
-                    style={{
-                      fontFamily: "var(--font-dm-sans)",
-                      fontSize: "12px",
-                      fontWeight: 300,
-                      color: "#9C9C9C",
-                      textAlign: "center",
-                    }}
-                  >
-                    Riffs run on repeat. You can adjust this later.
-                  </span>
-                  <PrimaryButton type="submit">Almost there...</PrimaryButton>
-                  <OnboardingProgress
-                    currentStep={2}
-                    totalSteps={TOTAL_STEPS}
-                  />
-                </motion.form>
-              )}
+        {step === 3 && (
+          <motion.form
+            key="step-3"
+            initial={{ opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -16 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            onSubmit={handleCreate}
+            style={{
+              width: "100%",
+              display: "flex",
+              flexDirection: "column",
+              gap: "24px",
+            }}
+          >
+            <div
+              style={{
+                width: "100%",
+                display: "flex",
+                flexDirection: "column",
+                gap: "16px",
+              }}
+            >
+              <Tagline
+                text="This is our vibe..."
+                color="#01EFFC"
+                textColor="#000000"
+                width={156}
+                fontSize={16}
+              />
+              <ImageUploadFlow
+                ref={uploadFlowRef}
+                onSelect={(url) => setBannerImage(url)}
+                currentImage={bannerImage || null}
+                aspectRatio={3 / 1}
+                removeLabel="Remove photo"
+                hideSaveButton
+              />
+            </div>
 
-              {step === 3 && (
-                <motion.form
-                  key="step-3"
-                  initial={{ opacity: 0, x: 16 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -16 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                  onSubmit={handleCreate}
-                  style={{
-                    width: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "24px",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: "100%",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "16px",
-                    }}
-                  >
-                    <Tagline
-                      text="This is our vibe..."
-                      color="#01EFFC"
-                      textColor="#000000"
-                      width={156}
-                      fontSize={16}
-                    />
-                    <ImageUploadFlow
-                      ref={uploadFlowRef}
-                      onSelect={(url) => setBannerImage(url)}
-                      currentImage={bannerImage || null}
-                      aspectRatio={3 / 1}
-                      removeLabel="Remove photo"
-                      hideSaveButton
-                    />
-                  </div>
+            <FormErrorText message={error} />
 
-                  {error && (
-                    <p
-                      style={{
-                        fontFamily: "var(--font-dm-sans)",
-                        fontSize: "14px",
-                        fontWeight: 300,
-                        color: "#DC2626",
-                        margin: 0,
-                        textAlign: "center",
-                      }}
-                    >
-                      {error}
-                    </p>
-                  )}
-
-                  <PrimaryButton
-                    type="submit"
-                    loading={loading}
-                    disabled={loading}
-                  >
-                    Create your club
-                  </PrimaryButton>
-                  <OnboardingProgress
-                    currentStep={3}
-                    totalSteps={TOTAL_STEPS}
-                  />
-                </motion.form>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-      </div>
-
-      <style>{`
-        .cchero-card {
-          margin-top: -420px;
-        }
-        @media (max-width: 767px) {
-          .cchero-hero {
-            padding: 48px 24px 64px !important;
-          }
-          .cchero-card {
-            margin-top: -200px;
-          }
-        }
-      `}</style>
-    </FullScreenOverlay>
+            <PrimaryButton type="submit" loading={loading} disabled={loading}>
+              Create your club
+            </PrimaryButton>
+            <OnboardingProgress currentStep={3} totalSteps={TOTAL_STEPS} />
+          </motion.form>
+        )}
+      </AnimatePresence>
+    </HeroCardOverlay>
   );
 }

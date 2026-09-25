@@ -4,12 +4,12 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import TextInput from "@/components/TextInput";
 import Tagline from "@/components/Tagline";
-import BackButton from "@/components/BackButton";
 import PrimaryButton from "@/components/PrimaryButton";
 import OnboardingProgress from "@/components/onboarding/OnboardingProgress";
 import ShareLinkOptions from "@/components/shared/ShareLinkOptions";
-import BrushWordHero from "@/components/shared/BrushWordHero";
-import FullScreenOverlay from "@/components/shared/FullScreenOverlay";
+import HeroCardOverlay from "@/components/shared/HeroCardOverlay";
+import OverlayStepHeader from "@/components/shared/OverlayStepHeader";
+import FormErrorText from "@/components/shared/FormErrorText";
 import TemplatePicker from "./TemplatePicker";
 import { QUICK_START } from "@/lib/riff-quick-start";
 import { createAndActivateRiff, toEndOfDay } from "@/lib/riff-utils";
@@ -128,315 +128,206 @@ export default function CreateRiffOverlay({
     : "";
 
   return (
-    <FullScreenOverlay
+    <HeroCardOverlay
       isOpen={isOpen}
       onClose={handleClose}
       ariaLabel="Create a riff"
+      word="riff"
+      cardOverlap={{ desktop: 460, mobile: 240 }}
     >
-      {/* Hero — renders once for the whole flow, same technique as the
-          create-club onboarding page; only the card below swaps per step. */}
-      <div
-        className="crhero-hero"
-        style={{
-          position: "relative",
-          overflow: "hidden",
-          padding: "64px 24px 96px",
-        }}
-      >
-        <div
-          style={{
-            position: "relative",
-            zIndex: 1,
-            maxWidth: "840px",
-            margin: "0 auto",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            textAlign: "center",
-          }}
-        >
-          <BrushWordHero word="riff" className="crhero-frame" />
+      <OverlayStepHeader
+        heading={step === 1 ? "The Creative Brief" : undefined}
+        onBack={step === 2 ? handleBack : undefined}
+      />
 
-          <div
-            className="crhero-card"
+      <AnimatePresence mode="wait" initial={false}>
+        {step === 1 && (
+          <motion.form
+            key="step-1"
+            initial={{ opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -16 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            onSubmit={(e) => {
+              e.preventDefault();
+              setStep(2);
+            }}
             style={{
-              position: "relative",
-              zIndex: 1,
               width: "100%",
-              maxWidth: "560px",
-              backgroundColor: "#FFFFFF",
-              border: "2px solid #000000",
-              boxShadow: "8px 8px 0px 0px #000000",
-              padding: "32px",
               display: "flex",
               flexDirection: "column",
               gap: "24px",
-              textAlign: "left",
             }}
           >
-            {step === 1 && (
+            <div
+              style={{
+                width: "100%",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+              }}
+            >
               <div
                 style={{
-                  width: "100%",
-                  height: "32px",
                   display: "flex",
                   alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "8px",
                 }}
               >
-                <h1
-                  style={{
-                    fontFamily: "var(--font-dm-serif-text)",
-                    fontSize: "24px",
-                    fontWeight: 400,
-                    lineHeight: "32px",
-                    color: "#000000",
-                    margin: 0,
-                  }}
-                >
-                  The Creative Brief
-                </h1>
+                <Tagline
+                  text="Riff name"
+                  color="#00FF66"
+                  width={94}
+                  textColor="#000000"
+                  fontSize={16}
+                />
+                <TemplatePicker
+                  active={isQuickStartApplied}
+                  onToggle={toggleQuickStart}
+                />
               </div>
-            )}
+              <TextInput
+                type="text"
+                name="title"
+                placeholder="Ex. Summer Stories"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                autoFocus
+                maxLength={200}
+              />
+            </div>
 
-            {step === 2 && (
-              <div style={{ width: "100%", display: "flex" }}>
-                <BackButton onClick={handleBack} />
-              </div>
-            )}
+            <div
+              style={{
+                width: "100%",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+              }}
+            >
+              <Tagline
+                text="Prompt"
+                color="#EECF01"
+                width={76}
+                textColor="#000000"
+                fontSize={16}
+              />
+              <TextInput
+                multiline
+                rows={3}
+                name="prompt"
+                placeholder="Let's write about..."
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+              />
+            </div>
 
-            <AnimatePresence mode="wait" initial={false}>
-              {step === 1 && (
-                <motion.form
-                  key="step-1"
-                  initial={{ opacity: 0, x: 16 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -16 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    setStep(2);
-                  }}
-                  style={{
-                    width: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "24px",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: "100%",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "8px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: "8px",
-                      }}
-                    >
-                      <Tagline
-                        text="Riff name"
-                        color="#00FF66"
-                        width={94}
-                        textColor="#000000"
-                        fontSize={16}
-                      />
-                      <TemplatePicker
-                        active={isQuickStartApplied}
-                        onToggle={toggleQuickStart}
-                      />
-                    </div>
-                    <TextInput
-                      type="text"
-                      name="title"
-                      placeholder="Ex. Summer Stories"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      autoFocus
-                      maxLength={200}
-                    />
-                  </div>
+            <FormErrorText message={error} />
 
-                  <div
-                    style={{
-                      width: "100%",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "8px",
-                    }}
-                  >
-                    <Tagline
-                      text="Prompt"
-                      color="#EECF01"
-                      width={76}
-                      textColor="#000000"
-                      fontSize={16}
-                    />
-                    <TextInput
-                      multiline
-                      rows={3}
-                      name="prompt"
-                      placeholder="Let's write about..."
-                      value={prompt}
-                      onChange={(e) => setPrompt(e.target.value)}
-                    />
-                  </div>
+            <PrimaryButton type="submit">Cool, what&apos;s next?</PrimaryButton>
+            <OnboardingProgress currentStep={1} totalSteps={TOTAL_STEPS} />
+          </motion.form>
+        )}
 
-                  {error && <p style={errorStyle}>{error}</p>}
-
-                  <PrimaryButton type="submit">
-                    Cool, what&apos;s next?
-                  </PrimaryButton>
-                  <OnboardingProgress
-                    currentStep={1}
-                    totalSteps={TOTAL_STEPS}
-                  />
-                </motion.form>
+        {step === 2 && (
+          <motion.form
+            key="step-2"
+            initial={{ opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -16 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            onSubmit={handleCreate}
+            style={{
+              width: "100%",
+              display: "flex",
+              flexDirection: "column",
+              gap: "24px",
+            }}
+          >
+            <div
+              style={{
+                width: "100%",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+              }}
+            >
+              <Tagline
+                text="Deadline"
+                color="#01EFFC"
+                width={86}
+                textColor="#000000"
+                fontSize={16}
+              />
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 300,
+                  color: "#000000",
+                  textAlign: "left",
+                  margin: "0 0 8px 0",
+                }}
+              >
+                The goal of a riff is to reveal together on or before this date.
+                Don&apos;t worry, you can change this date later if you want to.
+              </p>
+              <TextInput
+                type="date"
+                name="deadline"
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
+                required
+              />
+              {daysUntilDeadline !== null && (
+                <span style={helperTextStyle}>
+                  {daysUntilDeadline} days from today
+                </span>
               )}
+            </div>
 
-              {step === 2 && (
-                <motion.form
-                  key="step-2"
-                  initial={{ opacity: 0, x: 16 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -16 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                  onSubmit={handleCreate}
-                  style={{
-                    width: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "24px",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: "100%",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "8px",
-                    }}
-                  >
-                    <Tagline
-                      text="Deadline"
-                      color="#01EFFC"
-                      width={86}
-                      textColor="#000000"
-                      fontSize={16}
-                    />
-                    <p
-                      style={{
-                        fontFamily: "var(--font-dm-sans)",
-                        fontSize: "16px",
-                        fontWeight: 300,
-                        color: "#000000",
-                        textAlign: "left",
-                        margin: "0 0 8px 0",
-                      }}
-                    >
-                      The goal of a riff is to reveal together on or before this
-                      date. Don&apos;t worry, you can change this date later if
-                      you want to.
-                    </p>
-                    <TextInput
-                      type="date"
-                      name="deadline"
-                      value={deadline}
-                      onChange={(e) => setDeadline(e.target.value)}
-                      required
-                    />
-                    {daysUntilDeadline !== null && (
-                      <span style={helperTextStyle}>
-                        {daysUntilDeadline} days from today
-                      </span>
-                    )}
-                  </div>
+            <FormErrorText message={error} />
 
-                  {error && <p style={errorStyle}>{error}</p>}
+            <PrimaryButton type="submit" loading={loading} disabled={loading}>
+              {loading ? "Creating..." : "Invite friends"}
+            </PrimaryButton>
+            <OnboardingProgress currentStep={2} totalSteps={TOTAL_STEPS} />
+          </motion.form>
+        )}
 
-                  <PrimaryButton
-                    type="submit"
-                    loading={loading}
-                    disabled={loading}
-                  >
-                    {loading ? "Creating..." : "Invite friends"}
-                  </PrimaryButton>
-                  <OnboardingProgress
-                    currentStep={2}
-                    totalSteps={TOTAL_STEPS}
-                  />
-                </motion.form>
-              )}
+        {step === 3 && createdRiffId && (
+          <motion.div
+            key="step-3"
+            initial={{ opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -16 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            style={{
+              width: "100%",
+              display: "flex",
+              flexDirection: "column",
+              gap: "24px",
+            }}
+          >
+            <Tagline
+              text="Invite friends"
+              color="#C01582"
+              width={136}
+              textColor="#FFFFFF"
+              fontSize={16}
+            />
 
-              {step === 3 && createdRiffId && (
-                <motion.div
-                  key="step-3"
-                  initial={{ opacity: 0, x: 16 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -16 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                  style={{
-                    width: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "24px",
-                  }}
-                >
-                  <Tagline
-                    text="Invite friends"
-                    color="#C01582"
-                    width={136}
-                    textColor="#FFFFFF"
-                    fontSize={16}
-                  />
+            <ShareLinkOptions url={joinUrl} shareText="Let's riff!" />
 
-                  <ShareLinkOptions url={joinUrl} shareText="Let's riff!" />
-
-                  <PrimaryButton onClick={handleDone}>Done</PrimaryButton>
-                  <OnboardingProgress
-                    currentStep={3}
-                    totalSteps={TOTAL_STEPS}
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-      </div>
-
-      <style>{`
-        .crhero-frame {
-          margin: 0;
-        }
-        .crhero-card {
-          margin-top: -460px;
-        }
-        @media (max-width: 767px) {
-          .crhero-hero {
-            padding: 48px 24px 64px !important;
-          }
-          .crhero-card {
-            margin-top: -240px;
-          }
-        }
-      `}</style>
-    </FullScreenOverlay>
+            <PrimaryButton onClick={handleDone}>Done</PrimaryButton>
+            <OnboardingProgress currentStep={3} totalSteps={TOTAL_STEPS} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </HeroCardOverlay>
   );
 }
-
-const errorStyle: React.CSSProperties = {
-  fontFamily: "var(--font-dm-sans)",
-  fontSize: "14px",
-  fontWeight: 300,
-  color: "#DC2626",
-  margin: 0,
-  textAlign: "center",
-};
 
 const helperTextStyle: React.CSSProperties = {
   display: "inline-block",

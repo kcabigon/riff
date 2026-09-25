@@ -1,20 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Dropdown from "@/components/shared/Dropdown";
 import type { DropdownItem } from "@/components/shared/Dropdown";
 import { useDraftCreation } from "@/hooks/useDraftCreation";
+import {
+  useCreationOverlay,
+  riffCreatedPath,
+  clubCreatedPath,
+} from "@/hooks/useCreationOverlay";
 import CreatePillButton from "./CreatePillButton";
 import CreateRiffOverlay from "@/components/riffs/CreateRiffOverlay";
 import CreateClubOverlay from "./CreateClubOverlay";
 
 export default function CreateDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  const [isRiffOverlayOpen, setIsRiffOverlayOpen] = useState(false);
-  const [isClubOverlayOpen, setIsClubOverlayOpen] = useState(false);
+  const riffOverlay = useCreationOverlay(riffCreatedPath);
+  const clubOverlay = useCreationOverlay(clubCreatedPath);
   const { createDraft, isCreating } = useDraftCreation();
-  const router = useRouter();
 
   const items: DropdownItem[] = [
     {
@@ -25,12 +28,12 @@ export default function CreateDropdown() {
     {
       type: "action",
       label: "New riff",
-      onClick: () => setIsRiffOverlayOpen(true),
+      onClick: riffOverlay.open,
     },
     {
       type: "action",
       label: "New club",
-      onClick: () => setIsClubOverlayOpen(true),
+      onClick: clubOverlay.open,
     },
   ];
 
@@ -53,20 +56,14 @@ export default function CreateDropdown() {
         onClose={() => setIsOpen(false)}
       />
       <CreateRiffOverlay
-        isOpen={isRiffOverlayOpen}
-        onClose={() => setIsRiffOverlayOpen(false)}
-        onCreated={(riffId) => {
-          setIsRiffOverlayOpen(false);
-          router.push(`/riffs/${riffId}`);
-        }}
+        isOpen={riffOverlay.isOpen}
+        onClose={riffOverlay.close}
+        onCreated={riffOverlay.onCreated}
       />
       <CreateClubOverlay
-        isOpen={isClubOverlayOpen}
-        onClose={() => setIsClubOverlayOpen(false)}
-        onCreated={(clubId) => {
-          setIsClubOverlayOpen(false);
-          router.push(`/clubs/${clubId}?welcome=host`);
-        }}
+        isOpen={clubOverlay.isOpen}
+        onClose={clubOverlay.close}
+        onCreated={clubOverlay.onCreated}
       />
     </>
   );

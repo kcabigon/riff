@@ -11,6 +11,7 @@ import Avatar from "@/components/shared/Avatar";
 import { noiseTileStyle } from "@/components/NoiseBackground";
 import Tagline from "@/components/Tagline";
 import BrushWordHero from "@/components/shared/BrushWordHero";
+import FormErrorText from "@/components/shared/FormErrorText";
 import { getRiffDisplayTitle } from "@/lib/riff-utils";
 
 type JoinStep = "email" | "check-email" | "name" | "join";
@@ -485,7 +486,7 @@ export default function JoinRiffClient({
                       disabled={loading}
                       required
                     />
-                    {error && <p style={errorStyle}>{error}</p>}
+                    <FormErrorText message={error} />
                     <PrimaryButton type="submit" loading={loading}>
                       Let's riff
                     </PrimaryButton>
@@ -504,7 +505,7 @@ export default function JoinRiffClient({
                     gap: "16px",
                   }}
                 >
-                  {error && <p style={errorStyle}>{error}</p>}
+                  <FormErrorText message={error} />
                   <PrimaryButton loading={loading} onClick={handleJoin}>
                     Let's riff
                   </PrimaryButton>
@@ -560,15 +561,6 @@ const ctaTextStyle: React.CSSProperties = {
   fontSize: "18px",
   fontWeight: 300,
   color: "#000000",
-  margin: 0,
-  textAlign: "center",
-};
-
-const errorStyle: React.CSSProperties = {
-  fontFamily: "var(--font-dm-sans)",
-  fontSize: "14px",
-  fontWeight: 300,
-  color: "#DC2626",
   margin: 0,
   textAlign: "center",
 };
