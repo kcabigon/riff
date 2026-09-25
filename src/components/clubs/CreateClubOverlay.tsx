@@ -173,7 +173,7 @@ export default function CreateClubOverlay({
       cardOverlap={{ desktop: 420, mobile: 200 }}
     >
       <OverlayStepHeader
-        heading={step === 1 ? "We write on repeat." : undefined}
+        heading={step === 1 ? "Same Friends, Endless Riffs" : undefined}
         onBack={step > 1 ? handleBack : undefined}
       />
 
