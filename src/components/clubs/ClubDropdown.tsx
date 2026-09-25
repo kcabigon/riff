@@ -3,7 +3,12 @@
 import { useRouter, usePathname } from "next/navigation";
 import Dropdown from "@/components/shared/Dropdown";
 import type { DropdownItem } from "@/components/shared/Dropdown";
+import {
+  useCreationOverlay,
+  clubCreatedPath,
+} from "@/hooks/useCreationOverlay";
 import CreatePillButton from "./CreatePillButton";
+import CreateClubOverlay from "./CreateClubOverlay";
 
 interface ClubDropdownProps {
   clubs: Array<{
@@ -23,6 +28,7 @@ export default function ClubDropdown({
 }: ClubDropdownProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const clubOverlay = useCreationOverlay(clubCreatedPath);
 
   const items: DropdownItem[] = [
     ...clubs.map(
@@ -44,30 +50,34 @@ export default function ClubDropdown({
         // eslint-disable-next-line @next/next/no-img-element
         <img src="/icons/add.svg" alt="" width={16} height={16} />
       ),
-      onClick: () => {
-        sessionStorage.setItem("pendingClubFrom", pathname);
-        router.push("/onboarding/create-club");
-      },
+      onClick: clubOverlay.open,
     },
   ];
 
   return (
-    <Dropdown
-      trigger={
-        <CreatePillButton
-          label="My Clubs"
-          icon="chevron"
-          forceActive={isOpen}
-          reverseShadow
-          compactOnMobile
-        />
-      }
-      items={items}
-      align="right"
-      minWidth={200}
-      isOpen={isOpen}
-      onToggle={onToggle}
-      onClose={onClose}
-    />
+    <>
+      <Dropdown
+        trigger={
+          <CreatePillButton
+            label="My Clubs"
+            icon="chevron"
+            forceActive={isOpen}
+            reverseShadow
+            compactOnMobile
+          />
+        }
+        items={items}
+        align="right"
+        minWidth={200}
+        isOpen={isOpen}
+        onToggle={onToggle}
+        onClose={onClose}
+      />
+      <CreateClubOverlay
+        isOpen={clubOverlay.isOpen}
+        onClose={clubOverlay.close}
+        onCreated={clubOverlay.onCreated}
+      />
+    </>
   );
 }

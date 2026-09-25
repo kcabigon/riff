@@ -11,6 +11,7 @@ import NavBar from "@/components/clubs/NavBar";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import TextInput from "@/components/TextInput";
 import SecondaryButton from "@/components/SecondaryButton";
+import FormErrorText from "@/components/shared/FormErrorText";
 
 type JoinStep = "email" | "check-email" | "name" | "join";
 
@@ -623,7 +624,7 @@ export default function JoinClubClient({
                   disabled={loading}
                   required
                 />
-                {error && <p style={errorStyle}>{error}</p>}
+                <FormErrorText message={error} />
                 <SecondaryButton type="submit" loading={loading}>
                   Join club
                 </SecondaryButton>
@@ -646,7 +647,7 @@ export default function JoinClubClient({
               <p style={ctaTextStyle}>
                 You&apos;ve been invited to join this write club.
               </p>
-              {error && <p style={errorStyle}>{error}</p>}
+              <FormErrorText message={error} />
               <SecondaryButton loading={loading} onClick={handleJoin}>
                 Join club
               </SecondaryButton>
@@ -702,15 +703,6 @@ const ctaTextStyle: React.CSSProperties = {
   fontSize: "18px",
   fontWeight: 300,
   color: "#000000",
-  margin: 0,
-  textAlign: "center",
-};
-
-const errorStyle: React.CSSProperties = {
-  fontFamily: "var(--font-dm-sans)",
-  fontSize: "14px",
-  fontWeight: 300,
-  color: "#DC2626",
   margin: 0,
   textAlign: "center",
 };

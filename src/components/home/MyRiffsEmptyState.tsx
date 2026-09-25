@@ -1,11 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import NoiseBackground from "@/components/NoiseBackground";
 import CTAButton from "@/components/CTAButton";
-import CreateRiffModal from "@/components/riffs/CreateRiffModal";
+import {
+  useCreationOverlay,
+  riffCreatedPath,
+  clubCreatedPath,
+} from "@/hooks/useCreationOverlay";
+import CreateRiffOverlay from "@/components/riffs/CreateRiffOverlay";
+import CreateClubOverlay from "@/components/clubs/CreateClubOverlay";
 
 interface Panel {
   id: "write" | "riff" | "club";
@@ -84,17 +89,11 @@ export default function MyRiffsEmptyState({
   onStartWriting,
   isCreatingDraft,
 }: MyRiffsEmptyStateProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const [isRiffModalOpen, setIsRiffModalOpen] = useState(false);
   const [hoveredPanelId, setHoveredPanelId] = useState<Panel["id"] | null>(
     null
   );
-
-  const handleStartClub = () => {
-    sessionStorage.setItem("pendingClubFrom", pathname);
-    router.push("/onboarding/create-club");
-  };
+  const riffOverlay = useCreationOverlay(riffCreatedPath);
+  const clubOverlay = useCreationOverlay(clubCreatedPath);
 
   return (
     <div
@@ -344,7 +343,7 @@ export default function MyRiffsEmptyState({
                 {panel.id === "riff" && (
                   <CTAButton
                     accentColor={panel.accentColor}
-                    onClick={() => setIsRiffModalOpen(true)}
+                    onClick={riffOverlay.open}
                     style={panelButtonStyle}
                   >
                     {panel.cta}
@@ -354,7 +353,7 @@ export default function MyRiffsEmptyState({
                 {panel.id === "club" && (
                   <CTAButton
                     accentColor={panel.accentColor}
-                    onClick={handleStartClub}
+                    onClick={clubOverlay.open}
                     style={panelButtonStyle}
                   >
                     {panel.cta}
@@ -389,13 +388,15 @@ export default function MyRiffsEmptyState({
         }
       `}</style>
 
-      <CreateRiffModal
-        isOpen={isRiffModalOpen}
-        onClose={() => setIsRiffModalOpen(false)}
-        onCreated={(riffId) => {
-          setIsRiffModalOpen(false);
-          router.push(`/riffs/${riffId}`);
-        }}
+      <CreateRiffOverlay
+        isOpen={riffOverlay.isOpen}
+        onClose={riffOverlay.close}
+        onCreated={riffOverlay.onCreated}
+      />
+      <CreateClubOverlay
+        isOpen={clubOverlay.isOpen}
+        onClose={clubOverlay.close}
+        onCreated={clubOverlay.onCreated}
       />
     </div>
   );

@@ -93,6 +93,48 @@ export function toEndOfDay(dateString: string): string {
   return new Date(year, month - 1, day, 23, 59, 59, 999).toISOString();
 }
 
+// Client-side only: creates a riff (DRAFT) then immediately activates it —
+// the two-request "create riff" flow shared by CreateRiffModal (club riffs),
+// CreateRiffOverlay (the clubless flow), and CreateClubOverlay (a new club's
+// first riff). Callers own their own loading/error UI state; this just
+// returns a result to act on.
+export async function createAndActivateRiff(
+  createEndpoint: string,
+  body: {
+    title?: string | null;
+    prompt?: string | null;
+    deadline: string | null;
+  }
+): Promise<{ ok: true; riffId: string } | { ok: false; error: string }> {
+  const createRes = await fetch(createEndpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  if (!createRes.ok) {
+    const data = await createRes.json();
+    return { ok: false, error: data.error || "Failed to create riff" };
+  }
+
+  const { riff } = await createRes.json();
+
+  const activateRes = await fetch(`/api/riffs/${riff.id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status: "ACTIVE" }),
+  });
+
+  if (!activateRes.ok) {
+    return {
+      ok: false,
+      error: "Riff created but failed to activate. Please try again.",
+    };
+  }
+
+  return { ok: true, riffId: riff.id };
+}
+
 // Inverse of toEndOfDay — extracts the LOCAL calendar date (YYYY-MM-DD) from
 // a stored deadline, for pre-filling a <input type="date">. Must read local
 // date components, not toISOString()'s UTC date: an end-of-day deadline
