@@ -269,7 +269,7 @@ Routing lives in the `/auth/post-login` server component, NOT the NextAuth `redi
 ### Databases
 - **Local dev + staging share one Supabase project.** You'll see everyone's test data. A reset wipes it for the whole team — never accept a Prisma reset prompt.
 - **Production is a separate Supabase project.** Schema changes must be applied with `npm run db:migrate:prod` **before** promoting code that depends on them.
-- Schema changes are coordinated through Kyle; only one person creates a migration at a time. Others run `npm run db:migrate:dev`.
+- Schema changes are coordinated through Kyle; only one person creates a migration at a time. Kyle applies each reviewed migration once to the shared dev/staging database. Others run `npx prisma generate` after pulling a schema change.
 
 ### Branch Strategy
 ```

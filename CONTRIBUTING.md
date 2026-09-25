@@ -106,10 +106,11 @@ Or use `/pr-check` in Claude Code to run all checks at once.
 
 **Coordinate with Kyle before changing `prisma/schema.prisma`.**
 
-We share a single dev database, so:
+Local development and staging share one database, so:
 - Only one person should create a migration at a time
-- After someone creates a migration, others pull and run `npm run db:migrate:dev`
-- Never run `prisma migrate reset` on the shared database without checking with Kyle
+- Kyle applies reviewed migrations once with `npm run db:migrate:dev` (which uses `prisma migrate deploy`)
+- After pulling a schema change, everyone else runs `npx prisma generate` to update their local client; they do not migrate the shared database again
+- Never run `prisma migrate dev`, `prisma migrate reset`, or `db push` against the shared database. If Prisma asks to reset it, stop and contact Kyle
 
 ## Slash Commands Reference
 
