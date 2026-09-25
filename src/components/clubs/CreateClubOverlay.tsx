@@ -151,9 +151,13 @@ export default function CreateClubOverlay({
       const createdClubId = clubId;
       reset();
       onCreated(createdClubId);
-    } catch (err: any) {
+    } catch (err) {
       console.error("Error creating club:", err);
-      setError(err.message || "Something went wrong. Please try again.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong. Please try again."
+      );
       setLoading(false);
     }
   };
