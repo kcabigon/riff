@@ -1,12 +1,14 @@
-// Club Cadence — the creation-time picker (Weekly/Bi-weekly/Monthly) is real:
-// it seeds a new club's first riff with a real deadline. Editing cadence
-// after creation is not wired up yet (the "Riff cadence" 3-dot item is
-// disabled) since that needs a persisted `Cadence` field on Club, which
-// doesn't exist yet. See TODO.md "Club Cadence" item.
+// Club Cadence — how often a club gets a new riff. The creation-time picker
+// seeds the club's first riff deadline; the persisted `Club.cadence` field
+// drives every riff after that.
 //
-// Value names match the confirmed ClubCadence Prisma enum in the schema
-// proposal handed to Kyle, so wiring up editing later is additive, not a
-// value remapping.
+// MANUAL is a real, permanent mode, not a transitional state: the host
+// creates and reveals riffs themselves, exactly as clubs worked before
+// cadence existed. It's the schema default, so every club that predates this
+// feature keeps its current behavior until a host opts into an interval.
+// PAUSED is the same "no automatic riffs" behavior, framed as temporary.
+//
+// Values mirror the ClubCadence Prisma enum.
 
 export type CadenceValue =
   | "WEEKLY"
@@ -84,25 +86,49 @@ export const CREATION_CADENCE_OPTIONS: CadenceOption[] = [
   MONTHLY,
 ];
 
-// Full set, matching the confirmed enum — used only as getCadenceDays'
-// lookup table. Editing cadence isn't reachable in the UI yet, so only the
-// three CREATION_CADENCE_OPTIONS values above are ever actually looked up
-// today; the rest just keep this table complete for when that lands.
-const CADENCE_OPTIONS: CadenceOption[] = [
+// The settings modal shows these as two labeled groups rather than one list.
+// The split is the same one isIntervalCadence gates on — "Automatic" riffs
+// start on a schedule, "Other" produces none — so the grouping the host sees
+// matches the behavior the cron actually implements.
+export const CADENCE_INTERVAL_OPTIONS: CadenceOption[] = [
   WEEKLY,
   BIWEEKLY,
   MONTHLY,
   BIMONTHLY,
   QUARTERLY,
-  MANUAL,
-  PAUSED,
+];
+
+export const CADENCE_OTHER_OPTIONS: CadenceOption[] = [MANUAL, PAUSED];
+
+// Full set, matching the enum.
+const CADENCE_OPTIONS: CadenceOption[] = [
+  ...CADENCE_INTERVAL_OPTIONS,
+  ...CADENCE_OTHER_OPTIONS,
 ];
 
 export const DEFAULT_CADENCE: CadenceValue = "BIWEEKLY";
 
-// Days until the chosen cadence's first deadline, or null for Manual/Paused
-// (no fixed interval to seed one). Used to give a newly created club's first
-// riff a real deadline at club-creation time.
+// Days until the chosen cadence's next deadline, or null for Manual/Paused
+// (no fixed interval to seed one). Used both to give a newly created club's
+// first riff a real deadline and to date every auto-created riff after it.
 export function getCadenceDays(value: CadenceValue): number | null {
   return CADENCE_OPTIONS.find((o) => o.value === value)?.days ?? null;
+}
+
+export function getCadenceLabel(value: CadenceValue): string {
+  return CADENCE_OPTIONS.find((o) => o.value === value)?.label ?? "Manual";
+}
+
+// True only for the cadences that produce riffs on a schedule. Manual and
+// Paused both return false — nothing automatic should ever act on those
+// clubs, which is the check the cadence cron will gate on.
+export function isIntervalCadence(value: CadenceValue): boolean {
+  return getCadenceDays(value) !== null;
+}
+
+// Runtime guard for untrusted input (API request bodies).
+export function isCadenceValue(value: unknown): value is CadenceValue {
+  return (
+    typeof value === "string" && CADENCE_OPTIONS.some((o) => o.value === value)
+  );
 }

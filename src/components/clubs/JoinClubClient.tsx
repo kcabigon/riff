@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { noiseTileStyle } from "@/components/NoiseBackground";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import AvatarStack from "@/components/shared/AvatarStack";
+import ClubStatsRow from "@/components/clubs/ClubStatsRow";
+import ClubCadenceLine from "@/components/clubs/ClubCadenceLine";
 import LandingNavBar from "@/components/LandingNavBar";
 import NavBar from "@/components/clubs/NavBar";
+import type { CadenceValue } from "@/lib/cadence";
 
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import TextInput from "@/components/TextInput";
@@ -30,6 +32,7 @@ interface JoinClubClientProps {
     name: string;
     description: string | null;
     bannerImage: string | null;
+    cadence: CadenceValue;
     members: ClubMember[];
   };
   stats: {
@@ -76,8 +79,6 @@ export default function JoinClubClient({
   const [error, setError] = useState<string | null>(null);
   const [writeClubAnswered, setWriteClubAnswered] = useState(false);
   const isMobile = useIsMobile();
-
-  const formatNumber = (n: number) => n.toLocaleString();
 
   // Step 1: send magic link back to this join page
   const handleEmailSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -187,7 +188,14 @@ export default function JoinClubClient({
       style={{
         position: "relative",
         minHeight: "100vh",
-        ...noiseTileStyle,
+        // Plain white, as this page was before ca8964c. That commit tiled the
+        // noise background so it would render on mobile — a fix aimed at the
+        // riff join page, which already had noise — and incidentally gave it
+        // to this page and the piece join page, neither of which ever had it.
+        // The piece page was corrected the same day in 0dbd4cd; this one was
+        // missed, because its header text sits on a banner rather than on the
+        // background, so the noise only showed below the banner.
+        backgroundColor: "#FFFFFF",
       }}
     >
       {isLoggedIn && user ? (
@@ -213,7 +221,10 @@ export default function JoinClubClient({
           className="club-banner"
           style={{
             width: "100%",
-            height: "320px",
+            // minHeight + vertical padding, not a fixed height — see
+            // ClubPageLayout.tsx for why.
+            minHeight: "320px",
+            padding: "40px 0",
             ...(club.bannerImage
               ? {
                   backgroundImage: `url(${club.bannerImage})`,
@@ -276,29 +287,7 @@ export default function JoinClubClient({
                   {club.name}
                 </h1>
 
-                <div
-                  style={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: "4px 12px",
-                    alignItems: "start",
-                  }}
-                >
-                  <p style={statStyle("#FFFFFF")}>
-                    <span style={{ fontWeight: 700 }}>{stats.riffCount}</span>{" "}
-                    riffs
-                  </p>
-                  <p style={statStyle("#FFFFFF")}>
-                    <span style={{ fontWeight: 700 }}>{stats.pieceCount}</span>{" "}
-                    pieces
-                  </p>
-                  <p style={statStyle("#FFFFFF")}>
-                    <span style={{ fontWeight: 700 }}>
-                      {formatNumber(stats.wordCount)}
-                    </span>{" "}
-                    words
-                  </p>
-                </div>
+                <ClubCadenceLine cadence={club.cadence} />
 
                 <AvatarStack
                   users={club.members.map((m) => m.user)}
@@ -325,6 +314,8 @@ export default function JoinClubClient({
                     {club.description}
                   </p>
                 )}
+
+                <ClubStatsRow stats={stats} />
               </div>
             </>
           )}
@@ -364,27 +355,7 @@ export default function JoinClubClient({
             {club.name}
           </h1>
 
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "4px 12px",
-              alignItems: "start",
-            }}
-          >
-            <p style={statStyle("#FFFFFF")}>
-              <span style={{ fontWeight: 700 }}>{stats.riffCount}</span> riffs
-            </p>
-            <p style={statStyle("#FFFFFF")}>
-              <span style={{ fontWeight: 700 }}>{stats.pieceCount}</span> pieces
-            </p>
-            <p style={statStyle("#FFFFFF")}>
-              <span style={{ fontWeight: 700 }}>
-                {formatNumber(stats.wordCount)}
-              </span>{" "}
-              words
-            </p>
-          </div>
+          <ClubCadenceLine cadence={club.cadence} />
 
           <AvatarStack
             users={club.members.map((m) => m.user)}
@@ -407,6 +378,8 @@ export default function JoinClubClient({
               {club.description}
             </p>
           )}
+
+          <ClubStatsRow stats={stats} />
         </div>
       )}
 
@@ -454,28 +427,7 @@ export default function JoinClubClient({
               {club.name}
             </h1>
 
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "4px 12px",
-                alignItems: "start",
-              }}
-            >
-              <p style={statStyle("#FFFFFF")}>
-                <span style={{ fontWeight: 700 }}>{stats.riffCount}</span> riffs
-              </p>
-              <p style={statStyle("#FFFFFF")}>
-                <span style={{ fontWeight: 700 }}>{stats.pieceCount}</span>{" "}
-                pieces
-              </p>
-              <p style={statStyle("#FFFFFF")}>
-                <span style={{ fontWeight: 700 }}>
-                  {formatNumber(stats.wordCount)}
-                </span>{" "}
-                words
-              </p>
-            </div>
+            <ClubCadenceLine cadence={club.cadence} />
 
             <AvatarStack
               users={club.members.map((m) => m.user)}
@@ -499,6 +451,8 @@ export default function JoinClubClient({
                 {club.description}
               </p>
             )}
+
+            <ClubStatsRow stats={stats} />
           </div>
         )}
 
@@ -676,8 +630,11 @@ export default function JoinClubClient({
 
       <style>{`
         @media (max-width: 767px) {
+          /* min-height too, or the desktop minHeight would win — see
+             ClubPageLayout.tsx */
           .club-banner {
             height: 200px !important;
+            min-height: 200px !important;
           }
         }
       `}</style>
@@ -686,17 +643,6 @@ export default function JoinClubClient({
 }
 
 // Shared button used across multiple steps
-
-const statStyle = (
-  color: string,
-  fontSize: string = "16px"
-): React.CSSProperties => ({
-  fontFamily: "var(--font-dm-sans)",
-  fontSize,
-  fontWeight: 300,
-  color,
-  margin: 0,
-});
 
 const ctaTextStyle: React.CSSProperties = {
   fontFamily: "var(--font-dm-sans)",

@@ -97,6 +97,7 @@ export default function CreateClubOverlay({
           name: finalClubName,
           description: description.trim() || null,
           bannerImage: finalBannerImage || null,
+          cadence,
         }),
       });
 
@@ -118,8 +119,8 @@ export default function CreateClubOverlay({
 
       // The first riff is real, not mocked — a new club should never land
       // the host on an empty page. Deadline is seeded directly from the
-      // chosen cadence's day count (no Cadence field needed for this one-off
-      // creation; only the *next* riff after this one needs the schema).
+      // chosen cadence's day count; every riff after this one is created by
+      // the cadence cron off the persisted `Club.cadence` above.
       // Best-effort: club creation itself already succeeded, so a hiccup
       // here shouldn't block the host from reaching their new club.
       try {
