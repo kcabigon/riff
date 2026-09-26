@@ -392,15 +392,30 @@ export default function ClubPageLayout({
     memberCount <= 2 ? 304 : memberCount === 3 ? 301 : 280;
 
   const activeAuthorPieces = activeRiff ? pieceByAuthor(activeRiff) : {};
-  // A not-yet-joined club member still gets a slot in the grid — joining now
-  // only ever happens as a side effect of picking New/Attach draft, so there's
-  // no separate "join" step to gate the card on. Sourced from club
-  // membership rather than a real RiffParticipant row.
-  const viewerMember = club.members.find((m) => m.user.id === currentUserId);
-  const activeParticipantsForGrid =
-    activeRiff && !isJoined && viewerMember
-      ? [...activeRiff.participants, { user: viewerMember.user }]
-      : (activeRiff?.participants ?? []);
+  // Every club member gets a slot the moment a riff opens, whether or not
+  // they've started writing. A club riff arrives on the club's cadence rather
+  // than being something you opt into, so an empty card is the honest state of
+  // "this month is open to you" — and a grid full of them is a legible signal
+  // both ways: to members that nobody has written yet, and to the host that
+  // the club might want its cadence set to Pause. For a club member a
+  // RiffParticipant row only ever appears as a side effect of picking
+  // New/Attach draft, so there's no separate "join" step a card could be gated
+  // on — and a cron-created riff may have no participant rows at all, since the
+  // one automatic join fires on the DRAFT -> ACTIVE transition.
+  //
+  // The grid's own width already keys off club.members (desktopContentWidth
+  // above), so the layout always assumed a card per member.
+  //
+  // A union rather than club.members alone: someone who has since left the club
+  // but submitted to this riff keeps their card, and their piece with it.
+  const activeParticipantsForGrid = activeRiff
+    ? [
+        ...activeRiff.participants,
+        ...club.members.filter(
+          (m) => !activeRiff.participants.some((p) => p.user.id === m.user.id)
+        ),
+      ]
+    : [];
   const sortedActiveParticipants = activeRiff
     ? sortedByProgress(
         activeParticipantsForGrid,
