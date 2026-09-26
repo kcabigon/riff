@@ -397,9 +397,11 @@ export default function ClubPageLayout({
   // than being something you opt into, so an empty card is the honest state of
   // "this month is open to you" — and a grid full of them is a legible signal
   // both ways: to members that nobody has written yet, and to the host that
-  // the club might want its cadence set to Pause. Joining is already only ever
-  // a side effect of picking New/Attach draft, so there's no separate "join"
-  // step a card could be gated on anyway.
+  // the club might want its cadence set to Pause. For a club member a
+  // RiffParticipant row only ever appears as a side effect of picking
+  // New/Attach draft, so there's no separate "join" step a card could be gated
+  // on — and a cron-created riff may have no participant rows at all, since the
+  // one automatic join fires on the DRAFT -> ACTIVE transition.
   //
   // The grid's own width already keys off club.members (desktopContentWidth
   // above), so the layout always assumed a card per member.
