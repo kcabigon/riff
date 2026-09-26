@@ -41,6 +41,10 @@ import DeleteClubConfirmModal from "@/components/clubs/DeleteClubConfirmModal";
 import LeaveClubConfirmModal from "@/components/clubs/LeaveClubConfirmModal";
 import TransferHostModal from "@/components/clubs/TransferHostModal";
 import AssignCoHostModal from "@/components/clubs/AssignCoHostModal";
+import CadenceSettingsModal from "@/components/clubs/CadenceSettingsModal";
+import ClubStatsRow from "@/components/clubs/ClubStatsRow";
+import ClubCadenceLine from "@/components/clubs/ClubCadenceLine";
+import type { CadenceValue } from "@/lib/cadence";
 
 interface ClubMember {
   user: {
@@ -101,6 +105,7 @@ interface ClubPageLayoutProps {
     name: string;
     description: string | null;
     bannerImage: string | null;
+    cadence: CadenceValue;
     adminId: string;
     moderatorId: string | null;
     members: ClubMember[];
@@ -214,6 +219,8 @@ export default function ClubPageLayout({
   const [clubName, setClubName] = useState(club.name);
   const [clubDescription, setClubDescription] = useState(club.description);
   const [clubBannerImage, setClubBannerImage] = useState(club.bannerImage);
+  const [clubCadence, setClubCadence] = useState(club.cadence);
+  const [isCadenceModalOpen, setIsCadenceModalOpen] = useState(false);
   const [isCreateRiffModalOpen, setIsCreateRiffModalOpen] = useState(false);
   const [isRevealModalOpen, setIsRevealModalOpen] = useState(false);
   const [isEditRiffModalOpen, setIsEditRiffModalOpen] = useState(false);
@@ -239,12 +246,7 @@ export default function ClubPageLayout({
     {
       type: "action" as const,
       label: "Riff cadence",
-      // Editing cadence after creation isn't wired up yet — it needs the
-      // Cadence field on Club (Kyle's schema proposal) to have anywhere
-      // real to persist to. Disabled rather than removed so the entry
-      // point is ready once that lands.
-      disabled: true,
-      onClick: () => {},
+      onClick: () => setIsCadenceModalOpen(true),
     },
     {
       type: "action" as const,
@@ -280,8 +282,7 @@ export default function ClubPageLayout({
     {
       type: "action" as const,
       label: "Riff cadence",
-      disabled: true,
-      onClick: () => {},
+      onClick: () => setIsCadenceModalOpen(true),
     },
     {
       type: "action" as const,
@@ -377,11 +378,6 @@ export default function ClubPageLayout({
     ? allPiecesSubmitted(activeRiff.participants, activeRiff.pieces)
     : false;
 
-  // Format word count with commas
-  const formatNumber = (n: number): string => {
-    return n.toLocaleString();
-  };
-
   // Card-grid layout responsive to club size — sized so cards land close to
   // their natural ~280-300px width whether the club has 2, 3, or 4+ members,
   // instead of a fixed-width container stretching 2 cards across the row or
@@ -457,18 +453,6 @@ export default function ClubPageLayout({
               "linear-gradient(to bottom, #000000 calc(100% - 64px), rgba(0, 0, 0, 0) 100%)",
           }}
         >
-          <h1
-            style={{
-              fontFamily: "var(--font-dm-serif-text)",
-              fontSize: "32px",
-              fontWeight: 400,
-              color: "#FFFFFF",
-              margin: 0,
-            }}
-          >
-            {clubName}
-          </h1>
-
           <div
             style={{
               display: "flex",
@@ -476,52 +460,19 @@ export default function ClubPageLayout({
               gap: "12px",
             }}
           >
-            <div
+            <h1
               style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "4px 12px",
-                alignItems: "start",
+                fontFamily: "var(--font-dm-serif-text)",
+                fontSize: "32px",
+                fontWeight: 400,
+                color: "#FFFFFF",
+                margin: 0,
+                flex: 1,
+                minWidth: 0,
               }}
             >
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#FFFFFF",
-                  margin: 0,
-                }}
-              >
-                <span style={{ fontWeight: 700 }}>{stats.riffCount}</span> riffs
-              </p>
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#FFFFFF",
-                  margin: 0,
-                }}
-              >
-                <span style={{ fontWeight: 700 }}>{stats.pieceCount}</span>{" "}
-                pieces
-              </p>
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "16px",
-                  fontWeight: 300,
-                  color: "#FFFFFF",
-                  margin: 0,
-                }}
-              >
-                <span style={{ fontWeight: 700 }}>
-                  {formatNumber(stats.wordCount)}
-                </span>{" "}
-                words
-              </p>
-            </div>
+              {clubName}
+            </h1>
             <ThreeDotButton
               variant="dark"
               items={
@@ -534,6 +485,8 @@ export default function ClubPageLayout({
               align="right"
             />
           </div>
+
+          <ClubCadenceLine cadence={clubCadence} />
 
           <AvatarStack
             users={club.members.map((m) => m.user)}
@@ -562,6 +515,8 @@ export default function ClubPageLayout({
               {clubDescription}
             </p>
           )}
+
+          <ClubStatsRow stats={stats} />
         </div>
       )}
 
@@ -571,7 +526,19 @@ export default function ClubPageLayout({
           className="club-banner"
           style={{
             width: "100%",
-            height: "320px",
+            // minHeight, not height: the header content is variable (a name
+            // that wraps, an optional cadence line, a 4-line-clamped
+            // description) and at 320px fixed the worst case overflowed a
+            // box with no overflow handling, spilling over the nav and the
+            // content below. Growing is the only option here that neither
+            // clips nor truncates a club's own name.
+            minHeight: "320px",
+            // Vertical breathing room for the grown case. box-sizing is
+            // border-box globally, so this sits inside the 320px floor —
+            // short headers still render at exactly 320px, and only a header
+            // taller than 240px pushes the banner past it. Horizontal
+            // padding stays on the content column, which already has its own.
+            padding: "40px 0",
             ...(clubBannerImage
               ? {
                   backgroundImage: `url(${clubBannerImage})`,
@@ -622,18 +589,6 @@ export default function ClubPageLayout({
                       }
                 }
               >
-                <h1
-                  style={{
-                    fontFamily: "var(--font-dm-serif-text)",
-                    fontSize: "32px",
-                    fontWeight: 400,
-                    color: "#FFFFFF",
-                    margin: 0,
-                  }}
-                >
-                  {clubName}
-                </h1>
-
                 <div
                   style={{
                     display: "flex",
@@ -641,55 +596,19 @@ export default function ClubPageLayout({
                     gap: "12px",
                   }}
                 >
-                  <div
+                  <h1
                     style={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: "4px 12px",
-                      alignItems: "start",
+                      fontFamily: "var(--font-dm-serif-text)",
+                      fontSize: "32px",
+                      fontWeight: 400,
+                      color: "#FFFFFF",
+                      margin: 0,
+                      flex: 1,
+                      minWidth: 0,
                     }}
                   >
-                    <p
-                      style={{
-                        fontFamily: "var(--font-dm-sans)",
-                        fontSize: "16px",
-                        fontWeight: 300,
-                        color: "#FFFFFF",
-                        margin: 0,
-                      }}
-                    >
-                      <span style={{ fontWeight: 700 }}>{stats.riffCount}</span>{" "}
-                      riffs
-                    </p>
-                    <p
-                      style={{
-                        fontFamily: "var(--font-dm-sans)",
-                        fontSize: "16px",
-                        fontWeight: 300,
-                        color: "#FFFFFF",
-                        margin: 0,
-                      }}
-                    >
-                      <span style={{ fontWeight: 700 }}>
-                        {stats.pieceCount}
-                      </span>{" "}
-                      pieces
-                    </p>
-                    <p
-                      style={{
-                        fontFamily: "var(--font-dm-sans)",
-                        fontSize: "16px",
-                        fontWeight: 300,
-                        color: "#FFFFFF",
-                        margin: 0,
-                      }}
-                    >
-                      <span style={{ fontWeight: 700 }}>
-                        {formatNumber(stats.wordCount)}
-                      </span>{" "}
-                      words
-                    </p>
-                  </div>
+                    {clubName}
+                  </h1>
                   <ThreeDotButton
                     variant="dark"
                     items={
@@ -702,6 +621,8 @@ export default function ClubPageLayout({
                     align="right"
                   />
                 </div>
+
+                <ClubCadenceLine cadence={clubCadence} />
 
                 <AvatarStack
                   users={club.members.map((m) => m.user)}
@@ -734,6 +655,8 @@ export default function ClubPageLayout({
                     {clubDescription}
                   </p>
                 )}
+
+                <ClubStatsRow stats={stats} />
               </div>
             </>
           )}
@@ -774,18 +697,6 @@ export default function ClubPageLayout({
               backgroundColor: "#000000",
             }}
           >
-            <h1
-              style={{
-                fontFamily: "var(--font-dm-serif-text)",
-                fontSize: "32px",
-                fontWeight: 400,
-                color: "#FFFFFF",
-                margin: 0,
-              }}
-            >
-              {clubName}
-            </h1>
-
             <div
               style={{
                 display: "flex",
@@ -793,53 +704,19 @@ export default function ClubPageLayout({
                 gap: "12px",
               }}
             >
-              <div
+              <h1
                 style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: "4px 12px",
-                  alignItems: "start",
+                  fontFamily: "var(--font-dm-serif-text)",
+                  fontSize: "32px",
+                  fontWeight: 400,
+                  color: "#FFFFFF",
+                  margin: 0,
+                  flex: 1,
+                  minWidth: 0,
                 }}
               >
-                <p
-                  style={{
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "16px",
-                    fontWeight: 300,
-                    color: "#FFFFFF",
-                    margin: 0,
-                  }}
-                >
-                  <span style={{ fontWeight: 700 }}>{stats.riffCount}</span>{" "}
-                  riffs
-                </p>
-                <p
-                  style={{
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "16px",
-                    fontWeight: 300,
-                    color: "#FFFFFF",
-                    margin: 0,
-                  }}
-                >
-                  <span style={{ fontWeight: 700 }}>{stats.pieceCount}</span>{" "}
-                  pieces
-                </p>
-                <p
-                  style={{
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "16px",
-                    fontWeight: 300,
-                    color: "#FFFFFF",
-                    margin: 0,
-                  }}
-                >
-                  <span style={{ fontWeight: 700 }}>
-                    {formatNumber(stats.wordCount)}
-                  </span>{" "}
-                  words
-                </p>
-              </div>
+                {clubName}
+              </h1>
               <ThreeDotButton
                 variant="dark"
                 items={
@@ -852,6 +729,8 @@ export default function ClubPageLayout({
                 align="right"
               />
             </div>
+
+            <ClubCadenceLine cadence={clubCadence} />
 
             <AvatarStack
               users={club.members.map((m) => m.user)}
@@ -881,6 +760,8 @@ export default function ClubPageLayout({
                 {clubDescription}
               </p>
             )}
+
+            <ClubStatsRow stats={stats} />
           </div>
         )}
 
@@ -1513,8 +1394,13 @@ export default function ClubPageLayout({
 
       <style>{`
         @media (max-width: 767px) {
+          /* min-height too, or the desktop minHeight would win and force the
+             mobile photo to 320px. Nothing renders inside the banner on
+             mobile — the header overlaps it via negative margin — so a fixed
+             height is right here. */
           .club-banner {
             height: 200px !important;
+            min-height: 200px !important;
           }
         }
         .riff-row-link:hover {
@@ -1537,6 +1423,14 @@ export default function ClubPageLayout({
           description: clubDescription,
           bannerImage: clubBannerImage,
         }}
+      />
+
+      <CadenceSettingsModal
+        isOpen={isCadenceModalOpen}
+        onClose={() => setIsCadenceModalOpen(false)}
+        onUpdated={setClubCadence}
+        clubId={club.id}
+        cadence={clubCadence}
       />
 
       <DeleteClubConfirmModal

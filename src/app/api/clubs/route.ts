@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
+import { isCadenceValue } from "@/lib/cadence";
 
 // GET /api/clubs - List all clubs user is a member of
 export async function GET(req: Request) {
@@ -78,7 +79,7 @@ export async function POST(req: Request) {
   try {
     const user = await requireAuth();
 
-    const { name, description, bannerImage } = await req.json();
+    const { name, description, bannerImage, cadence } = await req.json();
 
     // Validate input
     if (!name || name.trim().length === 0) {
@@ -86,6 +87,10 @@ export async function POST(req: Request) {
         { error: "Club name is required" },
         { status: 400 }
       );
+    }
+
+    if (cadence !== undefined && !isCadenceValue(cadence)) {
+      return NextResponse.json({ error: "Invalid cadence" }, { status: 400 });
     }
 
     if (name.length > 100) {
@@ -101,6 +106,9 @@ export async function POST(req: Request) {
         name: name.trim(),
         description: description?.trim() || null,
         bannerImage: bannerImage || null,
+        // Omitted falls back to the schema default (MANUAL), which is what
+        // any caller that predates the cadence picker should get.
+        ...(cadence !== undefined && { cadence }),
         adminId: user.id,
         members: {
           create: {

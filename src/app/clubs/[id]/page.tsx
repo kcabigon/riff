@@ -52,6 +52,7 @@ export default async function ClubPage({
         name: true,
         description: true,
         bannerImage: true,
+        cadence: true,
         adminId: true,
         moderatorId: true,
         members: {

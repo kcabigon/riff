@@ -64,6 +64,7 @@ export default async function JoinClubPage({
       name: true,
       description: true,
       bannerImage: true,
+      cadence: true,
       members: {
         include: {
           user: {
@@ -164,6 +165,7 @@ export default async function JoinClubPage({
         name: club.name,
         description: club.description,
         bannerImage: club.bannerImage,
+        cadence: club.cadence,
         members: club.members,
       }}
       stats={{ riffCount, pieceCount, wordCount }}
