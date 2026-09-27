@@ -44,7 +44,7 @@ import AssignCoHostModal from "@/components/clubs/AssignCoHostModal";
 import CadenceSettingsModal from "@/components/clubs/CadenceSettingsModal";
 import ClubStatsRow from "@/components/clubs/ClubStatsRow";
 import ClubCadenceLine from "@/components/clubs/ClubCadenceLine";
-import type { CadenceValue } from "@/lib/cadence";
+import { isIntervalCadence, type CadenceValue } from "@/lib/cadence";
 
 interface ClubMember {
   user: {
@@ -459,8 +459,16 @@ export default function ClubPageLayout({
           }
           clubs={userClubs}
           currentClub={{ id: club.id, name: clubName }}
+          // Hidden on an interval cadence even between volumes. The cron opens
+          // the next riff, so offering the host a button to do it themselves
+          // reads as "this is your job" when it isn't — and the gap it would
+          // fill is at most one tick. Manual needs it, and Paused keeps it as
+          // the only way back to a riff at all: the sweep deliberately won't
+          // auto-create for a paused club.
           onNewRiff={
-            (isAdmin || isCoHost) && !activeRiff
+            (isAdmin || isCoHost) &&
+            !activeRiff &&
+            !isIntervalCadence(clubCadence)
               ? () => setIsCreateRiffModalOpen(true)
               : undefined
           }
@@ -1627,6 +1635,8 @@ export default function ClubPageLayout({
             prompt: activeRiff.prompt,
             deadline: activeRiff.deadline,
           }}
+          // Always a club riff here.
+          deadlineRequired
         />
       )}
 

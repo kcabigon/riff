@@ -284,6 +284,23 @@ export async function PATCH(
       );
     }
 
+    // A club riff must keep its deadline. Creation already requires one, and a
+    // club riff without one can't be revealed, extended, or replaced by the
+    // cadence sweep — it just gets skipped every run, so the club quietly stops
+    // getting riffs with nothing to show why. Enforced here rather than only in
+    // the edit modal so the invariant belongs to the API. Clubless riffs are
+    // free to have none.
+    // Falsy rather than strictly null, matching the write below — it stores
+    // null for anything falsy, so "" would otherwise clear the deadline while
+    // slipping past a null-only check. `undefined` is excluded separately: it
+    // is the one falsy value that means "field not provided".
+    if (deadline !== undefined && !deadline && riff.clubId) {
+      return NextResponse.json(
+        { error: "A club riff needs a deadline" },
+        { status: 400 }
+      );
+    }
+
     // Revealing is delegated to revealRiff() below — it owns the status change,
     // the atomic volume numbering, and the notifications, so the cadence cron
     // can reveal without a user session and the two paths can't drift. Any

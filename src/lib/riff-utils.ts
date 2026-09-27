@@ -94,10 +94,14 @@ export function toEndOfDay(dateString: string): string {
 }
 
 // Client-side only: creates a riff (DRAFT) then immediately activates it —
-// the two-request "create riff" flow shared by CreateRiffModal (club riffs),
-// CreateRiffOverlay (the clubless flow), and CreateClubOverlay (a new club's
-// first riff). Callers own their own loading/error UI state; this just
-// returns a result to act on.
+// the two-request "create riff" flow shared by CreateRiffModal (club riffs)
+// and CreateRiffOverlay (the clubless flow). Callers own their own
+// loading/error UI state; this just returns a result to act on.
+//
+// A new club's first riff no longer comes through here: it is created server
+// side inside the club's own transaction (see createActiveClubRiff in
+// lib/club-riff), because two requests from a browser cannot be made atomic
+// and a half-created club is the one case that must not happen.
 export async function createAndActivateRiff(
   createEndpoint: string,
   body: {
