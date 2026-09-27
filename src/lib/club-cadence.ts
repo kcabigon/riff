@@ -5,15 +5,19 @@ import {
   isIntervalCadence,
   type CadenceValue,
 } from "@/lib/cadence";
+import { revealRiff } from "@/lib/reveal-riff";
 
 // The club cadence sweep. Runs once daily from /api/cron/daily-notifications
 // (sharing that invocation keeps us under Vercel Hobby's two-job cap).
 //
-// This module decides; it does not yet act. Every branch is resolved and
-// reported, and `dryRun` controls whether the writes happen — so the reasoning
-// can be inspected against real data without creating riffs or sending mail.
-// Worth keeping permanently: local dev shares the team's database, so a live
-// sweep emails real people.
+// Deciding and acting are separate on purpose: decideForClub works out what
+// should happen with no reads or writes, and applyDecision carries it out. That
+// makes every branch drivable with synthetic input, and it makes the dry-run
+// report exactly what a live run would do rather than an approximation of it.
+//
+// `dryRun` defaults to true. Worth keeping permanently — local development
+// shares the team's database, so a live sweep creates real riffs and mails real
+// people.
 
 // One action per club per tick, in priority order. A club is only ever in one
 // of these states, so the sweep never has to sequence two writes for the same
@@ -176,6 +180,10 @@ export async function loadSweepClubs() {
       id: true,
       name: true,
       cadence: true,
+      // The admin owns cron-created riffs' creatorId, which is non-nullable —
+      // a database requirement only. It is never surfaced as "so-and-so started
+      // this riff", because they didn't.
+      adminId: true,
       riffs: {
         where: { status: { in: ["ACTIVE", "REVEALED", "COMPLETED"] } },
         select: {
@@ -205,6 +213,7 @@ export async function loadSweepClubs() {
       id: club.id,
       name: club.name,
       cadence: club.cadence as CadenceValue,
+      adminId: club.adminId,
       activeRiff: active
         ? {
             id: active.id,
@@ -223,6 +232,69 @@ export interface CadenceSweepResult {
   clubsConsidered: number;
   decisions: ClubDecision[];
   counts: Record<CadenceAction["kind"], number>;
+  applied: number;
+  errors: Array<{ clubId: string; kind: string; error: string }>;
+}
+
+// Carries out one decision. Notifications for reveal come free — revealRiff
+// handles them, and a null actorId means nobody is excluded and nothing is
+// attributed to a person who didn't act.
+//
+// Extend, pause, and create write correctly but do not notify yet. Their copy
+// needs writing from scratch rather than borrowed: the existing riff-created and
+// deadline-changed emails both name a host as the actor, which would tell a club
+// that someone started or rescheduled a riff they had nothing to do with. That
+// lands next, along with the paused email.
+async function applyDecision(
+  decision: ClubDecision,
+  adminId: string
+): Promise<void> {
+  const { action } = decision;
+
+  switch (action.kind) {
+    case "reveal":
+      await revealRiff(action.riffId, { actorId: null });
+      return;
+
+    case "extend":
+      await prisma.riff.update({
+        where: { id: action.riffId },
+        data: { deadline: action.newDeadline },
+      });
+      return;
+
+    case "pause":
+      // One transaction: a club left paused with its empty riff still active,
+      // or a deleted riff on a club still claiming a cadence, are both states
+      // the sweep would then have to reason about. Nothing is lost — zero
+      // submissions is what got us here, and PieceRiff cascades so attached
+      // drafts survive as standalone drafts.
+      await prisma.$transaction([
+        prisma.riff.delete({ where: { id: action.riffId } }),
+        prisma.club.update({
+          where: { id: decision.clubId },
+          data: { cadence: "PAUSED" },
+        }),
+      ]);
+      return;
+
+    case "create":
+      // title and prompt stay null on purpose: "Volume N" is derived at render
+      // from the count of revealed riffs, so nothing stale is stored, and a
+      // prompt is the host's to add afterwards.
+      await prisma.riff.create({
+        data: {
+          clubId: decision.clubId,
+          creatorId: adminId,
+          status: "ACTIVE",
+          deadline: action.deadline,
+        },
+      });
+      return;
+
+    case "skip":
+      return;
+  }
 }
 
 // Decides for every club and reports. Actions are not applied yet — the reveal,
@@ -246,10 +318,39 @@ export async function runClubCadence({
     >
   );
 
+  const errors: CadenceSweepResult["errors"] = [];
+  let applied = 0;
+
+  if (!dryRun) {
+    // Sequential, and each club isolated: one club's failure must not stop the
+    // sweep for the rest, and there's no reason to hammer the database in
+    // parallel for a job with all day to finish.
+    for (let i = 0; i < clubs.length; i++) {
+      const decision = decisions[i];
+      if (decision.action.kind === "skip") continue;
+      try {
+        await applyDecision(decision, clubs[i].adminId);
+        applied += 1;
+      } catch (err) {
+        errors.push({
+          clubId: decision.clubId,
+          kind: decision.action.kind,
+          error: String(err),
+        });
+        console.error(
+          `[cadence] ${decision.action.kind} failed for club ${decision.clubId}:`,
+          err
+        );
+      }
+    }
+  }
+
   return {
     dryRun,
     clubsConsidered: clubs.length,
     decisions,
     counts,
+    applied,
+    errors,
   };
 }
