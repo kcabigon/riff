@@ -239,7 +239,8 @@ export async function sendRiffCreatedEmail({
   deadline,
 }: {
   email: string;
-  actorName: string;
+  // Omitted for cron-created riffs — see getRiffCreatedEmailTemplate.
+  actorName?: string | null;
   clubName: string;
   riffUrl: string;
   riffTitle?: string | null;
@@ -391,7 +392,10 @@ function getRiffCreatedEmailTemplate({
   clubName,
   riffUrl,
 }: {
-  actorName: string;
+  // Absent when the cadence cron opened the riff. A riff the cron created has
+  // no author — its creatorId is the club admin, but only because the column is
+  // non-nullable, and telling the club that person started it would be false.
+  actorName?: string | null;
   clubName: string;
   riffUrl: string;
   riffTitle?: string | null;
@@ -406,7 +410,11 @@ function getRiffCreatedEmailTemplate({
           <tr>
             <td style="padding:40px 40px 16px;">
               <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">New riff dropped.</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;"><strong style="font-weight:500;">${actorName}</strong> started a new riff.</p>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${
+                actorName
+                  ? `<strong style="font-weight:500;">${actorName}</strong> started a new riff.`
+                  : `A new riff is open in <strong style="font-weight:500;">${clubName}</strong>.`
+              }</p>
             </td>
           </tr>
 
@@ -903,6 +911,59 @@ export async function sendJoinRiffNudgeEmail({
   } catch (error) {
     console.error("Error sending join riff nudge email:", error);
     return false;
+  }
+}
+
+/**
+ * Club auto-paused email — sent to the host when the cadence cron gives up on a
+ * club that hasn't submitted anything for several deadlines running.
+ *
+ * Says what happened to the riff as well as to the club. The host didn't ask for
+ * that deletion, so this email is where they find out, and it shouldn't mention
+ * only the half that sounds better.
+ */
+export async function sendClubPausedEmail({
+  email,
+  clubName,
+  clubUrl,
+  daysQuiet,
+  volumeLabel,
+}: {
+  email: string;
+  clubName: string;
+  clubUrl: string;
+  daysQuiet: number;
+  volumeLabel: string;
+}): Promise<void> {
+  try {
+    const { data, error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to: email,
+      subject: `${clubName} is paused`,
+      html: emailShell({
+        title: `${clubName} is paused`,
+        clubName,
+        footerText: `You're receiving this because you host ${clubName} on Riff.`,
+        content: `
+          <tr>
+            <td style="padding:40px 40px 16px;">
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">Taking a breather.</h1>
+              <p style="margin:0 0 12px 0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">Nobody's submitted to <strong style="font-weight:500;">${clubName}</strong> in ${daysQuiet} days, so we've paused it and cleared ${volumeLabel}.</p>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">Nothing was lost — anything anyone started is back in their drafts. Pick a cadence whenever the club's ready and a fresh riff opens the next day.</p>
+            </td>
+          </tr>
+
+          ${emailButton("Set a cadence", clubUrl)}`,
+      }),
+    });
+    if (error) {
+      console.error("[email error] club paused:", error);
+      throw error;
+    }
+    console.info(`[email] club paused sent to ${email}`, data?.id);
+  } catch (err) {
+    console.error("[email error] club paused threw:", err);
+    throw err;
   }
 }
 

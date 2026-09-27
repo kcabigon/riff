@@ -6,6 +6,14 @@ import {
   type CadenceValue,
 } from "@/lib/cadence";
 import { revealRiff } from "@/lib/reveal-riff";
+import { notifyClubMembers } from "@/lib/notifications";
+import {
+  batchNotificationsEnabled,
+  sendClubPausedEmail,
+  sendRiffCreatedEmail,
+} from "@/lib/resend";
+import { getBaseUrl } from "@/lib/env";
+import { NotificationType } from "@prisma/client";
 
 // The club cadence sweep. Runs once daily from /api/cron/daily-notifications
 // (sharing that invocation keeps us under Vercel Hobby's two-job cap).
@@ -245,6 +253,79 @@ export interface CadenceSweepResult {
 // deadline-changed emails both name a host as the actor, which would tell a club
 // that someone started or rescheduled a riff they had nothing to do with. That
 // lands next, along with the paused email.
+// Notifications are wrapped so a mail failure can never undo a write that
+// already happened — the riff exists, or the club is paused, whatever Resend did.
+async function notifySafely(label: string, fn: () => Promise<void>) {
+  try {
+    await fn();
+  } catch (err) {
+    console.error(`[cadence] ${label} notification failed:`, err);
+  }
+}
+
+// A cron-opened riff is announced without an actor. Its creatorId is the club
+// admin because the column is non-nullable, and saying they started it would be
+// a lie — so the copy is club-voiced instead (see getRiffCreatedEmailTemplate).
+async function notifyRiffOpened(decision: ClubDecision, riffId: string) {
+  await notifySafely("riff opened", async () => {
+    await notifyClubMembers(
+      decision.clubId,
+      NotificationType.RIFF_CREATED,
+      null,
+      { riffId }
+    );
+
+    const members = await prisma.clubMember.findMany({
+      where: { clubId: decision.clubId },
+      include: { user: { select: { email: true } } },
+    });
+    const enabled = await batchNotificationsEnabled(
+      members.map((m) => m.user.email)
+    );
+    const sends = await Promise.allSettled(
+      members
+        .filter((m) => enabled.has(m.user.email))
+        .map((m) =>
+          sendRiffCreatedEmail({
+            email: m.user.email,
+            clubName: decision.clubName,
+            riffUrl: `${getBaseUrl()}/clubs/${decision.clubId}`,
+          })
+        )
+    );
+    console.info(
+      `[cadence] riff opened ${riffId}: ${sends.filter((r) => r.status === "fulfilled").length}/${members.length} emailed`
+    );
+  });
+}
+
+// Only the host hears about a pause — it's their club and their decision to
+// reverse. The copy names the deleted riff too; they didn't ask for that.
+async function notifyClubPaused(
+  decision: ClubDecision,
+  adminId: string,
+  missed: number
+) {
+  await notifySafely("club paused", async () => {
+    const cadenceDays = getCadenceDays(decision.cadence) ?? 0;
+    const admin = await prisma.user.findUnique({
+      where: { id: adminId },
+      select: { email: true, emailNotifications: true },
+    });
+    if (!admin?.emailNotifications) return;
+
+    // Volume is only assigned at reveal, so an empty riff has none — the label
+    // has to describe it rather than number it.
+    await sendClubPausedEmail({
+      email: admin.email,
+      clubName: decision.clubName,
+      clubUrl: `${getBaseUrl()}/clubs/${decision.clubId}`,
+      daysQuiet: missed * cadenceDays,
+      volumeLabel: "the riff nobody wrote in",
+    });
+  });
+}
+
 async function applyDecision(
   decision: ClubDecision,
   adminId: string
@@ -276,21 +357,25 @@ async function applyDecision(
           data: { cadence: "PAUSED" },
         }),
       ]);
+      await notifyClubPaused(decision, adminId, action.missed);
       return;
 
-    case "create":
+    case "create": {
       // title and prompt stay null on purpose: "Volume N" is derived at render
       // from the count of revealed riffs, so nothing stale is stored, and a
       // prompt is the host's to add afterwards.
-      await prisma.riff.create({
+      const created = await prisma.riff.create({
         data: {
           clubId: decision.clubId,
           creatorId: adminId,
           status: "ACTIVE",
           deadline: action.deadline,
         },
+        select: { id: true },
       });
+      await notifyRiffOpened(decision, created.id);
       return;
+    }
 
     case "skip":
       return;
