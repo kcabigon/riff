@@ -278,11 +278,7 @@ export function daysSince(date: Date): number {
   return Math.floor((Date.now() - date.getTime()) / (24 * 60 * 60 * 1000));
 }
 
-// Re-send lookback window for the deadline-approaching reminder, scaled to
-// how much time is left — weekly when there's plenty of runway, more
-// frequent as the deadline nears.
-export function deadlineReminderLookbackDays(daysRemaining: number): number {
-  if (daysRemaining > 7) return 7;
-  if (daysRemaining >= 3) return 3;
-  return 2;
-}
+// Reminder re-send windows used to live here, scaling how often a nudge could
+// repeat to how close the deadline was. Reminders are now pinned to two points
+// in a riff's life rather than a repeat interval, so there is no window to
+// compute — see milestonesReached in lib/engagement-reminders.

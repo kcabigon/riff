@@ -678,9 +678,9 @@ interface ReminderEmailVariant {
   body: string;
 }
 
-// Deadline-approaching copy is picked by urgency tier (same >7 / 3-7 / <3
-// day boundaries as deadlineReminderLookbackDays), not by send count — the
-// joke should get more urgent as the deadline nears, not rotate arbitrarily.
+// Deadline-approaching copy is picked by urgency tier (>7 / 3-7 / <3 days
+// remaining), not by send count — the joke should get more urgent as the
+// deadline nears, not rotate arbitrarily.
 function deadlineApproachingVariant(
   daysRemaining: number,
   clubName: string,

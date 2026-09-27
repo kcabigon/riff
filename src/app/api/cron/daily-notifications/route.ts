@@ -33,8 +33,10 @@ export async function GET(req: Request) {
   const jobs: JobName[] =
     only && ALL_JOBS.includes(only as JobName) ? [only as JobName] : ALL_JOBS;
 
-  // The cadence sweep decides but does not act while dryRun is on, so it can be
-  // run against real data to inspect its reasoning. Scheduled runs act.
+  // The cadence sweep and the reminders both decide without acting while dryRun
+  // is on, so either can be run against real data to inspect its reasoning
+  // without writing or mailing. Scheduled runs act. The comment digest has no
+  // such mode, which is the reason to pair dryRun with ?only=.
   const dryRun = url.searchParams.get("dryRun") === "1";
 
   const results = await Promise.allSettled(
@@ -42,7 +44,7 @@ export async function GET(req: Request) {
       job === "comments"
         ? runCommentNotifications()
         : job === "engagement"
-          ? runEngagementReminders()
+          ? runEngagementReminders({ dryRun })
           : runClubCadence({ dryRun })
     )
   );

@@ -7,14 +7,25 @@ import {
   sendRememberToWriteEmail,
   sendJoinRiffNudgeEmail,
 } from "@/lib/resend";
-import {
-  daysUntil,
-  daysSince,
-  deadlineReminderLookbackDays,
-} from "@/lib/riff-utils";
+import { daysUntil } from "@/lib/riff-utils";
 
-// Shared fetch reused across all three checks below — one riff scan per cron
-// run instead of three. Only ACTIVE riffs are ever eligible for a nudge.
+// Riff reminders. One stream, two sends per riff, whatever the cadence.
+//
+// This used to be three independent checks — deadline-approaching, remember-to-
+// write, join-riff-nudge — each re-sending on its own weekly-ish clock. Their
+// audiences overlapped and their windows were fixed, so total volume scaled with
+// how long a riff stayed open: a bimonthly riff earned about twenty-six emails
+// across its cycle, most of them saying the same thing. Auto-riffs made that the
+// normal case rather than the exception.
+//
+// Now the schedule is proportional. Every riff gets a nudge at its halfway point
+// and a final call the day before it closes, so a weekly riff and a quarterly
+// riff both cost two emails. Which of the three templates goes out is decided
+// per person from how far along they are.
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+// Shared fetch — one riff scan per cron run. Only ACTIVE riffs are eligible.
 async function fetchActiveRiffs() {
   return prisma.riff.findMany({
     where: { status: "ACTIVE" },
@@ -38,12 +49,16 @@ async function fetchActiveRiffs() {
       participants: {
         select: {
           userId: true,
-          joinedAt: true,
           user: { select: { id: true, email: true } },
         },
       },
+      // wordCount separates "has something going" from "attached an empty draft
+      // and walked away" — the two want opposite copy.
       pieces: {
-        select: { submittedAt: true, piece: { select: { authorId: true } } },
+        select: {
+          submittedAt: true,
+          piece: { select: { authorId: true, wordCount: true } },
+        },
       },
     },
   });
@@ -58,263 +73,233 @@ function riffPath(riff: ActiveRiff): string {
   return riff.club ? `/clubs/${riff.club.id}` : `/riffs/${riff.id}`;
 }
 
+// How many of this riff's two reminder milestones `now` has passed. Paired with
+// the send count it drives everything: send only while count < reached, so each
+// milestone fires exactly once and a missed cron day catches up on the next run
+// instead of being lost.
+//
+// Deliberately pure, so the schedule can be checked against synthetic riffs
+// rather than inferred from what did or didn't arrive in someone's inbox.
+export function milestonesReached(
+  createdAt: Date,
+  deadline: Date | null,
+  now: Date
+): number {
+  // No deadline means there is no "closes tomorrow" to warn about, so the
+  // second milestone has nothing to say. One nudge on day three, then quiet.
+  if (!deadline) {
+    return now.getTime() - createdAt.getTime() >= 3 * DAY_MS ? 1 : 0;
+  }
+
+  // Past the deadline the cadence sweep owns this riff — it is about to be
+  // revealed, extended, or cleared, and a reminder would contradict whichever
+  // of those happens. An extension re-opens the window but does not re-arm
+  // these milestones; members hear about the new date from the extension's own
+  // notification instead.
+  if (now >= deadline) return 0;
+
+  const halfway = new Date(
+    createdAt.getTime() + (deadline.getTime() - createdAt.getTime()) / 2
+  );
+  const finalCall = new Date(deadline.getTime() - DAY_MS);
+
+  // Under two days long, the two milestones collapse into each other or invert.
+  // One nudge is all such a riff can carry without doubling up same-day.
+  if (finalCall <= halfway) return now >= halfway ? 1 : 0;
+
+  if (now >= finalCall) return 2;
+  if (now >= halfway) return 1;
+  return 0;
+}
+
 // Notification rows are used purely as an internal send-log here: created with
 // isRead: true so they can never surface in the bell/panel (both the list and
-// unread-count endpoints hard-filter on isRead: false). This reuses existing,
-// already-unused NotificationType values instead of adding new schema.
-async function logSend(
-  type: NotificationType,
-  riffId: string,
-  recipientId: string
-) {
+// unread-count endpoints hard-filter on isRead: false). This reuses an existing,
+// otherwise-unused NotificationType value instead of adding new schema.
+//
+// One type for the whole stream, where there used to be three. That is what
+// makes "at most two per riff" enforceable — three separate logs could each
+// independently decide a person was due.
+const REMINDER_LOG = NotificationType.RIFF_DEADLINE_APPROACHING;
+
+async function logSend(riffId: string, recipientId: string) {
   await prisma.notification.create({
-    data: { type, riffId, recipientId, isRead: true },
+    data: { type: REMINDER_LOG, riffId, recipientId, isRead: true },
   });
 }
 
-interface SendHistoryEntry {
-  count: number;
-  lastSentAt: Date;
-}
-
-// Builds a `${riffId}:${recipientId}` -> { count, lastSentAt } map for a given
-// notification type, in one query, so eligibility/variant-cycling checks
-// don't hit the DB per-recipient inside the riff loop. Fetches full history
-// (no time bound) since `count` needs every prior send, not just recent ones.
-async function fetchSendHistory(
-  type: NotificationType,
+// `${riffId}:${recipientId}` -> how many reminders that person has had for that
+// riff, in one query, so the per-recipient checks inside the riff loop don't
+// each hit the database.
+async function fetchSendCounts(
   riffIds: string[]
-): Promise<Map<string, SendHistoryEntry>> {
+): Promise<Map<string, number>> {
   if (riffIds.length === 0) return new Map();
-  const rows = await prisma.notification.findMany({
-    where: { type, riffId: { in: riffIds } },
-    select: { riffId: true, recipientId: true, createdAt: true },
+  const rows = await prisma.notification.groupBy({
+    by: ["riffId", "recipientId"],
+    where: { type: REMINDER_LOG, riffId: { in: riffIds } },
+    _count: { _all: true },
   });
-  const map = new Map<string, SendHistoryEntry>();
+  const map = new Map<string, number>();
   for (const row of rows) {
     if (!row.riffId) continue;
-    const key = `${row.riffId}:${row.recipientId}`;
-    const existing = map.get(key);
-    if (!existing) {
-      map.set(key, { count: 1, lastSentAt: row.createdAt });
-    } else {
-      existing.count++;
-      if (row.createdAt > existing.lastSentAt)
-        existing.lastSentAt = row.createdAt;
-    }
+    map.set(`${row.riffId}:${row.recipientId}`, row._count._all);
   }
   return map;
 }
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-interface DeadlineCheckResult {
+export interface ReminderRunResult {
+  dryRun: boolean;
   sent: number;
-  // `${riffId}:${userId}` for everyone actually emailed this run. The
-  // remember-to-write check skips these — an unstarted participant matches
-  // both nudges, and the deadline one is the more urgent of the two.
-  notified: Set<string>;
+  // Split by which template went out, so a run can be read at a glance.
+  finishYourPiece: number;
+  startWriting: number;
+  joinTheRiff: number;
+  // Dry-run only: one line per intended email, `riff | template | milestone`.
+  // Emails, deliberately, are not included — the shape of a run is what needs
+  // checking, not who is behind on their writing.
+  plan?: string[];
 }
 
-export async function runDeadlineApproachingCheck(
-  riffs: ActiveRiff[]
-): Promise<DeadlineCheckResult> {
-  const now = new Date();
-  const notified = new Set<string>();
-  const withDeadline = riffs.filter((r) => r.deadline && r.deadline > now);
-  if (withDeadline.length === 0) return { sent: 0, notified };
+// dryRun decides everything and reports it without sending or logging. Same
+// reasoning as the cadence sweep: local development runs against the team's
+// database, so the only safe way to inspect this against real riffs is a mode
+// that cannot mail anyone.
+export async function runRiffReminders(
+  riffs: ActiveRiff[],
+  { now = new Date(), dryRun = false }: { now?: Date; dryRun?: boolean } = {}
+): Promise<ReminderRunResult> {
+  const result: ReminderRunResult = {
+    dryRun,
+    sent: 0,
+    finishYourPiece: 0,
+    startWriting: 0,
+    joinTheRiff: 0,
+    ...(dryRun && { plan: [] }),
+  };
 
-  // Widest possible lookback is 7 days, but fetch full history — the map is
-  // shared eligibility-check machinery, even though this check doesn't need
-  // the count (variant is chosen by urgency tier, not send number).
-  const history = await fetchSendHistory(
-    NotificationType.RIFF_DEADLINE_APPROACHING,
-    withDeadline.map((r) => r.id)
-  );
+  const due = riffs
+    .map((riff) => ({
+      riff,
+      reached: milestonesReached(riff.createdAt, riff.deadline, now),
+    }))
+    .filter((r) => r.reached > 0);
+  if (due.length === 0) return result;
 
+  const counts = await fetchSendCounts(due.map((r) => r.riff.id));
   const baseUrl = getBaseUrl();
-  let sent = 0;
 
-  for (const riff of withDeadline) {
-    const deadline = riff.deadline as Date;
-    const daysRemaining = daysUntil(deadline);
-    const cutoff = new Date(
-      now.getTime() - deadlineReminderLookbackDays(daysRemaining) * DAY_MS
-    );
-
-    const submittedAuthorIds = new Set(
+  for (const { riff, reached } of due) {
+    const submitted = new Set(
       riff.pieces
         .filter((p) => p.submittedAt !== null)
         .map((p) => p.piece.authorId)
     );
-    const waiting = riff.participants.filter(
-      (p) => !submittedAuthorIds.has(p.userId)
-    );
-    if (waiting.length === 0) continue;
 
-    const eligible = waiting.filter((p) => {
-      const lastSent = history.get(`${riff.id}:${p.userId}`)?.lastSentAt;
-      return !lastSent || lastSent < cutoff;
-    });
+    // Club riffs reach the whole membership — the old split, where members who
+    // had joined the riff and members who hadn't got different emails on
+    // different clocks, is the overlap this merge removes. A clubless riff has
+    // no membership to draw on, so its participants are the whole audience.
+    const audience = riff.club
+      ? riff.club.members.map((m) => ({
+          userId: m.userId,
+          email: m.user.email,
+        }))
+      : riff.participants.map((p) => ({
+          userId: p.userId,
+          email: p.user.email,
+        }));
+
+    const eligible = audience.filter(
+      (a) =>
+        !submitted.has(a.userId) &&
+        (counts.get(`${riff.id}:${a.userId}`) ?? 0) < reached
+    );
     if (eligible.length === 0) continue;
 
-    const enabled = await batchRemindersEnabled(
-      eligible.map((p) => p.user.email)
-    );
+    const enabled = await batchRemindersEnabled(eligible.map((a) => a.email));
     const riffTitle = riff.title || riff.club?.name || "your riff";
-
-    for (const p of eligible.filter((p) => enabled.has(p.user.email))) {
-      const delivered = await sendDeadlineApproachingEmail({
-        email: p.user.email,
-        riffTitle,
-        clubName: riff.club?.name ?? riffTitle,
-        riffUrl: `${baseUrl}${riffPath(riff)}`,
-        deadline,
-        daysRemaining,
-      });
-      // Only log a send that actually went out — a logged failure would
-      // suppress this recipient for the whole lookback window.
-      if (!delivered) continue;
-      await logSend(
-        NotificationType.RIFF_DEADLINE_APPROACHING,
-        riff.id,
-        p.userId
-      );
-      notified.add(`${riff.id}:${p.userId}`);
-      sent++;
-    }
-  }
-
-  return { sent, notified };
-}
-
-export async function runRememberToWriteCheck(
-  riffs: ActiveRiff[],
-  skip: Set<string> = new Set()
-): Promise<number> {
-  const now = new Date();
-  const active = riffs.filter((r) => !r.deadline || r.deadline > now);
-  if (active.length === 0) return 0;
-
-  const history = await fetchSendHistory(
-    NotificationType.RIFF_STARTED,
-    active.map((r) => r.id)
-  );
-
-  const cutoff = new Date(now.getTime() - 7 * DAY_MS);
-  const baseUrl = getBaseUrl();
-  let sent = 0;
-
-  for (const riff of active) {
-    const authorsWithPiece = new Set(riff.pieces.map((p) => p.piece.authorId));
-    const neverStarted = riff.participants.filter(
-      (p) =>
-        !authorsWithPiece.has(p.userId) &&
-        daysSince(p.joinedAt) >= 3 &&
-        !skip.has(`${riff.id}:${p.userId}`)
-    );
-    if (neverStarted.length === 0) continue;
-
-    const eligible = neverStarted.filter((p) => {
-      const lastSent = history.get(`${riff.id}:${p.userId}`)?.lastSentAt;
-      return !lastSent || lastSent < cutoff;
-    });
-    if (eligible.length === 0) continue;
-
-    const enabled = await batchRemindersEnabled(
-      eligible.map((p) => p.user.email)
-    );
-    const riffTitle = riff.title || riff.club?.name || "your riff";
-
-    for (const p of eligible.filter((p) => enabled.has(p.user.email))) {
-      const variantIndex = history.get(`${riff.id}:${p.userId}`)?.count ?? 0;
-      const delivered = await sendRememberToWriteEmail({
-        email: p.user.email,
-        riffTitle,
-        clubName: riff.club?.name ?? riffTitle,
-        riffUrl: `${baseUrl}${riffPath(riff)}`,
-        variantIndex,
-      });
-      if (!delivered) continue;
-      await logSend(NotificationType.RIFF_STARTED, riff.id, p.userId);
-      sent++;
-    }
-  }
-
-  return sent;
-}
-
-export async function runJoinRiffNudgeCheck(
-  riffs: ActiveRiff[]
-): Promise<number> {
-  const now = new Date();
-  const active = riffs.filter(
-    (r) => (!r.deadline || r.deadline > now) && daysSince(r.createdAt) >= 3
-  );
-  if (active.length === 0) return 0;
-
-  const history = await fetchSendHistory(
-    NotificationType.RIFF_INVITATION,
-    active.map((r) => r.id)
-  );
-
-  const cutoff = new Date(now.getTime() - 7 * DAY_MS);
-  const baseUrl = getBaseUrl();
-  let sent = 0;
-
-  for (const riff of active) {
+    const clubName = riff.club?.name ?? riffTitle;
+    const riffUrl = `${baseUrl}${riffPath(riff)}`;
     const participantIds = new Set(riff.participants.map((p) => p.userId));
-    // Clubless riffs have no club members to nudge — the join link handles invites
-    const nonMembers = (riff.club?.members ?? []).filter(
-      (m) => !participantIds.has(m.userId)
-    );
-    if (nonMembers.length === 0) continue;
 
-    const eligible = nonMembers.filter((m) => {
-      const lastSent = history.get(`${riff.id}:${m.userId}`)?.lastSentAt;
-      return !lastSent || lastSent < cutoff;
-    });
-    if (eligible.length === 0) continue;
+    for (const person of eligible.filter((a) => enabled.has(a.email))) {
+      const priorSends = counts.get(`${riff.id}:${person.userId}`) ?? 0;
+      const hasWords = riff.pieces.some(
+        (p) => p.piece.authorId === person.userId && p.piece.wordCount > 0
+      );
 
-    const enabled = await batchRemindersEnabled(
-      eligible.map((m) => m.user.email)
-    );
-    const riffTitle = riff.title || riff.club?.name || "your riff";
+      let delivered: boolean;
+      let bucket: "finishYourPiece" | "startWriting" | "joinTheRiff";
 
-    for (const m of eligible.filter((m) => enabled.has(m.user.email))) {
-      const variantIndex = history.get(`${riff.id}:${m.userId}`)?.count ?? 0;
-      const delivered = await sendJoinRiffNudgeEmail({
-        email: m.user.email,
-        riffTitle,
-        clubName: riff.club?.name ?? riffTitle,
-        riffUrl: `${baseUrl}${riffPath(riff)}`,
-        variantIndex,
-      });
+      if (dryRun) {
+        // Same branch order as the real dispatch below, so the plan reflects
+        // what a live run would actually pick.
+        bucket =
+          hasWords && riff.deadline
+            ? "finishYourPiece"
+            : participantIds.has(person.userId)
+              ? "startWriting"
+              : "joinTheRiff";
+        result.plan?.push(
+          `${riffTitle} | ${bucket} | milestone ${priorSends + 1}/${reached}`
+        );
+        result[bucket]++;
+        result.sent++;
+        continue;
+      }
+
+      if (hasWords && riff.deadline) {
+        // Something real is in progress, so the deadline is the useful part.
+        // This is the only one of the three templates that reads the date,
+        // which is why a deadline-less riff can't use it — such a writer falls
+        // through to the start-writing copy below, whose wording is a little
+        // off for someone who has already started. Unifying the three into one
+        // deadline-aware, draft-aware template is the copy pass's job.
+        delivered = await sendDeadlineApproachingEmail({
+          email: person.email,
+          riffTitle,
+          clubName,
+          riffUrl,
+          deadline: riff.deadline,
+          daysRemaining: daysUntil(riff.deadline),
+        });
+        bucket = "finishYourPiece";
+      } else if (participantIds.has(person.userId)) {
+        delivered = await sendRememberToWriteEmail({
+          email: person.email,
+          riffTitle,
+          clubName,
+          riffUrl,
+          variantIndex: priorSends,
+        });
+        bucket = "startWriting";
+      } else {
+        delivered = await sendJoinRiffNudgeEmail({
+          email: person.email,
+          riffTitle,
+          clubName,
+          riffUrl,
+          variantIndex: priorSends,
+        });
+        bucket = "joinTheRiff";
+      }
+
+      // Only log a send that actually went out — a logged failure would burn
+      // one of this person's two reminders for the riff's whole lifetime.
       if (!delivered) continue;
-      await logSend(NotificationType.RIFF_INVITATION, riff.id, m.userId);
-      sent++;
+      await logSend(riff.id, person.userId);
+      result[bucket]++;
+      result.sent++;
     }
   }
 
-  return sent;
+  return result;
 }
 
-export async function runEngagementReminders() {
+export async function runEngagementReminders({
+  dryRun = false,
+}: { dryRun?: boolean } = {}) {
   const riffs = await fetchActiveRiffs();
-  // Deadline check runs first so remember-to-write can skip anyone it already
-  // emailed. The join nudge targets non-participants, so it can never overlap
-  // with either and stays parallel.
-  const [deadline, joinRiffNudge] = await Promise.all([
-    runDeadlineApproachingCheck(riffs),
-    runJoinRiffNudgeCheck(riffs),
-  ]);
-  const rememberToWrite = await runRememberToWriteCheck(
-    riffs,
-    deadline.notified
-  );
-  return {
-    deadlineApproaching: deadline.sent,
-    rememberToWrite,
-    joinRiffNudge,
-  };
+  return runRiffReminders(riffs, { dryRun });
 }
