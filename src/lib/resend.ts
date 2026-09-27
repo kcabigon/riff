@@ -590,15 +590,16 @@ export async function sendPieceSharedEmail({
   }
 }
 
+// Deliberately actor-free: a deadline moves either because the host rescheduled
+// it or because the cadence cron extended an empty riff, and the club has no
+// reason to care which. That makes this template safe for the cron to reuse.
 export async function sendDeadlineChangedEmail({
   email,
-  hostName,
   newDeadline,
   riffUrl,
   clubName,
 }: {
   email: string;
-  hostName: string;
   newDeadline: Date;
   riffUrl: string;
   clubName: string;

@@ -433,7 +433,6 @@ export async function PATCH(
           eligibleDeadline.map((m) =>
             sendDeadlineChangedEmail({
               email: m.user.email,
-              hostName: updatedRiff.creator.name || "Your host",
               newDeadline,
               riffUrl,
               clubName: updatedRiff.club?.name ?? "your club",
@@ -479,7 +478,6 @@ export async function PATCH(
           eligibleDeadline.map((p) =>
             sendDeadlineChangedEmail({
               email: p.user.email,
-              hostName: updatedRiff.creator.name || "Your host",
               newDeadline,
               riffUrl,
               clubName: updatedRiff.title ?? "your riff",

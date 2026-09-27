@@ -10,6 +10,7 @@ import { notifyClubMembers } from "@/lib/notifications";
 import {
   batchNotificationsEnabled,
   sendClubPausedEmail,
+  sendDeadlineChangedEmail,
   sendRiffCreatedEmail,
 } from "@/lib/resend";
 import { getBaseUrl } from "@/lib/env";
@@ -244,17 +245,12 @@ export interface CadenceSweepResult {
   errors: Array<{ clubId: string; kind: string; error: string }>;
 }
 
-// Carries out one decision. Notifications for reveal come free — revealRiff
-// handles them, and a null actorId means nobody is excluded and nothing is
-// attributed to a person who didn't act.
+// Notifications for reveal come free — revealRiff handles them, and a null
+// actorId means nobody is excluded and nothing is attributed to a person who
+// didn't act. The other three announce themselves below.
 //
-// Extend, pause, and create write correctly but do not notify yet. Their copy
-// needs writing from scratch rather than borrowed: the existing riff-created and
-// deadline-changed emails both name a host as the actor, which would tell a club
-// that someone started or rescheduled a riff they had nothing to do with. That
-// lands next, along with the paused email.
-// Notifications are wrapped so a mail failure can never undo a write that
-// already happened — the riff exists, or the club is paused, whatever Resend did.
+// All of them are wrapped so a mail failure can never undo a write that already
+// happened — the riff exists, or the club is paused, whatever Resend did.
 async function notifySafely(label: string, fn: () => Promise<void>) {
   try {
     await fn();
@@ -295,6 +291,47 @@ async function notifyRiffOpened(decision: ClubDecision, riffId: string) {
     );
     console.info(
       `[cadence] riff opened ${riffId}: ${sends.filter((r) => r.status === "fulfilled").length}/${members.length} emailed`
+    );
+  });
+}
+
+// An extension is the club's cue that it still has time, so everyone hears it.
+// Both the email and the in-app copy already describe the deadline moving
+// without saying who moved it, which is what makes them reusable here.
+async function notifyDeadlineExtended(
+  decision: ClubDecision,
+  riffId: string,
+  newDeadline: Date
+) {
+  await notifySafely("deadline extended", async () => {
+    await notifyClubMembers(
+      decision.clubId,
+      NotificationType.RIFF_DEADLINE_CHANGED,
+      null,
+      { riffId }
+    );
+
+    const members = await prisma.clubMember.findMany({
+      where: { clubId: decision.clubId },
+      include: { user: { select: { email: true } } },
+    });
+    const enabled = await batchNotificationsEnabled(
+      members.map((m) => m.user.email)
+    );
+    const sends = await Promise.allSettled(
+      members
+        .filter((m) => enabled.has(m.user.email))
+        .map((m) =>
+          sendDeadlineChangedEmail({
+            email: m.user.email,
+            newDeadline,
+            riffUrl: `${getBaseUrl()}/clubs/${decision.clubId}`,
+            clubName: decision.clubName,
+          })
+        )
+    );
+    console.info(
+      `[cadence] deadline extended ${riffId}: ${sends.filter((r) => r.status === "fulfilled").length}/${members.length} emailed`
     );
   });
 }
@@ -342,6 +379,7 @@ async function applyDecision(
         where: { id: action.riffId },
         data: { deadline: action.newDeadline },
       });
+      await notifyDeadlineExtended(decision, action.riffId, action.newDeadline);
       return;
 
     case "pause":
@@ -382,9 +420,9 @@ async function applyDecision(
   }
 }
 
-// Decides for every club and reports. Actions are not applied yet — the reveal,
-// extend, pause, and create writes land next, once the decisions look right
-// against real data.
+// Decides for every club, then applies unless this is a dry run. Clubs are
+// handled one at a time rather than in parallel: the sweep is tiny, and a failure
+// on one club must not take down the rest of the tick.
 export async function runClubCadence({
   dryRun = true,
   now = new Date(),
