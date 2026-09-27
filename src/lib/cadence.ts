@@ -26,6 +26,17 @@ export interface CadenceOption {
   // Only set on the interval options (Weekly..Quarterly) — Manual/Paused
   // have no fixed duration, so there's nothing to seed a deadline with.
   days?: number;
+  // How many deadlines a riff may pass with zero submissions before the cron
+  // deletes it and pauses the club. Counted as missed deadlines rather than
+  // elapsed time: every extension is exactly one period, so it's derivable
+  // from createdAt with no stored counter, and it doesn't matter whether the
+  // host or the cron moved the deadline.
+  //
+  // Deliberately not uniform. Longer cadences get fewer chances because the
+  // absolute wait is what matters — 60 days with nothing submitted is a club
+  // problem, not an app problem. At 1, a riff is never extended at all: its
+  // first missed deadline pauses the club.
+  maxMissedDeadlines?: number;
 }
 
 const WEEKLY: CadenceOption = {
@@ -33,6 +44,7 @@ const WEEKLY: CadenceOption = {
   label: "Weekly",
   description: "7 day riffs",
   days: 7,
+  maxMissedDeadlines: 3,
 };
 
 const BIWEEKLY: CadenceOption = {
@@ -40,6 +52,7 @@ const BIWEEKLY: CadenceOption = {
   label: "Bi-weekly",
   description: "14 day riffs",
   days: 14,
+  maxMissedDeadlines: 3,
 };
 
 const MONTHLY: CadenceOption = {
@@ -47,6 +60,7 @@ const MONTHLY: CadenceOption = {
   label: "Monthly",
   description: "30 day riffs",
   days: 30,
+  maxMissedDeadlines: 3,
 };
 
 const BIMONTHLY: CadenceOption = {
@@ -54,6 +68,7 @@ const BIMONTHLY: CadenceOption = {
   label: "Bi-monthly",
   description: "60 day riffs",
   days: 60,
+  maxMissedDeadlines: 2,
 };
 
 const QUARTERLY: CadenceOption = {
@@ -61,6 +76,7 @@ const QUARTERLY: CadenceOption = {
   label: "Quarterly",
   description: "90 day riffs",
   days: 90,
+  maxMissedDeadlines: 1,
 };
 
 const PAUSED: CadenceOption = {
@@ -117,6 +133,13 @@ export function getCadenceDays(value: CadenceValue): number | null {
 
 export function getCadenceLabel(value: CadenceValue): string {
   return CADENCE_OPTIONS.find((o) => o.value === value)?.label ?? "Manual";
+}
+
+// Null for Manual/Paused, which are never swept for pausing.
+export function getMaxMissedDeadlines(value: CadenceValue): number | null {
+  return (
+    CADENCE_OPTIONS.find((o) => o.value === value)?.maxMissedDeadlines ?? null
+  );
 }
 
 // True only for the cadences that produce riffs on a schedule. Manual and
