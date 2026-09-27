@@ -4,7 +4,9 @@ import { NotificationType } from "@prisma/client";
 interface CreateNotificationInput {
   type: NotificationType;
   recipientId: string;
-  actorId?: string;
+  // Null for system-driven notifications (the cadence cron) — stored as null
+  // either way, see the write below.
+  actorId?: string | null;
   clubId?: string;
   riffId?: string;
   pieceId?: string;
@@ -31,8 +33,13 @@ export async function createNotification(input: CreateNotificationInput) {
 export async function notifyClubMembers(
   clubId: string,
   type: NotificationType,
-  actorId: string,
-  extra: Omit<CreateNotificationInput, "type" | "recipientId" | "actorId" | "clubId"> = {}
+  // Nullable so a cron-driven action can notify everyone — there is no actor
+  // to exclude, and createNotification already stores a falsy actorId as null.
+  actorId: string | null,
+  extra: Omit<
+    CreateNotificationInput,
+    "type" | "recipientId" | "actorId" | "clubId"
+  > = {}
 ) {
   const members = await prisma.clubMember.findMany({
     where: { clubId },
@@ -57,8 +64,13 @@ export async function notifyClubMembers(
 export async function notifyRiffParticipants(
   riffId: string,
   type: NotificationType,
-  actorId: string,
-  extra: Omit<CreateNotificationInput, "type" | "recipientId" | "actorId" | "riffId"> = {}
+  // Nullable so a cron-driven action can notify everyone — there is no actor
+  // to exclude, and createNotification already stores a falsy actorId as null.
+  actorId: string | null,
+  extra: Omit<
+    CreateNotificationInput,
+    "type" | "recipientId" | "actorId" | "riffId"
+  > = {}
 ) {
   const participants = await prisma.riffParticipant.findMany({
     where: { riffId },

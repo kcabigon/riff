@@ -4,12 +4,12 @@ import { requireAuth } from "@/lib/auth-utils";
 import { notifyClubMembers, notifyRiffParticipants } from "@/lib/notifications";
 import {
   sendRiffCreatedEmail,
-  sendRiffRevealedEmail,
   sendDeadlineChangedEmail,
   batchNotificationsEnabled,
 } from "@/lib/resend";
 import { NotificationType } from "@prisma/client";
 import { getBaseUrl } from "@/lib/env";
+import { revealRiff } from "@/lib/reveal-riff";
 
 // GET /api/riffs/[id] - Get riff details
 export async function GET(
@@ -284,20 +284,13 @@ export async function PATCH(
       );
     }
 
-    // Update riff — assign volumeNumber atomically at reveal time to prevent race conditions
-    const updatedRiff = await prisma.$transaction(async (tx) => {
-      let volumeNumber: number | undefined;
-      // Volume numbers are a per-club sequence — clubless riffs don't get one
-      if (status === "REVEALED" && riff.status === "ACTIVE" && riff.clubId) {
-        const revealedCount = await tx.riff.count({
-          where: {
-            clubId: riff.clubId,
-            status: { in: ["REVEALED", "COMPLETED"] },
-          },
-        });
-        volumeNumber = revealedCount + 1;
-      }
+    // Revealing is delegated to revealRiff() below — it owns the status change,
+    // the atomic volume numbering, and the notifications, so the cadence cron
+    // can reveal without a user session and the two paths can't drift. Any
+    // other field edits in this same request are applied here first.
+    const isRevealing = status === "REVEALED" && riff.status === "ACTIVE";
 
+    const updatedRiff = await prisma.$transaction(async (tx) => {
       // Auto-join the creator when activating — atomic with the status change
       if (status === "ACTIVE" && riff.status === "DRAFT") {
         await tx.riffParticipant.upsert({
@@ -311,12 +304,11 @@ export async function PATCH(
         where: { id: riffId },
         data: {
           ...(title !== undefined && { title: title?.trim() || null }),
-          ...(volumeNumber !== undefined && { volumeNumber }),
           ...(prompt !== undefined && { prompt: prompt?.trim() || null }),
           ...(deadline !== undefined && {
             deadline: deadline ? new Date(deadline) : null,
           }),
-          ...(status !== undefined && { status }),
+          ...(status !== undefined && !isRevealing && { status }),
         },
         include: {
           creator: {
@@ -394,98 +386,14 @@ export async function PATCH(
             err
           );
         }
-      } else if (status === "REVEALED" && riff.clubId) {
-        try {
-          await notifyClubMembers(
-            riff.clubId,
-            NotificationType.RIFF_COMPLETED,
-            actorId,
-            { riffId }
-          ).catch((err) =>
-            console.error("[notification error] riff revealed:", err)
-          );
-
-          const riffUrl = `${getBaseUrl()}/riffs/${riffId}`;
-          const revealedMembers = await prisma.clubMember.findMany({
-            where: { clubId: riff.clubId, userId: { not: actorId } },
-            include: { user: { select: { email: true, name: true } } },
-          });
-          const revealedEnabled = await batchNotificationsEnabled(
-            revealedMembers.map((m) => m.user.email)
-          );
-          const eligibleRevealed = revealedMembers.filter((m) =>
-            revealedEnabled.has(m.user.email)
-          );
-          console.info(
-            `[notify] riff revealed ${riffId}: ${revealedMembers.length} members, ${eligibleRevealed.length} email-enabled`
-          );
-          const revealedResults = await Promise.allSettled(
-            eligibleRevealed.map((m) =>
-              sendRiffRevealedEmail({
-                email: m.user.email,
-                clubName: updatedRiff.club?.name ?? "your club",
-                riffUrl,
-                riffTitle: updatedRiff.title,
-                volumeNumber: updatedRiff.volumeNumber,
-                pieceCount: updatedRiff._count.pieces,
-              })
-            )
-          );
-          console.info(
-            `[notify] riff revealed ${riffId}: ${revealedResults.filter((r) => r.status === "fulfilled").length} sent, ${revealedResults.filter((r) => r.status === "rejected").length} failed`
-          );
-        } catch (err) {
-          console.error(
-            "[notification error] riff revealed pipeline failed:",
-            err
-          );
-        }
-      } else if (status === "REVEALED") {
-        // Clubless riff reveal — same pipeline, scoped to riff participants
-        try {
-          await notifyRiffParticipants(
-            riffId,
-            NotificationType.RIFF_COMPLETED,
-            actorId
-          ).catch((err) =>
-            console.error("[notification error] riff revealed:", err)
-          );
-
-          const riffUrl = `${getBaseUrl()}/riffs/${riffId}`;
-          const revealedParticipants = await prisma.riffParticipant.findMany({
-            where: { riffId, userId: { not: actorId } },
-            include: { user: { select: { email: true, name: true } } },
-          });
-          const revealedEnabled = await batchNotificationsEnabled(
-            revealedParticipants.map((p) => p.user.email)
-          );
-          const eligibleRevealed = revealedParticipants.filter((p) =>
-            revealedEnabled.has(p.user.email)
-          );
-          console.info(
-            `[notify] riff revealed ${riffId}: ${revealedParticipants.length} participants, ${eligibleRevealed.length} email-enabled`
-          );
-          const revealedResults = await Promise.allSettled(
-            eligibleRevealed.map((p) =>
-              sendRiffRevealedEmail({
-                email: p.user.email,
-                clubName: updatedRiff.title ?? "your riff",
-                riffUrl,
-                riffTitle: updatedRiff.title,
-                volumeNumber: updatedRiff.volumeNumber,
-                pieceCount: updatedRiff._count.pieces,
-              })
-            )
-          );
-          console.info(
-            `[notify] riff revealed ${riffId}: ${revealedResults.filter((r) => r.status === "fulfilled").length} sent, ${revealedResults.filter((r) => r.status === "rejected").length} failed`
-          );
-        } catch (err) {
-          console.error(
-            "[notification error] riff revealed pipeline failed:",
-            err
-          );
-        }
+      } else if (isRevealing) {
+        // Delegated: revealRiff owns the status change, the atomic volume
+        // numbering, and the club/clubless notification split. actorId excludes
+        // the host from their own notification; the cron passes null so nobody
+        // is excluded.
+        await revealRiff(riffId, { actorId }).catch((err) =>
+          console.error("[notification error] riff revealed:", err)
+        );
       }
     }
 
@@ -589,9 +497,26 @@ export async function PATCH(
       }
     }
 
+    // On a reveal, updatedRiff was read before revealRiff() ran, so its status
+    // and volumeNumber are stale. Re-read rather than return a riff that claims
+    // to still be ACTIVE. (The reveal client only checks res.ok, but the
+    // response shouldn't lie for anyone who does read it.)
+    const responseRiff = isRevealing
+      ? ((await prisma.riff.findUnique({
+          where: { id: riffId },
+          include: {
+            creator: {
+              select: { id: true, name: true, username: true, avatarUrl: true },
+            },
+            club: { select: { id: true, name: true } },
+            _count: { select: { participants: true, pieces: true } },
+          },
+        })) ?? updatedRiff)
+      : updatedRiff;
+
     return NextResponse.json({
       success: true,
-      riff: updatedRiff,
+      riff: responseRiff,
     });
   } catch (error: any) {
     if (error.message === "Unauthorized") {
