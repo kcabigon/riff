@@ -126,7 +126,7 @@ export function getEmailPreviews(): EmailPreview[] {
           label: "Open riff",
           build: () =>
             buildRiffRevealedEmail({
-              clubName: RIFF_TITLE,
+              clubName: null,
               riffUrl,
               riffTitle: RIFF_TITLE,
               volumeNumber: null,

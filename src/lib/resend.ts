@@ -352,18 +352,41 @@ export async function sendRiffCreatedEmail({
 }
 
 interface RiffRevealedEmailParams {
-  clubName: string;
+  // Null for an open (clubless) riff.
+  clubName: string | null;
   riffUrl: string;
   riffTitle?: string | null;
   volumeNumber?: number | null;
+  // Submitted pieces only — attached drafts that never went in don't count.
   pieceCount: number;
+}
+
+function revealedDisplayTitle({
+  riffTitle,
+  volumeNumber,
+}: Pick<RiffRevealedEmailParams, "riffTitle" | "volumeNumber">): string | null {
+  return volumeNumber
+    ? riffTitle
+      ? `Volume ${volumeNumber}: ${riffTitle}`
+      : `Volume ${volumeNumber}`
+    : riffTitle || null;
+}
+
+function piecesReady(count: number): string {
+  return count === 1
+    ? "1 piece is ready to read"
+    : `${count} pieces are ready to read`;
 }
 
 export function buildRiffRevealedEmail(
   params: RiffRevealedEmailParams
 ): BuiltEmail {
+  const displayTitle = revealedDisplayTitle(params);
   return {
-    subject: `Riff revealed in ${params.clubName}`,
+    subject: params.clubName
+      ? `Riff revealed in ${params.clubName}`
+      : `${displayTitle ?? "Your riff"} is revealed`,
+    preview: `${piecesReady(params.pieceCount)}.`,
     html: getRiffRevealedEmailTemplate(params),
   };
 }
@@ -512,38 +535,35 @@ function getRiffCreatedEmailTemplate({
 /**
  * Riff revealed email (notification layout — club name at top)
  */
-function getRiffRevealedEmailTemplate({
-  clubName,
-  riffUrl,
-  riffTitle,
-  volumeNumber,
-  pieceCount,
-}: {
-  clubName: string;
-  riffUrl: string;
-  riffTitle?: string | null;
-  volumeNumber?: number | null;
-  pieceCount: number;
-}): string {
-  const displayTitle = volumeNumber
-    ? riffTitle
-      ? `Volume ${volumeNumber}: ${riffTitle}`
-      : `Volume ${volumeNumber}`
-    : riffTitle || null;
-
-  const titleLine = displayTitle
-    ? `<strong style="font-weight:500;">${displayTitle}</strong> has been revealed.`
-    : "A riff has been revealed.";
+function getRiffRevealedEmailTemplate(params: RiffRevealedEmailParams): string {
+  const { clubName, riffUrl, pieceCount, riffTitle, volumeNumber } = params;
+  const displayTitle = revealedDisplayTitle(params);
+  // Mirrors "New riff dropped: …". A dot rather than the usual colon between
+  // volume and title, so the headline doesn't carry two colons.
+  const headlineTitle =
+    volumeNumber && riffTitle
+      ? `Volume ${volumeNumber} · ${riffTitle}`
+      : displayTitle;
+  const headline = headlineTitle
+    ? `Riff revealed: ${escapeHtml(headlineTitle)}`
+    : "Riff revealed.";
+  // An open riff has no club, so its own name heads the email instead.
+  const header = clubName ?? displayTitle ?? "Riff";
 
   return emailShell({
-    title: `Riff revealed in ${clubName}`,
-    clubName,
-    footerText: `You're receiving this because you're a member of ${clubName} on Riff.`,
+    title: clubName
+      ? `Riff revealed in ${clubName}`
+      : `${displayTitle ?? "Your riff"} is revealed`,
+    preview: `${piecesReady(pieceCount)}.`,
+    clubName: header,
+    footerText: clubName
+      ? `You're receiving this because you're a member of ${clubName} on Riff.`
+      : `You're receiving this because you're part of ${header} on Riff.`,
     content: `
           <tr>
             <td style="padding:40px 40px 16px;">
-              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">The pieces are in.</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${titleLine}</p>
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${headline}</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${piecesReady(pieceCount)}.</p>
             </td>
           </tr>
 

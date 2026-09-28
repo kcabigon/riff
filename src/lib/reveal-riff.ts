@@ -62,7 +62,11 @@ export async function revealRiff(
       },
       include: {
         club: { select: { id: true, name: true } },
-        _count: { select: { pieces: true } },
+        // Submitted only: an attached draft that never went in isn't a piece
+        // anyone can read.
+        _count: {
+          select: { pieces: { where: { submittedAt: { not: null } } } },
+        },
       },
     });
   });
@@ -152,7 +156,7 @@ export async function revealRiff(
         eligible.map((p) =>
           sendRiffRevealedEmail({
             email: p.user.email,
-            clubName: updatedRiff.title ?? "your riff",
+            clubName: null,
             riffUrl,
             riffTitle: updatedRiff.title,
             volumeNumber: updatedRiff.volumeNumber,
