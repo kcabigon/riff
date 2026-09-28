@@ -140,7 +140,7 @@ Last updated: May 16, 2026
 - [x] Welcome tutorial: mobile-optimized version (portrait layout, swipe navigation)
 - [x] Engagement reminders v1: deadline-approaching (cadence scales with time left), remember-to-write (joined, no draft), join-riff-nudge (club member hasn't joined active riff) — all email-only via new `/api/cron/engagement-reminders`, rotating joke copy per reminder type. Cut from scope: club-invite tracking for non-members (no data model for it today) and a "someone started writing" social ping (unproven value, revisit only if the above don't move completion rate enough)
 - [ ] Notification emails via Resend — new comment digest (already covered by `daily-notifications` cron; deadline-approaching also covered by the same cron, formerly a separate `engagement-reminders` job)
-- [ ] 🔨 @jarric — Email copy audit + revision: one deadline-aware/draft-aware reminder template, polish the cadence emails (grace week, club paused, riff opened), voice/subject/preview pass across every sender, and fix piece-submitted linking club members to `/riffs/{id}` instead of `/clubs/{id}`
+- [x] Email copy audit + revision: every email revised (preview text, no jokes, riff-named headlines), one riff reminder in place of three, new reading reminders after a reveal, open-riff join + piece-invite-accepted emails, piece-submitted link fix, Pacific-time dates, HTML escaping, and a `/dev/emails` preview page
 - [ ] Toast notifications replacing `console.error` catches
 - [ ] Onboarding page refinements (create-club, join-club pages)
 
