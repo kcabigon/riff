@@ -29,9 +29,18 @@ export async function GET(req: Request) {
   // database, so triggering this route by hand would otherwise send the comment
   // digest and engagement reminders to real people — this makes it possible to
   // exercise one job without mailing anyone.
+  // An unrecognised value is rejected rather than falling back to every job — a
+  // typo'd ?only= would otherwise run the comment digest live.
   const only = url.searchParams.get("only");
-  const jobs: JobName[] =
-    only && ALL_JOBS.includes(only as JobName) ? [only as JobName] : ALL_JOBS;
+  if (only !== null && !ALL_JOBS.includes(only as JobName)) {
+    return NextResponse.json(
+      {
+        error: `Unknown job "${only}". Expected one of: ${ALL_JOBS.join(", ")}`,
+      },
+      { status: 400 }
+    );
+  }
+  const jobs: JobName[] = only ? [only as JobName] : ALL_JOBS;
 
   // The cadence sweep and the reminders both decide without acting while dryRun
   // is on, so either can be run against real data to inspect its reasoning
