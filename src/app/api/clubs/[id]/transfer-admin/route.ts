@@ -110,18 +110,26 @@ export async function POST(
       (m) => m.userId === targetUserId
     )?.user;
 
-    const emailRecipients = [oldAdminUser, newAdminUser].filter(
-      (u) => u?.email && u.emailNotifications
-    ) as { name: string | null; email: string }[];
+    // Each side gets its own version: the new host hears it was handed to
+    // them, the old host that the handoff went through.
+    const emailRecipients = (
+      [
+        [oldAdminUser, "oldHost"],
+        [newAdminUser, "newHost"],
+      ] as const
+    ).flatMap(([to, recipient]) =>
+      to?.email && to.emailNotifications ? [{ email: to.email, recipient }] : []
+    );
 
     await Promise.allSettled(
-      emailRecipients.map((recipient) =>
+      emailRecipients.map(({ email, recipient }) =>
         sendHostTransferredEmail({
-          email: recipient.email,
+          email,
           oldHostName: oldAdminUser?.name || "Someone",
           newHostName: newAdminUser?.name || "Someone",
           clubName: club.name,
           clubUrl,
+          recipient,
         })
       )
     );

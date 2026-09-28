@@ -1228,6 +1228,9 @@ interface HostTransferredEmailParams {
   newHostName: string;
   clubName: string;
   clubUrl: string;
+  // The transfer emails both people, and each needs their own side of it —
+  // the old host is the one who just clicked the button.
+  recipient: "newHost" | "oldHost";
 }
 
 export function buildHostTransferredEmail({
@@ -1235,18 +1238,36 @@ export function buildHostTransferredEmail({
   newHostName,
   clubName,
   clubUrl,
+  recipient,
 }: HostTransferredEmailParams): BuiltEmail {
+  const copy =
+    recipient === "newHost"
+      ? {
+          subject: `You're now the host of ${clubName}`,
+          preview: `${oldHostName} handed ${clubName} over to you.`,
+          headline: "You're the host now.",
+          body: `<strong style="font-weight:500;">${escapeHtml(oldHostName)}</strong> handed <strong style="font-weight:500;">${escapeHtml(clubName)}</strong> over to you. You can now assign a co-host and manage everything about the club.`,
+        }
+      : {
+          subject: `${newHostName} is now the host of ${clubName}`,
+          preview: `You're still in ${clubName} as a member.`,
+          headline: "Handed off.",
+          body: `<strong style="font-weight:500;">${escapeHtml(newHostName)}</strong> is now the host of <strong style="font-weight:500;">${escapeHtml(clubName)}</strong>. You're still in the club as a member.`,
+        };
+
   return {
-    subject: `New host in ${clubName}`,
+    subject: copy.subject,
+    preview: copy.preview,
     html: emailShell({
-      title: `New host in ${clubName}`,
+      title: copy.subject,
+      preview: copy.preview,
       clubName,
       footerText: `You're receiving this because you're a member of ${clubName} on Riff.`,
       content: `
           <tr>
             <td style="padding:40px 40px 16px;">
-              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">New club host.</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;"><strong style="font-weight:500;">${oldHostName}</strong> has transferred host privileges to <strong style="font-weight:500;">${newHostName}</strong>.</p>
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${copy.headline}</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${copy.body}</p>
             </td>
           </tr>
 

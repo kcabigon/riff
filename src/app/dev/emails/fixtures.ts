@@ -380,16 +380,29 @@ export function getEmailPreviews(): EmailPreview[] {
     {
       id: "host-transferred",
       name: "Host transferred",
-      trigger: "A host hands the club to someone else. The old and new hosts.",
+      trigger:
+        "A host hands the club to someone else. The old and new hosts, each with their own version.",
       variants: [
         {
-          label: "Default",
+          label: "To the new host",
           build: () =>
             buildHostTransferredEmail({
               oldHostName: HOST,
               newHostName: CO_HOST,
               clubName: CLUB,
               clubUrl,
+              recipient: "newHost",
+            }),
+        },
+        {
+          label: "To the old host",
+          build: () =>
+            buildHostTransferredEmail({
+              oldHostName: HOST,
+              newHostName: CO_HOST,
+              clubName: CLUB,
+              clubUrl,
+              recipient: "oldHost",
             }),
         },
       ],
