@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { sendCommentNotificationEmail } from "@/lib/resend";
+import { getBaseUrl } from "@/lib/env";
 
 type DigestGroup = {
   recipientId: string;
@@ -11,6 +12,8 @@ type DigestGroup = {
   riffId: string | null;
   commentCount: number;
   replyCount: number;
+  // First names of whoever wrote them, in order, each once.
+  actorNames: string[];
 };
 
 export async function runCommentNotifications(): Promise<{
@@ -29,6 +32,7 @@ export async function runCommentNotifications(): Promise<{
           authorId: true,
         },
       },
+      author: { select: { firstName: true, name: true } },
     },
     orderBy: { createdAt: "asc" },
   });
@@ -79,10 +83,17 @@ export async function runCommentNotifications(): Promise<{
     if (recipientId === comment.authorId) return;
     recipientIds.add(recipientId);
     const key = `${recipientId}:${comment.pieceId}`;
+    const actorName =
+      comment.author.firstName ||
+      comment.author.name?.split(" ")[0] ||
+      "Someone";
     const existing = groups.get(key);
     if (existing) {
       if (kind === "comment") existing.commentCount++;
       else existing.replyCount++;
+      if (!existing.actorNames.includes(actorName)) {
+        existing.actorNames.push(actorName);
+      }
       return;
     }
     groups.set(key, {
@@ -92,6 +103,7 @@ export async function runCommentNotifications(): Promise<{
       riffId: comment.riffId,
       commentCount: kind === "comment" ? 1 : 0,
       replyCount: kind === "reply" ? 1 : 0,
+      actorNames: [actorName],
     });
   };
 
@@ -117,7 +129,7 @@ export async function runCommentNotifications(): Promise<{
   });
   const emailById = new Map(recipients.map((user) => [user.id, user.email]));
 
-  const baseUrl = process.env.NEXTAUTH_URL || "https://letsriff.app";
+  const baseUrl = getBaseUrl();
   let emailsSent = 0;
   const pieceIds = new Set<string>();
 
@@ -136,6 +148,7 @@ export async function runCommentNotifications(): Promise<{
       pieceTitle: group.pieceTitle,
       commentCount: group.commentCount,
       replyCount: group.replyCount,
+      actorNames: group.actorNames,
       pieceUrl: `${baseUrl}/read/${group.pieceId}?${params.toString()}`,
     });
     pieceIds.add(group.pieceId);

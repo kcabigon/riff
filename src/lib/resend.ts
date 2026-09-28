@@ -1369,29 +1369,49 @@ interface CommentNotificationEmailParams {
   pieceTitle: string;
   commentCount: number;
   replyCount: number;
+  // First names of whoever commented or replied, each once, in order.
+  actorNames: string[];
   pieceUrl: string;
+}
+
+// "Rivy", "Rivy and Johnny", "Rivy, Johnny, and Jay", then "Rivy, Johnny, and
+// 2 others".
+function listNames(names: string[]): string {
+  if (names.length === 0) return "Someone";
+  if (names.length === 1) return names[0];
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  if (names.length === 3) return `${names[0]}, ${names[1]}, and ${names[2]}`;
+  const rest = names.length - 2;
+  return `${names[0]}, ${names[1]}, and ${rest} other${rest === 1 ? "" : "s"}`;
 }
 
 // One digest per recipient per piece, covering both kinds of activity:
 // comments left on a piece you wrote, and replies in a thread you're part of
 // (which may be on someone else's piece). Either count can be zero, but the
-// caller never sends when both are.
+// caller never sends when both are. Who left them leads — that's the news.
 export function buildCommentNotificationEmail({
   pieceTitle,
   commentCount,
   replyCount,
+  actorNames,
   pieceUrl,
 }: CommentNotificationEmailParams): BuiltEmail {
+  const title = pieceTitleOrNull(pieceTitle);
+  const onPiece = title ? `on \u201c${title}\u201d` : "on your piece";
+  const who = listNames(actorNames);
+  const verb = commentCount > 0 ? "commented" : "replied";
+  // The subject stays generic — which piece, not who; the names lead inside.
+  const subject = `${commentCount > 0 ? "New comments" : "New replies"} ${onPiece}`;
+
   const parts = [
     commentCount > 0 &&
       `${commentCount} new comment${commentCount === 1 ? "" : "s"} on your piece`,
     replyCount > 0 &&
       `${replyCount} new ${replyCount === 1 ? "reply" : "replies"} to your comments`,
   ].filter((part): part is string => Boolean(part));
+  const summary = `${parts.join(" and ")} since yesterday.`;
+  const preview = summary.charAt(0).toUpperCase() + summary.slice(1);
 
-  const headline =
-    replyCount > 0 && commentCount === 0 ? "New replies" : "New comments";
-  const subject = `${headline} on "${pieceTitle}"`;
   const footerText =
     commentCount > 0
       ? `You're receiving this because someone commented on your writing on Riff.`
@@ -1399,14 +1419,19 @@ export function buildCommentNotificationEmail({
 
   return {
     subject,
+    preview,
     html: emailShell({
       title: subject,
+      preview,
+      // The piece takes the header slot the club name fills in other emails,
+      // so the headline doesn't need to repeat it.
+      clubName: title ?? "Your piece",
       footerText,
       content: `
           <tr>
             <td style="padding:40px 40px 16px;">
-              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${headline} on "${pieceTitle}".</h1>
-              <p style="margin:0 0 16px 0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${parts.join(" and ")} in the last 24 hours.</p>
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${escapeHtml(`${who} ${verb}.`)}</h1>
+              <p style="margin:0 0 16px 0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${preview}</p>
             </td>
           </tr>
 

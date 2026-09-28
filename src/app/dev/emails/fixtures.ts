@@ -459,7 +459,7 @@ export function getEmailPreviews(): EmailPreview[] {
       id: "comment-digest",
       name: "Comment digest",
       trigger:
-        "Daily cron: new comments on your piece, or replies in a thread you're in.",
+        "Daily cron: new comments on your piece, or replies in a thread you're in. One email per piece.",
       variants: [
         {
           label: "Comments",
@@ -468,6 +468,7 @@ export function getEmailPreviews(): EmailPreview[] {
               pieceTitle: "Mt. Whitney",
               commentCount: 3,
               replyCount: 0,
+              actorNames: ["Rivy", "Johnny"],
               pieceUrl: `${base}/read/preview`,
             }),
         },
@@ -478,16 +479,18 @@ export function getEmailPreviews(): EmailPreview[] {
               pieceTitle: "We'll Always Have Mammoth",
               commentCount: 0,
               replyCount: 2,
+              actorNames: ["Johnny"],
               pieceUrl: `${base}/read/preview`,
             }),
         },
         {
-          label: "Both",
+          label: "Both, many people",
           build: () =>
             buildCommentNotificationEmail({
               pieceTitle: "Mt. Whitney",
-              commentCount: 2,
+              commentCount: 4,
               replyCount: 1,
+              actorNames: ["Rivy", "Johnny", "Jay", "Kyle"],
               pieceUrl: `${base}/read/preview`,
             }),
         },
