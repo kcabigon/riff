@@ -684,8 +684,9 @@ export function buildPieceSubmittedEmail({
   pieceTitle,
   deadline,
 }: PieceSubmittedEmailParams): BuiltEmail {
-  const headline = pieceTitle?.trim()
-    ? `${escapeHtml(actorName)} submitted &ldquo;${escapeHtml(pieceTitle.trim())}&rdquo;`
+  const title = pieceTitleOrNull(pieceTitle);
+  const headline = title
+    ? `${escapeHtml(actorName)} submitted &ldquo;${escapeHtml(title)}&rdquo;`
     : `${escapeHtml(actorName)} submitted a piece.`;
   const progress = `${submittedCount} of ${Math.max(writerCount, submittedCount)}`;
   const preview = `${progress} pieces are in.`;
