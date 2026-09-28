@@ -9,7 +9,6 @@ interface RiffFormFieldsProps {
   setPrompt: (v: string) => void;
   deadline: string;
   setDeadline: (v: string) => void;
-  deadlineRequired?: boolean;
   titleRequired?: boolean;
 }
 
@@ -61,7 +60,6 @@ export default function RiffFormFields({
   setPrompt,
   deadline,
   setDeadline,
-  deadlineRequired = false,
   titleRequired = false,
 }: RiffFormFieldsProps) {
   const daysUntilDeadline = deadline
@@ -89,7 +87,9 @@ export default function RiffFormFields({
           type="date"
           value={deadline}
           onChange={(e) => setDeadline(e.target.value)}
-          required={deadlineRequired}
+          // Every riff needs a deadline — clubless and club alike, at creation
+          // and on edit. Not a prop: there is no caller that wants otherwise.
+          required
           style={{
             ...inputStyle,
             display: "block",
@@ -165,6 +165,25 @@ export default function RiffFormFields({
           onBlur={onBlurBlack}
         />
       </div>
+
+      {/* Scoped rather than global, matching how TextInput handles ::placeholder
+          — a pseudo-element is the one thing inline styles can't reach, and the
+          rule belongs next to the field it applies to.
+
+          The browser's own clear control invites emptying a field that is always
+          required, and on a club riff an empty deadline stalls the cadence sweep.
+          The calendar picker indicator is deliberately untouched; that's how the
+          field is meant to be used.
+
+          Cosmetic only: the value can still be cleared by selecting its text, so
+          the real guards stay the form check and the API's rejection of a null
+          deadline. This just stops offering it. */}
+      <style jsx>{`
+        input[type="date"]::-webkit-clear-button,
+        input[type="date"]::-ms-clear {
+          display: none;
+        }
+      `}</style>
     </>
   );
 }

@@ -239,7 +239,8 @@ export async function sendRiffCreatedEmail({
   deadline,
 }: {
   email: string;
-  actorName: string;
+  // Omitted for cron-created riffs — see getRiffCreatedEmailTemplate.
+  actorName?: string | null;
   clubName: string;
   riffUrl: string;
   riffTitle?: string | null;
@@ -391,7 +392,10 @@ function getRiffCreatedEmailTemplate({
   clubName,
   riffUrl,
 }: {
-  actorName: string;
+  // Absent when the cadence cron opened the riff. A riff the cron created has
+  // no author — its creatorId is the club admin, but only because the column is
+  // non-nullable, and telling the club that person started it would be false.
+  actorName?: string | null;
   clubName: string;
   riffUrl: string;
   riffTitle?: string | null;
@@ -406,7 +410,11 @@ function getRiffCreatedEmailTemplate({
           <tr>
             <td style="padding:40px 40px 16px;">
               <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">New riff dropped.</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;"><strong style="font-weight:500;">${actorName}</strong> started a new riff.</p>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${
+                actorName
+                  ? `<strong style="font-weight:500;">${actorName}</strong> started a new riff.`
+                  : `A new riff is open in <strong style="font-weight:500;">${clubName}</strong>.`
+              }</p>
             </td>
           </tr>
 
@@ -582,15 +590,63 @@ export async function sendPieceSharedEmail({
   }
 }
 
+// The cadence cron's grace-week warning: a whole period went by with nobody
+// writing, so the deadline moves once and the club is told what happens if it
+// stays quiet. Separate from sendDeadlineChangedEmail rather than a variant of
+// it, because that one is also sent when a host reschedules by hand — putting
+// this copy there would tell a club it was about to be paused every time its
+// host moved a date.
+export async function sendRiffGracePeriodEmail({
+  email,
+  clubName,
+  riffUrl,
+  newDeadline,
+}: {
+  email: string;
+  clubName: string;
+  riffUrl: string;
+  newDeadline: Date;
+}): Promise<void> {
+  const deadlineStr = newDeadline.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+  });
+  try {
+    const { error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to: email,
+      subject: `One more week for ${clubName}`,
+      html: emailShell({
+        title: `One more week for ${clubName}`,
+        clubName,
+        footerText: `You're receiving this because you're a member of ${clubName} on Riff.`,
+        content: `
+          <tr>
+            <td style="padding:40px 40px 16px;">
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">Nobody wrote anything this round.</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${clubName} has until ${deadlineStr} — one more week. If nothing gets submitted by then, the club's riff schedule pauses until someone turns it back on.</p>
+            </td>
+          </tr>
+
+          ${emailButton("Write something", riffUrl)}`,
+      }),
+    });
+    if (error) console.error("Resend error (riffGracePeriod):", error);
+  } catch (error) {
+    console.error("Error sending riff grace period email:", error);
+  }
+}
+
+// Deliberately actor-free: a deadline moves because the host rescheduled it, and
+// the club has no reason to care who. The cadence cron does not use this — its
+// one extension is the grace week above, which needs to explain itself.
 export async function sendDeadlineChangedEmail({
   email,
-  hostName,
   newDeadline,
   riffUrl,
   clubName,
 }: {
   email: string;
-  hostName: string;
   newDeadline: Date;
   riffUrl: string;
   clubName: string;
@@ -626,52 +682,15 @@ export async function sendDeadlineChangedEmail({
   }
 }
 
-export async function sendAllPiecesSubmittedEmail({
-  email,
-  riffTitle,
-  clubName,
-  riffUrl,
-}: {
-  email: string;
-  riffTitle: string;
-  clubName: string;
-  riffUrl: string;
-}): Promise<void> {
-  try {
-    const { error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to: email,
-      subject: `All pieces submitted in ${clubName}`,
-      html: emailShell({
-        title: `All pieces submitted in ${clubName}`,
-        clubName,
-        footerText: `You're receiving this because you're the host of this riff on Riff.`,
-        content: `
-          <tr>
-            <td style="padding:40px 40px 16px;">
-              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">All pieces submitted in ${clubName}.</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">Everyone's in. You're ready for reveal.</p>
-            </td>
-          </tr>
-
-          ${emailButton("Review and reveal", riffUrl)}`,
-      }),
-    });
-    if (error) console.error("Resend error (allPiecesSubmitted):", error);
-  } catch (error) {
-    console.error("Error sending all pieces submitted email:", error);
-  }
-}
-
 interface ReminderEmailVariant {
   subject: string;
   headline: string;
   body: string;
 }
 
-// Deadline-approaching copy is picked by urgency tier (same >7 / 3-7 / <3
-// day boundaries as deadlineReminderLookbackDays), not by send count — the
-// joke should get more urgent as the deadline nears, not rotate arbitrarily.
+// Deadline-approaching copy is picked by urgency tier (>7 / 3-7 / <3 days
+// remaining), not by send count — the joke should get more urgent as the
+// deadline nears, not rotate arbitrarily.
 function deadlineApproachingVariant(
   daysRemaining: number,
   clubName: string,
@@ -903,6 +922,59 @@ export async function sendJoinRiffNudgeEmail({
   } catch (error) {
     console.error("Error sending join riff nudge email:", error);
     return false;
+  }
+}
+
+/**
+ * Club auto-paused email — sent to the host when the cadence cron gives up on a
+ * club that hasn't submitted anything for several deadlines running.
+ *
+ * Says what happened to the riff as well as to the club. The host didn't ask for
+ * that deletion, so this email is where they find out, and it shouldn't mention
+ * only the half that sounds better.
+ */
+export async function sendClubPausedEmail({
+  email,
+  clubName,
+  clubUrl,
+  daysQuiet,
+  volumeLabel,
+}: {
+  email: string;
+  clubName: string;
+  clubUrl: string;
+  daysQuiet: number;
+  volumeLabel: string;
+}): Promise<void> {
+  try {
+    const { data, error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to: email,
+      subject: `${clubName} is paused`,
+      html: emailShell({
+        title: `${clubName} is paused`,
+        clubName,
+        footerText: `You're receiving this because you host ${clubName} on Riff.`,
+        content: `
+          <tr>
+            <td style="padding:40px 40px 16px;">
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">Taking a breather.</h1>
+              <p style="margin:0 0 12px 0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">Nobody's submitted to <strong style="font-weight:500;">${clubName}</strong> in ${daysQuiet} days, so we've paused it and cleared ${volumeLabel}.</p>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">Nothing was lost — anything anyone started is back in their drafts. Pick a cadence whenever the club's ready and a fresh riff opens the next day.</p>
+            </td>
+          </tr>
+
+          ${emailButton("Set a cadence", clubUrl)}`,
+      }),
+    });
+    if (error) {
+      console.error("[email error] club paused:", error);
+      throw error;
+    }
+    console.info(`[email] club paused sent to ${email}`, data?.id);
+  } catch (err) {
+    console.error("[email error] club paused threw:", err);
+    throw err;
   }
 }
 

@@ -94,10 +94,14 @@ export function toEndOfDay(dateString: string): string {
 }
 
 // Client-side only: creates a riff (DRAFT) then immediately activates it —
-// the two-request "create riff" flow shared by CreateRiffModal (club riffs),
-// CreateRiffOverlay (the clubless flow), and CreateClubOverlay (a new club's
-// first riff). Callers own their own loading/error UI state; this just
-// returns a result to act on.
+// the two-request "create riff" flow shared by CreateRiffModal (club riffs)
+// and CreateRiffOverlay (the clubless flow). Callers own their own
+// loading/error UI state; this just returns a result to act on.
+//
+// A new club's first riff no longer comes through here: it is created server
+// side inside the club's own transaction (see createActiveClubRiff in
+// lib/club-riff), because two requests from a browser cannot be made atomic
+// and a half-created club is the one case that must not happen.
 export async function createAndActivateRiff(
   createEndpoint: string,
   body: {
@@ -278,11 +282,7 @@ export function daysSince(date: Date): number {
   return Math.floor((Date.now() - date.getTime()) / (24 * 60 * 60 * 1000));
 }
 
-// Re-send lookback window for the deadline-approaching reminder, scaled to
-// how much time is left — weekly when there's plenty of runway, more
-// frequent as the deadline nears.
-export function deadlineReminderLookbackDays(daysRemaining: number): number {
-  if (daysRemaining > 7) return 7;
-  if (daysRemaining >= 3) return 3;
-  return 2;
-}
+// Reminder re-send windows used to live here, scaling how often a nudge could
+// repeat to how close the deadline was. Reminders are now pinned to two points
+// in a riff's life rather than a repeat interval, so there is no window to
+// compute — see milestonesReached in lib/engagement-reminders.

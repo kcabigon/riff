@@ -1,14 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
-import {
-  notifyClubMembers,
-  notifyRiffParticipants,
-  createNotification,
-} from "@/lib/notifications";
+import { notifyUsers } from "@/lib/notifications";
 import {
   sendPieceSubmittedEmail,
-  sendAllPiecesSubmittedEmail,
   batchNotificationsEnabled,
 } from "@/lib/resend";
 import { NotificationType } from "@prisma/client";
@@ -32,12 +27,6 @@ export async function PATCH(
             id: true,
             title: true,
             clubId: true,
-            creatorId: true,
-            participants: { select: { userId: true } },
-            pieces: {
-              where: { submittedAt: { not: null } },
-              select: { id: true },
-            },
             club: { select: { name: true } },
           },
         },
@@ -68,19 +57,21 @@ export async function PATCH(
       const riffUrl = `${getBaseUrl()}/riffs/${riffId}`;
 
       if (riff.clubId) {
-        await notifyClubMembers(
-          riff.clubId,
+        // Fetched once for both the in-app rows and the emails; the submitter
+        // is excluded here, so notifyUsers has nothing left to filter.
+        const pieceMembers = await prisma.clubMember.findMany({
+          where: { clubId: riff.clubId, userId: { not: user.id } },
+          select: { userId: true, user: { select: { email: true } } },
+        });
+
+        await notifyUsers(
+          pieceMembers.map((m) => m.userId),
           NotificationType.PIECE_SUBMITTED_TO_RIFF,
           user.id,
-          { riffId }
+          { clubId: riff.clubId, riffId }
         ).catch((err) =>
           console.error("[notification error] piece submitted:", err)
         );
-
-        const pieceMembers = await prisma.clubMember.findMany({
-          where: { clubId: riff.clubId, userId: { not: user.id } },
-          include: { user: { select: { email: true, name: true } } },
-        });
         const pieceEnabled = await batchNotificationsEnabled(
           pieceMembers.map((m) => m.user.email)
         );
@@ -107,18 +98,19 @@ export async function PATCH(
         );
       } else {
         // Clubless riff — same pipeline, scoped to riff participants
-        await notifyRiffParticipants(
-          riffId,
+        const pieceParticipants = await prisma.riffParticipant.findMany({
+          where: { riffId, userId: { not: user.id } },
+          select: { userId: true, user: { select: { email: true } } },
+        });
+
+        await notifyUsers(
+          pieceParticipants.map((p) => p.userId),
           NotificationType.PIECE_SUBMITTED_TO_RIFF,
-          user.id
+          user.id,
+          { riffId }
         ).catch((err) =>
           console.error("[notification error] piece submitted:", err)
         );
-
-        const pieceParticipants = await prisma.riffParticipant.findMany({
-          where: { riffId, userId: { not: user.id } },
-          include: { user: { select: { email: true, name: true } } },
-        });
         const pieceEnabled = await batchNotificationsEnabled(
           pieceParticipants.map((p) => p.user.email)
         );
@@ -143,45 +135,6 @@ export async function PATCH(
         console.info(
           `[notify] piece submitted ${riffId}: ${pieceResults.filter((r) => r.status === "fulfilled").length} sent, ${pieceResults.filter((r) => r.status === "rejected").length} failed`
         );
-      }
-
-      // Check if all participants have now submitted — notify host
-      const submittedCount = riff.pieces.length + 1; // +1 for this submission
-      const participantCount = riff.participants.length;
-      if (participantCount > 0 && submittedCount >= participantCount) {
-        await createNotification({
-          type: NotificationType.ALL_PIECES_SUBMITTED,
-          recipientId: riff.creatorId,
-          riffId,
-          clubId: riff.clubId ?? undefined,
-        }).catch((err) =>
-          console.error("[notification error] all pieces submitted:", err)
-        );
-
-        const host = await prisma.user.findUnique({
-          where: { id: riff.creatorId },
-          select: { email: true, emailNotifications: true },
-        });
-        if (host?.emailNotifications) {
-          console.info(
-            `[notify] all pieces submitted ${riffId}: sending host email to ${host.email}`
-          );
-          await sendAllPiecesSubmittedEmail({
-            email: host.email,
-            riffTitle: riffDisplayTitle,
-            clubName: riff.club?.name ?? riffDisplayTitle,
-            riffUrl,
-          }).catch((err) =>
-            console.error(
-              "[notification error] all pieces submitted email:",
-              err
-            )
-          );
-        } else {
-          console.info(
-            `[notify] all pieces submitted ${riffId}: host email skipped (emailNotifications=false)`
-          );
-        }
       }
     } catch (err) {
       console.error(

@@ -16,13 +16,7 @@ import {
   CREATION_CADENCE_OPTIONS,
   DEFAULT_CADENCE,
   CadenceValue,
-  getCadenceDays,
 } from "@/lib/cadence";
-import {
-  createAndActivateRiff,
-  toEndOfDay,
-  toLocalDateInputValue,
-} from "@/lib/riff-utils";
 import { CLUB_NAME_MAX, DESCRIPTION_MAX } from "@/lib/constants";
 
 const TOTAL_STEPS = 3;
@@ -117,37 +111,11 @@ export default function CreateClubOverlay({
         body: JSON.stringify({ clubId: clubId }),
       });
 
-      // The first riff is real, not mocked — a new club should never land
-      // the host on an empty page. Deadline is seeded directly from the
-      // chosen cadence's day count; every riff after this one is created by
-      // the cadence cron off the persisted `Club.cadence` above.
-      // Best-effort: club creation itself already succeeded, so a hiccup
-      // here shouldn't block the host from reaching their new club.
-      try {
-        const cadenceDays = getCadenceDays(cadence);
-        if (cadenceDays) {
-          const deadlineDate = new Date();
-          deadlineDate.setDate(deadlineDate.getDate() + cadenceDays);
-          const deadline = toEndOfDay(toLocalDateInputValue(deadlineDate));
-
-          let result = await createAndActivateRiff(
-            `/api/clubs/${clubId}/riffs`,
-            { deadline }
-          );
-          if (!result.ok) {
-            result = await createAndActivateRiff(`/api/clubs/${clubId}/riffs`, {
-              deadline,
-            });
-          }
-          if (!result.ok) {
-            console.error(
-              "Failed to create first riff for new club after retry"
-            );
-          }
-        }
-      } catch (riffErr) {
-        console.error("Error creating first riff for new club:", riffErr);
-      }
+      // The first riff is created by POST /api/clubs above, in the same
+      // transaction as the club itself. It used to happen here as a follow-up
+      // pair of requests, retried twice and otherwise only logged — so the
+      // promise that a new club never lands its host on an empty page could
+      // quietly fail to hold.
 
       const createdClubId = clubId;
       reset();
