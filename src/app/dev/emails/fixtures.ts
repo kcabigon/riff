@@ -240,8 +240,7 @@ export function getEmailPreviews(): EmailPreview[] {
             buildClubPausedEmail({
               clubName: CLUB,
               clubUrl,
-              daysQuiet: 14,
-              volumeLabel: "the riff nobody wrote in",
+              riffName: `Volume ${VOLUME + 1}`,
             }),
         },
       ],

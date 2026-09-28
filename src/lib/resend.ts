@@ -1208,40 +1208,40 @@ export async function sendJoinRiffNudgeEmail({
 interface ClubPausedEmailParams {
   clubName: string;
   clubUrl: string;
-  daysQuiet: number;
-  volumeLabel: string;
+  // The riff that was cleared — its title, or the "Volume N" it would have been.
+  riffName: string;
 }
 
 /**
- * Club auto-paused email — sent to the host when the cadence cron gives up on a
- * club that hasn't submitted anything for several deadlines running.
+ * Club auto-paused email — sent to the host when the cadence cron pauses a club
+ * whose riff stayed empty through its grace week.
  *
- * Says what happened to the riff as well as to the club. The host didn't ask for
- * that deletion, so this email is where they find out, and it shouldn't mention
- * only the half that sounds better.
+ * The empty riff is deleted along with the pause; the email leaves that out on
+ * purpose — nothing was submitted to it, and the club page no longer shows it.
  */
 export function buildClubPausedEmail({
   clubName,
   clubUrl,
-  daysQuiet,
-  volumeLabel,
+  riffName,
 }: ClubPausedEmailParams): BuiltEmail {
+  const preview = "Start again whenever you're ready.";
   return {
     subject: `${clubName} is paused`,
+    preview,
     html: emailShell({
       title: `${clubName} is paused`,
+      preview,
       clubName,
       footerText: `You're receiving this because you host ${clubName} on Riff.`,
       content: `
           <tr>
             <td style="padding:40px 40px 16px;">
               <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">Taking a breather.</h1>
-              <p style="margin:0 0 12px 0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">Nobody's submitted to <strong style="font-weight:500;">${clubName}</strong> in ${daysQuiet} days, so we've paused it and cleared ${volumeLabel}.</p>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">Nothing was lost — anything anyone started is back in their drafts. Pick a cadence whenever the club's ready and a fresh riff opens the next day.</p>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">Nothing was submitted to <strong style="font-weight:500;">${escapeHtml(riffName)}</strong>, so we've paused the club. Pick things back up whenever you're ready.</p>
             </td>
           </tr>
 
-          ${emailButton("Set a cadence", clubUrl)}`,
+          ${emailButton("Visit club", clubUrl)}`,
     }),
   };
 }

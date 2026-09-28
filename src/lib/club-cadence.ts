@@ -350,24 +350,23 @@ async function notifyGracePeriod(
 
 // Only the host hears about a pause — it's their club and their decision to
 // reverse. The copy names the deleted riff too; they didn't ask for that.
-async function notifyClubPaused(decision: ClubDecision, adminId: string) {
+async function notifyClubPaused(
+  decision: ClubDecision,
+  adminId: string,
+  riffName: string
+) {
   await notifySafely("club paused", async () => {
-    const cadenceDays = getCadenceDays(decision.cadence) ?? 0;
     const admin = await prisma.user.findUnique({
       where: { id: adminId },
       select: { email: true, emailNotifications: true },
     });
     if (!admin?.emailNotifications) return;
 
-    // Volume is only assigned at reveal, so an empty riff has none — the label
-    // has to describe it rather than number it.
     await sendClubPausedEmail({
       email: admin.email,
       clubName: decision.clubName,
       clubUrl: `${getBaseUrl()}/clubs/${decision.clubId}`,
-      // One full cadence period of silence, plus the grace week.
-      daysQuiet: cadenceDays + PAUSE_GRACE_DAYS,
-      volumeLabel: "the riff nobody wrote in",
+      riffName,
     });
   });
 }
@@ -391,7 +390,20 @@ async function applyDecision(
       await notifyGracePeriod(decision, action.riffId, action.newDeadline);
       return;
 
-    case "pause":
+    case "pause": {
+      // Named before it's deleted, for the host's email. Volume numbers are
+      // only assigned at reveal, so an untitled riff gets the one it would
+      // have had — what the club page was calling it. A failed lookup must not
+      // block the pause, so it falls back to a description.
+      const riffName = await prisma.riff
+        .findUnique({ where: { id: action.riffId }, select: { title: true } })
+        .then(async (riff) =>
+          getRiffDisplayTitle(
+            { title: riff?.title ?? null, status: "ACTIVE" },
+            await predictVolumeNumber(decision.clubId)
+          )
+        )
+        .catch(() => "the empty riff");
       // One transaction: a club left paused with its empty riff still active,
       // or a deleted riff on a club still claiming a cadence, are both states
       // the sweep would then have to reason about. Nothing is lost — zero
@@ -404,8 +416,9 @@ async function applyDecision(
           data: { cadence: "PAUSED" },
         }),
       ]);
-      await notifyClubPaused(decision, adminId);
+      await notifyClubPaused(decision, adminId, riffName);
       return;
+    }
 
     case "create": {
       // title and prompt stay null on purpose: "Volume N" is derived at render
