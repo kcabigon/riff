@@ -27,7 +27,6 @@ import { getBaseUrl } from "@/lib/env";
 
 const CLUB = "Midnight Howlers";
 const HOST = "Johnny Thrills";
-const CO_HOST = "Jay Dogg";
 const MEMBER = "Rivy Bobby";
 const WRITER = "Jarric Ramos";
 const RIFF_TITLE = "Summer Stories";
@@ -248,7 +247,7 @@ export function getEmailPreviews(): EmailPreview[] {
           label: "Club riff",
           build: () =>
             buildPieceSubmittedEmail({
-              actorName: MEMBER,
+              actorName: "Rivy",
               riffName: RIFF_TITLE,
               clubName: CLUB,
               riffUrl: clubUrl,
@@ -262,7 +261,7 @@ export function getEmailPreviews(): EmailPreview[] {
           label: "Open riff, untitled piece",
           build: () =>
             buildPieceSubmittedEmail({
-              actorName: MEMBER,
+              actorName: "Rivy",
               riffName: RIFF_TITLE,
               clubName: null,
               riffUrl,
@@ -512,8 +511,8 @@ export function getEmailPreviews(): EmailPreview[] {
           label: "Default",
           build: () =>
             buildCoHostAssignedEmail({
-              coHostName: CO_HOST,
-              adminName: HOST,
+              coHostName: "Jay",
+              adminName: "Johnny",
               clubName: CLUB,
               clubUrl,
             }),
@@ -530,8 +529,8 @@ export function getEmailPreviews(): EmailPreview[] {
           label: "To the new host",
           build: () =>
             buildHostTransferredEmail({
-              oldHostName: HOST,
-              newHostName: CO_HOST,
+              oldHostName: "Johnny",
+              newHostName: "Jay",
               clubName: CLUB,
               clubUrl,
               recipient: "newHost",
@@ -541,8 +540,8 @@ export function getEmailPreviews(): EmailPreview[] {
           label: "To the old host",
           build: () =>
             buildHostTransferredEmail({
-              oldHostName: HOST,
-              newHostName: CO_HOST,
+              oldHostName: "Johnny",
+              newHostName: "Jay",
               clubName: CLUB,
               clubUrl,
               recipient: "oldHost",

@@ -618,7 +618,7 @@ export function buildMemberJoinedEmail({
             </td>
           </tr>
 
-          ${emailButton("Visit club", clubUrl)}`,
+          ${emailButton("View the club", clubUrl)}`,
     }),
   };
 }
@@ -719,7 +719,7 @@ export function buildPieceSubmittedEmail({
   pieceTitle,
   deadline,
 }: PieceSubmittedEmailParams): BuiltEmail {
-  const headline = `${escapeHtml(actorName)} submitted &ldquo;${escapeHtml(finishedPieceTitle(pieceTitle))}&rdquo;`;
+  const headline = `${escapeHtml(actorName)} submitted &ldquo;${escapeHtml(finishedPieceTitle(pieceTitle))}&rdquo;.`;
   const progress = `${submittedCount} of ${Math.max(writerCount, submittedCount)}`;
   const preview = `${progress} pieces are in.`;
   const header = clubName ?? riffName;
@@ -892,7 +892,7 @@ export function buildPieceInviteAcceptedEmail({
             </td>
           </tr>
 
-          ${emailButton("See your friends", friendsUrl)}`,
+          ${emailButton("View your friends", friendsUrl)}`,
     }),
   };
 }
@@ -951,7 +951,7 @@ export function buildRiffGracePeriodEmail({
             </td>
           </tr>
 
-          ${emailButton("Write something", riffUrl)}`,
+          ${emailButton("Start writing", riffUrl)}`,
     }),
   };
 }
@@ -1247,7 +1247,7 @@ export function buildClubPausedEmail({
             </td>
           </tr>
 
-          ${emailButton("Visit club", clubUrl)}`,
+          ${emailButton("View the club", clubUrl)}`,
     }),
   };
 }
@@ -1291,7 +1291,7 @@ export function buildCoHostAssignedEmail({
             </td>
           </tr>
 
-          ${emailButton("Visit club", clubUrl)}`,
+          ${emailButton("View the club", clubUrl)}`,
     }),
   };
 }
@@ -1351,7 +1351,7 @@ export function buildHostTransferredEmail({
             </td>
           </tr>
 
-          ${emailButton("Visit club", clubUrl)}`,
+          ${emailButton("View the club", clubUrl)}`,
     }),
   };
 }
