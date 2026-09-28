@@ -1,5 +1,9 @@
 import { prisma } from "@/lib/prisma";
-import { sendCommentNotificationEmail } from "@/lib/resend";
+import {
+  buildCommentNotificationEmail,
+  deliverMany,
+  type OutgoingEmail,
+} from "@/lib/resend";
 import { getBaseUrl } from "@/lib/env";
 import { firstNameOf } from "@/lib/names";
 
@@ -128,8 +132,7 @@ export async function runCommentNotifications(): Promise<{
   const emailById = new Map(recipients.map((user) => [user.id, user.email]));
 
   const baseUrl = getBaseUrl();
-  let emailsSent = 0;
-  const pieceIds = new Set<string>();
+  const outgoing: Array<{ message: OutgoingEmail; pieceId: string }> = [];
 
   for (const group of groups.values()) {
     const email = emailById.get(group.recipientId);
@@ -141,17 +144,28 @@ export async function runCommentNotifications(): Promise<{
     if (group.riffId) params.set("riff", group.riffId);
     params.set("notify", "1");
 
-    await sendCommentNotificationEmail({
-      email,
-      pieceTitle: group.pieceTitle,
-      commentCount: group.commentCount,
-      replyCount: group.replyCount,
-      actorNames: group.actorNames,
-      pieceUrl: `${baseUrl}/read/${group.pieceId}?${params.toString()}`,
+    outgoing.push({
+      message: {
+        to: email,
+        email: buildCommentNotificationEmail({
+          pieceTitle: group.pieceTitle,
+          commentCount: group.commentCount,
+          replyCount: group.replyCount,
+          actorNames: group.actorNames,
+          pieceUrl: `${baseUrl}/read/${group.pieceId}?${params.toString()}`,
+        }),
+      },
+      pieceId: group.pieceId,
     });
-    pieceIds.add(group.pieceId);
-    emailsSent++;
   }
 
-  return { emailsSent, piecesWithComments: pieceIds.size };
+  const delivered = await deliverMany(
+    outgoing.map((o) => o.message),
+    "commentNotification"
+  );
+  const sentOut = outgoing.filter((_, i) => delivered[i]);
+  return {
+    emailsSent: sentOut.length,
+    piecesWithComments: new Set(sentOut.map((o) => o.pieceId)).size,
+  };
 }

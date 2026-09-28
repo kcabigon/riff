@@ -3,7 +3,8 @@ import { NotificationType } from "@prisma/client";
 import { notifyUsers } from "@/lib/notifications";
 import {
   batchNotificationsEnabled,
-  sendRiffRevealedEmail,
+  buildRiffRevealedEmail,
+  deliverMany,
   type ReadingListPiece,
 } from "@/lib/resend";
 import { getBaseUrl } from "@/lib/env";
@@ -144,20 +145,22 @@ export async function revealRiff(
         `[notify] riff revealed ${riffId}: ${members.length} members, ${eligible.length} email-enabled`
       );
 
-      const sends = await Promise.allSettled(
-        eligible.map((m) =>
-          sendRiffRevealedEmail({
-            email: m.user.email,
+      // Built per reader — each lists only the pieces that reader didn't write.
+      const delivered = await deliverMany(
+        eligible.map((m) => ({
+          to: m.user.email,
+          email: buildRiffRevealedEmail({
             clubName: updatedRiff.club?.name ?? "your club",
             riffUrl,
             riffName,
             pieces: readingListFor(m.userId),
-          })
-        )
+          }),
+        })),
+        "riffRevealed"
       );
-      result.emailsSent = sends.filter((r) => r.status === "fulfilled").length;
+      result.emailsSent = delivered.filter(Boolean).length;
       console.info(
-        `[notify] riff revealed ${riffId}: ${result.emailsSent} sent, ${sends.length - result.emailsSent} failed`
+        `[notify] riff revealed ${riffId}: ${result.emailsSent} sent, ${delivered.length - result.emailsSent} failed`
       );
     } else {
       // Clubless riff — same pipeline, scoped to participants instead of members
@@ -183,20 +186,22 @@ export async function revealRiff(
         `[notify] riff revealed ${riffId}: ${participants.length} participants, ${eligible.length} email-enabled`
       );
 
-      const sends = await Promise.allSettled(
-        eligible.map((p) =>
-          sendRiffRevealedEmail({
-            email: p.user.email,
+      // Built per reader — each lists only the pieces that reader didn't write.
+      const delivered = await deliverMany(
+        eligible.map((p) => ({
+          to: p.user.email,
+          email: buildRiffRevealedEmail({
             clubName: null,
             riffUrl,
             riffName,
             pieces: readingListFor(p.userId),
-          })
-        )
+          }),
+        })),
+        "riffRevealed"
       );
-      result.emailsSent = sends.filter((r) => r.status === "fulfilled").length;
+      result.emailsSent = delivered.filter(Boolean).length;
       console.info(
-        `[notify] riff revealed ${riffId}: ${result.emailsSent} sent, ${sends.length - result.emailsSent} failed`
+        `[notify] riff revealed ${riffId}: ${result.emailsSent} sent, ${delivered.length - result.emailsSent} failed`
       );
     }
   } catch (err) {

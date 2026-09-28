@@ -3,8 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
 import { notifyUsers } from "@/lib/notifications";
 import {
-  sendRiffCreatedEmail,
-  sendDeadlineChangedEmail,
+  buildRiffCreatedEmail,
+  buildDeadlineChangedEmail,
+  deliverMany,
   batchNotificationsEnabled,
 } from "@/lib/resend";
 import { NotificationType } from "@prisma/client";
@@ -392,20 +393,20 @@ export async function PATCH(
           console.info(
             `[notify] riff created ${riffId}: ${riffCreatedMembers.length} members, ${eligibleRiffCreated.length} email-enabled`
           );
-          const riffCreatedResults = await Promise.allSettled(
-            eligibleRiffCreated.map((m) =>
-              sendRiffCreatedEmail({
-                email: m.user.email,
-                clubName: updatedRiff.club?.name ?? "your club",
-                riffUrl: riffCreatedUrl,
-                riffName,
-                prompt: updatedRiff.prompt,
-                deadline: updatedRiff.deadline,
-              })
-            )
+          const email = buildRiffCreatedEmail({
+            clubName: updatedRiff.club?.name ?? "your club",
+            riffUrl: riffCreatedUrl,
+            riffName,
+            prompt: updatedRiff.prompt,
+            deadline: updatedRiff.deadline,
+          });
+          const delivered = await deliverMany(
+            eligibleRiffCreated.map((m) => ({ to: m.user.email, email })),
+            "riffCreated"
           );
+          const sent = delivered.filter(Boolean).length;
           console.info(
-            `[notify] riff created ${riffId}: ${riffCreatedResults.filter((r) => r.status === "fulfilled").length} sent, ${riffCreatedResults.filter((r) => r.status === "rejected").length} failed`
+            `[notify] riff created ${riffId}: ${sent} sent, ${delivered.length - sent} failed`
           );
         } catch (err) {
           console.error(
@@ -460,20 +461,20 @@ export async function PATCH(
         console.info(
           `[notify] deadline changed ${riffId}: ${deadlineMembers.length} members, ${eligibleDeadline.length} email-enabled`
         );
-        const deadlineResults = await Promise.allSettled(
-          eligibleDeadline.map((m) =>
-            sendDeadlineChangedEmail({
-              email: m.user.email,
-              clubName: updatedRiff.club?.name ?? "your club",
-              riffName,
-              riffUrl,
-              newDeadline,
-              previousDeadline: riff.deadline,
-            })
-          )
+        const email = buildDeadlineChangedEmail({
+          clubName: updatedRiff.club?.name ?? "your club",
+          riffName,
+          riffUrl,
+          newDeadline,
+          previousDeadline: riff.deadline,
+        });
+        const delivered = await deliverMany(
+          eligibleDeadline.map((m) => ({ to: m.user.email, email })),
+          "deadlineChanged"
         );
+        const sent = delivered.filter(Boolean).length;
         console.info(
-          `[notify] deadline changed ${riffId}: ${deadlineResults.filter((r) => r.status === "fulfilled").length} sent, ${deadlineResults.filter((r) => r.status === "rejected").length} failed`
+          `[notify] deadline changed ${riffId}: ${sent} sent, ${delivered.length - sent} failed`
         );
       } catch (err) {
         console.error(
@@ -508,20 +509,20 @@ export async function PATCH(
         console.info(
           `[notify] deadline changed ${riffId}: ${deadlineParticipants.length} participants, ${eligibleDeadline.length} email-enabled`
         );
-        const deadlineResults = await Promise.allSettled(
-          eligibleDeadline.map((p) =>
-            sendDeadlineChangedEmail({
-              email: p.user.email,
-              clubName: null,
-              riffName: updatedRiff.title || "Your riff",
-              riffUrl,
-              newDeadline,
-              previousDeadline: riff.deadline,
-            })
-          )
+        const email = buildDeadlineChangedEmail({
+          clubName: null,
+          riffName: updatedRiff.title || "Your riff",
+          riffUrl,
+          newDeadline,
+          previousDeadline: riff.deadline,
+        });
+        const delivered = await deliverMany(
+          eligibleDeadline.map((p) => ({ to: p.user.email, email })),
+          "deadlineChanged"
         );
+        const sent = delivered.filter(Boolean).length;
         console.info(
-          `[notify] deadline changed ${riffId}: ${deadlineResults.filter((r) => r.status === "fulfilled").length} sent, ${deadlineResults.filter((r) => r.status === "rejected").length} failed`
+          `[notify] deadline changed ${riffId}: ${sent} sent, ${delivered.length - sent} failed`
         );
       } catch (err) {
         console.error(

@@ -9,8 +9,9 @@ import { notifyUsers } from "@/lib/notifications";
 import {
   batchNotificationsEnabled,
   sendClubPausedEmail,
-  sendRiffCreatedEmail,
-  sendRiffGracePeriodEmail,
+  buildRiffCreatedEmail,
+  buildRiffGracePeriodEmail,
+  deliverMany,
 } from "@/lib/resend";
 import { getBaseUrl } from "@/lib/env";
 import { addDays, predictVolumeNumber } from "@/lib/club-riff";
@@ -279,21 +280,20 @@ async function notifyRiffOpened(
       { title: null, status: "ACTIVE" },
       await predictVolumeNumber(decision.clubId)
     );
-    const sends = await Promise.allSettled(
+    const email = buildRiffCreatedEmail({
+      clubName: decision.clubName,
+      riffUrl,
+      riffName,
+      deadline,
+    });
+    const delivered = await deliverMany(
       members
         .filter((m) => enabled.has(m.user.email))
-        .map((m) =>
-          sendRiffCreatedEmail({
-            email: m.user.email,
-            clubName: decision.clubName,
-            riffUrl,
-            riffName,
-            deadline,
-          })
-        )
+        .map((m) => ({ to: m.user.email, email })),
+      "riffCreated"
     );
     console.info(
-      `[cadence] riff opened ${riffId}: ${sends.filter((r) => r.status === "fulfilled").length}/${members.length} emailed`
+      `[cadence] riff opened ${riffId}: ${delivered.filter(Boolean).length}/${members.length} emailed`
     );
   });
 }
@@ -324,20 +324,19 @@ async function notifyGracePeriod(
       members.map((m) => m.user.email)
     );
     const riffUrl = `${getBaseUrl()}/clubs/${decision.clubId}`;
-    const sends = await Promise.allSettled(
+    const email = buildRiffGracePeriodEmail({
+      newDeadline,
+      riffUrl,
+      clubName: decision.clubName,
+    });
+    const delivered = await deliverMany(
       members
         .filter((m) => enabled.has(m.user.email))
-        .map((m) =>
-          sendRiffGracePeriodEmail({
-            email: m.user.email,
-            newDeadline,
-            riffUrl,
-            clubName: decision.clubName,
-          })
-        )
+        .map((m) => ({ to: m.user.email, email })),
+      "riffGracePeriod"
     );
     console.info(
-      `[cadence] grace week ${riffId}: ${sends.filter((r) => r.status === "fulfilled").length}/${members.length} emailed`
+      `[cadence] grace week ${riffId}: ${delivered.filter(Boolean).length}/${members.length} emailed`
     );
   });
 }
