@@ -58,7 +58,7 @@ A private essay-sharing platform for creative communities. People write together
 
 **Notifications & email**
 - In-app bell + panel (polls every 30s, click-through routing)
-- Emails (all in `src/lib/resend.ts`, each a `build…Email` + `send…Email` pair): sign-in, welcome, new riff, riff revealed, deadline changed, grace week, club paused, piece submitted, riff reminder (halfway + last call, one template), member joined, open-riff participant joined (creator only), co-host assigned, host transferred, piece shared (opens like the piece — cover, title, first ~600 chars), piece invite accepted (author only, new friendships only; email only — no bell notification yet), daily comment digest
+- Emails (all in `src/lib/resend.ts`, each a `build…Email` + `send…Email` pair): sign-in, welcome, new riff, riff revealed, deadline changed, grace week, club paused, piece submitted, riff reminder (halfway + last call, one template), reading reminders (5 and 10 days after a reveal, to every member with pieces left to read, listing them), member joined, open-riff participant joined (creator only), co-host assigned, host transferred, piece shared (opens like the piece — cover, title, first ~600 chars), piece invite accepted (author only, new friendships only; email only — no bell notification yet), daily comment digest
 - **Email preview** (`/dev/emails`, dev only): every email and its variants rendered from sample data, with subject and preview line — nothing is sent. Sample data lives in `src/app/dev/emails/fixtures.ts`; add a fixture when you add an email
 - Email dates are formatted in Pacific time; all text people typed is HTML-escaped by the shared email frame
 
@@ -67,7 +67,7 @@ A private essay-sharing platform for creative communities. People write together
 - Release notes page (`/release-notes`) — built but hidden/unlinked
 
 ### Known Gaps / In Progress
-- **Daily cron is a stopgap**: `/api/cron/daily-notifications` runs the comment digest, riff reminders and the club cadence sweep side by side (`?only=` and `?dryRun=1` for safe manual runs). The unified digest engine in `NOTIFICATIONS-PRD.md` is not started.
+- **Daily cron is a stopgap**: `/api/cron/daily-notifications` runs the comment digest, riff reminders, reading reminders and the club cadence sweep side by side (`?only=` and `?dryRun=1` for safe manual runs). The unified digest engine in `NOTIFICATIONS-PRD.md` is not started.
 - **Unused schema**: `Collection`, `CollectionPiece`, `CollectionCollaborator`, `Jam`, `JamRead`, `PieceVisibilitySettings`, and `ClubInvite` exist in the schema but no code queries them. Club joins use the link itself, not `ClubInvite` tokens.
 
 ---
@@ -116,7 +116,7 @@ src/app/api/
 │   └── [id]/send, send-candidates # Email a piece to chosen friends
 ├── comments/                     # list, create, [id]
 ├── notifications/                # list, [id] mark read, unread-count
-├── cron/daily-notifications      # Vercel Cron (13:00 UTC): comment digest + riff reminders + cadence sweep
+├── cron/daily-notifications      # Vercel Cron (13:00 UTC): comment digest + riff/reading reminders + cadence sweep
 ├── users/me/                     # current user, update, delete, export, email-preferences, admin-clubs
 ├── users/[id]/                   # public profile data
 ├── upload/image/                 # Image upload (auth required, 5MB max)
@@ -182,6 +182,7 @@ src/lib/
 ├── notifications.ts           # createNotification, notifyClubMembers, notifyRiffParticipants
 ├── comment-notifications.ts   # Daily comment digest job
 ├── engagement-reminders.ts    # Riff reminders job — halfway + last call, max two per person per riff
+├── reading-reminders.ts      # Reading reminders job — 5 and 10 days after a reveal, unread pieces only
 ├── club-cadence.ts            # Daily cadence sweep: reveal / extend (grace week) / pause / open the next riff
 ├── reveal-riff.ts, club-riff.ts # revealRiff() shared by host + cron; opening a club riff; predictVolumeNumber()
 ├── participant-joined.ts      # Open-riff join notification (in-app to all, email to creator)
@@ -258,8 +259,8 @@ Routing lives in the `/auth/post-login` server component, NOT the NextAuth `redi
 
 ## Crons & Email
 
-- **One Vercel Cron** (`vercel.json`): `/api/cron/daily-notifications` at 13:00 UTC, authenticated with `CRON_SECRET`. It runs the comment digest, riff reminders and the club cadence sweep. Vercel Hobby allows 2 cron jobs, so one slot is free.
-- One-time notification emails respect `User.emailNotifications` ("Notifications"); riff reminders respect `emailMarketing`, repurposed as the "Reminders" toggle. Sign-in and welcome emails always send.
+- **One Vercel Cron** (`vercel.json`): `/api/cron/daily-notifications` at 13:00 UTC, authenticated with `CRON_SECRET`. It runs the comment digest, riff reminders, reading reminders and the club cadence sweep. Vercel Hobby allows 2 cron jobs, so one slot is free.
+- One-time notification emails respect `User.emailNotifications` ("Notifications"); riff and reading reminders respect `emailMarketing`, repurposed as the "Reminders" toggle. Sign-in and welcome emails always send.
 
 ---
 

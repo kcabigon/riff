@@ -9,6 +9,7 @@ import {
   buildPieceSubmittedEmail,
   buildClubPausedEmail,
   buildRiffReminderEmail,
+  buildReadingReminderEmail,
   buildMemberJoinedEmail,
   buildParticipantJoinedEmail,
   buildCoHostAssignedEmail,
@@ -333,6 +334,103 @@ export function getEmailPreviews(): EmailPreview[] {
                 title: "Untitled",
                 wordCount: 0,
               },
+            }),
+        },
+      ],
+    },
+    {
+      id: "reading-reminders",
+      name: "Reading reminders",
+      trigger:
+        "Cron: 5 and 10 days after a reveal, to every member (participants, for an open riff) with pieces left to read — writers and non-writers alike.",
+      variants: [
+        {
+          label: "First nudge, several unread",
+          build: () =>
+            buildReadingReminderEmail({
+              clubName: CLUB,
+              riffName: `Volume ${VOLUME} · ${RIFF_TITLE}`,
+              nudge: "first",
+              pieces: [
+                { title: "Mt. Whitney", authorName: WRITER, readLengthMin: 2 },
+                {
+                  title: "366 Days of Summer",
+                  authorName: HOST,
+                  readLengthMin: 2,
+                },
+                {
+                  title: "We'll Always Have Mammoth",
+                  authorName: MEMBER,
+                  readLengthMin: 9,
+                },
+              ],
+              readUrl: `${base}/read/preview`,
+            }),
+        },
+        {
+          label: "Second nudge, one left",
+          build: () =>
+            buildReadingReminderEmail({
+              clubName: CLUB,
+              riffName: `Volume ${VOLUME} · ${RIFF_TITLE}`,
+              nudge: "second",
+              pieces: [
+                {
+                  title: "We'll Always Have Mammoth",
+                  authorName: MEMBER,
+                  readLengthMin: 9,
+                },
+              ],
+              readUrl: `${base}/read/preview`,
+            }),
+        },
+        {
+          label: "Open riff",
+          build: () =>
+            buildReadingReminderEmail({
+              clubName: null,
+              riffName: RIFF_TITLE,
+              nudge: "first",
+              pieces: [
+                { title: "Mt. Whitney", authorName: WRITER, readLengthMin: 2 },
+                {
+                  title: "We'll Always Have Mammoth",
+                  authorName: MEMBER,
+                  readLengthMin: 9,
+                },
+              ],
+              readUrl: `${base}/read/preview`,
+            }),
+        },
+        {
+          label: "Big riff, list capped",
+          build: () =>
+            buildReadingReminderEmail({
+              clubName: CLUB,
+              riffName: "Volume 9",
+              nudge: "first",
+              pieces: [
+                { title: "Mt. Whitney", authorName: WRITER, readLengthMin: 2 },
+                {
+                  title: "366 Days of Summer",
+                  authorName: HOST,
+                  readLengthMin: 2,
+                },
+                { title: "Wild Days", authorName: WRITER, readLengthMin: 2 },
+                { title: "Whoa, Dusty", authorName: HOST, readLengthMin: 3 },
+                { title: "Boat Life", authorName: WRITER, readLengthMin: 2 },
+                {
+                  title: "Bass Lake Commune Trip",
+                  authorName: HOST,
+                  readLengthMin: 2,
+                },
+                {
+                  title: "We'll Always Have Mammoth",
+                  authorName: MEMBER,
+                  readLengthMin: 9,
+                },
+              ],
+              readUrl: `${base}/read/preview`,
             }),
         },
       ],

@@ -1244,6 +1244,118 @@ export async function sendRiffReminderEmail({
   }
 }
 
+interface ReadingReminderEmailParams {
+  // Null for an open (clubless) riff.
+  clubName: string | null;
+  // "Volume 6 · Summer Stories", as the revealed email names it.
+  riffName: string;
+  nudge: "first" | "second";
+  // What this reader hasn't read, in submission order — never their own.
+  pieces: Array<{ title: string; authorName: string; readLengthMin: number }>;
+  // The first unread piece, so the button is one tap to reading.
+  readUrl: string;
+}
+
+// Only the first few are listed; the rest are counted.
+const READING_LIST_MAX = 5;
+
+// The reading nudge after a reveal (see runReadingReminders). It goes to every
+// member, including anyone who didn't write this round — reading doesn't
+// need you to have written. It lists exactly what's left for this reader, so
+// it's a to-do list rather than a guilt trip, and says how long it'll take.
+export function buildReadingReminderEmail({
+  clubName,
+  riffName,
+  nudge,
+  pieces,
+  readUrl,
+}: ReadingReminderEmailParams): BuiltEmail {
+  const count = pieces.length;
+  const piecesWord = count === 1 ? "1 piece" : `${count} pieces`;
+  const minutes = pieces.reduce(
+    (sum, p) => sum + Math.max(p.readLengthMin, 1),
+    0
+  );
+  const subject =
+    nudge === "first"
+      ? `${piecesWord} to read in ${riffName}`
+      : `${piecesWord} still waiting in ${riffName}`;
+  const preview = `About ${minutes} minute${minutes === 1 ? "" : "s"} of reading.`;
+  const headline =
+    nudge === "first"
+      ? `Ready to read: ${escapeHtml(riffName)}`
+      : `Still unread: ${escapeHtml(riffName)}`;
+  const intro =
+    nudge === "first"
+      ? count === 1
+        ? "Here's the one you haven't read yet."
+        : "Here's what you haven't read yet."
+      : count === 1
+        ? "One piece is still waiting for you."
+        : "A few pieces are still waiting for you.";
+
+  const listed = pieces.slice(0, READING_LIST_MAX);
+  const more = count - listed.length;
+  const list = listed
+    .map(
+      (p) =>
+        `<p style="margin:12px 0 0;font-size:16px;font-weight:300;color:#444444;line-height:1.5;font-family:'DM Sans',-apple-system,sans-serif;"><strong style="font-weight:500;color:#000000;">${escapeHtml(finishedPieceTitle(p.title))}</strong> by ${escapeHtml(p.authorName)} &middot; ${Math.max(p.readLengthMin, 1)} min</p>`
+    )
+    .join("\n              ");
+  const moreLine =
+    more > 0
+      ? `<p style="margin:12px 0 0;font-size:16px;font-weight:300;color:#808080;line-height:1.5;font-family:'DM Sans',-apple-system,sans-serif;">and ${more} more</p>`
+      : "";
+  const header = clubName ?? riffName;
+
+  return {
+    subject,
+    preview,
+    html: emailShell({
+      title: subject,
+      preview,
+      clubName: header,
+      footerText: clubName
+        ? `You're receiving this because you're a member of ${clubName} on Riff.`
+        : `You're receiving this because you're part of ${riffName} on Riff.`,
+      content: `
+          <tr>
+            <td style="padding:40px 40px 16px;">
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${headline}</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${intro}</p>
+              ${list}
+              ${moreLine}
+            </td>
+          </tr>
+
+          ${emailButton("Start reading", readUrl)}`,
+    }),
+  };
+}
+
+export async function sendReadingReminderEmail({
+  email,
+  ...params
+}: ReadingReminderEmailParams & { email: string }): Promise<boolean> {
+  try {
+    const { subject, html } = buildReadingReminderEmail(params);
+    const { error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to: email,
+      subject,
+      html,
+    });
+    if (error) {
+      console.error("Resend error (readingReminder):", error);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error("Error sending reading reminder email:", error);
+    return false;
+  }
+}
+
 interface ClubPausedEmailParams {
   clubName: string;
   clubUrl: string;
