@@ -590,9 +590,56 @@ export async function sendPieceSharedEmail({
   }
 }
 
-// Deliberately actor-free: a deadline moves either because the host rescheduled
-// it or because the cadence cron extended an empty riff, and the club has no
-// reason to care which. That makes this template safe for the cron to reuse.
+// The cadence cron's grace-week warning: a whole period went by with nobody
+// writing, so the deadline moves once and the club is told what happens if it
+// stays quiet. Separate from sendDeadlineChangedEmail rather than a variant of
+// it, because that one is also sent when a host reschedules by hand — putting
+// this copy there would tell a club it was about to be paused every time its
+// host moved a date.
+export async function sendRiffGracePeriodEmail({
+  email,
+  clubName,
+  riffUrl,
+  newDeadline,
+}: {
+  email: string;
+  clubName: string;
+  riffUrl: string;
+  newDeadline: Date;
+}): Promise<void> {
+  const deadlineStr = newDeadline.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+  });
+  try {
+    const { error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to: email,
+      subject: `One more week for ${clubName}`,
+      html: emailShell({
+        title: `One more week for ${clubName}`,
+        clubName,
+        footerText: `You're receiving this because you're a member of ${clubName} on Riff.`,
+        content: `
+          <tr>
+            <td style="padding:40px 40px 16px;">
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">Nobody wrote anything this round.</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${clubName} has until ${deadlineStr} — one more week. If nothing gets submitted by then, the club's riff schedule pauses until someone turns it back on.</p>
+            </td>
+          </tr>
+
+          ${emailButton("Write something", riffUrl)}`,
+      }),
+    });
+    if (error) console.error("Resend error (riffGracePeriod):", error);
+  } catch (error) {
+    console.error("Error sending riff grace period email:", error);
+  }
+}
+
+// Deliberately actor-free: a deadline moves because the host rescheduled it, and
+// the club has no reason to care who. The cadence cron does not use this — its
+// one extension is the grace week above, which needs to explain itself.
 export async function sendDeadlineChangedEmail({
   email,
   newDeadline,

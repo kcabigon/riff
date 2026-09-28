@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import {
   getCadenceDays,
-  getMaxMissedDeadlines,
   isIntervalCadence,
   type CadenceValue,
 } from "@/lib/cadence";
@@ -10,8 +9,8 @@ import { notifyClubMembers } from "@/lib/notifications";
 import {
   batchNotificationsEnabled,
   sendClubPausedEmail,
-  sendDeadlineChangedEmail,
   sendRiffCreatedEmail,
+  sendRiffGracePeriodEmail,
 } from "@/lib/resend";
 import { getBaseUrl } from "@/lib/env";
 import { NotificationType } from "@prisma/client";
@@ -34,8 +33,8 @@ import { NotificationType } from "@prisma/client";
 // than chained behind it.
 export type CadenceAction =
   | { kind: "reveal"; riffId: string; submittedCount: number }
-  | { kind: "extend"; riffId: string; newDeadline: Date; missed: number }
-  | { kind: "pause"; riffId: string; missed: number }
+  | { kind: "extend"; riffId: string; newDeadline: Date }
+  | { kind: "pause"; riffId: string }
   | { kind: "create"; deadline: Date }
   | { kind: "skip"; reason: string };
 
@@ -46,18 +45,9 @@ export interface ClubDecision {
   action: CadenceAction;
 }
 
-// How many deadlines this riff has passed with nothing submitted. Every
-// extension moves the deadline by exactly one cadence period, so elapsed
-// periods since creation is the same number — no stored counter needed, and it
-// doesn't matter whether the host or the cron moved the deadline.
-function missedDeadlines(
-  createdAt: Date,
-  cadenceDays: number,
-  now: Date
-): number {
-  const elapsedDays = (now.getTime() - createdAt.getTime()) / 86_400_000;
-  return Math.floor(elapsedDays / cadenceDays);
-}
+// The single grace period a quiet riff gets before its club is paused. Flat
+// across every cadence on purpose — see decideForClub.
+export const PAUSE_GRACE_DAYS = 7;
 
 function addDays(from: Date, days: number): Date {
   const d = new Date(from);
@@ -130,14 +120,28 @@ export function decideForClub(
       };
     }
 
-    const missed = missedDeadlines(activeRiff.createdAt, cadenceDays, now);
-    const limit = getMaxMissedDeadlines(club.cadence);
+    // A whole cadence period with nothing written. The club gets one fixed
+    // grace week and a warning that says so, then pauses. One week regardless
+    // of cadence: it's a last call, and a week reads as a last call whether the
+    // club writes weekly or quarterly.
+    //
+    // Whether that week has already been granted is derived from the deadline
+    // rather than stored. Every riff on an interval club is dated exactly one
+    // cadence period out — by the cron and by club creation alike, and hosts
+    // can't open riffs on an interval club — so a deadline beyond that has been
+    // extended. The extra day absorbs the millisecond skew between createdAt
+    // (written by the database) and the deadline (computed just before the
+    // insert); a granted grace sits a full seven days past the line, so the
+    // margin is comfortable in both directions.
+    //
+    // A host who edits the deadline can consume or reset the grace through this
+    // inference. Harmless either way — nobody has written — and the alternative
+    // is a stored flag, which means a migration for a rule this small.
+    const graceGranted =
+      activeRiff.deadline > addDays(activeRiff.createdAt, cadenceDays + 1);
 
-    if (limit !== null && missed >= limit) {
-      return {
-        ...base,
-        action: { kind: "pause", riffId: activeRiff.id, missed },
-      };
+    if (graceGranted) {
+      return { ...base, action: { kind: "pause", riffId: activeRiff.id } };
     }
 
     return {
@@ -145,8 +149,9 @@ export function decideForClub(
       action: {
         kind: "extend",
         riffId: activeRiff.id,
-        newDeadline: addDays(activeRiff.deadline, cadenceDays),
-        missed,
+        // Seven days from now, not from the old deadline — if the cron misses a
+        // stretch of days, "you have a week" should still mean a week.
+        newDeadline: addDays(now, PAUSE_GRACE_DAYS),
       },
     };
   }
@@ -295,15 +300,16 @@ async function notifyRiffOpened(decision: ClubDecision, riffId: string) {
   });
 }
 
-// An extension is the club's cue that it still has time, so everyone hears it.
-// Both the email and the in-app copy already describe the deadline moving
-// without saying who moved it, which is what makes them reusable here.
-async function notifyDeadlineExtended(
+// The grace week goes to the whole club, not just the host — they're the ones
+// who would have to write. The in-app line reuses RIFF_DEADLINE_CHANGED, which
+// says only that the deadline moved; the warning itself lives in the email,
+// since there's no enum value for it and adding one means a migration.
+async function notifyGracePeriod(
   decision: ClubDecision,
   riffId: string,
   newDeadline: Date
 ) {
-  await notifySafely("deadline extended", async () => {
+  await notifySafely("grace period", async () => {
     await notifyClubMembers(
       decision.clubId,
       NotificationType.RIFF_DEADLINE_CHANGED,
@@ -322,7 +328,7 @@ async function notifyDeadlineExtended(
       members
         .filter((m) => enabled.has(m.user.email))
         .map((m) =>
-          sendDeadlineChangedEmail({
+          sendRiffGracePeriodEmail({
             email: m.user.email,
             newDeadline,
             riffUrl: `${getBaseUrl()}/clubs/${decision.clubId}`,
@@ -331,18 +337,14 @@ async function notifyDeadlineExtended(
         )
     );
     console.info(
-      `[cadence] deadline extended ${riffId}: ${sends.filter((r) => r.status === "fulfilled").length}/${members.length} emailed`
+      `[cadence] grace week ${riffId}: ${sends.filter((r) => r.status === "fulfilled").length}/${members.length} emailed`
     );
   });
 }
 
 // Only the host hears about a pause — it's their club and their decision to
 // reverse. The copy names the deleted riff too; they didn't ask for that.
-async function notifyClubPaused(
-  decision: ClubDecision,
-  adminId: string,
-  missed: number
-) {
+async function notifyClubPaused(decision: ClubDecision, adminId: string) {
   await notifySafely("club paused", async () => {
     const cadenceDays = getCadenceDays(decision.cadence) ?? 0;
     const admin = await prisma.user.findUnique({
@@ -357,7 +359,8 @@ async function notifyClubPaused(
       email: admin.email,
       clubName: decision.clubName,
       clubUrl: `${getBaseUrl()}/clubs/${decision.clubId}`,
-      daysQuiet: missed * cadenceDays,
+      // One full cadence period of silence, plus the grace week.
+      daysQuiet: cadenceDays + PAUSE_GRACE_DAYS,
       volumeLabel: "the riff nobody wrote in",
     });
   });
@@ -379,7 +382,7 @@ async function applyDecision(
         where: { id: action.riffId },
         data: { deadline: action.newDeadline },
       });
-      await notifyDeadlineExtended(decision, action.riffId, action.newDeadline);
+      await notifyGracePeriod(decision, action.riffId, action.newDeadline);
       return;
 
     case "pause":
@@ -395,7 +398,7 @@ async function applyDecision(
           data: { cadence: "PAUSED" },
         }),
       ]);
-      await notifyClubPaused(decision, adminId, action.missed);
+      await notifyClubPaused(decision, adminId);
       return;
 
     case "create": {
