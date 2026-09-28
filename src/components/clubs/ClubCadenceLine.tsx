@@ -1,37 +1,37 @@
 import { RecurringIcon } from "@/components/shared/icons";
 import {
-  getCadenceLabel,
+  getCadenceStatusLabel,
   isIntervalCadence,
   type CadenceValue,
 } from "@/lib/cadence";
 
 interface ClubCadenceLineProps {
   cadence: CadenceValue;
+  // Show Paused and Freestyle too, not just the rhythms. The club page does,
+  // so members can see why no riff is coming; the join page doesn't, since a
+  // prospective member only needs to know the rhythm if there is one.
+  showUnscheduled?: boolean;
+  // Host and co-host only: opens the cadence settings. Adds a chevron so the
+  // line reads as something to tap.
+  onClick?: () => void;
 }
 
 // The club's rhythm, as a subheading under the club name. Used by
 // ClubPageLayout's three header branches and JoinClubClient's three, so
 // prospective members see it before they join.
 //
-// Renders nothing for Manual and Paused — neither has a rhythm to state, which
-// is what isIntervalCadence already gates on for the cron. Note that means the
-// line is absent for every club until a host picks an interval, since Manual is
-// the schema default.
-//
 // White at 16px to match the stats row beneath it: everything in these headers
 // sits on a banner photo or the black fallback, and smaller text loses too much
 // legibility over an arbitrary image.
-export default function ClubCadenceLine({ cadence }: ClubCadenceLineProps) {
-  if (!isIntervalCadence(cadence)) return null;
+export default function ClubCadenceLine({
+  cadence,
+  showUnscheduled = false,
+  onClick,
+}: ClubCadenceLineProps) {
+  if (!showUnscheduled && !isIntervalCadence(cadence)) return null;
 
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-      }}
-    >
+  const content = (
+    <>
       <RecurringIcon color="#FFFFFF" size={14} />
       <p
         style={{
@@ -43,8 +43,38 @@ export default function ClubCadenceLine({ cadence }: ClubCadenceLineProps) {
         }}
       >
         Cadence:{" "}
-        <span style={{ fontWeight: 700 }}>{getCadenceLabel(cadence)}</span>
+        <span style={{ fontWeight: 700 }}>
+          {getCadenceStatusLabel(cadence)}
+          {onClick && " ›"}
+        </span>
       </p>
-    </div>
+    </>
+  );
+
+  const rowStyle = {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+  } as const;
+
+  if (!onClick) return <div style={rowStyle}>{content}</div>;
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={`Riff cadence: ${getCadenceStatusLabel(cadence)}. Change it`}
+      style={{
+        ...rowStyle,
+        alignSelf: "flex-start",
+        background: "none",
+        border: "none",
+        padding: 0,
+        cursor: "pointer",
+        textAlign: "left",
+      }}
+    >
+      {content}
+    </button>
   );
 }

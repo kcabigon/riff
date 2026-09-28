@@ -15,7 +15,9 @@ import {
 interface CadenceSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onUpdated: (cadence: CadenceValue) => void;
+  // riffOpened: the save moved the club onto a rhythm with no riff going, so
+  // the server opened one — the page needs a refresh to show it.
+  onUpdated: (cadence: CadenceValue, riffOpened: boolean) => void;
   clubId: string;
   cadence: CadenceValue;
 }
@@ -58,8 +60,9 @@ export default function CadenceSettingsModal({
         return;
       }
 
+      const data = await res.json();
       setIsSubmitting(false);
-      onUpdated(selected);
+      onUpdated(selected, data.riffOpened === true);
       onClose();
     } catch (err) {
       console.error("Error updating club cadence:", err);

@@ -69,9 +69,11 @@ const PAUSED: CadenceOption = {
   description: "Take a break",
 };
 
+// Stored as MANUAL, shown as Freestyle: the host starts riffs whenever they
+// like. Renamed in the UI only, so the enum and every row keep their value.
 const MANUAL: CadenceOption = {
   value: "MANUAL",
-  label: "Manual",
+  label: "Freestyle",
   description: "Create your own riffs",
 };
 
@@ -116,7 +118,14 @@ export function getCadenceDays(value: CadenceValue): number | null {
 }
 
 export function getCadenceLabel(value: CadenceValue): string {
-  return CADENCE_OPTIONS.find((o) => o.value === value)?.label ?? "Manual";
+  return CADENCE_OPTIONS.find((o) => o.value === value)?.label ?? "Freestyle";
+}
+
+// The label as a state rather than a choice, for the club page's cadence line.
+// Only Pause differs: it's an action in the picker ("Pause"), but on the page
+// it describes where the club is ("Paused").
+export function getCadenceStatusLabel(value: CadenceValue): string {
+  return value === "PAUSED" ? "Paused" : getCadenceLabel(value);
 }
 
 // True only for the cadences that produce riffs on a schedule. Manual and
