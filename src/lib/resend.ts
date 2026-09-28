@@ -22,10 +22,9 @@ export async function batchNotificationsEnabled(
   return new Set(users.map((u) => u.email));
 }
 
-// Gates the recurring nudges (deadline approaching, remember-to-write,
-// join-riff-nudge) on the "Reminders" toggle — repurposes the previously
-// unused emailMarketing column so these can be silenced independently of
-// the one-time alerts gated by emailNotifications.
+// Gates the recurring riff reminders (sendRiffReminderEmail) on the "Reminders"
+// toggle — repurposes the previously unused emailMarketing column so these can
+// be silenced independently of the one-time alerts gated by emailNotifications.
 export async function batchRemindersEnabled(
   emails: string[]
 ): Promise<Set<string>> {
@@ -224,6 +223,14 @@ function calendarDaysBetween(from: Date, to: Date): number {
     return Date.UTC(part("year"), part("month") - 1, part("day")) / 86_400_000;
   };
   return dayNumber(to) - dayNumber(from);
+}
+
+// A piece's title as something worth quoting — null for a blank one or the
+// "Untitled" every new draft starts with, so emails fall back to "your draft"
+// or "a piece" rather than quoting a placeholder.
+function pieceTitleOrNull(title: string | null | undefined): string | null {
+  const t = title?.trim();
+  return t && t !== "Untitled" ? t : null;
 }
 
 // For text people typed — a prompt can contain <, > or &, and must render as
@@ -591,13 +598,6 @@ function getRiffRevealedEmailTemplate(params: RiffRevealedEmailParams): string {
 
 // ==================== NOTIFICATION EMAILS ====================
 
-function formatNames(names: string[]): string {
-  if (names.length === 0) return "Someone";
-  if (names.length === 1) return names[0];
-  if (names.length === 2) return `${names[0]} and ${names[1]}`;
-  return `${names[0]}, ${names[1]}, and ${names.length - 2} other${names.length - 2 === 1 ? "" : "s"}`;
-}
-
 interface MemberJoinedEmailParams {
   newMemberFullName: string;
   newMemberFirstName: string;
@@ -935,172 +935,95 @@ export async function sendDeadlineChangedEmail({
   }
 }
 
-interface ReminderEmailVariant {
-  subject: string;
-  headline: string;
-  body: string;
-}
-
-// Deadline-approaching copy is picked by urgency tier (>7 / 3-7 / <3 days
-// remaining), not by send count — the joke should get more urgent as the
-// deadline nears, not rotate arbitrarily.
-function deadlineApproachingVariant(
-  daysRemaining: number,
-  clubName: string,
-  riffTitle: string,
-  deadlineStr: string,
-  dayLabel: string
-): ReminderEmailVariant {
-  if (daysRemaining > 7) {
-    return {
-      subject: `${riffTitle} closes ${dayLabel}`,
-      headline: `Plenty of time. Famous last words.`,
-      body: `The deadline's ${deadlineStr}. Get your piece in before ${clubName} moves on without you.`,
-    };
-  }
-  if (daysRemaining >= 3) {
-    return {
-      subject: `1.21 gigawatts won't save this deadline`,
-      headline: `1.21 gigawatts won't save this deadline.`,
-      body: `${riffTitle} closes ${dayLabel}. Time travel's not real — get your piece in before ${clubName} moves on.`,
-    };
-  }
-  return {
-    subject: `This deadline will self-destruct ${dayLabel}`,
-    headline: `This deadline will self-destruct ${dayLabel}.`,
-    body: `${riffTitle} closes ${deadlineStr}. Get your piece in — this offer won't repeat itself.`,
-  };
-}
-
-// Remember-to-write and join-riff-nudge cycle through a fixed pool of copy
-// by send number (variantIndex = how many times this reminder has already
-// gone out to this person for this riff), so a repeat nudge doesn't repeat
-// the same joke.
-const REMEMBER_TO_WRITE_VARIANTS: Array<
-  (clubName: string, riffTitle: string) => ReminderEmailVariant
-> = [
-  (clubName, riffTitle) => ({
-    subject: `The first rule of ${clubName}`,
-    headline: `The first rule of ${clubName}: you gotta write something.`,
-    body: `You joined ${riffTitle} — now all that's missing is your piece.`,
-  }),
-  (clubName, riffTitle) => ({
-    subject: `If you write it...`,
-    headline: `If you write it, they will read it.`,
-    body: `${riffTitle}'s waiting on your piece in ${clubName}.`,
-  }),
-  (clubName) => ({
-    subject: `${clubName}, show me the words`,
-    headline: `${clubName}, show me the words.`,
-    body: `You joined this riff — time to put something on the page.`,
-  }),
-  (clubName, riffTitle) => ({
-    subject: `Isn't it ironic?`,
-    headline: `Isn't it ironic?`,
-    body: `You joined ${riffTitle} in ${clubName} but haven't written a word yet. A little too ironic, don't you think?`,
-  }),
-];
-
-const JOIN_RIFF_NUDGE_VARIANTS: Array<
-  (clubName: string, riffTitle: string) => ReminderEmailVariant
-> = [
-  (clubName, riffTitle) => ({
-    subject: `Looks like you got left behind`,
-    headline: `${clubName} started riffing... and you got left behind.`,
-    body: `${riffTitle}'s underway. Don't miss the party.`,
-  }),
-  (clubName, riffTitle) => ({
-    subject: `Smells like team spirit`,
-    headline: `${clubName} is riffing, and it smells like team spirit.`,
-    body: `${riffTitle}'s underway — everyone's in but you.`,
-  }),
-  (clubName, riffTitle) => ({
-    subject: `Insert coin to continue`,
-    headline: `${clubName}'s riffing — insert coin to continue.`,
-    body: `${riffTitle} is live and waiting on your next move.`,
-  }),
-];
-
-// The three reminder templates share one layout and differ only in copy,
-// footer and button, so they share this renderer.
-function buildReminderEmail({
-  variant,
-  clubName,
-  footerText,
-  buttonLabel,
-  riffUrl,
-}: {
-  variant: ReminderEmailVariant;
-  clubName: string;
-  footerText: string;
-  buttonLabel: string;
+interface RiffReminderEmailParams {
+  // Null for an open (clubless) riff.
+  clubName: string | null;
+  // The title, or "Volume N" for an untitled club riff — what the club page shows.
+  riffName: string;
   riffUrl: string;
-}): BuiltEmail {
+  deadline: Date;
+  // Which of the riff's two reminders this is. A missed halfway run catches up
+  // as the final call, so a person never gets a halfway nudge after it.
+  milestone: "halfway" | "final";
+  // The recipient's own draft on this riff, if they've attached one. With words
+  // in it they get "you're N words into…"; the button goes straight to it
+  // either way, matching the club page's "Continue writing".
+  draft: { url: string; title: string | null; wordCount: number } | null;
+}
+
+// One reminder for every unsubmitted writer. It replaced three templates —
+// deadline-approaching, remember-to-write and join-riff-nudge — which rotated
+// jokes by send count. Its whole job is to get someone back into their draft:
+// when it's due, and one tap to get there. Who else has submitted is left out
+// on purpose — every submission already emails the club.
+export function buildRiffReminderEmail({
+  clubName,
+  riffName,
+  riffUrl,
+  deadline,
+  milestone,
+  draft,
+}: RiffReminderEmailParams): BuiltEmail {
+  const days = Math.max(calendarDaysBetween(new Date(), deadline), 0);
+  const dueIn =
+    days === 0 ? "today" : days === 1 ? "tomorrow" : `in ${days} days`;
+  const dueDate = `<strong style="font-weight:500;">${formatEmailDate(
+    deadline,
+    { weekday: "long", month: "long", day: "numeric" }
+  )}</strong>`;
+  const draftTitle = pieceTitleOrNull(draft?.title);
+  const draftName = draftTitle
+    ? `&ldquo;${escapeHtml(draftTitle)}&rdquo;`
+    : "your draft";
+
+  // Each body pairs where the reader is (started or not) with where the riff
+  // is (its date at halfway, the last day at the final call). An empty attached
+  // draft reads as not started, though its button still opens that draft.
+  const when =
+    milestone === "final"
+      ? `${days === 0 ? "Today" : "Tomorrow"}'s the last day to submit.`
+      : `It's due ${dueDate}.`;
+  const body =
+    draft && draft.wordCount > 0
+      ? `You're ${draft.wordCount.toLocaleString("en-US")} words into ${draftName}. ${when}`
+      : `${when} There's still time to write something.`;
+
+  const headline =
+    milestone === "final"
+      ? `Last call: ${escapeHtml(riffName)}`
+      : `Halfway there: ${escapeHtml(riffName)}`;
+  const buttonLabel = draft ? "Continue writing" : "Start writing";
+  // The preview is the button's own words — the one thing to do.
+  const preview = `${buttonLabel}.`;
+  const header = clubName ?? riffName;
+
   return {
-    subject: variant.subject,
+    subject: `${riffName} is due ${dueIn}`,
+    preview,
     html: emailShell({
-      title: variant.headline,
-      clubName,
-      footerText,
+      title: `${riffName} is due ${dueIn}`,
+      preview,
+      clubName: header,
+      footerText: `You're receiving this because you haven't submitted to ${riffName} yet.`,
       content: `
           <tr>
             <td style="padding:40px 40px 16px;">
-              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${variant.headline}</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${variant.body}</p>
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${headline}</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${body}</p>
             </td>
           </tr>
 
-          ${emailButton(buttonLabel, riffUrl)}`,
+          ${emailButton(buttonLabel, draft?.url ?? riffUrl)}`,
     }),
   };
 }
 
-interface DeadlineApproachingEmailParams {
-  riffTitle: string;
-  clubName: string;
-  riffUrl: string;
-  deadline: Date;
-  daysRemaining: number;
-}
-
-export function buildDeadlineApproachingEmail({
-  riffTitle,
-  clubName,
-  riffUrl,
-  deadline,
-  daysRemaining,
-}: DeadlineApproachingEmailParams): BuiltEmail {
-  const deadlineStr = formatEmailDate(deadline, {
-    month: "long",
-    day: "numeric",
-  });
-  const dayLabel =
-    daysRemaining <= 0
-      ? "today"
-      : daysRemaining === 1
-        ? "tomorrow"
-        : `in ${daysRemaining} days`;
-  return buildReminderEmail({
-    variant: deadlineApproachingVariant(
-      daysRemaining,
-      clubName,
-      riffTitle,
-      deadlineStr,
-      dayLabel
-    ),
-    clubName,
-    footerText: `You're receiving this because you haven't submitted a piece to ${riffTitle} yet.`,
-    buttonLabel: "Finish your piece",
-    riffUrl,
-  });
-}
-
-export async function sendDeadlineApproachingEmail({
+export async function sendRiffReminderEmail({
   email,
   ...params
-}: DeadlineApproachingEmailParams & { email: string }): Promise<boolean> {
+}: RiffReminderEmailParams & { email: string }): Promise<boolean> {
   try {
-    const { subject, html } = buildDeadlineApproachingEmail(params);
+    const { subject, html } = buildRiffReminderEmail(params);
     const { error } = await getResend().emails.send({
       from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
       to: email,
@@ -1108,99 +1031,12 @@ export async function sendDeadlineApproachingEmail({
       html,
     });
     if (error) {
-      console.error("Resend error (deadlineApproaching):", error);
+      console.error("Resend error (riffReminder):", error);
       return false;
     }
     return true;
   } catch (error) {
-    console.error("Error sending deadline approaching email:", error);
-    return false;
-  }
-}
-
-interface RotatingReminderEmailParams {
-  riffTitle: string;
-  clubName: string;
-  riffUrl: string;
-  variantIndex: number;
-}
-
-export function buildRememberToWriteEmail({
-  riffTitle,
-  clubName,
-  riffUrl,
-  variantIndex,
-}: RotatingReminderEmailParams): BuiltEmail {
-  return buildReminderEmail({
-    variant: REMEMBER_TO_WRITE_VARIANTS[
-      variantIndex % REMEMBER_TO_WRITE_VARIANTS.length
-    ](clubName, riffTitle),
-    clubName,
-    footerText: `You're receiving this because you joined ${riffTitle} in ${clubName} but haven't started writing yet.`,
-    buttonLabel: "Start writing",
-    riffUrl,
-  });
-}
-
-export async function sendRememberToWriteEmail({
-  email,
-  ...params
-}: RotatingReminderEmailParams & { email: string }): Promise<boolean> {
-  try {
-    const { subject, html } = buildRememberToWriteEmail(params);
-    const { error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to: email,
-      subject,
-      html,
-    });
-    if (error) {
-      console.error("Resend error (rememberToWrite):", error);
-      return false;
-    }
-    return true;
-  } catch (error) {
-    console.error("Error sending remember to write email:", error);
-    return false;
-  }
-}
-
-export function buildJoinRiffNudgeEmail({
-  riffTitle,
-  clubName,
-  riffUrl,
-  variantIndex,
-}: RotatingReminderEmailParams): BuiltEmail {
-  return buildReminderEmail({
-    variant: JOIN_RIFF_NUDGE_VARIANTS[
-      variantIndex % JOIN_RIFF_NUDGE_VARIANTS.length
-    ](clubName, riffTitle),
-    clubName,
-    footerText: `You're receiving this because you're a member of ${clubName} on Riff.`,
-    buttonLabel: "Let's riff",
-    riffUrl,
-  });
-}
-
-export async function sendJoinRiffNudgeEmail({
-  email,
-  ...params
-}: RotatingReminderEmailParams & { email: string }): Promise<boolean> {
-  try {
-    const { subject, html } = buildJoinRiffNudgeEmail(params);
-    const { error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to: email,
-      subject,
-      html,
-    });
-    if (error) {
-      console.error("Resend error (joinRiffNudge):", error);
-      return false;
-    }
-    return true;
-  } catch (error) {
-    console.error("Error sending join riff nudge email:", error);
+    console.error("Error sending riff reminder email:", error);
     return false;
   }
 }

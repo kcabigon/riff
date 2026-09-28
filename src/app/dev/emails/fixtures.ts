@@ -8,9 +8,7 @@ import {
   buildRiffGracePeriodEmail,
   buildPieceSubmittedEmail,
   buildClubPausedEmail,
-  buildDeadlineApproachingEmail,
-  buildRememberToWriteEmail,
-  buildJoinRiffNudgeEmail,
+  buildRiffReminderEmail,
   buildMemberJoinedEmail,
   buildCoHostAssignedEmail,
   buildHostTransferredEmail,
@@ -249,79 +247,78 @@ export function getEmailPreviews(): EmailPreview[] {
       id: "reminders",
       name: "Reminders",
       trigger:
-        "Cron: at the halfway point and the day before the deadline. Every member who hasn't submitted; the template depends on how far along they are.",
+        "Cron: at the halfway point and the day before the deadline. Every member who hasn't submitted (participants, for an open riff).",
       variants: [
         {
-          label: "Has words — halfway, monthly",
+          label: "Halfway, started",
           build: () =>
-            buildDeadlineApproachingEmail({
-              riffTitle: RIFF_TITLE,
+            buildRiffReminderEmail({
               clubName: CLUB,
-              riffUrl: clubUrl,
-              deadline: daysFromNow(15),
-              daysRemaining: 15,
-            }),
-        },
-        {
-          label: "Has words — halfway, weekly",
-          build: () =>
-            buildDeadlineApproachingEmail({
-              riffTitle: RIFF_TITLE,
-              clubName: CLUB,
+              riffName: RIFF_TITLE,
               riffUrl: clubUrl,
               deadline: daysFromNow(4),
-              daysRemaining: 4,
+              milestone: "halfway",
+              draft: {
+                url: `${base}/write/preview`,
+                title: "Mt. Whitney",
+                wordCount: 362,
+              },
             }),
         },
         {
-          label: "Has words — final call",
+          label: "Halfway, not started",
           build: () =>
-            buildDeadlineApproachingEmail({
-              riffTitle: RIFF_TITLE,
+            buildRiffReminderEmail({
               clubName: CLUB,
+              riffName: RIFF_TITLE,
+              riffUrl: clubUrl,
+              deadline: daysFromNow(4),
+              milestone: "halfway",
+              draft: null,
+            }),
+        },
+        {
+          label: "Last call, started",
+          build: () =>
+            buildRiffReminderEmail({
+              clubName: CLUB,
+              riffName: RIFF_TITLE,
               riffUrl: clubUrl,
               deadline: daysFromNow(1),
-              daysRemaining: 1,
+              milestone: "final",
+              draft: {
+                url: `${base}/write/preview`,
+                title: "Mt. Whitney",
+                wordCount: 362,
+              },
             }),
         },
         {
-          label: "Joined, no words — 1st",
+          label: "Last call, not started",
           build: () =>
-            buildRememberToWriteEmail({
-              riffTitle: RIFF_TITLE,
+            buildRiffReminderEmail({
               clubName: CLUB,
+              riffName: `Volume ${VOLUME + 1}`,
               riffUrl: clubUrl,
-              variantIndex: 0,
+              deadline: daysFromNow(1),
+              milestone: "final",
+              draft: null,
             }),
         },
         {
-          label: "Joined, no words — 2nd",
+          label: "Empty draft attached",
           build: () =>
-            buildRememberToWriteEmail({
-              riffTitle: RIFF_TITLE,
+            buildRiffReminderEmail({
               clubName: CLUB,
+              riffName: RIFF_TITLE,
               riffUrl: clubUrl,
-              variantIndex: 1,
-            }),
-        },
-        {
-          label: "Not joined — 1st",
-          build: () =>
-            buildJoinRiffNudgeEmail({
-              riffTitle: RIFF_TITLE,
-              clubName: CLUB,
-              riffUrl: clubUrl,
-              variantIndex: 0,
-            }),
-        },
-        {
-          label: "Not joined — 2nd",
-          build: () =>
-            buildJoinRiffNudgeEmail({
-              riffTitle: RIFF_TITLE,
-              clubName: CLUB,
-              riffUrl: clubUrl,
-              variantIndex: 1,
+              deadline: daysFromNow(4),
+              milestone: "halfway",
+              draft: {
+                url: `${base}/write/preview`,
+                title: "Untitled",
+                wordCount: 0,
+              },
             }),
         },
       ],
