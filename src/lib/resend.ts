@@ -649,32 +649,67 @@ export async function sendMemberJoinedEmail({
 
 interface PieceSubmittedEmailParams {
   actorName: string;
-  riffTitle: string;
+  // The title, or "Volume N" for an untitled club riff — what the club page shows.
+  riffName: string;
+  // Null for an open (clubless) riff.
+  clubName: string | null;
   riffUrl: string;
-  clubName: string;
+  // Progress after this submission: pieces in, out of everyone who could write
+  // one (club members, or an open riff's participants).
+  submittedCount: number;
+  writerCount: number;
+  // Already visible pre-reveal on the club page's locked cards, so naming it
+  // here reveals nothing new.
+  pieceTitle?: string | null;
+  deadline: Date | null;
+}
+
+// "with 3 days to go" / "due today" — left out once the deadline has passed,
+// e.g. a late submission during the grace week.
+function timeLeft(deadline: Date | null): string {
+  if (!deadline) return "";
+  const days = calendarDaysBetween(new Date(), deadline);
+  if (days < 0) return "";
+  if (days === 0) return ", due today";
+  return `, with ${days === 1 ? "1 day" : `${days} days`} to go`;
 }
 
 export function buildPieceSubmittedEmail({
   actorName,
-  riffTitle,
-  riffUrl,
+  riffName,
   clubName,
+  riffUrl,
+  submittedCount,
+  writerCount,
+  pieceTitle,
+  deadline,
 }: PieceSubmittedEmailParams): BuiltEmail {
+  const headline = pieceTitle?.trim()
+    ? `${escapeHtml(actorName)} submitted &ldquo;${escapeHtml(pieceTitle.trim())}&rdquo;`
+    : `${escapeHtml(actorName)} submitted a piece.`;
+  const progress = `${submittedCount} of ${Math.max(writerCount, submittedCount)}`;
+  const preview = `${progress} pieces are in.`;
+  const header = clubName ?? riffName;
+
   return {
-    subject: `${actorName} submitted a piece to ${clubName}`,
+    subject: `${actorName} submitted to ${riffName}`,
+    preview,
     html: emailShell({
-      title: `${actorName} submitted a piece to ${clubName}`,
-      clubName,
-      footerText: `You're receiving this because you're a participant in ${riffTitle} on Riff.`,
+      title: `${actorName} submitted to ${riffName}`,
+      preview,
+      clubName: header,
+      footerText: clubName
+        ? `You're receiving this because you're a member of ${clubName} on Riff.`
+        : `You're receiving this because you're part of ${riffName} on Riff.`,
       content: `
           <tr>
             <td style="padding:40px 40px 16px;">
-              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${actorName} submitted a piece to ${clubName}.</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">Take a peek at the piece and riff progress.</p>
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${headline}</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">That's ${progress} pieces in for <strong style="font-weight:500;">${escapeHtml(riffName)}</strong>${timeLeft(deadline)}. Everyone's pieces unlock at the reveal.</p>
             </td>
           </tr>
 
-          ${emailButton("Check it out", riffUrl)}`,
+          ${emailButton("View the riff", riffUrl)}`,
     }),
   };
 }

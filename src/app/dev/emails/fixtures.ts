@@ -196,16 +196,35 @@ export function getEmailPreviews(): EmailPreview[] {
     {
       id: "piece-submitted",
       name: "Piece submitted",
-      trigger: "Someone submits a piece. Every member except the writer.",
+      trigger:
+        "Someone submits a piece. Every member except the writer (participants, for an open riff).",
       variants: [
         {
-          label: "Default",
+          label: "Club riff",
           build: () =>
             buildPieceSubmittedEmail({
               actorName: MEMBER,
-              riffTitle: RIFF_TITLE,
-              riffUrl: clubUrl,
+              riffName: RIFF_TITLE,
               clubName: CLUB,
+              riffUrl: clubUrl,
+              submittedCount: 2,
+              writerCount: 4,
+              pieceTitle: "We'll Always Have Mammoth",
+              deadline: daysFromNow(3),
+            }),
+        },
+        {
+          label: "Open riff, untitled piece",
+          build: () =>
+            buildPieceSubmittedEmail({
+              actorName: MEMBER,
+              riffName: RIFF_TITLE,
+              clubName: null,
+              riffUrl,
+              submittedCount: 1,
+              writerCount: 3,
+              pieceTitle: null,
+              deadline: daysFromNow(1),
             }),
         },
       ],
