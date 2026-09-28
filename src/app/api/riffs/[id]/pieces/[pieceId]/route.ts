@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { firstNameOf } from "@/lib/names";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
 import { notifyUsers } from "@/lib/notifications";
@@ -7,6 +8,8 @@ import {
   batchNotificationsEnabled,
 } from "@/lib/resend";
 import { NotificationType } from "@prisma/client";
+import { predictVolumeNumber } from "@/lib/club-riff";
+import { getRiffDisplayTitle } from "@/lib/riff-utils";
 import { getBaseUrl } from "@/lib/env";
 
 // PATCH /api/riffs/[id]/pieces/[pieceId] - Submit piece to riff (set submittedAt)
@@ -27,6 +30,7 @@ export async function PATCH(
             id: true,
             title: true,
             clubId: true,
+            deadline: true,
             club: { select: { name: true } },
           },
         },
@@ -51,12 +55,22 @@ export async function PATCH(
 
     // Fire notifications — isolated so failures don't affect the submission response
     const riff = submission.riff;
-    const riffDisplayTitle = riff.title || riff.club?.name || "your riff";
+    const actorName = firstNameOf(user);
 
     try {
-      const riffUrl = `${getBaseUrl()}/riffs/${riffId}`;
+      // Counted after the update, so it includes the piece just submitted.
+      const submittedCount = await prisma.pieceRiff.count({
+        where: { riffId, submittedAt: { not: null } },
+      });
 
       if (riff.clubId) {
+        // A club riff lives on the club page until it's revealed — the
+        // standalone riff page is for open riffs.
+        const riffUrl = `${getBaseUrl()}/clubs/${riff.clubId}`;
+        const riffName = getRiffDisplayTitle(
+          { title: riff.title, status: "ACTIVE" },
+          await predictVolumeNumber(riff.clubId)
+        );
         // Fetched once for both the in-app rows and the emails; the submitter
         // is excluded here, so notifyUsers has nothing left to filter.
         const pieceMembers = await prisma.clubMember.findMany({
@@ -85,11 +99,15 @@ export async function PATCH(
           eligiblePieceMembers.map((m) =>
             sendPieceSubmittedEmail({
               email: m.user.email,
-              actorName:
-                user.name || user.firstName || user.username || "Someone",
-              riffTitle: riffDisplayTitle,
+              actorName,
+              riffName,
               clubName: riff.club?.name ?? "your club",
               riffUrl,
+              submittedCount,
+              // Everyone else, plus the submitter.
+              writerCount: pieceMembers.length + 1,
+              pieceTitle: submission.piece.title,
+              deadline: riff.deadline,
             })
           )
         );
@@ -98,6 +116,7 @@ export async function PATCH(
         );
       } else {
         // Clubless riff — same pipeline, scoped to riff participants
+        const riffUrl = `${getBaseUrl()}/riffs/${riffId}`;
         const pieceParticipants = await prisma.riffParticipant.findMany({
           where: { riffId, userId: { not: user.id } },
           select: { userId: true, user: { select: { email: true } } },
@@ -124,11 +143,14 @@ export async function PATCH(
           eligiblePieceParticipants.map((p) =>
             sendPieceSubmittedEmail({
               email: p.user.email,
-              actorName:
-                user.name || user.firstName || user.username || "Someone",
-              riffTitle: riffDisplayTitle,
-              clubName: riffDisplayTitle,
+              actorName,
+              riffName: riff.title || "Your riff",
+              clubName: null,
               riffUrl,
+              submittedCount,
+              writerCount: pieceParticipants.length + 1,
+              pieceTitle: submission.piece.title,
+              deadline: riff.deadline,
             })
           )
         );

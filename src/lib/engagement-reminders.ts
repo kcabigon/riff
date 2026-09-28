@@ -1,13 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { NotificationType } from "@prisma/client";
 import { getBaseUrl } from "@/lib/env";
-import {
-  batchRemindersEnabled,
-  sendDeadlineApproachingEmail,
-  sendRememberToWriteEmail,
-  sendJoinRiffNudgeEmail,
-} from "@/lib/resend";
-import { daysUntil } from "@/lib/riff-utils";
+import { batchRemindersEnabled, sendRiffReminderEmail } from "@/lib/resend";
+import { getRiffDisplayTitle } from "@/lib/riff-utils";
 
 // Riff reminders. One stream, two sends per riff, whatever the cadence.
 //
@@ -20,8 +15,8 @@ import { daysUntil } from "@/lib/riff-utils";
 //
 // Now the schedule is proportional. Every riff gets a nudge at its halfway point
 // and a final call the day before it closes, so a weekly riff and a quarterly
-// riff both cost two emails. Which of the three templates goes out is decided
-// per person from how far along they are.
+// riff both cost two emails. It's one template, told per person whether they've
+// started (see buildRiffReminderEmail).
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -38,6 +33,13 @@ async function fetchActiveRiffs() {
         select: {
           id: true,
           name: true,
+          // Revealed volumes, to name an untitled riff "Volume N" the way the
+          // club page does.
+          _count: {
+            select: {
+              riffs: { where: { status: { in: ["REVEALED", "COMPLETED"] } } },
+            },
+          },
           members: {
             select: {
               userId: true,
@@ -53,11 +55,14 @@ async function fetchActiveRiffs() {
         },
       },
       // wordCount separates "has something going" from "attached an empty draft
-      // and walked away" — the two want opposite copy.
+      // and walked away" — the two want different copy. The id and title point
+      // the button at the draft and name it.
       pieces: {
         select: {
           submittedAt: true,
-          piece: { select: { authorId: true, wordCount: true } },
+          piece: {
+            select: { id: true, authorId: true, title: true, wordCount: true },
+          },
         },
       },
     },
@@ -151,11 +156,10 @@ async function fetchSendCounts(
 export interface ReminderRunResult {
   dryRun: boolean;
   sent: number;
-  // Split by which template went out, so a run can be read at a glance.
-  finishYourPiece: number;
+  // Split by button, so a run can be read at a glance.
+  continueWriting: number;
   startWriting: number;
-  joinTheRiff: number;
-  // Dry-run only: one line per intended email, `riff | template | milestone`.
+  // Dry-run only: one line per intended email, `riff | button | milestone`.
   // Emails, deliberately, are not included — the shape of a run is what needs
   // checking, not who is behind on their writing.
   plan?: string[];
@@ -176,9 +180,8 @@ export async function runRiffReminders(
   const result: ReminderRunResult = {
     dryRun,
     sent: 0,
-    finishYourPiece: 0,
+    continueWriting: 0,
     startWriting: 0,
-    joinTheRiff: 0,
     ...(dryRun && { plan: [] }),
   };
 
@@ -205,10 +208,8 @@ export async function runRiffReminders(
           .map((p) => p.piece.authorId)
       );
 
-      // Club riffs reach the whole membership — the old split, where members who
-      // had joined the riff and members who hadn't got different emails on
-      // different clocks, is the overlap this merge removes. A clubless riff has
-      // no membership to draw on, so its participants are the whole audience.
+      // Club riffs reach the whole membership; a clubless riff has no
+      // membership to draw on, so its participants are the whole audience.
       const audience = riff.club
         ? riff.club.members.map((m) => ({
             userId: m.userId,
@@ -237,10 +238,18 @@ export async function runRiffReminders(
   ]);
 
   for (const { riff, reached, eligible } of work) {
-    const riffTitle = riff.title || riff.club?.name || "your riff";
-    const clubName = riff.club?.name ?? riffTitle;
+    // milestonesReached returns 0 without a deadline, so every riff here has one.
+    const deadline = riff.deadline as Date;
+    const riffName = riff.club
+      ? getRiffDisplayTitle(
+          { title: riff.title, status: "ACTIVE" },
+          riff.club._count.riffs + 1
+        )
+      : riff.title || "Your riff";
     const riffUrl = `${baseUrl}${riffPath(riff)}`;
-    const participantIds = new Set(riff.participants.map((p) => p.userId));
+    // A missed halfway run catches up as the final call rather than sending a
+    // stale "halfway" a day before the deadline.
+    const milestone = reached >= 2 ? "final" : "halfway";
     // One insert per riff instead of one per recipient. Flushed per riff
     // rather than once at the very end so a crash mid-sweep can only lose this
     // riff's log — an unlogged send is one that goes out again next run.
@@ -248,60 +257,36 @@ export async function runRiffReminders(
 
     for (const person of eligible.filter((a) => enabled.has(a.email))) {
       const priorSends = counts.get(`${riff.id}:${person.userId}`) ?? 0;
-      const hasWords = riff.pieces.some(
-        (p) => p.piece.authorId === person.userId && p.piece.wordCount > 0
-      );
-
-      // Non-null exactly when the deadline-aware template applies: something
-      // real is in progress and there's a date to talk about. It doubles as the
-      // branch condition below, so the choice is made once — a dry run and a
-      // live run can't disagree about which template a person would get.
-      //
-      // A writer on a deadline-less riff therefore falls through to the
-      // start-writing copy, whose wording is a little off for someone who has
-      // already started. Unifying the three templates into one deadline-aware,
-      // draft-aware one is the copy pass's job.
-      const deadlineForCopy = hasWords ? riff.deadline : null;
-      const bucket: "finishYourPiece" | "startWriting" | "joinTheRiff" =
-        deadlineForCopy
-          ? "finishYourPiece"
-          : participantIds.has(person.userId)
-            ? "startWriting"
-            : "joinTheRiff";
+      const own = riff.pieces.find(
+        (p) => p.piece.authorId === person.userId && p.submittedAt === null
+      )?.piece;
+      const draft = own
+        ? {
+            url: `${baseUrl}/write/${own.id}`,
+            title: own.title,
+            wordCount: own.wordCount,
+          }
+        : null;
+      const bucket = draft ? "continueWriting" : "startWriting";
 
       if (dryRun) {
         result.plan?.push(
-          `${riffTitle} | ${bucket} | milestone ${priorSends + 1}/${reached}`
+          `${riffName} | ${bucket} | ${milestone} (${priorSends + 1}/${reached})`
         );
         result[bucket]++;
         result.sent++;
         continue;
       }
 
-      const delivered = deadlineForCopy
-        ? await sendDeadlineApproachingEmail({
-            email: person.email,
-            riffTitle,
-            clubName,
-            riffUrl,
-            deadline: deadlineForCopy,
-            daysRemaining: daysUntil(deadlineForCopy),
-          })
-        : bucket === "startWriting"
-          ? await sendRememberToWriteEmail({
-              email: person.email,
-              riffTitle,
-              clubName,
-              riffUrl,
-              variantIndex: priorSends,
-            })
-          : await sendJoinRiffNudgeEmail({
-              email: person.email,
-              riffTitle,
-              clubName,
-              riffUrl,
-              variantIndex: priorSends,
-            });
+      const delivered = await sendRiffReminderEmail({
+        email: person.email,
+        clubName: riff.club?.name ?? null,
+        riffName,
+        riffUrl,
+        deadline,
+        milestone,
+        draft,
+      });
 
       // Only log a send that actually went out — a logged failure would burn
       // one of this person's two reminders for the riff's whole lifetime.

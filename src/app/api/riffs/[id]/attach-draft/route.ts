@@ -1,11 +1,7 @@
 import { NextResponse } from "next/server";
-import { NotificationType } from "@prisma/client";
+import { notifyOpenRiffParticipantJoined } from "@/lib/participant-joined";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
-import {
-  createNotification,
-  notifyRiffParticipants,
-} from "@/lib/notifications";
 
 // POST /api/riffs/[id]/attach-draft - Attach an existing standalone draft
 // (a piece with zero PieceRiff rows) to this riff, auto-joining the caller
@@ -108,27 +104,9 @@ export async function POST(
       return { didJoin: !existingParticipant };
     });
 
+    // Open riffs only — see notifyOpenRiffParticipantJoined.
     if (didJoin && !riff.clubId) {
-      try {
-        await notifyRiffParticipants(
-          riffId,
-          NotificationType.RIFF_PARTICIPANT_JOINED,
-          user.id
-        );
-        const creatorIsParticipant = await prisma.riffParticipant.findUnique({
-          where: { riffId_userId: { riffId, userId: riff.creatorId } },
-        });
-        if (!creatorIsParticipant) {
-          await createNotification({
-            type: NotificationType.RIFF_PARTICIPANT_JOINED,
-            recipientId: riff.creatorId,
-            actorId: user.id,
-            riffId,
-          });
-        }
-      } catch (err) {
-        console.error("[notification error] attach draft join:", err);
-      }
+      await notifyOpenRiffParticipantJoined(riffId, user.id);
     }
 
     return NextResponse.json({ success: true, pieceId }, { status: 201 });

@@ -13,6 +13,8 @@ import {
   sendRiffGracePeriodEmail,
 } from "@/lib/resend";
 import { getBaseUrl } from "@/lib/env";
+import { addDays, predictVolumeNumber } from "@/lib/club-riff";
+import { getRiffDisplayTitle } from "@/lib/riff-utils";
 import { NotificationType } from "@prisma/client";
 
 // The club cadence sweep. Runs once daily from /api/cron/daily-notifications
@@ -51,12 +53,6 @@ export interface ClubDecision {
 // The single grace period a quiet riff gets before its club is paused. Flat
 // across every cadence on purpose — see decideForClub.
 export const PAUSE_GRACE_DAYS = 7;
-
-function addDays(from: Date, days: number): Date {
-  const d = new Date(from);
-  d.setDate(d.getDate() + days);
-  return d;
-}
 
 // Decides what should happen to one club. Pure — no reads, no writes — so the
 // branch table is testable and the dry-run report is exactly what would run.
@@ -255,7 +251,11 @@ async function notifySafely(label: string, fn: () => Promise<void>) {
 // A cron-opened riff is announced without an actor. Its creatorId is the club
 // admin because the column is non-nullable, and saying they started it would be
 // a lie — so the copy is club-voiced instead (see getRiffCreatedEmailTemplate).
-async function notifyRiffOpened(decision: ClubDecision, riffId: string) {
+async function notifyRiffOpened(
+  decision: ClubDecision,
+  riffId: string,
+  deadline: Date
+) {
   await notifySafely("riff opened", async () => {
     // One member fetch, used for both the in-app rows and the emails.
     const members = await prisma.clubMember.findMany({
@@ -274,6 +274,11 @@ async function notifyRiffOpened(decision: ClubDecision, riffId: string) {
       members.map((m) => m.user.email)
     );
     const riffUrl = `${getBaseUrl()}/clubs/${decision.clubId}`;
+    // Cron riffs never have a title, so this is always "Volume N".
+    const riffName = getRiffDisplayTitle(
+      { title: null, status: "ACTIVE" },
+      await predictVolumeNumber(decision.clubId)
+    );
     const sends = await Promise.allSettled(
       members
         .filter((m) => enabled.has(m.user.email))
@@ -282,6 +287,8 @@ async function notifyRiffOpened(decision: ClubDecision, riffId: string) {
             email: m.user.email,
             clubName: decision.clubName,
             riffUrl,
+            riffName,
+            deadline,
           })
         )
     );
@@ -337,24 +344,23 @@ async function notifyGracePeriod(
 
 // Only the host hears about a pause — it's their club and their decision to
 // reverse. The copy names the deleted riff too; they didn't ask for that.
-async function notifyClubPaused(decision: ClubDecision, adminId: string) {
+async function notifyClubPaused(
+  decision: ClubDecision,
+  adminId: string,
+  riffName: string
+) {
   await notifySafely("club paused", async () => {
-    const cadenceDays = getCadenceDays(decision.cadence) ?? 0;
     const admin = await prisma.user.findUnique({
       where: { id: adminId },
       select: { email: true, emailNotifications: true },
     });
     if (!admin?.emailNotifications) return;
 
-    // Volume is only assigned at reveal, so an empty riff has none — the label
-    // has to describe it rather than number it.
     await sendClubPausedEmail({
       email: admin.email,
       clubName: decision.clubName,
       clubUrl: `${getBaseUrl()}/clubs/${decision.clubId}`,
-      // One full cadence period of silence, plus the grace week.
-      daysQuiet: cadenceDays + PAUSE_GRACE_DAYS,
-      volumeLabel: "the riff nobody wrote in",
+      riffName,
     });
   });
 }
@@ -378,7 +384,20 @@ async function applyDecision(
       await notifyGracePeriod(decision, action.riffId, action.newDeadline);
       return;
 
-    case "pause":
+    case "pause": {
+      // Named before it's deleted, for the host's email. Volume numbers are
+      // only assigned at reveal, so an untitled riff gets the one it would
+      // have had — what the club page was calling it. A failed lookup must not
+      // block the pause, so it falls back to a description.
+      const riffName = await prisma.riff
+        .findUnique({ where: { id: action.riffId }, select: { title: true } })
+        .then(async (riff) =>
+          getRiffDisplayTitle(
+            { title: riff?.title ?? null, status: "ACTIVE" },
+            await predictVolumeNumber(decision.clubId)
+          )
+        )
+        .catch(() => "the empty riff");
       // One transaction: a club left paused with its empty riff still active,
       // or a deleted riff on a club still claiming a cadence, are both states
       // the sweep would then have to reason about. Nothing is lost — zero
@@ -391,8 +410,9 @@ async function applyDecision(
           data: { cadence: "PAUSED" },
         }),
       ]);
-      await notifyClubPaused(decision, adminId);
+      await notifyClubPaused(decision, adminId, riffName);
       return;
+    }
 
     case "create": {
       // title and prompt stay null on purpose: "Volume N" is derived at render
@@ -407,7 +427,7 @@ async function applyDecision(
         },
         select: { id: true },
       });
-      await notifyRiffOpened(decision, created.id);
+      await notifyRiffOpened(decision, created.id, action.deadline);
       return;
     }
 

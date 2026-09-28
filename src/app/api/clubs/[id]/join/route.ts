@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { firstNameOf, fullNameOf } from "@/lib/names";
 import { requireAuth } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { notifyClubMembers } from "@/lib/notifications";
@@ -44,7 +45,7 @@ export async function POST(
     const newMember = await prisma.user.update({
       where: { id: userId },
       data: { lastActiveClubId: clubId },
-      select: { name: true, firstName: true },
+      select: { name: true, firstName: true, username: true },
     });
 
     // Notify existing members and send emails — isolated so failures don't affect the join response
@@ -75,11 +76,13 @@ export async function POST(
         eligibleMembers.map((m) =>
           sendMemberJoinedEmail({
             email: m.user.email,
-            newMemberFullName: newMember.name || "A new member",
-            newMemberFirstName:
-              newMember.firstName || newMember.name?.split(" ")[0] || "them",
+            // Full name: a join introduces someone others may not know.
+            newMemberFullName: fullNameOf(newMember),
+            newMemberFirstName: firstNameOf(newMember),
             clubName: club!.name,
             clubUrl,
+            // Everyone else, plus the new member.
+            memberCount: members.length + 1,
           })
         )
       );

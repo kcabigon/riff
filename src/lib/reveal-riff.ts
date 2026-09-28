@@ -1,8 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { NotificationType } from "@prisma/client";
 import { notifyUsers } from "@/lib/notifications";
-import { batchNotificationsEnabled, sendRiffRevealedEmail } from "@/lib/resend";
+import {
+  batchNotificationsEnabled,
+  sendRiffRevealedEmail,
+  type ReadingListPiece,
+} from "@/lib/resend";
 import { getBaseUrl } from "@/lib/env";
+import { fullNameOf } from "@/lib/names";
+import { getRiffDisplayTitle } from "@/lib/riff-utils";
 
 // Revealing a riff, extracted from the PATCH handler so the cadence cron can do
 // it without a user session. Permission checks deliberately stay in the route:
@@ -62,7 +68,11 @@ export async function revealRiff(
       },
       include: {
         club: { select: { id: true, name: true } },
-        _count: { select: { pieces: true } },
+        // Submitted only: an attached draft that never went in isn't a piece
+        // anyone can read.
+        _count: {
+          select: { pieces: { where: { submittedAt: { not: null } } } },
+        },
       },
     });
   });
@@ -79,6 +89,32 @@ export async function revealRiff(
   // leave the riff unrevealed, and the reveal is the thing that matters.
   try {
     const riffUrl = `${getBaseUrl()}/riffs/${riffId}`;
+    const riffName = getRiffDisplayTitle(updatedRiff);
+    // The pieces to list, loaded once; each recipient's email leaves out their
+    // own (see readingListFor).
+    const submitted = await prisma.pieceRiff.findMany({
+      where: { riffId, submittedAt: { not: null } },
+      orderBy: { submittedAt: "asc" },
+      select: {
+        piece: {
+          select: {
+            title: true,
+            readLengthMin: true,
+            authorId: true,
+            author: { select: { name: true, firstName: true, username: true } },
+          },
+        },
+      },
+    });
+    const readingListFor = (userId: string): ReadingListPiece[] =>
+      submitted
+        .map((s) => s.piece)
+        .filter((piece) => piece.authorId !== userId)
+        .map((piece) => ({
+          title: piece.title,
+          authorName: fullNameOf(piece.author),
+          readLengthMin: piece.readLengthMin,
+        }));
     // Excluding the actor only applies when there is one.
     const excludeActor = actorId ? { userId: { not: actorId } } : {};
 
@@ -114,9 +150,8 @@ export async function revealRiff(
             email: m.user.email,
             clubName: updatedRiff.club?.name ?? "your club",
             riffUrl,
-            riffTitle: updatedRiff.title,
-            volumeNumber: updatedRiff.volumeNumber,
-            pieceCount: updatedRiff._count.pieces,
+            riffName,
+            pieces: readingListFor(m.userId),
           })
         )
       );
@@ -152,11 +187,10 @@ export async function revealRiff(
         eligible.map((p) =>
           sendRiffRevealedEmail({
             email: p.user.email,
-            clubName: updatedRiff.title ?? "your riff",
+            clubName: null,
             riffUrl,
-            riffTitle: updatedRiff.title,
-            volumeNumber: updatedRiff.volumeNumber,
-            pieceCount: updatedRiff._count.pieces,
+            riffName,
+            pieces: readingListFor(p.userId),
           })
         )
       );

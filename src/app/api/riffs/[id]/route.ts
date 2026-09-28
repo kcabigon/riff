@@ -10,6 +10,8 @@ import {
 import { NotificationType } from "@prisma/client";
 import { getBaseUrl } from "@/lib/env";
 import { revealRiff } from "@/lib/reveal-riff";
+import { predictVolumeNumber } from "@/lib/club-riff";
+import { getRiffDisplayTitle } from "@/lib/riff-utils";
 
 // GET /api/riffs/[id] - Get riff details
 export async function GET(
@@ -381,6 +383,12 @@ export async function PATCH(
           const eligibleRiffCreated = riffCreatedMembers.filter((m) =>
             riffCreatedEnabled.has(m.user.email)
           );
+          // Named the way the club page names it: the title, or the volume it
+          // will become.
+          const riffName = getRiffDisplayTitle(
+            updatedRiff,
+            await predictVolumeNumber(riff.clubId)
+          );
           console.info(
             `[notify] riff created ${riffId}: ${riffCreatedMembers.length} members, ${eligibleRiffCreated.length} email-enabled`
           );
@@ -388,12 +396,11 @@ export async function PATCH(
             eligibleRiffCreated.map((m) =>
               sendRiffCreatedEmail({
                 email: m.user.email,
-                actorName: updatedRiff.creator.name || "Your host",
                 clubName: updatedRiff.club?.name ?? "your club",
                 riffUrl: riffCreatedUrl,
-                riffTitle: riff.title,
-                prompt: riff.prompt,
-                deadline: riff.deadline ?? null,
+                riffName,
+                prompt: updatedRiff.prompt,
+                deadline: updatedRiff.deadline,
               })
             )
           );
@@ -443,6 +450,10 @@ export async function PATCH(
         const deadlineEnabled = await batchNotificationsEnabled(
           deadlineMembers.map((m) => m.user.email)
         );
+        const riffName = getRiffDisplayTitle(
+          updatedRiff,
+          await predictVolumeNumber(riff.clubId)
+        );
         const eligibleDeadline = deadlineMembers.filter((m) =>
           deadlineEnabled.has(m.user.email)
         );
@@ -453,9 +464,11 @@ export async function PATCH(
           eligibleDeadline.map((m) =>
             sendDeadlineChangedEmail({
               email: m.user.email,
-              newDeadline,
-              riffUrl,
               clubName: updatedRiff.club?.name ?? "your club",
+              riffName,
+              riffUrl,
+              newDeadline,
+              previousDeadline: riff.deadline,
             })
           )
         );
@@ -499,9 +512,11 @@ export async function PATCH(
           eligibleDeadline.map((p) =>
             sendDeadlineChangedEmail({
               email: p.user.email,
-              newDeadline,
+              clubName: null,
+              riffName: updatedRiff.title || "Your riff",
               riffUrl,
-              clubName: updatedRiff.title ?? "your riff",
+              newDeadline,
+              previousDeadline: riff.deadline,
             })
           )
         );

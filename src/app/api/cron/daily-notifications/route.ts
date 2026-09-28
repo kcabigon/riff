@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { runCommentNotifications } from "@/lib/comment-notifications";
 import { runEngagementReminders } from "@/lib/engagement-reminders";
 import { runClubCadence } from "@/lib/club-cadence";
+import { runReadingReminders } from "@/lib/reading-reminders";
 
 // Interim stopgap merge to stay within Vercel Hobby's 2-cron-job cap and free
 // a slot for upcoming crons (stale-riff cleanup). This is NOT the unified
@@ -10,8 +11,8 @@ import { runClubCadence } from "@/lib/club-cadence";
 // invocation.
 export const maxDuration = 60;
 
-type JobName = "comments" | "engagement" | "cadence";
-const ALL_JOBS: JobName[] = ["comments", "engagement", "cadence"];
+type JobName = "comments" | "engagement" | "reading" | "cadence";
+const ALL_JOBS: JobName[] = ["comments", "engagement", "reading", "cadence"];
 
 function settled<T>(r: PromiseSettledResult<T>) {
   return r.status === "fulfilled" ? r.value : { error: String(r.reason) };
@@ -42,7 +43,7 @@ export async function GET(req: Request) {
   }
   const jobs: JobName[] = only ? [only as JobName] : ALL_JOBS;
 
-  // The cadence sweep and the reminders both decide without acting while dryRun
+  // The cadence sweep and both reminder jobs decide without acting while dryRun
   // is on, so either can be run against real data to inspect its reasoning
   // without writing or mailing. Scheduled runs act. The comment digest has no
   // such mode, which is the reason to pair dryRun with ?only=.
@@ -54,7 +55,9 @@ export async function GET(req: Request) {
         ? runCommentNotifications()
         : job === "engagement"
           ? runEngagementReminders({ dryRun })
-          : runClubCadence({ dryRun })
+          : job === "reading"
+            ? runReadingReminders({ dryRun })
+            : runClubCadence({ dryRun })
     )
   );
 

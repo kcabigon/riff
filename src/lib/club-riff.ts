@@ -48,13 +48,25 @@ export async function createActiveClubRiff(
   return riff;
 }
 
-// Days-from-now deadline, matching how the cadence sweep dates every riff it
-// opens (see addDays in lib/club-cadence). The browser used to compute this as
-// end-of-day in the host's own timezone, which no server can know; the
-// difference doesn't surface, because daysUntil buckets by UTC date and the
-// sweep only ever compares the deadline against its own fixed daily tick.
-export function deadlineFromCadence(cadenceDays: number, from = new Date()) {
-  const deadline = new Date(from);
-  deadline.setDate(deadline.getDate() + cadenceDays);
-  return deadline;
+// `days` after `from`. How every cadence riff is dated — by club creation and
+// by the cadence sweep alike — and how the sweep sizes its grace week.
+//
+// A new club's first riff used to be dated in the browser as end-of-day in the
+// host's own timezone, which no server can know. The difference doesn't
+// surface: daysUntil buckets by UTC date, and the sweep only ever compares a
+// deadline against its own fixed daily tick.
+export function addDays(from: Date, days: number): Date {
+  const d = new Date(from);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
+// The volume number an active riff will get when it's revealed — the same
+// count the club page uses to call an untitled riff "Volume N" before then, and
+// the same one revealRiff assigns.
+export async function predictVolumeNumber(clubId: string): Promise<number> {
+  const revealed = await prisma.riff.count({
+    where: { clubId, status: { in: ["REVEALED", "COMPLETED"] } },
+  });
+  return revealed + 1;
 }
