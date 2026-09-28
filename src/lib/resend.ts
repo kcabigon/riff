@@ -190,6 +190,24 @@ function emailButton(label: string, href: string): string {
           </tr>`;
 }
 
+// Every date an email shows is formatted in Pacific time. Emails render on the
+// server, which runs in UTC, and a host-picked deadline is stored as the end of
+// that day in the host's own timezone — for Pacific, 06:59 UTC the next day. So
+// without a fixed zone, a deadline set for Sunday read as Monday in every email.
+// Per-recipient zones would need a stored timezone per user; until then Pacific
+// matches the team and what the date picker effectively assumes.
+const EMAIL_TIME_ZONE = "America/Los_Angeles";
+
+function formatEmailDate(
+  date: Date,
+  options: Intl.DateTimeFormatOptions
+): string {
+  return date.toLocaleDateString("en-US", {
+    ...options,
+    timeZone: EMAIL_TIME_ZONE,
+  });
+}
+
 // ==================== SEND FUNCTIONS ====================
 
 export function buildSignInEmail(magicLink: string): BuiltEmail {
@@ -683,7 +701,7 @@ export function buildRiffGracePeriodEmail({
   riffUrl,
   newDeadline,
 }: RiffGracePeriodEmailParams): BuiltEmail {
-  const deadlineStr = newDeadline.toLocaleDateString("en-US", {
+  const deadlineStr = formatEmailDate(newDeadline, {
     month: "long",
     day: "numeric",
   });
@@ -738,7 +756,7 @@ export function buildDeadlineChangedEmail({
   riffUrl,
   clubName,
 }: DeadlineChangedEmailParams): BuiltEmail {
-  const deadlineStr = newDeadline.toLocaleDateString("en-US", {
+  const deadlineStr = formatEmailDate(newDeadline, {
     month: "long",
     day: "numeric",
     year: "numeric",
@@ -915,7 +933,7 @@ export function buildDeadlineApproachingEmail({
   deadline,
   daysRemaining,
 }: DeadlineApproachingEmailParams): BuiltEmail {
-  const deadlineStr = deadline.toLocaleDateString("en-US", {
+  const deadlineStr = formatEmailDate(deadline, {
     month: "long",
     day: "numeric",
   });
