@@ -56,8 +56,10 @@ export interface BuiltEmail {
 
 // The inbox preview line. Hidden in the opened email; the trailing run of
 // zero-width spaces stops clients from padding the preview with body text.
+// Previews are plain text, and some carry what people typed (names, or a
+// shared piece's opening), so it's escaped here, once, for every email.
 function preheader(text: string): string {
-  return `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#ffffff;">${text}${"&#847;&zwnj;&nbsp;".repeat(60)}</div>`;
+  return `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#ffffff;">${escapeHtml(text)}${"&#847;&zwnj;&nbsp;".repeat(60)}</div>`;
 }
 
 /**
