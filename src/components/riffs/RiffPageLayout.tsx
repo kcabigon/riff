@@ -782,8 +782,6 @@ export default function RiffPageLayout({
             prompt: riff.prompt,
             deadline: riff.deadline,
           }}
-          // Club riffs only — a clubless riff legitimately has no deadline.
-          deadlineRequired={!!riff.clubId}
         />
       )}
 

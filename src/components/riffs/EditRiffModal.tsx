@@ -16,13 +16,6 @@ interface EditRiffModalProps {
     prompt: string | null;
     deadline: string | null;
   };
-  // True for club riffs, matching what CreateRiffModal already enforces there.
-  // Clearing a club riff's deadline used to be possible here and nowhere else,
-  // and on a club with an interval cadence it stopped the cadence sweep dead —
-  // a riff with no deadline can't be revealed, extended, or replaced, so the
-  // club silently stopped getting riffs. Clubless riffs genuinely have no
-  // deadline, which is why this is a prop rather than always on.
-  deadlineRequired?: boolean;
 }
 
 export default function EditRiffModal({
@@ -30,7 +23,6 @@ export default function EditRiffModal({
   onClose,
   onUpdated,
   riff,
-  deadlineRequired = false,
 }: EditRiffModalProps) {
   const [title, setTitle] = useState(riff.title || "");
   const [prompt, setPrompt] = useState(riff.prompt || "");
@@ -43,7 +35,12 @@ export default function EditRiffModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (deadlineRequired && !deadline) {
+    // Editing could clear a deadline that creation always required — for club
+    // riffs that stalled the cadence sweep outright, since a riff without one
+    // can't be revealed, given its grace week, or replaced. Clubless riffs were
+    // never meant to drop theirs either; that they could was an oversight in the
+    // same place, not a decision.
+    if (!deadline) {
       setError("Please set a deadline");
       return;
     }
@@ -89,7 +86,6 @@ export default function EditRiffModal({
             setPrompt={setPrompt}
             deadline={deadline}
             setDeadline={setDeadline}
-            deadlineRequired={deadlineRequired}
           />
 
           {error && (

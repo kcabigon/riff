@@ -284,19 +284,20 @@ export async function PATCH(
       );
     }
 
-    // A club riff must keep its deadline. Creation already requires one, and a
-    // club riff without one can't be revealed, extended, or replaced by the
-    // cadence sweep — it just gets skipped every run, so the club quietly stops
-    // getting riffs with nothing to show why. Enforced here rather than only in
-    // the edit modal so the invariant belongs to the API. Clubless riffs are
-    // free to have none.
-    // Falsy rather than strictly null, matching the write below — it stores
-    // null for anything falsy, so "" would otherwise clear the deadline while
-    // slipping past a null-only check. `undefined` is excluded separately: it
-    // is the one falsy value that means "field not provided".
-    if (deadline !== undefined && !deadline && riff.clubId) {
+    // Every riff keeps its deadline. All four creation paths already require one
+    // — club and clubless, UI and API — but editing could clear it, which on a
+    // club with an interval cadence stalled the cadence sweep: a riff without a
+    // deadline can't be revealed, given its grace week, or replaced, so it was
+    // skipped every run and the club quietly stopped getting riffs.
+    //
+    // Enforced here rather than only in the edit modal so the invariant belongs
+    // to the API. Falsy rather than strictly null, matching the write below,
+    // which stores null for anything falsy — so "" would otherwise clear the
+    // deadline while slipping past a null-only check. `undefined` is excluded
+    // separately: it's the one falsy value meaning "field not provided".
+    if (deadline !== undefined && !deadline) {
       return NextResponse.json(
-        { error: "A club riff needs a deadline" },
+        { error: "A riff needs a deadline" },
         { status: 400 }
       );
     }

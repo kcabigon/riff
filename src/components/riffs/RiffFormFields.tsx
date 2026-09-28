@@ -9,7 +9,6 @@ interface RiffFormFieldsProps {
   setPrompt: (v: string) => void;
   deadline: string;
   setDeadline: (v: string) => void;
-  deadlineRequired?: boolean;
   titleRequired?: boolean;
 }
 
@@ -61,7 +60,6 @@ export default function RiffFormFields({
   setPrompt,
   deadline,
   setDeadline,
-  deadlineRequired = false,
   titleRequired = false,
 }: RiffFormFieldsProps) {
   const daysUntilDeadline = deadline
@@ -89,11 +87,9 @@ export default function RiffFormFields({
           type="date"
           value={deadline}
           onChange={(e) => setDeadline(e.target.value)}
-          required={deadlineRequired}
-          // Only hide the browser's clear control where an empty value is
-          // actually invalid. A clubless riff may genuinely drop its deadline,
-          // so it keeps the control.
-          className={deadlineRequired ? "no-clear" : undefined}
+          // Every riff needs a deadline — clubless and club alike, at creation
+          // and on edit. Not a prop: there is no caller that wants otherwise.
+          required
           style={{
             ...inputStyle,
             display: "block",
@@ -174,17 +170,17 @@ export default function RiffFormFields({
           — a pseudo-element is the one thing inline styles can't reach, and the
           rule belongs next to the field it applies to.
 
-          The browser's own clear control invites emptying a field the form will
-          then reject, and on a club riff an empty deadline is what stalls the
-          cadence sweep. The calendar picker indicator is deliberately untouched;
-          that's how the field is meant to be used.
+          The browser's own clear control invites emptying a field that is always
+          required, and on a club riff an empty deadline stalls the cadence sweep.
+          The calendar picker indicator is deliberately untouched; that's how the
+          field is meant to be used.
 
           Cosmetic only: the value can still be cleared by selecting its text, so
           the real guards stay the form check and the API's rejection of a null
-          deadline on a club riff. This just stops offering it. */}
+          deadline. This just stops offering it. */}
       <style jsx>{`
-        .no-clear::-webkit-clear-button,
-        .no-clear::-ms-clear {
+        input[type="date"]::-webkit-clear-button,
+        input[type="date"]::-ms-clear {
           display: none;
         }
       `}</style>

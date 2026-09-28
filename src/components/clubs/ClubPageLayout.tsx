@@ -1595,8 +1595,6 @@ export default function ClubPageLayout({
             prompt: activeRiff.prompt,
             deadline: activeRiff.deadline,
           }}
-          // Always a club riff here.
-          deadlineRequired
         />
       )}
 

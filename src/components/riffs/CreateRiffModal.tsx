@@ -142,7 +142,6 @@ export default function CreateRiffModal({
             setPrompt={setPrompt}
             deadline={deadline}
             setDeadline={setDeadline}
-            deadlineRequired
             titleRequired={!clubId}
           />
 
