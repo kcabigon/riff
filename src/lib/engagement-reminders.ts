@@ -241,7 +241,7 @@ export async function runRiffReminders(
     const clubName = riff.club?.name ?? riffTitle;
     const riffUrl = `${baseUrl}${riffPath(riff)}`;
     const participantIds = new Set(riff.participants.map((p) => p.userId));
-    // #4: one insert per riff instead of one per recipient. Flushed per riff
+    // One insert per riff instead of one per recipient. Flushed per riff
     // rather than once at the very end so a crash mid-sweep can only lose this
     // riff's log — an unlogged send is one that goes out again next run.
     const logs: Array<{ riffId: string; recipientId: string }> = [];
