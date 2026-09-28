@@ -208,6 +208,17 @@ function formatEmailDate(
   });
 }
 
+// For text people typed — a prompt can contain <, > or &, and must render as
+// text rather than as markup in someone else's inbox.
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 // ==================== SEND FUNCTIONS ====================
 
 export function buildSignInEmail(magicLink: string): BuiltEmail {
@@ -283,21 +294,32 @@ export async function sendOnboardingEmail(
 }
 
 interface RiffCreatedEmailParams {
-  // Omitted for cron-created riffs — see getRiffCreatedEmailTemplate.
-  actorName?: string | null;
   clubName: string;
   riffUrl: string;
-  riffTitle?: string | null;
+  // What the club page calls it: the host's title, or "Volume N" when there
+  // isn't one — which is always the case for riffs the cadence cron opens.
+  riffName: string;
+  // Optional — hosts often leave it blank, and cron-opened riffs never have one.
   prompt?: string | null;
-  deadline?: Date | null;
+  // Every riff has one — creation and editing both require it — but the type
+  // allows null, and a missing line reads better than an invented date.
+  deadline: Date | null;
 }
 
 export function buildRiffCreatedEmail(
   params: RiffCreatedEmailParams
 ): BuiltEmail {
+  const preview = params.deadline
+    ? `${params.riffName} is open. Due ${formatEmailDate(params.deadline, {
+        weekday: "long",
+        month: "short",
+        day: "numeric",
+      })}.`
+    : `${params.riffName} is open.`;
   return {
     subject: `New riff in ${params.clubName}`,
-    html: getRiffCreatedEmailTemplate(params),
+    preview,
+    html: getRiffCreatedEmailTemplate({ ...params, preview }),
   };
 }
 
@@ -450,33 +472,36 @@ function getOnboardingEmailTemplate(magicLink: string): string {
  * Riff created email (notification layout — club name at top)
  */
 function getRiffCreatedEmailTemplate({
-  actorName,
   clubName,
   riffUrl,
-}: {
-  // Absent when the cadence cron opened the riff. A riff the cron created has
-  // no author — its creatorId is the club admin, but only because the column is
-  // non-nullable, and telling the club that person started it would be false.
-  actorName?: string | null;
-  clubName: string;
-  riffUrl: string;
-  riffTitle?: string | null;
-  prompt?: string | null;
-  deadline?: Date | null;
-}): string {
+  riffName,
+  prompt,
+  deadline,
+  preview,
+}: RiffCreatedEmailParams & { preview: string }): string {
+  // Name in the headline, then the due date, then the prompt when there is
+  // one — so a riff without a prompt just ends a line sooner.
+  const dueLine = deadline
+    ? `<p style="margin:0;font-size:16px;font-weight:500;color:#000000;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">Due ${formatEmailDate(
+        deadline,
+        { weekday: "long", month: "long", day: "numeric" }
+      )}</p>`
+    : "";
+  const promptLine = prompt?.trim()
+    ? `<p style="margin:${deadline ? "12px" : "0"} 0 0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${escapeHtml(prompt.trim()).replace(/\n/g, "<br>")}</p>`
+    : "";
+
   return emailShell({
     title: `New riff in ${clubName}`,
+    preview,
     clubName,
     footerText: `You're receiving this because you're a member of ${clubName} on Riff.`,
     content: `
           <tr>
             <td style="padding:40px 40px 16px;">
-              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">New riff dropped.</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${
-                actorName
-                  ? `<strong style="font-weight:500;">${actorName}</strong> started a new riff.`
-                  : `A new riff is open in <strong style="font-weight:500;">${clubName}</strong>.`
-              }</p>
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">New riff dropped: ${escapeHtml(riffName)}</h1>
+              ${dueLine}
+              ${promptLine}
             </td>
           </tr>
 

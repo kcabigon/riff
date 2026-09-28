@@ -80,26 +80,26 @@ export function getEmailPreviews(): EmailPreview[] {
       id: "riff-created",
       name: "New riff",
       trigger:
-        "A riff opens — started by a host, or by the cadence cron. Every member except the host.",
+        "A riff opens — started by a host, or by the cadence cron. Every member except whoever started it.",
       variants: [
         {
-          label: "Host started it",
+          label: "Title and prompt",
           build: () =>
             buildRiffCreatedEmail({
-              actorName: HOST,
               clubName: CLUB,
               riffUrl: clubUrl,
-              riffTitle: RIFF_TITLE,
+              riffName: RIFF_TITLE,
               prompt: PROMPT,
               deadline: daysFromNow(14),
             }),
         },
         {
-          label: "Opened on schedule",
+          label: "No title or prompt (every scheduled riff)",
           build: () =>
             buildRiffCreatedEmail({
               clubName: CLUB,
               riffUrl: clubUrl,
+              riffName: `Volume ${VOLUME + 1}`,
               deadline: daysFromNow(7),
             }),
         },

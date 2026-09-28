@@ -13,6 +13,8 @@ import {
   sendRiffGracePeriodEmail,
 } from "@/lib/resend";
 import { getBaseUrl } from "@/lib/env";
+import { predictVolumeNumber } from "@/lib/club-riff";
+import { getRiffDisplayTitle } from "@/lib/riff-utils";
 import { NotificationType } from "@prisma/client";
 
 // The club cadence sweep. Runs once daily from /api/cron/daily-notifications
@@ -255,7 +257,11 @@ async function notifySafely(label: string, fn: () => Promise<void>) {
 // A cron-opened riff is announced without an actor. Its creatorId is the club
 // admin because the column is non-nullable, and saying they started it would be
 // a lie — so the copy is club-voiced instead (see getRiffCreatedEmailTemplate).
-async function notifyRiffOpened(decision: ClubDecision, riffId: string) {
+async function notifyRiffOpened(
+  decision: ClubDecision,
+  riffId: string,
+  deadline: Date
+) {
   await notifySafely("riff opened", async () => {
     // One member fetch, used for both the in-app rows and the emails.
     const members = await prisma.clubMember.findMany({
@@ -274,6 +280,11 @@ async function notifyRiffOpened(decision: ClubDecision, riffId: string) {
       members.map((m) => m.user.email)
     );
     const riffUrl = `${getBaseUrl()}/clubs/${decision.clubId}`;
+    // Cron riffs never have a title, so this is always "Volume N".
+    const riffName = getRiffDisplayTitle(
+      { title: null, status: "ACTIVE" },
+      await predictVolumeNumber(decision.clubId)
+    );
     const sends = await Promise.allSettled(
       members
         .filter((m) => enabled.has(m.user.email))
@@ -282,6 +293,8 @@ async function notifyRiffOpened(decision: ClubDecision, riffId: string) {
             email: m.user.email,
             clubName: decision.clubName,
             riffUrl,
+            riffName,
+            deadline,
           })
         )
     );
@@ -407,7 +420,7 @@ async function applyDecision(
         },
         select: { id: true },
       });
-      await notifyRiffOpened(decision, created.id);
+      await notifyRiffOpened(decision, created.id, action.deadline);
       return;
     }
 

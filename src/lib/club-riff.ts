@@ -58,3 +58,13 @@ export function deadlineFromCadence(cadenceDays: number, from = new Date()) {
   deadline.setDate(deadline.getDate() + cadenceDays);
   return deadline;
 }
+
+// The volume number an active riff will get when it's revealed — the same
+// count the club page uses to call an untitled riff "Volume N" before then, and
+// the same one revealRiff assigns.
+export async function predictVolumeNumber(clubId: string): Promise<number> {
+  const revealed = await prisma.riff.count({
+    where: { clubId, status: { in: ["REVEALED", "COMPLETED"] } },
+  });
+  return revealed + 1;
+}
