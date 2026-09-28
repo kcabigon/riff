@@ -195,6 +195,7 @@ function emailButton(label: string, href: string): string {
 export function buildSignInEmail(magicLink: string): BuiltEmail {
   return {
     subject: "Sign in to Riff",
+    preview: SIGN_IN_PREVIEW,
     html: getSignInEmailTemplate(magicLink),
   };
 }
@@ -367,12 +368,16 @@ export async function sendMagicLinkEmail(
 
 // ==================== EMAIL TEMPLATES ====================
 
+const SIGN_IN_PREVIEW =
+  "Your link is ready. It works once and expires in 24 hours.";
+
 /**
  * Sign-in email (auth layout — big logo at top)
  */
 function getSignInEmailTemplate(magicLink: string): string {
   return emailShell({
     title: "Sign in to Riff",
+    preview: SIGN_IN_PREVIEW,
     unsubscribe: false,
     footerText: `Button not working? Copy this link into your browser:<br><a href="${magicLink}" style="color:#888888;font-size:11px;word-break:break-all;">${magicLink}</a>`,
     content: `
