@@ -14,6 +14,7 @@ import {
   buildCoHostAssignedEmail,
   buildHostTransferredEmail,
   buildPieceSharedEmail,
+  buildPieceInviteAcceptedEmail,
   buildCommentNotificationEmail,
 } from "@/lib/resend";
 import { getBaseUrl } from "@/lib/env";
@@ -451,6 +452,32 @@ export function getEmailPreviews(): EmailPreview[] {
               content: SAMPLE_CONTENT,
               readLengthMin: 3,
               pieceUrl: `${base}/read/preview`,
+            }),
+        },
+      ],
+    },
+    {
+      id: "piece-invite-accepted",
+      name: "Piece invite accepted",
+      trigger:
+        "Someone accepts an invite sent through a piece's link and becomes the author's friend. The author only, and only for a new friendship.",
+      variants: [
+        {
+          label: "Titled piece",
+          build: () =>
+            buildPieceInviteAcceptedEmail({
+              accepterName: "Rivy",
+              pieceTitle: "Mt. Whitney",
+              friendsUrl: `${base}/home`,
+            }),
+        },
+        {
+          label: "Titled Untitled",
+          build: () =>
+            buildPieceInviteAcceptedEmail({
+              accepterName: "Rivy",
+              pieceTitle: "Untitled",
+              friendsUrl: `${base}/home`,
             }),
         },
       ],

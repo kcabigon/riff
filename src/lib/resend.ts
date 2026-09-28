@@ -923,6 +923,68 @@ export async function sendPieceSharedEmail({
   }
 }
 
+interface PieceInviteAcceptedEmailParams {
+  // First name of whoever accepted.
+  accepterName: string;
+  pieceTitle: string | null;
+  // Home, where the Friends section leads the page and the new friend now
+  // appears. Not their profile — someone accepting an invite is usually new,
+  // with nothing on it.
+  friendsUrl: string;
+}
+
+// An author invited someone through a piece's link and they accepted, which
+// makes them friends: each can now read what the other publishes. Sent to the
+// author only, and only when the friendship is new — the accept route returns
+// early for people who were already friends through a club or riff.
+export function buildPieceInviteAcceptedEmail({
+  accepterName,
+  pieceTitle,
+  friendsUrl,
+}: PieceInviteAcceptedEmailParams): BuiltEmail {
+  const title = finishedPieceTitle(pieceTitle);
+  const onPiece = ` to \u201c${title}\u201d`;
+  const preview = "You're friends now.";
+  return {
+    subject: `${accepterName} accepted your invite${onPiece}`,
+    preview,
+    html: emailShell({
+      title: `${accepterName} accepted your invite${onPiece}`,
+      preview,
+      // The piece takes the header slot, as in the comment digest.
+      clubName: title,
+      footerText: `You're receiving this because you invited ${accepterName} to a piece on Riff.`,
+      content: `
+          <tr>
+            <td style="padding:40px 40px 16px;">
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${escapeHtml(accepterName)} accepted your invite.</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">You're friends now, so ${escapeHtml(accepterName)} can read the pieces you publish, and you can read theirs.</p>
+            </td>
+          </tr>
+
+          ${emailButton("See your friends", friendsUrl)}`,
+    }),
+  };
+}
+
+export async function sendPieceInviteAcceptedEmail({
+  email,
+  ...params
+}: PieceInviteAcceptedEmailParams & { email: string }): Promise<void> {
+  try {
+    const { subject, html } = buildPieceInviteAcceptedEmail(params);
+    const { error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to: email,
+      subject,
+      html,
+    });
+    if (error) console.error("Resend error (pieceInviteAccepted):", error);
+  } catch (error) {
+    console.error("Error sending piece invite accepted email:", error);
+  }
+}
+
 interface RiffGracePeriodEmailParams {
   clubName: string;
   riffUrl: string;
