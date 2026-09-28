@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { sendCommentNotificationEmail } from "@/lib/resend";
 import { getBaseUrl } from "@/lib/env";
+import { firstNameOf } from "@/lib/names";
 
 type DigestGroup = {
   recipientId: string;
@@ -32,7 +33,7 @@ export async function runCommentNotifications(): Promise<{
           authorId: true,
         },
       },
-      author: { select: { firstName: true, name: true } },
+      author: { select: { firstName: true, name: true, username: true } },
     },
     orderBy: { createdAt: "asc" },
   });
@@ -83,10 +84,7 @@ export async function runCommentNotifications(): Promise<{
     if (recipientId === comment.authorId) return;
     recipientIds.add(recipientId);
     const key = `${recipientId}:${comment.pieceId}`;
-    const actorName =
-      comment.author.firstName ||
-      comment.author.name?.split(" ")[0] ||
-      "Someone";
+    const actorName = firstNameOf(comment.author);
     const existing = groups.get(key);
     if (existing) {
       if (kind === "comment") existing.commentCount++;

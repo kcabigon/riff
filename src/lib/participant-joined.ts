@@ -3,6 +3,7 @@ import { NotificationType } from "@prisma/client";
 import { notifyUsers } from "@/lib/notifications";
 import { sendParticipantJoinedEmail } from "@/lib/resend";
 import { getBaseUrl } from "@/lib/env";
+import { fullNameOf } from "@/lib/names";
 
 // Someone joined an open (clubless) riff — by its link, by attaching a draft,
 // or by starting one there. Everyone already in it gets the in-app line, and
@@ -50,8 +51,8 @@ export async function notifyOpenRiffParticipantJoined(
     if (riff.creatorId === joinerId || !riff.creator.emailNotifications) return;
     await sendParticipantJoinedEmail({
       email: riff.creator.email,
-      newParticipantFullName:
-        joiner?.name || joiner?.firstName || joiner?.username || "Someone",
+      // Full name: a join introduces someone the creator may not know.
+      newParticipantFullName: fullNameOf(joiner),
       riffName: riff.title || "Your riff",
       riffUrl: `${getBaseUrl()}/riffs/${riffId}`,
       // Includes the joiner, whose row is already written.

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { firstNameOf } from "@/lib/names";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
 import { notifyUsers } from "@/lib/notifications";
@@ -54,7 +55,7 @@ export async function PATCH(
 
     // Fire notifications — isolated so failures don't affect the submission response
     const riff = submission.riff;
-    const actorName = user.name || user.firstName || user.username || "Someone";
+    const actorName = firstNameOf(user);
 
     try {
       // Counted after the update, so it includes the piece just submitted.

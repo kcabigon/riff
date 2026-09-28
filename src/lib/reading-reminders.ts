@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { NotificationType } from "@prisma/client";
 import { getBaseUrl } from "@/lib/env";
+import { fullNameOf } from "@/lib/names";
+import { getRiffDisplayTitle } from "@/lib/riff-utils";
 import { batchRemindersEnabled, sendReadingReminderEmail } from "@/lib/resend";
 
 // Reading reminders: a nudge to read a revealed riff's pieces, for anyone who
@@ -91,7 +93,9 @@ export async function runReadingReminders({
               title: true,
               readLengthMin: true,
               authorId: true,
-              author: { select: { name: true, firstName: true } },
+              author: {
+                select: { name: true, firstName: true, username: true },
+              },
             },
           },
         },
@@ -182,11 +186,11 @@ export async function runReadingReminders({
   const baseUrl = getBaseUrl();
 
   for (const { riff, reached, owed } of work) {
-    const riffName = riff.volumeNumber
-      ? riff.title
-        ? `Volume ${riff.volumeNumber} · ${riff.title}`
-        : `Volume ${riff.volumeNumber}`
-      : riff.title || "Your riff";
+    const riffName = getRiffDisplayTitle({
+      title: riff.title,
+      volumeNumber: riff.volumeNumber,
+      status: "REVEALED",
+    });
     const logs: Array<{ riffId: string; recipientId: string }> = [];
 
     for (const person of owed.filter((p) => enabled.has(p.email))) {
@@ -209,7 +213,7 @@ export async function runReadingReminders({
         nudge: reached >= 2 ? "second" : "first",
         pieces: person.unread.map((piece) => ({
           title: piece.title,
-          authorName: piece.author.name || piece.author.firstName || "Someone",
+          authorName: fullNameOf(piece.author),
           readLengthMin: piece.readLengthMin,
         })),
         // The riff page, like the reveal email — where every piece and its

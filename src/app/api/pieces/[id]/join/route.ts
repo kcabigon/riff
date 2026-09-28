@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
 import { isFriendOf } from "@/lib/friends";
 import { getBaseUrl } from "@/lib/env";
+import { firstNameOf } from "@/lib/names";
 import { sendPieceInviteAcceptedEmail } from "@/lib/resend";
 
 // POST /api/pieces/[id]/join — accept a friend invite delivered via a piece.
@@ -96,11 +97,7 @@ export async function POST(
       if (author?.emailNotifications) {
         await sendPieceInviteAcceptedEmail({
           email: author.email,
-          accepterName:
-            accepter?.firstName ||
-            accepter?.name?.split(" ")[0] ||
-            accepter?.username ||
-            "Someone",
+          accepterName: firstNameOf(accepter),
           pieceTitle: piece.title,
           friendsUrl: `${getBaseUrl()}/home`,
         });

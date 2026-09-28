@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
 import { getFriends } from "@/lib/friends";
 import { getBaseUrl } from "@/lib/env";
+import { firstNameOf, fullNameOf } from "@/lib/names";
 import { sendPieceSharedEmail, batchNotificationsEnabled } from "@/lib/resend";
 
 // POST /api/pieces/[id]/send — email specific existing friends about a
@@ -70,11 +71,7 @@ export async function POST(
     const emails = recipients.map((r) => r.email);
     const optedInEmails = await batchNotificationsEnabled(emails);
 
-    const actorName =
-      piece.author.firstName ||
-      piece.author.name ||
-      piece.author.username ||
-      "Someone";
+    const actorName = firstNameOf(piece.author);
     const pieceUrl = `${getBaseUrl()}/read/${pieceId}`;
 
     await Promise.all(
@@ -82,7 +79,7 @@ export async function POST(
         sendPieceSharedEmail({
           email,
           actorName,
-          authorName: piece.author.name || actorName,
+          authorName: fullNameOf(piece.author),
           pieceTitle: piece.title,
           subtitle: piece.subtitle,
           coverImage: piece.coverImage,

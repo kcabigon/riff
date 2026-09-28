@@ -1,4 +1,5 @@
 import { Parser } from "htmlparser2";
+import { escapeHtml } from "@/lib/html";
 
 // The opening of a piece, for an email: its first `maxChars` characters of
 // text, keeping only paragraphs, line breaks, bold and italic.
@@ -44,15 +45,6 @@ type Inline =
   | { kind: "text"; text: string }
   | { kind: "br" }
   | { kind: "open" | "close"; tag: "strong" | "em" };
-
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
 
 export function buildEmailExcerpt(
   contentHtml: string,

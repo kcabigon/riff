@@ -7,6 +7,8 @@ import {
   type ReadingListPiece,
 } from "@/lib/resend";
 import { getBaseUrl } from "@/lib/env";
+import { fullNameOf } from "@/lib/names";
+import { getRiffDisplayTitle } from "@/lib/riff-utils";
 
 // Revealing a riff, extracted from the PATCH handler so the cadence cron can do
 // it without a user session. Permission checks deliberately stay in the route:
@@ -87,6 +89,7 @@ export async function revealRiff(
   // leave the riff unrevealed, and the reveal is the thing that matters.
   try {
     const riffUrl = `${getBaseUrl()}/riffs/${riffId}`;
+    const riffName = getRiffDisplayTitle(updatedRiff);
     // The pieces to list, loaded once; each recipient's email leaves out their
     // own (see readingListFor).
     const submitted = await prisma.pieceRiff.findMany({
@@ -98,7 +101,7 @@ export async function revealRiff(
             title: true,
             readLengthMin: true,
             authorId: true,
-            author: { select: { name: true, firstName: true } },
+            author: { select: { name: true, firstName: true, username: true } },
           },
         },
       },
@@ -109,7 +112,7 @@ export async function revealRiff(
         .filter((piece) => piece.authorId !== userId)
         .map((piece) => ({
           title: piece.title,
-          authorName: piece.author.name || piece.author.firstName || "Someone",
+          authorName: fullNameOf(piece.author),
           readLengthMin: piece.readLengthMin,
         }));
     // Excluding the actor only applies when there is one.
@@ -147,8 +150,7 @@ export async function revealRiff(
             email: m.user.email,
             clubName: updatedRiff.club?.name ?? "your club",
             riffUrl,
-            riffTitle: updatedRiff.title,
-            volumeNumber: updatedRiff.volumeNumber,
+            riffName,
             pieces: readingListFor(m.userId),
           })
         )
@@ -187,8 +189,7 @@ export async function revealRiff(
             email: p.user.email,
             clubName: null,
             riffUrl,
-            riffTitle: updatedRiff.title,
-            volumeNumber: updatedRiff.volumeNumber,
+            riffName,
             pieces: readingListFor(p.userId),
           })
         )

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { firstNameOf } from "@/lib/names";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
 import { sendHostTransferredEmail } from "@/lib/resend";
@@ -30,6 +31,8 @@ export async function POST(
               select: {
                 id: true,
                 name: true,
+                firstName: true,
+                username: true,
                 email: true,
                 emailNotifications: true,
               },
@@ -125,8 +128,8 @@ export async function POST(
       emailRecipients.map(({ email, recipient }) =>
         sendHostTransferredEmail({
           email,
-          oldHostName: oldAdminUser?.name || "Someone",
-          newHostName: newAdminUser?.name || "Someone",
+          oldHostName: firstNameOf(oldAdminUser),
+          newHostName: firstNameOf(newAdminUser),
           clubName: club.name,
           clubUrl,
           recipient,

@@ -7,6 +7,7 @@ import { Resend } from "resend";
 import { prisma } from "@/lib/prisma";
 import { getBaseUrl } from "@/lib/env";
 import { buildEmailExcerpt } from "@/lib/email-excerpt";
+import { escapeHtml } from "@/lib/html";
 
 function getResend() {
   return new Resend(process.env.RESEND_API_KEY);
@@ -260,17 +261,6 @@ function draftTitleOrNull(title: string | null | undefined): string | null {
   return t && t !== "Untitled" ? t : null;
 }
 
-// For text people typed — a prompt can contain <, > or &, and must render as
-// text rather than as markup in someone else's inbox.
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
 // ==================== SEND FUNCTIONS ====================
 
 export function buildSignInEmail(magicLink: string): BuiltEmail {
@@ -433,22 +423,18 @@ interface RiffRevealedEmailParams {
   // Null for an open (clubless) riff.
   clubName: string | null;
   riffUrl: string;
-  riffTitle?: string | null;
-  volumeNumber?: number | null;
+  // As the app names it — getRiffDisplayTitle, e.g. "Volume 6: Summer Stories".
+  riffName: string;
   // What this reader has to read: every submitted piece except their own.
   // Attached drafts that never went in aren't pieces anyone can read.
   pieces: ReadingListPiece[];
 }
 
-function revealedDisplayTitle({
-  riffTitle,
-  volumeNumber,
-}: Pick<RiffRevealedEmailParams, "riffTitle" | "volumeNumber">): string | null {
-  return volumeNumber
-    ? riffTitle
-      ? `Volume ${volumeNumber}: ${riffTitle}`
-      : `Volume ${volumeNumber}`
-    : riffTitle || null;
+// Riff names follow the app ("Volume 6: Summer Stories") everywhere but one
+// spot: straight after a headline's own "Label:", where a second colon would
+// stutter — "Riff revealed: Volume 6 · Summer Stories".
+function afterLabel(riffName: string): string {
+  return riffName.replace(/^(Volume \d+): /, "$1 · ");
 }
 
 // "3 pieces are ready to read." — or, for the round's only writer, a line
@@ -463,11 +449,9 @@ function piecesReady(count: number): string {
 export function buildRiffRevealedEmail(
   params: RiffRevealedEmailParams
 ): BuiltEmail {
-  const displayTitle = revealedDisplayTitle(params);
   return {
-    subject: params.clubName
-      ? `Riff revealed in ${params.clubName}`
-      : `${displayTitle ?? "Your riff"} is revealed`,
+    // Riff-named, like the two reading reminders that follow it.
+    subject: `${params.riffName} is revealed`,
     preview: piecesReady(params.pieces.length),
     html: getRiffRevealedEmailTemplate(params),
   };
@@ -609,24 +593,13 @@ function getRiffCreatedEmailTemplate({
  * Riff revealed email (notification layout — club name at top)
  */
 function getRiffRevealedEmailTemplate(params: RiffRevealedEmailParams): string {
-  const { clubName, riffUrl, pieces, riffTitle, volumeNumber } = params;
-  const displayTitle = revealedDisplayTitle(params);
-  // Mirrors "New riff dropped: …". A dot rather than the usual colon between
-  // volume and title, so the headline doesn't carry two colons.
-  const headlineTitle =
-    volumeNumber && riffTitle
-      ? `Volume ${volumeNumber} · ${riffTitle}`
-      : displayTitle;
-  const headline = headlineTitle
-    ? `Riff revealed: ${escapeHtml(headlineTitle)}`
-    : "Riff revealed.";
+  const { clubName, riffUrl, pieces, riffName } = params;
+  const headline = `Riff revealed: ${escapeHtml(afterLabel(riffName))}`;
   // An open riff has no club, so its own name heads the email instead.
-  const header = clubName ?? displayTitle ?? "Riff";
+  const header = clubName ?? riffName;
 
   return emailShell({
-    title: clubName
-      ? `Riff revealed in ${clubName}`
-      : `${displayTitle ?? "Your riff"} is revealed`,
+    title: `${riffName} is revealed`,
     preview: piecesReady(pieces.length),
     clubName: header,
     footerText: clubName
@@ -1278,7 +1251,7 @@ export async function sendRiffReminderEmail({
 interface ReadingReminderEmailParams {
   // Null for an open (clubless) riff.
   clubName: string | null;
-  // "Volume 6 · Summer Stories", as the revealed email names it.
+  // As the app names it — getRiffDisplayTitle, e.g. "Volume 6: Summer Stories".
   riffName: string;
   nudge: "first" | "second";
   // What this reader hasn't read, in submission order — never their own.
@@ -1311,8 +1284,8 @@ export function buildReadingReminderEmail({
   const preview = `About ${minutes} minute${minutes === 1 ? "" : "s"} of reading.`;
   const headline =
     nudge === "first"
-      ? `Ready to read: ${escapeHtml(riffName)}`
-      : `Still unread: ${escapeHtml(riffName)}`;
+      ? `Ready to read: ${escapeHtml(afterLabel(riffName))}`
+      : `Still unread: ${escapeHtml(afterLabel(riffName))}`;
   const intro =
     nudge === "first"
       ? count === 1

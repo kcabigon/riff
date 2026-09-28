@@ -130,8 +130,7 @@ export function getEmailPreviews(): EmailPreview[] {
             buildRiffRevealedEmail({
               clubName: CLUB,
               riffUrl,
-              riffTitle: RIFF_TITLE,
-              volumeNumber: VOLUME,
+              riffName: `Volume ${VOLUME}: ${RIFF_TITLE}`,
               pieces: [
                 { title: "Mt. Whitney", authorName: WRITER, readLengthMin: 2 },
                 {
@@ -153,8 +152,7 @@ export function getEmailPreviews(): EmailPreview[] {
             buildRiffRevealedEmail({
               clubName: null,
               riffUrl,
-              riffTitle: RIFF_TITLE,
-              volumeNumber: null,
+              riffName: RIFF_TITLE,
               pieces: [
                 { title: "Mt. Whitney", authorName: WRITER, readLengthMin: 2 },
                 {
@@ -176,8 +174,7 @@ export function getEmailPreviews(): EmailPreview[] {
             buildRiffRevealedEmail({
               clubName: CLUB,
               riffUrl,
-              riffTitle: RIFF_TITLE,
-              volumeNumber: VOLUME,
+              riffName: `Volume ${VOLUME}: ${RIFF_TITLE}`,
               pieces: [],
             }),
         },
@@ -384,7 +381,7 @@ export function getEmailPreviews(): EmailPreview[] {
           build: () =>
             buildReadingReminderEmail({
               clubName: CLUB,
-              riffName: `Volume ${VOLUME} · ${RIFF_TITLE}`,
+              riffName: `Volume ${VOLUME}: ${RIFF_TITLE}`,
               nudge: "first",
               pieces: [
                 { title: "Mt. Whitney", authorName: WRITER, readLengthMin: 2 },
@@ -407,7 +404,7 @@ export function getEmailPreviews(): EmailPreview[] {
           build: () =>
             buildReadingReminderEmail({
               clubName: CLUB,
-              riffName: `Volume ${VOLUME} · ${RIFF_TITLE}`,
+              riffName: `Volume ${VOLUME}: ${RIFF_TITLE}`,
               nudge: "second",
               pieces: [
                 {
