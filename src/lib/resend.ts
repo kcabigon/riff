@@ -42,6 +42,24 @@ const EMAIL_LOGO_URL =
 
 // ==================== SHARED EMAIL HELPERS ====================
 
+// Everything an email needs except its recipient. Each email has a build
+// function returning one of these and a send function that delivers it, so the
+// dev preview page (/dev/emails) can render the exact email a send would
+// produce without sending anything.
+export interface BuiltEmail {
+  subject: string;
+  // Also rendered inside html as a hidden preheader; carried separately so the
+  // preview page can show it the way an inbox would.
+  preview?: string;
+  html: string;
+}
+
+// The inbox preview line. Hidden in the opened email; the trailing run of
+// zero-width spaces stops clients from padding the preview with body text.
+function preheader(text: string): string {
+  return `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#ffffff;">${text}${"&#847;&zwnj;&nbsp;".repeat(60)}</div>`;
+}
+
 /**
  * Wraps email content in the standard Riff email shell:
  * table-based layout, inline styles, logo, divider, footer.
@@ -56,12 +74,14 @@ function emailShell({
   footerText,
   clubName,
   unsubscribe = true,
+  preview,
 }: {
   title: string;
   content: string;
   footerText: string;
   clubName?: string;
   unsubscribe?: boolean;
+  preview?: string;
 }): string {
   const baseUrl = getBaseUrl();
   const fullFooterText = unsubscribe
@@ -113,7 +133,7 @@ function emailShell({
   <title>${title}</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&family=DM+Serif+Text&display=swap" rel="stylesheet">
 </head>
-<body style="margin:0;padding:0;background-color:#f5f5f5;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+<body style="margin:0;padding:0;background-color:#f5f5f5;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">${preview ? `\n  ${preheader(preview)}` : ""}
 
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f5f5;padding:48px 24px;">
     <tr>
@@ -172,6 +192,13 @@ function emailButton(label: string, href: string): string {
 
 // ==================== SEND FUNCTIONS ====================
 
+export function buildSignInEmail(magicLink: string): BuiltEmail {
+  return {
+    subject: "Sign in to Riff",
+    html: getSignInEmailTemplate(magicLink),
+  };
+}
+
 /**
  * Send a magic link email for authentication (existing users)
  */
@@ -180,11 +207,12 @@ export async function sendSignInEmail(
   magicLink: string
 ): Promise<void> {
   try {
+    const { subject, html } = buildSignInEmail(magicLink);
     const { data, error } = await getResend().emails.send({
       from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
       to: email,
-      subject: "Sign in to Riff",
-      html: getSignInEmailTemplate(magicLink),
+      subject,
+      html,
     });
 
     if (error) {
@@ -199,6 +227,13 @@ export async function sendSignInEmail(
   }
 }
 
+export function buildOnboardingEmail(magicLink: string): BuiltEmail {
+  return {
+    subject: "Welcome to Riff!",
+    html: getOnboardingEmailTemplate(magicLink),
+  };
+}
+
 /**
  * Send an onboarding email for new users
  */
@@ -207,11 +242,12 @@ export async function sendOnboardingEmail(
   magicLink: string
 ): Promise<void> {
   try {
+    const { subject, html } = buildOnboardingEmail(magicLink);
     const { data, error } = await getResend().emails.send({
       from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
       to: email,
-      subject: "Welcome to Riff!",
-      html: getOnboardingEmailTemplate(magicLink),
+      subject,
+      html,
     });
 
     if (error) {
@@ -226,19 +262,7 @@ export async function sendOnboardingEmail(
   }
 }
 
-/**
- * Send a riff created email to a club member
- */
-export async function sendRiffCreatedEmail({
-  email,
-  actorName,
-  clubName,
-  riffUrl,
-  riffTitle,
-  prompt,
-  deadline,
-}: {
-  email: string;
+interface RiffCreatedEmailParams {
   // Omitted for cron-created riffs — see getRiffCreatedEmailTemplate.
   actorName?: string | null;
   clubName: string;
@@ -246,20 +270,31 @@ export async function sendRiffCreatedEmail({
   riffTitle?: string | null;
   prompt?: string | null;
   deadline?: Date | null;
-}): Promise<void> {
+}
+
+export function buildRiffCreatedEmail(
+  params: RiffCreatedEmailParams
+): BuiltEmail {
+  return {
+    subject: `New riff in ${params.clubName}`,
+    html: getRiffCreatedEmailTemplate(params),
+  };
+}
+
+/**
+ * Send a riff created email to a club member
+ */
+export async function sendRiffCreatedEmail({
+  email,
+  ...params
+}: RiffCreatedEmailParams & { email: string }): Promise<void> {
   try {
+    const { subject, html } = buildRiffCreatedEmail(params);
     const { data, error } = await getResend().emails.send({
       from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
       to: email,
-      subject: `New riff in ${clubName}`,
-      html: getRiffCreatedEmailTemplate({
-        actorName,
-        clubName,
-        riffUrl,
-        riffTitle,
-        prompt,
-        deadline,
-      }),
+      subject,
+      html,
     });
 
     if (error) {
@@ -274,36 +309,37 @@ export async function sendRiffCreatedEmail({
   }
 }
 
-/**
- * Send a riff revealed email to a club member
- */
-export async function sendRiffRevealedEmail({
-  email,
-  clubName,
-  riffUrl,
-  riffTitle,
-  volumeNumber,
-  pieceCount,
-}: {
-  email: string;
+interface RiffRevealedEmailParams {
   clubName: string;
   riffUrl: string;
   riffTitle?: string | null;
   volumeNumber?: number | null;
   pieceCount: number;
-}): Promise<void> {
+}
+
+export function buildRiffRevealedEmail(
+  params: RiffRevealedEmailParams
+): BuiltEmail {
+  return {
+    subject: `Riff revealed in ${params.clubName}`,
+    html: getRiffRevealedEmailTemplate(params),
+  };
+}
+
+/**
+ * Send a riff revealed email to a club member
+ */
+export async function sendRiffRevealedEmail({
+  email,
+  ...params
+}: RiffRevealedEmailParams & { email: string }): Promise<void> {
   try {
+    const { subject, html } = buildRiffRevealedEmail(params);
     const { data, error } = await getResend().emails.send({
       from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
       to: email,
-      subject: `Riff revealed in ${clubName}`,
-      html: getRiffRevealedEmailTemplate({
-        clubName,
-        riffUrl,
-        riffTitle,
-        volumeNumber,
-        pieceCount,
-      }),
+      subject,
+      html,
     });
 
     if (error) {
@@ -473,29 +509,25 @@ function formatNames(names: string[]): string {
   return `${names[0]}, ${names[1]}, and ${names.length - 2} other${names.length - 2 === 1 ? "" : "s"}`;
 }
 
-export async function sendMemberJoinedEmail({
-  email,
-  newMemberFullName,
-  newMemberFirstName,
-  clubName,
-  clubUrl,
-}: {
-  email: string;
+interface MemberJoinedEmailParams {
   newMemberFullName: string;
   newMemberFirstName: string;
   clubName: string;
   clubUrl: string;
-}): Promise<void> {
-  try {
-    const { error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to: email,
-      subject: `${newMemberFullName} joined ${clubName}`,
-      html: emailShell({
-        title: `${newMemberFullName} joined ${clubName}`,
-        clubName,
-        footerText: `You're receiving this because you're a member of ${clubName} on Riff.`,
-        content: `
+}
+
+export function buildMemberJoinedEmail({
+  newMemberFullName,
+  clubName,
+  clubUrl,
+}: MemberJoinedEmailParams): BuiltEmail {
+  return {
+    subject: `${newMemberFullName} joined ${clubName}`,
+    html: emailShell({
+      title: `${newMemberFullName} joined ${clubName}`,
+      clubName,
+      footerText: `You're receiving this because you're a member of ${clubName} on Riff.`,
+      content: `
           <tr>
             <td style="padding:40px 40px 16px;">
               <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${newMemberFullName} joined ${clubName}.</h1>
@@ -504,7 +536,21 @@ export async function sendMemberJoinedEmail({
           </tr>
 
           ${emailButton("Visit club", clubUrl)}`,
-      }),
+    }),
+  };
+}
+
+export async function sendMemberJoinedEmail({
+  email,
+  ...params
+}: MemberJoinedEmailParams & { email: string }): Promise<void> {
+  try {
+    const { subject, html } = buildMemberJoinedEmail(params);
+    const { error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to: email,
+      subject,
+      html,
     });
     if (error) console.error("Resend error (memberJoined):", error);
   } catch (error) {
@@ -512,29 +558,26 @@ export async function sendMemberJoinedEmail({
   }
 }
 
-export async function sendPieceSubmittedEmail({
-  email,
-  actorName,
-  riffTitle,
-  riffUrl,
-  clubName,
-}: {
-  email: string;
+interface PieceSubmittedEmailParams {
   actorName: string;
   riffTitle: string;
   riffUrl: string;
   clubName: string;
-}): Promise<void> {
-  try {
-    const { error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to: email,
-      subject: `${actorName} submitted a piece to ${clubName}`,
-      html: emailShell({
-        title: `${actorName} submitted a piece to ${clubName}`,
-        clubName,
-        footerText: `You're receiving this because you're a participant in ${riffTitle} on Riff.`,
-        content: `
+}
+
+export function buildPieceSubmittedEmail({
+  actorName,
+  riffTitle,
+  riffUrl,
+  clubName,
+}: PieceSubmittedEmailParams): BuiltEmail {
+  return {
+    subject: `${actorName} submitted a piece to ${clubName}`,
+    html: emailShell({
+      title: `${actorName} submitted a piece to ${clubName}`,
+      clubName,
+      footerText: `You're receiving this because you're a participant in ${riffTitle} on Riff.`,
+      content: `
           <tr>
             <td style="padding:40px 40px 16px;">
               <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${actorName} submitted a piece to ${clubName}.</h1>
@@ -543,7 +586,21 @@ export async function sendPieceSubmittedEmail({
           </tr>
 
           ${emailButton("Check it out", riffUrl)}`,
-      }),
+    }),
+  };
+}
+
+export async function sendPieceSubmittedEmail({
+  email,
+  ...params
+}: PieceSubmittedEmailParams & { email: string }): Promise<void> {
+  try {
+    const { subject, html } = buildPieceSubmittedEmail(params);
+    const { error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to: email,
+      subject,
+      html,
     });
     if (error) console.error("Resend error (pieceSubmitted):", error);
   } catch (error) {
@@ -551,29 +608,26 @@ export async function sendPieceSubmittedEmail({
   }
 }
 
-// Send section of the Share modal — author picked this specific friend to
-// notify about a piece they already have Friends-tier access to (no join
-// step, straight to /read/[pieceId]).
-export async function sendPieceSharedEmail({
-  email,
-  actorName,
-  pieceTitle,
-  pieceUrl,
-}: {
-  email: string;
+interface PieceSharedEmailParams {
   actorName: string;
   pieceTitle: string;
   pieceUrl: string;
-}): Promise<void> {
-  try {
-    const { error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to: email,
-      subject: `${actorName} shared a piece with you`,
-      html: emailShell({
-        title: `&ldquo;${pieceTitle}&rdquo; by ${actorName} is shared with you`,
-        footerText: `You're receiving this because ${actorName} shared a piece with you on Riff.`,
-        content: `
+}
+
+// Send section of the Share modal — author picked this specific friend to
+// notify about a piece they already have Friends-tier access to (no join
+// step, straight to /read/[pieceId]).
+export function buildPieceSharedEmail({
+  actorName,
+  pieceTitle,
+  pieceUrl,
+}: PieceSharedEmailParams): BuiltEmail {
+  return {
+    subject: `${actorName} shared a piece with you`,
+    html: emailShell({
+      title: `&ldquo;${pieceTitle}&rdquo; by ${actorName} is shared with you`,
+      footerText: `You're receiving this because ${actorName} shared a piece with you on Riff.`,
+      content: `
           <tr>
             <td style="padding:40px 40px 16px;">
               <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">&ldquo;${pieceTitle}&rdquo; by ${actorName} is shared with you.</h1>
@@ -582,12 +636,32 @@ export async function sendPieceSharedEmail({
           </tr>
 
           ${emailButton("Read it", pieceUrl)}`,
-      }),
+    }),
+  };
+}
+
+export async function sendPieceSharedEmail({
+  email,
+  ...params
+}: PieceSharedEmailParams & { email: string }): Promise<void> {
+  try {
+    const { subject, html } = buildPieceSharedEmail(params);
+    const { error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to: email,
+      subject,
+      html,
     });
     if (error) console.error("Resend error (pieceShared):", error);
   } catch (error) {
     console.error("Error sending piece shared email:", error);
   }
+}
+
+interface RiffGracePeriodEmailParams {
+  clubName: string;
+  riffUrl: string;
+  newDeadline: Date;
 }
 
 // The cadence cron's grace-week warning: a whole period went by with nobody
@@ -596,31 +670,22 @@ export async function sendPieceSharedEmail({
 // it, because that one is also sent when a host reschedules by hand — putting
 // this copy there would tell a club it was about to be paused every time its
 // host moved a date.
-export async function sendRiffGracePeriodEmail({
-  email,
+export function buildRiffGracePeriodEmail({
   clubName,
   riffUrl,
   newDeadline,
-}: {
-  email: string;
-  clubName: string;
-  riffUrl: string;
-  newDeadline: Date;
-}): Promise<void> {
+}: RiffGracePeriodEmailParams): BuiltEmail {
   const deadlineStr = newDeadline.toLocaleDateString("en-US", {
     month: "long",
     day: "numeric",
   });
-  try {
-    const { error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to: email,
-      subject: `One more week for ${clubName}`,
-      html: emailShell({
-        title: `One more week for ${clubName}`,
-        clubName,
-        footerText: `You're receiving this because you're a member of ${clubName} on Riff.`,
-        content: `
+  return {
+    subject: `One more week for ${clubName}`,
+    html: emailShell({
+      title: `One more week for ${clubName}`,
+      clubName,
+      footerText: `You're receiving this because you're a member of ${clubName} on Riff.`,
+      content: `
           <tr>
             <td style="padding:40px 40px 16px;">
               <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">Nobody wrote anything this round.</h1>
@@ -629,7 +694,21 @@ export async function sendRiffGracePeriodEmail({
           </tr>
 
           ${emailButton("Write something", riffUrl)}`,
-      }),
+    }),
+  };
+}
+
+export async function sendRiffGracePeriodEmail({
+  email,
+  ...params
+}: RiffGracePeriodEmailParams & { email: string }): Promise<void> {
+  try {
+    const { subject, html } = buildRiffGracePeriodEmail(params);
+    const { error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to: email,
+      subject,
+      html,
     });
     if (error) console.error("Resend error (riffGracePeriod):", error);
   } catch (error) {
@@ -637,35 +716,32 @@ export async function sendRiffGracePeriodEmail({
   }
 }
 
-// Deliberately actor-free: a deadline moves because the host rescheduled it, and
-// the club has no reason to care who. The cadence cron does not use this — its
-// one extension is the grace week above, which needs to explain itself.
-export async function sendDeadlineChangedEmail({
-  email,
-  newDeadline,
-  riffUrl,
-  clubName,
-}: {
-  email: string;
+interface DeadlineChangedEmailParams {
   newDeadline: Date;
   riffUrl: string;
   clubName: string;
-}): Promise<void> {
+}
+
+// Deliberately actor-free: a deadline moves because the host rescheduled it, and
+// the club has no reason to care who. The cadence cron does not use this — its
+// one extension is the grace week above, which needs to explain itself.
+export function buildDeadlineChangedEmail({
+  newDeadline,
+  riffUrl,
+  clubName,
+}: DeadlineChangedEmailParams): BuiltEmail {
   const deadlineStr = newDeadline.toLocaleDateString("en-US", {
     month: "long",
     day: "numeric",
     year: "numeric",
   });
-  try {
-    const { error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to: email,
-      subject: `Riff deadline change in ${clubName}`,
-      html: emailShell({
-        title: `Riff deadline change in ${clubName}`,
-        clubName,
-        footerText: `You're receiving this because you're a member of ${clubName} on Riff.`,
-        content: `
+  return {
+    subject: `Riff deadline change in ${clubName}`,
+    html: emailShell({
+      title: `Riff deadline change in ${clubName}`,
+      clubName,
+      footerText: `You're receiving this because you're a member of ${clubName} on Riff.`,
+      content: `
           <tr>
             <td style="padding:40px 40px 16px;">
               <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">Riff deadline change in ${clubName}.</h1>
@@ -674,7 +750,21 @@ export async function sendDeadlineChangedEmail({
           </tr>
 
           ${emailButton("View the riff", riffUrl)}`,
-      }),
+    }),
+  };
+}
+
+export async function sendDeadlineChangedEmail({
+  email,
+  ...params
+}: DeadlineChangedEmailParams & { email: string }): Promise<void> {
+  try {
+    const { subject, html } = buildDeadlineChangedEmail(params);
+    const { error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to: email,
+      subject,
+      html,
     });
     if (error) console.error("Resend error (deadlineChanged):", error);
   } catch (error) {
@@ -768,21 +858,55 @@ const JOIN_RIFF_NUDGE_VARIANTS: Array<
   }),
 ];
 
-export async function sendDeadlineApproachingEmail({
-  email,
-  riffTitle,
+// The three reminder templates share one layout and differ only in copy,
+// footer and button, so they share this renderer.
+function buildReminderEmail({
+  variant,
   clubName,
+  footerText,
+  buttonLabel,
   riffUrl,
-  deadline,
-  daysRemaining,
 }: {
-  email: string;
+  variant: ReminderEmailVariant;
+  clubName: string;
+  footerText: string;
+  buttonLabel: string;
+  riffUrl: string;
+}): BuiltEmail {
+  return {
+    subject: variant.subject,
+    html: emailShell({
+      title: variant.headline,
+      clubName,
+      footerText,
+      content: `
+          <tr>
+            <td style="padding:40px 40px 16px;">
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${variant.headline}</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${variant.body}</p>
+            </td>
+          </tr>
+
+          ${emailButton(buttonLabel, riffUrl)}`,
+    }),
+  };
+}
+
+interface DeadlineApproachingEmailParams {
   riffTitle: string;
   clubName: string;
   riffUrl: string;
   deadline: Date;
   daysRemaining: number;
-}): Promise<boolean> {
+}
+
+export function buildDeadlineApproachingEmail({
+  riffTitle,
+  clubName,
+  riffUrl,
+  deadline,
+  daysRemaining,
+}: DeadlineApproachingEmailParams): BuiltEmail {
   const deadlineStr = deadline.toLocaleDateString("en-US", {
     month: "long",
     day: "numeric",
@@ -793,32 +917,32 @@ export async function sendDeadlineApproachingEmail({
       : daysRemaining === 1
         ? "tomorrow"
         : `in ${daysRemaining} days`;
-  const variant = deadlineApproachingVariant(
-    daysRemaining,
+  return buildReminderEmail({
+    variant: deadlineApproachingVariant(
+      daysRemaining,
+      clubName,
+      riffTitle,
+      deadlineStr,
+      dayLabel
+    ),
     clubName,
-    riffTitle,
-    deadlineStr,
-    dayLabel
-  );
+    footerText: `You're receiving this because you haven't submitted a piece to ${riffTitle} yet.`,
+    buttonLabel: "Finish your piece",
+    riffUrl,
+  });
+}
+
+export async function sendDeadlineApproachingEmail({
+  email,
+  ...params
+}: DeadlineApproachingEmailParams & { email: string }): Promise<boolean> {
   try {
+    const { subject, html } = buildDeadlineApproachingEmail(params);
     const { error } = await getResend().emails.send({
       from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
       to: email,
-      subject: variant.subject,
-      html: emailShell({
-        title: variant.headline,
-        clubName,
-        footerText: `You're receiving this because you haven't submitted a piece to ${riffTitle} yet.`,
-        content: `
-          <tr>
-            <td style="padding:40px 40px 16px;">
-              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${variant.headline}</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${variant.body}</p>
-            </td>
-          </tr>
-
-          ${emailButton("Finish your piece", riffUrl)}`,
-      }),
+      subject,
+      html,
     });
     if (error) {
       console.error("Resend error (deadlineApproaching):", error);
@@ -831,41 +955,41 @@ export async function sendDeadlineApproachingEmail({
   }
 }
 
-export async function sendRememberToWriteEmail({
-  email,
-  riffTitle,
-  clubName,
-  riffUrl,
-  variantIndex,
-}: {
-  email: string;
+interface RotatingReminderEmailParams {
   riffTitle: string;
   clubName: string;
   riffUrl: string;
   variantIndex: number;
-}): Promise<boolean> {
-  const variant = REMEMBER_TO_WRITE_VARIANTS[
-    variantIndex % REMEMBER_TO_WRITE_VARIANTS.length
-  ](clubName, riffTitle);
+}
+
+export function buildRememberToWriteEmail({
+  riffTitle,
+  clubName,
+  riffUrl,
+  variantIndex,
+}: RotatingReminderEmailParams): BuiltEmail {
+  return buildReminderEmail({
+    variant: REMEMBER_TO_WRITE_VARIANTS[
+      variantIndex % REMEMBER_TO_WRITE_VARIANTS.length
+    ](clubName, riffTitle),
+    clubName,
+    footerText: `You're receiving this because you joined ${riffTitle} in ${clubName} but haven't started writing yet.`,
+    buttonLabel: "Start writing",
+    riffUrl,
+  });
+}
+
+export async function sendRememberToWriteEmail({
+  email,
+  ...params
+}: RotatingReminderEmailParams & { email: string }): Promise<boolean> {
   try {
+    const { subject, html } = buildRememberToWriteEmail(params);
     const { error } = await getResend().emails.send({
       from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
       to: email,
-      subject: variant.subject,
-      html: emailShell({
-        title: variant.headline,
-        clubName,
-        footerText: `You're receiving this because you joined ${riffTitle} in ${clubName} but haven't started writing yet.`,
-        content: `
-          <tr>
-            <td style="padding:40px 40px 16px;">
-              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${variant.headline}</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${variant.body}</p>
-            </td>
-          </tr>
-
-          ${emailButton("Start writing", riffUrl)}`,
-      }),
+      subject,
+      html,
     });
     if (error) {
       console.error("Resend error (rememberToWrite):", error);
@@ -878,41 +1002,34 @@ export async function sendRememberToWriteEmail({
   }
 }
 
-export async function sendJoinRiffNudgeEmail({
-  email,
+export function buildJoinRiffNudgeEmail({
   riffTitle,
   clubName,
   riffUrl,
   variantIndex,
-}: {
-  email: string;
-  riffTitle: string;
-  clubName: string;
-  riffUrl: string;
-  variantIndex: number;
-}): Promise<boolean> {
-  const variant = JOIN_RIFF_NUDGE_VARIANTS[
-    variantIndex % JOIN_RIFF_NUDGE_VARIANTS.length
-  ](clubName, riffTitle);
+}: RotatingReminderEmailParams): BuiltEmail {
+  return buildReminderEmail({
+    variant: JOIN_RIFF_NUDGE_VARIANTS[
+      variantIndex % JOIN_RIFF_NUDGE_VARIANTS.length
+    ](clubName, riffTitle),
+    clubName,
+    footerText: `You're receiving this because you're a member of ${clubName} on Riff.`,
+    buttonLabel: "Let's riff",
+    riffUrl,
+  });
+}
+
+export async function sendJoinRiffNudgeEmail({
+  email,
+  ...params
+}: RotatingReminderEmailParams & { email: string }): Promise<boolean> {
   try {
+    const { subject, html } = buildJoinRiffNudgeEmail(params);
     const { error } = await getResend().emails.send({
       from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
       to: email,
-      subject: variant.subject,
-      html: emailShell({
-        title: variant.headline,
-        clubName,
-        footerText: `You're receiving this because you're a member of ${clubName} on Riff.`,
-        content: `
-          <tr>
-            <td style="padding:40px 40px 16px;">
-              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${variant.headline}</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${variant.body}</p>
-            </td>
-          </tr>
-
-          ${emailButton("Let's riff", riffUrl)}`,
-      }),
+      subject,
+      html,
     });
     if (error) {
       console.error("Resend error (joinRiffNudge):", error);
@@ -925,6 +1042,13 @@ export async function sendJoinRiffNudgeEmail({
   }
 }
 
+interface ClubPausedEmailParams {
+  clubName: string;
+  clubUrl: string;
+  daysQuiet: number;
+  volumeLabel: string;
+}
+
 /**
  * Club auto-paused email — sent to the host when the cadence cron gives up on a
  * club that hasn't submitted anything for several deadlines running.
@@ -933,29 +1057,19 @@ export async function sendJoinRiffNudgeEmail({
  * that deletion, so this email is where they find out, and it shouldn't mention
  * only the half that sounds better.
  */
-export async function sendClubPausedEmail({
-  email,
+export function buildClubPausedEmail({
   clubName,
   clubUrl,
   daysQuiet,
   volumeLabel,
-}: {
-  email: string;
-  clubName: string;
-  clubUrl: string;
-  daysQuiet: number;
-  volumeLabel: string;
-}): Promise<void> {
-  try {
-    const { data, error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to: email,
-      subject: `${clubName} is paused`,
-      html: emailShell({
-        title: `${clubName} is paused`,
-        clubName,
-        footerText: `You're receiving this because you host ${clubName} on Riff.`,
-        content: `
+}: ClubPausedEmailParams): BuiltEmail {
+  return {
+    subject: `${clubName} is paused`,
+    html: emailShell({
+      title: `${clubName} is paused`,
+      clubName,
+      footerText: `You're receiving this because you host ${clubName} on Riff.`,
+      content: `
           <tr>
             <td style="padding:40px 40px 16px;">
               <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">Taking a breather.</h1>
@@ -965,7 +1079,21 @@ export async function sendClubPausedEmail({
           </tr>
 
           ${emailButton("Set a cadence", clubUrl)}`,
-      }),
+    }),
+  };
+}
+
+export async function sendClubPausedEmail({
+  email,
+  ...params
+}: ClubPausedEmailParams & { email: string }): Promise<void> {
+  try {
+    const { subject, html } = buildClubPausedEmail(params);
+    const { data, error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to: email,
+      subject,
+      html,
     });
     if (error) {
       console.error("[email error] club paused:", error);
@@ -978,29 +1106,25 @@ export async function sendClubPausedEmail({
   }
 }
 
-export async function sendCoHostAssignedEmail({
-  email,
-  coHostName,
-  adminName,
-  clubName,
-  clubUrl,
-}: {
-  email: string;
+interface CoHostAssignedEmailParams {
   coHostName: string;
   adminName: string;
   clubName: string;
   clubUrl: string;
-}): Promise<void> {
-  try {
-    const { error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to: email,
-      subject: `You're a co-host of ${clubName}`,
-      html: emailShell({
-        title: `You're a co-host of ${clubName}`,
-        clubName,
-        footerText: `You're receiving this because you're a member of ${clubName} on Riff.`,
-        content: `
+}
+
+export function buildCoHostAssignedEmail({
+  adminName,
+  clubName,
+  clubUrl,
+}: CoHostAssignedEmailParams): BuiltEmail {
+  return {
+    subject: `You're a co-host of ${clubName}`,
+    html: emailShell({
+      title: `You're a co-host of ${clubName}`,
+      clubName,
+      footerText: `You're receiving this because you're a member of ${clubName} on Riff.`,
+      content: `
           <tr>
             <td style="padding:40px 40px 16px;">
               <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">You're a co-host.</h1>
@@ -1009,7 +1133,21 @@ export async function sendCoHostAssignedEmail({
           </tr>
 
           ${emailButton("Visit club", clubUrl)}`,
-      }),
+    }),
+  };
+}
+
+export async function sendCoHostAssignedEmail({
+  email,
+  ...params
+}: CoHostAssignedEmailParams & { email: string }): Promise<void> {
+  try {
+    const { subject, html } = buildCoHostAssignedEmail(params);
+    const { error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to: email,
+      subject,
+      html,
     });
     if (error) console.error("Resend error (coHostAssigned):", error);
   } catch (error) {
@@ -1017,29 +1155,26 @@ export async function sendCoHostAssignedEmail({
   }
 }
 
-export async function sendHostTransferredEmail({
-  email,
-  oldHostName,
-  newHostName,
-  clubName,
-  clubUrl,
-}: {
-  email: string;
+interface HostTransferredEmailParams {
   oldHostName: string;
   newHostName: string;
   clubName: string;
   clubUrl: string;
-}): Promise<void> {
-  try {
-    const { error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to: email,
-      subject: `New host in ${clubName}`,
-      html: emailShell({
-        title: `New host in ${clubName}`,
-        clubName,
-        footerText: `You're receiving this because you're a member of ${clubName} on Riff.`,
-        content: `
+}
+
+export function buildHostTransferredEmail({
+  oldHostName,
+  newHostName,
+  clubName,
+  clubUrl,
+}: HostTransferredEmailParams): BuiltEmail {
+  return {
+    subject: `New host in ${clubName}`,
+    html: emailShell({
+      title: `New host in ${clubName}`,
+      clubName,
+      footerText: `You're receiving this because you're a member of ${clubName} on Riff.`,
+      content: `
           <tr>
             <td style="padding:40px 40px 16px;">
               <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">New club host.</h1>
@@ -1048,7 +1183,21 @@ export async function sendHostTransferredEmail({
           </tr>
 
           ${emailButton("Visit club", clubUrl)}`,
-      }),
+    }),
+  };
+}
+
+export async function sendHostTransferredEmail({
+  email,
+  ...params
+}: HostTransferredEmailParams & { email: string }): Promise<void> {
+  try {
+    const { subject, html } = buildHostTransferredEmail(params);
+    const { error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to: email,
+      subject,
+      html,
     });
     if (error) console.error("Resend error (hostTransferred):", error);
   } catch (error) {
@@ -1056,23 +1205,23 @@ export async function sendHostTransferredEmail({
   }
 }
 
-// One digest per recipient per piece, covering both kinds of activity:
-// comments left on a piece you wrote, and replies in a thread you're part of
-// (which may be on someone else's piece). Either count can be zero, but the
-// caller never sends when both are.
-export async function sendCommentNotificationEmail({
-  email,
-  pieceTitle,
-  commentCount,
-  replyCount,
-  pieceUrl,
-}: {
-  email: string;
+interface CommentNotificationEmailParams {
   pieceTitle: string;
   commentCount: number;
   replyCount: number;
   pieceUrl: string;
-}): Promise<void> {
+}
+
+// One digest per recipient per piece, covering both kinds of activity:
+// comments left on a piece you wrote, and replies in a thread you're part of
+// (which may be on someone else's piece). Either count can be zero, but the
+// caller never sends when both are.
+export function buildCommentNotificationEmail({
+  pieceTitle,
+  commentCount,
+  replyCount,
+  pieceUrl,
+}: CommentNotificationEmailParams): BuiltEmail {
   const parts = [
     commentCount > 0 &&
       `${commentCount} new comment${commentCount === 1 ? "" : "s"} on your piece`,
@@ -1088,15 +1237,12 @@ export async function sendCommentNotificationEmail({
       ? `You're receiving this because someone commented on your writing on Riff.`
       : `You're receiving this because you're part of the conversation on Riff.`;
 
-  try {
-    const { error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to: email,
-      subject,
-      html: emailShell({
-        title: subject,
-        footerText,
-        content: `
+  return {
+    subject,
+    html: emailShell({
+      title: subject,
+      footerText,
+      content: `
           <tr>
             <td style="padding:40px 40px 16px;">
               <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${headline} on "${pieceTitle}".</h1>
@@ -1105,7 +1251,21 @@ export async function sendCommentNotificationEmail({
           </tr>
 
           ${emailButton("View the conversation", pieceUrl)}`,
-      }),
+    }),
+  };
+}
+
+export async function sendCommentNotificationEmail({
+  email,
+  ...params
+}: CommentNotificationEmailParams & { email: string }): Promise<void> {
+  try {
+    const { subject, html } = buildCommentNotificationEmail(params);
+    const { error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to: email,
+      subject,
+      html,
     });
     if (error) console.error("Resend error (commentNotification):", error);
   } catch (error) {
