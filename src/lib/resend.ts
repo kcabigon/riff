@@ -261,6 +261,32 @@ function draftTitleOrNull(title: string | null | undefined): string | null {
   return t && t !== "Untitled" ? t : null;
 }
 
+// Sends a built email. Never throws: failures are logged with the email's
+// label and reported as false, and each send function decides what a failure
+// means for its caller — the sign-in email, for one, must throw.
+async function deliver(
+  to: string,
+  { subject, html }: BuiltEmail,
+  label: string
+): Promise<boolean> {
+  try {
+    const { error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to,
+      subject,
+      html,
+    });
+    if (error) {
+      console.error(`[email error] ${label}:`, error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error(`[email error] ${label} threw:`, err);
+    return false;
+  }
+}
+
 // ==================== SEND FUNCTIONS ====================
 
 export function buildSignInEmail(magicLink: string): BuiltEmail {
@@ -278,24 +304,9 @@ export async function sendSignInEmail(
   email: string,
   magicLink: string
 ): Promise<void> {
-  try {
-    const { subject, html } = buildSignInEmail(magicLink);
-    const { data, error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to: email,
-      subject,
-      html,
-    });
-
-    if (error) {
-      console.error("Resend API error:", error);
-      throw new Error(`Failed to send email: ${error.message}`);
-    }
-
-    console.info("Sign-in email sent successfully:", data);
-  } catch (error) {
-    console.error("Error sending sign-in email:", error);
-    throw error;
+  // Throws on failure — its caller counts or reports failed sends.
+  if (!(await deliver(email, buildSignInEmail(magicLink), "signIn"))) {
+    throw new Error("Failed to send signIn email");
   }
 }
 
@@ -314,24 +325,9 @@ export async function sendOnboardingEmail(
   email: string,
   magicLink: string
 ): Promise<void> {
-  try {
-    const { subject, html } = buildOnboardingEmail(magicLink);
-    const { data, error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to: email,
-      subject,
-      html,
-    });
-
-    if (error) {
-      console.error("Resend API error:", error);
-      throw new Error(`Failed to send email: ${error.message}`);
-    }
-
-    console.info("Onboarding email sent successfully:", data);
-  } catch (error) {
-    console.error("Error sending onboarding email:", error);
-    throw error;
+  // Throws on failure — its caller counts or reports failed sends.
+  if (!(await deliver(email, buildOnboardingEmail(magicLink), "onboarding"))) {
+    throw new Error("Failed to send onboarding email");
   }
 }
 
@@ -372,24 +368,9 @@ export async function sendRiffCreatedEmail({
   email,
   ...params
 }: RiffCreatedEmailParams & { email: string }): Promise<void> {
-  try {
-    const { subject, html } = buildRiffCreatedEmail(params);
-    const { data, error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to: email,
-      subject,
-      html,
-    });
-
-    if (error) {
-      console.error("Resend API error:", error);
-      throw new Error(`Failed to send email: ${error.message}`);
-    }
-
-    console.info("Riff created email sent successfully:", data);
-  } catch (error) {
-    console.error("Error sending riff created email:", error);
-    throw error;
+  // Throws on failure — its caller counts or reports failed sends.
+  if (!(await deliver(email, buildRiffCreatedEmail(params), "riffCreated"))) {
+    throw new Error("Failed to send riffCreated email");
   }
 }
 
@@ -464,24 +445,9 @@ export async function sendRiffRevealedEmail({
   email,
   ...params
 }: RiffRevealedEmailParams & { email: string }): Promise<void> {
-  try {
-    const { subject, html } = buildRiffRevealedEmail(params);
-    const { data, error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to: email,
-      subject,
-      html,
-    });
-
-    if (error) {
-      console.error("Resend API error:", error);
-      throw new Error(`Failed to send email: ${error.message}`);
-    }
-
-    console.info("Riff revealed email sent successfully:", data);
-  } catch (error) {
-    console.error("Error sending riff revealed email:", error);
-    throw error;
+  // Throws on failure — its caller counts or reports failed sends.
+  if (!(await deliver(email, buildRiffRevealedEmail(params), "riffRevealed"))) {
+    throw new Error("Failed to send riffRevealed email");
   }
 }
 
@@ -661,18 +627,7 @@ export async function sendMemberJoinedEmail({
   email,
   ...params
 }: MemberJoinedEmailParams & { email: string }): Promise<void> {
-  try {
-    const { subject, html } = buildMemberJoinedEmail(params);
-    const { error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to: email,
-      subject,
-      html,
-    });
-    if (error) console.error("Resend error (memberJoined):", error);
-  } catch (error) {
-    console.error("Error sending member joined email:", error);
-  }
+  await deliver(email, buildMemberJoinedEmail(params), "memberJoined");
 }
 
 interface ParticipantJoinedEmailParams {
@@ -720,18 +675,11 @@ export async function sendParticipantJoinedEmail({
   email,
   ...params
 }: ParticipantJoinedEmailParams & { email: string }): Promise<void> {
-  try {
-    const { subject, html } = buildParticipantJoinedEmail(params);
-    const { error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to: email,
-      subject,
-      html,
-    });
-    if (error) console.error("Resend error (participantJoined):", error);
-  } catch (error) {
-    console.error("Error sending participant joined email:", error);
-  }
+  await deliver(
+    email,
+    buildParticipantJoinedEmail(params),
+    "participantJoined"
+  );
 }
 
 interface PieceSubmittedEmailParams {
@@ -803,18 +751,7 @@ export async function sendPieceSubmittedEmail({
   email,
   ...params
 }: PieceSubmittedEmailParams & { email: string }): Promise<void> {
-  try {
-    const { subject, html } = buildPieceSubmittedEmail(params);
-    const { error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to: email,
-      subject,
-      html,
-    });
-    if (error) console.error("Resend error (pieceSubmitted):", error);
-  } catch (error) {
-    console.error("Error sending piece submitted email:", error);
-  }
+  await deliver(email, buildPieceSubmittedEmail(params), "pieceSubmitted");
 }
 
 interface PieceSharedEmailParams {
@@ -913,18 +850,7 @@ export async function sendPieceSharedEmail({
   email,
   ...params
 }: PieceSharedEmailParams & { email: string }): Promise<void> {
-  try {
-    const { subject, html } = buildPieceSharedEmail(params);
-    const { error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to: email,
-      subject,
-      html,
-    });
-    if (error) console.error("Resend error (pieceShared):", error);
-  } catch (error) {
-    console.error("Error sending piece shared email:", error);
-  }
+  await deliver(email, buildPieceSharedEmail(params), "pieceShared");
 }
 
 interface PieceInviteAcceptedEmailParams {
@@ -975,18 +901,11 @@ export async function sendPieceInviteAcceptedEmail({
   email,
   ...params
 }: PieceInviteAcceptedEmailParams & { email: string }): Promise<void> {
-  try {
-    const { subject, html } = buildPieceInviteAcceptedEmail(params);
-    const { error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to: email,
-      subject,
-      html,
-    });
-    if (error) console.error("Resend error (pieceInviteAccepted):", error);
-  } catch (error) {
-    console.error("Error sending piece invite accepted email:", error);
-  }
+  await deliver(
+    email,
+    buildPieceInviteAcceptedEmail(params),
+    "pieceInviteAccepted"
+  );
 }
 
 interface RiffGracePeriodEmailParams {
@@ -1041,18 +960,7 @@ export async function sendRiffGracePeriodEmail({
   email,
   ...params
 }: RiffGracePeriodEmailParams & { email: string }): Promise<void> {
-  try {
-    const { subject, html } = buildRiffGracePeriodEmail(params);
-    const { error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to: email,
-      subject,
-      html,
-    });
-    if (error) console.error("Resend error (riffGracePeriod):", error);
-  } catch (error) {
-    console.error("Error sending riff grace period email:", error);
-  }
+  await deliver(email, buildRiffGracePeriodEmail(params), "riffGracePeriod");
 }
 
 interface DeadlineChangedEmailParams {
@@ -1128,18 +1036,7 @@ export async function sendDeadlineChangedEmail({
   email,
   ...params
 }: DeadlineChangedEmailParams & { email: string }): Promise<void> {
-  try {
-    const { subject, html } = buildDeadlineChangedEmail(params);
-    const { error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to: email,
-      subject,
-      html,
-    });
-    if (error) console.error("Resend error (deadlineChanged):", error);
-  } catch (error) {
-    console.error("Error sending deadline changed email:", error);
-  }
+  await deliver(email, buildDeadlineChangedEmail(params), "deadlineChanged");
 }
 
 interface RiffReminderEmailParams {
@@ -1229,23 +1126,8 @@ export async function sendRiffReminderEmail({
   email,
   ...params
 }: RiffReminderEmailParams & { email: string }): Promise<boolean> {
-  try {
-    const { subject, html } = buildRiffReminderEmail(params);
-    const { error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to: email,
-      subject,
-      html,
-    });
-    if (error) {
-      console.error("Resend error (riffReminder):", error);
-      return false;
-    }
-    return true;
-  } catch (error) {
-    console.error("Error sending riff reminder email:", error);
-    return false;
-  }
+  // True only when it went out — the caller logs a send only then.
+  return deliver(email, buildRiffReminderEmail(params), "riffReminder");
 }
 
 interface ReadingReminderEmailParams {
@@ -1325,23 +1207,8 @@ export async function sendReadingReminderEmail({
   email,
   ...params
 }: ReadingReminderEmailParams & { email: string }): Promise<boolean> {
-  try {
-    const { subject, html } = buildReadingReminderEmail(params);
-    const { error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to: email,
-      subject,
-      html,
-    });
-    if (error) {
-      console.error("Resend error (readingReminder):", error);
-      return false;
-    }
-    return true;
-  } catch (error) {
-    console.error("Error sending reading reminder email:", error);
-    return false;
-  }
+  // True only when it went out — the caller logs a send only then.
+  return deliver(email, buildReadingReminderEmail(params), "readingReminder");
 }
 
 interface ClubPausedEmailParams {
@@ -1389,22 +1256,9 @@ export async function sendClubPausedEmail({
   email,
   ...params
 }: ClubPausedEmailParams & { email: string }): Promise<void> {
-  try {
-    const { subject, html } = buildClubPausedEmail(params);
-    const { data, error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to: email,
-      subject,
-      html,
-    });
-    if (error) {
-      console.error("[email error] club paused:", error);
-      throw error;
-    }
-    console.info(`[email] club paused sent to ${email}`, data?.id);
-  } catch (err) {
-    console.error("[email error] club paused threw:", err);
-    throw err;
+  // Throws on failure — its caller counts or reports failed sends.
+  if (!(await deliver(email, buildClubPausedEmail(params), "clubPaused"))) {
+    throw new Error("Failed to send clubPaused email");
   }
 }
 
@@ -1446,18 +1300,7 @@ export async function sendCoHostAssignedEmail({
   email,
   ...params
 }: CoHostAssignedEmailParams & { email: string }): Promise<void> {
-  try {
-    const { subject, html } = buildCoHostAssignedEmail(params);
-    const { error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to: email,
-      subject,
-      html,
-    });
-    if (error) console.error("Resend error (coHostAssigned):", error);
-  } catch (error) {
-    console.error("Error sending co-host assigned email:", error);
-  }
+  await deliver(email, buildCoHostAssignedEmail(params), "coHostAssigned");
 }
 
 interface HostTransferredEmailParams {
@@ -1517,18 +1360,7 @@ export async function sendHostTransferredEmail({
   email,
   ...params
 }: HostTransferredEmailParams & { email: string }): Promise<void> {
-  try {
-    const { subject, html } = buildHostTransferredEmail(params);
-    const { error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to: email,
-      subject,
-      html,
-    });
-    if (error) console.error("Resend error (hostTransferred):", error);
-  } catch (error) {
-    console.error("Error sending host transferred email:", error);
-  }
+  await deliver(email, buildHostTransferredEmail(params), "hostTransferred");
 }
 
 interface CommentNotificationEmailParams {
@@ -1610,16 +1442,9 @@ export async function sendCommentNotificationEmail({
   email,
   ...params
 }: CommentNotificationEmailParams & { email: string }): Promise<void> {
-  try {
-    const { subject, html } = buildCommentNotificationEmail(params);
-    const { error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to: email,
-      subject,
-      html,
-    });
-    if (error) console.error("Resend error (commentNotification):", error);
-  } catch (error) {
-    console.error("Error sending comment notification email:", error);
-  }
+  await deliver(
+    email,
+    buildCommentNotificationEmail(params),
+    "commentNotification"
+  );
 }
