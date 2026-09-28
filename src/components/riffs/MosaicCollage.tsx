@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 // Placeholder color palette for pieces without a cover image. Intentional
 // pastel rotation, shared across multiple placeholder surfaces.
 /* eslint-disable riff/no-non-palette-colors */
@@ -70,17 +72,12 @@ export default function MosaicCollage({ pieces }: MosaicCollageProps) {
                 }}
               />
             ) : (
-              <img
+              <Image
                 src={imageUrl}
                 alt=""
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  pointerEvents: "none",
-                }}
+                fill
+                sizes="(max-width: 767px) 90vw, 280px"
+                style={{ objectFit: "cover", pointerEvents: "none" }}
               />
             )}
           </div>

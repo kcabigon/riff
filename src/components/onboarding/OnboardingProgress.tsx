@@ -14,24 +14,9 @@ export default function OnboardingProgress({
       style={{
         width: "100%",
         display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: "16px",
+        justifyContent: "center",
       }}
     >
-      {/* Progress text */}
-      <p
-        style={{
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "14px",
-          fontWeight: 300,
-          color: "#9C9C9C",
-          margin: 0,
-        }}
-      >
-        Step {currentStep} of {totalSteps}
-      </p>
-
       {/* Progress dots */}
       <div style={{ display: "flex", gap: "12px" }}>
         {Array.from({ length: totalSteps }).map((_, index) => (

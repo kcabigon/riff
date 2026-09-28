@@ -162,38 +162,69 @@ export default async function ReadPage({
     redirect("/");
   }
 
-  // Check if already read — skipped for riff-less pieces, there's no reveal
-  // progress to track against.
-  const existingRead = validRiffId
-    ? await prisma.pieceRead.findUnique({
-        where: {
-          userId_pieceId_riffId: {
-            userId,
-            pieceId,
-            riffId: validRiffId,
-          },
-        },
-      })
-    : null;
-
-  // Fetch comments server-side (top-level only; replies included nested)
-  const rawComments = await prisma.comment.findMany({
-    where: { pieceId, riffId: validRiffId, parentId: null },
-    include: {
-      author: {
-        select: { id: true, name: true, username: true, avatarUrl: true },
-      },
-      replies: {
+  // Check if already read, fetch comments, sibling pieces (for prev/next
+  // navigation), and the current user's info (for comment compose) — none
+  // of these four depend on each other, so they run as one round trip
+  // instead of four sequential ones.
+  const [existingRead, rawComments, siblingPieces, currentUser] =
+    await Promise.all([
+      // Skipped for riff-less pieces, there's no reveal progress to track against.
+      validRiffId
+        ? prisma.pieceRead.findUnique({
+            where: {
+              userId_pieceId_riffId: {
+                userId,
+                pieceId,
+                riffId: validRiffId,
+              },
+            },
+          })
+        : Promise.resolve(null),
+      // Top-level only; replies included nested
+      prisma.comment.findMany({
+        where: { pieceId, riffId: validRiffId, parentId: null },
         include: {
           author: {
             select: { id: true, name: true, username: true, avatarUrl: true },
           },
+          replies: {
+            include: {
+              author: {
+                select: {
+                  id: true,
+                  name: true,
+                  username: true,
+                  avatarUrl: true,
+                },
+              },
+            },
+            orderBy: { createdAt: "asc" },
+          },
         },
-        orderBy: { createdAt: "asc" },
-      },
-    },
-    orderBy: { selectionStart: "asc" },
-  });
+        orderBy: { selectionStart: "asc" },
+      }),
+      // No siblings for a riff-less published piece, there's no riff to gather them from
+      validRiffId
+        ? prisma.pieceRiff.findMany({
+            where: { riffId: validRiffId },
+            select: {
+              piece: {
+                select: { id: true, title: true },
+              },
+            },
+            orderBy: { submittedAt: "asc" },
+          })
+        : Promise.resolve([]),
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          avatarUrl: true,
+        },
+      }),
+    ]);
 
   // Serialize for client boundary
   const initialComments = rawComments.map((c) => ({
@@ -216,20 +247,6 @@ export default async function ReadPage({
     })),
   }));
 
-  // Fetch sibling pieces in same riff for navigation — no siblings for a
-  // riff-less published piece, there's no riff to gather them from
-  const siblingPieces = validRiffId
-    ? await prisma.pieceRiff.findMany({
-        where: { riffId: validRiffId },
-        select: {
-          piece: {
-            select: { id: true, title: true },
-          },
-        },
-        orderBy: { submittedAt: "asc" },
-      })
-    : [];
-
   const orderedPieces = siblingPieces.map((pr) => pr.piece);
   const currentIndex = orderedPieces.findIndex((p) => p.id === pieceId);
   const previousPiece =
@@ -238,17 +255,6 @@ export default async function ReadPage({
     currentIndex < orderedPieces.length - 1
       ? orderedPieces[currentIndex + 1]
       : null;
-
-  // Fetch current user info for comment compose
-  const currentUser = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      name: true,
-      username: true,
-      avatarUrl: true,
-    },
-  });
 
   // The CTA shows only on the one opted-in piece, in every environment. That ID
   // lives in the production DB and never exists in the (separate) dev DB, so the

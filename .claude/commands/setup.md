@@ -30,10 +30,9 @@ Help a new collaborator set up the Riff project for local development. Walk thro
    - Run `npx prisma generate`
    - Explain: "This generates the TypeScript client for database access based on the schema"
 
-6. **Run database migrations**:
-   - Run `npm run db:migrate:dev`
-   - If this fails, it's likely a DATABASE_URL issue — help debug
-   - Explain: "This ensures your database schema matches the project's migration files"
+6. **Explain the shared database**:
+   - Do not run database migrations during setup. Local development and staging share one database; Kyle applies reviewed migrations once for the team
+   - Explain: "The Prisma client was generated on your machine. If database access fails, check your `.env.development` with Kyle; never accept a reset prompt"
 
 7. **Verify build**:
    - Run `npm run build`

@@ -1,19 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
 import Dropdown from "@/components/shared/Dropdown";
 import type { DropdownItem } from "@/components/shared/Dropdown";
 import { useDraftCreation } from "@/hooks/useDraftCreation";
+import {
+  useCreationOverlay,
+  riffCreatedPath,
+  clubCreatedPath,
+} from "@/hooks/useCreationOverlay";
 import CreatePillButton from "./CreatePillButton";
-import CreateRiffModal from "@/components/riffs/CreateRiffModal";
+import CreateRiffOverlay from "@/components/riffs/CreateRiffOverlay";
+import CreateClubOverlay from "./CreateClubOverlay";
 
 export default function CreateDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  const [isRiffModalOpen, setIsRiffModalOpen] = useState(false);
+  const riffOverlay = useCreationOverlay(riffCreatedPath);
+  const clubOverlay = useCreationOverlay(clubCreatedPath);
   const { createDraft, isCreating } = useDraftCreation();
-  const router = useRouter();
-  const pathname = usePathname();
 
   const items: DropdownItem[] = [
     {
@@ -24,15 +28,12 @@ export default function CreateDropdown() {
     {
       type: "action",
       label: "New riff",
-      onClick: () => setIsRiffModalOpen(true),
+      onClick: riffOverlay.open,
     },
     {
       type: "action",
       label: "New club",
-      onClick: () => {
-        sessionStorage.setItem("pendingClubFrom", pathname);
-        router.push("/onboarding/create-club");
-      },
+      onClick: clubOverlay.open,
     },
   ];
 
@@ -54,13 +55,15 @@ export default function CreateDropdown() {
         onToggle={() => setIsOpen((o) => !o)}
         onClose={() => setIsOpen(false)}
       />
-      <CreateRiffModal
-        isOpen={isRiffModalOpen}
-        onClose={() => setIsRiffModalOpen(false)}
-        onCreated={(riffId) => {
-          setIsRiffModalOpen(false);
-          router.push(`/riffs/${riffId}`);
-        }}
+      <CreateRiffOverlay
+        isOpen={riffOverlay.isOpen}
+        onClose={riffOverlay.close}
+        onCreated={riffOverlay.onCreated}
+      />
+      <CreateClubOverlay
+        isOpen={clubOverlay.isOpen}
+        onClose={clubOverlay.close}
+        onCreated={clubOverlay.onCreated}
       />
     </>
   );

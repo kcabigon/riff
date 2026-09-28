@@ -91,7 +91,6 @@ export default async function RiffPage({
               authorId: true,
               wordCount: true,
               coverImage: true,
-              currentContent: true,
               updatedAt: true,
               author: {
                 select: { id: true, name: true, avatarUrl: true },
@@ -115,9 +114,20 @@ export default async function RiffPage({
     redirect("/");
   }
 
-  // Verify user is a club member OR a riff participant + predicted volume number in parallel
+  // Content (full Tiptap JSON) is deliberately not selected on the main
+  // riff query above — it isn't used anywhere on this page except to build
+  // the viewer's own preview text, and pulling every participant's full
+  // essay content just to discard it (pre-reveal it's never even sent to
+  // the client) was wasted DB I/O on every riff page load. Fetch it only
+  // for the viewer's own piece, alongside the other per-request checks
+  // below (none of these three depend on each other).
+  const ownPieceId =
+    riff.pieces.find((p) => p.piece.authorId === userId)?.piece.id ?? null;
+
+  // Verify user is a club member OR a riff participant + predicted volume number
+  // + the viewer's own piece content (for their preview), all in parallel
   // (clubless riffs have no members to check and no per-club volume sequence)
-  const [member, predictedVolumeNumber] = await Promise.all([
+  const [member, predictedVolumeNumber, ownPieceContent] = await Promise.all([
     riff.clubId
       ? prisma.clubMember.findFirst({
           where: { clubId: riff.clubId, userId },
@@ -133,6 +143,12 @@ export default async function RiffPage({
           })
           .then((n) => n + 1)
       : Promise.resolve(undefined),
+    ownPieceId
+      ? prisma.piece.findUnique({
+          where: { id: ownPieceId },
+          select: { currentContent: true },
+        })
+      : Promise.resolve(null),
   ]);
 
   const isJoined = riff.participants.some((p) => p.user.id === userId);
@@ -167,13 +183,41 @@ export default async function RiffPage({
   const hasNewCommentsMap: Record<string, boolean> = {};
   let contributionData: RiffContributor[] = [];
   if (riff.status === "REVEALED") {
-    // One PieceRead fetch for the whole riff — derives both the viewer's
-    // own per-piece readAt map and every member's total read count, instead
-    // of a separate findMany + groupBy round-trip for each.
-    const allReads = await prisma.pieceRead.findMany({
-      where: { riffId: id },
-      select: { userId: true, pieceId: true, readAt: true },
-    });
+    // Reads, comments, and the contribution-strip membership list are three
+    // independent queries — none depends on another — so they run as one
+    // round trip instead of three sequential ones.
+    const [allReads, allComments, clubMembers] = await Promise.all([
+      // One PieceRead fetch for the whole riff — derives both the viewer's
+      // own per-piece readAt map and every member's total read count, instead
+      // of a separate findMany + groupBy round-trip for each.
+      prisma.pieceRead.findMany({
+        where: { riffId: id },
+        select: { userId: true, pieceId: true, readAt: true },
+      }),
+      // One Comment fetch for the whole riff — derives both the "new since
+      // you last read it" flags and every author's total comment count.
+      prisma.comment.findMany({
+        where: { riffId: id },
+        select: { pieceId: true, createdAt: true, authorId: true },
+      }),
+      // Contribution strip data — club members for club riffs, participants for clubless
+      riff.clubId
+        ? prisma.clubMember.findMany({
+            where: { clubId: riff.clubId },
+            select: {
+              user: { select: { id: true, name: true, avatarUrl: true } },
+            },
+          })
+        : Promise.resolve(
+            riff.participants.map((p) => ({
+              user: {
+                id: p.user.id,
+                name: p.user.name,
+                avatarUrl: p.user.avatarUrl,
+              },
+            }))
+          ),
+    ]);
     const reads = allReads.filter((r) => r.userId === userId);
 
     // Exclude self-authored-piece reads before counting — navigating to your
@@ -203,12 +247,6 @@ export default async function RiffPage({
     // new members browsing past riffs) should not see the "moment you've been waiting for" modal
     isFirstReveal = !isAdmin && reads.length === 0 && isJoined;
 
-    // One Comment fetch for the whole riff — derives both the "new since
-    // you last read it" flags and every author's total comment count.
-    const allComments = await prisma.comment.findMany({
-      where: { riffId: id },
-      select: { pieceId: true, createdAt: true, authorId: true },
-    });
     const commentCountMap: Record<string, number> = {};
     for (const c of allComments) {
       commentCountMap[c.authorId] = (commentCountMap[c.authorId] ?? 0) + 1;
@@ -223,22 +261,6 @@ export default async function RiffPage({
           c.authorId !== userId && c.pieceId === pid && c.createdAt > readAt
       );
     }
-
-    // Contribution strip data — club members for club riffs, participants for clubless
-    const clubMembers = riff.clubId
-      ? await prisma.clubMember.findMany({
-          where: { clubId: riff.clubId },
-          select: {
-            user: { select: { id: true, name: true, avatarUrl: true } },
-          },
-        })
-      : riff.participants.map((p) => ({
-          user: {
-            id: p.user.id,
-            name: p.user.name,
-            avatarUrl: p.user.avatarUrl,
-          },
-        }));
 
     // Own pieces never get a PieceRead row from normal viewing, so a piece's
     // author can never reach a full ring against the riff-wide total. Shrink
@@ -283,8 +305,6 @@ export default async function RiffPage({
         submittedAt: pr.submittedAt ? pr.submittedAt.toISOString() : null,
         piece: {
           ...pr.piece,
-          // Strip content before reveal — cover image still returned for locked card teaser
-          currentContent: isRevealed ? pr.piece.currentContent : null,
           updatedAt: pr.piece.updatedAt.toISOString(),
           commentCount: pr.piece._count?.comments ?? 0,
           _count: undefined,
@@ -294,7 +314,7 @@ export default async function RiffPage({
           // wordCount alone (see ProgressCard's blurredPreviewFiller).
           preview:
             pr.piece.authorId === userId
-              ? getContentPreview(pr.piece.currentContent, 500)
+              ? getContentPreview(ownPieceContent?.currentContent ?? "", 500)
               : "",
         },
       })),

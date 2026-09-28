@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
+import { isCadenceValue } from "@/lib/cadence";
 
 // GET /api/clubs/[id] - Get club details
 export async function GET(
@@ -106,7 +107,8 @@ export async function PATCH(
   try {
     const user = await requireAuth();
     const { id: clubId } = await params;
-    const { name, description, moderatorId, bannerImage } = await req.json();
+    const { name, description, moderatorId, bannerImage, cadence } =
+      await req.json();
 
     // Check if user is admin
     const club = await prisma.club.findUnique({
@@ -152,6 +154,10 @@ export async function PATCH(
       }
     }
 
+    if (cadence !== undefined && !isCadenceValue(cadence)) {
+      return NextResponse.json({ error: "Invalid cadence" }, { status: 400 });
+    }
+
     // If updating moderator, verify they are a member
     if (moderatorId !== undefined && moderatorId !== null) {
       const member = await prisma.clubMember.findFirst({
@@ -179,6 +185,7 @@ export async function PATCH(
         }),
         ...(moderatorId !== undefined && { moderatorId }),
         ...(bannerImage !== undefined && { bannerImage }),
+        ...(cadence !== undefined && { cadence }),
       },
       include: {
         admin: {
@@ -251,6 +258,40 @@ export async function DELETE(
         { error: "Only the club admin can delete the club" },
         { status: 403 }
       );
+    }
+
+    // Archiving hides the club from every listing query, which would
+    // otherwise strand any DRAFT/ACTIVE riff — it stays on members' home
+    // pages (that query doesn't filter by club.isArchived) but the card's
+    // link target (the club page) 404s. Clean those riffs up first: reveal
+    // if someone submitted (worth keeping — mirrors the manual reveal
+    // transition in PATCH /api/riffs/[id]), otherwise delete (nothing to
+    // preserve). No notifications fired — this is a side effect of the
+    // admin's archive action, not a standalone host action with its own
+    // announcement.
+    const strandedRiffs = await prisma.riff.findMany({
+      where: { clubId, status: { in: ["DRAFT", "ACTIVE"] } },
+      select: { id: true, status: true },
+    });
+
+    for (const riff of strandedRiffs) {
+      const submittedCount = await prisma.pieceRiff.count({
+        where: { riffId: riff.id, submittedAt: { not: null } },
+      });
+
+      if (riff.status === "ACTIVE" && submittedCount > 0) {
+        await prisma.$transaction(async (tx) => {
+          const revealedCount = await tx.riff.count({
+            where: { clubId, status: { in: ["REVEALED", "COMPLETED"] } },
+          });
+          await tx.riff.update({
+            where: { id: riff.id },
+            data: { status: "REVEALED", volumeNumber: revealedCount + 1 },
+          });
+        });
+      } else {
+        await prisma.riff.delete({ where: { id: riff.id } });
+      }
     }
 
     // Archive instead of hard delete

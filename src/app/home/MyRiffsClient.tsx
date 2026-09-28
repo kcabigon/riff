@@ -117,6 +117,16 @@ interface MyRiffsClientProps {
   friends: FriendSummary[];
   pieces: WritingPiece[];
   joinableRiffs: Riff[];
+  hasStandaloneDrafts: boolean;
+  // Drafts/Pieces/Past Riffs all arrive capped (see DRAFTS_CAP etc. below) —
+  // these say whether more exist server-side and where to resume from, so
+  // "View all" can fetch the rest instead of it all having shipped already.
+  hasMoreDrafts: boolean;
+  draftsCursor: string | null;
+  hasMoreSubmitted: boolean;
+  submittedCursor: string | null;
+  hasMorePastRiffs: boolean;
+  pastRiffsCursor: string | null;
 }
 
 function isFinished(piece: WritingPiece): boolean {
@@ -228,6 +238,13 @@ export default function MyRiffsClient({
   friends,
   pieces,
   joinableRiffs,
+  hasStandaloneDrafts,
+  hasMoreDrafts,
+  draftsCursor,
+  hasMoreSubmitted,
+  submittedCursor,
+  hasMorePastRiffs,
+  pastRiffsCursor,
 }: MyRiffsClientProps) {
   const router = useRouter();
   const [allPieces, setAllPieces] = useState(pieces);
@@ -248,6 +265,92 @@ export default function MyRiffsClient({
   const [revealRiffId, setRevealRiffId] = useState<string | null>(null);
   const { revealRiff, isRevealing } = useRevealRiff();
   const { createDraft, isCreating: isCreatingDraft } = useDraftCreation();
+
+  // Pagination state for the three "View all" sections — each starts from
+  // whatever the initial (capped) server fetch reported, and updates once
+  // after the one follow-up fetch each section ever makes (see
+  // fetchMorePieces/fetchMorePastRiffs below).
+  const [draftsMore, setDraftsMore] = useState({
+    hasMore: hasMoreDrafts,
+    cursor: draftsCursor,
+  });
+  const [submittedMore, setSubmittedMore] = useState({
+    hasMore: hasMoreSubmitted,
+    cursor: submittedCursor,
+  });
+  const [pastRiffsMore, setPastRiffsMore] = useState({
+    hasMore: hasMorePastRiffs,
+    cursor: pastRiffsCursor,
+  });
+  const [loadingSection, setLoadingSection] = useState<
+    "drafts" | "pieces" | "pastRiffs" | null
+  >(null);
+
+  // Fetches everything past the initial cap in one page (generous limit —
+  // in practice this covers "the rest" for virtually every user) and
+  // appends into allPieces, so the existing drafts/submittedPieces filters
+  // below pick the new items up with no other changes.
+  const fetchMorePieces = async (kind: "draft" | "submitted") => {
+    const more = kind === "draft" ? draftsMore : submittedMore;
+    if (!more.hasMore) return;
+    setLoadingSection(kind === "draft" ? "drafts" : "pieces");
+    try {
+      const params = new URLSearchParams({ kind, limit: "100" });
+      if (more.cursor) params.set("cursor", more.cursor);
+      const res = await fetch(`/api/home/pieces?${params}`);
+      if (!res.ok) throw new Error(await res.text());
+      const data: {
+        pieces: WritingPiece[];
+        nextCursor: string | null;
+        hasMore: boolean;
+      } = await res.json();
+      setAllPieces((prev) => [...prev, ...data.pieces]);
+      const setMore = kind === "draft" ? setDraftsMore : setSubmittedMore;
+      setMore({ hasMore: data.hasMore, cursor: data.nextCursor });
+    } catch (err) {
+      console.error(`Error fetching more ${kind} pieces:`, err);
+    } finally {
+      setLoadingSection(null);
+    }
+  };
+
+  const fetchMorePastRiffs = async () => {
+    if (!pastRiffsMore.hasMore) return;
+    setLoadingSection("pastRiffs");
+    try {
+      const params = new URLSearchParams({ limit: "100" });
+      if (pastRiffsMore.cursor) params.set("cursor", pastRiffsMore.cursor);
+      const res = await fetch(`/api/home/past-riffs?${params}`);
+      if (!res.ok) throw new Error(await res.text());
+      const data: {
+        riffs: Riff[];
+        nextCursor: string | null;
+        hasMore: boolean;
+      } = await res.json();
+      setAllRiffs((prev) => [...prev, ...data.riffs]);
+      setPastRiffsMore({ hasMore: data.hasMore, cursor: data.nextCursor });
+    } catch (err) {
+      console.error("Error fetching more past riffs:", err);
+    } finally {
+      setLoadingSection(null);
+    }
+  };
+
+  const handleExpandDrafts = async () => {
+    if (draftsExpanded) return setDraftsExpanded(false);
+    if (draftsMore.hasMore) await fetchMorePieces("draft");
+    setDraftsExpanded(true);
+  };
+  const handleExpandPieces = async () => {
+    if (piecesExpanded) return setPiecesExpanded(false);
+    if (submittedMore.hasMore) await fetchMorePieces("submitted");
+    setPiecesExpanded(true);
+  };
+  const handleExpandPastRiffs = async () => {
+    if (pastRiffsExpanded) return setPastRiffsExpanded(false);
+    if (pastRiffsMore.hasMore) await fetchMorePastRiffs();
+    setPastRiffsExpanded(true);
+  };
 
   const otherSubmittedCount = (riff: Riff) =>
     getSubmittedPieces(riff.pieces).filter(
@@ -312,10 +415,6 @@ export default function MyRiffsClient({
   // the "+" tile (FriendsRow's canInvite prop, also driven by this flag).
   const hasRevealedPiece = allPieces.some(isPieceRevealed);
   const showFriendsSection = friends.length > 0 || hasRevealedPiece;
-  // Whether the "Attach draft" option should show up on riff CTAs — a
-  // draft that's never been attached to any riff. Computed once here from
-  // data already in memory rather than re-fetched per card.
-  const hasStandaloneDrafts = drafts.some((p) => p.riffs.length === 0);
 
   const visibleDrafts = draftsExpanded ? drafts : drafts.slice(0, DRAFTS_CAP);
   const visiblePieces = piecesExpanded
@@ -751,12 +850,17 @@ export default function MyRiffsClient({
                 }}
               >
                 <SectionHeading text="DRAFTS" color="#EECF01" width={74} />
-                {drafts.length > DRAFTS_CAP && (
+                {(drafts.length > DRAFTS_CAP || draftsMore.hasMore) && (
                   <button
-                    onClick={() => setDraftsExpanded((prev) => !prev)}
+                    onClick={handleExpandDrafts}
+                    disabled={loadingSection === "drafts"}
                     style={viewAllButtonStyle}
                   >
-                    {draftsExpanded ? "View less" : "View all"}
+                    {loadingSection === "drafts"
+                      ? "Loading…"
+                      : draftsExpanded
+                        ? "View less"
+                        : "View all"}
                   </button>
                 )}
               </div>
@@ -778,12 +882,18 @@ export default function MyRiffsClient({
                 }}
               >
                 <SectionHeading text="PIECES" color="#C01582" width={68} />
-                {submittedPieces.length > PIECES_CAP && (
+                {(submittedPieces.length > PIECES_CAP ||
+                  submittedMore.hasMore) && (
                   <button
-                    onClick={() => setPiecesExpanded((prev) => !prev)}
+                    onClick={handleExpandPieces}
+                    disabled={loadingSection === "pieces"}
                     style={viewAllButtonStyle}
                   >
-                    {piecesExpanded ? "View less" : "View all"}
+                    {loadingSection === "pieces"
+                      ? "Loading…"
+                      : piecesExpanded
+                        ? "View less"
+                        : "View all"}
                   </button>
                 )}
               </div>
@@ -806,12 +916,18 @@ export default function MyRiffsClient({
                 }}
               >
                 <SectionHeading text="PAST RIFFS" color="#955CB5" width={96} />
-                {pastRiffs.length > PAST_RIFFS_CAP && (
+                {(pastRiffs.length > PAST_RIFFS_CAP ||
+                  pastRiffsMore.hasMore) && (
                   <button
-                    onClick={() => setPastRiffsExpanded((prev) => !prev)}
+                    onClick={handleExpandPastRiffs}
+                    disabled={loadingSection === "pastRiffs"}
                     style={viewAllButtonStyle}
                   >
-                    {pastRiffsExpanded ? "View less" : "View all"}
+                    {loadingSection === "pastRiffs"
+                      ? "Loading…"
+                      : pastRiffsExpanded
+                        ? "View less"
+                        : "View all"}
                   </button>
                 )}
               </div>

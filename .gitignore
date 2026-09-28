@@ -29,12 +29,8 @@ yarn-debug.log*
 yarn-error.log*
 
 # env files
-.env
-.env*.local
-.env.local
-.env.development
-.env.staging
-.env.production
+.env*
+!.env.example
 
 # vercel
 .vercel
@@ -58,6 +54,12 @@ next-env.d.ts
 
 # claude personal memory (project-level commands and settings ARE committed)
 .claude/memory
+.claude/settings.local.json
+.claude/worktrees/
 
 # claude plan files — created by /new-feature complex flow, ephemeral session artifacts
 .claude/plans/*.md
+
+# local Python output from Codex hook checks
+__pycache__/
+*.py[cod]

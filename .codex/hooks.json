@@ -1,0 +1,18 @@
+{
+  "description": "Riff safeguards for Codex sessions",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|apply_patch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/.codex/hooks/pre_tool_use.py\"",
+            "timeout": 5,
+            "statusMessage": "Checking Riff project safeguards"
+          }
+        ]
+      }
+    ]
+  }
+}

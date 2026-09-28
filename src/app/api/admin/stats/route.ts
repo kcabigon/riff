@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
-
-const ADMIN_EMAIL = "kyle.cabigon@gmail.com";
+import { hasAdminAccess } from "@/lib/admin-access";
 
 export async function GET() {
   try {
     const user = await requireAuth();
-    if (user.email !== ADMIN_EMAIL) {
+    if (!hasAdminAccess(user.email)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

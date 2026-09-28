@@ -2,8 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import AdminDashboard from "@/components/admin/AdminDashboard";
-
-const ADMIN_EMAIL = "kyle.cabigon@gmail.com";
+import { hasAdminAccess } from "@/lib/admin-access";
 
 export const metadata = {
   title: "Admin Dashboard",
@@ -14,7 +13,7 @@ export default async function AdminPage() {
   if (!session?.user) {
     redirect("/login");
   }
-  if (session.user?.email !== ADMIN_EMAIL) {
+  if (!hasAdminAccess(session.user.email)) {
     redirect("/");
   }
 
