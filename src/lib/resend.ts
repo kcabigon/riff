@@ -669,17 +669,16 @@ interface ReminderEmailVariant {
   body: string;
 }
 
-// Deadline-approaching copy is sent only when there is plenty of runway or
-// when fewer than three days remain. The middle tier deliberately sends no
-// email. The caller also guarantees the urgent variant is sent only once per
-// recipient and riff.
+// Deadline-approaching copy is picked by urgency tier (same >7 / 3-7 / <3
+// day boundaries as deadlineReminderLookbackDays), not by send count — the
+// joke should get more urgent as the deadline nears, not rotate arbitrarily.
 function deadlineApproachingVariant(
   daysRemaining: number,
   clubName: string,
   riffTitle: string,
   deadlineStr: string,
   dayLabel: string
-): ReminderEmailVariant | null {
+): ReminderEmailVariant {
   if (daysRemaining > 7) {
     return {
       subject: `${riffTitle} closes ${dayLabel}`,
@@ -688,7 +687,11 @@ function deadlineApproachingVariant(
     };
   }
   if (daysRemaining >= 3) {
-    return null;
+    return {
+      subject: `1.21 gigawatts won't save this deadline`,
+      headline: `1.21 gigawatts won't save this deadline.`,
+      body: `${riffTitle} closes ${dayLabel}. Time travel's not real — get your piece in before ${clubName} moves on.`,
+    };
   }
   return {
     subject: `This deadline will self-destruct ${dayLabel}`,
@@ -778,7 +781,6 @@ export async function sendDeadlineApproachingEmail({
     deadlineStr,
     dayLabel
   );
-  if (!variant) return false;
   try {
     const { error } = await getResend().emails.send({
       from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
