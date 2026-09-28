@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
-import { notifyClubMembers, notifyRiffParticipants } from "@/lib/notifications";
+import { notifyUsers } from "@/lib/notifications";
 import {
   sendRiffCreatedEmail,
   sendDeadlineChangedEmail,
@@ -358,20 +358,22 @@ export async function PATCH(
       // Clubless riffs skip RIFF_CREATED entirely — the join link replaces it
       if (status === "ACTIVE" && riff.clubId) {
         try {
-          await notifyClubMembers(
-            riff.clubId,
+          const riffCreatedUrl = `${getBaseUrl()}/clubs/${riff.clubId}`;
+          // One fetch for both the in-app rows and the emails; the actor is
+          // excluded by the query.
+          const riffCreatedMembers = await prisma.clubMember.findMany({
+            where: { clubId: riff.clubId, userId: { not: actorId } },
+            select: { userId: true, user: { select: { email: true } } },
+          });
+
+          await notifyUsers(
+            riffCreatedMembers.map((m) => m.userId),
             NotificationType.RIFF_CREATED,
             actorId,
-            { riffId }
+            { clubId: riff.clubId, riffId }
           ).catch((err) =>
             console.error("[notification error] riff created:", err)
           );
-
-          const riffCreatedUrl = `${getBaseUrl()}/clubs/${riff.clubId}`;
-          const riffCreatedMembers = await prisma.clubMember.findMany({
-            where: { clubId: riff.clubId, userId: { not: actorId } },
-            include: { user: { select: { email: true, name: true } } },
-          });
           const riffCreatedEnabled = await batchNotificationsEnabled(
             riffCreatedMembers.map((m) => m.user.email)
           );
@@ -423,20 +425,20 @@ export async function PATCH(
     if (deadlineChanged && riff.clubId) {
       try {
         const newDeadline = new Date(deadline);
-        await notifyClubMembers(
-          riff.clubId,
-          NotificationType.RIFF_DEADLINE_CHANGED,
-          user.id,
-          { riffId }
-        ).catch((err) =>
-          console.error("[notification error] deadline changed:", err)
-        );
-
         const riffUrl = `${getBaseUrl()}/clubs/${riff.clubId}`;
         const deadlineMembers = await prisma.clubMember.findMany({
           where: { clubId: riff.clubId, userId: { not: user.id } },
-          include: { user: { select: { email: true } } },
+          select: { userId: true, user: { select: { email: true } } },
         });
+
+        await notifyUsers(
+          deadlineMembers.map((m) => m.userId),
+          NotificationType.RIFF_DEADLINE_CHANGED,
+          user.id,
+          { clubId: riff.clubId, riffId }
+        ).catch((err) =>
+          console.error("[notification error] deadline changed:", err)
+        );
         const deadlineEnabled = await batchNotificationsEnabled(
           deadlineMembers.map((m) => m.user.email)
         );
@@ -469,19 +471,20 @@ export async function PATCH(
       // Clubless riff deadline change — same pipeline, scoped to riff participants
       try {
         const newDeadline = new Date(deadline);
-        await notifyRiffParticipants(
-          riffId,
-          NotificationType.RIFF_DEADLINE_CHANGED,
-          user.id
-        ).catch((err) =>
-          console.error("[notification error] deadline changed:", err)
-        );
-
         const riffUrl = `${getBaseUrl()}/riffs/${riffId}`;
         const deadlineParticipants = await prisma.riffParticipant.findMany({
           where: { riffId, userId: { not: user.id } },
-          include: { user: { select: { email: true } } },
+          select: { userId: true, user: { select: { email: true } } },
         });
+
+        await notifyUsers(
+          deadlineParticipants.map((p) => p.userId),
+          NotificationType.RIFF_DEADLINE_CHANGED,
+          user.id,
+          { riffId }
+        ).catch((err) =>
+          console.error("[notification error] deadline changed:", err)
+        );
         const deadlineEnabled = await batchNotificationsEnabled(
           deadlineParticipants.map((p) => p.user.email)
         );

@@ -120,9 +120,11 @@ export function milestonesReached(
 // independently decide a person was due.
 const REMINDER_LOG = NotificationType.RIFF_DEADLINE_APPROACHING;
 
-async function logSend(riffId: string, recipientId: string) {
-  await prisma.notification.create({
-    data: { type: REMINDER_LOG, riffId, recipientId, isRead: true },
+async function logSends(
+  entries: Array<{ riffId: string; recipientId: string }>
+) {
+  await prisma.notification.createMany({
+    data: entries.map((e) => ({ ...e, type: REMINDER_LOG, isRead: true })),
   });
 }
 
@@ -191,39 +193,58 @@ export async function runRiffReminders(
   const counts = await fetchSendCounts(due.map((r) => r.riff.id));
   const baseUrl = getBaseUrl();
 
-  for (const { riff, reached } of due) {
-    const submitted = new Set(
-      riff.pieces
-        .filter((p) => p.submittedAt !== null)
-        .map((p) => p.piece.authorId)
-    );
+  // Work out who is owed a reminder for every riff first, then resolve the
+  // Reminders opt-out for all of them in one query. This used to run that query
+  // inside the riff loop, which meant one round trip per riff for a preference
+  // that could be fetched once.
+  const work = due
+    .map(({ riff, reached }) => {
+      const submitted = new Set(
+        riff.pieces
+          .filter((p) => p.submittedAt !== null)
+          .map((p) => p.piece.authorId)
+      );
 
-    // Club riffs reach the whole membership — the old split, where members who
-    // had joined the riff and members who hadn't got different emails on
-    // different clocks, is the overlap this merge removes. A clubless riff has
-    // no membership to draw on, so its participants are the whole audience.
-    const audience = riff.club
-      ? riff.club.members.map((m) => ({
-          userId: m.userId,
-          email: m.user.email,
-        }))
-      : riff.participants.map((p) => ({
-          userId: p.userId,
-          email: p.user.email,
-        }));
+      // Club riffs reach the whole membership — the old split, where members who
+      // had joined the riff and members who hadn't got different emails on
+      // different clocks, is the overlap this merge removes. A clubless riff has
+      // no membership to draw on, so its participants are the whole audience.
+      const audience = riff.club
+        ? riff.club.members.map((m) => ({
+            userId: m.userId,
+            email: m.user.email,
+          }))
+        : riff.participants.map((p) => ({
+            userId: p.userId,
+            email: p.user.email,
+          }));
 
-    const eligible = audience.filter(
-      (a) =>
-        !submitted.has(a.userId) &&
-        (counts.get(`${riff.id}:${a.userId}`) ?? 0) < reached
-    );
-    if (eligible.length === 0) continue;
+      return {
+        riff,
+        reached,
+        eligible: audience.filter(
+          (a) =>
+            !submitted.has(a.userId) &&
+            (counts.get(`${riff.id}:${a.userId}`) ?? 0) < reached
+        ),
+      };
+    })
+    .filter((w) => w.eligible.length > 0);
+  if (work.length === 0) return result;
 
-    const enabled = await batchRemindersEnabled(eligible.map((a) => a.email));
+  const enabled = await batchRemindersEnabled([
+    ...new Set(work.flatMap((w) => w.eligible.map((a) => a.email))),
+  ]);
+
+  for (const { riff, reached, eligible } of work) {
     const riffTitle = riff.title || riff.club?.name || "your riff";
     const clubName = riff.club?.name ?? riffTitle;
     const riffUrl = `${baseUrl}${riffPath(riff)}`;
     const participantIds = new Set(riff.participants.map((p) => p.userId));
+    // #4: one insert per riff instead of one per recipient. Flushed per riff
+    // rather than once at the very end so a crash mid-sweep can only lose this
+    // riff's log — an unlogged send is one that goes out again next run.
+    const logs: Array<{ riffId: string; recipientId: string }> = [];
 
     for (const person of eligible.filter((a) => enabled.has(a.email))) {
       const priorSends = counts.get(`${riff.id}:${person.userId}`) ?? 0;
@@ -231,18 +252,24 @@ export async function runRiffReminders(
         (p) => p.piece.authorId === person.userId && p.piece.wordCount > 0
       );
 
-      let delivered: boolean;
-      let bucket: "finishYourPiece" | "startWriting" | "joinTheRiff";
+      // Non-null exactly when the deadline-aware template applies: something
+      // real is in progress and there's a date to talk about. It doubles as the
+      // branch condition below, so the choice is made once — a dry run and a
+      // live run can't disagree about which template a person would get.
+      //
+      // A writer on a deadline-less riff therefore falls through to the
+      // start-writing copy, whose wording is a little off for someone who has
+      // already started. Unifying the three templates into one deadline-aware,
+      // draft-aware one is the copy pass's job.
+      const deadlineForCopy = hasWords ? riff.deadline : null;
+      const bucket: "finishYourPiece" | "startWriting" | "joinTheRiff" =
+        deadlineForCopy
+          ? "finishYourPiece"
+          : participantIds.has(person.userId)
+            ? "startWriting"
+            : "joinTheRiff";
 
       if (dryRun) {
-        // Same branch order as the real dispatch below, so the plan reflects
-        // what a live run would actually pick.
-        bucket =
-          hasWords && riff.deadline
-            ? "finishYourPiece"
-            : participantIds.has(person.userId)
-              ? "startWriting"
-              : "joinTheRiff";
         result.plan?.push(
           `${riffTitle} | ${bucket} | milestone ${priorSends + 1}/${reached}`
         );
@@ -251,49 +278,40 @@ export async function runRiffReminders(
         continue;
       }
 
-      if (hasWords && riff.deadline) {
-        // Something real is in progress, so the deadline is the useful part.
-        // This is the only one of the three templates that reads the date,
-        // which is why a deadline-less riff can't use it — such a writer falls
-        // through to the start-writing copy below, whose wording is a little
-        // off for someone who has already started. Unifying the three into one
-        // deadline-aware, draft-aware template is the copy pass's job.
-        delivered = await sendDeadlineApproachingEmail({
-          email: person.email,
-          riffTitle,
-          clubName,
-          riffUrl,
-          deadline: riff.deadline,
-          daysRemaining: daysUntil(riff.deadline),
-        });
-        bucket = "finishYourPiece";
-      } else if (participantIds.has(person.userId)) {
-        delivered = await sendRememberToWriteEmail({
-          email: person.email,
-          riffTitle,
-          clubName,
-          riffUrl,
-          variantIndex: priorSends,
-        });
-        bucket = "startWriting";
-      } else {
-        delivered = await sendJoinRiffNudgeEmail({
-          email: person.email,
-          riffTitle,
-          clubName,
-          riffUrl,
-          variantIndex: priorSends,
-        });
-        bucket = "joinTheRiff";
-      }
+      const delivered = deadlineForCopy
+        ? await sendDeadlineApproachingEmail({
+            email: person.email,
+            riffTitle,
+            clubName,
+            riffUrl,
+            deadline: deadlineForCopy,
+            daysRemaining: daysUntil(deadlineForCopy),
+          })
+        : bucket === "startWriting"
+          ? await sendRememberToWriteEmail({
+              email: person.email,
+              riffTitle,
+              clubName,
+              riffUrl,
+              variantIndex: priorSends,
+            })
+          : await sendJoinRiffNudgeEmail({
+              email: person.email,
+              riffTitle,
+              clubName,
+              riffUrl,
+              variantIndex: priorSends,
+            });
 
       // Only log a send that actually went out — a logged failure would burn
       // one of this person's two reminders for the riff's whole lifetime.
       if (!delivered) continue;
-      await logSend(riff.id, person.userId);
+      logs.push({ riffId: riff.id, recipientId: person.userId });
       result[bucket]++;
       result.sent++;
     }
+
+    if (logs.length > 0) await logSends(logs);
   }
 
   return result;

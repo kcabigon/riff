@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { NotificationType } from "@prisma/client";
-import { notifyClubMembers, notifyRiffParticipants } from "@/lib/notifications";
+import { notifyUsers } from "@/lib/notifications";
 import { batchNotificationsEnabled, sendRiffRevealedEmail } from "@/lib/resend";
 import { getBaseUrl } from "@/lib/env";
 
@@ -83,19 +83,22 @@ export async function revealRiff(
     const excludeActor = actorId ? { userId: { not: actorId } } : {};
 
     if (riff.clubId) {
-      await notifyClubMembers(
-        riff.clubId,
+      // Fetched once and reused for both the in-app rows and the emails — the
+      // actor exclusion is applied here, so notifyUsers has nothing left to
+      // filter.
+      const members = await prisma.clubMember.findMany({
+        where: { clubId: riff.clubId, ...excludeActor },
+        select: { userId: true, user: { select: { email: true } } },
+      });
+
+      await notifyUsers(
+        members.map((m) => m.userId),
         NotificationType.RIFF_COMPLETED,
         actorId,
-        { riffId }
+        { clubId: riff.clubId, riffId }
       ).catch((err) =>
         console.error("[notification error] riff revealed:", err)
       );
-
-      const members = await prisma.clubMember.findMany({
-        where: { clubId: riff.clubId, ...excludeActor },
-        include: { user: { select: { email: true, name: true } } },
-      });
       const enabled = await batchNotificationsEnabled(
         members.map((m) => m.user.email)
       );
@@ -123,18 +126,19 @@ export async function revealRiff(
       );
     } else {
       // Clubless riff — same pipeline, scoped to participants instead of members
-      await notifyRiffParticipants(
-        riffId,
+      const participants = await prisma.riffParticipant.findMany({
+        where: { riffId, ...excludeActor },
+        select: { userId: true, user: { select: { email: true } } },
+      });
+
+      await notifyUsers(
+        participants.map((p) => p.userId),
         NotificationType.RIFF_COMPLETED,
-        actorId
+        actorId,
+        { riffId }
       ).catch((err) =>
         console.error("[notification error] riff revealed:", err)
       );
-
-      const participants = await prisma.riffParticipant.findMany({
-        where: { riffId, ...excludeActor },
-        include: { user: { select: { email: true, name: true } } },
-      });
       const enabled = await batchNotificationsEnabled(
         participants.map((p) => p.user.email)
       );

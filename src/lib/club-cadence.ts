@@ -5,7 +5,7 @@ import {
   type CadenceValue,
 } from "@/lib/cadence";
 import { revealRiff } from "@/lib/reveal-riff";
-import { notifyClubMembers } from "@/lib/notifications";
+import { notifyUsers } from "@/lib/notifications";
 import {
   batchNotificationsEnabled,
   sendClubPausedEmail,
@@ -186,16 +186,21 @@ export async function loadSweepClubs() {
       // a database requirement only. It is never surfaced as "so-and-so started
       // this riff", because they didn't.
       adminId: true,
+      // Only the active riff. This used to take REVEALED and COMPLETED ones too,
+      // to find the most recent reveal for a cooldown that no longer exists —
+      // which meant every tick loaded every volume a club had ever revealed,
+      // along with each one's submitted-piece rows. That cost grew with the
+      // club's whole history and nothing read it.
       riffs: {
-        where: { status: { in: ["ACTIVE", "REVEALED", "COMPLETED"] } },
+        where: { status: "ACTIVE" },
         select: {
           id: true,
-          status: true,
           createdAt: true,
           deadline: true,
-          pieces: {
-            where: { submittedAt: { not: null } },
-            select: { id: true },
+          // Counted in the database rather than fetched and measured here: the
+          // decision only needs whether anything was submitted, not which.
+          _count: {
+            select: { pieces: { where: { submittedAt: { not: null } } } },
           },
         },
       },
@@ -203,7 +208,9 @@ export async function loadSweepClubs() {
   });
 
   return clubs.map((club) => {
-    const active = club.riffs.find((r) => r.status === "ACTIVE") ?? null;
+    // At most one, by how riffs are opened — indexing is enough now that the
+    // query returns nothing else.
+    const active = club.riffs[0] ?? null;
 
     return {
       id: club.id,
@@ -215,7 +222,7 @@ export async function loadSweepClubs() {
             id: active.id,
             createdAt: active.createdAt,
             deadline: active.deadline,
-            submittedCount: active.pieces.length,
+            submittedCount: active._count.pieces,
           }
         : null,
     };
@@ -250,20 +257,23 @@ async function notifySafely(label: string, fn: () => Promise<void>) {
 // a lie — so the copy is club-voiced instead (see getRiffCreatedEmailTemplate).
 async function notifyRiffOpened(decision: ClubDecision, riffId: string) {
   await notifySafely("riff opened", async () => {
-    await notifyClubMembers(
-      decision.clubId,
-      NotificationType.RIFF_CREATED,
-      null,
-      { riffId }
-    );
-
+    // One member fetch, used for both the in-app rows and the emails.
     const members = await prisma.clubMember.findMany({
       where: { clubId: decision.clubId },
-      include: { user: { select: { email: true } } },
+      select: { userId: true, user: { select: { email: true } } },
     });
+
+    await notifyUsers(
+      members.map((m) => m.userId),
+      NotificationType.RIFF_CREATED,
+      null,
+      { clubId: decision.clubId, riffId }
+    );
+
     const enabled = await batchNotificationsEnabled(
       members.map((m) => m.user.email)
     );
+    const riffUrl = `${getBaseUrl()}/clubs/${decision.clubId}`;
     const sends = await Promise.allSettled(
       members
         .filter((m) => enabled.has(m.user.email))
@@ -271,7 +281,7 @@ async function notifyRiffOpened(decision: ClubDecision, riffId: string) {
           sendRiffCreatedEmail({
             email: m.user.email,
             clubName: decision.clubName,
-            riffUrl: `${getBaseUrl()}/clubs/${decision.clubId}`,
+            riffUrl,
           })
         )
     );
@@ -291,20 +301,22 @@ async function notifyGracePeriod(
   newDeadline: Date
 ) {
   await notifySafely("grace period", async () => {
-    await notifyClubMembers(
-      decision.clubId,
-      NotificationType.RIFF_DEADLINE_CHANGED,
-      null,
-      { riffId }
-    );
-
     const members = await prisma.clubMember.findMany({
       where: { clubId: decision.clubId },
-      include: { user: { select: { email: true } } },
+      select: { userId: true, user: { select: { email: true } } },
     });
+
+    await notifyUsers(
+      members.map((m) => m.userId),
+      NotificationType.RIFF_DEADLINE_CHANGED,
+      null,
+      { clubId: decision.clubId, riffId }
+    );
+
     const enabled = await batchNotificationsEnabled(
       members.map((m) => m.user.email)
     );
+    const riffUrl = `${getBaseUrl()}/clubs/${decision.clubId}`;
     const sends = await Promise.allSettled(
       members
         .filter((m) => enabled.has(m.user.email))
@@ -312,7 +324,7 @@ async function notifyGracePeriod(
           sendRiffGracePeriodEmail({
             email: m.user.email,
             newDeadline,
-            riffUrl: `${getBaseUrl()}/clubs/${decision.clubId}`,
+            riffUrl,
             clubName: decision.clubName,
           })
         )
