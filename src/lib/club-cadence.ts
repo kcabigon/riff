@@ -13,7 +13,7 @@ import {
   sendRiffGracePeriodEmail,
 } from "@/lib/resend";
 import { getBaseUrl } from "@/lib/env";
-import { predictVolumeNumber } from "@/lib/club-riff";
+import { addDays, predictVolumeNumber } from "@/lib/club-riff";
 import { getRiffDisplayTitle } from "@/lib/riff-utils";
 import { NotificationType } from "@prisma/client";
 
@@ -53,12 +53,6 @@ export interface ClubDecision {
 // The single grace period a quiet riff gets before its club is paused. Flat
 // across every cadence on purpose — see decideForClub.
 export const PAUSE_GRACE_DAYS = 7;
-
-function addDays(from: Date, days: number): Date {
-  const d = new Date(from);
-  d.setDate(d.getDate() + days);
-  return d;
-}
 
 // Decides what should happen to one club. Pure — no reads, no writes — so the
 // branch table is testable and the dry-run report is exactly what would run.
