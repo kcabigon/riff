@@ -295,7 +295,7 @@ export function getEmailPreviews(): EmailPreview[] {
     },
     {
       id: "reminders",
-      name: "Reminders",
+      name: "Riff reminders",
       trigger:
         "Cron: at the halfway point and the day before the deadline. Every member who hasn't submitted (participants, for an open riff).",
       variants: [
