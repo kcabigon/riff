@@ -90,6 +90,10 @@ export default function RiffFormFields({
           value={deadline}
           onChange={(e) => setDeadline(e.target.value)}
           required={deadlineRequired}
+          // Only hide the browser's clear control where an empty value is
+          // actually invalid. A clubless riff may genuinely drop its deadline,
+          // so it keeps the control.
+          className={deadlineRequired ? "date-input-no-clear" : undefined}
           style={{
             ...inputStyle,
             display: "block",

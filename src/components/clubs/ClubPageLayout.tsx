@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import NavBar from "@/components/clubs/NavBar";
 import AvatarStack from "@/components/shared/AvatarStack";
 import MobileCardCarousel from "@/components/shared/MobileCardCarousel";
-import ExpandRiffButton from "@/components/riffs/ExpandRiffButton";
 import ProgressCard from "@/components/riffs/ProgressCard";
 import PieceCard from "@/components/riffs/PieceCard";
 import DraftChoiceTrigger from "@/components/riffs/DraftChoiceTrigger";
@@ -221,9 +220,6 @@ export default function ClubPageLayout({
   const [clubBannerImage, setClubBannerImage] = useState(club.bannerImage);
   const [clubCadence, setClubCadence] = useState(club.cadence);
   const [isCadenceModalOpen, setIsCadenceModalOpen] = useState(false);
-  // Only consulted when the active riff is collapsed behind a current read —
-  // see the Current Riff section.
-  const [isActiveRiffExpanded, setIsActiveRiffExpanded] = useState(false);
   const [isCreateRiffModalOpen, setIsCreateRiffModalOpen] = useState(false);
   const [isRevealModalOpen, setIsRevealModalOpen] = useState(false);
   const [isEditRiffModalOpen, setIsEditRiffModalOpen] = useState(false);
@@ -343,26 +339,17 @@ export default function ClubPageLayout({
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   };
 
-  // Current Read holds one riff — the most recently revealed one with unread
-  // pieces. Anything older the user also hasn't finished drops to Past Riffs
-  // rather than stacking up here: cadences short enough to reveal faster than
-  // a club reads would otherwise grow this section without bound, and only the
-  // newest volume is what "current" means. The demoted ones keep their unread
-  // badges down there, so nothing is hidden, just deprioritised.
-  const unreadRevealed = revealedRiffs
+  // Every revealed riff the user still has unread pieces in, newest first.
+  const currentReadRiffs = revealedRiffs
     .filter(hasUnreadForUser)
     .sort(newestFirst);
-  const currentReadRiffs = unreadRevealed.slice(0, 1);
-  const demotedUnreadRiffs = unreadRevealed.slice(1);
 
-  // Past Riffs — COMPLETED + pre-join REVEALED + fully-read REVEALED riffs, plus
-  // any unread ones Current Read didn't keep. Excludes riffs with no submitted
-  // pieces (e.g. the sole submission was deleted).
+  // Past Riffs — COMPLETED + pre-join REVEALED + fully-read REVEALED riffs,
+  // excluding any with no submitted pieces (e.g. the sole submission was deleted).
   const pastRiffs = [
     ...completedRiffs,
     ...pastRevealedRiffs,
     ...revealedRiffs.filter(isFullyReadForUser),
-    ...demotedUnreadRiffs,
   ]
     .filter((riff) => getSubmittedPieces(riff.pieces).length > 0)
     .sort(newestFirst);
@@ -808,11 +795,10 @@ export default function ClubPageLayout({
           </div>
         )}
 
-        {/* Current Read section — the newest revealed riff the user hasn't
-            finished. Sits above Current Riff deliberately: when a cadence
-            reveals one volume and opens the next on the following tick, the
-            pieces waiting to be read are the more immediate thing, and the new
-            riff's empty cards would otherwise push them below the fold. */}
+        {/* Current Read section — revealed riffs the user hasn't fully read yet.
+            Sits above Current Riff deliberately: when a cadence reveals one
+            volume and opens the next a tick later, the pieces waiting to be read
+            are the more immediate thing. */}
         {(() => {
           if (currentReadRiffs.length === 0) return null;
 
@@ -914,14 +900,6 @@ export default function ClubPageLayout({
             section had nothing left to say to anyone. */}
         {(() => {
           if (!activeRiff) return null;
-
-          // Collapsed when there are pieces waiting above — a freshly opened
-          // riff is a row of empty cards, one per member, and that much blank
-          // space between the reader and the writing is the thing worth
-          // avoiding. The riff still announces itself; only its cards wait for
-          // a click.
-          const collapsible = currentReadRiffs.length > 0;
-          const showCards = !collapsible || isActiveRiffExpanded;
 
           const showReveal = shouldShowReveal({
             deadlinePassed,
@@ -1216,89 +1194,74 @@ export default function ClubPageLayout({
                 </div>
               )}
 
-              {collapsible && !showCards && (
-                <ExpandRiffButton
-                  total={sortedActiveParticipants.length}
-                  started={
-                    sortedActiveParticipants.filter(
-                      (p) => (activeAuthorPieces[p.user.id]?.wordCount ?? 0) > 0
-                    ).length
-                  }
-                  onClick={() => setIsActiveRiffExpanded(true)}
-                />
-              )}
+              {(() => {
+                // Own card always leads (sortedActiveParticipants
+                // guarantees it), whether not-started, in-progress, or
+                // submitted — this is the single card-render path shared
+                // by both the mobile carousel and the desktop grid below.
+                const renderCard = (p: RiffParticipant) => {
+                  const piece = activeAuthorPieces[p.user.id] ?? null;
+                  const isOwnUser = p.user.id === currentUserId;
+                  const isOwnDraft =
+                    isOwnUser && piece && piece.submittedAt === null;
+                  const isOwnNotStarted = isOwnUser && !piece;
 
-              {showCards &&
-                (() => {
-                  // Own card always leads (sortedActiveParticipants
-                  // guarantees it), whether not-started, in-progress, or
-                  // submitted — this is the single card-render path shared
-                  // by both the mobile carousel and the desktop grid below.
-                  const renderCard = (p: RiffParticipant) => {
-                    const piece = activeAuthorPieces[p.user.id] ?? null;
-                    const isOwnUser = p.user.id === currentUserId;
-                    const isOwnDraft =
-                      isOwnUser && piece && piece.submittedAt === null;
-                    const isOwnNotStarted = isOwnUser && !piece;
-
-                    if (isOwnNotStarted) {
-                      return (
-                        <DraftChoiceTrigger
-                          key={p.user.id}
-                          riffId={activeRiff.id}
-                          hasStandaloneDrafts={hasStandaloneDrafts}
-                          renderTrigger={(onClick) => (
-                            <ProgressCard
-                              user={p.user}
-                              piece={null}
-                              onClick={onClick}
-                            />
-                          )}
-                        />
-                      );
-                    }
-
+                  if (isOwnNotStarted) {
                     return (
-                      <ProgressCard
+                      <DraftChoiceTrigger
                         key={p.user.id}
-                        user={p.user}
-                        piece={piece}
-                        onClick={
-                          isOwnDraft
-                            ? () => router.push(`/write/${piece.id}`)
-                            : undefined
-                        }
+                        riffId={activeRiff.id}
+                        hasStandaloneDrafts={hasStandaloneDrafts}
+                        renderTrigger={(onClick) => (
+                          <ProgressCard
+                            user={p.user}
+                            piece={null}
+                            onClick={onClick}
+                          />
+                        )}
                       />
                     );
-                  };
+                  }
 
-                  return isMobile ? (
-                    <div style={{ marginTop: "48px" }}>
-                      <MobileCardCarousel>
-                        {sortedActiveParticipants.map(renderCard)}
-                      </MobileCardCarousel>
-                    </div>
-                  ) : (
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns:
-                          "repeat(auto-fill, minmax(280px, 1fr))",
-                        gap: "24px",
-                        marginTop: "48px",
-                      }}
-                    >
-                      {sortedActiveParticipants.map(renderCard)}
-                    </div>
+                  return (
+                    <ProgressCard
+                      key={p.user.id}
+                      user={p.user}
+                      piece={piece}
+                      onClick={
+                        isOwnDraft
+                          ? () => router.push(`/write/${piece.id}`)
+                          : undefined
+                      }
+                    />
                   );
-                })()}
+                };
+
+                return isMobile ? (
+                  <div style={{ marginTop: "48px" }}>
+                    <MobileCardCarousel>
+                      {sortedActiveParticipants.map(renderCard)}
+                    </MobileCardCarousel>
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns:
+                        "repeat(auto-fill, minmax(280px, 1fr))",
+                      gap: "24px",
+                      marginTop: "48px",
+                    }}
+                  >
+                    {sortedActiveParticipants.map(renderCard)}
+                  </div>
+                );
+              })()}
             </div>
           );
         })()}
 
-        {/* Past Riffs section — COMPLETED + pre-join REVEALED + fully-read
-            REVEALED riffs, plus any still-unread ones Current Read passed over
-            in favour of a newer volume. */}
+        {/* Past Riffs section — includes COMPLETED + pre-join REVEALED + fully-read REVEALED riffs */}
         {pastRiffs.length > 0 && (
           <div>
             <SectionHeading text="PAST RIFFS" color="#955CB5" width={96} />
@@ -1338,11 +1301,8 @@ export default function ClubPageLayout({
                         wordCount: piece.wordCount,
                         author: p.user,
                       }}
-                      // Not always fully read any more: an unread riff that
-                      // Current Read passed over for a newer one lands here,
-                      // and the point of demoting rather than hiding it is
-                      // that its unread pieces stay marked.
-                      isRead={!isPieceUnread(piece)}
+                      // Past Riffs is fully-read riffs only, by definition.
+                      isRead={true}
                       isOwnPiece={p.user.id === currentUserId}
                       onClick={() =>
                         router.push(`/read/${piece.id}?riff=${riff.id}`)
