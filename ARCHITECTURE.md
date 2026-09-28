@@ -1,6 +1,6 @@
 # Riff — Architecture & Project Reference
 
-**Last Updated**: September 15, 2026
+**Last Updated**: September 27, 2026
 
 This file is the single source of truth for project context. The `/letsriff` slash command reads this automatically at the start of each session. For the design system, shared component catalog, and UI patterns, see `DESIGN-SYSTEM.md`.
 
@@ -58,15 +58,16 @@ A private essay-sharing platform for creative communities. People write together
 
 **Notifications & email**
 - In-app bell + panel (polls every 30s, click-through routing)
-- Emails: magic link, riff created/revealed, member joined, piece submitted/shared, deadline changed/approaching, all pieces submitted, co-host/host transfer, daily comment digest, engagement reminders (remember-to-write, join-riff nudge)
+- Emails (all in `src/lib/resend.ts`, each a `build…Email` + `send…Email` pair): sign-in, welcome, new riff, riff revealed, deadline changed, grace week, club paused, piece submitted, riff reminder (halfway + last call, one template), member joined, open-riff participant joined (creator only), co-host assigned, host transferred, piece shared (opens like the piece — cover, title, first ~600 chars), daily comment digest
+- **Email preview** (`/dev/emails`, dev only): every email and its variants rendered from sample data, with subject and preview line — nothing is sent. Sample data lives in `src/app/dev/emails/fixtures.ts`; add a fixture when you add an email
+- Email dates are formatted in Pacific time; all text people typed is HTML-escaped by the shared email frame
 
 **Internal**
 - Admin analytics dashboard (`/admin`) — Kyle and Chris; leaderboard (`/leaderboard`) — Kyle only
 - Release notes page (`/release-notes`) — built but hidden/unlinked
 
 ### Known Gaps / In Progress
-- **Daily cron is a stopgap**: `/api/cron/daily-notifications` just runs the comment digest + engagement reminders back-to-back. The unified digest engine in `NOTIFICATIONS-PRD.md` is not started.
-- **Engagement reminders**: a failed Resend send is still logged as sent, so that reminder is skipped until the next window.
+- **Daily cron is a stopgap**: `/api/cron/daily-notifications` runs the comment digest, riff reminders and the club cadence sweep side by side (`?only=` and `?dryRun=1` for safe manual runs). The unified digest engine in `NOTIFICATIONS-PRD.md` is not started.
 - **Unused schema**: `Collection`, `CollectionPiece`, `CollectionCollaborator`, `Jam`, `JamRead`, `PieceVisibilitySettings`, and `ClubInvite` exist in the schema but no code queries them. Club joins use the link itself, not `ClubInvite` tokens.
 
 ---
@@ -96,7 +97,7 @@ src/app/
 ├── account/                      # Account settings
 ├── admin/, leaderboard/          # Admin: Kyle + Chris; leaderboard: Kyle only
 ├── release-notes/                # Hidden
-└── dev-signin/, test-*/          # Dev-only sandboxes (not linked)
+└── dev-signin/, dev/emails/      # Dev-only (not linked): account switching, email preview
 ```
 
 ### API Routes
@@ -115,7 +116,7 @@ src/app/api/
 │   └── [id]/send, send-candidates # Email a piece to chosen friends
 ├── comments/                     # list, create, [id]
 ├── notifications/                # list, [id] mark read, unread-count
-├── cron/daily-notifications      # Vercel Cron (13:00 UTC): comment digest + engagement reminders
+├── cron/daily-notifications      # Vercel Cron (13:00 UTC): comment digest + riff reminders + cadence sweep
 ├── users/me/                     # current user, update, delete, export, email-preferences, admin-clubs
 ├── users/[id]/                   # public profile data
 ├── upload/image/                 # Image upload (auth required, 5MB max)
@@ -180,8 +181,12 @@ src/lib/
 ├── riff-utils.ts              # Riff helpers (submitted pieces, deadlines, display titles, date formatting)
 ├── notifications.ts           # createNotification, notifyClubMembers, notifyRiffParticipants
 ├── comment-notifications.ts   # Daily comment digest job
-├── engagement-reminders.ts    # Deadline-approaching / remember-to-write / join-riff nudge job
-├── resend.ts                  # All transactional email templates + batchNotificationsEnabled()
+├── engagement-reminders.ts    # Riff reminders job — halfway + last call, max two per person per riff
+├── club-cadence.ts            # Daily cadence sweep: reveal / extend (grace week) / pause / open the next riff
+├── reveal-riff.ts, club-riff.ts # revealRiff() shared by host + cron; opening a club riff; predictVolumeNumber()
+├── participant-joined.ts      # Open-riff join notification (in-app to all, email to creator)
+├── resend.ts                  # All transactional emails (build + send) + opt-out checks
+├── email-excerpt.ts           # A piece's opening for email — paragraphs, breaks, bold, italic only
 ├── supabase.ts, upload-image.ts, convert-heic.ts, crop-image.ts, extract-first-image.ts
 ├── tiptap-to-docx.ts          # Tiptap JSON → .docx (export)
 ├── timeAgo.ts                 # Relative time formatting
@@ -253,8 +258,8 @@ Routing lives in the `/auth/post-login` server component, NOT the NextAuth `redi
 
 ## Crons & Email
 
-- **One Vercel Cron** (`vercel.json`): `/api/cron/daily-notifications` at 13:00 UTC, authenticated with `CRON_SECRET`. It runs the comment digest and engagement reminders. Vercel Hobby allows 2 cron jobs, so one slot is free.
-- Reminder emails respect `User.emailNotifications`; marketing respects `emailMarketing`.
+- **One Vercel Cron** (`vercel.json`): `/api/cron/daily-notifications` at 13:00 UTC, authenticated with `CRON_SECRET`. It runs the comment digest, riff reminders and the club cadence sweep. Vercel Hobby allows 2 cron jobs, so one slot is free.
+- One-time notification emails respect `User.emailNotifications` ("Notifications"); riff reminders respect `emailMarketing`, repurposed as the "Reminders" toggle. Sign-in and welcome emails always send.
 
 ---
 

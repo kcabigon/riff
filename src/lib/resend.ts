@@ -464,17 +464,6 @@ export async function sendRiffRevealedEmail({
   }
 }
 
-/**
- * Legacy function name for backward compatibility
- * @deprecated Use sendSignInEmail or sendOnboardingEmail instead
- */
-export async function sendMagicLinkEmail(
-  email: string,
-  magicLink: string
-): Promise<void> {
-  return sendSignInEmail(email, magicLink);
-}
-
 // ==================== EMAIL TEMPLATES ====================
 
 const SIGN_IN_PREVIEW =
