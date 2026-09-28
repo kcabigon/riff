@@ -190,7 +190,8 @@ export async function runReadingReminders({
     const logs: Array<{ riffId: string; recipientId: string }> = [];
 
     for (const person of owed.filter((p) => enabled.has(p.email))) {
-      const nudge = (sendCount.get(`${riff.id}:${person.userId}`) ?? 0) + 1;
+      const priorSends = sendCount.get(`${riff.id}:${person.userId}`) ?? 0;
+      const nudge = priorSends + 1;
       if (dryRun) {
         result.plan?.push(
           `${riffName} | ${person.unread.length} unread | nudge ${nudge}/${reached}`
@@ -216,7 +217,13 @@ export async function runReadingReminders({
         riffUrl: `${baseUrl}/riffs/${riff.id}`,
       });
       if (!delivered) continue;
-      logs.push({ riffId: riff.id, recipientId: person.userId });
+      // The final nudge closes the series. If it went out as a late catch-up
+      // (the first never did), log it for both, or tomorrow's run would see
+      // one still owed and send "Still unread" a second day running.
+      const rows = reached >= 2 ? Math.max(2 - priorSends, 1) : 1;
+      for (let i = 0; i < rows; i++) {
+        logs.push({ riffId: riff.id, recipientId: person.userId });
+      }
       result.sent++;
     }
 
