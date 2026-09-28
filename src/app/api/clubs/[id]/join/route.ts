@@ -80,6 +80,8 @@ export async function POST(
               newMember.firstName || newMember.name?.split(" ")[0] || "them",
             clubName: club!.name,
             clubUrl,
+            // Everyone else, plus the new member.
+            memberCount: members.length + 1,
           })
         )
       );

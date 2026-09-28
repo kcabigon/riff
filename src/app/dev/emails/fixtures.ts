@@ -336,6 +336,7 @@ export function getEmailPreviews(): EmailPreview[] {
               newMemberFirstName: "Rivy",
               clubName: CLUB,
               clubUrl,
+              memberCount: 4,
             }),
         },
       ],
