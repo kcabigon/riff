@@ -682,43 +682,6 @@ export async function sendDeadlineChangedEmail({
   }
 }
 
-export async function sendAllPiecesSubmittedEmail({
-  email,
-  riffTitle,
-  clubName,
-  riffUrl,
-}: {
-  email: string;
-  riffTitle: string;
-  clubName: string;
-  riffUrl: string;
-}): Promise<void> {
-  try {
-    const { error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to: email,
-      subject: `All pieces submitted in ${clubName}`,
-      html: emailShell({
-        title: `All pieces submitted in ${clubName}`,
-        clubName,
-        footerText: `You're receiving this because you're the host of this riff on Riff.`,
-        content: `
-          <tr>
-            <td style="padding:40px 40px 16px;">
-              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">All pieces submitted in ${clubName}.</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">Everyone's in. You're ready for reveal.</p>
-            </td>
-          </tr>
-
-          ${emailButton("Review and reveal", riffUrl)}`,
-      }),
-    });
-    if (error) console.error("Resend error (allPiecesSubmitted):", error);
-  } catch (error) {
-    console.error("Error sending all pieces submitted email:", error);
-  }
-}
-
 interface ReminderEmailVariant {
   subject: string;
   headline: string;

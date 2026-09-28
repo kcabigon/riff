@@ -27,10 +27,13 @@ import { NotificationType } from "@prisma/client";
 // shares the team's database, so a live sweep creates real riffs and mails real
 // people.
 
-// One action per club per tick, in priority order. A club is only ever in one
-// of these states, so the sweep never has to sequence two writes for the same
-// club — which is why creation is deferred to the tick *after* a reveal rather
-// than chained behind it.
+// One action per club per tick, in priority order. A club is only ever in one of
+// these states, so the sweep never has to sequence two writes for the same club.
+//
+// That alone is what defers a new riff to the tick after a reveal: revealing is
+// the club's whole action for that run, so the next tick is the first time it
+// sees a club with no active riff. No extra cooldown is needed, and an earlier
+// one here was a no-op for exactly this reason.
 export type CadenceAction =
   | { kind: "reveal"; riffId: string; submittedCount: number }
   | { kind: "extend"; riffId: string; newDeadline: Date }
@@ -68,7 +71,6 @@ export function decideForClub(
       deadline: Date | null;
       submittedCount: number;
     } | null;
-    lastRevealedAt: Date | null;
   },
   now: Date
 ): ClubDecision {
@@ -161,20 +163,6 @@ export function decideForClub(
     return { ...base, action: { kind: "skip", reason: "paused" } };
   }
 
-  // Creation waits a full tick after a reveal, so a club gets 24 hours with
-  // just the pieces before the next riff's empty cards appear. Without this the
-  // reveal and the next opening would land in the same second.
-  if (club.lastRevealedAt) {
-    const hoursSinceReveal =
-      (now.getTime() - club.lastRevealedAt.getTime()) / 3_600_000;
-    if (hoursSinceReveal < 20) {
-      return {
-        ...base,
-        action: { kind: "skip", reason: "revealed within the last tick" },
-      };
-    }
-  }
-
   return {
     ...base,
     action: { kind: "create", deadline: addDays(now, cadenceDays) },
@@ -205,7 +193,6 @@ export async function loadSweepClubs() {
           status: true,
           createdAt: true,
           deadline: true,
-          updatedAt: true,
           pieces: {
             where: { submittedAt: { not: null } },
             select: { id: true },
@@ -217,11 +204,6 @@ export async function loadSweepClubs() {
 
   return clubs.map((club) => {
     const active = club.riffs.find((r) => r.status === "ACTIVE") ?? null;
-    // Reveal time isn't stored, so updatedAt on the newest revealed riff is the
-    // closest proxy — it's written by the same update that sets the status.
-    const revealed = club.riffs
-      .filter((r) => r.status === "REVEALED" || r.status === "COMPLETED")
-      .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())[0];
 
     return {
       id: club.id,
@@ -236,7 +218,6 @@ export async function loadSweepClubs() {
             submittedCount: active.pieces.length,
           }
         : null,
-      lastRevealedAt: revealed?.updatedAt ?? null,
     };
   });
 }

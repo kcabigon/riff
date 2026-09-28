@@ -85,17 +85,15 @@ export function milestonesReached(
   deadline: Date | null,
   now: Date
 ): number {
-  // No deadline means there is no "closes tomorrow" to warn about, so the
-  // second milestone has nothing to say. One nudge on day three, then quiet.
-  if (!deadline) {
-    return now.getTime() - createdAt.getTime() >= 3 * DAY_MS ? 1 : 0;
-  }
+  // Both milestones are positions within a deadline, so a riff without one has
+  // none to reach. Only a clubless riff edited to drop its deadline gets here —
+  // every creation path requires one, and a club riff can't have it cleared.
+  if (!deadline) return 0;
 
   // Past the deadline the cadence sweep owns this riff — it is about to be
-  // revealed, extended, or cleared, and a reminder would contradict whichever
-  // of those happens. An extension re-opens the window but does not re-arm
-  // these milestones; members hear about the new date from the extension's own
-  // notification instead.
+  // revealed, given its grace week, or cleared, and a reminder would contradict
+  // whichever happens. The grace week re-opens the window but does not re-arm
+  // these milestones; the grace email carries the warning instead.
   if (now >= deadline) return 0;
 
   const halfway = new Date(
@@ -103,10 +101,10 @@ export function milestonesReached(
   );
   const finalCall = new Date(deadline.getTime() - DAY_MS);
 
-  // Under two days long, the two milestones collapse into each other or invert.
-  // One nudge is all such a riff can carry without doubling up same-day.
-  if (finalCall <= halfway) return now >= halfway ? 1 : 0;
-
+  // On a riff shorter than two days these two can coincide or invert, which
+  // reports 2 from the start. That costs nothing: only one reminder per person
+  // is sent per run, and such a riff has no second run before its deadline — so
+  // it resolves to a single nudge without needing a case of its own.
   if (now >= finalCall) return 2;
   if (now >= halfway) return 1;
   return 0;
@@ -165,9 +163,13 @@ export interface ReminderRunResult {
 // reasoning as the cadence sweep: local development runs against the team's
 // database, so the only safe way to inspect this against real riffs is a mode
 // that cannot mail anyone.
+//
+// It defaults to true, matching runClubCadence. The two used to disagree, which
+// meant calling one of them with no arguments to "see what it would do" was safe
+// and the other mailed an entire club. Scheduled runs pass false explicitly.
 export async function runRiffReminders(
   riffs: ActiveRiff[],
-  { now = new Date(), dryRun = false }: { now?: Date; dryRun?: boolean } = {}
+  { now = new Date(), dryRun = true }: { now?: Date; dryRun?: boolean } = {}
 ): Promise<ReminderRunResult> {
   const result: ReminderRunResult = {
     dryRun,
@@ -298,7 +300,7 @@ export async function runRiffReminders(
 }
 
 export async function runEngagementReminders({
-  dryRun = false,
+  dryRun = true,
 }: { dryRun?: boolean } = {}) {
   const riffs = await fetchActiveRiffs();
   return runRiffReminders(riffs, { dryRun });

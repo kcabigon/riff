@@ -1,19 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
-import {
-  notifyClubMembers,
-  notifyRiffParticipants,
-  createNotification,
-} from "@/lib/notifications";
+import { notifyClubMembers, notifyRiffParticipants } from "@/lib/notifications";
 import {
   sendPieceSubmittedEmail,
-  sendAllPiecesSubmittedEmail,
   batchNotificationsEnabled,
 } from "@/lib/resend";
 import { NotificationType } from "@prisma/client";
 import { getBaseUrl } from "@/lib/env";
-import { allPiecesSubmitted } from "@/lib/riff-utils";
 
 // PATCH /api/riffs/[id]/pieces/[pieceId] - Submit piece to riff (set submittedAt)
 export async function PATCH(
@@ -33,7 +27,6 @@ export async function PATCH(
             id: true,
             title: true,
             clubId: true,
-            creatorId: true,
             club: { select: { name: true } },
           },
         },
@@ -139,78 +132,6 @@ export async function PATCH(
         console.info(
           `[notify] piece submitted ${riffId}: ${pieceResults.filter((r) => r.status === "fulfilled").length} sent, ${pieceResults.filter((r) => r.status === "rejected").length} failed`
         );
-      }
-
-      // Tell the host the riff is ready to reveal early. Read back rather than
-      // adjusting the pre-update counts by one: this has to agree with the
-      // reveal button the host is about to go looking for, and that button
-      // calls allPiecesSubmitted on live data. Previously this used its own
-      // aggregate comparison, so the mail and the button could disagree.
-      //
-      // Sharing the predicate also drops the count comparison's blind spot —
-      // `submitted >= participants` counts pieces, not people, so one author
-      // submitting two pieces satisfied it while a second writer was still
-      // drafting. Note it does not change the case where members never write
-      // at all: "all submitted" has always meant everyone who started, and a
-      // club where most members stay silent still qualifies.
-      const progress = await prisma.riff.findUnique({
-        where: { id: riffId },
-        select: {
-          participants: { select: { user: { select: { id: true } } } },
-          pieces: {
-            select: {
-              submittedAt: true,
-              piece: { select: { authorId: true, wordCount: true } },
-            },
-          },
-          club: { select: { _count: { select: { members: true } } } },
-        },
-      });
-
-      // A solo club always satisfies "everyone submitted" the moment its one
-      // writer does, which makes the mail noise rather than news — there is
-      // nobody else to wait on and the host is the person who just submitted.
-      const memberCount = progress?.club?._count.members ?? 0;
-      const worthTelling = riff.clubId ? memberCount >= 2 : true;
-
-      if (
-        progress &&
-        worthTelling &&
-        allPiecesSubmitted(progress.participants, progress.pieces)
-      ) {
-        await createNotification({
-          type: NotificationType.ALL_PIECES_SUBMITTED,
-          recipientId: riff.creatorId,
-          riffId,
-          clubId: riff.clubId ?? undefined,
-        }).catch((err) =>
-          console.error("[notification error] all pieces submitted:", err)
-        );
-
-        const host = await prisma.user.findUnique({
-          where: { id: riff.creatorId },
-          select: { email: true, emailNotifications: true },
-        });
-        if (host?.emailNotifications) {
-          console.info(
-            `[notify] all pieces submitted ${riffId}: sending host email to ${host.email}`
-          );
-          await sendAllPiecesSubmittedEmail({
-            email: host.email,
-            riffTitle: riffDisplayTitle,
-            clubName: riff.club?.name ?? riffDisplayTitle,
-            riffUrl,
-          }).catch((err) =>
-            console.error(
-              "[notification error] all pieces submitted email:",
-              err
-            )
-          );
-        } else {
-          console.info(
-            `[notify] all pieces submitted ${riffId}: host email skipped (emailNotifications=false)`
-          );
-        }
       }
     } catch (err) {
       console.error(
