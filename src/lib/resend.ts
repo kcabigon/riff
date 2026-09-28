@@ -74,6 +74,7 @@ function emailShell({
   title,
   content,
   footerText,
+  footerLink,
   clubName,
   unsubscribe = true,
   preview,
@@ -81,7 +82,12 @@ function emailShell({
 }: {
   title: string;
   content: string;
+  // Plain text — escaped here, because it names clubs, riffs and people.
+  // title, clubName and preview are plain text too, escaped the same way, so
+  // no template has to remember to.
   footerText: string;
+  // A URL shown in full under the footer text, for "button not working?".
+  footerLink?: string;
   clubName?: string;
   unsubscribe?: boolean;
   preview?: string;
@@ -91,14 +97,17 @@ function emailShell({
   showLogo?: boolean;
 }): string {
   const baseUrl = getBaseUrl();
+  const footerBody = footerLink
+    ? `${escapeHtml(footerText)}<br><a href="${footerLink}" style="color:#888888;font-size:11px;word-break:break-all;">${escapeHtml(footerLink)}</a>`
+    : escapeHtml(footerText);
   const fullFooterText = unsubscribe
-    ? `${footerText} · <a href="${baseUrl}/account" style="color:#bbbbbb;">Unsubscribe</a>`
-    : footerText;
+    ? `${footerBody} · <a href="${baseUrl}/account" style="color:#bbbbbb;">Unsubscribe</a>`
+    : footerBody;
   const topSection = clubName
     ? `<!-- Club name header -->
           <tr>
             <td style="padding:40px 40px 24px;">
-              <p style="margin:0;font-size:16px;font-weight:500;color:#000000;letter-spacing:2px;text-transform:uppercase;font-family:'DM Sans',-apple-system,sans-serif;">${clubName}</p>
+              <p style="margin:0;font-size:16px;font-weight:500;color:#000000;letter-spacing:2px;text-transform:uppercase;font-family:'DM Sans',-apple-system,sans-serif;">${escapeHtml(clubName)}</p>
             </td>
           </tr>
 
@@ -140,7 +149,7 @@ function emailShell({
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title}</title>
+  <title>${escapeHtml(title)}</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&family=DM+Serif+Text&display=swap" rel="stylesheet">
 </head>
 <body style="margin:0;padding:0;background-color:#f5f5f5;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">${preview ? `\n  ${preheader(preview)}` : ""}
@@ -479,7 +488,8 @@ function getSignInEmailTemplate(magicLink: string): string {
     title: "Sign in to Riff",
     preview: SIGN_IN_PREVIEW,
     unsubscribe: false,
-    footerText: `Button not working? Copy this link into your browser:<br><a href="${magicLink}" style="color:#888888;font-size:11px;word-break:break-all;">${magicLink}</a>`,
+    footerText: "Button not working? Copy this link into your browser:",
+    footerLink: magicLink,
     content: `
           <tr>
             <td style="padding:40px 40px 16px;">
@@ -508,7 +518,8 @@ function getOnboardingEmailTemplate(magicLink: string): string {
     title: "Welcome to Riff",
     preview: WELCOME_PREVIEW,
     unsubscribe: false,
-    footerText: `Button not working? Copy this link into your browser:<br><a href="${magicLink}" style="color:#888888;font-size:11px;word-break:break-all;">${magicLink}</a>`,
+    footerText: "Button not working? Copy this link into your browser:",
+    footerLink: magicLink,
     content: `
           <tr>
             <td style="padding:40px 40px 16px;">
@@ -1267,7 +1278,7 @@ export function buildCoHostAssignedEmail({
           <tr>
             <td style="padding:40px 40px 16px;">
               <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">You're a co-host.</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;"><strong style="font-weight:500;">${adminName}</strong> made you a co-host of <strong style="font-weight:500;">${clubName}</strong>. You can now start and reveal riffs, set the club's cadence, and edit club details.</p>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;"><strong style="font-weight:500;">${escapeHtml(adminName)}</strong> made you a co-host of <strong style="font-weight:500;">${escapeHtml(clubName)}</strong>. You can now start and reveal riffs, set the club's cadence, and edit club details.</p>
             </td>
           </tr>
 
