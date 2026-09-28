@@ -39,19 +39,3 @@
     --foreground: #000000;
   }
 }
-
-/* Date inputs whose value is mandatory — club riff deadlines. The browser's
-   own clear control invites emptying a field the form will then reject, and on
-   a club riff an empty deadline is what stalls the cadence sweep. The calendar
-   picker indicator is deliberately left alone; that's how the field is used.
-
-   Cosmetic only: the field can still be emptied by selecting its text, so the
-   real guards remain the form check and the API's rejection of a null deadline
-   on a club riff. This just stops offering it. */
-.date-input-no-clear::-webkit-clear-button {
-  display: none;
-}
-
-.date-input-no-clear::-ms-clear {
-  display: none;
-}

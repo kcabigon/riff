@@ -93,7 +93,7 @@ export default function RiffFormFields({
           // Only hide the browser's clear control where an empty value is
           // actually invalid. A clubless riff may genuinely drop its deadline,
           // so it keeps the control.
-          className={deadlineRequired ? "date-input-no-clear" : undefined}
+          className={deadlineRequired ? "no-clear" : undefined}
           style={{
             ...inputStyle,
             display: "block",
@@ -169,6 +169,25 @@ export default function RiffFormFields({
           onBlur={onBlurBlack}
         />
       </div>
+
+      {/* Scoped rather than global, matching how TextInput handles ::placeholder
+          — a pseudo-element is the one thing inline styles can't reach, and the
+          rule belongs next to the field it applies to.
+
+          The browser's own clear control invites emptying a field the form will
+          then reject, and on a club riff an empty deadline is what stalls the
+          cadence sweep. The calendar picker indicator is deliberately untouched;
+          that's how the field is meant to be used.
+
+          Cosmetic only: the value can still be cleared by selecting its text, so
+          the real guards stay the form check and the API's rejection of a null
+          deadline on a club riff. This just stops offering it. */}
+      <style jsx>{`
+        .no-clear::-webkit-clear-button,
+        .no-clear::-ms-clear {
+          display: none;
+        }
+      `}</style>
     </>
   );
 }
