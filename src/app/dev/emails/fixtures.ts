@@ -142,20 +142,35 @@ export function getEmailPreviews(): EmailPreview[] {
         "A host edits a riff's deadline. Members (participants, for an open riff).",
       variants: [
         {
-          label: "Club riff",
+          label: "Pushed back a week",
           build: () =>
             buildDeadlineChangedEmail({
               clubName: CLUB,
+              riffName: RIFF_TITLE,
               riffUrl: clubUrl,
+              previousDeadline: daysFromNow(3),
               newDeadline: daysFromNow(10),
+            }),
+        },
+        {
+          label: "Pulled in",
+          build: () =>
+            buildDeadlineChangedEmail({
+              clubName: CLUB,
+              riffName: `Volume ${VOLUME + 1}`,
+              riffUrl: clubUrl,
+              previousDeadline: daysFromNow(10),
+              newDeadline: daysFromNow(8),
             }),
         },
         {
           label: "Open riff",
           build: () =>
             buildDeadlineChangedEmail({
-              clubName: RIFF_TITLE,
+              clubName: null,
+              riffName: RIFF_TITLE,
               riffUrl,
+              previousDeadline: daysFromNow(3),
               newDeadline: daysFromNow(10),
             }),
         },

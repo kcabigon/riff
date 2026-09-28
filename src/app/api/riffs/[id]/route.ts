@@ -450,6 +450,10 @@ export async function PATCH(
         const deadlineEnabled = await batchNotificationsEnabled(
           deadlineMembers.map((m) => m.user.email)
         );
+        const riffName = getRiffDisplayTitle(
+          updatedRiff,
+          await predictVolumeNumber(riff.clubId)
+        );
         const eligibleDeadline = deadlineMembers.filter((m) =>
           deadlineEnabled.has(m.user.email)
         );
@@ -460,9 +464,11 @@ export async function PATCH(
           eligibleDeadline.map((m) =>
             sendDeadlineChangedEmail({
               email: m.user.email,
-              newDeadline,
-              riffUrl,
               clubName: updatedRiff.club?.name ?? "your club",
+              riffName,
+              riffUrl,
+              newDeadline,
+              previousDeadline: riff.deadline,
             })
           )
         );
@@ -506,9 +512,11 @@ export async function PATCH(
           eligibleDeadline.map((p) =>
             sendDeadlineChangedEmail({
               email: p.user.email,
-              newDeadline,
+              clubName: null,
+              riffName: updatedRiff.title || "Your riff",
               riffUrl,
-              clubName: updatedRiff.title ?? "your riff",
+              newDeadline,
+              previousDeadline: riff.deadline,
             })
           )
         );

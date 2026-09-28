@@ -208,6 +208,24 @@ function formatEmailDate(
   });
 }
 
+// Whole calendar days from one date to another as the email reader sees them
+// (in EMAIL_TIME_ZONE), so an end-of-day deadline moved to the next end of day
+// counts as one day, not 0.99.
+function calendarDaysBetween(from: Date, to: Date): number {
+  const dayNumber = (d: Date) => {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: EMAIL_TIME_ZONE,
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+    }).formatToParts(d);
+    const part = (type: string) =>
+      Number(parts.find((p) => p.type === type)?.value);
+    return Date.UTC(part("year"), part("month") - 1, part("day")) / 86_400_000;
+  };
+  return dayNumber(to) - dayNumber(from);
+}
+
 // For text people typed — a prompt can contain <, > or &, and must render as
 // text rather than as markup in someone else's inbox.
 function escapeHtml(text: string): string {
@@ -788,35 +806,66 @@ export async function sendRiffGracePeriodEmail({
 }
 
 interface DeadlineChangedEmailParams {
-  newDeadline: Date;
+  // Null for an open (clubless) riff.
+  clubName: string | null;
+  // The title, or "Volume N" for an untitled club riff — what the club page shows.
+  riffName: string;
   riffUrl: string;
-  clubName: string;
+  newDeadline: Date;
+  previousDeadline: Date | null;
+}
+
+function howFarMoved(days: number): string {
+  const n = Math.abs(days);
+  const amount = n === 1 ? "a day" : n === 7 ? "a week" : `${n} days`;
+  return `${amount} ${days > 0 ? "later" : "earlier"}`;
 }
 
 // Deliberately actor-free: a deadline moves because the host rescheduled it, and
 // the club has no reason to care who. The cadence cron does not use this — its
-// one extension is the grace week above, which needs to explain itself.
+// one extension is the grace week, which needs to explain itself.
 export function buildDeadlineChangedEmail({
-  newDeadline,
-  riffUrl,
   clubName,
+  riffName,
+  riffUrl,
+  newDeadline,
+  previousDeadline,
 }: DeadlineChangedEmailParams): BuiltEmail {
-  const deadlineStr = formatEmailDate(newDeadline, {
+  const longDate = formatEmailDate(newDeadline, {
+    weekday: "long",
     month: "long",
     day: "numeric",
-    year: "numeric",
   });
+  const shortDate = formatEmailDate(newDeadline, {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  });
+  // Zero when only the time of day changed — then there's no direction to give.
+  const days = previousDeadline
+    ? calendarDaysBetween(previousDeadline, newDeadline)
+    : 0;
+  const header = clubName ?? riffName;
+
   return {
-    subject: `Riff deadline change in ${clubName}`,
+    subject: `${riffName} has a new deadline`,
+    preview: days
+      ? `Now due ${shortDate}, ${howFarMoved(days)}.`
+      : `Now due ${shortDate}.`,
     html: emailShell({
-      title: `Riff deadline change in ${clubName}`,
-      clubName,
-      footerText: `You're receiving this because you're a member of ${clubName} on Riff.`,
+      title: `${riffName} has a new deadline`,
+      preview: days
+        ? `Now due ${shortDate}, ${howFarMoved(days)}.`
+        : `Now due ${shortDate}.`,
+      clubName: header,
+      footerText: clubName
+        ? `You're receiving this because you're a member of ${clubName} on Riff.`
+        : `You're receiving this because you're part of ${riffName} on Riff.`,
       content: `
           <tr>
             <td style="padding:40px 40px 16px;">
-              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">Riff deadline change in ${clubName}.</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">The new deadline is ${deadlineStr}.</p>
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">Deadline moved: ${escapeHtml(riffName)}</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">It's now due <strong style="font-weight:500;">${longDate}</strong>${days ? `, ${howFarMoved(days)} than before` : ""}.</p>
             </td>
           </tr>
 
