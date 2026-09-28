@@ -1,7 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { NotificationType } from "@prisma/client";
 import { getBaseUrl } from "@/lib/env";
-import { batchRemindersEnabled, sendRiffReminderEmail } from "@/lib/resend";
+import {
+  batchRemindersEnabled,
+  buildRiffReminderEmail,
+  deliverMany,
+  type OutgoingEmail,
+} from "@/lib/resend";
 import { getRiffDisplayTitle } from "@/lib/riff-utils";
 
 // Riff reminders. One stream, two sends per riff, whatever the cadence.
@@ -237,6 +242,15 @@ export async function runRiffReminders(
     ...new Set(work.flatMap((w) => w.eligible.map((a) => a.email))),
   ]);
 
+  // Every reminder is built first and sent together, then logged — only the
+  // ones that went out, since a logged failure would burn one of that
+  // person's two reminders for the riff's whole lifetime.
+  const outgoing: Array<{
+    message: OutgoingEmail;
+    log: { riffId: string; recipientId: string };
+    bucket: "continueWriting" | "startWriting";
+  }> = [];
+
   for (const { riff, reached, eligible } of work) {
     // milestonesReached returns 0 without a deadline, so every riff here has one.
     const deadline = riff.deadline as Date;
@@ -250,11 +264,6 @@ export async function runRiffReminders(
     // A missed halfway run catches up as the final call rather than sending a
     // stale "halfway" a day before the deadline.
     const milestone = reached >= 2 ? "final" : "halfway";
-    // One insert per riff instead of one per recipient. Flushed per riff
-    // rather than once at the very end so a crash mid-sweep can only lose this
-    // riff's log — an unlogged send is one that goes out again next run.
-    const logs: Array<{ riffId: string; recipientId: string }> = [];
-
     for (const person of eligible.filter((a) => enabled.has(a.email))) {
       const priorSends = counts.get(`${riff.id}:${person.userId}`) ?? 0;
       const own = riff.pieces.find(
@@ -278,26 +287,38 @@ export async function runRiffReminders(
         continue;
       }
 
-      const delivered = await sendRiffReminderEmail({
-        email: person.email,
-        clubName: riff.club?.name ?? null,
-        riffName,
-        riffUrl,
-        deadline,
-        milestone,
-        draft,
+      outgoing.push({
+        message: {
+          to: person.email,
+          email: buildRiffReminderEmail({
+            clubName: riff.club?.name ?? null,
+            riffName,
+            riffUrl,
+            deadline,
+            milestone,
+            draft,
+          }),
+        },
+        log: { riffId: riff.id, recipientId: person.userId },
+        bucket,
       });
-
-      // Only log a send that actually went out — a logged failure would burn
-      // one of this person's two reminders for the riff's whole lifetime.
-      if (!delivered) continue;
-      logs.push({ riffId: riff.id, recipientId: person.userId });
-      result[bucket]++;
-      result.sent++;
     }
-
-    if (logs.length > 0) await logSends(logs);
   }
+
+  if (outgoing.length === 0) return result;
+  const delivered = await deliverMany(
+    outgoing.map((o) => o.message),
+    "riffReminder"
+  );
+  const sentOut = outgoing.filter((_, i) => delivered[i]);
+  for (const { bucket } of sentOut) {
+    result[bucket]++;
+    result.sent++;
+  }
+  // One insert for the whole run, straight after the send, so the gap in
+  // which a crash could leave a send unlogged (and repeated tomorrow) is as
+  // small as it can be.
+  if (sentOut.length > 0) await logSends(sentOut.map((o) => o.log));
 
   return result;
 }

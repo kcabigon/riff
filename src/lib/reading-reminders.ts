@@ -3,7 +3,12 @@ import { NotificationType } from "@prisma/client";
 import { getBaseUrl } from "@/lib/env";
 import { fullNameOf } from "@/lib/names";
 import { getRiffDisplayTitle } from "@/lib/riff-utils";
-import { batchRemindersEnabled, sendReadingReminderEmail } from "@/lib/resend";
+import {
+  batchRemindersEnabled,
+  buildReadingReminderEmail,
+  deliverMany,
+  type OutgoingEmail,
+} from "@/lib/resend";
 
 // Reading reminders: a nudge to read a revealed riff's pieces, for anyone who
 // hasn't. Reading is half of what a club is for, and it's the half that
@@ -185,14 +190,18 @@ export async function runReadingReminders({
   ]);
   const baseUrl = getBaseUrl();
 
+  // Built first and sent together, then logged — only the ones that went out.
+  const outgoing: Array<{
+    message: OutgoingEmail;
+    logs: Array<{ riffId: string; recipientId: string }>;
+  }> = [];
+
   for (const { riff, reached, owed } of work) {
     const riffName = getRiffDisplayTitle({
       title: riff.title,
       volumeNumber: riff.volumeNumber,
       status: "REVEALED",
     });
-    const logs: Array<{ riffId: string; recipientId: string }> = [];
-
     for (const person of owed.filter((p) => enabled.has(p.email))) {
       const priorSends = sendCount.get(`${riff.id}:${person.userId}`) ?? 0;
       const nudge = priorSends + 1;
@@ -204,38 +213,49 @@ export async function runReadingReminders({
         continue;
       }
 
-      const delivered = await sendReadingReminderEmail({
-        email: person.email,
-        clubName: riff.club?.name ?? null,
-        riffName,
-        // A missed first run catches up as the second nudge's copy, the same
-        // way the writing reminder's halfway note gives way to its last call.
-        nudge: reached >= 2 ? "second" : "first",
-        pieces: person.unread.map((piece) => ({
-          title: piece.title,
-          authorName: fullNameOf(piece.author),
-          readLengthMin: piece.readLengthMin,
-        })),
-        // The riff page, like the reveal email — where every piece and its
-        // read ring sit together.
-        riffUrl: `${baseUrl}/riffs/${riff.id}`,
-      });
-      if (!delivered) continue;
-      // The final nudge closes the series. If it went out as a late catch-up
-      // (the first never did), log it for both, or tomorrow's run would see
-      // one still owed and send "Still unread" a second day running.
+      // The final nudge closes the series. If it goes out as a late catch-up
+      // (the first never did), it's logged for both, or tomorrow's run would
+      // see one still owed and send "Still unread" a second day running.
       const rows = reached >= 2 ? Math.max(2 - priorSends, 1) : 1;
-      for (let i = 0; i < rows; i++) {
-        logs.push({ riffId: riff.id, recipientId: person.userId });
-      }
-      result.sent++;
-    }
-
-    if (logs.length > 0) {
-      await prisma.notification.createMany({
-        data: logs.map((l) => ({ ...l, type: READING_LOG, isRead: true })),
+      outgoing.push({
+        message: {
+          to: person.email,
+          email: buildReadingReminderEmail({
+            clubName: riff.club?.name ?? null,
+            riffName,
+            // A missed first run catches up as the second nudge's copy, the
+            // same way the writing reminder's halfway note gives way to its
+            // last call.
+            nudge: reached >= 2 ? "second" : "first",
+            pieces: person.unread.map((piece) => ({
+              title: piece.title,
+              authorName: fullNameOf(piece.author),
+              readLengthMin: piece.readLengthMin,
+            })),
+            // The riff page, like the reveal email — where every piece and
+            // its read ring sit together.
+            riffUrl: `${baseUrl}/riffs/${riff.id}`,
+          }),
+        },
+        logs: Array.from({ length: rows }, () => ({
+          riffId: riff.id,
+          recipientId: person.userId,
+        })),
       });
     }
+  }
+
+  if (outgoing.length === 0) return result;
+  const delivered = await deliverMany(
+    outgoing.map((o) => o.message),
+    "readingReminder"
+  );
+  const logs = outgoing.filter((_, i) => delivered[i]).flatMap((o) => o.logs);
+  result.sent = delivered.filter(Boolean).length;
+  if (logs.length > 0) {
+    await prisma.notification.createMany({
+      data: logs.map((l) => ({ ...l, type: READING_LOG, isRead: true })),
+    });
   }
 
   return result;

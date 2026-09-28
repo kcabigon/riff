@@ -58,9 +58,10 @@ A private essay-sharing platform for creative communities. People write together
 
 **Notifications & email**
 - In-app bell + panel (polls every 30s, click-through routing)
-- Emails (all in `src/lib/resend.ts`, each a `build…Email` + `send…Email` pair): sign-in, welcome, new riff, riff revealed, deadline changed, grace week, club paused, piece submitted, riff reminder (halfway + last call, one template), reading reminders (5 and 10 days after a reveal, to every member with pieces left to read, listing them), member joined, open-riff participant joined (creator only), co-host assigned, host transferred, piece shared (opens like the piece — cover, title, first ~600 chars), piece invite accepted (author only, new friendships only; email only — no bell notification yet), daily comment digest
+- Emails (all in `src/lib/resend.ts`, each built by a `build…Email`; anything sent to more than one person goes through `deliverMany()`, Resend's batch API, and one-person emails keep a `send…Email`): sign-in, welcome, new riff, riff revealed, deadline changed, grace week, club paused, piece submitted, riff reminder (halfway + last call, one template), reading reminders (5 and 10 days after a reveal, to every member with pieces left to read, listing them), member joined, open-riff participant joined (creator only), co-host assigned, host transferred, piece shared (opens like the piece — cover, title, first ~600 chars), piece invite accepted (author only, new friendships only; email only — no bell notification yet), daily comment digest
 - **Email preview** (`/dev/emails`, dev only): every email and its variants rendered from sample data, with subject and preview line — nothing is sent. Sample data lives in `src/app/dev/emails/fixtures.ts`; add a fixture when you add an email
 - Email dates are formatted in Pacific time; all text people typed is HTML-escaped by the shared email frame
+- Sends retry when Resend rate-limits them (the daily jobs run side by side). The reminder jobs log only the emails that actually went out
 
 **Internal**
 - Admin analytics dashboard (`/admin`) — Kyle and Chris; leaderboard (`/leaderboard`) — Kyle only

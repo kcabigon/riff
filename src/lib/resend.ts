@@ -24,7 +24,7 @@ export async function batchNotificationsEnabled(
   return new Set(users.map((u) => u.email));
 }
 
-// Gates the recurring riff reminders (sendRiffReminderEmail) on the "Reminders"
+// Gates the recurring riff and reading reminders on the "Reminders"
 // toggle — repurposes the previously unused emailMarketing column so these can
 // be silenced independently of the one-time alerts gated by emailNotifications.
 export async function batchRemindersEnabled(
@@ -261,21 +261,54 @@ function draftTitleOrNull(title: string | null | undefined): string | null {
   return t && t !== "Untitled" ? t : null;
 }
 
+// One email on its way to one person.
+export interface OutgoingEmail {
+  to: string;
+  email: BuiltEmail;
+}
+
+function toResendPayload({ to, email }: OutgoingEmail) {
+  return {
+    from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+    to,
+    subject: email.subject,
+    html: email.html,
+  };
+}
+
+// Resend turns away requests over its per-second limit rather than queueing
+// them, and the daily cron runs its jobs side by side, so two sends colliding
+// is ordinary. A rate-limited request waits and tries again, backing off a
+// little more each time, before it counts as failed.
+const RATE_LIMIT_RETRIES = 3;
+
+async function withRateLimitRetry<T extends { error: { name: string } | null }>(
+  request: () => Promise<T>
+): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    const response = await request();
+    if (
+      response.error?.name !== "rate_limit_exceeded" ||
+      attempt > RATE_LIMIT_RETRIES
+    ) {
+      return response;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
+  }
+}
+
 // Sends a built email. Never throws: failures are logged with the email's
 // label and reported as false, and each send function decides what a failure
 // means for its caller — the sign-in email, for one, must throw.
 async function deliver(
   to: string,
-  { subject, html }: BuiltEmail,
+  email: BuiltEmail,
   label: string
 ): Promise<boolean> {
   try {
-    const { error } = await getResend().emails.send({
-      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
-      to,
-      subject,
-      html,
-    });
+    const { error } = await withRateLimitRetry(() =>
+      getResend().emails.send(toResendPayload({ to, email }))
+    );
     if (error) {
       console.error(`[email error] ${label}:`, error);
       return false;
@@ -285,6 +318,56 @@ async function deliver(
     console.error(`[email error] ${label} threw:`, err);
     return false;
   }
+}
+
+// Resend's batch endpoint takes up to 100 emails a request.
+const BATCH_SIZE = 100;
+
+// A batch is accepted or rejected whole. These rejections mean something in
+// it was malformed — one bad address, or in development an address the test
+// key may not send to — so the rest still deserve to go out, one by one.
+// Anything else (an outage, a bad key) would fail singly too.
+const PER_EMAIL_REJECTIONS = new Set([
+  "validation_error",
+  "invalid_parameter",
+  "missing_required_field",
+]);
+
+// Sends many emails in as few requests as possible — how anything that mails
+// more than one person should send. Never throws; returns, in order, whether
+// each email went out, so a caller that keeps a send log (the reminders) can
+// log exactly the ones that did.
+export async function deliverMany(
+  messages: OutgoingEmail[],
+  label: string
+): Promise<boolean[]> {
+  const delivered: boolean[] = [];
+  for (let i = 0; i < messages.length; i += BATCH_SIZE) {
+    const chunk = messages.slice(i, i + BATCH_SIZE);
+    try {
+      const { error } = await withRateLimitRetry(() =>
+        getResend().batch.send(chunk.map(toResendPayload))
+      );
+      if (!error) {
+        delivered.push(...chunk.map(() => true));
+      } else if (PER_EMAIL_REJECTIONS.has(error.name)) {
+        console.error(
+          `[email error] ${label} batch rejected, sending one by one:`,
+          error
+        );
+        for (const message of chunk) {
+          delivered.push(await deliver(message.to, message.email, label));
+        }
+      } else {
+        console.error(`[email error] ${label} batch:`, error);
+        delivered.push(...chunk.map(() => false));
+      }
+    } catch (err) {
+      console.error(`[email error] ${label} batch threw:`, err);
+      delivered.push(...chunk.map(() => false));
+    }
+  }
+  return delivered;
 }
 
 // ==================== SEND FUNCTIONS ====================
@@ -361,19 +444,6 @@ export function buildRiffCreatedEmail(
   };
 }
 
-/**
- * Send a riff created email to a club member
- */
-export async function sendRiffCreatedEmail({
-  email,
-  ...params
-}: RiffCreatedEmailParams & { email: string }): Promise<void> {
-  // Throws on failure — its caller counts or reports failed sends.
-  if (!(await deliver(email, buildRiffCreatedEmail(params), "riffCreated"))) {
-    throw new Error("Failed to send riffCreated email");
-  }
-}
-
 // A list of pieces to read — title, author, read time — shared by the three
 // emails that bookend a reveal: riff revealed, then the two reading reminders.
 // Only the first few are listed; the rest are counted.
@@ -436,19 +506,6 @@ export function buildRiffRevealedEmail(
     preview: piecesReady(params.pieces.length),
     html: getRiffRevealedEmailTemplate(params),
   };
-}
-
-/**
- * Send a riff revealed email to a club member
- */
-export async function sendRiffRevealedEmail({
-  email,
-  ...params
-}: RiffRevealedEmailParams & { email: string }): Promise<void> {
-  // Throws on failure — its caller counts or reports failed sends.
-  if (!(await deliver(email, buildRiffRevealedEmail(params), "riffRevealed"))) {
-    throw new Error("Failed to send riffRevealed email");
-  }
 }
 
 // ==================== EMAIL TEMPLATES ====================
@@ -623,13 +680,6 @@ export function buildMemberJoinedEmail({
   };
 }
 
-export async function sendMemberJoinedEmail({
-  email,
-  ...params
-}: MemberJoinedEmailParams & { email: string }): Promise<void> {
-  await deliver(email, buildMemberJoinedEmail(params), "memberJoined");
-}
-
 interface ParticipantJoinedEmailParams {
   newParticipantFullName: string;
   riffName: string;
@@ -747,13 +797,6 @@ export function buildPieceSubmittedEmail({
   };
 }
 
-export async function sendPieceSubmittedEmail({
-  email,
-  ...params
-}: PieceSubmittedEmailParams & { email: string }): Promise<void> {
-  await deliver(email, buildPieceSubmittedEmail(params), "pieceSubmitted");
-}
-
 interface PieceSharedEmailParams {
   // First name, for the "shared this with you" line and the subject.
   actorName: string;
@@ -844,13 +887,6 @@ ${cover}
           ${emailButton("Keep reading", pieceUrl)}`,
     }),
   };
-}
-
-export async function sendPieceSharedEmail({
-  email,
-  ...params
-}: PieceSharedEmailParams & { email: string }): Promise<void> {
-  await deliver(email, buildPieceSharedEmail(params), "pieceShared");
 }
 
 interface PieceInviteAcceptedEmailParams {
@@ -956,13 +992,6 @@ export function buildRiffGracePeriodEmail({
   };
 }
 
-export async function sendRiffGracePeriodEmail({
-  email,
-  ...params
-}: RiffGracePeriodEmailParams & { email: string }): Promise<void> {
-  await deliver(email, buildRiffGracePeriodEmail(params), "riffGracePeriod");
-}
-
 interface DeadlineChangedEmailParams {
   // Null for an open (clubless) riff.
   clubName: string | null;
@@ -1030,13 +1059,6 @@ export function buildDeadlineChangedEmail({
           ${emailButton("View the riff", riffUrl)}`,
     }),
   };
-}
-
-export async function sendDeadlineChangedEmail({
-  email,
-  ...params
-}: DeadlineChangedEmailParams & { email: string }): Promise<void> {
-  await deliver(email, buildDeadlineChangedEmail(params), "deadlineChanged");
 }
 
 interface RiffReminderEmailParams {
@@ -1122,14 +1144,6 @@ export function buildRiffReminderEmail({
   };
 }
 
-export async function sendRiffReminderEmail({
-  email,
-  ...params
-}: RiffReminderEmailParams & { email: string }): Promise<boolean> {
-  // True only when it went out — the caller logs a send only then.
-  return deliver(email, buildRiffReminderEmail(params), "riffReminder");
-}
-
 interface ReadingReminderEmailParams {
   // Null for an open (clubless) riff.
   clubName: string | null;
@@ -1201,14 +1215,6 @@ export function buildReadingReminderEmail({
           ${emailButton("Read pieces", riffUrl)}`,
     }),
   };
-}
-
-export async function sendReadingReminderEmail({
-  email,
-  ...params
-}: ReadingReminderEmailParams & { email: string }): Promise<boolean> {
-  // True only when it went out — the caller logs a send only then.
-  return deliver(email, buildReadingReminderEmail(params), "readingReminder");
 }
 
 interface ClubPausedEmailParams {
@@ -1436,15 +1442,4 @@ export function buildCommentNotificationEmail({
           ${emailButton("View the conversation", pieceUrl)}`,
     }),
   };
-}
-
-export async function sendCommentNotificationEmail({
-  email,
-  ...params
-}: CommentNotificationEmailParams & { email: string }): Promise<void> {
-  await deliver(
-    email,
-    buildCommentNotificationEmail(params),
-    "commentNotification"
-  );
 }

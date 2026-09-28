@@ -4,8 +4,9 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
 import { notifyUsers } from "@/lib/notifications";
 import {
-  sendPieceSubmittedEmail,
   batchNotificationsEnabled,
+  buildPieceSubmittedEmail,
+  deliverMany,
 } from "@/lib/resend";
 import { NotificationType } from "@prisma/client";
 import { predictVolumeNumber } from "@/lib/club-riff";
@@ -95,24 +96,24 @@ export async function PATCH(
         console.info(
           `[notify] piece submitted ${riffId}: ${pieceMembers.length} members, ${eligiblePieceMembers.length} email-enabled`
         );
-        const pieceResults = await Promise.allSettled(
-          eligiblePieceMembers.map((m) =>
-            sendPieceSubmittedEmail({
-              email: m.user.email,
-              actorName,
-              riffName,
-              clubName: riff.club?.name ?? "your club",
-              riffUrl,
-              submittedCount,
-              // Everyone else, plus the submitter.
-              writerCount: pieceMembers.length + 1,
-              pieceTitle: submission.piece.title,
-              deadline: riff.deadline,
-            })
-          )
+        const email = buildPieceSubmittedEmail({
+          actorName,
+          riffName,
+          clubName: riff.club?.name ?? "your club",
+          riffUrl,
+          submittedCount,
+          // Everyone else, plus the submitter.
+          writerCount: pieceMembers.length + 1,
+          pieceTitle: submission.piece.title,
+          deadline: riff.deadline,
+        });
+        const delivered = await deliverMany(
+          eligiblePieceMembers.map((m) => ({ to: m.user.email, email })),
+          "pieceSubmitted"
         );
+        const sent = delivered.filter(Boolean).length;
         console.info(
-          `[notify] piece submitted ${riffId}: ${pieceResults.filter((r) => r.status === "fulfilled").length} sent, ${pieceResults.filter((r) => r.status === "rejected").length} failed`
+          `[notify] piece submitted ${riffId}: ${sent} sent, ${delivered.length - sent} failed`
         );
       } else {
         // Clubless riff — same pipeline, scoped to riff participants
@@ -139,23 +140,23 @@ export async function PATCH(
         console.info(
           `[notify] piece submitted ${riffId}: ${pieceParticipants.length} participants, ${eligiblePieceParticipants.length} email-enabled`
         );
-        const pieceResults = await Promise.allSettled(
-          eligiblePieceParticipants.map((p) =>
-            sendPieceSubmittedEmail({
-              email: p.user.email,
-              actorName,
-              riffName: riff.title || "Your riff",
-              clubName: null,
-              riffUrl,
-              submittedCount,
-              writerCount: pieceParticipants.length + 1,
-              pieceTitle: submission.piece.title,
-              deadline: riff.deadline,
-            })
-          )
+        const email = buildPieceSubmittedEmail({
+          actorName,
+          riffName: riff.title || "Your riff",
+          clubName: null,
+          riffUrl,
+          submittedCount,
+          writerCount: pieceParticipants.length + 1,
+          pieceTitle: submission.piece.title,
+          deadline: riff.deadline,
+        });
+        const delivered = await deliverMany(
+          eligiblePieceParticipants.map((p) => ({ to: p.user.email, email })),
+          "pieceSubmitted"
         );
+        const sent = delivered.filter(Boolean).length;
         console.info(
-          `[notify] piece submitted ${riffId}: ${pieceResults.filter((r) => r.status === "fulfilled").length} sent, ${pieceResults.filter((r) => r.status === "rejected").length} failed`
+          `[notify] piece submitted ${riffId}: ${sent} sent, ${delivered.length - sent} failed`
         );
       }
     } catch (err) {

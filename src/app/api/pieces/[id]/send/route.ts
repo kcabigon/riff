@@ -4,7 +4,11 @@ import { requireAuth } from "@/lib/auth-utils";
 import { getFriends } from "@/lib/friends";
 import { getBaseUrl } from "@/lib/env";
 import { firstNameOf, fullNameOf } from "@/lib/names";
-import { sendPieceSharedEmail, batchNotificationsEnabled } from "@/lib/resend";
+import {
+  batchNotificationsEnabled,
+  buildPieceSharedEmail,
+  deliverMany,
+} from "@/lib/resend";
 
 // POST /api/pieces/[id]/send — email specific existing friends about a
 // piece they already have Friends-tier access to. No access change, no
@@ -74,20 +78,19 @@ export async function POST(
     const actorName = firstNameOf(piece.author);
     const pieceUrl = `${getBaseUrl()}/read/${pieceId}`;
 
-    await Promise.all(
-      [...optedInEmails].map((email) =>
-        sendPieceSharedEmail({
-          email,
-          actorName,
-          authorName: fullNameOf(piece.author),
-          pieceTitle: piece.title,
-          subtitle: piece.subtitle,
-          coverImage: piece.coverImage,
-          content: piece.currentContent,
-          readLengthMin: piece.readLengthMin,
-          pieceUrl,
-        })
-      )
+    const email = buildPieceSharedEmail({
+      actorName,
+      authorName: fullNameOf(piece.author),
+      pieceTitle: piece.title,
+      subtitle: piece.subtitle,
+      coverImage: piece.coverImage,
+      content: piece.currentContent,
+      readLengthMin: piece.readLengthMin,
+      pieceUrl,
+    });
+    await deliverMany(
+      [...optedInEmails].map((to) => ({ to, email })),
+      "pieceShared"
     );
 
     return NextResponse.json({ success: true, sentCount: optedInEmails.size });

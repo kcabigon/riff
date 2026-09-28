@@ -3,7 +3,11 @@ import { firstNameOf, fullNameOf } from "@/lib/names";
 import { requireAuth } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { notifyClubMembers } from "@/lib/notifications";
-import { sendMemberJoinedEmail, batchNotificationsEnabled } from "@/lib/resend";
+import {
+  batchNotificationsEnabled,
+  buildMemberJoinedEmail,
+  deliverMany,
+} from "@/lib/resend";
 import { NotificationType } from "@prisma/client";
 import { getBaseUrl } from "@/lib/env";
 
@@ -72,22 +76,22 @@ export async function POST(
       console.info(
         `[notify] member joined club ${clubId}: ${members.length} members, ${eligibleMembers.length} email-enabled`
       );
-      const emailResults = await Promise.allSettled(
-        eligibleMembers.map((m) =>
-          sendMemberJoinedEmail({
-            email: m.user.email,
-            // Full name: a join introduces someone others may not know.
-            newMemberFullName: fullNameOf(newMember),
-            newMemberFirstName: firstNameOf(newMember),
-            clubName: club!.name,
-            clubUrl,
-            // Everyone else, plus the new member.
-            memberCount: members.length + 1,
-          })
-        )
+      // The same email for everyone, so it's built once.
+      const email = buildMemberJoinedEmail({
+        // Full name: a join introduces someone others may not know.
+        newMemberFullName: fullNameOf(newMember),
+        newMemberFirstName: firstNameOf(newMember),
+        clubName: club!.name,
+        clubUrl,
+        // Everyone else, plus the new member.
+        memberCount: members.length + 1,
+      });
+      const delivered = await deliverMany(
+        eligibleMembers.map((m) => ({ to: m.user.email, email })),
+        "memberJoined"
       );
-      const sent = emailResults.filter((r) => r.status === "fulfilled").length;
-      const failed = emailResults.filter((r) => r.status === "rejected").length;
+      const sent = delivered.filter(Boolean).length;
+      const failed = delivered.length - sent;
       console.info(
         `[notify] member joined club ${clubId}: ${sent} sent, ${failed} failed`
       );
