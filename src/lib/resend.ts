@@ -231,6 +231,7 @@ export async function sendSignInEmail(
 export function buildOnboardingEmail(magicLink: string): BuiltEmail {
   return {
     subject: "Welcome to Riff!",
+    preview: WELCOME_PREVIEW,
     html: getOnboardingEmailTemplate(magicLink),
   };
 }
@@ -398,24 +399,26 @@ function getSignInEmailTemplate(magicLink: string): string {
   });
 }
 
+const WELCOME_PREVIEW = "One tap and you're in. Your link expires in 24 hours.";
+
 /**
  * Onboarding email for new users (auth layout — big logo at top)
  */
 function getOnboardingEmailTemplate(magicLink: string): string {
   return emailShell({
     title: "Welcome to Riff",
+    preview: WELCOME_PREVIEW,
     unsubscribe: false,
     footerText: `Button not working? Copy this link into your browser:<br><a href="${magicLink}" style="color:#888888;font-size:11px;word-break:break-all;">${magicLink}</a>`,
     content: `
           <tr>
             <td style="padding:40px 40px 16px;">
               <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">Welcome to Riff.</h1>
-              <p style="margin:0 0 8px 0;font-size:16px;font-weight:300;color:#808080;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">For friends who write for fun.</p>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">You're one click away from joining your friends in a private space to share your writing. Let's get you set up!</p>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">Tap below to finish signing up.</p>
             </td>
           </tr>
 
-          ${emailButton("Let's do this", magicLink)}
+          ${emailButton("Let's riff", magicLink)}
 
           <tr>
             <td style="padding:0 40px 40px;">
