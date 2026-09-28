@@ -190,7 +190,7 @@ function emailButton(label: string, href: string): string {
               <table cellpadding="0" cellspacing="0" width="100%" style="border-collapse:separate;border-spacing:0;">
                 <tr>
                   <td style="background-color:#00FF66;border:2px solid #000000;padding:14px 0;text-align:center;">
-                    <a href="${href}" style="display:block;font-size:17px;font-weight:300;color:#000000;text-decoration:none;font-family:'DM Sans',-apple-system,sans-serif;">${label}</a>
+                    <a href="${href}" style="display:block;font-size:17px;font-weight:300;color:#000000;text-decoration:none;font-family:'DM Sans',-apple-system,sans-serif;">${escapeHtml(label)}</a>
                   </td>
                   <td width="8" style="width:8px;min-width:8px;padding:0;font-size:0;line-height:0;background-color:#000000;background-image:linear-gradient(to bottom, #ffffff 8px, #000000 8px);">&nbsp;</td>
                 </tr>
@@ -245,10 +245,17 @@ function calendarDaysBetween(from: Date, to: Date): number {
   return dayNumber(to) - dayNumber(from);
 }
 
-// A piece's title as something worth quoting — null for a blank one or the
-// "Untitled" every new draft starts with, so emails fall back to "your draft"
-// or "a piece" rather than quoting a placeholder.
-function pieceTitleOrNull(title: string | null | undefined): string | null {
+// A finished piece's title — submitted, published or revealed — is exactly
+// what the author called it, "Untitled" included; a blank one reads as
+// "Untitled", as it does in the app.
+function finishedPieceTitle(title: string | null | undefined): string {
+  return title?.trim() || "Untitled";
+}
+
+// A draft's title, or null while it still carries the "Untitled" every new
+// draft starts with — the writer hasn't chosen one yet, so emails say "your
+// draft" instead.
+function draftTitleOrNull(title: string | null | undefined): string | null {
   const t = title?.trim();
   return t && t !== "Untitled" ? t : null;
 }
@@ -760,10 +767,7 @@ export function buildPieceSubmittedEmail({
   pieceTitle,
   deadline,
 }: PieceSubmittedEmailParams): BuiltEmail {
-  const title = pieceTitleOrNull(pieceTitle);
-  const headline = title
-    ? `${escapeHtml(actorName)} submitted &ldquo;${escapeHtml(title)}&rdquo;`
-    : `${escapeHtml(actorName)} submitted a piece.`;
+  const headline = `${escapeHtml(actorName)} submitted &ldquo;${escapeHtml(finishedPieceTitle(pieceTitle))}&rdquo;`;
   const progress = `${submittedCount} of ${Math.max(writerCount, submittedCount)}`;
   const preview = `${progress} pieces are in.`;
   const header = clubName ?? riffName;
@@ -843,7 +847,7 @@ export function buildPieceSharedEmail({
 }: PieceSharedEmailParams): BuiltEmail {
   // Roughly the first two paragraphs — enough to get pulled in.
   const excerpt = buildEmailExcerpt(content, 600);
-  const title = pieceTitleOrNull(pieceTitle);
+  const title = finishedPieceTitle(pieceTitle);
   const readLength = `${Math.max(readLengthMin, 1)} min read`;
   // The inbox line is the opening sentence or so, cut at a word — starting at
   // the first real paragraph, past a short heading like "Chapter 1".
@@ -881,7 +885,7 @@ export function buildPieceSharedEmail({
     subject: `${actorName} shared a piece with you`,
     preview,
     html: emailShell({
-      title: title ?? `${actorName} shared a piece with you`,
+      title,
       preview,
       footerText: `You're receiving this because ${actorName} shared a piece with you on Riff.`,
       showLogo: false,
@@ -889,7 +893,7 @@ export function buildPieceSharedEmail({
 ${cover}
           <tr>
             <td style="padding:${coverImage ? "24px" : "40px"} 40px 0;">
-              <h1 style="margin:0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${title ? escapeHtml(title) : "Untitled"}</h1>
+              <h1 style="margin:0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${escapeHtml(title)}</h1>
               ${subtitleLine}
               <p style="margin:12px 0 0;font-size:13px;font-weight:300;color:#808080;line-height:1.5;font-family:'DM Sans',-apple-system,sans-serif;">${escapeHtml(authorName)} &middot; ${readLength}</p>
               ${excerptBlock}
@@ -1108,7 +1112,7 @@ export function buildRiffReminderEmail({
     deadline,
     { weekday: "long", month: "long", day: "numeric" }
   )}</strong>`;
-  const draftTitle = pieceTitleOrNull(draft?.title);
+  const draftTitle = draftTitleOrNull(draft?.title);
   const draftName = draftTitle
     ? `&ldquo;${escapeHtml(draftTitle)}&rdquo;`
     : "your draft";
@@ -1396,8 +1400,8 @@ export function buildCommentNotificationEmail({
   actorNames,
   pieceUrl,
 }: CommentNotificationEmailParams): BuiltEmail {
-  const title = pieceTitleOrNull(pieceTitle);
-  const onPiece = title ? `on \u201c${title}\u201d` : "on your piece";
+  const title = finishedPieceTitle(pieceTitle);
+  const onPiece = `on \u201c${title}\u201d`;
   const who = listNames(actorNames);
   const verb = commentCount > 0 ? "commented" : "replied";
   // The subject stays generic — which piece, not who; the names lead inside.
@@ -1425,7 +1429,7 @@ export function buildCommentNotificationEmail({
       preview,
       // The piece takes the header slot the club name fills in other emails,
       // so the headline doesn't need to repeat it.
-      clubName: title ?? "Your piece",
+      clubName: title,
       footerText,
       content: `
           <tr>

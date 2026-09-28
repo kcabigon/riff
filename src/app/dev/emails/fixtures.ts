@@ -442,7 +442,7 @@ export function getEmailPreviews(): EmailPreview[] {
             }),
         },
         {
-          label: "No cover, untitled",
+          label: "No cover, titled Untitled",
           build: () =>
             buildPieceSharedEmail({
               actorName: "Jarric",
