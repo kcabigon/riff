@@ -653,6 +653,65 @@ export async function sendMemberJoinedEmail({
   }
 }
 
+interface ParticipantJoinedEmailParams {
+  newParticipantFullName: string;
+  riffName: string;
+  riffUrl: string;
+  // Participants including the one who just joined.
+  participantCount: number;
+}
+
+// The open-riff counterpart to member-joined, sent to the riff's creator only
+// (see notifyOpenRiffParticipantJoined).
+export function buildParticipantJoinedEmail({
+  newParticipantFullName,
+  riffName,
+  riffUrl,
+  participantCount,
+}: ParticipantJoinedEmailParams): BuiltEmail {
+  const writers = `${riffName} now has ${participantCount} writer${
+    participantCount === 1 ? "" : "s"
+  }.`;
+  const preview = writers;
+  return {
+    subject: `${newParticipantFullName} joined ${riffName}`,
+    preview,
+    html: emailShell({
+      title: `${newParticipantFullName} joined ${riffName}`,
+      preview,
+      clubName: riffName,
+      footerText: `You're receiving this because you started ${riffName} on Riff.`,
+      content: `
+          <tr>
+            <td style="padding:40px 40px 16px;">
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${escapeHtml(newParticipantFullName)} just joined ${escapeHtml(riffName)}.</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${escapeHtml(writers)}</p>
+            </td>
+          </tr>
+
+          ${emailButton("View the riff", riffUrl)}`,
+    }),
+  };
+}
+
+export async function sendParticipantJoinedEmail({
+  email,
+  ...params
+}: ParticipantJoinedEmailParams & { email: string }): Promise<void> {
+  try {
+    const { subject, html } = buildParticipantJoinedEmail(params);
+    const { error } = await getResend().emails.send({
+      from: process.env.EMAIL_FROM || "Riff <noreply@localhost>",
+      to: email,
+      subject,
+      html,
+    });
+    if (error) console.error("Resend error (participantJoined):", error);
+  } catch (error) {
+    console.error("Error sending participant joined email:", error);
+  }
+}
+
 interface PieceSubmittedEmailParams {
   actorName: string;
   // The title, or "Volume N" for an untitled club riff — what the club page shows.

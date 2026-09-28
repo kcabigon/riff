@@ -10,6 +10,7 @@ import {
   buildClubPausedEmail,
   buildRiffReminderEmail,
   buildMemberJoinedEmail,
+  buildParticipantJoinedEmail,
   buildCoHostAssignedEmail,
   buildHostTransferredEmail,
   buildPieceSharedEmail,
@@ -337,6 +338,24 @@ export function getEmailPreviews(): EmailPreview[] {
               clubName: CLUB,
               clubUrl,
               memberCount: 4,
+            }),
+        },
+      ],
+    },
+    {
+      id: "participant-joined",
+      name: "Participant joined",
+      trigger:
+        "Someone joins an open riff (by link, attaching a draft, or starting one). The riff's creator only.",
+      variants: [
+        {
+          label: "Default",
+          build: () =>
+            buildParticipantJoinedEmail({
+              newParticipantFullName: MEMBER,
+              riffName: RIFF_TITLE,
+              riffUrl,
+              participantCount: 3,
             }),
         },
       ],
