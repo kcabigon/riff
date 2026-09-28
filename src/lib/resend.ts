@@ -764,21 +764,29 @@ export function buildRiffGracePeriodEmail({
   riffUrl,
   newDeadline,
 }: RiffGracePeriodEmailParams): BuiltEmail {
-  const deadlineStr = formatEmailDate(newDeadline, {
+  const longDate = formatEmailDate(newDeadline, {
+    weekday: "long",
     month: "long",
     day: "numeric",
   });
+  const preview = `Now due ${formatEmailDate(newDeadline, {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  })}.`;
   return {
     subject: `One more week for ${clubName}`,
+    preview,
     html: emailShell({
       title: `One more week for ${clubName}`,
+      preview,
       clubName,
       footerText: `You're receiving this because you're a member of ${clubName} on Riff.`,
       content: `
           <tr>
             <td style="padding:40px 40px 16px;">
-              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">Nobody wrote anything this round.</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${clubName} has until ${deadlineStr} — one more week. If nothing gets submitted by then, the club's riff schedule pauses until someone turns it back on.</p>
+              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">Nobody submitted anything this round.</h1>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">We've extended the deadline a week, to <strong style="font-weight:500;">${longDate}</strong>. One piece keeps the club going. If nothing comes in, we'll assume the club's taking a break.</p>
             </td>
           </tr>
 
