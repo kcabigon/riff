@@ -1183,17 +1183,20 @@ export function buildCoHostAssignedEmail({
   clubName,
   clubUrl,
 }: CoHostAssignedEmailParams): BuiltEmail {
+  const preview = `You can now help run ${clubName}.`;
   return {
     subject: `You're a co-host of ${clubName}`,
+    preview,
     html: emailShell({
       title: `You're a co-host of ${clubName}`,
+      preview,
       clubName,
       footerText: `You're receiving this because you're a member of ${clubName} on Riff.`,
       content: `
           <tr>
             <td style="padding:40px 40px 16px;">
               <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">You're a co-host.</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;"><strong style="font-weight:500;">${adminName}</strong> made you a co-host of <strong style="font-weight:500;">${clubName}</strong>. You can now start riffs, reveal pieces, and edit club details.</p>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;"><strong style="font-weight:500;">${adminName}</strong> made you a co-host of <strong style="font-weight:500;">${clubName}</strong>. You can now start and reveal riffs, set the club's cadence, and edit club details.</p>
             </td>
           </tr>
 
