@@ -33,6 +33,18 @@ const VOLUME = 6;
 const PROMPT =
   "In Derek's last piece he mentioned wormhole songs. Let's all write about this, songs that transport you to a different time and place.";
 
+// Made up for the preview — the real email uses the opening of the piece.
+// Written as the editor stores it, heading and formatting included, so the
+// preview exercises what the excerpt keeps and what it flattens.
+const SAMPLE_CONTENT = [
+  "<h2>Chapter 1</h2>",
+  "<p>We left before sunrise with a cooler, two boards, and a map nobody could read. By the time we crossed the border the radio had given up on English, and so had we.</p>",
+  "<p>Somewhere past Ensenada the road turned to washboard and the truck started making a sound my dad swore was <em>normal</em>. It was <strong>not</strong> normal.</p>",
+  "<p>We found that out forty miles later, parked on the shoulder with the hood up,<br>eating warm tortillas while a man named Chuy explained the problem with his hands. He fixed it with a coat hanger. It held for the rest of the trip, and, as far as I know, for the rest of that truck's life.</p>",
+  '<img src="https://example.com/photo.jpg">',
+  "<p>Twenty-five years later I still think about that coat hanger.</p>",
+].join("");
+
 function daysFromNow(days: number): Date {
   const d = new Date();
   d.setDate(d.getDate() + days);
@@ -414,11 +426,30 @@ export function getEmailPreviews(): EmailPreview[] {
         "An author sends a piece to specific friends from the Share modal.",
       variants: [
         {
-          label: "Default",
+          label: "With cover and subtitle",
           build: () =>
             buildPieceSharedEmail({
-              actorName: WRITER,
+              actorName: "Jarric",
+              authorName: WRITER,
               pieceTitle: "Someday, Somewhere in Baja",
+              subtitle: "25 Years of Baja",
+              // The piece's real cover on the dev database.
+              coverImage:
+                "https://wmqlbbtgexpsxzwwurpi.supabase.co/storage/v1/object/public/images/75eee551-a1e5-49fd-ace3-b3f2ae6a7ae6.jpg",
+              content: SAMPLE_CONTENT,
+              readLengthMin: 10,
+              pieceUrl: `${base}/read/preview`,
+            }),
+        },
+        {
+          label: "No cover, untitled",
+          build: () =>
+            buildPieceSharedEmail({
+              actorName: "Jarric",
+              authorName: WRITER,
+              pieceTitle: "Untitled",
+              content: SAMPLE_CONTENT,
+              readLengthMin: 3,
               pieceUrl: `${base}/read/preview`,
             }),
         },

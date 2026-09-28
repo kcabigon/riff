@@ -29,6 +29,10 @@ export async function POST(
       where: { id: pieceId },
       select: {
         title: true,
+        subtitle: true,
+        coverImage: true,
+        currentContent: true,
+        readLengthMin: true,
         authorId: true,
         author: { select: { firstName: true, name: true, username: true } },
       },
@@ -71,12 +75,21 @@ export async function POST(
       piece.author.name ||
       piece.author.username ||
       "Someone";
-    const pieceTitle = piece.title || "Untitled";
     const pieceUrl = `${getBaseUrl()}/read/${pieceId}`;
 
     await Promise.all(
       [...optedInEmails].map((email) =>
-        sendPieceSharedEmail({ email, actorName, pieceTitle, pieceUrl })
+        sendPieceSharedEmail({
+          email,
+          actorName,
+          authorName: piece.author.name || actorName,
+          pieceTitle: piece.title,
+          subtitle: piece.subtitle,
+          coverImage: piece.coverImage,
+          content: piece.currentContent,
+          readLengthMin: piece.readLengthMin,
+          pieceUrl,
+        })
       )
     );
 

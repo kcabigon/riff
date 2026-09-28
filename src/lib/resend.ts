@@ -6,6 +6,7 @@
 import { Resend } from "resend";
 import { prisma } from "@/lib/prisma";
 import { getBaseUrl } from "@/lib/env";
+import { buildEmailExcerpt } from "@/lib/email-excerpt";
 
 function getResend() {
   return new Resend(process.env.RESEND_API_KEY);
@@ -74,6 +75,7 @@ function emailShell({
   clubName,
   unsubscribe = true,
   preview,
+  showLogo = true,
 }: {
   title: string;
   content: string;
@@ -81,6 +83,10 @@ function emailShell({
   clubName?: string;
   unsubscribe?: boolean;
   preview?: string;
+  // Off for an email whose content is its own header — the shared piece, which
+  // opens on the piece's cover and title. The wordmark then moves to the small
+  // footer logo that notification emails use.
+  showLogo?: boolean;
 }): string {
   const baseUrl = getBaseUrl();
   const fullFooterText = unsubscribe
@@ -100,7 +106,9 @@ function emailShell({
               <table width="100%" cellpadding="0" cellspacing="0"><tr><td style="height:2px;background-color:#000000;font-size:0;line-height:0;">&nbsp;</td></tr></table>
             </td>
           </tr>`
-    : `<!-- Logo -->
+    : !showLogo
+      ? ""
+      : `<!-- Logo -->
           <tr>
             <td align="center" style="padding:48px 40px 32px;">
               <img src="${EMAIL_LOGO_URL}" alt="Riff" width="200" height="132" style="display:block;margin:0 auto;" />
@@ -114,7 +122,8 @@ function emailShell({
             </td>
           </tr>`;
 
-  const bottomLogo = clubName
+  const smallFooterLogo = Boolean(clubName) || !showLogo;
+  const bottomLogo = smallFooterLogo
     ? `<!-- Small logo -->
           <tr>
             <td align="center" style="padding:0 40px 24px;">
@@ -145,7 +154,7 @@ function emailShell({
 
           <!-- Footer -->
           <tr>
-            <td style="padding:20px 40px ${clubName ? "12px" : "32px"};border-top:1px solid #eeeeee;">
+            <td style="padding:20px 40px ${smallFooterLogo ? "12px" : "32px"};border-top:1px solid #eeeeee;">
               <p style="margin:0;font-size:12px;font-weight:300;color:#bbbbbb;font-family:'DM Sans',-apple-system,sans-serif;">${fullFooterText}</p>
             </td>
           </tr>
@@ -799,33 +808,93 @@ export async function sendPieceSubmittedEmail({
 }
 
 interface PieceSharedEmailParams {
+  // First name, for the "shared this with you" line and the subject.
   actorName: string;
-  pieceTitle: string;
+  // Full name, for the byline.
+  authorName: string;
+  pieceTitle: string | null;
+  subtitle?: string | null;
+  coverImage?: string | null;
+  // The piece's HTML, as stored. Only its opening reaches the email — see
+  // buildEmailExcerpt.
+  content: string;
+  readLengthMin: number;
   pieceUrl: string;
 }
 
-// Send section of the Share modal — author picked this specific friend to
-// notify about a piece they already have Friends-tier access to (no join
-// step, straight to /read/[pieceId]).
+// Send section of the Share modal — the author picked this friend, who already
+// has access, so the email is laid out as the start of the piece rather than
+// an alert about it: cover, title, byline, then the opening lines. The subject
+// and footer carry who shared it.
+//
+// The excerpt is a few sentences of the author's writing that stays in the
+// inbox even if the piece later changes — sent only to people the author chose.
 export function buildPieceSharedEmail({
   actorName,
+  authorName,
   pieceTitle,
+  subtitle,
+  coverImage,
+  content,
+  readLengthMin,
   pieceUrl,
 }: PieceSharedEmailParams): BuiltEmail {
+  // Roughly the first two paragraphs — enough to get pulled in.
+  const excerpt = buildEmailExcerpt(content, 600);
+  const title = pieceTitleOrNull(pieceTitle);
+  const readLength = `${Math.max(readLengthMin, 1)} min read`;
+  // The inbox line is the opening sentence or so, cut at a word — starting at
+  // the first real paragraph, past a short heading like "Chapter 1".
+  const firstParagraph =
+    excerpt.paragraphs.find((p) => p.length > 40) ??
+    excerpt.paragraphs[0] ??
+    "";
+  const opening =
+    firstParagraph.length > 110
+      ? `${firstParagraph.slice(0, firstParagraph.lastIndexOf(" ", 110)).replace(/[,;:.…\s]+$/, "")}…`
+      : firstParagraph;
+  const preview = opening || `A ${readLength}.`;
+
+  const cover = coverImage
+    ? `
+          <tr>
+            <td style="padding:40px 40px 0;">
+              <a href="${pieceUrl}"><img src="${escapeHtml(coverImage)}" alt="" width="436" style="display:block;width:100%;height:auto;border:2px solid #000000;" /></a>
+            </td>
+          </tr>`
+    : "";
+  const subtitleLine = subtitle?.trim()
+    ? `<p style="margin:8px 0 0;font-size:18px;font-weight:400;color:#808080;line-height:1.4;font-family:'DM Serif Text',Georgia,serif;">${escapeHtml(subtitle.trim())}</p>`
+    : "";
+  // Already escaped and reduced to paragraphs, breaks, bold and italic.
+  const excerptBlock = excerpt.html
+    .split("\n")
+    .map(
+      (paragraph, i) =>
+        `<p style="margin:${i === 0 ? "24px" : "16px"} 0 0;font-size:17px;font-weight:400;color:#222222;line-height:1.7;font-family:Georgia,'Times New Roman',serif;">${paragraph}</p>`
+    )
+    .join("\n              ");
+
   return {
     subject: `${actorName} shared a piece with you`,
+    preview,
     html: emailShell({
-      title: `&ldquo;${pieceTitle}&rdquo; by ${actorName} is shared with you`,
+      title: title ?? `${actorName} shared a piece with you`,
+      preview,
       footerText: `You're receiving this because ${actorName} shared a piece with you on Riff.`,
+      showLogo: false,
       content: `
+${cover}
           <tr>
-            <td style="padding:40px 40px 16px;">
-              <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">&ldquo;${pieceTitle}&rdquo; by ${actorName} is shared with you.</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">Take a look when you get a chance.</p>
+            <td style="padding:${coverImage ? "24px" : "40px"} 40px 0;">
+              <h1 style="margin:0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${title ? escapeHtml(title) : "Untitled"}</h1>
+              ${subtitleLine}
+              <p style="margin:12px 0 0;font-size:13px;font-weight:300;color:#808080;line-height:1.5;font-family:'DM Sans',-apple-system,sans-serif;">${escapeHtml(authorName)} &middot; ${readLength}</p>
+              ${excerptBlock}
             </td>
           </tr>
 
-          ${emailButton("Read it", pieceUrl)}`,
+          ${emailButton("Keep reading", pieceUrl)}`,
     }),
   };
 }
