@@ -403,14 +403,41 @@ export async function sendRiffCreatedEmail({
   }
 }
 
+// A list of pieces to read — title, author, read time — shared by the three
+// emails that bookend a reveal: riff revealed, then the two reading reminders.
+// Only the first few are listed; the rest are counted.
+export interface ReadingListPiece {
+  title: string;
+  authorName: string;
+  readLengthMin: number;
+}
+
+const READING_LIST_MAX = 5;
+
+function readingListHtml(pieces: ReadingListPiece[]): string {
+  const listed = pieces.slice(0, READING_LIST_MAX);
+  const more = pieces.length - listed.length;
+  const rows = listed.map(
+    (p) =>
+      `<p style="margin:12px 0 0;font-size:16px;font-weight:300;color:#444444;line-height:1.5;font-family:'DM Sans',-apple-system,sans-serif;"><strong style="font-weight:500;color:#000000;">${escapeHtml(finishedPieceTitle(p.title))}</strong> by ${escapeHtml(p.authorName)} &middot; ${Math.max(p.readLengthMin, 1)} min</p>`
+  );
+  if (more > 0) {
+    rows.push(
+      `<p style="margin:12px 0 0;font-size:16px;font-weight:300;color:#808080;line-height:1.5;font-family:'DM Sans',-apple-system,sans-serif;">and ${more} more</p>`
+    );
+  }
+  return rows.join("\n              ");
+}
+
 interface RiffRevealedEmailParams {
   // Null for an open (clubless) riff.
   clubName: string | null;
   riffUrl: string;
   riffTitle?: string | null;
   volumeNumber?: number | null;
-  // Submitted pieces only — attached drafts that never went in don't count.
-  pieceCount: number;
+  // What this reader has to read: every submitted piece except their own.
+  // Attached drafts that never went in aren't pieces anyone can read.
+  pieces: ReadingListPiece[];
 }
 
 function revealedDisplayTitle({
@@ -424,10 +451,13 @@ function revealedDisplayTitle({
     : riffTitle || null;
 }
 
+// "3 pieces are ready to read." — or, for the round's only writer, a line
+// that doesn't pretend there's something waiting.
 function piecesReady(count: number): string {
+  if (count === 0) return "Yours is the only piece this round.";
   return count === 1
-    ? "1 piece is ready to read"
-    : `${count} pieces are ready to read`;
+    ? "1 piece is ready to read."
+    : `${count} pieces are ready to read.`;
 }
 
 export function buildRiffRevealedEmail(
@@ -438,7 +468,7 @@ export function buildRiffRevealedEmail(
     subject: params.clubName
       ? `Riff revealed in ${params.clubName}`
       : `${displayTitle ?? "Your riff"} is revealed`,
-    preview: `${piecesReady(params.pieceCount)}.`,
+    preview: piecesReady(params.pieces.length),
     html: getRiffRevealedEmailTemplate(params),
   };
 }
@@ -579,7 +609,7 @@ function getRiffCreatedEmailTemplate({
  * Riff revealed email (notification layout — club name at top)
  */
 function getRiffRevealedEmailTemplate(params: RiffRevealedEmailParams): string {
-  const { clubName, riffUrl, pieceCount, riffTitle, volumeNumber } = params;
+  const { clubName, riffUrl, pieces, riffTitle, volumeNumber } = params;
   const displayTitle = revealedDisplayTitle(params);
   // Mirrors "New riff dropped: …". A dot rather than the usual colon between
   // volume and title, so the headline doesn't carry two colons.
@@ -597,7 +627,7 @@ function getRiffRevealedEmailTemplate(params: RiffRevealedEmailParams): string {
     title: clubName
       ? `Riff revealed in ${clubName}`
       : `${displayTitle ?? "Your riff"} is revealed`,
-    preview: `${piecesReady(pieceCount)}.`,
+    preview: piecesReady(pieces.length),
     clubName: header,
     footerText: clubName
       ? `You're receiving this because you're a member of ${clubName} on Riff.`
@@ -606,11 +636,12 @@ function getRiffRevealedEmailTemplate(params: RiffRevealedEmailParams): string {
           <tr>
             <td style="padding:40px 40px 16px;">
               <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${headline}</h1>
-              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${piecesReady(pieceCount)}.</p>
+              <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${piecesReady(pieces.length)}</p>
+              ${readingListHtml(pieces)}
             </td>
           </tr>
 
-          ${emailButton("Read pieces", riffUrl)}`,
+          ${emailButton(pieces.length > 0 ? "Read pieces" : "View the riff", riffUrl)}`,
   });
 }
 
@@ -1251,13 +1282,10 @@ interface ReadingReminderEmailParams {
   riffName: string;
   nudge: "first" | "second";
   // What this reader hasn't read, in submission order — never their own.
-  pieces: Array<{ title: string; authorName: string; readLengthMin: number }>;
-  // The first unread piece, so the button is one tap to reading.
-  readUrl: string;
+  pieces: ReadingListPiece[];
+  // The riff page, the same destination as the reveal email.
+  riffUrl: string;
 }
-
-// Only the first few are listed; the rest are counted.
-const READING_LIST_MAX = 5;
 
 // The reading nudge after a reveal (see runReadingReminders). It goes to every
 // member, including anyone who didn't write this round — reading doesn't
@@ -1268,7 +1296,7 @@ export function buildReadingReminderEmail({
   riffName,
   nudge,
   pieces,
-  readUrl,
+  riffUrl,
 }: ReadingReminderEmailParams): BuiltEmail {
   const count = pieces.length;
   const piecesWord = count === 1 ? "1 piece" : `${count} pieces`;
@@ -1294,18 +1322,6 @@ export function buildReadingReminderEmail({
         ? "One piece is still waiting for you."
         : "A few pieces are still waiting for you.";
 
-  const listed = pieces.slice(0, READING_LIST_MAX);
-  const more = count - listed.length;
-  const list = listed
-    .map(
-      (p) =>
-        `<p style="margin:12px 0 0;font-size:16px;font-weight:300;color:#444444;line-height:1.5;font-family:'DM Sans',-apple-system,sans-serif;"><strong style="font-weight:500;color:#000000;">${escapeHtml(finishedPieceTitle(p.title))}</strong> by ${escapeHtml(p.authorName)} &middot; ${Math.max(p.readLengthMin, 1)} min</p>`
-    )
-    .join("\n              ");
-  const moreLine =
-    more > 0
-      ? `<p style="margin:12px 0 0;font-size:16px;font-weight:300;color:#808080;line-height:1.5;font-family:'DM Sans',-apple-system,sans-serif;">and ${more} more</p>`
-      : "";
   const header = clubName ?? riffName;
 
   return {
@@ -1323,12 +1339,11 @@ export function buildReadingReminderEmail({
             <td style="padding:40px 40px 16px;">
               <h1 style="margin:0 0 16px 0;font-size:28px;font-weight:400;color:#000000;line-height:1.2;font-family:'DM Serif Text',Georgia,serif;">${headline}</h1>
               <p style="margin:0;font-size:16px;font-weight:300;color:#444444;line-height:1.6;font-family:'DM Sans',-apple-system,sans-serif;">${intro}</p>
-              ${list}
-              ${moreLine}
+              ${readingListHtml(pieces)}
             </td>
           </tr>
 
-          ${emailButton("Start reading", readUrl)}`,
+          ${emailButton("Read pieces", riffUrl)}`,
     }),
   };
 }

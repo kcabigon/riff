@@ -132,7 +132,19 @@ export function getEmailPreviews(): EmailPreview[] {
               riffUrl,
               riffTitle: RIFF_TITLE,
               volumeNumber: VOLUME,
-              pieceCount: 3,
+              pieces: [
+                { title: "Mt. Whitney", authorName: WRITER, readLengthMin: 2 },
+                {
+                  title: "366 Days of Summer",
+                  authorName: HOST,
+                  readLengthMin: 2,
+                },
+                {
+                  title: "We'll Always Have Mammoth",
+                  authorName: MEMBER,
+                  readLengthMin: 9,
+                },
+              ],
             }),
         },
         {
@@ -143,7 +155,30 @@ export function getEmailPreviews(): EmailPreview[] {
               riffUrl,
               riffTitle: RIFF_TITLE,
               volumeNumber: null,
-              pieceCount: 3,
+              pieces: [
+                { title: "Mt. Whitney", authorName: WRITER, readLengthMin: 2 },
+                {
+                  title: "366 Days of Summer",
+                  authorName: HOST,
+                  readLengthMin: 2,
+                },
+                {
+                  title: "We'll Always Have Mammoth",
+                  authorName: MEMBER,
+                  readLengthMin: 9,
+                },
+              ],
+            }),
+        },
+        {
+          label: "Only writer this round",
+          build: () =>
+            buildRiffRevealedEmail({
+              clubName: CLUB,
+              riffUrl,
+              riffTitle: RIFF_TITLE,
+              volumeNumber: VOLUME,
+              pieces: [],
             }),
         },
       ],
@@ -364,7 +399,7 @@ export function getEmailPreviews(): EmailPreview[] {
                   readLengthMin: 9,
                 },
               ],
-              readUrl: `${base}/read/preview`,
+              riffUrl,
             }),
         },
         {
@@ -381,7 +416,7 @@ export function getEmailPreviews(): EmailPreview[] {
                   readLengthMin: 9,
                 },
               ],
-              readUrl: `${base}/read/preview`,
+              riffUrl,
             }),
         },
         {
@@ -399,7 +434,7 @@ export function getEmailPreviews(): EmailPreview[] {
                   readLengthMin: 9,
                 },
               ],
-              readUrl: `${base}/read/preview`,
+              riffUrl,
             }),
         },
         {
@@ -430,7 +465,7 @@ export function getEmailPreviews(): EmailPreview[] {
                   readLengthMin: 9,
                 },
               ],
-              readUrl: `${base}/read/preview`,
+              riffUrl,
             }),
         },
       ],

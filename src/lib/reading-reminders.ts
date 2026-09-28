@@ -211,8 +211,9 @@ export async function runReadingReminders({
           authorName: piece.author.name || piece.author.firstName || "Someone",
           readLengthMin: piece.readLengthMin,
         })),
-        // Straight into the first thing they haven't read.
-        readUrl: `${baseUrl}/read/${person.unread[0].id}?riff=${riff.id}`,
+        // The riff page, like the reveal email — where every piece and its
+        // read ring sit together.
+        riffUrl: `${baseUrl}/riffs/${riff.id}`,
       });
       if (!delivered) continue;
       logs.push({ riffId: riff.id, recipientId: person.userId });

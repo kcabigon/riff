@@ -1,7 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { NotificationType } from "@prisma/client";
 import { notifyUsers } from "@/lib/notifications";
-import { batchNotificationsEnabled, sendRiffRevealedEmail } from "@/lib/resend";
+import {
+  batchNotificationsEnabled,
+  sendRiffRevealedEmail,
+  type ReadingListPiece,
+} from "@/lib/resend";
 import { getBaseUrl } from "@/lib/env";
 
 // Revealing a riff, extracted from the PATCH handler so the cadence cron can do
@@ -83,6 +87,31 @@ export async function revealRiff(
   // leave the riff unrevealed, and the reveal is the thing that matters.
   try {
     const riffUrl = `${getBaseUrl()}/riffs/${riffId}`;
+    // The pieces to list, loaded once; each recipient's email leaves out their
+    // own (see readingListFor).
+    const submitted = await prisma.pieceRiff.findMany({
+      where: { riffId, submittedAt: { not: null } },
+      orderBy: { submittedAt: "asc" },
+      select: {
+        piece: {
+          select: {
+            title: true,
+            readLengthMin: true,
+            authorId: true,
+            author: { select: { name: true, firstName: true } },
+          },
+        },
+      },
+    });
+    const readingListFor = (userId: string): ReadingListPiece[] =>
+      submitted
+        .map((s) => s.piece)
+        .filter((piece) => piece.authorId !== userId)
+        .map((piece) => ({
+          title: piece.title,
+          authorName: piece.author.name || piece.author.firstName || "Someone",
+          readLengthMin: piece.readLengthMin,
+        }));
     // Excluding the actor only applies when there is one.
     const excludeActor = actorId ? { userId: { not: actorId } } : {};
 
@@ -120,7 +149,7 @@ export async function revealRiff(
             riffUrl,
             riffTitle: updatedRiff.title,
             volumeNumber: updatedRiff.volumeNumber,
-            pieceCount: updatedRiff._count.pieces,
+            pieces: readingListFor(m.userId),
           })
         )
       );
@@ -160,7 +189,7 @@ export async function revealRiff(
             riffUrl,
             riffTitle: updatedRiff.title,
             volumeNumber: updatedRiff.volumeNumber,
-            pieceCount: updatedRiff._count.pieces,
+            pieces: readingListFor(p.userId),
           })
         )
       );
