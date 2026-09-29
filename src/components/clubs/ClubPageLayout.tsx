@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import NavBar from "@/components/clubs/NavBar";
 import AvatarStack from "@/components/shared/AvatarStack";
 import MobileCardCarousel from "@/components/shared/MobileCardCarousel";
@@ -20,6 +21,7 @@ import ClubSettingsModal from "@/components/clubs/ClubSettingsModal";
 import ShareLinkOptions from "@/components/shared/ShareLinkOptions";
 import CloseButton from "@/components/CloseButton";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
+import { ArrowIcon } from "@/components/shared/icons";
 import type { DropdownItem } from "@/components/shared/Dropdown";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
 import { useIsMobile } from "@/hooks/useMediaQuery";
@@ -35,6 +37,7 @@ import {
   allPiecesSubmitted,
   daysUntil,
   formatDateLong,
+  formatDateShort,
 } from "@/lib/riff-utils";
 import DeleteClubConfirmModal from "@/components/clubs/DeleteClubConfirmModal";
 import LeaveClubConfirmModal from "@/components/clubs/LeaveClubConfirmModal";
@@ -88,6 +91,9 @@ interface Riff {
   deadline: string | null;
   status: string;
   createdAt: string;
+  // Stands in for the reveal date once a riff is REVEALED — the same proxy
+  // page.tsx (Current Read vs Past Riffs split) and the riff page header use.
+  updatedAt: string;
   creator: {
     id: string;
     name: string | null;
@@ -868,23 +874,49 @@ export default function ClubPageLayout({
                     );
                   };
 
+                  const totalWords = getSubmittedPieces(riff.pieces).reduce(
+                    (sum, p) => sum + (p.piece.wordCount || 0),
+                    0
+                  );
+
                   return (
                     <div key={riff.id}>
-                      <h3
-                        onClick={() => router.push(`/riffs/${riff.id}`)}
-                        className="riff-row-link"
+                      {/* Title + metadata sized to match Current Riff's
+                          header, with the same Revealed · Words line as the
+                          riff page header it links to. */}
+                      <div
                         style={{
-                          cursor: "pointer",
-                          display: "inline-block",
-                          fontFamily: "var(--font-dm-serif-text)",
-                          fontSize: "20px",
-                          fontWeight: 400,
-                          color: "#000000",
-                          margin: "0 0 12px 0",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "4px",
+                          marginBottom: "24px",
                         }}
                       >
-                        {getRiffDisplayTitle(riff)}
-                      </h3>
+                        <RiffTitleLink
+                          riffId={riff.id}
+                          title={getRiffDisplayTitle(riff)}
+                          size="large"
+                        />
+                        <p
+                          style={{
+                            fontFamily: "var(--font-dm-sans)",
+                            fontSize: "16px",
+                            fontWeight: 300,
+                            color: "#808080",
+                            margin: 0,
+                          }}
+                        >
+                          Revealed:{" "}
+                          <span style={{ color: "#000000" }}>
+                            {formatDateShort(riff.updatedAt)}
+                          </span>
+                          {" · "}
+                          Words:{" "}
+                          <span style={{ color: "#000000" }}>
+                            {totalWords.toLocaleString()}
+                          </span>
+                        </p>
+                      </div>
                       {isMobile ? (
                         <MobileCardCarousel>
                           {piecesToShow.map(renderCard)}
@@ -1340,21 +1372,11 @@ export default function ClubPageLayout({
                         margin: "0 0 12px 0",
                       }}
                     >
-                      <h3
-                        onClick={() => router.push(`/riffs/${riff.id}`)}
-                        className="riff-row-link"
-                        style={{
-                          cursor: "pointer",
-                          display: "inline-block",
-                          fontFamily: "var(--font-dm-serif-text)",
-                          fontSize: "20px",
-                          fontWeight: 400,
-                          color: "#000000",
-                          margin: 0,
-                        }}
-                      >
-                        {getRiffDisplayTitle(riff)}
-                      </h3>
+                      <RiffTitleLink
+                        riffId={riff.id}
+                        title={getRiffDisplayTitle(riff)}
+                        size="small"
+                      />
                       {newComments > 0 && (
                         <svg
                           width="16"
@@ -1420,8 +1442,26 @@ export default function ClubPageLayout({
             min-height: 200px !important;
           }
         }
-        .riff-row-link:hover {
+        .riff-row-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          color: #000000;
+          text-decoration: none;
+        }
+        .riff-row-link:hover .riff-row-link-text {
           text-decoration: underline;
+        }
+        .riff-row-link:focus-visible {
+          outline: 2px solid #00FF66;
+          outline-offset: 2px;
+        }
+        .riff-row-link-arrow {
+          display: flex;
+          transition: transform 0.15s ease;
+        }
+        .riff-row-link:hover .riff-row-link-arrow {
+          transform: translateX(4px);
         }
       `}</style>
 
@@ -1634,5 +1674,37 @@ export default function ClubPageLayout({
         />
       )}
     </div>
+  );
+}
+
+// A riff row's title as a link to its riff page. The trailing arrow is always
+// visible — a title that merely underlines on hover never told anyone the riff
+// page (read-by strip, comment feed) was one click away.
+function RiffTitleLink({
+  riffId,
+  title,
+  size,
+}: {
+  riffId: string;
+  title: string;
+  size: "large" | "small";
+}) {
+  const Heading = size === "large" ? "h2" : "h3";
+  return (
+    <Heading
+      style={{
+        fontFamily: "var(--font-dm-serif-text)",
+        fontSize: size === "large" ? "32px" : "20px",
+        fontWeight: 400,
+        margin: 0,
+      }}
+    >
+      <Link href={`/riffs/${riffId}`} className="riff-row-link">
+        <span className="riff-row-link-text">{title}</span>
+        <span className="riff-row-link-arrow" aria-hidden="true">
+          <ArrowIcon size={size === "large" ? 24 : 16} />
+        </span>
+      </Link>
+    </Heading>
   );
 }

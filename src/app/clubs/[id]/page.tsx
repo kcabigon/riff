@@ -176,6 +176,7 @@ export default async function ClubPage({
   const serializeRiff = (r: (typeof riffs)[0]) => ({
     ...r,
     createdAt: r.createdAt.toISOString(),
+    updatedAt: r.updatedAt.toISOString(),
     deadline: r.deadline ? r.deadline.toISOString() : null,
     pieces: r.pieces.map((pr) => ({
       ...pr,
