@@ -23,6 +23,7 @@ import ShareLinkOptions from "@/components/shared/ShareLinkOptions";
 import CloseButton from "@/components/CloseButton";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import RiffMark from "@/components/shared/RiffMark";
+import { ChevronIcon } from "@/components/shared/icons";
 import type { DropdownItem } from "@/components/shared/Dropdown";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
 import { useIsMobile } from "@/hooks/useMediaQuery";
@@ -896,6 +897,7 @@ export default function ClubPageLayout({
                         <RiffTitleLink
                           riffId={riff.id}
                           title={getRiffDisplayTitle(riff)}
+                          isMobile={isMobile}
                         />
                         <p
                           style={{
@@ -1057,7 +1059,6 @@ export default function ClubPageLayout({
                         }}
                       >
                         {getRiffDisplayTitle(activeRiff, predictedVolumeNumber)}
-                        <RiffMark width={24} variant="progress" />
                       </h2>
                       <div
                         style={{
@@ -1354,6 +1355,7 @@ export default function ClubPageLayout({
                     <RiffTitleLink
                       riffId={riff.id}
                       title={getRiffDisplayTitle(riff)}
+                      isMobile={isMobile}
                     />
                     {newComments > 0 && (
                       <svg
@@ -1427,8 +1429,9 @@ export default function ClubPageLayout({
           text-decoration: none;
         }
         /* Green, and thick enough to read on white — a hairline in #00FF66
-           all but disappears. */
-        .riff-row-link:hover .riff-row-link-text {
+           all but disappears. Always on for mobile, which has no hover. */
+        .riff-row-link:hover .riff-row-link-text,
+        .riff-row-link--mobile .riff-row-link-text {
           text-decoration: underline;
           text-decoration-color: #00FF66;
           text-decoration-thickness: 3px;
@@ -1687,7 +1690,18 @@ export default function ClubPageLayout({
 // always visible — a title that merely underlines on hover never told anyone
 // the riff page (read-by strip, comment feed) was one click away — and it
 // re-writes itself on hover.
-function RiffTitleLink({ riffId, title }: { riffId: string; title: string }) {
+// On mobile there's no hover to play the mark or reveal the underline, so the
+// link cue has to be static: an always-on green underline and a plain chevron,
+// the usual "tap to go" sign in a phone list. No mark there.
+function RiffTitleLink({
+  riffId,
+  title,
+  isMobile,
+}: {
+  riffId: string;
+  title: string;
+  isMobile: boolean;
+}) {
   return (
     <h2
       style={{
@@ -1697,10 +1711,13 @@ function RiffTitleLink({ riffId, title }: { riffId: string; title: string }) {
         margin: 0,
       }}
     >
-      <Link href={`/riffs/${riffId}`} className="riff-row-link">
+      <Link
+        href={`/riffs/${riffId}`}
+        className={`riff-row-link${isMobile ? " riff-row-link--mobile" : ""}`}
+      >
         <span className="riff-row-link-text">{title}</span>
         <span className="riff-row-link-mark" aria-hidden="true">
-          <RiffMark width={24} />
+          {isMobile ? <ChevronIcon size={24} /> : <RiffMark width={24} />}
         </span>
       </Link>
     </h2>
