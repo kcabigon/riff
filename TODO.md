@@ -142,7 +142,7 @@ Last updated: May 16, 2026
 - [ ] Notification emails via Resend — new comment digest (already covered by `daily-notifications` cron; deadline-approaching also covered by the same cron, formerly a separate `engagement-reminders` job)
 - [x] Email copy audit + revision: every email revised (preview text, no jokes, riff-named headlines), one riff reminder in place of three, new reading reminders after a reveal, open-riff join + piece-invite-accepted emails, piece-submitted link fix, Pacific-time dates, HTML escaping, and a `/dev/emails` preview page
 - [x] Resend batch sending: club-wide and cron emails go out through the batch API, with retry on rate limits
-- [ ] 🔨 @jarric — Cadence on the club page: always-visible cadence line (Paused, Freestyle), clickable for host/co-host, and switching Freestyle/Paused → a rhythm opens a riff right away. Manual renamed Freestyle
+- [x] Cadence on the club page: always-visible cadence line (Paused, Freestyle), clickable for host/co-host, and switching Freestyle/Paused → a rhythm opens a riff right away. Manual renamed Freestyle; the save button reads "Let's riff" when it will open one
 - [ ] Toast notifications replacing `console.error` catches
 - [ ] Onboarding page refinements (create-club, join-club pages)
 
