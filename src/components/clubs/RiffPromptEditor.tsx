@@ -165,45 +165,47 @@ export default function RiffPromptEditor({
         ) : (
           <p style={promptTextStyle}>{prompt}</p>
         )}
-      </div>
 
-      {isEditing && (
-        <>
-          <FormErrorText message={error} />
-          {/* Same Cancel + Save pair as editing a comment or reply. Unlike
-              those, Save stays live on an empty box — that clears the prompt. */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "flex-end",
-              alignItems: "center",
-              gap: "8px",
-              marginTop: "12px",
-            }}
-          >
-            <button
-              type="button"
-              onClick={cancel}
-              disabled={isSaving}
+        {/* Inside the ruled block, directly under the text, so they read as
+            part of the edit rather than floating off to the side. Same Save +
+            Cancel pair as editing a comment or reply, left-aligned here to sit
+            under the text's start. Unlike comments, Save stays live on an
+            empty box — that clears the prompt. */}
+        {isEditing && (
+          <>
+            <FormErrorText message={error} />
+            <div
               style={{
-                background: "none",
-                border: "none",
-                cursor: isSaving ? "not-allowed" : "pointer",
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "13px",
-                fontWeight: 300,
-                color: "#808080",
-                padding: "4px 8px",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                marginTop: "12px",
               }}
             >
-              Cancel
-            </button>
-            <CommentButton onClick={save} loading={isSaving}>
-              Save
-            </CommentButton>
-          </div>
-        </>
-      )}
+              <CommentButton onClick={save} loading={isSaving}>
+                Save
+              </CommentButton>
+              <button
+                type="button"
+                onClick={cancel}
+                disabled={isSaving}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: isSaving ? "not-allowed" : "pointer",
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "13px",
+                  fontWeight: 300,
+                  color: "#808080",
+                  padding: "4px 8px",
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </>
+        )}
+      </div>
 
       <style>{`
         .riff-prompt-input::placeholder {
