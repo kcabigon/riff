@@ -6,6 +6,7 @@ import Link from "next/link";
 import NavBar from "@/components/clubs/NavBar";
 import AvatarStack from "@/components/shared/AvatarStack";
 import MobileCardCarousel from "@/components/shared/MobileCardCarousel";
+import HorizontalScrollRow from "@/components/shared/HorizontalScrollRow";
 import ProgressCard from "@/components/riffs/ProgressCard";
 import PieceCard from "@/components/riffs/PieceCard";
 import DraftChoiceTrigger from "@/components/riffs/DraftChoiceTrigger";
@@ -1370,15 +1371,7 @@ export default function ClubPageLayout({
                         {piecesToShow.map(renderCard)}
                       </MobileCardCarousel>
                     ) : (
-                      <div
-                        style={{
-                          display: "flex",
-                          flexDirection: "row",
-                          gap: "24px",
-                          overflowX: "auto",
-                          paddingBottom: "8px",
-                        }}
-                      >
+                      <HorizontalScrollRow>
                         {piecesToShow.map((p) => (
                           <div
                             key={p.user.id}
@@ -1390,7 +1383,7 @@ export default function ClubPageLayout({
                             {renderCard(p)}
                           </div>
                         ))}
-                      </div>
+                      </HorizontalScrollRow>
                     )}
                   </div>
                 );
