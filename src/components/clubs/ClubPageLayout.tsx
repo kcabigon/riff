@@ -1210,7 +1210,6 @@ export default function ClubPageLayout({
                           riffId={riff.id}
                           title={getRiffDisplayTitle(riff)}
                           isMobile={isMobile}
-                          caret
                         />
                         <p
                           style={{
@@ -1433,9 +1432,8 @@ export default function ClubPageLayout({
           35% { transform: scaleX(0.25); }
           100% { transform: scaleX(1); }
         }
-        /* Anything current — the live riff's gray mark, Current Read's
-           colored one — blinks its last stroke like a text caret: the line
-           still being written, or still being read. */
+        /* The live riff's gray mark blinks its last stroke like a text
+           caret — the line still being written. */
         .riff-mark-caret {
           animation: riff-caret-blink 1.06s steps(1) infinite;
         }
@@ -1692,15 +1690,12 @@ function RiffTitleLink({
   title,
   isMobile,
   size = "large",
-  caret = false,
   trailing,
 }: {
   riffId: string;
   title: string;
   isMobile: boolean;
   size?: "large" | "small";
-  // Blinks the mark's last stroke — for current riffs (Current Read).
-  caret?: boolean;
   // Rides inside the link (after the mark) so it shares the hover and the
   // tap target — Past Riffs' new-comment icon.
   trailing?: React.ReactNode;
@@ -1726,7 +1721,7 @@ function RiffTitleLink({
           {isMobile ? (
             <ChevronIcon size={iconSize} />
           ) : (
-            <RiffMark width={iconSize} caret={caret} />
+            <RiffMark width={iconSize} />
           )}
         </span>
         {!isMobile && trailing}
