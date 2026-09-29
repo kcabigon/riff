@@ -1083,26 +1083,10 @@ export default function ClubPageLayout({
                         {!deadlinePassed && activeRiff.deadline && (
                           <span style={{ color: "#808080" }}>·</span>
                         )}
-                        <p
-                          style={{
-                            fontFamily: "var(--font-dm-sans)",
-                            fontSize: "16px",
-                            fontWeight: 300,
-                            color: activeRiff.deadline ? "#DC2626" : "#808080",
-                            margin: 0,
-                          }}
-                        >
-                          {deadlinePassed
-                            ? "Deadline passed"
-                            : activeRiff.deadline
-                              ? (() => {
-                                  const days = daysUntil(
-                                    new Date(activeRiff.deadline)
-                                  );
-                                  return `${days} ${days === 1 ? "day" : "days"} left`;
-                                })()
-                              : "No deadline"}
-                        </p>
+                        <DaysLeft
+                          deadline={activeRiff.deadline}
+                          deadlinePassed={deadlinePassed}
+                        />
                         {(isAdmin || isCoHost) && (
                           <ThreeDotButton
                             variant="light"
@@ -1157,7 +1141,7 @@ export default function ClubPageLayout({
                       }}
                     >
                       {getRiffDisplayTitle(activeRiff, predictedVolumeNumber)}
-                      <RiffMark width={24} variant="progress" />
+                      <RiffMark width={24} variant="progress" caret />
                     </h2>
                     <div
                       style={{
@@ -1183,26 +1167,10 @@ export default function ClubPageLayout({
                       {!deadlinePassed && activeRiff.deadline && (
                         <span style={{ color: "#808080" }}>·</span>
                       )}
-                      <p
-                        style={{
-                          fontFamily: "var(--font-dm-sans)",
-                          fontSize: "16px",
-                          fontWeight: 300,
-                          color: activeRiff.deadline ? "#DC2626" : "#808080",
-                          margin: 0,
-                        }}
-                      >
-                        {deadlinePassed
-                          ? "Deadline passed"
-                          : activeRiff.deadline
-                            ? (() => {
-                                const days = daysUntil(
-                                  new Date(activeRiff.deadline)
-                                );
-                                return `${days} ${days === 1 ? "day" : "days"} left`;
-                              })()
-                            : "No deadline"}
-                      </p>
+                      <DaysLeft
+                        deadline={activeRiff.deadline}
+                        deadlinePassed={deadlinePassed}
+                      />
                       {(isAdmin || isCoHost) && (
                         <ThreeDotButton
                           variant="light"
@@ -1462,6 +1430,36 @@ export default function ClubPageLayout({
           35% { transform: scaleX(0.25); }
           100% { transform: scaleX(1); }
         }
+        /* Current Riff is the live one. Its gray mark's last stroke blinks
+           like a text caret (the line still being written)... */
+        .riff-mark-caret {
+          animation: riff-caret-blink 1.06s steps(1) infinite;
+        }
+        @keyframes riff-caret-blink {
+          50% { opacity: 0; }
+        }
+        /* ...and a red dot pings before the days left, like a recording
+           light. */
+        .riff-live-dot {
+          position: relative;
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background-color: #DC2626;
+          flex-shrink: 0;
+        }
+        .riff-live-dot::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          border-radius: 50%;
+          background-color: #DC2626;
+          animation: riff-live-ping 1.6s ease-out infinite;
+        }
+        @keyframes riff-live-ping {
+          0% { transform: scale(1); opacity: 0.6; }
+          100% { transform: scale(2.75); opacity: 0; }
+        }
         /* The new-comment bubble pops in after the mark has re-written
            itself, like a message arriving. */
         .riff-comment-icon {
@@ -1478,7 +1476,9 @@ export default function ClubPageLayout({
         }
         @media (prefers-reduced-motion: reduce) {
           .riff-row-link:hover .riff-mark-row,
-          .riff-row-link:hover .riff-comment-icon {
+          .riff-row-link:hover .riff-comment-icon,
+          .riff-mark-caret,
+          .riff-live-dot::after {
             animation: none;
           }
         }
@@ -1748,5 +1748,44 @@ function RiffTitleLink({
         {!isMobile && trailing}
       </Link>
     </h2>
+  );
+}
+
+// The current riff's time left. A pinging red dot marks it as the live riff,
+// and the last 3 days go bold. Round on purpose, like the scroll arrow: a
+// status light, not a layout element.
+function DaysLeft({
+  deadline,
+  deadlinePassed,
+}: {
+  deadline: string | null;
+  deadlinePassed: boolean;
+}) {
+  const style: React.CSSProperties = {
+    fontFamily: "var(--font-dm-sans)",
+    fontSize: "16px",
+    fontWeight: 300,
+    color: "#DC2626",
+    margin: 0,
+  };
+
+  if (deadlinePassed) return <p style={style}>Deadline passed</p>;
+  if (!deadline)
+    return <p style={{ ...style, color: "#808080" }}>No deadline</p>;
+
+  const days = daysUntil(new Date(deadline));
+  return (
+    <p
+      style={{
+        ...style,
+        fontWeight: days <= 3 ? 700 : 300,
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "8px",
+      }}
+    >
+      <span className="riff-live-dot" aria-hidden="true" />
+      {`${days} ${days === 1 ? "day" : "days"} left`}
+    </p>
   );
 }

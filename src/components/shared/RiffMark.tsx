@@ -31,6 +31,8 @@ const PROGRESS_GRAYS: Record<string, string> = {
   "#EECF01": "#9C9C9C",
 };
 
+const LAST_STROKE = ROWS[ROWS.length - 1].strokes.at(-1);
+
 const STROKE_HEIGHT = 5.25;
 // The logo's shadow falls down and to the left.
 const SHADOW_OFFSET = 1;
@@ -40,9 +42,13 @@ const SHADOW_OFFSET = 1;
 export default function RiffMark({
   width = 20,
   variant = "color",
+  caret = false,
 }: {
   width?: number;
   variant?: "color" | "progress";
+  // Tags the last stroke (bottom right, where the next line would go) with
+  // "riff-mark-caret" so a parent can blink it like a text cursor.
+  caret?: boolean;
 }) {
   return (
     <svg
@@ -57,7 +63,12 @@ export default function RiffMark({
       {ROWS.map((row) => (
         <g key={row.y} className="riff-mark-row">
           {row.strokes.map((stroke) => (
-            <g key={stroke.x}>
+            <g
+              key={stroke.x}
+              className={
+                caret && stroke === LAST_STROKE ? "riff-mark-caret" : undefined
+              }
+            >
               <rect
                 x={stroke.x - SHADOW_OFFSET}
                 y={row.y + SHADOW_OFFSET}
