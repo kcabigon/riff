@@ -24,7 +24,7 @@ A private essay-sharing platform for creative communities. People write together
 - Landing page (detects logged-in users), About page (founder's note with fake comment highlights), Terms page
 
 **Clubs**
-- Club page with grid/slot progress cards, unified desktop/mobile header
+- Club page with grid/slot progress cards, unified desktop/mobile header. Sections run Current Riff → Current Read → Past Riffs; riff titles link to the riff page with a Riff mark; hosts/co-hosts edit the current riff's prompt in place
 - Join by link (`/clubs/[id]/join`), leave club, delete club (typed confirmation)
 - Host roles: assign / re-assign / remove co-host, transfer host (emails both parties)
 - Account deletion blocked for hosts with active club members
@@ -130,11 +130,12 @@ src/app/api/
 src/components/
 ├── shared/        # Modal, Avatar, AvatarStack, AdminBadge, Badge, Dropdown, ThreeDotButton, IconButton,
 │                  # BackLink, SectionHeading, Toast, ShareLinkOptions, SendToFriendsModal, InvitePieceModal,
-│                  # MobileCardCarousel, EnvironmentBadge, ImageUploadModal/Flow, ImageDropZone, icons
+│                  # MobileCardCarousel, HorizontalScrollRow, RiffMark, EnvironmentBadge,
+│                  # ImageUploadModal/Flow, ImageDropZone, icons
 ├── home/          # MyRiffsEmptyState
 ├── clubs/         # ClubPageLayout, NavBar, ClubDropdown, AvatarDropdown, CreateDropdown, CreatePillButton,
 │                  # ClubSettingsModal, JoinClubClient, AssignCoHostModal, TransferHostModal,
-│                  # LeaveClubConfirmModal, DeleteClubConfirmModal
+│                  # LeaveClubConfirmModal, DeleteClubConfirmModal, RiffPromptEditor
 ├── riffs/         # RiffPageLayout, RiffEventCard, ProgressCard, PieceCard, CompletedRiffCard, ReadyToRevealCard,
 │                  # ActivityFeed, ReadByStrip, FriendsRow, RiffCTAButton, RevealRiffButton, RevealConfirmModal,
 │                  # RevealCelebration, CreateRiffModal, EditRiffModal, RiffFormFields, DeleteRiffConfirmModal,

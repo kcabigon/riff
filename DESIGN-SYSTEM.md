@@ -128,7 +128,7 @@ Stat: large numeric callouts (e.g. word/submission counts on RiffEventCard).
 | `2px solid #000` | Primary borders (buttons, cards, inputs, modals) |
 | `1px solid #E6E6E6` | Separators, tab borders, dividers |
 | `2px dashed #CCCCCC` | Upload drop zones |
-| **Radius**: `0px` everywhere | Except avatars: `64px` (fully round) |
+| **Radius**: `0px` everywhere | Except avatars: `64px` (fully round), and round overlays that float over artwork rather than sitting in the layout (the `HorizontalScrollRow` arrows) |
 
 ### Shadows (Neo-Brutalist)
 | Name | Value | Usage |
@@ -213,6 +213,8 @@ All interactive elements: border/outline changes to green `#00FF66`.
 | **ImageUploadModal** | `shared/ImageUploadModal.tsx` | **Go-to for all image uploads.** Crop, drag-drop, HEIC/GIF support. Use as a building block — wrap in a Modal, embed in a tab, or use standalone. Props: `isOpen`, `onClose`, `onSelect`, `title`, `aspectRatio` (16/9 covers, 1 avatars, 3/1 banners), `cropShape` ("rect"\|"round"), `currentImage`, `existingImages` |
 | **AdminBadge** | `shared/AdminBadge.tsx` | Host/moderator role indicator. Props: `type`, `size` |
 | **EnvironmentBadge** | `shared/EnvironmentBadge.tsx` | Dev/staging/prod label |
+| **HorizontalScrollRow** | `shared/HorizontalScrollRow.tsx` | Desktop row of fixed-width cards that scrolls sideways, under a `header`. When it overflows, a round frosted arrow (20% white, blur, white chevron) floats over the edge with more to see and scrolls one card per click. Mobile uses **MobileCardCarousel** instead |
+| **MobileCardCarousel** | `shared/MobileCardCarousel.tsx` | Mobile one-card-at-a-time swipe row with dot pagination |
 
 ### Decorative (`src/components/`)
 | Component | File | Use for |
@@ -220,6 +222,7 @@ All interactive elements: border/outline changes to green `#00FF66`.
 | **NoiseBackground** | `NoiseBackground.tsx` | Fractal noise SVG backdrop. Props: `fillMode` |
 | **Tagline** | `Tagline.tsx` | Colored vector highlight text. Props: `text`, `color` |
 | **WelcomeNote** | `WelcomeNote.tsx` | Handwriting-font message box |
+| **RiffMark** | `shared/RiffMark.tsx` | Tiny (<1KB) redraw of the Riff logo for inline use — never the 500KB logo SVGs at icon size. Props: `width`, `variant` ("color" \| "progress": grays for a riff still being written), `caret` (blinks the last stroke like a text cursor, via `.riff-mark-caret`). On the club page it ends every riff title: gray + blinking for the current riff, color for revealed ones, re-writing its strokes on hover |
 
 ### Logo Assets (`public/images/`)
 | Asset | File | Use for |
