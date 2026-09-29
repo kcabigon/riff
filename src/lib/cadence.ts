@@ -69,9 +69,11 @@ const PAUSED: CadenceOption = {
   description: "Take a break",
 };
 
+// Stored as MANUAL, shown as Freestyle: the host starts riffs whenever they
+// like. Renamed in the UI only, so the enum and every row keep their value.
 const MANUAL: CadenceOption = {
   value: "MANUAL",
-  label: "Manual",
+  label: "Freestyle",
   description: "Create your own riffs",
 };
 
@@ -86,10 +88,10 @@ export const CREATION_CADENCE_OPTIONS: CadenceOption[] = [
   MONTHLY,
 ];
 
-// The settings modal shows these as two labeled groups rather than one list.
-// The split is the same one isIntervalCadence gates on — "Automatic" riffs
-// start on a schedule, "Other" produces none — so the grouping the host sees
-// matches the behavior the cron actually implements.
+// The settings modal's Automatic tab. The split is the same one
+// isIntervalCadence gates on — these start riffs on a schedule, Freestyle and
+// Pause (their own tabs) produce none — so what the host sees matches the
+// behavior the cron actually implements.
 export const CADENCE_INTERVAL_OPTIONS: CadenceOption[] = [
   WEEKLY,
   BIWEEKLY,
@@ -98,12 +100,11 @@ export const CADENCE_INTERVAL_OPTIONS: CadenceOption[] = [
   QUARTERLY,
 ];
 
-export const CADENCE_OTHER_OPTIONS: CadenceOption[] = [MANUAL, PAUSED];
-
 // Full set, matching the enum.
 const CADENCE_OPTIONS: CadenceOption[] = [
   ...CADENCE_INTERVAL_OPTIONS,
-  ...CADENCE_OTHER_OPTIONS,
+  MANUAL,
+  PAUSED,
 ];
 
 export const DEFAULT_CADENCE: CadenceValue = "BIWEEKLY";
@@ -116,7 +117,14 @@ export function getCadenceDays(value: CadenceValue): number | null {
 }
 
 export function getCadenceLabel(value: CadenceValue): string {
-  return CADENCE_OPTIONS.find((o) => o.value === value)?.label ?? "Manual";
+  return CADENCE_OPTIONS.find((o) => o.value === value)?.label ?? "Freestyle";
+}
+
+// The label as a state rather than a choice, for the club page's cadence line.
+// Only Pause differs: it's an action in the picker ("Pause"), but on the page
+// it describes where the club is ("Paused").
+export function getCadenceStatusLabel(value: CadenceValue): string {
+  return value === "PAUSED" ? "Paused" : getCadenceLabel(value);
 }
 
 // True only for the cadences that produce riffs on a schedule. Manual and

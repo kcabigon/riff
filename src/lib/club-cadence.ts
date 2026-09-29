@@ -169,9 +169,12 @@ export function decideForClub(
 // Loads every club the sweep could act on, with just the fields decideForClub
 // needs. Clubs on MANUAL are excluded here rather than decided and skipped —
 // they can never produce an action, so there's no reason to fetch them.
-export async function loadSweepClubs() {
+//
+// Pass a clubId to load just that one (see openRiffIfDue).
+export async function loadSweepClubs(clubId?: string) {
   const clubs = await prisma.club.findMany({
     where: {
+      ...(clubId && { id: clubId }),
       isArchived: false,
       cadence: { not: "MANUAL" },
     },
@@ -433,6 +436,24 @@ async function applyDecision(
     case "skip":
       return;
   }
+}
+
+// A host moving a club from Freestyle or Paused onto a rhythm expects a riff
+// then, not at tomorrow's sweep. This runs the sweep's own decision for just
+// that club and carries it out only when it's "create", so the riff gets the
+// same deadline and the same emails as one the cron opens. Anything else — a
+// riff already going — is left for the regular sweep. Returns whether a riff
+// was opened.
+export async function openRiffIfDue(
+  clubId: string,
+  now: Date = new Date()
+): Promise<boolean> {
+  const [club] = await loadSweepClubs(clubId);
+  if (!club) return false;
+  const decision = decideForClub(club, now);
+  if (decision.action.kind !== "create") return false;
+  await applyDecision(decision, club.adminId);
+  return true;
 }
 
 // Decides for every club, then applies unless this is a dry run. Clubs are

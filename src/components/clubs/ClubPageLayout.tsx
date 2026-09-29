@@ -236,6 +236,11 @@ export default function ClubPageLayout({
 
   const isCoHost = club.moderatorId === currentUserId;
 
+  // The cadence line under the club name opens the same settings as the menu,
+  // for host and co-host only — it's how a club runs, so it's one tap away.
+  const openCadenceSettings =
+    isAdmin || isCoHost ? () => setIsCadenceModalOpen(true) : undefined;
+
   const adminMenuItems = [
     {
       type: "action" as const,
@@ -516,7 +521,11 @@ export default function ClubPageLayout({
             />
           </div>
 
-          <ClubCadenceLine cadence={clubCadence} />
+          <ClubCadenceLine
+            cadence={clubCadence}
+            showUnscheduled
+            onClick={openCadenceSettings}
+          />
 
           <AvatarStack
             users={club.members.map((m) => m.user)}
@@ -652,7 +661,11 @@ export default function ClubPageLayout({
                   />
                 </div>
 
-                <ClubCadenceLine cadence={clubCadence} />
+                <ClubCadenceLine
+                  cadence={clubCadence}
+                  showUnscheduled
+                  onClick={openCadenceSettings}
+                />
 
                 <AvatarStack
                   users={club.members.map((m) => m.user)}
@@ -760,7 +773,11 @@ export default function ClubPageLayout({
               />
             </div>
 
-            <ClubCadenceLine cadence={clubCadence} />
+            <ClubCadenceLine
+              cadence={clubCadence}
+              showUnscheduled
+              onClick={openCadenceSettings}
+            />
 
             <AvatarStack
               users={club.members.map((m) => m.user)}
@@ -1428,9 +1445,14 @@ export default function ClubPageLayout({
       <CadenceSettingsModal
         isOpen={isCadenceModalOpen}
         onClose={() => setIsCadenceModalOpen(false)}
-        onUpdated={setClubCadence}
+        onUpdated={(cadence, riffOpened) => {
+          setClubCadence(cadence);
+          // Switching onto a rhythm can open a riff straight away.
+          if (riffOpened) router.refresh();
+        }}
         clubId={club.id}
         cadence={clubCadence}
+        activeRiff={activeRiff}
       />
 
       <DeleteClubConfirmModal
