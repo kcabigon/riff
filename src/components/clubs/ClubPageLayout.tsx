@@ -933,6 +933,7 @@ export default function ClubPageLayout({
                         }}
                       >
                         {getRiffDisplayTitle(activeRiff, predictedVolumeNumber)}
+                        <RiffMark width={24} variant="progress" caret />
                       </h2>
                       <div
                         style={{
@@ -1322,7 +1323,6 @@ export default function ClubPageLayout({
                     trailing={
                       newComments > 0 && (
                         <svg
-                          className="riff-comment-icon"
                           width="18"
                           height="18"
                           viewBox="0 0 16 16"
@@ -1440,23 +1440,8 @@ export default function ClubPageLayout({
         @keyframes riff-caret-blink {
           50% { opacity: 0; }
         }
-        /* The new-comment bubble pops in after the mark has re-written
-           itself, like a message arriving. */
-        .riff-comment-icon {
-          transform-origin: 20% 90%;
-        }
-        .riff-row-link:hover .riff-comment-icon {
-          animation: riff-comment-pop 0.4s ease-out 0.3s both;
-        }
-        @keyframes riff-comment-pop {
-          0% { transform: scale(1) rotate(0deg); }
-          40% { transform: scale(1.25) rotate(-10deg); }
-          70% { transform: scale(0.95) rotate(4deg); }
-          100% { transform: scale(1) rotate(0deg); }
-        }
         @media (prefers-reduced-motion: reduce) {
           .riff-row-link:hover .riff-mark-row,
-          .riff-row-link:hover .riff-comment-icon,
           .riff-mark-caret {
             animation: none;
           }
@@ -1679,12 +1664,12 @@ export default function ClubPageLayout({
 // always visible — a title that merely underlines on hover never told anyone
 // the riff page (read-by strip, comment feed) was one click away — and it
 // re-writes itself on hover.
-// On mobile there's no hover to play the mark or reveal the underline, so the
-// link cue has to be static: an always-on green underline and a plain chevron,
-// the usual "tap to go" sign in a phone list. No mark there.
+// On mobile there's no hover to reveal the underline, so it's always on.
 //
 // "large" is Current Read (32px, matching Current Riff); "small" is Past Riffs
-// at the type scale's h2 (24px), with the mark and chevron scaled to match.
+// at the type scale's h2 (24px), with its icons scaled to match. On mobile,
+// Past Riffs swaps the mark for a plain chevron, so current riffs (mark) and
+// past ones (chevron) read differently there.
 function RiffTitleLink({
   riffId,
   title,
@@ -1701,6 +1686,7 @@ function RiffTitleLink({
   trailing?: React.ReactNode;
 }) {
   const iconSize = size === "large" ? 24 : 18;
+  const useChevron = isMobile && size === "small";
   return (
     <h2
       style={{
@@ -1715,16 +1701,16 @@ function RiffTitleLink({
         className={`riff-row-link${isMobile ? " riff-row-link--mobile" : ""}`}
       >
         <span className="riff-row-link-text">{title}</span>
-        {/* Mobile keeps the chevron last, the way a phone list reads. */}
-        {isMobile && trailing}
+        {/* A chevron stays last, the way a phone list reads. */}
+        {useChevron && trailing}
         <span className="riff-row-link-mark" aria-hidden="true">
-          {isMobile ? (
+          {useChevron ? (
             <ChevronIcon size={iconSize} />
           ) : (
             <RiffMark width={iconSize} />
           )}
         </span>
-        {!isMobile && trailing}
+        {!useChevron && trailing}
       </Link>
     </h2>
   );
