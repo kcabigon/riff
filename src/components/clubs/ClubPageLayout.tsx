@@ -1337,46 +1337,52 @@ export default function ClubPageLayout({
 
                 const newComments = newCommentCounts[riff.id] ?? 0;
 
+                const titleRow = (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      minWidth: 0,
+                    }}
+                  >
+                    <RiffTitleLink
+                      riffId={riff.id}
+                      title={getRiffDisplayTitle(riff)}
+                      size="small"
+                    />
+                    {newComments > 0 && (
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        style={{ flexShrink: 0 }}
+                      >
+                        <title>{`${newComments} new ${newComments === 1 ? "comment" : "comments"}`}</title>
+                        <path
+                          d="M2 3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H6l-3 3v-3H3a1 1 0 0 1-1-1V3z"
+                          fill="#01EFFC"
+                          stroke="#000000"
+                          strokeWidth="1.2"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    )}
+                  </div>
+                );
+
                 return (
                   <div key={riff.id}>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        margin: "0 0 12px 0",
-                      }}
-                    >
-                      <RiffTitleLink
-                        riffId={riff.id}
-                        title={getRiffDisplayTitle(riff)}
-                        size="small"
-                      />
-                      {newComments > 0 && (
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          style={{ flexShrink: 0 }}
-                        >
-                          <title>{`${newComments} new ${newComments === 1 ? "comment" : "comments"}`}</title>
-                          <path
-                            d="M2 3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H6l-3 3v-3H3a1 1 0 0 1-1-1V3z"
-                            fill="#01EFFC"
-                            stroke="#000000"
-                            strokeWidth="1.2"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      )}
-                    </div>
                     {isMobile ? (
-                      <MobileCardCarousel>
-                        {piecesToShow.map(renderCard)}
-                      </MobileCardCarousel>
+                      <>
+                        <div style={{ marginBottom: "12px" }}>{titleRow}</div>
+                        <MobileCardCarousel>
+                          {piecesToShow.map(renderCard)}
+                        </MobileCardCarousel>
+                      </>
                     ) : (
-                      <HorizontalScrollRow>
+                      <HorizontalScrollRow header={titleRow}>
                         {piecesToShow.map((p) => (
                           <div
                             key={p.user.id}
