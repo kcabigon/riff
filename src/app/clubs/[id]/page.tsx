@@ -264,6 +264,9 @@ export default async function ClubPage({
     ...revealedRiffs,
   ].map((r) => r.id);
   let newCommentCounts: Record<string, number> = {};
+  // Every comment on the riff, own included — Current Read's metadata line,
+  // matching the riff page's Comments (N) total. Tallied from the same rows.
+  let commentCounts: Record<string, number> = {};
   if (pastEligibleRiffIds.length > 0) {
     const [pastReads, pastComments] = await Promise.all([
       prisma.pieceRead.findMany({
@@ -287,6 +290,10 @@ export default async function ClubPage({
       if (readAt && c.riffId && c.createdAt > readAt) {
         acc[c.riffId] = (acc[c.riffId] || 0) + 1;
       }
+      return acc;
+    }, {});
+    commentCounts = pastComments.reduce<Record<string, number>>((acc, c) => {
+      if (c.riffId) acc[c.riffId] = (acc[c.riffId] || 0) + 1;
       return acc;
     }, {});
   }
@@ -313,6 +320,7 @@ export default async function ClubPage({
       readCounts={readCounts}
       readPieceIds={readPieceIds}
       newCommentCounts={newCommentCounts}
+      commentCounts={commentCounts}
       completedRiffs={completedRiffs}
       stats={{ riffCount, pieceCount, wordCount }}
       predictedVolumeNumber={predictedVolumeNumber}

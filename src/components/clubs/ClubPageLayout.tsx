@@ -126,6 +126,7 @@ interface ClubPageLayoutProps {
   readCounts: Record<string, number>;
   readPieceIds: string[];
   newCommentCounts: Record<string, number>;
+  commentCounts: Record<string, number>;
   completedRiffs: Riff[];
   stats: {
     riffCount: number;
@@ -217,6 +218,7 @@ export default function ClubPageLayout({
   readCounts,
   readPieceIds,
   newCommentCounts,
+  commentCounts,
   completedRiffs,
   stats,
   predictedVolumeNumber,
@@ -876,16 +878,13 @@ export default function ClubPageLayout({
                     );
                   };
 
-                  const totalWords = getSubmittedPieces(riff.pieces).reduce(
-                    (sum, p) => sum + (p.piece.wordCount || 0),
-                    0
-                  );
+                  const totalComments = commentCounts[riff.id] ?? 0;
 
                   return (
                     <div key={riff.id}>
                       {/* Title + metadata sized to match Current Riff's
-                          header, with the same Revealed · Words line as the
-                          riff page header it links to. */}
+                          header. Comments over words: talk already happening
+                          is the reason to open the riff page. */}
                       <div
                         style={{
                           display: "flex",
@@ -912,11 +911,17 @@ export default function ClubPageLayout({
                           <span style={{ color: "#000000" }}>
                             {formatDateShort(riff.updatedAt)}
                           </span>
-                          {" · "}
-                          Words:{" "}
-                          <span style={{ color: "#000000" }}>
-                            {totalWords.toLocaleString()}
-                          </span>
+                          {/* Hidden at zero — "Comments: 0" makes a fresh
+                              reveal look dead instead of new. */}
+                          {totalComments > 0 && (
+                            <>
+                              {" · "}
+                              Comments:{" "}
+                              <span style={{ color: "#000000" }}>
+                                {totalComments.toLocaleString()}
+                              </span>
+                            </>
+                          )}
                         </p>
                       </div>
                       {isMobile ? (
