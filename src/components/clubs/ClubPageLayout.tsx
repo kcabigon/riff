@@ -1344,39 +1344,33 @@ export default function ClubPageLayout({
                 const newComments = newCommentCounts[riff.id] ?? 0;
 
                 const titleRow = (
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      minWidth: 0,
-                    }}
-                  >
-                    <RiffTitleLink
-                      riffId={riff.id}
-                      title={getRiffDisplayTitle(riff)}
-                      isMobile={isMobile}
-                      size="small"
-                    />
-                    {newComments > 0 && (
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 16 16"
-                        fill="none"
-                        style={{ flexShrink: 0 }}
-                      >
-                        <title>{`${newComments} new ${newComments === 1 ? "comment" : "comments"}`}</title>
-                        <path
-                          d="M2 3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H6l-3 3v-3H3a1 1 0 0 1-1-1V3z"
-                          fill="#01EFFC"
-                          stroke="#000000"
-                          strokeWidth="1.2"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    )}
-                  </div>
+                  <RiffTitleLink
+                    riffId={riff.id}
+                    title={getRiffDisplayTitle(riff)}
+                    isMobile={isMobile}
+                    size="small"
+                    trailing={
+                      newComments > 0 && (
+                        <svg
+                          className="riff-comment-icon"
+                          width="18"
+                          height="18"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          style={{ flexShrink: 0 }}
+                        >
+                          <title>{`${newComments} new ${newComments === 1 ? "comment" : "comments"}`}</title>
+                          <path
+                            d="M2 3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H6l-3 3v-3H3a1 1 0 0 1-1-1V3z"
+                            fill="#01EFFC"
+                            stroke="#000000"
+                            strokeWidth="1.2"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      )
+                    }
+                  />
                 );
 
                 return (
@@ -1468,8 +1462,23 @@ export default function ClubPageLayout({
           35% { transform: scaleX(0.25); }
           100% { transform: scaleX(1); }
         }
+        /* The new-comment bubble pops in after the mark has re-written
+           itself, like a message arriving. */
+        .riff-comment-icon {
+          transform-origin: 20% 90%;
+        }
+        .riff-row-link:hover .riff-comment-icon {
+          animation: riff-comment-pop 0.4s ease-out 0.3s both;
+        }
+        @keyframes riff-comment-pop {
+          0% { transform: scale(1) rotate(0deg); }
+          40% { transform: scale(1.25) rotate(-10deg); }
+          70% { transform: scale(0.95) rotate(4deg); }
+          100% { transform: scale(1) rotate(0deg); }
+        }
         @media (prefers-reduced-motion: reduce) {
-          .riff-row-link:hover .riff-mark-row {
+          .riff-row-link:hover .riff-mark-row,
+          .riff-row-link:hover .riff-comment-icon {
             animation: none;
           }
         }
@@ -1702,11 +1711,15 @@ function RiffTitleLink({
   title,
   isMobile,
   size = "large",
+  trailing,
 }: {
   riffId: string;
   title: string;
   isMobile: boolean;
   size?: "large" | "small";
+  // Rides inside the link (after the mark) so it shares the hover and the
+  // tap target — Past Riffs' new-comment icon.
+  trailing?: React.ReactNode;
 }) {
   const iconSize = size === "large" ? 24 : 18;
   return (
@@ -1723,6 +1736,8 @@ function RiffTitleLink({
         className={`riff-row-link${isMobile ? " riff-row-link--mobile" : ""}`}
       >
         <span className="riff-row-link-text">{title}</span>
+        {/* Mobile keeps the chevron last, the way a phone list reads. */}
+        {isMobile && trailing}
         <span className="riff-row-link-mark" aria-hidden="true">
           {isMobile ? (
             <ChevronIcon size={iconSize} />
@@ -1730,6 +1745,7 @@ function RiffTitleLink({
             <RiffMark width={iconSize} />
           )}
         </span>
+        {!isMobile && trailing}
       </Link>
     </h2>
   );
