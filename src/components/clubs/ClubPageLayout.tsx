@@ -1700,7 +1700,7 @@ function RiffTitleLink({
       <Link href={`/riffs/${riffId}`} className="riff-row-link">
         <span className="riff-row-link-text">{title}</span>
         <span className="riff-row-link-mark" aria-hidden="true">
-          <RiffMark width={size === "large" ? 24 : 16} />
+          <RiffMark width={24} />
         </span>
       </Link>
     </Heading>
