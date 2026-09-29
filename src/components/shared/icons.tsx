@@ -100,34 +100,6 @@ export function OpenLinkIcon({
   );
 }
 
-export function ArrowIcon({
-  color = "#000000",
-  size = 14,
-  direction = "right",
-}: {
-  color?: string;
-  size?: number;
-  direction?: "left" | "right";
-}) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      xmlns="http://www.w3.org/2000/svg"
-      style={direction === "left" ? { transform: "scaleX(-1)" } : undefined}
-    >
-      <path d="M5 12h14" />
-      <path d="m13 6 6 6-6 6" />
-    </svg>
-  );
-}
-
 export function ChevronIcon({
   color = "#000000",
   size = 14,
