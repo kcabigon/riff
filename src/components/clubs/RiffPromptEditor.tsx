@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useRef, useState } from "react";
 import FormErrorText from "@/components/shared/FormErrorText";
+import CommentButton from "@/components/read/CommentButton";
 
 const promptTextStyle: React.CSSProperties = {
   fontFamily: "var(--font-dm-sans)",
@@ -10,15 +11,6 @@ const promptTextStyle: React.CSSProperties = {
   lineHeight: 1.5,
   color: "#000000",
   margin: 0,
-};
-
-const textButtonStyle: React.CSSProperties = {
-  background: "none",
-  border: "none",
-  padding: 0,
-  fontFamily: "var(--font-dm-sans)",
-  fontSize: "16px",
-  cursor: "pointer",
 };
 
 // The current riff's prompt on the club page — the black left rule marks it as
@@ -178,41 +170,37 @@ export default function RiffPromptEditor({
       {isEditing && (
         <>
           <FormErrorText message={error} />
+          {/* Same Cancel + Save pair as editing a comment or reply. Unlike
+              those, Save stays live on an empty box — that clears the prompt. */}
           <div
             style={{
               display: "flex",
+              justifyContent: "flex-end",
               alignItems: "center",
-              gap: "16px",
+              gap: "8px",
               marginTop: "12px",
-              paddingLeft: "18px",
             }}
           >
-            <button
-              type="button"
-              onClick={save}
-              disabled={isSaving}
-              style={{
-                ...textButtonStyle,
-                fontWeight: 700,
-                color: "#000000",
-                cursor: isSaving ? "not-allowed" : "pointer",
-              }}
-            >
-              {isSaving ? "Saving..." : "Save"}
-            </button>
             <button
               type="button"
               onClick={cancel}
               disabled={isSaving}
               style={{
-                ...textButtonStyle,
+                background: "none",
+                border: "none",
+                cursor: isSaving ? "not-allowed" : "pointer",
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "13px",
                 fontWeight: 300,
                 color: "#808080",
-                cursor: isSaving ? "not-allowed" : "pointer",
+                padding: "4px 8px",
               }}
             >
               Cancel
             </button>
+            <CommentButton onClick={save} loading={isSaving}>
+              Save
+            </CommentButton>
           </div>
         </>
       )}
