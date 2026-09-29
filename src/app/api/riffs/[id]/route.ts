@@ -180,7 +180,7 @@ export async function PATCH(
 
     // Only DRAFT or ACTIVE riffs can have details edited
     if (
-      (title || prompt || deadline !== undefined) &&
+      (title || prompt !== undefined || deadline !== undefined) &&
       !["DRAFT", "ACTIVE"].includes(riff.status)
     ) {
       return NextResponse.json(
@@ -207,7 +207,7 @@ export async function PATCH(
 
     // Creator, admin, or co-host can update title, prompt, deadline
     if (
-      (title || prompt || deadline !== undefined) &&
+      (title || prompt !== undefined || deadline !== undefined) &&
       riff.creatorId !== user.id &&
       !isClubAdminOrCoHost
     ) {
