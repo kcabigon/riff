@@ -39,7 +39,7 @@ const PANELS: Panel[] = [
     accentColor: "#01EFFC",
     rotate: -3,
     lift: 0,
-    quip: "writing for strangers is overrated",
+    quip: "my audience is just a few friends",
     quipFrom: {
       name: "Jarric",
       avatarSrc: "/images/about/founderAvatars/jarric-avatar.png",
