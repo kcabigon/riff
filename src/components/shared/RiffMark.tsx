@@ -26,7 +26,15 @@ const STROKE_HEIGHT = 5.25;
 // The logo's shadow falls down and to the left.
 const SHADOW_OFFSET = 1;
 
-export default function RiffMark({ width = 20 }: { width?: number }) {
+// "progress" is the in-progress riff's version — gray strokes on the same
+// black shadow, the colors still to come once it's revealed.
+export default function RiffMark({
+  width = 20,
+  variant = "color",
+}: {
+  width?: number;
+  variant?: "color" | "progress";
+}) {
   return (
     <svg
       width={width}
@@ -53,7 +61,7 @@ export default function RiffMark({ width = 20 }: { width?: number }) {
                 y={row.y}
                 width={stroke.width}
                 height={STROKE_HEIGHT}
-                fill={stroke.fill}
+                fill={variant === "progress" ? "#CCCCCC" : stroke.fill}
               />
             </g>
           ))}

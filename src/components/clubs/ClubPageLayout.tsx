@@ -1046,7 +1046,9 @@ export default function ClubPageLayout({
                     >
                       <h2
                         style={{
-                          display: "inline-block",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "8px",
                           fontFamily: "var(--font-dm-serif-text)",
                           fontSize: "32px",
                           fontWeight: 400,
@@ -1055,6 +1057,7 @@ export default function ClubPageLayout({
                         }}
                       >
                         {getRiffDisplayTitle(activeRiff, predictedVolumeNumber)}
+                        <RiffMark width={24} variant="progress" />
                       </h2>
                       <div
                         style={{
@@ -1142,7 +1145,9 @@ export default function ClubPageLayout({
                   >
                     <h2
                       style={{
-                        display: "inline-block",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "8px",
                         fontFamily: "var(--font-dm-serif-text)",
                         fontSize: "32px",
                         fontWeight: 400,
@@ -1151,6 +1156,7 @@ export default function ClubPageLayout({
                       }}
                     >
                       {getRiffDisplayTitle(activeRiff, predictedVolumeNumber)}
+                      <RiffMark width={24} variant="progress" />
                     </h2>
                     <div
                       style={{
