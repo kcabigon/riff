@@ -145,6 +145,7 @@ Last updated: May 16, 2026
 - [x] Cadence on the club page: always-visible cadence line (Paused, Freestyle), clickable for host/co-host, and switching Freestyle/Paused → a rhythm opens a riff right away. Manual renamed Freestyle; the save button reads "Let's riff" when it will open one
 - [ ] Toast notifications replacing `console.error` catches
 - [ ] Onboarding page refinements (create-club, join-club pages)
+- [ ] 🔨 @jarric — Club page riff sections: big Current read heading + matching metadata, clearer click-through to riff pages, host-editable current riff prompt, visible horizontal scroll on past riffs
 
 ---
 
