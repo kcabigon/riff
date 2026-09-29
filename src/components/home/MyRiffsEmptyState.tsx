@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import NoiseBackground from "@/components/NoiseBackground";
 import CTAButton from "@/components/CTAButton";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import {
   useCreationOverlay,
   riffCreatedPath,
@@ -21,6 +22,7 @@ interface Panel {
   rotate: number;
   lift: number;
   quip: string;
+  quipFrom: { name: string; avatarSrc: string };
   quipRotate: number;
 }
 
@@ -37,7 +39,11 @@ const PANELS: Panel[] = [
     accentColor: "#01EFFC",
     rotate: -3,
     lift: 0,
-    quip: "feeling creative, might delete later",
+    quip: "writing for strangers is overrated",
+    quipFrom: {
+      name: "Jarric",
+      avatarSrc: "/images/about/founderAvatars/jarric-avatar.png",
+    },
     quipRotate: -4,
   },
   {
@@ -48,7 +54,11 @@ const PANELS: Panel[] = [
     accentColor: "#00FF66",
     rotate: 2,
     lift: -14,
-    quip: "literary mosh pit with friends",
+    quip: "everyone writes, due next friday",
+    quipFrom: {
+      name: "Kyla",
+      avatarSrc: "/images/about/founderAvatars/kyla-avatar.jpg",
+    },
     quipRotate: 3,
   },
   {
@@ -60,6 +70,10 @@ const PANELS: Panel[] = [
     rotate: -2,
     lift: 6,
     quip: "write clubs are the new book clubs",
+    quipFrom: {
+      name: "Chris",
+      avatarSrc: "/images/about/founderAvatars/chris-avatar.jpeg",
+    },
     quipRotate: -3,
   },
 ];
@@ -71,6 +85,10 @@ function hexToRgba(hex: string, alpha: number): string {
   const b = value & 255;
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
+
+// On the Avatar size scale — big enough to sit level with a two-line
+// bubble without outweighing it.
+const QUIP_AVATAR_SIZE = 56;
 
 // Sizing shared by all three panel CTAs — bigger than CTAButton's own
 // default so it reads as a hero action, not an inline one. Weight is left
@@ -92,6 +110,65 @@ export default function MyRiffsEmptyState({
   const [hoveredPanelId, setHoveredPanelId] = useState<Panel["id"] | null>(
     null
   );
+  // Touch screens can't hover, so there each bubble pops in the first time
+  // its card scrolls into view instead — like a message arriving — and
+  // stays. Keyed on hover capability, not width, so tablets and touch
+  // laptops get it too.
+  const isTouch = useMediaQuery("(hover: none)");
+  const panelsRef = useRef<HTMLDivElement>(null);
+  const [arrivedPanelIds, setArrivedPanelIds] = useState<Set<Panel["id"]>>(
+    () => new Set()
+  );
+
+  // Nothing arrives until the first scroll, so the page opens clean and the
+  // first bubble lands as a response to the reader moving. A page too short
+  // to scroll starts right away — otherwise its bubbles would never show.
+  const [hasScrolled, setHasScrolled] = useState(false);
+
+  useEffect(() => {
+    if (!isTouch || hasScrolled) return;
+    const canScroll =
+      document.documentElement.scrollHeight > window.innerHeight;
+    if (!canScroll) {
+      setHasScrolled(true);
+      return;
+    }
+    const start = () => setHasScrolled(true);
+    window.addEventListener("scroll", start, { passive: true, once: true });
+    window.addEventListener("touchmove", start, { passive: true, once: true });
+    return () => {
+      window.removeEventListener("scroll", start);
+      window.removeEventListener("touchmove", start);
+    };
+  }, [isTouch, hasScrolled]);
+
+  useEffect(() => {
+    if (!isTouch || !hasScrolled || !panelsRef.current) return;
+    const cards =
+      panelsRef.current.querySelectorAll<HTMLElement>("[data-panel-id]");
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const arrived = entries
+          .filter((entry) => entry.isIntersecting)
+          .map((entry) => (entry.target as HTMLElement).dataset.panelId);
+        if (arrived.length === 0) return;
+        setArrivedPanelIds((prev) => {
+          const next = new Set(prev);
+          arrived.forEach((id) => next.add(id as Panel["id"]));
+          return next;
+        });
+        entries
+          .filter((entry) => entry.isIntersecting)
+          .forEach((entry) => observer.unobserve(entry.target));
+      },
+      { threshold: 0.6 }
+    );
+    cards.forEach((card) => observer.observe(card));
+    return () => observer.disconnect();
+  }, [isTouch, hasScrolled]);
+
+  const isQuipShown = (id: Panel["id"]) =>
+    isTouch ? arrivedPanelIds.has(id) : hoveredPanelId === id;
   const riffOverlay = useCreationOverlay(riffCreatedPath);
   const clubOverlay = useCreationOverlay(clubCreatedPath);
 
@@ -164,6 +241,7 @@ export default function MyRiffsEmptyState({
       </h1>
 
       <div
+        ref={panelsRef}
         className="panels"
         style={{
           position: "relative",
@@ -172,18 +250,21 @@ export default function MyRiffsEmptyState({
           maxWidth: "1000px",
           display: "flex",
           alignItems: "center",
-          gap: "56px",
         }}
       >
         {PANELS.map((panel) => (
           <div
             key={panel.id}
-            style={{
-              flex: 1,
-              display: "flex",
-              justifyContent: "center",
-              transform: `rotate(${panel.rotate}deg) translateY(${panel.lift}px)`,
-            }}
+            className="panel-slot"
+            style={
+              {
+                flex: 1,
+                display: "flex",
+                justifyContent: "center",
+                "--panel-rotate": `${panel.rotate}deg`,
+                "--panel-lift": `${panel.lift}px`,
+              } as React.CSSProperties
+            }
           >
             {/* Semi-transparent "sticker card" — a black scrim (legibility)
                 plus a thin wash of the panel's own accent (identity), so
@@ -191,6 +272,7 @@ export default function MyRiffsEmptyState({
                 floating loose on the photo. Shadow turns the panel's accent
                 color on hover — a preview of the CTA's own hover color. */}
             <div
+              data-panel-id={panel.id}
               onMouseEnter={() => setHoveredPanelId(panel.id)}
               onMouseLeave={() => setHoveredPanelId(null)}
               style={{
@@ -213,11 +295,11 @@ export default function MyRiffsEmptyState({
                 transition: "box-shadow 0.1s ease",
               }}
             >
-              {/* Comic speech bubble — the one deliberately rounded shape in
-                  this build. Everything else in the design system is sharp
-                  corners, but a speech bubble reads as a speech bubble via
-                  its curve + tail, so the brutalist "no radius" rule gets a
-                  one-off exception here. */}
+              {/* Group-chat message — who'd send this text, then the
+                  bubble. The bubble is the one deliberately rounded shape in
+                  this build: a speech bubble reads as one via its curve +
+                  tail, so the brutalist "no radius" rule gets a one-off
+                  exception here. */}
               <div
                 aria-hidden
                 style={{
@@ -227,46 +309,72 @@ export default function MyRiffsEmptyState({
                   marginBottom: "16px",
                   zIndex: 3,
                   width: "max-content",
-                  maxWidth: "200px",
-                  padding: "12px 16px",
-                  backgroundColor: "#FFFFFF",
-                  border: "3px solid #000000",
-                  borderRadius: "20px",
-                  boxShadow: `4px 4px 0px 0px ${panel.accentColor}`,
-                  opacity: hoveredPanelId === panel.id ? 1 : 0,
+                  display: "flex",
+                  alignItems: "flex-end",
+                  gap: "10px",
+                  opacity: isQuipShown(panel.id) ? 1 : 0,
                   transform: `translateX(-50%) rotate(${panel.quipRotate}deg) translateY(${
-                    hoveredPanelId === panel.id ? 0 : 8
+                    isQuipShown(panel.id) ? 0 : 8
                   }px)`,
-                  transition: "opacity 0.15s ease, transform 0.15s ease",
+                  // Slower on touch, where it plays once as the card
+                  // arrives rather than tracking a cursor.
+                  transition: isTouch
+                    ? "opacity 0.3s ease, transform 0.3s ease"
+                    : "opacity 0.15s ease, transform 0.15s ease",
                   pointerEvents: "none",
                 }}
               >
-                <p
+                <Image
+                  src={panel.quipFrom.avatarSrc}
+                  alt=""
+                  width={QUIP_AVATAR_SIZE}
+                  height={QUIP_AVATAR_SIZE}
                   style={{
-                    fontFamily: "var(--font-dm-sans)",
-                    fontWeight: 700,
-                    fontSize: "13px",
-                    lineHeight: 1.4,
-                    color: "#000000",
-                    textAlign: "center",
-                    margin: 0,
-                  }}
-                >
-                  {panel.quip}
-                </p>
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: "-9px",
-                    left: "50%",
-                    transform: "translateX(-50%) rotate(45deg)",
-                    width: "16px",
-                    height: "16px",
-                    backgroundColor: "#FFFFFF",
-                    borderRight: "3px solid #000000",
-                    borderBottom: "3px solid #000000",
+                    flexShrink: 0,
+                    borderRadius: "50%",
+                    border: "2px solid #000000",
+                    objectFit: "cover",
                   }}
                 />
+                <div
+                  style={{
+                    position: "relative",
+                    maxWidth: "200px",
+                    padding: "12px 16px",
+                    backgroundColor: "#FFFFFF",
+                    border: "3px solid #000000",
+                    borderRadius: "20px",
+                    boxShadow: `4px 4px 0px 0px ${panel.accentColor}`,
+                  }}
+                >
+                  <p
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
+                      fontWeight: 700,
+                      fontSize: "13px",
+                      lineHeight: 1.4,
+                      color: "#000000",
+                      textAlign: "left",
+                      margin: 0,
+                    }}
+                  >
+                    {panel.quip}
+                  </p>
+                  {/* Tail on the bottom-left, pointing at the sender. */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: "-9px",
+                      left: "14px",
+                      transform: "rotate(45deg)",
+                      width: "16px",
+                      height: "16px",
+                      backgroundColor: "#FFFFFF",
+                      borderRight: "3px solid #000000",
+                      borderBottom: "3px solid #000000",
+                    }}
+                  />
+                </div>
               </div>
 
               <div
@@ -366,8 +474,21 @@ export default function MyRiffsEmptyState({
       </div>
 
       <style>{`
+        /* Stacked, each card needs room above it for its bubble (~66px
+           tall + 16px offset) — the gap between cards, plus padding over
+           the first one so its bubble clears the heading. Padding + the
+           heading's 32px margin = 112px, the same as the gap between
+           cards, so the whole stack keeps one rhythm. */
         .panels {
           flex-direction: column;
+          gap: 112px;
+          padding-top: 80px;
+        }
+        /* The lift staggers the cards' heights side by side; stacked, it
+           would just make the gaps between them uneven, so it's desktop
+           only. */
+        .panel-slot {
+          transform: rotate(var(--panel-rotate));
         }
         .hero-heading {
           font-size: 64px;
@@ -378,7 +499,12 @@ export default function MyRiffsEmptyState({
           .panels {
             flex-direction: row;
             align-items: flex-start;
+            gap: 56px;
             padding-top: 24px;
+          }
+          .panel-slot {
+            transform: rotate(var(--panel-rotate))
+              translateY(var(--panel-lift));
           }
           .hero-heading {
             font-size: 80px;
