@@ -141,10 +141,7 @@ export default function CreateClubOverlay({
       word="writeclub"
       cardOverlap={{ desktop: 420, mobile: 200 }}
     >
-      <OverlayStepHeader
-        heading={step === 1 ? "Same Friends, Endless Riffs" : undefined}
-        onBack={step > 1 ? handleBack : undefined}
-      />
+      <OverlayStepHeader onBack={step > 1 ? handleBack : undefined} />
 
       <AnimatePresence mode="wait" initial={false}>
         {step === 1 && (
