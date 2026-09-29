@@ -22,12 +22,21 @@ const ROWS: {
   },
 ];
 
+// Each brand color's gray in the in-progress mark — a design-system gray per
+// color, keeping their light/dark order (pink darkest, cyan lightest) so the
+// strokes still read as separate lines.
+const PROGRESS_GRAYS: Record<string, string> = {
+  "#01EFFC": "#CCCCCC",
+  "#C01582": "#808080",
+  "#EECF01": "#9C9C9C",
+};
+
 const STROKE_HEIGHT = 5.25;
 // The logo's shadow falls down and to the left.
 const SHADOW_OFFSET = 1;
 
-// "progress" is the in-progress riff's version — gray strokes on the same
-// black shadow, the colors still to come once it's revealed.
+// "progress" is the in-progress riff's version — grays on the same black
+// shadow, the colors still to come once it's revealed.
 export default function RiffMark({
   width = 20,
   variant = "color",
@@ -61,7 +70,11 @@ export default function RiffMark({
                 y={row.y}
                 width={stroke.width}
                 height={STROKE_HEIGHT}
-                fill={variant === "progress" ? "#CCCCCC" : stroke.fill}
+                fill={
+                  variant === "progress"
+                    ? PROGRESS_GRAYS[stroke.fill]
+                    : stroke.fill
+                }
               />
             </g>
           ))}
