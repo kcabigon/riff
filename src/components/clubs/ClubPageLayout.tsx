@@ -1356,11 +1356,12 @@ export default function ClubPageLayout({
                       riffId={riff.id}
                       title={getRiffDisplayTitle(riff)}
                       isMobile={isMobile}
+                      size="small"
                     />
                     {newComments > 0 && (
                       <svg
-                        width="24"
-                        height="24"
+                        width="18"
+                        height="18"
                         viewBox="0 0 16 16"
                         fill="none"
                         style={{ flexShrink: 0 }}
@@ -1693,20 +1694,26 @@ export default function ClubPageLayout({
 // On mobile there's no hover to play the mark or reveal the underline, so the
 // link cue has to be static: an always-on green underline and a plain chevron,
 // the usual "tap to go" sign in a phone list. No mark there.
+//
+// "large" is Current Read (32px, matching Current Riff); "small" is Past Riffs
+// at the type scale's h2 (24px), with the mark and chevron scaled to match.
 function RiffTitleLink({
   riffId,
   title,
   isMobile,
+  size = "large",
 }: {
   riffId: string;
   title: string;
   isMobile: boolean;
+  size?: "large" | "small";
 }) {
+  const iconSize = size === "large" ? 24 : 18;
   return (
     <h2
       style={{
         fontFamily: "var(--font-dm-serif-text)",
-        fontSize: "32px",
+        fontSize: size === "large" ? "32px" : "24px",
         fontWeight: 400,
         margin: 0,
       }}
@@ -1717,7 +1724,11 @@ function RiffTitleLink({
       >
         <span className="riff-row-link-text">{title}</span>
         <span className="riff-row-link-mark" aria-hidden="true">
-          {isMobile ? <ChevronIcon size={24} /> : <RiffMark width={24} />}
+          {isMobile ? (
+            <ChevronIcon size={iconSize} />
+          ) : (
+            <RiffMark width={iconSize} />
+          )}
         </span>
       </Link>
     </h2>
