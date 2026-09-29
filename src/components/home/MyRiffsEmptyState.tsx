@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import NoiseBackground from "@/components/NoiseBackground";
 import CTAButton from "@/components/CTAButton";
+import Avatar from "@/components/shared/Avatar";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import {
   useCreationOverlay,
@@ -324,17 +325,14 @@ export default function MyRiffsEmptyState({
                   pointerEvents: "none",
                 }}
               >
-                <Image
-                  src={panel.quipFrom.avatarSrc}
-                  alt=""
-                  width={QUIP_AVATAR_SIZE}
-                  height={QUIP_AVATAR_SIZE}
-                  style={{
-                    flexShrink: 0,
-                    borderRadius: "50%",
-                    border: "2px solid #000000",
-                    objectFit: "cover",
+                <Avatar
+                  user={{
+                    id: panel.id,
+                    name: panel.quipFrom.name,
+                    username: null,
+                    avatarUrl: panel.quipFrom.avatarSrc,
                   }}
+                  size={QUIP_AVATAR_SIZE}
                 />
                 <div
                   style={{
