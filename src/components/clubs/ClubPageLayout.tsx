@@ -823,132 +823,6 @@ export default function ClubPageLayout({
           </div>
         )}
 
-        {/* Current Read section — revealed riffs the user hasn't fully read yet.
-            Sits above Current Riff deliberately: when a cadence reveals one
-            volume and opens the next a tick later, the pieces waiting to be read
-            are the more immediate thing. */}
-        {(() => {
-          if (currentReadRiffs.length === 0) return null;
-
-          return (
-            <div style={{ marginBottom: "56px" }}>
-              <SectionHeading text="CURRENT READ" color="#01EFFC" width={140} />
-
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "32px",
-                  marginTop: "16px",
-                }}
-              >
-                {currentReadRiffs.map((riff) => {
-                  const authorPieces = pieceByAuthor(riff);
-                  // Unread pieces lead here instead of the viewer's own —
-                  // stable sort preserves sortedParticipants' tier/recency
-                  // order within each unread/read group.
-                  const piecesToShow = sortedParticipants(
-                    riff.participants,
-                    authorPieces
-                  )
-                    .filter((p) => authorPieces[p.user.id]?.submittedAt)
-                    .sort(
-                      (a, b) =>
-                        Number(!isPieceUnread(authorPieces[a.user.id])) -
-                        Number(!isPieceUnread(authorPieces[b.user.id]))
-                    );
-
-                  const renderCard = (p: RiffParticipant) => {
-                    const piece = authorPieces[p.user.id];
-                    return (
-                      <PieceCard
-                        key={p.user.id}
-                        piece={{
-                          id: piece.id,
-                          title: piece.title,
-                          coverImage: piece.coverImage,
-                          wordCount: piece.wordCount,
-                          author: p.user,
-                        }}
-                        isRead={!isPieceUnread(piece)}
-                        isOwnPiece={p.user.id === currentUserId}
-                        onClick={() =>
-                          router.push(`/read/${piece.id}?riff=${riff.id}`)
-                        }
-                      />
-                    );
-                  };
-
-                  const totalComments = commentCounts[riff.id] ?? 0;
-
-                  return (
-                    <div key={riff.id}>
-                      {/* Title + metadata sized to match Current Riff's
-                          header. Comments over words: talk already happening
-                          is the reason to open the riff page. */}
-                      <div
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "4px",
-                          marginBottom: "24px",
-                        }}
-                      >
-                        <RiffTitleLink
-                          riffId={riff.id}
-                          title={getRiffDisplayTitle(riff)}
-                          isMobile={isMobile}
-                        />
-                        <p
-                          style={{
-                            fontFamily: "var(--font-dm-sans)",
-                            fontSize: "16px",
-                            fontWeight: 300,
-                            color: "#808080",
-                            margin: 0,
-                          }}
-                        >
-                          Revealed:{" "}
-                          <span style={{ color: "#000000" }}>
-                            {formatDateShort(riff.updatedAt)}
-                          </span>
-                          {/* Hidden at zero — "Comments: 0" makes a fresh
-                              reveal look dead instead of new. */}
-                          {totalComments > 0 && (
-                            <>
-                              {" · "}
-                              Comments:{" "}
-                              <span style={{ color: "#000000" }}>
-                                {totalComments.toLocaleString()}
-                              </span>
-                            </>
-                          )}
-                        </p>
-                      </div>
-                      {isMobile ? (
-                        <MobileCardCarousel>
-                          {piecesToShow.map(renderCard)}
-                        </MobileCardCarousel>
-                      ) : (
-                        <div
-                          style={{
-                            display: "grid",
-                            gridTemplateColumns:
-                              "repeat(auto-fill, minmax(280px, 1fr))",
-                            gap: "24px",
-                          }}
-                        >
-                          {piecesToShow.map(renderCard)}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })()}
-
         {/* Current Riff section — hidden entirely when there's no active riff.
             It used to stay open for regular members to tell them the host would
             start the next one soon, which a cadence makes untrue: the cron
@@ -1255,6 +1129,134 @@ export default function ClubPageLayout({
                   </div>
                 );
               })()}
+            </div>
+          );
+        })()}
+
+        {/* Current Read section — revealed riffs the user hasn't fully read yet.
+            Below Current Riff, next to Past Riffs: writing on top, then the
+            reading sections together, so the page keeps one shape instead of
+            sandwiching the live riff between two reading rows. Unread pieces
+            losing the top spot costs little — the reveal and reading-reminder
+            emails link straight to the riff page, not here. */}
+        {(() => {
+          if (currentReadRiffs.length === 0) return null;
+
+          return (
+            <div style={{ marginBottom: "56px" }}>
+              <SectionHeading text="CURRENT READ" color="#01EFFC" width={140} />
+
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "32px",
+                  marginTop: "16px",
+                }}
+              >
+                {currentReadRiffs.map((riff) => {
+                  const authorPieces = pieceByAuthor(riff);
+                  // Unread pieces lead here instead of the viewer's own —
+                  // stable sort preserves sortedParticipants' tier/recency
+                  // order within each unread/read group.
+                  const piecesToShow = sortedParticipants(
+                    riff.participants,
+                    authorPieces
+                  )
+                    .filter((p) => authorPieces[p.user.id]?.submittedAt)
+                    .sort(
+                      (a, b) =>
+                        Number(!isPieceUnread(authorPieces[a.user.id])) -
+                        Number(!isPieceUnread(authorPieces[b.user.id]))
+                    );
+
+                  const renderCard = (p: RiffParticipant) => {
+                    const piece = authorPieces[p.user.id];
+                    return (
+                      <PieceCard
+                        key={p.user.id}
+                        piece={{
+                          id: piece.id,
+                          title: piece.title,
+                          coverImage: piece.coverImage,
+                          wordCount: piece.wordCount,
+                          author: p.user,
+                        }}
+                        isRead={!isPieceUnread(piece)}
+                        isOwnPiece={p.user.id === currentUserId}
+                        onClick={() =>
+                          router.push(`/read/${piece.id}?riff=${riff.id}`)
+                        }
+                      />
+                    );
+                  };
+
+                  const totalComments = commentCounts[riff.id] ?? 0;
+
+                  return (
+                    <div key={riff.id}>
+                      {/* Title + metadata sized to match Current Riff's
+                          header. Comments over words: talk already happening
+                          is the reason to open the riff page. */}
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "4px",
+                          marginBottom: "24px",
+                        }}
+                      >
+                        <RiffTitleLink
+                          riffId={riff.id}
+                          title={getRiffDisplayTitle(riff)}
+                          isMobile={isMobile}
+                        />
+                        <p
+                          style={{
+                            fontFamily: "var(--font-dm-sans)",
+                            fontSize: "16px",
+                            fontWeight: 300,
+                            color: "#808080",
+                            margin: 0,
+                          }}
+                        >
+                          Revealed:{" "}
+                          <span style={{ color: "#000000" }}>
+                            {formatDateShort(riff.updatedAt)}
+                          </span>
+                          {/* Hidden at zero — "Comments: 0" makes a fresh
+                              reveal look dead instead of new. */}
+                          {totalComments > 0 && (
+                            <>
+                              {" · "}
+                              Comments:{" "}
+                              <span style={{ color: "#000000" }}>
+                                {totalComments.toLocaleString()}
+                              </span>
+                            </>
+                          )}
+                        </p>
+                      </div>
+                      {isMobile ? (
+                        <MobileCardCarousel>
+                          {piecesToShow.map(renderCard)}
+                        </MobileCardCarousel>
+                      ) : (
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns:
+                              "repeat(auto-fill, minmax(280px, 1fr))",
+                            gap: "24px",
+                          }}
+                        >
+                          {piecesToShow.map(renderCard)}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           );
         })()}
