@@ -1210,6 +1210,7 @@ export default function ClubPageLayout({
                           riffId={riff.id}
                           title={getRiffDisplayTitle(riff)}
                           isMobile={isMobile}
+                          caret
                         />
                         <p
                           style={{
@@ -1432,35 +1433,14 @@ export default function ClubPageLayout({
           35% { transform: scaleX(0.25); }
           100% { transform: scaleX(1); }
         }
-        /* Current Riff is the live one. Its gray mark's last stroke blinks
-           like a text caret (the line still being written)... */
+        /* Anything current — the live riff's gray mark, Current Read's
+           colored one — blinks its last stroke like a text caret: the line
+           still being written, or still being read. */
         .riff-mark-caret {
           animation: riff-caret-blink 1.06s steps(1) infinite;
         }
         @keyframes riff-caret-blink {
           50% { opacity: 0; }
-        }
-        /* ...and a red dot pings before the days left, like a recording
-           light. */
-        .riff-live-dot {
-          position: relative;
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background-color: #DC2626;
-          flex-shrink: 0;
-        }
-        .riff-live-dot::after {
-          content: "";
-          position: absolute;
-          inset: 0;
-          border-radius: 50%;
-          background-color: #DC2626;
-          animation: riff-live-ping 1.6s ease-out infinite;
-        }
-        @keyframes riff-live-ping {
-          0% { transform: scale(1); opacity: 0.6; }
-          100% { transform: scale(2.75); opacity: 0; }
         }
         /* The new-comment bubble pops in after the mark has re-written
            itself, like a message arriving. */
@@ -1479,8 +1459,7 @@ export default function ClubPageLayout({
         @media (prefers-reduced-motion: reduce) {
           .riff-row-link:hover .riff-mark-row,
           .riff-row-link:hover .riff-comment-icon,
-          .riff-mark-caret,
-          .riff-live-dot::after {
+          .riff-mark-caret {
             animation: none;
           }
         }
@@ -1713,12 +1692,15 @@ function RiffTitleLink({
   title,
   isMobile,
   size = "large",
+  caret = false,
   trailing,
 }: {
   riffId: string;
   title: string;
   isMobile: boolean;
   size?: "large" | "small";
+  // Blinks the mark's last stroke — for current riffs (Current Read).
+  caret?: boolean;
   // Rides inside the link (after the mark) so it shares the hover and the
   // tap target — Past Riffs' new-comment icon.
   trailing?: React.ReactNode;
@@ -1744,7 +1726,7 @@ function RiffTitleLink({
           {isMobile ? (
             <ChevronIcon size={iconSize} />
           ) : (
-            <RiffMark width={iconSize} />
+            <RiffMark width={iconSize} caret={caret} />
           )}
         </span>
         {!isMobile && trailing}
@@ -1753,9 +1735,7 @@ function RiffTitleLink({
   );
 }
 
-// The current riff's time left. A pinging red dot marks it as the live riff,
-// and the last 3 days go bold. Round on purpose, like the scroll arrow: a
-// status light, not a layout element.
+// The current riff's time left, bold in the last 3 days.
 function DaysLeft({
   deadline,
   deadlinePassed,
@@ -1777,16 +1757,7 @@ function DaysLeft({
 
   const days = daysUntil(new Date(deadline));
   return (
-    <p
-      style={{
-        ...style,
-        fontWeight: days <= 3 ? 700 : 300,
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "8px",
-      }}
-    >
-      <span className="riff-live-dot" aria-hidden="true" />
+    <p style={{ ...style, fontWeight: days <= 3 ? 700 : 300 }}>
       {`${days} ${days === 1 ? "day" : "days"} left`}
     </p>
   );
