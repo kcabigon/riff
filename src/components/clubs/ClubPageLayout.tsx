@@ -22,7 +22,7 @@ import ClubSettingsModal from "@/components/clubs/ClubSettingsModal";
 import ShareLinkOptions from "@/components/shared/ShareLinkOptions";
 import CloseButton from "@/components/CloseButton";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
-import { ArrowIcon } from "@/components/shared/icons";
+import RiffMark from "@/components/shared/RiffMark";
 import type { DropdownItem } from "@/components/shared/Dropdown";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
 import { useIsMobile } from "@/hooks/useMediaQuery";
@@ -1429,12 +1429,36 @@ export default function ClubPageLayout({
           outline: 2px solid #00FF66;
           outline-offset: 2px;
         }
-        .riff-row-link-arrow {
+        .riff-row-link-mark {
           display: flex;
-          transition: transform 0.15s ease;
         }
-        .riff-row-link:hover .riff-row-link-arrow {
-          transform: translateX(4px);
+        /* Hover re-writes the mark: each stroke pulls back and draws out
+           again, top to bottom, like lines being written. */
+        .riff-row-link-mark .riff-mark-row {
+          transform-box: fill-box;
+          transform-origin: left center;
+        }
+        .riff-row-link:hover .riff-mark-row {
+          animation: riff-mark-write 0.45s ease-out both;
+        }
+        .riff-row-link:hover .riff-mark-row:nth-child(2) {
+          animation-delay: 0.06s;
+        }
+        .riff-row-link:hover .riff-mark-row:nth-child(3) {
+          animation-delay: 0.12s;
+        }
+        .riff-row-link:hover .riff-mark-row:nth-child(4) {
+          animation-delay: 0.18s;
+        }
+        @keyframes riff-mark-write {
+          0% { transform: scaleX(1); }
+          35% { transform: scaleX(0.25); }
+          100% { transform: scaleX(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .riff-row-link:hover .riff-mark-row {
+            animation: none;
+          }
         }
       `}</style>
 
@@ -1650,9 +1674,10 @@ export default function ClubPageLayout({
   );
 }
 
-// A riff row's title as a link to its riff page. The trailing arrow is always
-// visible — a title that merely underlines on hover never told anyone the riff
-// page (read-by strip, comment feed) was one click away.
+// A riff row's title as a link to its riff page. The trailing Riff mark is
+// always visible — a title that merely underlines on hover never told anyone
+// the riff page (read-by strip, comment feed) was one click away — and it
+// re-writes itself on hover.
 function RiffTitleLink({
   riffId,
   title,
@@ -1674,8 +1699,8 @@ function RiffTitleLink({
     >
       <Link href={`/riffs/${riffId}`} className="riff-row-link">
         <span className="riff-row-link-text">{title}</span>
-        <span className="riff-row-link-arrow" aria-hidden="true">
-          <ArrowIcon size={size === "large" ? 24 : 16} />
+        <span className="riff-row-link-mark" aria-hidden="true">
+          <RiffMark width={size === "large" ? 24 : 16} />
         </span>
       </Link>
     </Heading>
