@@ -1452,7 +1452,7 @@ export default function ClubPageLayout({
         }}
         clubId={club.id}
         cadence={clubCadence}
-        hasActiveRiff={activeRiff !== null}
+        activeRiff={activeRiff}
       />
 
       <DeleteClubConfirmModal

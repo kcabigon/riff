@@ -10,8 +10,10 @@ import {
   CadenceValue,
   CADENCE_INTERVAL_OPTIONS,
   CADENCE_OTHER_OPTIONS,
+  getCadenceLabel,
   isIntervalCadence,
 } from "@/lib/cadence";
+import { formatDateShort } from "@/lib/riff-utils";
 
 interface CadenceSettingsModalProps {
   isOpen: boolean;
@@ -21,7 +23,9 @@ interface CadenceSettingsModalProps {
   onUpdated: (cadence: CadenceValue, riffOpened: boolean) => void;
   clubId: string;
   cadence: CadenceValue;
-  hasActiveRiff: boolean;
+  // The club's running riff, if any — whether saving opens one, and what the
+  // helper line says happens to it.
+  activeRiff: { deadline: string | null } | null;
 }
 
 export default function CadenceSettingsModal({
@@ -30,7 +34,7 @@ export default function CadenceSettingsModal({
   onUpdated,
   clubId,
   cadence,
-  hasActiveRiff,
+  activeRiff,
 }: CadenceSettingsModalProps) {
   const [selected, setSelected] = useState<CadenceValue>(cadence);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,9 +52,29 @@ export default function CadenceSettingsModal({
   // Freestyle or Paused onto a rhythm, with nothing running, opens a riff on
   // save (see openRiffIfDue) — so the button says that instead of "Save".
   const willOpenRiff =
-    !hasActiveRiff &&
-    isIntervalCadence(selected) &&
-    !isIntervalCadence(cadence);
+    !activeRiff && isIntervalCadence(selected) && !isIntervalCadence(cadence);
+
+  // What the change means for the club, in one line under the options. The
+  // cadence and a riff's deadline are easy to mix up mid-riff: a new cadence
+  // never moves the running riff's deadline, and Freestyle clubs aren't
+  // revealed by the cadence sweep.
+  const helperText = (() => {
+    if (selected === cadence) return null;
+    if (willOpenRiff) {
+      return "Saving starts a new riff now and emails the club.";
+    }
+    if (!activeRiff) return null;
+    const when = activeRiff.deadline
+      ? `on ${formatDateShort(activeRiff.deadline)}`
+      : "at its deadline";
+    if (selected === "MANUAL") {
+      return "Your current riff won't reveal on its own. You'll reveal it when you're ready.";
+    }
+    if (selected === "PAUSED") {
+      return `Your current riff still reveals ${when}. Automatic riffs will be paused.`;
+    }
+    return `Your current riff still ends ${when}, which you can change in the riff's settings. ${getCadenceLabel(selected)} starts with the next riff.`;
+  })();
 
   const handleSave = async () => {
     setIsSubmitting(true);
@@ -115,6 +139,31 @@ export default function CadenceSettingsModal({
             onSelect={setSelected}
           />
         </div>
+
+        {helperText && (
+          // A white box, like the co-host modal's info box: plain text on the
+          // noise background is hard to read.
+          <div
+            style={{
+              backgroundColor: "#FFFFFF",
+              border: "2px solid #000000",
+              padding: "16px",
+            }}
+          >
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "16px",
+                fontWeight: 300,
+                color: "#000000",
+                margin: 0,
+                lineHeight: 1.6,
+              }}
+            >
+              {helperText}
+            </p>
+          </div>
+        )}
 
         <FormErrorText message={error} />
 
