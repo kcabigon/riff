@@ -896,7 +896,6 @@ export default function ClubPageLayout({
                         <RiffTitleLink
                           riffId={riff.id}
                           title={getRiffDisplayTitle(riff)}
-                          size="large"
                         />
                         <p
                           style={{
@@ -1349,7 +1348,6 @@ export default function ClubPageLayout({
                     <RiffTitleLink
                       riffId={riff.id}
                       title={getRiffDisplayTitle(riff)}
-                      size="small"
                     />
                     {newComments > 0 && (
                       <svg
@@ -1678,21 +1676,12 @@ export default function ClubPageLayout({
 // always visible — a title that merely underlines on hover never told anyone
 // the riff page (read-by strip, comment feed) was one click away — and it
 // re-writes itself on hover.
-function RiffTitleLink({
-  riffId,
-  title,
-  size,
-}: {
-  riffId: string;
-  title: string;
-  size: "large" | "small";
-}) {
-  const Heading = size === "large" ? "h2" : "h3";
+function RiffTitleLink({ riffId, title }: { riffId: string; title: string }) {
   return (
-    <Heading
+    <h2
       style={{
         fontFamily: "var(--font-dm-serif-text)",
-        fontSize: size === "large" ? "32px" : "20px",
+        fontSize: "32px",
         fontWeight: 400,
         margin: 0,
       }}
@@ -1703,6 +1692,6 @@ function RiffTitleLink({
           <RiffMark width={24} />
         </span>
       </Link>
-    </Heading>
+    </h2>
   );
 }
