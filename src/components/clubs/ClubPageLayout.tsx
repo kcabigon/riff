@@ -46,6 +46,7 @@ import AssignCoHostModal from "@/components/clubs/AssignCoHostModal";
 import CadenceSettingsModal from "@/components/clubs/CadenceSettingsModal";
 import ClubStatsRow from "@/components/clubs/ClubStatsRow";
 import ClubCadenceLine from "@/components/clubs/ClubCadenceLine";
+import RiffPromptEditor from "@/components/clubs/RiffPromptEditor";
 import { isIntervalCadence, type CadenceValue } from "@/lib/cadence";
 
 interface ClubMember {
@@ -997,6 +998,19 @@ export default function ClubPageLayout({
               : []),
           ];
 
+          // Keyed on the prompt too, so an edit made through the Edit riff
+          // modal (which refreshes the page) resets the editor's shown value.
+          const promptEditor = (style: React.CSSProperties) => (
+            <RiffPromptEditor
+              key={`${activeRiff.id}:${activeRiff.prompt ?? ""}`}
+              riffId={activeRiff.id}
+              prompt={activeRiff.prompt}
+              canEdit={isAdmin || isCoHost}
+              onSaved={() => router.refresh()}
+              style={style}
+            />
+          );
+
           return (
             <div style={{ marginBottom: "56px" }}>
               <SectionHeading text="CURRENT RIFF" color="#00FF66" width={121} />
@@ -1097,33 +1111,10 @@ export default function ClubPageLayout({
                     )}
                   </div>
 
-                  {/* Prompt row — own line below, when the riff was
-                          created with one. Capped to a readable line length
-                          instead of spanning the full (up to 1240px) grid
-                          width. */}
-                  {activeRiff.prompt && (
-                    <div
-                      style={{
-                        marginTop: "24px",
-                        borderLeft: "2px solid #000000",
-                        paddingLeft: "16px",
-                        maxWidth: "780px",
-                      }}
-                    >
-                      <p
-                        style={{
-                          fontFamily: "var(--font-dm-sans)",
-                          fontSize: "16px",
-                          fontWeight: 300,
-                          color: "#000000",
-                          margin: 0,
-                          lineHeight: 1.5,
-                        }}
-                      >
-                        {activeRiff.prompt}
-                      </p>
-                    </div>
-                  )}
+                  {/* Prompt row — own line below. Capped to a readable
+                      line length instead of spanning the full (up to 1240px)
+                      grid width. */}
+                  {promptEditor({ marginTop: "24px" })}
                 </>
               ) : (
                 <div
@@ -1208,29 +1199,7 @@ export default function ClubPageLayout({
                         />
                       )}
                     </div>
-                    {activeRiff.prompt && (
-                      <div
-                        style={{
-                          marginTop: "20px",
-                          borderLeft: "2px solid #000000",
-                          paddingLeft: "16px",
-                          maxWidth: "780px",
-                        }}
-                      >
-                        <p
-                          style={{
-                            fontFamily: "var(--font-dm-sans)",
-                            fontSize: "16px",
-                            fontWeight: 300,
-                            color: "#000000",
-                            margin: 0,
-                            lineHeight: 1.5,
-                          }}
-                        >
-                          {activeRiff.prompt}
-                        </p>
-                      </div>
-                    )}
+                    {promptEditor({ marginTop: "20px" })}
                   </div>
 
                   <div style={{ flexShrink: 0 }}>
