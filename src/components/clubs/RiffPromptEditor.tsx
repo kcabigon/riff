@@ -139,6 +139,10 @@ export default function RiffPromptEditor({
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => {
+              // readOnly doesn't stop key handlers: mid-save, Escape would
+              // close the editor on an edit that still lands (or hide its
+              // error), and Cmd+Enter would send the save twice.
+              if (isSaving) return;
               if (e.key === "Escape") cancel();
               if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) save();
             }}
