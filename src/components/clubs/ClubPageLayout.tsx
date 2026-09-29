@@ -2,9 +2,11 @@
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import NavBar from "@/components/clubs/NavBar";
 import AvatarStack from "@/components/shared/AvatarStack";
 import MobileCardCarousel from "@/components/shared/MobileCardCarousel";
+import HorizontalScrollRow from "@/components/shared/HorizontalScrollRow";
 import ProgressCard from "@/components/riffs/ProgressCard";
 import PieceCard from "@/components/riffs/PieceCard";
 import DraftChoiceTrigger from "@/components/riffs/DraftChoiceTrigger";
@@ -20,6 +22,8 @@ import ClubSettingsModal from "@/components/clubs/ClubSettingsModal";
 import ShareLinkOptions from "@/components/shared/ShareLinkOptions";
 import CloseButton from "@/components/CloseButton";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
+import RiffMark from "@/components/shared/RiffMark";
+import { ChevronIcon } from "@/components/shared/icons";
 import type { DropdownItem } from "@/components/shared/Dropdown";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
 import { useIsMobile } from "@/hooks/useMediaQuery";
@@ -35,6 +39,7 @@ import {
   allPiecesSubmitted,
   daysUntil,
   formatDateLong,
+  formatDateShort,
 } from "@/lib/riff-utils";
 import DeleteClubConfirmModal from "@/components/clubs/DeleteClubConfirmModal";
 import LeaveClubConfirmModal from "@/components/clubs/LeaveClubConfirmModal";
@@ -43,6 +48,7 @@ import AssignCoHostModal from "@/components/clubs/AssignCoHostModal";
 import CadenceSettingsModal from "@/components/clubs/CadenceSettingsModal";
 import ClubStatsRow from "@/components/clubs/ClubStatsRow";
 import ClubCadenceLine from "@/components/clubs/ClubCadenceLine";
+import RiffPromptEditor from "@/components/clubs/RiffPromptEditor";
 import { isIntervalCadence, type CadenceValue } from "@/lib/cadence";
 
 interface ClubMember {
@@ -88,6 +94,9 @@ interface Riff {
   deadline: string | null;
   status: string;
   createdAt: string;
+  // Stands in for the reveal date once a riff is REVEALED — the same proxy
+  // page.tsx (Current Read vs Past Riffs split) and the riff page header use.
+  updatedAt: string;
   creator: {
     id: string;
     name: string | null;
@@ -118,6 +127,7 @@ interface ClubPageLayoutProps {
   readCounts: Record<string, number>;
   readPieceIds: string[];
   newCommentCounts: Record<string, number>;
+  commentCounts: Record<string, number>;
   completedRiffs: Riff[];
   stats: {
     riffCount: number;
@@ -209,6 +219,7 @@ export default function ClubPageLayout({
   readCounts,
   readPieceIds,
   newCommentCounts,
+  commentCounts,
   completedRiffs,
   stats,
   predictedVolumeNumber,
@@ -812,103 +823,6 @@ export default function ClubPageLayout({
           </div>
         )}
 
-        {/* Current Read section — revealed riffs the user hasn't fully read yet.
-            Sits above Current Riff deliberately: when a cadence reveals one
-            volume and opens the next a tick later, the pieces waiting to be read
-            are the more immediate thing. */}
-        {(() => {
-          if (currentReadRiffs.length === 0) return null;
-
-          return (
-            <div style={{ marginBottom: "56px" }}>
-              <SectionHeading text="CURRENT READ" color="#01EFFC" width={140} />
-
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "32px",
-                  marginTop: "16px",
-                }}
-              >
-                {currentReadRiffs.map((riff) => {
-                  const authorPieces = pieceByAuthor(riff);
-                  // Unread pieces lead here instead of the viewer's own —
-                  // stable sort preserves sortedParticipants' tier/recency
-                  // order within each unread/read group.
-                  const piecesToShow = sortedParticipants(
-                    riff.participants,
-                    authorPieces
-                  )
-                    .filter((p) => authorPieces[p.user.id]?.submittedAt)
-                    .sort(
-                      (a, b) =>
-                        Number(!isPieceUnread(authorPieces[a.user.id])) -
-                        Number(!isPieceUnread(authorPieces[b.user.id]))
-                    );
-
-                  const renderCard = (p: RiffParticipant) => {
-                    const piece = authorPieces[p.user.id];
-                    return (
-                      <PieceCard
-                        key={p.user.id}
-                        piece={{
-                          id: piece.id,
-                          title: piece.title,
-                          coverImage: piece.coverImage,
-                          wordCount: piece.wordCount,
-                          author: p.user,
-                        }}
-                        isRead={!isPieceUnread(piece)}
-                        isOwnPiece={p.user.id === currentUserId}
-                        onClick={() =>
-                          router.push(`/read/${piece.id}?riff=${riff.id}`)
-                        }
-                      />
-                    );
-                  };
-
-                  return (
-                    <div key={riff.id}>
-                      <h3
-                        onClick={() => router.push(`/riffs/${riff.id}`)}
-                        className="riff-row-link"
-                        style={{
-                          cursor: "pointer",
-                          display: "inline-block",
-                          fontFamily: "var(--font-dm-serif-text)",
-                          fontSize: "20px",
-                          fontWeight: 400,
-                          color: "#000000",
-                          margin: "0 0 12px 0",
-                        }}
-                      >
-                        {getRiffDisplayTitle(riff)}
-                      </h3>
-                      {isMobile ? (
-                        <MobileCardCarousel>
-                          {piecesToShow.map(renderCard)}
-                        </MobileCardCarousel>
-                      ) : (
-                        <div
-                          style={{
-                            display: "grid",
-                            gridTemplateColumns:
-                              "repeat(auto-fill, minmax(280px, 1fr))",
-                            gap: "24px",
-                          }}
-                        >
-                          {piecesToShow.map(renderCard)}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })()}
-
         {/* Current Riff section — hidden entirely when there's no active riff.
             It used to stay open for regular members to tell them the host would
             start the next one soon, which a cadence makes untrue: the cron
@@ -965,6 +879,19 @@ export default function ClubPageLayout({
               : []),
           ];
 
+          // Keyed on the prompt too, so an edit made through the Edit riff
+          // modal (which refreshes the page) resets the editor's shown value.
+          const promptEditor = (style: React.CSSProperties) => (
+            <RiffPromptEditor
+              key={`${activeRiff.id}:${activeRiff.prompt ?? ""}`}
+              riffId={activeRiff.id}
+              prompt={activeRiff.prompt}
+              canEdit={isAdmin || isCoHost}
+              onSaved={() => router.refresh()}
+              style={style}
+            />
+          );
+
           return (
             <div style={{ marginBottom: "56px" }}>
               <SectionHeading text="CURRENT RIFF" color="#00FF66" width={121} />
@@ -995,7 +922,9 @@ export default function ClubPageLayout({
                     >
                       <h2
                         style={{
-                          display: "inline-block",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "8px",
                           fontFamily: "var(--font-dm-serif-text)",
                           fontSize: "32px",
                           fontWeight: 400,
@@ -1004,6 +933,7 @@ export default function ClubPageLayout({
                         }}
                       >
                         {getRiffDisplayTitle(activeRiff, predictedVolumeNumber)}
+                        <RiffMark width={24} variant="progress" caret />
                       </h2>
                       <div
                         style={{
@@ -1028,26 +958,10 @@ export default function ClubPageLayout({
                         {!deadlinePassed && activeRiff.deadline && (
                           <span style={{ color: "#808080" }}>·</span>
                         )}
-                        <p
-                          style={{
-                            fontFamily: "var(--font-dm-sans)",
-                            fontSize: "16px",
-                            fontWeight: 300,
-                            color: activeRiff.deadline ? "#DC2626" : "#808080",
-                            margin: 0,
-                          }}
-                        >
-                          {deadlinePassed
-                            ? "Deadline passed"
-                            : activeRiff.deadline
-                              ? (() => {
-                                  const days = daysUntil(
-                                    new Date(activeRiff.deadline)
-                                  );
-                                  return `${days} ${days === 1 ? "day" : "days"} left`;
-                                })()
-                              : "No deadline"}
-                        </p>
+                        <DaysLeft
+                          deadline={activeRiff.deadline}
+                          deadlinePassed={deadlinePassed}
+                        />
                         {(isAdmin || isCoHost) && (
                           <ThreeDotButton
                             variant="light"
@@ -1065,33 +979,10 @@ export default function ClubPageLayout({
                     )}
                   </div>
 
-                  {/* Prompt row — own line below, when the riff was
-                          created with one. Capped to a readable line length
-                          instead of spanning the full (up to 1240px) grid
-                          width. */}
-                  {activeRiff.prompt && (
-                    <div
-                      style={{
-                        marginTop: "24px",
-                        borderLeft: "2px solid #000000",
-                        paddingLeft: "16px",
-                        maxWidth: "780px",
-                      }}
-                    >
-                      <p
-                        style={{
-                          fontFamily: "var(--font-dm-sans)",
-                          fontSize: "16px",
-                          fontWeight: 300,
-                          color: "#000000",
-                          margin: 0,
-                          lineHeight: 1.5,
-                        }}
-                      >
-                        {activeRiff.prompt}
-                      </p>
-                    </div>
-                  )}
+                  {/* Prompt row — own line below. Capped to a readable
+                      line length instead of spanning the full (up to 1240px)
+                      grid width. */}
+                  {promptEditor({ marginTop: "24px" })}
                 </>
               ) : (
                 <div
@@ -1114,7 +1005,9 @@ export default function ClubPageLayout({
                   >
                     <h2
                       style={{
-                        display: "inline-block",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "8px",
                         fontFamily: "var(--font-dm-serif-text)",
                         fontSize: "32px",
                         fontWeight: 400,
@@ -1123,6 +1016,7 @@ export default function ClubPageLayout({
                       }}
                     >
                       {getRiffDisplayTitle(activeRiff, predictedVolumeNumber)}
+                      <RiffMark width={24} variant="progress" caret />
                     </h2>
                     <div
                       style={{
@@ -1148,26 +1042,10 @@ export default function ClubPageLayout({
                       {!deadlinePassed && activeRiff.deadline && (
                         <span style={{ color: "#808080" }}>·</span>
                       )}
-                      <p
-                        style={{
-                          fontFamily: "var(--font-dm-sans)",
-                          fontSize: "16px",
-                          fontWeight: 300,
-                          color: activeRiff.deadline ? "#DC2626" : "#808080",
-                          margin: 0,
-                        }}
-                      >
-                        {deadlinePassed
-                          ? "Deadline passed"
-                          : activeRiff.deadline
-                            ? (() => {
-                                const days = daysUntil(
-                                  new Date(activeRiff.deadline)
-                                );
-                                return `${days} ${days === 1 ? "day" : "days"} left`;
-                              })()
-                            : "No deadline"}
-                      </p>
+                      <DaysLeft
+                        deadline={activeRiff.deadline}
+                        deadlinePassed={deadlinePassed}
+                      />
                       {(isAdmin || isCoHost) && (
                         <ThreeDotButton
                           variant="light"
@@ -1176,29 +1054,7 @@ export default function ClubPageLayout({
                         />
                       )}
                     </div>
-                    {activeRiff.prompt && (
-                      <div
-                        style={{
-                          marginTop: "20px",
-                          borderLeft: "2px solid #000000",
-                          paddingLeft: "16px",
-                          maxWidth: "780px",
-                        }}
-                      >
-                        <p
-                          style={{
-                            fontFamily: "var(--font-dm-sans)",
-                            fontSize: "16px",
-                            fontWeight: 300,
-                            color: "#000000",
-                            margin: 0,
-                            lineHeight: 1.5,
-                          }}
-                        >
-                          {activeRiff.prompt}
-                        </p>
-                      </div>
-                    )}
+                    {promptEditor({ marginTop: "20px" })}
                   </div>
 
                   <div style={{ flexShrink: 0 }}>
@@ -1278,6 +1134,134 @@ export default function ClubPageLayout({
           );
         })()}
 
+        {/* Current Read section — revealed riffs the user hasn't fully read yet.
+            Below Current Riff, next to Past Riffs: writing on top, then the
+            reading sections together, so the page keeps one shape instead of
+            sandwiching the live riff between two reading rows. Unread pieces
+            losing the top spot costs little — the reveal and reading-reminder
+            emails link straight to the riff page, not here. */}
+        {(() => {
+          if (currentReadRiffs.length === 0) return null;
+
+          return (
+            <div style={{ marginBottom: "56px" }}>
+              <SectionHeading text="CURRENT READ" color="#01EFFC" width={140} />
+
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "32px",
+                  marginTop: "16px",
+                }}
+              >
+                {currentReadRiffs.map((riff) => {
+                  const authorPieces = pieceByAuthor(riff);
+                  // Unread pieces lead here instead of the viewer's own —
+                  // stable sort preserves sortedParticipants' tier/recency
+                  // order within each unread/read group.
+                  const piecesToShow = sortedParticipants(
+                    riff.participants,
+                    authorPieces
+                  )
+                    .filter((p) => authorPieces[p.user.id]?.submittedAt)
+                    .sort(
+                      (a, b) =>
+                        Number(!isPieceUnread(authorPieces[a.user.id])) -
+                        Number(!isPieceUnread(authorPieces[b.user.id]))
+                    );
+
+                  const renderCard = (p: RiffParticipant) => {
+                    const piece = authorPieces[p.user.id];
+                    return (
+                      <PieceCard
+                        key={p.user.id}
+                        piece={{
+                          id: piece.id,
+                          title: piece.title,
+                          coverImage: piece.coverImage,
+                          wordCount: piece.wordCount,
+                          author: p.user,
+                        }}
+                        isRead={!isPieceUnread(piece)}
+                        isOwnPiece={p.user.id === currentUserId}
+                        onClick={() =>
+                          router.push(`/read/${piece.id}?riff=${riff.id}`)
+                        }
+                      />
+                    );
+                  };
+
+                  const totalComments = commentCounts[riff.id] ?? 0;
+
+                  return (
+                    <div key={riff.id}>
+                      {/* Title + metadata sized to match Current Riff's
+                          header. Comments over words: talk already happening
+                          is the reason to open the riff page. */}
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "4px",
+                          marginBottom: "24px",
+                        }}
+                      >
+                        <RiffTitleLink
+                          riffId={riff.id}
+                          title={getRiffDisplayTitle(riff)}
+                          isMobile={isMobile}
+                        />
+                        <p
+                          style={{
+                            fontFamily: "var(--font-dm-sans)",
+                            fontSize: "16px",
+                            fontWeight: 300,
+                            color: "#808080",
+                            margin: 0,
+                          }}
+                        >
+                          Revealed:{" "}
+                          <span style={{ color: "#000000" }}>
+                            {formatDateShort(riff.updatedAt)}
+                          </span>
+                          {/* Hidden at zero — "Comments: 0" makes a fresh
+                              reveal look dead instead of new. */}
+                          {totalComments > 0 && (
+                            <>
+                              {" · "}
+                              Comments:{" "}
+                              <span style={{ color: "#000000" }}>
+                                {totalComments.toLocaleString()}
+                              </span>
+                            </>
+                          )}
+                        </p>
+                      </div>
+                      {isMobile ? (
+                        <MobileCardCarousel>
+                          {piecesToShow.map(renderCard)}
+                        </MobileCardCarousel>
+                      ) : (
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns:
+                              "repeat(auto-fill, minmax(280px, 1fr))",
+                            gap: "24px",
+                          }}
+                        >
+                          {piecesToShow.map(renderCard)}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Past Riffs section — includes COMPLETED + pre-join REVEALED + fully-read REVEALED riffs */}
         {pastRiffs.length > 0 && (
           <div>
@@ -1330,35 +1314,17 @@ export default function ClubPageLayout({
 
                 const newComments = newCommentCounts[riff.id] ?? 0;
 
-                return (
-                  <div key={riff.id}>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        margin: "0 0 12px 0",
-                      }}
-                    >
-                      <h3
-                        onClick={() => router.push(`/riffs/${riff.id}`)}
-                        className="riff-row-link"
-                        style={{
-                          cursor: "pointer",
-                          display: "inline-block",
-                          fontFamily: "var(--font-dm-serif-text)",
-                          fontSize: "20px",
-                          fontWeight: 400,
-                          color: "#000000",
-                          margin: 0,
-                        }}
-                      >
-                        {getRiffDisplayTitle(riff)}
-                      </h3>
-                      {newComments > 0 && (
+                const titleRow = (
+                  <RiffTitleLink
+                    riffId={riff.id}
+                    title={getRiffDisplayTitle(riff)}
+                    isMobile={isMobile}
+                    size="small"
+                    trailing={
+                      newComments > 0 && (
                         <svg
-                          width="16"
-                          height="16"
+                          width="18"
+                          height="18"
                           viewBox="0 0 16 16"
                           fill="none"
                           style={{ flexShrink: 0 }}
@@ -1372,22 +1338,22 @@ export default function ClubPageLayout({
                             strokeLinejoin="round"
                           />
                         </svg>
-                      )}
-                    </div>
+                      )
+                    }
+                  />
+                );
+
+                return (
+                  <div key={riff.id}>
                     {isMobile ? (
-                      <MobileCardCarousel>
-                        {piecesToShow.map(renderCard)}
-                      </MobileCardCarousel>
+                      <>
+                        <div style={{ marginBottom: "12px" }}>{titleRow}</div>
+                        <MobileCardCarousel>
+                          {piecesToShow.map(renderCard)}
+                        </MobileCardCarousel>
+                      </>
                     ) : (
-                      <div
-                        style={{
-                          display: "flex",
-                          flexDirection: "row",
-                          gap: "24px",
-                          overflowX: "auto",
-                          paddingBottom: "8px",
-                        }}
-                      >
+                      <HorizontalScrollRow header={titleRow}>
                         {piecesToShow.map((p) => (
                           <div
                             key={p.user.id}
@@ -1399,7 +1365,7 @@ export default function ClubPageLayout({
                             {renderCard(p)}
                           </div>
                         ))}
-                      </div>
+                      </HorizontalScrollRow>
                     )}
                   </div>
                 );
@@ -1420,8 +1386,65 @@ export default function ClubPageLayout({
             min-height: 200px !important;
           }
         }
-        .riff-row-link:hover {
+        .riff-row-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          color: #000000;
+          text-decoration: none;
+        }
+        /* Green, and thick enough to read on white — a hairline in #00FF66
+           all but disappears. Always on for mobile, which has no hover. */
+        .riff-row-link:hover .riff-row-link-text,
+        .riff-row-link--mobile .riff-row-link-text {
           text-decoration: underline;
+          text-decoration-color: #00FF66;
+          text-decoration-thickness: 3px;
+          text-underline-offset: 4px;
+        }
+        .riff-row-link:focus-visible {
+          outline: 2px solid #00FF66;
+          outline-offset: 2px;
+        }
+        .riff-row-link-mark {
+          display: flex;
+        }
+        /* Hover re-writes the mark: each stroke pulls back and draws out
+           again, top to bottom, like lines being written. */
+        .riff-row-link-mark .riff-mark-row {
+          transform-box: fill-box;
+          transform-origin: left center;
+        }
+        .riff-row-link:hover .riff-mark-row {
+          animation: riff-mark-write 0.45s ease-out both;
+        }
+        .riff-row-link:hover .riff-mark-row:nth-child(2) {
+          animation-delay: 0.06s;
+        }
+        .riff-row-link:hover .riff-mark-row:nth-child(3) {
+          animation-delay: 0.12s;
+        }
+        .riff-row-link:hover .riff-mark-row:nth-child(4) {
+          animation-delay: 0.18s;
+        }
+        @keyframes riff-mark-write {
+          0% { transform: scaleX(1); }
+          35% { transform: scaleX(0.25); }
+          100% { transform: scaleX(1); }
+        }
+        /* The live riff's gray mark blinks its last stroke like a text
+           caret — the line still being written. */
+        .riff-mark-caret {
+          animation: riff-caret-blink 1.06s steps(1) infinite;
+        }
+        @keyframes riff-caret-blink {
+          50% { opacity: 0; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .riff-row-link:hover .riff-mark-row,
+          .riff-mark-caret {
+            animation: none;
+          }
         }
       `}</style>
 
@@ -1634,5 +1657,89 @@ export default function ClubPageLayout({
         />
       )}
     </div>
+  );
+}
+
+// A riff row's title as a link to its riff page. The trailing Riff mark is
+// always visible — a title that merely underlines on hover never told anyone
+// the riff page (read-by strip, comment feed) was one click away — and it
+// re-writes itself on hover.
+// On mobile there's no hover to reveal the underline, so it's always on.
+//
+// "large" is Current Read (32px, matching Current Riff); "small" is Past Riffs
+// at the type scale's h2 (24px), with its icons scaled to match. On mobile,
+// Past Riffs swaps the mark for a plain chevron, so current riffs (mark) and
+// past ones (chevron) read differently there.
+function RiffTitleLink({
+  riffId,
+  title,
+  isMobile,
+  size = "large",
+  trailing,
+}: {
+  riffId: string;
+  title: string;
+  isMobile: boolean;
+  size?: "large" | "small";
+  // Rides inside the link (after the mark) so it shares the hover and the
+  // tap target — Past Riffs' new-comment icon.
+  trailing?: React.ReactNode;
+}) {
+  const iconSize = size === "large" ? 24 : 18;
+  const useChevron = isMobile && size === "small";
+  return (
+    <h2
+      style={{
+        fontFamily: "var(--font-dm-serif-text)",
+        fontSize: size === "large" ? "32px" : "24px",
+        fontWeight: 400,
+        margin: 0,
+      }}
+    >
+      <Link
+        href={`/riffs/${riffId}`}
+        className={`riff-row-link${isMobile ? " riff-row-link--mobile" : ""}`}
+      >
+        <span className="riff-row-link-text">{title}</span>
+        {/* A chevron stays last, the way a phone list reads. */}
+        {useChevron && trailing}
+        <span className="riff-row-link-mark" aria-hidden="true">
+          {useChevron ? (
+            <ChevronIcon size={iconSize} />
+          ) : (
+            <RiffMark width={iconSize} />
+          )}
+        </span>
+        {!useChevron && trailing}
+      </Link>
+    </h2>
+  );
+}
+
+// The current riff's time left, bold in the last 3 days.
+function DaysLeft({
+  deadline,
+  deadlinePassed,
+}: {
+  deadline: string | null;
+  deadlinePassed: boolean;
+}) {
+  const style: React.CSSProperties = {
+    fontFamily: "var(--font-dm-sans)",
+    fontSize: "16px",
+    fontWeight: 300,
+    color: "#DC2626",
+    margin: 0,
+  };
+
+  if (deadlinePassed) return <p style={style}>Deadline passed</p>;
+  if (!deadline)
+    return <p style={{ ...style, color: "#808080" }}>No deadline</p>;
+
+  const days = daysUntil(new Date(deadline));
+  return (
+    <p style={{ ...style, fontWeight: days <= 3 ? 700 : 300 }}>
+      {`${days} ${days === 1 ? "day" : "days"} left`}
+    </p>
   );
 }
