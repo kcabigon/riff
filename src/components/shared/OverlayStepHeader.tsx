@@ -11,9 +11,9 @@ interface OverlayStepHeaderProps {
 
 // The top row of a creation-flow card. Step 1 has no back target (back would
 // just close the overlay, which the X already does), so it gets a heading
-// instead — sized to the back arrow's row height so the fields below it stay
-// put when the row swaps to an arrow on later steps. Callers that want
-// neither pass neither.
+// instead — or, passing neither, an empty row. Either way the row is sized
+// to the back arrow's height so the fields below it stay put when the row
+// swaps to an arrow on later steps.
 export default function OverlayStepHeader({
   heading,
   onBack,
@@ -52,5 +52,5 @@ export default function OverlayStepHeader({
     );
   }
 
-  return null;
+  return <div aria-hidden style={{ height: "32px" }} />;
 }
