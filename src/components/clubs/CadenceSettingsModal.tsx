@@ -10,6 +10,7 @@ import {
   CadenceValue,
   CADENCE_INTERVAL_OPTIONS,
   CADENCE_OTHER_OPTIONS,
+  isIntervalCadence,
 } from "@/lib/cadence";
 
 interface CadenceSettingsModalProps {
@@ -20,6 +21,7 @@ interface CadenceSettingsModalProps {
   onUpdated: (cadence: CadenceValue, riffOpened: boolean) => void;
   clubId: string;
   cadence: CadenceValue;
+  hasActiveRiff: boolean;
 }
 
 export default function CadenceSettingsModal({
@@ -28,6 +30,7 @@ export default function CadenceSettingsModal({
   onUpdated,
   clubId,
   cadence,
+  hasActiveRiff,
 }: CadenceSettingsModalProps) {
   const [selected, setSelected] = useState<CadenceValue>(cadence);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,6 +44,13 @@ export default function CadenceSettingsModal({
       setError(null);
     }
   }, [isOpen, cadence]);
+
+  // Freestyle or Paused onto a rhythm, with nothing running, opens a riff on
+  // save (see openRiffIfDue) — so the button says that instead of "Save".
+  const willOpenRiff =
+    !hasActiveRiff &&
+    isIntervalCadence(selected) &&
+    !isIntervalCadence(cadence);
 
   const handleSave = async () => {
     setIsSubmitting(true);
@@ -114,7 +124,13 @@ export default function CadenceSettingsModal({
           loading={isSubmitting}
           disabled={selected === cadence}
         >
-          {isSubmitting ? "Saving..." : "Save"}
+          {willOpenRiff
+            ? isSubmitting
+              ? "Starting..."
+              : "Let's riff"
+            : isSubmitting
+              ? "Saving..."
+              : "Save"}
         </PrimaryButton>
       </div>
     </Modal>
