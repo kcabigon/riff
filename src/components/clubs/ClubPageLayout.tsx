@@ -1420,8 +1420,13 @@ export default function ClubPageLayout({
           color: #000000;
           text-decoration: none;
         }
+        /* Green, and thick enough to read on white — a hairline in #00FF66
+           all but disappears. */
         .riff-row-link:hover .riff-row-link-text {
           text-decoration: underline;
+          text-decoration-color: #00FF66;
+          text-decoration-thickness: 3px;
+          text-underline-offset: 4px;
         }
         .riff-row-link:focus-visible {
           outline: 2px solid #00FF66;
