@@ -1,6 +1,7 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import FormErrorText from "@/components/shared/FormErrorText";
 import CommentButton from "@/components/read/CommentButton";
 
@@ -38,6 +39,7 @@ export default function RiffPromptEditor({
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const actionsRef = useRef<HTMLDivElement>(null);
 
   // Grow with the text instead of scrolling inside a fixed box, so editing
   // looks like the prompt it replaced.
@@ -48,12 +50,41 @@ export default function RiffPromptEditor({
     el.style.height = `${el.scrollHeight}px`;
   }, [draft, isEditing]);
 
+  // iOS Safari scrolls just far enough to show the caret, which can leave
+  // Save/Cancel under the keyboard. Once the keyboard shrinks the visual
+  // viewport, nudge the page so the button row clears it.
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!isEditing || !viewport) return;
+    const keepActionsVisible = () => {
+      const row = actionsRef.current;
+      if (!row) return;
+      const visibleBottom = viewport.offsetTop + viewport.height;
+      const overlap = row.getBoundingClientRect().bottom - visibleBottom;
+      if (overlap > -16) {
+        window.scrollBy({ top: overlap + 16, behavior: "smooth" });
+      }
+    };
+    viewport.addEventListener("resize", keepActionsVisible);
+    return () => viewport.removeEventListener("resize", keepActionsVisible);
+  }, [isEditing]);
+
   if (!prompt && !canEdit) return null;
 
   const startEditing = () => {
-    setDraft(prompt ?? "");
+    // A tap never fires mouseleave on iOS, so the hover tint would otherwise
+    // still be on when the prompt comes back after Save/Cancel.
+    setIsHovered(false);
     setError(null);
-    setIsEditing(true);
+    // iOS only opens the keyboard for a focus() made while handling the tap
+    // itself, so mount the textarea synchronously and focus it right here.
+    // autoFocus on mount fires too late and leaves the keyboard closed. The
+    // same limit is why CommentModal focuses a hidden input on tap.
+    flushSync(() => {
+      setDraft(prompt ?? "");
+      setIsEditing(true);
+    });
+    textareaRef.current?.focus();
   };
 
   const cancel = () => {
@@ -113,7 +144,6 @@ export default function RiffPromptEditor({
             }}
             placeholder="Let's write about..."
             aria-label="Riff prompt"
-            autoFocus
             // Caret at the end, not the start — an edit is usually a tweak.
             onFocus={(e) => {
               const end = e.target.value.length;
@@ -175,6 +205,7 @@ export default function RiffPromptEditor({
           <>
             <FormErrorText message={error} />
             <div
+              ref={actionsRef}
               style={{
                 display: "flex",
                 alignItems: "center",
