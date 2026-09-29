@@ -1,23 +1,30 @@
 "use client";
 
-import { useState } from "react";
-import TextInput from "@/components/TextInput";
-import CTAButton from "@/components/CTAButton";
-import IconButton from "@/components/shared/IconButton";
+import { useLayoutEffect, useRef, useState } from "react";
 import FormErrorText from "@/components/shared/FormErrorText";
-import { PencilIcon } from "@/components/shared/icons";
 
-const promptTextStyle = {
+const promptTextStyle: React.CSSProperties = {
   fontFamily: "var(--font-dm-sans)",
   fontSize: "16px",
   fontWeight: 300,
-  margin: 0,
   lineHeight: 1.5,
+  color: "#000000",
+  margin: 0,
+};
+
+const textButtonStyle: React.CSSProperties = {
+  background: "none",
+  border: "none",
+  padding: 0,
+  fontFamily: "var(--font-dm-sans)",
+  fontSize: "16px",
+  cursor: "pointer",
 };
 
 // The current riff's prompt on the club page — the black left rule marks it as
-// a note from the host. Hosts and co-hosts can edit it in place instead of
-// digging into the 3-dot menu's Edit riff modal; everyone else just reads it.
+// a note from the host. Hosts and co-hosts edit it in place: clicking the text
+// turns that same text into the editing surface (no box, same type), and the
+// rule goes green while it has focus. Everyone else just reads it.
 export default function RiffPromptEditor({
   riffId,
   prompt: initialPrompt,
@@ -34,9 +41,20 @@ export default function RiffPromptEditor({
   // Shown value, updated on save so the edit lands before the refresh does.
   const [prompt, setPrompt] = useState(initialPrompt);
   const [isEditing, setIsEditing] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const [draft, setDraft] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Grow with the text instead of scrolling inside a fixed box, so editing
+  // looks like the prompt it replaced.
+  useLayoutEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [draft, isEditing]);
 
   if (!prompt && !canEdit) return null;
 
@@ -81,102 +99,129 @@ export default function RiffPromptEditor({
     }
   };
 
-  const wrapperStyle: React.CSSProperties = {
-    borderLeft: `2px solid ${prompt || isEditing ? "#000000" : "#CCCCCC"}`,
-    paddingLeft: "16px",
-    maxWidth: "780px",
-    ...style,
-  };
-
-  if (isEditing) {
-    return (
-      <div style={wrapperStyle}>
-        <TextInput
-          multiline
-          rows={3}
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") cancel();
-            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) save();
-          }}
-          placeholder="Let's write about..."
-          aria-label="Riff prompt"
-          autoFocus
-          // Caret at the end, not the start — an edit is usually a tweak.
-          onFocus={(e) => {
-            const end = e.target.value.length;
-            e.target.setSelectionRange(end, end);
-          }}
-          readOnly={isSaving}
-        />
-        <FormErrorText message={error} />
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "24px",
-            marginTop: "16px",
-          }}
-        >
-          <CTAButton onClick={save} disabled={isSaving}>
-            {isSaving ? "Saving..." : "Save"}
-          </CTAButton>
-          <button
-            type="button"
-            onClick={cancel}
-            disabled={isSaving}
-            style={{
-              background: "none",
-              border: "none",
-              padding: 0,
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              color: "#808080",
-              cursor: isSaving ? "not-allowed" : "pointer",
-            }}
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const ruleColor = isEditing ? "#00FF66" : prompt ? "#000000" : "#CCCCCC";
 
   return (
-    <div
-      style={{
-        ...wrapperStyle,
-        display: "flex",
-        alignItems: "flex-start",
-        gap: "8px",
-      }}
-    >
-      {canEdit ? (
-        <p
-          onClick={startEditing}
-          style={{
-            ...promptTextStyle,
-            color: prompt ? "#000000" : "#9C9C9C",
-            cursor: "text",
-            flex: 1,
-            minWidth: 0,
-          }}
-        >
-          {prompt || "Add a prompt"}
-        </p>
-      ) : (
-        <p style={{ ...promptTextStyle, color: "#000000" }}>{prompt}</p>
+    <div style={{ maxWidth: "780px", ...style }}>
+      <div
+        style={{
+          borderLeft: `2px solid ${ruleColor}`,
+          paddingLeft: "16px",
+          transition: "border-color 0.15s ease",
+        }}
+      >
+        {isEditing ? (
+          <textarea
+            ref={textareaRef}
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") cancel();
+              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) save();
+            }}
+            placeholder="Let's write about..."
+            aria-label="Riff prompt"
+            autoFocus
+            // Caret at the end, not the start — an edit is usually a tweak.
+            onFocus={(e) => {
+              const end = e.target.value.length;
+              e.target.setSelectionRange(end, end);
+            }}
+            readOnly={isSaving}
+            rows={1}
+            className="riff-prompt-input"
+            style={{
+              ...promptTextStyle,
+              display: "block",
+              width: "100%",
+              padding: 0,
+              border: "none",
+              outline: "none",
+              resize: "none",
+              overflow: "hidden",
+              background: "transparent",
+            }}
+          />
+        ) : canEdit ? (
+          <p
+            role="button"
+            tabIndex={0}
+            onClick={startEditing}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                startEditing();
+              }
+            }}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            aria-label={prompt ? "Edit prompt" : "Add a prompt"}
+            style={{
+              ...promptTextStyle,
+              color: prompt ? "#000000" : "#9C9C9C",
+              cursor: "text",
+              // Hover tint bleeds into the padding instead of hugging the
+              // glyphs, without shifting the text.
+              margin: "-4px -8px",
+              padding: "4px 8px",
+              backgroundColor: isHovered ? "#F5F5F5" : "transparent",
+              transition: "background-color 0.15s ease",
+            }}
+          >
+            {prompt || "Add a prompt"}
+          </p>
+        ) : (
+          <p style={promptTextStyle}>{prompt}</p>
+        )}
+      </div>
+
+      {isEditing && (
+        <>
+          <FormErrorText message={error} />
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "16px",
+              marginTop: "12px",
+              paddingLeft: "18px",
+            }}
+          >
+            <button
+              type="button"
+              onClick={save}
+              disabled={isSaving}
+              style={{
+                ...textButtonStyle,
+                fontWeight: 700,
+                color: "#000000",
+                cursor: isSaving ? "not-allowed" : "pointer",
+              }}
+            >
+              {isSaving ? "Saving..." : "Save"}
+            </button>
+            <button
+              type="button"
+              onClick={cancel}
+              disabled={isSaving}
+              style={{
+                ...textButtonStyle,
+                fontWeight: 300,
+                color: "#808080",
+                cursor: isSaving ? "not-allowed" : "pointer",
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </>
       )}
-      {canEdit && (
-        <IconButton
-          onClick={startEditing}
-          ariaLabel={prompt ? "Edit prompt" : "Add a prompt"}
-        >
-          {(color) => <PencilIcon color={color} size={14} />}
-        </IconButton>
-      )}
+
+      <style>{`
+        .riff-prompt-input::placeholder {
+          color: #9C9C9C;
+        }
+      `}</style>
     </div>
   );
 }
