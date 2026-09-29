@@ -113,21 +113,25 @@ function ScrollArrow({
         width: "40px",
         height: "40px",
         borderRadius: "50%",
-        border: "none",
         padding: 0,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        // Light, not dark — covers already sit under a dark overlay (for their
-        // white titles), so a dark circle sank into them.
-        backgroundColor: isHovered ? "#FFFFFF" : "rgba(255, 255, 255, 0.85)",
-        backdropFilter: "blur(4px)",
-        WebkitBackdropFilter: "blur(4px)",
+        // Frosted glass over the cover — covers already sit under a dark
+        // overlay (for their white titles), so a dark circle sank into them
+        // and a solid white one sat on top of them. A faint white rim keeps
+        // the edge readable.
+        backgroundColor: isHovered
+          ? "rgba(255, 255, 255, 0.4)"
+          : "rgba(255, 255, 255, 0.2)",
+        border: "1px solid rgba(255, 255, 255, 0.5)",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
         cursor: "pointer",
         transition: "background-color 0.15s ease",
       }}
     >
-      <ChevronIcon direction={direction} color="#000000" size={20} />
+      <ChevronIcon direction={direction} color="#FFFFFF" size={20} />
     </button>
   );
 }
