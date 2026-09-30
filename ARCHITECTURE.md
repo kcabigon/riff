@@ -69,7 +69,7 @@ A private essay-sharing platform for creative communities. People write together
 
 ### Known Gaps / In Progress
 - **Daily cron is a stopgap**: `/api/cron/daily-notifications` runs the comment digest, riff reminders, reading reminders and the club cadence sweep side by side (`?only=` and `?dryRun=1` for safe manual runs). The unified digest engine in `NOTIFICATIONS-PRD.md` is not started.
-- **Unused schema**: `Collection`, `CollectionPiece`, `CollectionCollaborator`, `Jam`, `JamRead`, `PieceVisibilitySettings`, and `ClubInvite` exist in the schema but no code queries them. Club joins use the link itself, not `ClubInvite` tokens.
+- **Unused schema**: `Collection`, `CollectionPiece`, `CollectionCollaborator`, `Jam`, `JamRead`, and `ClubInvite` exist in the schema but no code queries them. `PieceVisibilitySettings` is reused for one thing only: a `PRIVATE` row means the author hid that piece from their profile (display only, access is unchanged). Club joins use the link itself, not `ClubInvite` tokens.
 
 ---
 

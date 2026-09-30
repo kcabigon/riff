@@ -5,7 +5,15 @@ import { CopyIcon, CheckIcon, OpenLinkIcon } from "@/components/shared/icons";
 import IconButton from "@/components/shared/IconButton";
 
 // Author-only, same as ThreeDotButton — gate rendering at the call site.
-export default function PublicShareIndicator({ pieceId }: { pieceId: string }) {
+// `trailing` sits after the link buttons in the same row (e.g. Home's
+// hidden-from-profile icon), so the two never overlap on the cover.
+export default function PublicShareIndicator({
+  pieceId,
+  trailing,
+}: {
+  pieceId: string;
+  trailing?: React.ReactNode;
+}) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async (e: React.MouseEvent) => {
@@ -57,6 +65,7 @@ export default function PublicShareIndicator({ pieceId }: { pieceId: string }) {
       >
         {(color) => <OpenLinkIcon color={color} />}
       </IconButton>
+      {trailing}
     </div>
   );
 }
