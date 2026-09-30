@@ -193,7 +193,6 @@ export default function CreateRiffOverlay({
                 placeholder="Ex. Summer Stories"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                autoFocus
                 maxLength={200}
               />
             </div>
