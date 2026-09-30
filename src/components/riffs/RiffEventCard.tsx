@@ -507,7 +507,6 @@ export default function RiffEventCard({
               ) : riff.status !== "REVEALED" ? (
                 <RiffCTAButton
                   riffId={riff.id}
-                  isJoined={isJoined}
                   hasDraft={hasDraft}
                   hasSubmitted={hasSubmitted}
                   hasStandaloneDrafts={hasStandaloneDrafts}

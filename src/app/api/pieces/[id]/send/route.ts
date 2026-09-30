@@ -3,7 +3,12 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
 import { getFriends } from "@/lib/friends";
 import { getBaseUrl } from "@/lib/env";
-import { sendPieceSharedEmail, batchNotificationsEnabled } from "@/lib/resend";
+import { firstNameOf, fullNameOf } from "@/lib/names";
+import {
+  batchNotificationsEnabled,
+  buildPieceSharedEmail,
+  deliverMany,
+} from "@/lib/resend";
 
 // POST /api/pieces/[id]/send — email specific existing friends about a
 // piece they already have Friends-tier access to. No access change, no
@@ -29,6 +34,10 @@ export async function POST(
       where: { id: pieceId },
       select: {
         title: true,
+        subtitle: true,
+        coverImage: true,
+        currentContent: true,
+        readLengthMin: true,
         authorId: true,
         author: { select: { firstName: true, name: true, username: true } },
       },
@@ -66,18 +75,22 @@ export async function POST(
     const emails = recipients.map((r) => r.email);
     const optedInEmails = await batchNotificationsEnabled(emails);
 
-    const actorName =
-      piece.author.firstName ||
-      piece.author.name ||
-      piece.author.username ||
-      "Someone";
-    const pieceTitle = piece.title || "Untitled";
+    const actorName = firstNameOf(piece.author);
     const pieceUrl = `${getBaseUrl()}/read/${pieceId}`;
 
-    await Promise.all(
-      [...optedInEmails].map((email) =>
-        sendPieceSharedEmail({ email, actorName, pieceTitle, pieceUrl })
-      )
+    const email = buildPieceSharedEmail({
+      actorName,
+      authorName: fullNameOf(piece.author),
+      pieceTitle: piece.title,
+      subtitle: piece.subtitle,
+      coverImage: piece.coverImage,
+      content: piece.currentContent,
+      readLengthMin: piece.readLengthMin,
+      pieceUrl,
+    });
+    await deliverMany(
+      [...optedInEmails].map((to) => ({ to, email })),
+      "pieceShared"
     );
 
     return NextResponse.json({ success: true, sentCount: optedInEmails.size });

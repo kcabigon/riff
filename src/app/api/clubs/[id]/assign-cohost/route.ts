@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { firstNameOf } from "@/lib/names";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
 import { sendCoHostAssignedEmail } from "@/lib/resend";
@@ -24,6 +25,8 @@ export async function POST(
               select: {
                 id: true,
                 name: true,
+                firstName: true,
+                username: true,
                 email: true,
                 emailNotifications: true,
               },
@@ -109,8 +112,8 @@ export async function POST(
       if (newCoHost?.email && newCoHost.emailNotifications) {
         await sendCoHostAssignedEmail({
           email: newCoHost.email,
-          coHostName: newCoHost.name || "there",
-          adminName: adminUser?.name || "The host",
+          coHostName: firstNameOf(newCoHost),
+          adminName: firstNameOf(adminUser),
           clubName: club.name,
           clubUrl: `${getBaseUrl()}/clubs/${clubId}`,
         }).catch((err) =>

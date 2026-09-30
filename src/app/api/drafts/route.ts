@@ -1,11 +1,7 @@
 import { NextResponse } from "next/server";
-import { NotificationType } from "@prisma/client";
+import { notifyOpenRiffParticipantJoined } from "@/lib/participant-joined";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
-import {
-  createNotification,
-  notifyRiffParticipants,
-} from "@/lib/notifications";
 import { getContentPreview } from "@/lib/riff-utils";
 
 // POST /api/drafts - Create a new draft piece, optionally connected to a riff
@@ -116,30 +112,9 @@ export async function POST(req: Request) {
       return { piece, didJoin: !existingParticipant };
     });
 
-    // Clubless riffs: tell existing participants + the creator someone
-    // joined (in-app only, no email). Club-riff joins fire nothing today —
-    // mirrors POST /api/riffs/[id]/participants.
+    // Open riffs only — see notifyOpenRiffParticipantJoined.
     if (didJoin && !riff.clubId) {
-      try {
-        await notifyRiffParticipants(
-          riffId,
-          NotificationType.RIFF_PARTICIPANT_JOINED,
-          userId
-        );
-        const creatorIsParticipant = await prisma.riffParticipant.findUnique({
-          where: { riffId_userId: { riffId, userId: riff.creatorId } },
-        });
-        if (!creatorIsParticipant) {
-          await createNotification({
-            type: NotificationType.RIFF_PARTICIPANT_JOINED,
-            recipientId: riff.creatorId,
-            actorId: userId,
-            riffId,
-          });
-        }
-      } catch (err) {
-        console.error("[notification error] draft creation join:", err);
-      }
+      await notifyOpenRiffParticipantJoined(riffId, userId);
     }
 
     return NextResponse.json({ success: true, piece }, { status: 201 });

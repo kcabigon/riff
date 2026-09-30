@@ -130,14 +130,14 @@ export default function EmailSection() {
     {
       label: "App notifications",
       description:
-        "Club activity — new riffs, reveals, comments on your writing.",
+        "When something happens — new riffs, reveals, comments, pieces shared with you.",
       value: appNotifications,
       field: "emailNotifications" as const,
     },
     {
       label: "Reminders",
       description:
-        "Nudges to write, join a riff, or beat a deadline — recurring, not one-time alerts.",
+        "A couple of nudges before a deadline, and a couple after a reveal if there's still something to read.",
       value: reminders,
       field: "emailMarketing" as const,
     },

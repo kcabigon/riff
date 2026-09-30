@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import Avatar from "@/components/shared/Avatar";
 import { useProfileNavigation } from "@/hooks/useProfileNavigation";
 import type { FriendSummary } from "@/lib/friends";
@@ -13,6 +14,8 @@ interface FriendsRowProps {
   canInvite: boolean;
 }
 
+const FADE_PX = 48;
+
 // Horizontal-scroll row of people you've shared a club or riff with — the
 // circular avatar + name-below layout borrows from Instagram Stories, kept
 // flat and minimal (no gradients, no "seen" state) to match Substack Home's
@@ -25,6 +28,27 @@ export default function FriendsRow({
   canInvite,
 }: FriendsRowProps) {
   const handleClick = useProfileNavigation();
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  // Same edge check as HorizontalScrollRow: 1px of slack, since scrollLeft is
+  // fractional on zoomed/high-DPI screens.
+  const updateEdges = useCallback(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 1);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+  }, []);
+
+  useLayoutEffect(() => {
+    updateEdges();
+    const el = scrollerRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(updateEdges);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [updateEdges]);
 
   const firstName = (friend: FriendSummary) =>
     (friend.name || friend.username || "Friend").split(" ")[0];
@@ -35,7 +59,10 @@ export default function FriendsRow({
           sides (Instagram Stories-style) so overscroll doesn't reveal a
           mismatched gap on the left; padding-left re-adds the 24px gutter
           so the resting position still matches the page's side padding.
-          Desktop keeps the row fully inset. */}
+          Desktop keeps the row inset in the page column, so instead of
+          slicing an avatar at the column's hard edge, the side with more to
+          scroll to fades out. Each fade shows only when there's something
+          that way; neither shows when everyone fits. */}
       <style>{`
         @media (max-width: 767px) {
           .friends-row-scroll {
@@ -44,10 +71,20 @@ export default function FriendsRow({
             padding-left: 24px;
           }
         }
+        @media (min-width: 768px) {
+          .friends-row-scroll {
+            -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--fade-left), #000 calc(100% - var(--fade-right)), transparent 100%);
+            mask-image: linear-gradient(to right, transparent 0, #000 var(--fade-left), #000 calc(100% - var(--fade-right)), transparent 100%);
+          }
+        }
       `}</style>
       <div
+        ref={scrollerRef}
+        onScroll={updateEdges}
         className="friends-row-scroll"
         style={{
+          ["--fade-left" as string]: canScrollLeft ? `${FADE_PX}px` : "0px",
+          ["--fade-right" as string]: canScrollRight ? `${FADE_PX}px` : "0px",
           display: "flex",
           gap: "8px",
           overflowX: "auto",

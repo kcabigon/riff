@@ -1,11 +1,7 @@
 import { NextResponse } from "next/server";
-import { NotificationType } from "@prisma/client";
+import { notifyOpenRiffParticipantJoined } from "@/lib/participant-joined";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
-import {
-  createNotification,
-  notifyRiffParticipants,
-} from "@/lib/notifications";
 
 // POST /api/riffs/[id]/participants - Join a riff (opt-in)
 export async function POST(
@@ -83,29 +79,10 @@ export async function POST(
       },
     });
 
-    // Clubless riffs: tell existing participants + the creator someone joined
-    // (in-app only, no email). Club-riff joins fire nothing today — unchanged.
+    // Open riffs announce a join to everyone already in them; club-riff joins
+    // fire nothing — the club join itself was announced by member-joined.
     if (!riff.clubId) {
-      try {
-        await notifyRiffParticipants(
-          riffId,
-          NotificationType.RIFF_PARTICIPANT_JOINED,
-          user.id
-        );
-        const creatorIsParticipant = riff.participants.some(
-          (p) => p.userId === riff.creatorId
-        );
-        if (!creatorIsParticipant) {
-          await createNotification({
-            type: NotificationType.RIFF_PARTICIPANT_JOINED,
-            recipientId: riff.creatorId,
-            actorId: user.id,
-            riffId,
-          });
-        }
-      } catch (err) {
-        console.error("[notification error] riff participant joined:", err);
-      }
+      await notifyOpenRiffParticipantJoined(riffId, user.id);
     }
 
     return NextResponse.json(

@@ -35,6 +35,7 @@ const PIECE_SELECT = {
     select: { id: true },
     take: 1,
   },
+  visibility: { select: { visibility: true } },
 } satisfies Prisma.PieceSelect;
 
 type RawPiece = Prisma.PieceGetPayload<{ select: typeof PIECE_SELECT }>;
@@ -58,6 +59,7 @@ function serializePiece(p: RawPiece) {
     })),
     isPublic: p.newShares.length > 0,
     publicShareId: p.newShares[0]?.id ?? null,
+    hiddenFromProfile: p.visibility?.visibility === "PRIVATE",
   };
 }
 

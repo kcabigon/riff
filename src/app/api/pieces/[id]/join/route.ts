@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
 import { isFriendOf } from "@/lib/friends";
+import { getBaseUrl } from "@/lib/env";
+import { firstNameOf } from "@/lib/names";
+import { sendPieceInviteAcceptedEmail } from "@/lib/resend";
 
 // POST /api/pieces/[id]/join — accept a friend invite delivered via a piece.
 // Mirrors /api/clubs/[id]/join: possession of the link is the invite, no
@@ -76,6 +79,32 @@ export async function POST(
         isVisible: true,
       },
     });
+
+    // Tell the author their invite worked — only reached for a new
+    // friendship, since existing friends returned above. Isolated so a mail
+    // failure can't undo a join that already happened.
+    try {
+      const [author, accepter] = await Promise.all([
+        prisma.user.findUnique({
+          where: { id: piece.authorId },
+          select: { email: true, emailNotifications: true },
+        }),
+        prisma.user.findUnique({
+          where: { id: user.id },
+          select: { firstName: true, name: true, username: true },
+        }),
+      ]);
+      if (author?.emailNotifications) {
+        await sendPieceInviteAcceptedEmail({
+          email: author.email,
+          accepterName: firstNameOf(accepter),
+          pieceTitle: piece.title,
+          friendsUrl: `${getBaseUrl()}/home`,
+        });
+      }
+    } catch (err) {
+      console.error("[notification error] piece invite accepted:", err);
+    }
 
     return NextResponse.json({ success: true, alreadyFriend: false });
   } catch (error: unknown) {

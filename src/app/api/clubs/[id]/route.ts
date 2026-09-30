@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
+import { isCadenceValue, isIntervalCadence } from "@/lib/cadence";
+import { openRiffIfDue } from "@/lib/club-cadence";
 
 // GET /api/clubs/[id] - Get club details
 export async function GET(
@@ -106,7 +108,8 @@ export async function PATCH(
   try {
     const user = await requireAuth();
     const { id: clubId } = await params;
-    const { name, description, moderatorId, bannerImage } = await req.json();
+    const { name, description, moderatorId, bannerImage, cadence } =
+      await req.json();
 
     // Check if user is admin
     const club = await prisma.club.findUnique({
@@ -152,6 +155,10 @@ export async function PATCH(
       }
     }
 
+    if (cadence !== undefined && !isCadenceValue(cadence)) {
+      return NextResponse.json({ error: "Invalid cadence" }, { status: 400 });
+    }
+
     // If updating moderator, verify they are a member
     if (moderatorId !== undefined && moderatorId !== null) {
       const member = await prisma.clubMember.findFirst({
@@ -179,6 +186,7 @@ export async function PATCH(
         }),
         ...(moderatorId !== undefined && { moderatorId }),
         ...(bannerImage !== undefined && { bannerImage }),
+        ...(cadence !== undefined && { cadence }),
       },
       include: {
         admin: {
@@ -212,9 +220,27 @@ export async function PATCH(
       },
     });
 
+    // Freestyle or Paused onto a rhythm: open the first riff now rather than
+    // leaving the club empty until the next daily sweep. Between two rhythms
+    // the sweep already has it in hand. A failure here doesn't undo the
+    // cadence change — the sweep will open the riff on its next run.
+    let riffOpened = false;
+    if (
+      cadence !== undefined &&
+      isIntervalCadence(cadence) &&
+      !isIntervalCadence(club.cadence)
+    ) {
+      try {
+        riffOpened = await openRiffIfDue(clubId);
+      } catch (err) {
+        console.error(`Error opening riff for club ${clubId}:`, err);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       club: updatedClub,
+      riffOpened,
     });
   } catch (error: any) {
     if (error.message === "Unauthorized") {
