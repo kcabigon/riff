@@ -94,14 +94,8 @@ export default function AssignCoHostModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Assign co-host" size="sm">
       <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-        {/* Info box */}
-        <div
-          style={{
-            backgroundColor: "#FFFFFF",
-            border: "2px solid #000000",
-            padding: "16px",
-          }}
-        >
+        {/* Intro */}
+        <div>
           <p
             style={{
               fontFamily: "var(--font-dm-sans)",
