@@ -107,8 +107,8 @@ export default function AssignCoHostModal({
               lineHeight: 1.6,
             }}
           >
-            Host with a friend. They can start and reveal riffs and edit club
-            details.
+            Host with a friend. They can adjust the riff cadence, add prompts,
+            and edit club details.
           </p>
           <p
             style={{
