@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import Modal from "@/components/shared/Modal";
 import PrimaryButton from "@/components/PrimaryButton";
+import TextInput from "@/components/TextInput";
+import Tagline from "@/components/Tagline";
 
 interface EmbedModalProps {
   isOpen: boolean;
@@ -44,18 +46,6 @@ export default function EmbedModal({
     onClose();
   };
 
-  const inputStyle = {
-    width: "100%",
-    backgroundColor: "#FFFFFF",
-    border: "2px solid #000000",
-    padding: "12px",
-    fontFamily: "var(--font-dm-sans)",
-    fontSize: "16px",
-    fontWeight: 300,
-    outline: "none",
-    boxSizing: "border-box" as const,
-  };
-
   const footer = (
     <div
       style={{
@@ -91,22 +81,19 @@ export default function EmbedModal({
       size="sm"
       footer={footer}
     >
-      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-        <div>
-          <label
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              fontWeight: 500,
-              color: "#000",
-              display: "block",
-              marginBottom: "6px",
-            }}
-          >
-            URL
-          </label>
-          <input
+      <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          <Tagline
+            text="URL"
+            color="#01EFFC"
+            textColor="#000000"
+            fontSize={16}
+            width="fit"
+            align="left"
+          />
+          <TextInput
             ref={urlRef}
+            aria-label="URL"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder={placeholder}
@@ -117,24 +104,20 @@ export default function EmbedModal({
                 handleSubmit();
               }
             }}
-            style={inputStyle}
           />
         </div>
         {showDisplayText && (
-          <div>
-            <label
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: 500,
-                color: "#000",
-                display: "block",
-                marginBottom: "6px",
-              }}
-            >
-              Display text
-            </label>
-            <input
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <Tagline
+              text="Display text"
+              color="#00FF66"
+              textColor="#000000"
+              fontSize={16}
+              width="fit"
+              align="left"
+            />
+            <TextInput
+              aria-label="Display text"
               value={displayText}
               onChange={(e) => setDisplayText(e.target.value)}
               placeholder="Text to display (defaults to URL)"
@@ -145,7 +128,6 @@ export default function EmbedModal({
                   handleSubmit();
                 }
               }}
-              style={inputStyle}
             />
           </div>
         )}

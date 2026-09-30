@@ -1,6 +1,6 @@
 "use client";
 
-import { InputHTMLAttributes, TextareaHTMLAttributes } from "react";
+import { InputHTMLAttributes, Ref, TextareaHTMLAttributes } from "react";
 
 interface BaseTextInputProps {
   error?: string;
@@ -10,8 +10,14 @@ interface BaseTextInputProps {
 
 type TextInputProps = BaseTextInputProps &
   (
-    | ({ multiline?: false } & InputHTMLAttributes<HTMLInputElement>)
-    | ({ multiline: true } & TextareaHTMLAttributes<HTMLTextAreaElement>)
+    | ({
+        multiline?: false;
+        ref?: Ref<HTMLInputElement>;
+      } & InputHTMLAttributes<HTMLInputElement>)
+    | ({
+        multiline: true;
+        ref?: Ref<HTMLTextAreaElement>;
+      } & TextareaHTMLAttributes<HTMLTextAreaElement>)
   );
 
 export default function TextInput({
