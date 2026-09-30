@@ -172,9 +172,8 @@ export default function CadenceSettingsModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Riff cadence" size="sm">
       <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-        {/* A segmented bar on white, matching the rhythm list card: text
-            straight on the modal's noise background doesn't read, whatever
-            its weight. The active mode takes the palette's light gray. */}
+        {/* A segmented bar styled like the rhythm list card. The active mode
+            takes the palette's light gray. */}
         <div
           role="tablist"
           aria-label="Cadence mode"
@@ -214,27 +213,18 @@ export default function CadenceSettingsModal({
         </div>
 
         {mode === "AUTOMATIC" ? (
-          <CadenceOptionList
-            value={selected}
-            options={CADENCE_INTERVAL_OPTIONS}
-            onSelect={setSelected}
-            footer={automaticNote && <p style={TEXT_STYLE}>{automaticNote}</p>}
-          />
+          <>
+            <CadenceOptionList
+              value={selected}
+              options={CADENCE_INTERVAL_OPTIONS}
+              onSelect={setSelected}
+            />
+            {automaticNote && <p style={TEXT_STYLE}>{automaticNote}</p>}
+          </>
         ) : (
-          // The same white card as the rhythm list, so the tabs' content sits
-          // in one place and stays readable over the noise background.
-          <div
-            style={{
-              backgroundColor: "#FFFFFF",
-              border: "2px solid #000000",
-              boxShadow: "4px 4px 0px 0px #000000",
-              padding: "16px",
-            }}
-          >
-            <p style={TEXT_STYLE}>
-              {mode === "MANUAL" ? freestyleText : pauseText}
-            </p>
-          </div>
+          <p style={TEXT_STYLE}>
+            {mode === "MANUAL" ? freestyleText : pauseText}
+          </p>
         )}
 
         <FormErrorText message={error} />
