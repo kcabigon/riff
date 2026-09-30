@@ -30,7 +30,7 @@ export default function RevealConfirmModal({
   totalParticipants,
 }: RevealConfirmModalProps) {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Reveal pieces?">
+    <Modal isOpen={isOpen} onClose={onClose} title="Reveal pieces?" size="sm">
       {/* Summary */}
       <p
         style={{

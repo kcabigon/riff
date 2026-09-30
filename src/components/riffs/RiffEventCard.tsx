@@ -558,6 +558,7 @@ export default function RiffEventCard({
           isOpen={isInviteModalOpen}
           onClose={() => setIsInviteModalOpen(false)}
           title="Invite friends"
+          size="sm"
         >
           <ShareLinkOptions
             url={`${typeof window !== "undefined" ? window.location.origin : ""}/riffs/${riff.id}/join`}
