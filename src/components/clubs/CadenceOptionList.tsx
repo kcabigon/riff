@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { CadenceOption, CadenceValue } from "@/lib/cadence";
 
 interface CadenceOptionListProps {
@@ -8,10 +8,6 @@ interface CadenceOptionListProps {
   value: CadenceValue | null;
   options: CadenceOption[];
   onSelect: (value: CadenceValue) => void;
-  // Optional note under the last option, inside the same card — the cadence
-  // modal's "what this change does" line, kept on white rather than the
-  // modal's noise background.
-  footer?: ReactNode;
 }
 
 // Modeled on ShareModal's AccessDropdown row styling (radio circle + label,
@@ -22,7 +18,6 @@ export default function CadenceOptionList({
   value,
   options,
   onSelect,
-  footer,
 }: CadenceOptionListProps) {
   const [hoveredOption, setHoveredOption] = useState<string | null>(null);
 
@@ -95,11 +90,6 @@ export default function CadenceOptionList({
           </button>
         );
       })}
-      {footer && (
-        <div style={{ borderTop: "1px solid #E6E6E6", padding: "16px" }}>
-          {footer}
-        </div>
-      )}
     </div>
   );
 }

@@ -82,6 +82,65 @@ export function allPiecesSubmitted<T extends { user: { id: string } }>(
 }
 
 // Returns true if the riff deadline has passed.
+// Who a reveal would include and leave out. `members` is the club roster for
+// club riffs; club members only become participants once they join or start
+// a draft, so without it a host who submits first reads as "1 of 1".
+// Clubless riffs have no roster — pass null and everyone is a participant.
+export interface RevealRosterUser {
+  id: string;
+  name: string | null;
+  avatarUrl: string | null;
+}
+
+export function getRevealRoster(
+  participants: { user: RevealRosterUser }[],
+  pieces: { submittedAt: string | Date | null; piece: { authorId: string } }[],
+  members: { user: RevealRosterUser }[] | null
+): {
+  submitted: RevealRosterUser[];
+  writing: RevealRosterUser[];
+  notStarted: RevealRosterUser[];
+} {
+  const submittedIds = new Set(
+    pieces.filter((p) => p.submittedAt !== null).map((p) => p.piece.authorId)
+  );
+  const participantIds = new Set(participants.map((p) => p.user.id));
+  return {
+    submitted: participants
+      .filter((p) => submittedIds.has(p.user.id))
+      .map((p) => p.user),
+    writing: participants
+      .filter((p) => !submittedIds.has(p.user.id))
+      .map((p) => p.user),
+    notStarted: (members ?? [])
+      .filter((m) => !participantIds.has(m.user.id))
+      .map((m) => m.user),
+  };
+}
+
+// Whether the Reveal button should offer an early (pre-deadline) reveal.
+// Club riffs wait for every club member to submit; clubless riffs keep the
+// looser allPiecesSubmitted rule. "Reveal now" in the menu stays available
+// either way for a deliberate early reveal.
+export function isReadyToReveal(
+  participants: { user: RevealRosterUser }[],
+  pieces: {
+    submittedAt: string | Date | null;
+    piece: { authorId: string; wordCount: number };
+  }[],
+  members: { user: RevealRosterUser }[] | null
+): boolean {
+  if (!members) return allPiecesSubmitted(participants, pieces);
+  const { submitted, writing, notStarted } = getRevealRoster(
+    participants,
+    pieces,
+    members
+  );
+  return (
+    submitted.length > 0 && writing.length === 0 && notStarted.length === 0
+  );
+}
+
 export function isPastDeadline(deadline: string | Date | null): boolean {
   return deadline ? new Date(deadline).getTime() < Date.now() : false;
 }

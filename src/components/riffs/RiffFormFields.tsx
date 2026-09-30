@@ -44,7 +44,7 @@ const optionalSpan = (
       backgroundColor: "#FFFFFF",
       padding: "2px 8px",
       fontFamily: "var(--font-dm-sans)",
-      fontSize: "14px",
+      fontSize: "12px",
       fontWeight: 300,
       color: "#9C9C9C",
     }}
@@ -79,7 +79,7 @@ export default function RiffFormFields({
             color="#01EFFC"
             textColor="#000000"
             fontSize={16}
-            width={116}
+            width="fit"
             align="left"
           />
         </div>
@@ -102,11 +102,8 @@ export default function RiffFormFields({
         {daysUntilDeadline !== null && (
           <span
             style={{
-              display: "inline-block",
-              backgroundColor: "#FFFFFF",
-              padding: "2px 8px",
               fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
+              fontSize: "12px",
               fontWeight: 300,
               color: "#9C9C9C",
               alignSelf: "flex-start",
@@ -125,7 +122,7 @@ export default function RiffFormFields({
             color="#00FF66"
             textColor="#000000"
             fontSize={16}
-            width={124}
+            width="fit"
             align="left"
           />
           {!titleRequired && optionalSpan}
@@ -150,7 +147,7 @@ export default function RiffFormFields({
             color="#EECF01"
             textColor="#000000"
             fontSize={16}
-            width={96}
+            width="fit"
             align="left"
           />
           {optionalSpan}

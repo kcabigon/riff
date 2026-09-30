@@ -316,7 +316,7 @@ const ImageUploadFlow = forwardRef<ImageUploadFlowHandle, ImageUploadFlowProps>(
                     flex: 1,
                     padding: "8px 0",
                     fontFamily: "var(--font-dm-sans)",
-                    fontSize: "12px",
+                    fontSize: "16px",
                     fontWeight: tab === t ? 500 : 300,
                     color: tab === t ? "#000" : "#808080",
                     background: "none",
