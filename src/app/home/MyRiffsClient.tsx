@@ -140,6 +140,8 @@ interface MyRiffsClientProps {
   pieces: WritingPiece[];
   joinableRiffs: Riff[];
   hasStandaloneDrafts: boolean;
+  // Server-side check across all pieces, not just the capped page
+  hasAnyRevealedPiece: boolean;
   // Drafts/Pieces/Past Riffs all arrive capped (see DRAFTS_CAP etc. below) —
   // these say whether more exist server-side and where to resume from, so
   // "View all" can fetch the rest instead of it all having shipped already.
@@ -261,6 +263,7 @@ export default function MyRiffsClient({
   pieces,
   joinableRiffs,
   hasStandaloneDrafts,
+  hasAnyRevealedPiece,
   hasMoreDrafts,
   draftsCursor,
   hasMoreSubmitted,
@@ -435,7 +438,10 @@ export default function MyRiffsClient({
   // drafts don't count. A user can have friends (via club/riff) with no
   // eligible piece yet — the Friends row still shows them, just without
   // the "+" tile (FriendsRow's canInvite prop, also driven by this flag).
-  const hasRevealedPiece = allPieces.some(isPieceRevealed);
+  // The server answers for the whole account — allPieces is only the capped
+  // page — and loaded pieces cover anything revealed since the page rendered.
+  const hasRevealedPiece =
+    hasAnyRevealedPiece || allPieces.some(isPieceRevealed);
   const showFriendsSection = friends.length > 0 || hasRevealedPiece;
 
   const visibleDrafts = draftsExpanded ? drafts : drafts.slice(0, DRAFTS_CAP);
