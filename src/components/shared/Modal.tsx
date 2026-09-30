@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useCallback, ReactNode } from "react";
 import { createPortal } from "react-dom";
-import NoiseBackground from "@/components/NoiseBackground";
 import CloseButton from "@/components/CloseButton";
 
 interface ModalProps {
@@ -12,7 +11,6 @@ interface ModalProps {
   size?: "sm" | "md" | "lg";
   children: ReactNode;
   footer?: ReactNode;
-  noiseBackground?: boolean;
 }
 
 const SIZE_MAP = { sm: 400, md: 480, lg: 600 };
@@ -24,7 +22,6 @@ export default function Modal({
   size = "md",
   children,
   footer,
-  noiseBackground = true,
 }: ModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
@@ -128,7 +125,7 @@ export default function Modal({
           backgroundColor: "#FFFFFF",
           border: "2px solid #000000",
           boxShadow: "8px 8px 0px 0px #000000",
-          padding: 0,
+          padding: "40px",
           width: `${SIZE_MAP[size]}px`,
           maxWidth: "90vw",
           maxHeight: "85vh",
@@ -136,56 +133,36 @@ export default function Modal({
           zIndex: 101,
         }}
       >
-        {/* Padding lives here so noise covers edge-to-edge and full scroll height */}
-        <div style={{ position: "relative", padding: "40px" }}>
-          {/* Noise background layer */}
-          {noiseBackground && (
-            <div
+        {/* Header */}
+        {title && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "32px",
+            }}
+          >
+            <h2
               style={{
-                position: "absolute",
-                inset: 0,
-                zIndex: 0,
-                pointerEvents: "none",
+                fontFamily: "var(--font-dm-serif-text)",
+                fontSize: "24px",
+                fontWeight: 400,
+                color: "#000000",
+                margin: 0,
               }}
             >
-              <NoiseBackground fillMode="cover" />
-            </div>
-          )}
-
-          {/* Content above noise */}
-          <div style={{ position: "relative", zIndex: 1 }}>
-            {/* Header */}
-            {title && (
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: "32px",
-                }}
-              >
-                <h2
-                  style={{
-                    fontFamily: "var(--font-dm-serif-text)",
-                    fontSize: "24px",
-                    fontWeight: 400,
-                    color: "#000000",
-                    margin: 0,
-                  }}
-                >
-                  {title}
-                </h2>
-                <CloseButton onClick={onClose} size={24} />
-              </div>
-            )}
-
-            {/* Body */}
-            {children}
-
-            {/* Footer */}
-            {footer && <div style={{ marginTop: "24px" }}>{footer}</div>}
+              {title}
+            </h2>
+            <CloseButton onClick={onClose} size={24} />
           </div>
-        </div>
+        )}
+
+        {/* Body */}
+        {children}
+
+        {/* Footer */}
+        {footer && <div style={{ marginTop: "24px" }}>{footer}</div>}
       </div>
     </>,
     document.body

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Modal from "@/components/shared/Modal";
+import FormErrorText from "@/components/shared/FormErrorText";
 import DestructiveButton from "@/components/DestructiveButton";
 
 interface LeaveClubConfirmModalProps {
@@ -90,47 +91,16 @@ export default function LeaveClubConfirmModal({
         </p>
       </div>
 
-      {error && (
-        <p
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "12px",
-            fontWeight: 300,
-            color: "#DC2626",
-            margin: "0 0 16px",
-          }}
-        >
-          {error}
-        </p>
-      )}
+      <FormErrorText message={error} style={{ marginBottom: "16px" }} />
 
       <DestructiveButton
         size="lg"
         onClick={handleLeave}
         disabled={isLeaving}
-        style={{ width: "100%", marginBottom: "16px" }}
+        style={{ width: "100%" }}
       >
         {isLeaving ? "Leaving..." : "Leave club"}
       </DestructiveButton>
-
-      <div style={{ textAlign: "center" }}>
-        <button
-          onClick={onClose}
-          style={{
-            backgroundColor: "#FFFFFF",
-            border: "none",
-            cursor: "pointer",
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "12px",
-            fontWeight: 300,
-            color: "#808080",
-            padding: "4px 12px",
-            textDecoration: "underline",
-          }}
-        >
-          Cancel
-        </button>
-      </div>
     </Modal>
   );
 }
