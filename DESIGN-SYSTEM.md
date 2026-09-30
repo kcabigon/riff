@@ -220,7 +220,7 @@ All interactive elements: border/outline changes to green `#00FF66`.
 | Component | File | Use for |
 |-----------|------|---------|
 | **NoiseBackground** | `NoiseBackground.tsx` | Fractal noise SVG backdrop. Props: `fillMode` |
-| **Tagline** | `Tagline.tsx` | Colored vector highlight text. Props: `text`, `color` |
+| **Tagline** | `Tagline.tsx` | Colored vector highlight text. Props: `text`, `color`, `width` (px, or `"fit"` to hug the text — use `"fit"` for form labels) |
 | **WelcomeNote** | `WelcomeNote.tsx` | Handwriting-font message box |
 | **RiffMark** | `shared/RiffMark.tsx` | Tiny (<1KB) redraw of the Riff logo for inline use — never the 500KB logo SVGs at icon size. Props: `width`, `variant` ("color" \| "progress": grays for a riff still being written), `caret` (blinks the last stroke like a text cursor, via `.riff-mark-caret`). On the club page it ends every riff title: gray + blinking for the current riff, color for revealed ones, re-writing its strokes on hover |
 
