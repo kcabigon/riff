@@ -707,7 +707,6 @@ export default function MyRiffsClient({
           onClose={() => setRevealRiffId(null)}
           onConfirm={handleRevealConfirm}
           isRevealing={isRevealing}
-          deadline={revealTarget.deadline}
           {...getRevealRoster(
             revealTarget.participants,
             revealTarget.pieces,

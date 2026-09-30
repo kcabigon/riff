@@ -743,7 +743,6 @@ export default function RiffPageLayout({
         onClose={() => setIsRevealModalOpen(false)}
         onConfirm={handleRevealConfirm}
         isRevealing={isRevealing}
-        deadline={riff.deadline}
         {...getRevealRoster(riff.participants, riff.pieces, clubMembers)}
       />
 

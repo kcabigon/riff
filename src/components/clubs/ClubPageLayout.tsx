@@ -1571,7 +1571,6 @@ export default function ClubPageLayout({
           onClose={() => setIsRevealModalOpen(false)}
           onConfirm={handleRevealConfirm}
           isRevealing={isRevealing}
-          deadline={activeRiff.deadline}
           {...getRevealRoster(
             activeRiff.participants,
             activeRiff.pieces,
