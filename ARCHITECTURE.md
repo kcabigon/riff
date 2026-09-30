@@ -141,7 +141,7 @@ src/components/
 │                  # RevealCelebration, CreateRiffModal, EditRiffModal, RiffFormFields, DeleteRiffConfirmModal,
 │                  # DraftChoiceModal, DraftChoiceTrigger, InviteFriendModal, JoinRiffClient, MosaicCollage,
 │                  # PublicShareIndicator, EmptyRiffState
-├── pieces/        # ShareModal, PieceJoinClient, PieceViewer, PieceStatus, VersionTimeline
+├── pieces/        # PieceJoinClient
 ├── read/          # ReadPageLayout, ReadOnlyEditor, ReadToggle, ReadingProgress, PieceNavigation,
 │                  # CommentAnchor, CommentButton, CommentPopover, CommentSidebar, CommentModal,
 │                  # CommentComposeModal, ReplyThread, MotionExperienceCTA, StrangeCaseExperience
