@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import Modal from "@/components/shared/Modal";
 import PrimaryButton from "@/components/PrimaryButton";
 import TextInput from "@/components/TextInput";
-import Tagline from "@/components/Tagline";
 import FormErrorText from "@/components/shared/FormErrorText";
 
 interface MediaEmbedModalProps {
@@ -126,14 +125,6 @@ export default function MediaEmbedModal({
       footer={footer}
     >
       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-        <Tagline
-          text="URL"
-          color="#01EFFC"
-          textColor="#000000"
-          fontSize={16}
-          width="fit"
-          align="left"
-        />
         <TextInput
           ref={urlRef}
           aria-label="URL"

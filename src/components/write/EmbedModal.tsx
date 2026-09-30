@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import Modal from "@/components/shared/Modal";
 import PrimaryButton from "@/components/PrimaryButton";
 import TextInput from "@/components/TextInput";
-import Tagline from "@/components/Tagline";
 
 interface EmbedModalProps {
   isOpen: boolean;
@@ -82,21 +81,26 @@ export default function EmbedModal({
       footer={footer}
     >
       <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          <Tagline
-            text="URL"
-            color="#01EFFC"
-            textColor="#000000"
-            fontSize={16}
-            width="fit"
-            align="left"
-          />
+        <TextInput
+          ref={urlRef}
+          aria-label="URL"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder={placeholder}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              e.stopPropagation();
+              handleSubmit();
+            }
+          }}
+        />
+        {showDisplayText && (
           <TextInput
-            ref={urlRef}
-            aria-label="URL"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder={placeholder}
+            aria-label="Display text"
+            value={displayText}
+            onChange={(e) => setDisplayText(e.target.value)}
+            placeholder="Text to display (defaults to URL)"
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
@@ -105,31 +109,6 @@ export default function EmbedModal({
               }
             }}
           />
-        </div>
-        {showDisplayText && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <Tagline
-              text="Display text"
-              color="#00FF66"
-              textColor="#000000"
-              fontSize={16}
-              width="fit"
-              align="left"
-            />
-            <TextInput
-              aria-label="Display text"
-              value={displayText}
-              onChange={(e) => setDisplayText(e.target.value)}
-              placeholder="Text to display (defaults to URL)"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleSubmit();
-                }
-              }}
-            />
-          </div>
         )}
       </div>
     </Modal>
