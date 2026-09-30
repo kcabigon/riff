@@ -50,7 +50,7 @@ export default function RevealConfirmModal({
   const pieceCount = submitted.length;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Reveal pieces?" size="sm">
+    <Modal isOpen={isOpen} onClose={onClose} title="Reveal now?" size="sm">
       <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
         <Group label="Submitted" users={submitted} />
         <Group label="Still writing" users={writing} />
