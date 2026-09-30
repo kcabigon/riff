@@ -155,7 +155,7 @@ export default function AssignCoHostModal({
                   style={{
                     fontFamily: "var(--font-dm-sans)",
                     fontSize: "16px",
-                    fontWeight: 400,
+                    fontWeight: 300,
                     color: "#000000",
                     margin: 0,
                   }}
