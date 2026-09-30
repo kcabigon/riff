@@ -31,6 +31,7 @@ A private essay-sharing platform for creative communities. People write together
 
 **Riffs**
 - Lifecycle: DRAFT → ACTIVE → REVEALED → COMPLETED (reveal celebration)
+- Reveal: clubs on any cadence but Freestyle reveal automatically at the deadline (Paused included), so hosts get no Reveal button. Freestyle hosts and open-riff hosts get it after the deadline, or before it once everyone has submitted (every club member for club riffs). "Reveal now" in the 3-dot menu reveals any time there's a submission. The reveal modal groups the club into Submitted / Still writing / Haven't started
 - **Open (clubless) riffs** — created with no club, joined via invite link (`/riffs/[id]/join`)
 - Riff page is one scrolling activity view: progress cards (locked until reveal), activity/comment feed, Read-by strip with progress rings
 - Mandatory deadlines with countdown; editing a riff never silently moves the deadline
