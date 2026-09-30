@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { signOut } from "next-auth/react";
 import Modal from "@/components/shared/Modal";
+import FormErrorText from "@/components/shared/FormErrorText";
 import TextInput from "@/components/TextInput";
 import DestructiveButton from "@/components/DestructiveButton";
 
@@ -128,38 +129,18 @@ export default function DeleteAccountConfirmModal({
           Loading...
         </p>
       ) : fetchError ? (
-        <>
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "16px",
-              fontWeight: 300,
-              color: "#808080",
-              margin: "0 0 24px",
-              lineHeight: 1.6,
-            }}
-          >
-            Unable to verify your clubs right now. Close and try again.
-          </p>
-          <div style={{ textAlign: "center" }}>
-            <button
-              onClick={onClose}
-              style={{
-                backgroundColor: "#FFFFFF",
-                border: "none",
-                cursor: "pointer",
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "12px",
-                fontWeight: 300,
-                color: "#808080",
-                padding: "4px 12px",
-                textDecoration: "underline",
-              }}
-            >
-              Cancel
-            </button>
-          </div>
-        </>
+        <p
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "16px",
+            fontWeight: 300,
+            color: "#808080",
+            margin: 0,
+            lineHeight: 1.6,
+          }}
+        >
+          Unable to verify your clubs right now. Close and try again.
+        </p>
       ) : isBlocked ? (
         <>
           {/* Host gate warning box */}
@@ -168,7 +149,6 @@ export default function DeleteAccountConfirmModal({
               backgroundColor: "#FFFFFF",
               border: "2px solid #DC2626",
               padding: "16px",
-              marginBottom: "24px",
             }}
           >
             <p
@@ -199,25 +179,6 @@ export default function DeleteAccountConfirmModal({
               or delete the club if it&apos;s no longer active. Come back here
               when you&apos;re done.
             </p>
-          </div>
-
-          <div style={{ textAlign: "center" }}>
-            <button
-              onClick={onClose}
-              style={{
-                backgroundColor: "#FFFFFF",
-                border: "none",
-                cursor: "pointer",
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "12px",
-                fontWeight: 300,
-                color: "#808080",
-                padding: "4px 12px",
-                textDecoration: "underline",
-              }}
-            >
-              Cancel
-            </button>
           </div>
         </>
       ) : (
@@ -288,47 +249,16 @@ export default function DeleteAccountConfirmModal({
             />
           </div>
 
-          {error && (
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "12px",
-                fontWeight: 300,
-                color: "#DC2626",
-                margin: "0 0 16px",
-              }}
-            >
-              {error}
-            </p>
-          )}
+          <FormErrorText message={error} style={{ marginBottom: "16px" }} />
 
           <DestructiveButton
             size="lg"
             onClick={handleDelete}
             disabled={buttonDisabled}
-            style={{ width: "100%", marginBottom: "16px" }}
+            style={{ width: "100%" }}
           >
             {isDeleting ? "Deleting..." : "Delete my account"}
           </DestructiveButton>
-
-          <div style={{ textAlign: "center" }}>
-            <button
-              onClick={onClose}
-              style={{
-                backgroundColor: "#FFFFFF",
-                border: "none",
-                cursor: "pointer",
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "12px",
-                fontWeight: 300,
-                color: "#808080",
-                padding: "4px 12px",
-                textDecoration: "underline",
-              }}
-            >
-              Cancel
-            </button>
-          </div>
         </>
       )}
     </Modal>

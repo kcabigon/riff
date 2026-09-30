@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Modal from "@/components/shared/Modal";
+import FormErrorText from "@/components/shared/FormErrorText";
 import RiffFormFields from "./RiffFormFields";
 import PrimaryButton from "@/components/PrimaryButton";
 import { toEndOfDay, toLocalDateInputValue } from "@/lib/riff-utils";
@@ -88,19 +89,7 @@ export default function EditRiffModal({
             setDeadline={setDeadline}
           />
 
-          {error && (
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: 300,
-                color: "#DC2626",
-                margin: 0,
-              }}
-            >
-              {error}
-            </p>
-          )}
+          <FormErrorText message={error} />
 
           <PrimaryButton type="submit" loading={isSubmitting}>
             {isSubmitting ? "Saving..." : "Save changes"}

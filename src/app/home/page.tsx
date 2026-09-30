@@ -34,6 +34,7 @@ export default async function MyRiffsPage() {
     submittedPage,
     pastRiffsPage,
     standaloneDraftCount,
+    revealedPiece,
     joinableRiffs,
   ] = await Promise.all([
     // ACTIVE + REVEALED only — this set stays naturally small (people tend
@@ -72,6 +73,23 @@ export default async function MyRiffsPage() {
     // clubs/[id]/page.tsx and riffs/[id]/page.tsx).
     prisma.piece.count({
       where: { authorId: userId, riffs: { none: {} }, publishedAt: null },
+    }),
+    // Whether the Friends row gets its invite tile — needs *any* revealed or
+    // published piece, not just the capped Pieces page above (whose newest
+    // two can both sit in riffs that haven't revealed yet).
+    prisma.piece.findFirst({
+      where: {
+        authorId: userId,
+        OR: [
+          { publishedAt: { not: null } },
+          {
+            riffs: {
+              some: { riff: { status: { in: ["REVEALED", "COMPLETED"] } } },
+            },
+          },
+        ],
+      },
+      select: { id: true },
     }),
     // Active riffs in the user's clubs they haven't joined yet — powers
     // the "join" CTA in the Current Riffs section.
@@ -234,6 +252,7 @@ export default async function MyRiffsPage() {
       pieces={ownPieces}
       joinableRiffs={serializedJoinableRiffs}
       hasStandaloneDrafts={standaloneDraftCount > 0}
+      hasAnyRevealedPiece={revealedPiece !== null}
       hasMoreDrafts={draftsPage.hasMore}
       draftsCursor={draftsPage.nextCursor}
       hasMoreSubmitted={submittedPage.hasMore}

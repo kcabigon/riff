@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Modal from "@/components/shared/Modal";
+import FormErrorText from "@/components/shared/FormErrorText";
 import PrimaryButton from "@/components/PrimaryButton";
 
 interface AssignCoHostModalProps {
@@ -94,26 +95,21 @@ export default function AssignCoHostModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Assign co-host" size="sm">
       <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-        {/* Info box */}
-        <div
-          style={{
-            backgroundColor: "#FFFFFF",
-            border: "2px solid #000000",
-            padding: "16px",
-          }}
-        >
+        {/* Intro — the extra 8px on top of the column gap sets it apart
+            from the controls below */}
+        <div style={{ marginBottom: "8px" }}>
           <p
             style={{
               fontFamily: "var(--font-dm-sans)",
               fontSize: "16px",
               fontWeight: 300,
               color: "#000000",
-              margin: "0 0 4px",
+              margin: "0 0 8px",
               lineHeight: 1.6,
             }}
           >
-            Host with a friend. Your co-host can start and reveal riffs, and
-            edit club details.
+            Host with a friend. They can adjust the riff cadence, add prompts,
+            and edit club details.
           </p>
           <p
             style={{
@@ -125,8 +121,8 @@ export default function AssignCoHostModal({
               lineHeight: 1.6,
             }}
           >
-            You stay in control — they can&apos;t transfer admin privileges or
-            delete the club. You can remove them anytime.
+            They can&apos;t transfer hosting or delete the club. Remove them
+            anytime.
           </p>
         </div>
 
@@ -159,7 +155,7 @@ export default function AssignCoHostModal({
                   style={{
                     fontFamily: "var(--font-dm-sans)",
                     fontSize: "16px",
-                    fontWeight: 400,
+                    fontWeight: 300,
                     color: "#000000",
                     margin: 0,
                   }}
@@ -210,9 +206,9 @@ export default function AssignCoHostModal({
               }}
               style={{
                 width: "100%",
-                padding: "10px 12px",
+                padding: "12px",
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
+                fontSize: "16px",
                 fontWeight: 300,
                 color: selectedMemberId ? "#000000" : "#9C9C9C",
                 backgroundColor: "#FFFFFF",
@@ -248,38 +244,7 @@ export default function AssignCoHostModal({
           </div>
         )}
 
-        {error && (
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "12px",
-              fontWeight: 300,
-              color: "#DC2626",
-              margin: 0,
-            }}
-          >
-            {error}
-          </p>
-        )}
-
-        <div style={{ textAlign: "center" }}>
-          <button
-            onClick={onClose}
-            style={{
-              backgroundColor: "#FFFFFF",
-              border: "none",
-              cursor: "pointer",
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "12px",
-              fontWeight: 300,
-              color: "#808080",
-              padding: "4px 12px",
-              textDecoration: "underline",
-            }}
-          >
-            Cancel
-          </button>
-        </div>
+        <FormErrorText message={error} />
       </div>
     </Modal>
   );

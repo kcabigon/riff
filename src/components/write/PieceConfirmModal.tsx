@@ -129,18 +129,7 @@ export default function PieceConfirmModal({
         </div>
       </div>
 
-      <div style={{ display: "flex", justifyContent: "center" }}>
-        <div
-          style={{
-            display: "inline-block",
-            backgroundColor: "#FFFFFF",
-            padding: "4px 8px",
-            textAlign: "center",
-          }}
-        >
-          {note}
-        </div>
-      </div>
+      <div style={{ textAlign: "center" }}>{note}</div>
     </Modal>
   );
 }

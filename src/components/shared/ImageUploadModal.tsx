@@ -71,26 +71,24 @@ export default function ImageUploadModal({
       size="md"
       footer={footer}
     >
-      <div style={{ marginTop: "16px" }}>
-        <ImageUploadFlow
-          ref={flowRef}
-          onSelect={(url) => {
-            onSelect(url);
-            if (url) onClose();
-          }}
-          onClose={onClose}
-          currentImage={currentImage}
-          removeLabel={removeLabel}
-          aspectRatio={aspectRatio}
-          cropShape={cropShape}
-          existingImages={existingImages}
-          existingImagesLabel={existingImagesLabel}
-          inlinePreview={inlinePreview}
-          onSkip={onSkip}
-          hideSaveButton={true}
-          onCropStateChange={setCropActive}
-        />
-      </div>
+      <ImageUploadFlow
+        ref={flowRef}
+        onSelect={(url) => {
+          onSelect(url);
+          if (url) onClose();
+        }}
+        onClose={onClose}
+        currentImage={currentImage}
+        removeLabel={removeLabel}
+        aspectRatio={aspectRatio}
+        cropShape={cropShape}
+        existingImages={existingImages}
+        existingImagesLabel={existingImagesLabel}
+        inlinePreview={inlinePreview}
+        onSkip={onSkip}
+        hideSaveButton={true}
+        onCropStateChange={setCropActive}
+      />
     </Modal>
   );
 }

@@ -7,8 +7,9 @@ import { useProfileNavigation } from "@/hooks/useProfileNavigation";
 import {
   getRiffDisplayTitle,
   getSubmittedPieces,
-  allPiecesSubmitted,
   isPastDeadline,
+  isReadyToReveal,
+  type RevealRosterUser,
 } from "@/lib/riff-utils";
 import RiffCTAButton from "@/components/riffs/RiffCTAButton";
 import RevealRiffButton, {
@@ -64,6 +65,10 @@ interface RiffEventCardProps {
   onJoin?: () => void;
   onReveal?: () => void;
   predictedVolumeNumber?: number;
+  // Club roster for the early-reveal check; null for clubless riffs
+  clubMembers: { user: RevealRosterUser }[] | null;
+  // The club's cadence reveals this riff itself — hide the Reveal button
+  autoReveals: boolean;
 }
 
 export default function RiffEventCard({
@@ -78,14 +83,26 @@ export default function RiffEventCard({
   isAdmin,
   onReveal,
   predictedVolumeNumber,
+  clubMembers,
+  autoReveals,
 }: RiffEventCardProps) {
   const [isCardHovered, setIsCardHovered] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const router = useRouter();
   const handleAvatarClick = useProfileNavigation();
   const deadlinePassed = isPastDeadline(riff.deadline ?? null);
-  const piecesAllSubmitted = allPiecesSubmitted(riff.participants, riff.pieces);
+  const piecesAllSubmitted = isReadyToReveal(
+    riff.participants,
+    riff.pieces,
+    clubMembers
+  );
   const submittedCount = getSubmittedPieces(riff.pieces).length;
+  // Club riffs count the whole club — members only become participants once
+  // they join, so participants alone reads "1/1" when the host submits first.
+  // Max guards a submitter who has since left the club.
+  const submittedTotal = clubMembers
+    ? Math.max(clubMembers.length, submittedCount)
+    : riff.participants.length;
   // Hosts see group progress the whole time — they're accountable for the
   // riff, not just their own piece. Members switch to it once they've
   // submitted, since their own word count stops being the useful number.
@@ -420,7 +437,7 @@ export default function RiffEventCard({
                         margin: 0,
                       }}
                     >
-                      {submittedCount}/{riff.participants.length}
+                      {submittedCount}/{submittedTotal}
                     </p>
                     <p
                       style={{
@@ -498,6 +515,7 @@ export default function RiffEventCard({
                 piecesAllSubmitted,
                 isAdmin,
                 status: riff.status,
+                autoReveals,
               }) ? (
                 <RevealRiffButton onClick={handleRevealClick} />
               ) : showInviteCta ? (
@@ -558,6 +576,7 @@ export default function RiffEventCard({
           isOpen={isInviteModalOpen}
           onClose={() => setIsInviteModalOpen(false)}
           title="Invite friends"
+          size="sm"
         >
           <ShareLinkOptions
             url={`${typeof window !== "undefined" ? window.location.origin : ""}/riffs/${riff.id}/join`}

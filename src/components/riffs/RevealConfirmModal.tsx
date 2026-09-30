@@ -3,20 +3,39 @@
 import Modal from "@/components/shared/Modal";
 import AvatarStack from "@/components/shared/AvatarStack";
 import PrimaryButton from "@/components/PrimaryButton";
+import type { RevealRosterUser } from "@/lib/riff-utils";
 
 interface RevealConfirmModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
   isRevealing: boolean;
-  riffTitle: string | null;
-  waitingUsers: Array<{
-    id: string;
-    name: string | null;
-    avatarUrl: string | null;
-  }>;
-  submittedCount: number;
-  totalParticipants: number;
+  submitted: RevealRosterUser[];
+  writing: RevealRosterUser[];
+  notStarted: RevealRosterUser[];
+}
+
+function Group({ label, users }: { label: string; users: RevealRosterUser[] }) {
+  if (users.length === 0) return null;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+      <p
+        style={{
+          fontFamily: "var(--font-dm-sans)",
+          fontSize: "12px",
+          fontWeight: 300,
+          color: "#808080",
+          margin: 0,
+        }}
+      >
+        {label}
+      </p>
+      <AvatarStack
+        users={users.map((u) => ({ ...u, username: null }))}
+        size={32}
+      />
+    </div>
+  );
 }
 
 export default function RevealConfirmModal({
@@ -24,139 +43,24 @@ export default function RevealConfirmModal({
   onClose,
   onConfirm,
   isRevealing,
-  riffTitle,
-  waitingUsers,
-  submittedCount,
-  totalParticipants,
+  submitted,
+  writing,
+  notStarted,
 }: RevealConfirmModalProps) {
+  const pieceCount = submitted.length;
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Reveal pieces?">
-      {/* Summary */}
-      <div
-        style={{
-          display: "inline-block",
-          backgroundColor: "#FFFFFF",
-          padding: "2px 8px",
-          marginBottom: "20px",
-        }}
-      >
-        <p
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
-            fontWeight: 300,
-            color: "#000000",
-            margin: 0,
-            lineHeight: 1.5,
-          }}
-        >
-          <span style={{ fontWeight: 700 }}>{submittedCount}</span> of{" "}
-          <span style={{ fontWeight: 700 }}>{totalParticipants}</span> members
-          have submitted to &ldquo;{riffTitle || "Untitled"}&rdquo;.
-        </p>
-      </div>
+    <Modal isOpen={isOpen} onClose={onClose} title="Reveal now?" size="sm">
+      <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+        <Group label="Submitted" users={submitted} />
+        <Group label="Still writing" users={writing} />
+        <Group label="Haven't started" users={notStarted} />
 
-      {/* Waiting users */}
-      {waitingUsers.length > 0 && (
-        <div style={{ marginBottom: "20px" }}>
-          <div
-            style={{
-              display: "inline-block",
-              backgroundColor: "#FFFFFF",
-              padding: "2px 8px",
-              marginBottom: "8px",
-            }}
-          >
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: 300,
-                color: "#808080",
-                margin: 0,
-              }}
-            >
-              Still writing:
-            </p>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <AvatarStack
-              users={waitingUsers.map((u) => ({ ...u, username: null }))}
-              size={32}
-            />
-            <div
-              style={{
-                display: "inline-block",
-                backgroundColor: "#FFFFFF",
-                padding: "2px 8px",
-              }}
-            >
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "14px",
-                  fontWeight: 300,
-                  color: "#000000",
-                  margin: 0,
-                }}
-              >
-                {waitingUsers.map((u) => u.name || "Unknown").join(", ")}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Warning */}
-      {waitingUsers.length > 0 && (
-        <div
-          style={{
-            display: "inline-block",
-            backgroundColor: "#FFFFFF",
-            padding: "2px 8px",
-            marginBottom: "24px",
-          }}
-        >
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              fontWeight: 300,
-              color: "#DC2626",
-              margin: 0,
-              lineHeight: 1.5,
-            }}
-          >
-            Members who haven&apos;t submitted won&apos;t be included.
-          </p>
-        </div>
-      )}
-
-      {/* Confirm */}
-      <div style={{ marginBottom: "16px" }}>
         <PrimaryButton onClick={onConfirm} loading={isRevealing}>
-          {isRevealing ? "Revealing..." : "Reveal pieces"}
+          {isRevealing
+            ? "Revealing..."
+            : `Reveal ${pieceCount} ${pieceCount === 1 ? "piece" : "pieces"}`}
         </PrimaryButton>
-      </div>
-
-      {/* Cancel */}
-      <div style={{ textAlign: "center" }}>
-        <button
-          onClick={onClose}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
-            fontWeight: 300,
-            color: "#808080",
-            padding: "4px",
-            textDecoration: "underline",
-          }}
-        >
-          Cancel
-        </button>
       </div>
     </Modal>
   );
