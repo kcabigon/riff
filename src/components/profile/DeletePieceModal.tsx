@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Modal from "@/components/shared/Modal";
 import FormErrorText from "@/components/shared/FormErrorText";
+import DestructiveButton from "@/components/DestructiveButton";
 
 interface DeletePieceModalProps {
   pieceId: string;
@@ -18,7 +19,6 @@ export default function DeletePieceModal({
   onDeleted,
 }: DeletePieceModalProps) {
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [friendNames, setFriendNames] = useState<string[] | null>(null);
 
@@ -56,39 +56,14 @@ export default function DeletePieceModal({
   };
 
   const footer = (
-    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-      <button
-        onClick={handleDelete}
-        disabled={isDeleting}
-        onMouseEnter={() => {
-          if (!isDeleting) setIsHovered(true);
-        }}
-        onMouseLeave={() => setIsHovered(false)}
-        style={{
-          width: "100%",
-          backgroundColor: isDeleting
-            ? "#FFFFFF"
-            : isHovered
-              ? "#DC2626"
-              : "#FFFFFF",
-          border: isDeleting ? "2px solid #9C9C9C" : "2px solid #000000",
-          boxShadow: isDeleting
-            ? "none"
-            : isHovered
-              ? "8px 8px 0px 0px #000000"
-              : "8px 8px 0px 0px #DC2626",
-          padding: "12px 48px",
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: "16px",
-          fontWeight: 300,
-          color: isDeleting ? "#9C9C9C" : "#000000",
-          cursor: isDeleting ? "not-allowed" : "pointer",
-          transition: "none",
-        }}
-      >
-        {isDeleting ? "Deleting…" : friendNames ? "Delete anyway" : "Delete"}
-      </button>
-    </div>
+    <DestructiveButton
+      size="lg"
+      onClick={handleDelete}
+      disabled={isDeleting}
+      style={{ width: "100%" }}
+    >
+      {isDeleting ? "Deleting…" : friendNames ? "Delete anyway" : "Delete"}
+    </DestructiveButton>
   );
 
   return (
