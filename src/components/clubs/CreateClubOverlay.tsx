@@ -183,7 +183,6 @@ export default function CreateClubOverlay({
                 placeholder="Dead Poets Society"
                 value={clubName}
                 onChange={(e) => setClubName(e.target.value)}
-                autoFocus
                 maxLength={CLUB_NAME_MAX}
                 error={clubName.length >= CLUB_NAME_MAX ? " " : undefined}
               />

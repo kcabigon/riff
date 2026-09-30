@@ -970,7 +970,7 @@ export default function ClubPageLayout({
                           <ThreeDotButton
                             variant="light"
                             items={riffMenuItems}
-                            align="left"
+                            align="right"
                           />
                         )}
                       </div>

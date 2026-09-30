@@ -26,6 +26,9 @@ export default function FullScreenOverlay({
 }: FullScreenOverlayProps) {
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
+  // Scroll lock + focus restore — only depends on isOpen. Callers pass a new
+  // onClose every render, so tying this to onClose re-ran it on each
+  // keystroke and yanked focus back to whatever field was focused before.
   useEffect(() => {
     if (!isOpen) return;
 
@@ -33,15 +36,23 @@ export default function FullScreenOverlay({
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      previousFocusRef.current?.focus();
+    };
+  }, [isOpen]);
+
+  // Key listener — separate so onClose reference changes don't re-run the above
+  useEffect(() => {
+    if (!isOpen) return;
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.body.style.overflow = originalOverflow;
       document.removeEventListener("keydown", handleKeyDown);
-      previousFocusRef.current?.focus();
     };
   }, [isOpen, onClose]);
 
