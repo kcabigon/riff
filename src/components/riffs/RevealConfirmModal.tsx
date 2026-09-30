@@ -98,31 +98,9 @@ export default function RevealConfirmModal({
       )}
 
       {/* Confirm */}
-      <div style={{ marginBottom: "16px" }}>
-        <PrimaryButton onClick={onConfirm} loading={isRevealing}>
-          {isRevealing ? "Revealing..." : "Reveal pieces"}
-        </PrimaryButton>
-      </div>
-
-      {/* Cancel */}
-      <div style={{ textAlign: "center" }}>
-        <button
-          onClick={onClose}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
-            fontWeight: 300,
-            color: "#808080",
-            padding: "4px",
-            textDecoration: "underline",
-          }}
-        >
-          Cancel
-        </button>
-      </div>
+      <PrimaryButton onClick={onConfirm} loading={isRevealing}>
+        {isRevealing ? "Revealing..." : "Reveal pieces"}
+      </PrimaryButton>
     </Modal>
   );
 }

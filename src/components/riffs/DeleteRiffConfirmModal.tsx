@@ -114,29 +114,10 @@ export default function DeleteRiffConfirmModal({
         size="lg"
         onClick={handleDelete}
         disabled={isDeleting}
-        style={{ width: "100%", marginBottom: "16px" }}
+        style={{ width: "100%" }}
       >
         {isDeleting ? "Deleting..." : "Delete riff"}
       </DestructiveButton>
-
-      <div style={{ textAlign: "center" }}>
-        <button
-          onClick={onClose}
-          style={{
-            backgroundColor: "#FFFFFF",
-            border: "none",
-            cursor: "pointer",
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
-            fontWeight: 300,
-            color: "#808080",
-            padding: "4px 12px",
-            textDecoration: "underline",
-          }}
-        >
-          Cancel
-        </button>
-      </div>
     </Modal>
   );
 }

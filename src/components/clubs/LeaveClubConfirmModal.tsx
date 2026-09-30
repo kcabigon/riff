@@ -108,29 +108,10 @@ export default function LeaveClubConfirmModal({
         size="lg"
         onClick={handleLeave}
         disabled={isLeaving}
-        style={{ width: "100%", marginBottom: "16px" }}
+        style={{ width: "100%" }}
       >
         {isLeaving ? "Leaving..." : "Leave club"}
       </DestructiveButton>
-
-      <div style={{ textAlign: "center" }}>
-        <button
-          onClick={onClose}
-          style={{
-            backgroundColor: "#FFFFFF",
-            border: "none",
-            cursor: "pointer",
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "12px",
-            fontWeight: 300,
-            color: "#808080",
-            padding: "4px 12px",
-            textDecoration: "underline",
-          }}
-        >
-          Cancel
-        </button>
-      </div>
     </Modal>
   );
 }
