@@ -20,7 +20,7 @@ import DeleteRiffConfirmModal from "@/components/riffs/DeleteRiffConfirmModal";
 import RevealConfirmModal from "@/components/riffs/RevealConfirmModal";
 import ClubSettingsModal from "@/components/clubs/ClubSettingsModal";
 import ShareLinkOptions from "@/components/shared/ShareLinkOptions";
-import CloseButton from "@/components/CloseButton";
+import Modal from "@/components/shared/Modal";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import RiffMark from "@/components/shared/RiffMark";
 import { ChevronIcon } from "@/components/shared/icons";
@@ -1539,58 +1539,16 @@ export default function ClubPageLayout({
 
       {/* Invite Friends Modal */}
       {isInviteModalOpen && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            backgroundColor: "rgba(0,0,0,0.5)",
-            zIndex: 100,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "24px",
-          }}
-          onClick={() => setIsInviteModalOpen(false)}
+        <Modal
+          isOpen={isInviteModalOpen}
+          onClose={() => setIsInviteModalOpen(false)}
+          title="Invite friends"
         >
-          <div
-            style={{
-              backgroundColor: "#FFFFFF",
-              border: "2px solid #000000",
-              padding: "32px",
-              width: "100%",
-              maxWidth: "480px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "24px",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <h2
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "20px",
-                  fontWeight: 300,
-                  color: "#000000",
-                  margin: 0,
-                }}
-              >
-                Invite friends
-              </h2>
-              <CloseButton onClick={() => setIsInviteModalOpen(false)} />
-            </div>
-            <ShareLinkOptions
-              url={`${typeof window !== "undefined" ? window.location.origin : ""}/clubs/${club.id}/join`}
-              shareText={`Join ${clubName} on Riff!`}
-            />
-          </div>
-        </div>
+          <ShareLinkOptions
+            url={`${typeof window !== "undefined" ? window.location.origin : ""}/clubs/${club.id}/join`}
+            shareText={`Join ${clubName} on Riff!`}
+          />
+        </Modal>
       )}
 
       {/* Create Riff Modal */}
