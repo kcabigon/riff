@@ -1,7 +1,7 @@
 "use client";
 
 import Modal from "@/components/shared/Modal";
-import Avatar from "@/components/shared/Avatar";
+import AvatarStack from "@/components/shared/AvatarStack";
 import PrimaryButton from "@/components/PrimaryButton";
 import { formatDateLong, type RevealRosterUser } from "@/lib/riff-utils";
 
@@ -68,17 +68,10 @@ function Group({ label, users }: { label: string; users: RevealRosterUser[] }) {
       >
         {label}
       </p>
-      {users.map((u) => (
-        <div
-          key={u.id}
-          style={{ display: "flex", alignItems: "center", gap: "12px" }}
-        >
-          <Avatar user={{ ...u, username: null }} size={24} />
-          <span style={{ ...TEXT_STYLE, lineHeight: 1.4 }}>
-            {u.name || "Unknown"}
-          </span>
-        </div>
-      ))}
+      <AvatarStack
+        users={users.map((u) => ({ ...u, username: null }))}
+        size={32}
+      />
     </div>
   );
 }
