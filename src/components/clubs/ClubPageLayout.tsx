@@ -48,7 +48,11 @@ import CadenceSettingsModal from "@/components/clubs/CadenceSettingsModal";
 import ClubStatsRow from "@/components/clubs/ClubStatsRow";
 import ClubCadenceLine from "@/components/clubs/ClubCadenceLine";
 import RiffPromptEditor from "@/components/clubs/RiffPromptEditor";
-import { isIntervalCadence, type CadenceValue } from "@/lib/cadence";
+import {
+  isIntervalCadence,
+  revealsAutomatically,
+  type CadenceValue,
+} from "@/lib/cadence";
 
 interface ClubMember {
   user: {
@@ -838,6 +842,7 @@ export default function ClubPageLayout({
             piecesAllSubmitted,
             isAdmin: isAdmin || isCoHost,
             status: activeRiff.status,
+            autoReveals: revealsAutomatically(clubCadence),
           });
 
           // Same menu as the individual riff page's 3-dot (RiffPageLayout).

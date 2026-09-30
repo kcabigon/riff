@@ -67,6 +67,8 @@ interface RiffEventCardProps {
   predictedVolumeNumber?: number;
   // Club roster for the early-reveal check; null for clubless riffs
   clubMembers: { user: RevealRosterUser }[] | null;
+  // The club's cadence reveals this riff itself — hide the Reveal button
+  autoReveals: boolean;
 }
 
 export default function RiffEventCard({
@@ -82,6 +84,7 @@ export default function RiffEventCard({
   onReveal,
   predictedVolumeNumber,
   clubMembers,
+  autoReveals,
 }: RiffEventCardProps) {
   const [isCardHovered, setIsCardHovered] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
@@ -506,6 +509,7 @@ export default function RiffEventCard({
                 piecesAllSubmitted,
                 isAdmin,
                 status: riff.status,
+                autoReveals,
               }) ? (
                 <RevealRiffButton onClick={handleRevealClick} />
               ) : showInviteCta ? (

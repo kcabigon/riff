@@ -1,5 +1,7 @@
 "use client";
 
+import { revealsAutomatically, type CadenceValue } from "@/lib/cadence";
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import PieceCard from "./PieceCard";
@@ -49,7 +51,7 @@ interface RiffPageLayoutProps {
     createdAt: string;
     updatedAt?: string;
     clubId: string | null;
-    club: { id: string; name: string } | null;
+    club: { id: string; name: string; cadence: CadenceValue } | null;
     creator: {
       id: string;
       name: string | null;
@@ -486,6 +488,8 @@ export default function RiffPageLayout({
               piecesAllSubmitted,
               isAdmin,
               status: riff.status,
+              autoReveals:
+                !!riff.club && revealsAutomatically(riff.club.cadence),
             }) && <RevealRiffButton onClick={handleRevealClick} />}
           </div>
         </div>

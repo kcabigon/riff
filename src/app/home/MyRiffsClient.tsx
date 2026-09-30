@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { revealsAutomatically, type CadenceValue } from "@/lib/cadence";
 import NavBar from "@/components/clubs/NavBar";
 import RiffEventCard from "@/components/riffs/RiffEventCard";
 import ReadyToRevealCard from "@/components/riffs/ReadyToRevealCard";
@@ -63,6 +64,7 @@ interface Riff {
     bannerImage: string | null;
     adminId: string;
     moderatorId: string | null;
+    cadence: CadenceValue;
     members: Array<{
       user: { id: string; name: string | null; avatarUrl: string | null };
     }>;
@@ -876,6 +878,9 @@ export default function MyRiffsClient({
                       }}
                       isClubless={!riff.club}
                       clubMembers={riff.club?.members ?? null}
+                      autoReveals={
+                        !!riff.club && revealsAutomatically(riff.club.cadence)
+                      }
                       isJoined={isJoined}
                       hasDraft={hasDraft}
                       hasSubmitted={hasSubmitted}

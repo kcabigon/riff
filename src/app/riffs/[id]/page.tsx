@@ -68,6 +68,7 @@ export default async function RiffPage({
           name: true,
           adminId: true,
           moderatorId: true,
+          cadence: true,
           admin: { select: { firstName: true } },
           // Roster for the reveal modal and early-reveal check
           members: {
