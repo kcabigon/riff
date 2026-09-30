@@ -173,7 +173,7 @@ function AccessDropdown({
                     width: "14px",
                     height: "14px",
                     borderRadius: "64px",
-                    border: "2px solid #000000",
+                    border: "1px solid #000000",
                     backgroundColor: isSelected ? "#00FF66" : "#FFFFFF",
                     flexShrink: 0,
                     marginTop: "2px",

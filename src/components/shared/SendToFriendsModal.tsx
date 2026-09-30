@@ -86,7 +86,7 @@ export default function SendToFriendsModal({
         style={{
           width: "16px",
           height: "16px",
-          border: "2px solid #000000",
+          border: "1px solid #000000",
           backgroundColor: selectedIds.has(friend.id) ? "#00FF66" : "#FFFFFF",
           flexShrink: 0,
         }}
