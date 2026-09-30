@@ -251,7 +251,8 @@ All interactive elements: border/outline changes to green `#00FF66`.
 - Container: plain white background (no noise — it hurts readability), 2px solid black border, 8px black shadow
 - Padding: 40px
 - Title: DM Serif Text 24px
-- Sizes: sm (400px), md (480px), lg (600px)
+- Sizes: sm (400px) for confirmations and share/invite flows, md (480px) for forms, lg (600px)
+- Errors: `FormErrorText`
 - Close: CloseButton in top-right
 - Focus trap + ESC to close
 
