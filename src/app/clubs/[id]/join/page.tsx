@@ -21,32 +21,21 @@ export async function generateMetadata({
   }
 
   const title = `Join ${club.name} on Riff`;
+  const description = club.description || "Write clubs for friends";
+  // Clubs without a banner fall back to the default Riff card image
+  const image = club.bannerImage || "/og-image.png";
 
-  if (club.bannerImage) {
-    return {
+  return {
+    title,
+    description,
+    openGraph: { title, description, images: [{ url: image }] },
+    twitter: {
+      card: "summary_large_image",
       title,
-      openGraph: {
-        title,
-        images: [{ url: club.bannerImage, width: 1200, height: 630 }],
-      },
-      twitter: {
-        card: "summary_large_image",
-        title,
-        images: [club.bannerImage],
-      },
-    };
-  }
-
-  if (club.description) {
-    return {
-      title,
-      description: club.description,
-      openGraph: { title, description: club.description },
-      twitter: { card: "summary", title, description: club.description },
-    };
-  }
-
-  return { title };
+      description,
+      images: [image],
+    },
+  };
 }
 
 export default async function JoinClubPage({
