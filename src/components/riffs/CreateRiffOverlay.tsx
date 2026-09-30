@@ -1,0 +1,341 @@
+"use client";
+
+import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import TextInput from "@/components/TextInput";
+import Tagline from "@/components/Tagline";
+import PrimaryButton from "@/components/PrimaryButton";
+import OnboardingProgress from "@/components/onboarding/OnboardingProgress";
+import ShareLinkOptions from "@/components/shared/ShareLinkOptions";
+import HeroCardOverlay from "@/components/shared/HeroCardOverlay";
+import OverlayStepHeader from "@/components/shared/OverlayStepHeader";
+import FormErrorText from "@/components/shared/FormErrorText";
+import TemplatePicker from "./TemplatePicker";
+import { QUICK_START } from "@/lib/riff-quick-start";
+import { createAndActivateRiff, toEndOfDay } from "@/lib/riff-utils";
+
+const TOTAL_STEPS = 3;
+
+function getDefaultDeadline() {
+  const d = new Date();
+  d.setDate(d.getDate() + 14);
+  return d.toISOString().split("T")[0];
+}
+
+interface CreateRiffOverlayProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onCreated: (riffId: string) => void;
+}
+
+export default function CreateRiffOverlay({
+  isOpen,
+  onClose,
+  onCreated,
+}: CreateRiffOverlayProps) {
+  const [step, setStep] = useState(1);
+  const [title, setTitle] = useState("");
+  const [prompt, setPrompt] = useState("");
+  const [deadline, setDeadline] = useState(getDefaultDeadline);
+  const [isQuickStartApplied, setIsQuickStartApplied] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [createdRiffId, setCreatedRiffId] = useState<string | null>(null);
+
+  const reset = () => {
+    setStep(1);
+    setTitle("");
+    setPrompt("");
+    setDeadline(getDefaultDeadline());
+    setIsQuickStartApplied(false);
+    setLoading(false);
+    setError("");
+    setCreatedRiffId(null);
+  };
+
+  const handleClose = () => {
+    reset();
+    onClose();
+  };
+
+  const daysUntilDeadline = deadline
+    ? Math.round(
+        (new Date(deadline).getTime() - new Date().setHours(0, 0, 0, 0)) /
+          (1000 * 60 * 60 * 24)
+      )
+    : null;
+
+  const toggleQuickStart = () => {
+    if (isQuickStartApplied) {
+      setTitle("");
+      setPrompt("");
+      setIsQuickStartApplied(false);
+      return;
+    }
+    setTitle(QUICK_START.title);
+    setPrompt(QUICK_START.prompt);
+    setIsQuickStartApplied(true);
+  };
+
+  const handleBack = () => {
+    if (step > 1) {
+      setStep((s) => s - 1);
+      return;
+    }
+    handleClose();
+  };
+
+  const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const result = await createAndActivateRiff("/api/riffs", {
+        title: title.trim() || "Let's riff",
+        prompt: prompt.trim() || null,
+        deadline: toEndOfDay(deadline),
+      });
+
+      if (!result.ok) {
+        setError(result.error);
+        setLoading(false);
+        return;
+      }
+
+      setCreatedRiffId(result.riffId);
+      setLoading(false);
+      setStep(3);
+    } catch (err) {
+      console.error("Error creating riff:", err);
+      setError("Something went wrong. Please try again.");
+      setLoading(false);
+    }
+  };
+
+  const handleDone = () => {
+    if (createdRiffId) {
+      const riffId = createdRiffId;
+      reset();
+      onCreated(riffId);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  const joinUrl = createdRiffId
+    ? `${typeof window !== "undefined" ? window.location.origin : ""}/riffs/${createdRiffId}/join`
+    : "";
+
+  return (
+    <HeroCardOverlay
+      isOpen={isOpen}
+      onClose={handleClose}
+      ariaLabel="Create a riff"
+      word="riff"
+      cardOverlap={{ desktop: 460, mobile: 240 }}
+    >
+      <OverlayStepHeader
+        heading={step === 1 ? "The Creative Brief" : undefined}
+        onBack={step === 2 ? handleBack : undefined}
+      />
+
+      <AnimatePresence mode="wait" initial={false}>
+        {step === 1 && (
+          <motion.form
+            key="step-1"
+            initial={{ opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -16 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            onSubmit={(e) => {
+              e.preventDefault();
+              setStep(2);
+            }}
+            style={{
+              width: "100%",
+              display: "flex",
+              flexDirection: "column",
+              gap: "24px",
+            }}
+          >
+            <div
+              style={{
+                width: "100%",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "8px",
+                }}
+              >
+                <Tagline
+                  text="Riff name"
+                  color="#00FF66"
+                  width={94}
+                  textColor="#000000"
+                  fontSize={16}
+                />
+                <TemplatePicker
+                  active={isQuickStartApplied}
+                  onToggle={toggleQuickStart}
+                />
+              </div>
+              <TextInput
+                type="text"
+                name="title"
+                placeholder="Ex. Summer Stories"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                autoFocus
+                maxLength={200}
+              />
+            </div>
+
+            <div
+              style={{
+                width: "100%",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+              }}
+            >
+              <Tagline
+                text="Prompt"
+                color="#EECF01"
+                width={76}
+                textColor="#000000"
+                fontSize={16}
+              />
+              <TextInput
+                multiline
+                rows={3}
+                name="prompt"
+                placeholder="Let's write about..."
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+              />
+            </div>
+
+            <FormErrorText message={error} />
+
+            <PrimaryButton type="submit">Cool, what&apos;s next?</PrimaryButton>
+            <OnboardingProgress currentStep={1} totalSteps={TOTAL_STEPS} />
+          </motion.form>
+        )}
+
+        {step === 2 && (
+          <motion.form
+            key="step-2"
+            initial={{ opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -16 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            onSubmit={handleCreate}
+            style={{
+              width: "100%",
+              display: "flex",
+              flexDirection: "column",
+              gap: "24px",
+            }}
+          >
+            <div
+              style={{
+                width: "100%",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+              }}
+            >
+              <Tagline
+                text="Deadline"
+                color="#01EFFC"
+                width={86}
+                textColor="#000000"
+                fontSize={16}
+              />
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "16px",
+                  fontWeight: 300,
+                  color: "#000000",
+                  textAlign: "left",
+                  margin: "0 0 8px 0",
+                }}
+              >
+                The goal of a riff is to reveal together on or before this date.
+                Don&apos;t worry, you can change this date later if you want to.
+              </p>
+              <TextInput
+                type="date"
+                name="deadline"
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
+                required
+              />
+              {daysUntilDeadline !== null && (
+                <span style={helperTextStyle}>
+                  {daysUntilDeadline} days from today
+                </span>
+              )}
+            </div>
+
+            <FormErrorText message={error} />
+
+            <PrimaryButton type="submit" loading={loading} disabled={loading}>
+              {loading ? "Creating..." : "Invite friends"}
+            </PrimaryButton>
+            <OnboardingProgress currentStep={2} totalSteps={TOTAL_STEPS} />
+          </motion.form>
+        )}
+
+        {step === 3 && createdRiffId && (
+          <motion.div
+            key="step-3"
+            initial={{ opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -16 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            style={{
+              width: "100%",
+              display: "flex",
+              flexDirection: "column",
+              gap: "24px",
+            }}
+          >
+            <Tagline
+              text="Invite friends"
+              color="#C01582"
+              width={136}
+              textColor="#FFFFFF"
+              fontSize={16}
+            />
+
+            <ShareLinkOptions url={joinUrl} shareText="Let's riff!" />
+
+            <PrimaryButton onClick={handleDone}>Done</PrimaryButton>
+            <OnboardingProgress currentStep={3} totalSteps={TOTAL_STEPS} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </HeroCardOverlay>
+  );
+}
+
+const helperTextStyle: React.CSSProperties = {
+  display: "inline-block",
+  backgroundColor: "#FFFFFF",
+  padding: "2px 8px",
+  fontFamily: "var(--font-dm-sans)",
+  fontSize: "14px",
+  fontWeight: 300,
+  color: "#9C9C9C",
+  alignSelf: "flex-start",
+};

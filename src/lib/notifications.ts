@@ -4,7 +4,9 @@ import { NotificationType } from "@prisma/client";
 interface CreateNotificationInput {
   type: NotificationType;
   recipientId: string;
-  actorId?: string;
+  // Null for system-driven notifications (the cadence cron) — stored as null
+  // either way, see the write below.
+  actorId?: string | null;
   clubId?: string;
   riffId?: string;
   pieceId?: string;
@@ -28,37 +30,58 @@ export async function createNotification(input: CreateNotificationInput) {
   });
 }
 
+// Notifies an already-known set of users. Callers that had to load those users
+// anyway — to get their email addresses, almost always — should use this rather
+// than notifyClubMembers, which would load the same rows a second time.
+export async function notifyUsers(
+  recipientIds: string[],
+  type: NotificationType,
+  actorId: string | null,
+  extra: Omit<CreateNotificationInput, "type" | "recipientId" | "actorId"> = {}
+) {
+  return Promise.allSettled(
+    recipientIds
+      .filter((id) => id !== actorId)
+      .map((id) =>
+        createNotification({ type, recipientId: id, actorId, ...extra })
+      )
+  );
+}
+
 export async function notifyClubMembers(
   clubId: string,
   type: NotificationType,
-  actorId: string,
-  extra: Omit<CreateNotificationInput, "type" | "recipientId" | "actorId" | "clubId"> = {}
+  // Nullable so a cron-driven action can notify everyone — there is no actor
+  // to exclude, and createNotification already stores a falsy actorId as null.
+  actorId: string | null,
+  extra: Omit<
+    CreateNotificationInput,
+    "type" | "recipientId" | "actorId" | "clubId"
+  > = {}
 ) {
   const members = await prisma.clubMember.findMany({
     where: { clubId },
     select: { userId: true },
   });
 
-  const notifications = members
-    .filter((m) => m.userId !== actorId)
-    .map((m) =>
-      createNotification({
-        type,
-        recipientId: m.userId,
-        actorId,
-        clubId,
-        ...extra,
-      })
-    );
-
-  return Promise.allSettled(notifications);
+  return notifyUsers(
+    members.map((m) => m.userId),
+    type,
+    actorId,
+    { clubId, ...extra }
+  );
 }
 
 export async function notifyRiffParticipants(
   riffId: string,
   type: NotificationType,
-  actorId: string,
-  extra: Omit<CreateNotificationInput, "type" | "recipientId" | "actorId" | "riffId"> = {}
+  // Nullable so a cron-driven action can notify everyone — there is no actor
+  // to exclude, and createNotification already stores a falsy actorId as null.
+  actorId: string | null,
+  extra: Omit<
+    CreateNotificationInput,
+    "type" | "recipientId" | "actorId" | "riffId"
+  > = {}
 ) {
   const participants = await prisma.riffParticipant.findMany({
     where: { riffId },

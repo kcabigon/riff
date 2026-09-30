@@ -1,0 +1,5 @@
+-- CreateEnum
+CREATE TYPE "ClubCadence" AS ENUM ('WEEKLY', 'BIWEEKLY', 'MONTHLY', 'BIMONTHLY', 'QUARTERLY', 'PAUSED', 'MANUAL');
+
+-- AlterTable
+ALTER TABLE "clubs" ADD COLUMN "cadence" "ClubCadence" NOT NULL DEFAULT 'MANUAL';

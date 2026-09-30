@@ -49,8 +49,8 @@ If the user asks you to "regain context" or "catch up", run `/letsriff`.
 ### Database changes
 - If you need to change `prisma/schema.prisma`, coordinate with Kyle first
 - Only one person should create migrations at a time
-- Others apply migrations with `npm run db:migrate:dev`
-- **NEVER accept a Prisma prompt to reset the database.** If `prisma migrate dev` says it needs to reset, STOP IMMEDIATELY and tell the user to contact Kyle. The dev database is shared by everyone — a reset destroys ALL test data for the entire team. This has happened before and it was catastrophic.
+- Local development and staging share one database. Kyle coordinates and applies each reviewed migration once with `npm run db:migrate:dev` (which uses `prisma migrate deploy`). Other collaborators pull the code and run `npx prisma generate` after schema changes; they do not run migrations during setup or after pulling.
+- **Never run `prisma migrate dev`, `prisma migrate reset`, or `db push` against the shared database.** If Prisma asks to reset it, stop and contact Kyle. A reset destroys everyone's test data; this has happened before.
 
 ## Quick Reference
 
@@ -60,7 +60,6 @@ npm run build            # Production build
 npm run lint             # ESLint
 npm run format           # Prettier
 npx tsc --noEmit         # Type check
-npm run db:migrate:dev   # Run database migrations
 npm run db:studio:dev    # Visual database browser
 npx prisma generate      # Regenerate Prisma client after schema changes
 ```

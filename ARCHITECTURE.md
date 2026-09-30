@@ -1,6 +1,6 @@
 # Riff — Architecture & Project Reference
 
-**Last Updated**: September 15, 2026
+**Last Updated**: September 27, 2026
 
 This file is the single source of truth for project context. The `/letsriff` slash command reads this automatically at the start of each session. For the design system, shared component catalog, and UI patterns, see `DESIGN-SYSTEM.md`.
 
@@ -24,7 +24,7 @@ A private essay-sharing platform for creative communities. People write together
 - Landing page (detects logged-in users), About page (founder's note with fake comment highlights), Terms page
 
 **Clubs**
-- Club page with grid/slot progress cards, unified desktop/mobile header
+- Club page with grid/slot progress cards, unified desktop/mobile header. Sections run Current Riff → Current Read → Past Riffs; riff titles link to the riff page with a Riff mark; hosts/co-hosts edit the current riff's prompt in place
 - Join by link (`/clubs/[id]/join`), leave club, delete club (typed confirmation)
 - Host roles: assign / re-assign / remove co-host, transfer host (emails both parties)
 - Account deletion blocked for hosts with active club members
@@ -58,16 +58,18 @@ A private essay-sharing platform for creative communities. People write together
 
 **Notifications & email**
 - In-app bell + panel (polls every 30s, click-through routing)
-- Emails: magic link, riff created/revealed, member joined, piece submitted/shared, deadline changed/approaching, all pieces submitted, co-host/host transfer, daily comment digest, engagement reminders (remember-to-write, join-riff nudge)
+- Emails (all in `src/lib/resend.ts`, each built by a `build…Email`; anything sent to more than one person goes through `deliverMany()`, Resend's batch API, and one-person emails keep a `send…Email`): sign-in, welcome, new riff, riff revealed, deadline changed, grace week, club paused, piece submitted, riff reminder (halfway + last call, one template), reading reminders (5 and 10 days after a reveal, to every member with pieces left to read, listing them), member joined, open-riff participant joined (creator only), co-host assigned, host transferred, piece shared (opens like the piece — cover, title, first ~600 chars), piece invite accepted (author only, new friendships only; email only — no bell notification yet), daily comment digest
+- **Email preview** (`/dev/emails`, dev only): every email and its variants rendered from sample data, with subject and preview line — nothing is sent. Sample data lives in `src/app/dev/emails/fixtures.ts`; add a fixture when you add an email
+- Email dates are formatted in Pacific time; all text people typed is HTML-escaped by the shared email frame
+- Sends retry when Resend rate-limits them (the daily jobs run side by side). The reminder jobs log only the emails that actually went out
 
 **Internal**
 - Admin analytics dashboard (`/admin`) — Kyle and Chris; leaderboard (`/leaderboard`) — Kyle only
 - Release notes page (`/release-notes`) — built but hidden/unlinked
 
 ### Known Gaps / In Progress
-- **Daily cron is a stopgap**: `/api/cron/daily-notifications` just runs the comment digest + engagement reminders back-to-back. The unified digest engine in `NOTIFICATIONS-PRD.md` is not started.
-- **Engagement reminders**: a failed Resend send is still logged as sent, so that reminder is skipped until the next window.
-- **Unused schema**: `Collection`, `CollectionPiece`, `CollectionCollaborator`, `Jam`, `JamRead`, `PieceVisibilitySettings`, and `ClubInvite` exist in the schema but no code queries them. Club joins use the link itself, not `ClubInvite` tokens.
+- **Daily cron is a stopgap**: `/api/cron/daily-notifications` runs the comment digest, riff reminders, reading reminders and the club cadence sweep side by side (`?only=` and `?dryRun=1` for safe manual runs). The unified digest engine in `NOTIFICATIONS-PRD.md` is not started.
+- **Unused schema**: `Collection`, `CollectionPiece`, `CollectionCollaborator`, `Jam`, `JamRead`, and `ClubInvite` exist in the schema but no code queries them. `PieceVisibilitySettings` is reused for one thing only: a `PRIVATE` row means the author hid that piece from their profile (display only, access is unchanged). Club joins use the link itself, not `ClubInvite` tokens.
 
 ---
 
@@ -96,7 +98,7 @@ src/app/
 ├── account/                      # Account settings
 ├── admin/, leaderboard/          # Admin: Kyle + Chris; leaderboard: Kyle only
 ├── release-notes/                # Hidden
-└── dev-signin/, test-*/          # Dev-only sandboxes (not linked)
+└── dev-signin/, dev/emails/      # Dev-only (not linked): account switching, email preview
 ```
 
 ### API Routes
@@ -115,7 +117,7 @@ src/app/api/
 │   └── [id]/send, send-candidates # Email a piece to chosen friends
 ├── comments/                     # list, create, [id]
 ├── notifications/                # list, [id] mark read, unread-count
-├── cron/daily-notifications      # Vercel Cron (13:00 UTC): comment digest + engagement reminders
+├── cron/daily-notifications      # Vercel Cron (13:00 UTC): comment digest + riff/reading reminders + cadence sweep
 ├── users/me/                     # current user, update, delete, export, email-preferences, admin-clubs
 ├── users/[id]/                   # public profile data
 ├── upload/image/                 # Image upload (auth required, 5MB max)
@@ -128,11 +130,12 @@ src/app/api/
 src/components/
 ├── shared/        # Modal, Avatar, AvatarStack, AdminBadge, Badge, Dropdown, ThreeDotButton, IconButton,
 │                  # BackLink, SectionHeading, Toast, ShareLinkOptions, SendToFriendsModal, InvitePieceModal,
-│                  # MobileCardCarousel, EnvironmentBadge, ImageUploadModal/Flow, ImageDropZone, icons
+│                  # MobileCardCarousel, HorizontalScrollRow, RiffMark, EnvironmentBadge,
+│                  # ImageUploadModal/Flow, ImageDropZone, icons
 ├── home/          # MyRiffsEmptyState
 ├── clubs/         # ClubPageLayout, NavBar, ClubDropdown, AvatarDropdown, CreateDropdown, CreatePillButton,
 │                  # ClubSettingsModal, JoinClubClient, AssignCoHostModal, TransferHostModal,
-│                  # LeaveClubConfirmModal, DeleteClubConfirmModal
+│                  # LeaveClubConfirmModal, DeleteClubConfirmModal, RiffPromptEditor
 ├── riffs/         # RiffPageLayout, RiffEventCard, ProgressCard, PieceCard, CompletedRiffCard, ReadyToRevealCard,
 │                  # ActivityFeed, ReadByStrip, FriendsRow, RiffCTAButton, RevealRiffButton, RevealConfirmModal,
 │                  # RevealCelebration, CreateRiffModal, EditRiffModal, RiffFormFields, DeleteRiffConfirmModal,
@@ -180,8 +183,13 @@ src/lib/
 ├── riff-utils.ts              # Riff helpers (submitted pieces, deadlines, display titles, date formatting)
 ├── notifications.ts           # createNotification, notifyClubMembers, notifyRiffParticipants
 ├── comment-notifications.ts   # Daily comment digest job
-├── engagement-reminders.ts    # Deadline-approaching / remember-to-write / join-riff nudge job
-├── resend.ts                  # All transactional email templates + batchNotificationsEnabled()
+├── engagement-reminders.ts    # Riff reminders job — halfway + last call, max two per person per riff
+├── reading-reminders.ts      # Reading reminders job — 5 and 10 days after a reveal, unread pieces only
+├── club-cadence.ts            # Daily cadence sweep: reveal / extend (grace week) / pause / open the next riff
+├── reveal-riff.ts, club-riff.ts # revealRiff() shared by host + cron; opening a club riff; predictVolumeNumber()
+├── participant-joined.ts      # Open-riff join notification (in-app to all, email to creator)
+├── resend.ts                  # All transactional emails (build + send) + opt-out checks
+├── email-excerpt.ts           # A piece's opening for email — paragraphs, breaks, bold, italic only
 ├── supabase.ts, upload-image.ts, convert-heic.ts, crop-image.ts, extract-first-image.ts
 ├── tiptap-to-docx.ts          # Tiptap JSON → .docx (export)
 ├── timeAgo.ts                 # Relative time formatting
@@ -253,8 +261,8 @@ Routing lives in the `/auth/post-login` server component, NOT the NextAuth `redi
 
 ## Crons & Email
 
-- **One Vercel Cron** (`vercel.json`): `/api/cron/daily-notifications` at 13:00 UTC, authenticated with `CRON_SECRET`. It runs the comment digest and engagement reminders. Vercel Hobby allows 2 cron jobs, so one slot is free.
-- Reminder emails respect `User.emailNotifications`; marketing respects `emailMarketing`.
+- **One Vercel Cron** (`vercel.json`): `/api/cron/daily-notifications` at 13:00 UTC, authenticated with `CRON_SECRET`. It runs the comment digest, riff reminders, reading reminders and the club cadence sweep. Vercel Hobby allows 2 cron jobs, so one slot is free.
+- One-time notification emails respect `User.emailNotifications` ("Notifications"); riff and reading reminders respect `emailMarketing`, repurposed as the "Reminders" toggle. Sign-in and welcome emails always send.
 
 ---
 
@@ -269,7 +277,7 @@ Routing lives in the `/auth/post-login` server component, NOT the NextAuth `redi
 ### Databases
 - **Local dev + staging share one Supabase project.** You'll see everyone's test data. A reset wipes it for the whole team — never accept a Prisma reset prompt.
 - **Production is a separate Supabase project.** Schema changes must be applied with `npm run db:migrate:prod` **before** promoting code that depends on them.
-- Schema changes are coordinated through Kyle; only one person creates a migration at a time. Others run `npm run db:migrate:dev`.
+- Schema changes are coordinated through Kyle; only one person creates a migration at a time. Kyle applies each reviewed migration once to the shared dev/staging database. Others run `npx prisma generate` after pulling a schema change.
 
 ### Branch Strategy
 ```

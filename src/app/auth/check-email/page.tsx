@@ -2,28 +2,45 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import AuthCard from "@/components/auth/AuthCard";
 import CTAButton from "@/components/CTAButton";
 
 function CheckEmailContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const email = searchParams.get("email");
-  const [countdown, setCountdown] = useState(60);
-  const [canResend, setCanResend] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
+  const [sent, setSent] = useState(false);
 
   useEffect(() => {
-    if (countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-      return () => clearTimeout(timer);
-    } else {
-      setCanResend(true);
-    }
-  }, [countdown]);
+    if (!email) router.replace("/login");
+  }, [email, router]);
 
   const handleResend = async () => {
-    // TODO: Implement resend logic
-    setCountdown(60);
-    setCanResend(false);
+    if (!email || sending) return;
+
+    setSending(true);
+    setError("");
+    setSent(false);
+    try {
+      const result = await signIn("resend", {
+        email,
+        redirect: false,
+        callbackUrl: "/auth/post-login",
+      });
+      if (!result?.ok || result.error) {
+        setError("Could not resend the email. Please try again.");
+      } else {
+        setSent(true);
+      }
+    } catch {
+      setError("Could not resend the email. Please try again.");
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -70,9 +87,15 @@ function CheckEmailContent() {
         )}
 
         {/* Resend */}
-        <CTAButton onClick={handleResend} disabled={!canResend}>
-          {canResend ? "Resend email" : `Resend in ${countdown}s`}
+        <CTAButton onClick={handleResend} disabled={sending}>
+          {sending ? "Sending..." : "Resend email"}
         </CTAButton>
+        {error && (
+          <p role="alert" style={{ color: "#DC2626" }}>
+            {error}
+          </p>
+        )}
+        {sent && <p role="status">Email sent. Check your inbox.</p>}
       </div>
     </AuthCard>
   );

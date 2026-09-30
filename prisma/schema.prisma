@@ -62,12 +62,23 @@ enum OnboardingStep {
 
 // ==================== CLUBS (NEW ARCHITECTURE) ====================
 
+enum ClubCadence {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  BIMONTHLY
+  QUARTERLY
+  PAUSED
+  MANUAL
+}
+
 model Club {
   id          String   @id @default(cuid())
   name        String
   description String?
   bannerImage String?  // New: Banner image URL for club personalization
   isArchived  Boolean  @default(false)
+  cadence     ClubCadence @default(MANUAL)
   adminId     String   // Creator, permanent
   moderatorId String?  // Rotatable moderator role
   createdAt   DateTime @default(now())

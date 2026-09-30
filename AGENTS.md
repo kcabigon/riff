@@ -8,7 +8,7 @@ This repository is shared with Claude Code users. Keep `CLAUDE.md`, `.claude/`, 
 - Use lowercase conventional commits. Before a PR, run `npm run lint`, `npx tsc --noEmit`, and `npm run build`. Format changed source files with Prettier before committing. `npm run format` formats all of `src/`, so review its diff for unrelated changes if you use it.
 - Follow existing TypeScript, Prisma, and API auth patterns. Use `requireAuth()` for protected API routes. Read `DESIGN-SYSTEM.md` before UI work and reuse its shared components.
 - Never commit `.env*` files or `docs/` session notes.
-- The development database is shared. Do not run Prisma migration, reset, or `db push` commands, including npm scripts that invoke them, as part of routine Codex work. Do not edit `prisma/schema.prisma` unless Kyle explicitly requests a coordinated schema change. The Codex hook blocks direct schema edits by default; Kyle must deliberately turn it off for approved schema work. Never accept a prompt to reset the shared database. Only one person creates migrations at a time.
+- Local development and staging share one database. Do not run Prisma migration, reset, or `db push` commands, including npm scripts that invoke them, as part of routine Codex work. After pulling a schema change, run `npx prisma generate`; Kyle coordinates and applies reviewed migrations once. Do not edit `prisma/schema.prisma` unless Kyle explicitly requests a coordinated schema change. The Codex hook blocks direct schema edits by default; Kyle must deliberately turn it off for approved schema work. Never accept a prompt to reset the shared database. Only one person creates migrations at a time.
 
 ## Using the existing workflows
 

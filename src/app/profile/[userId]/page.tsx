@@ -94,6 +94,8 @@ export default async function ProfilePageRoute({
           { riffs: { some: { submittedAt: { not: null } } } },
           { publishedAt: { not: null } },
         ],
+        // Skip pieces the author hid from their profile (unhidden from Home)
+        NOT: { visibility: { is: { visibility: "PRIVATE" } } },
       },
       select: {
         id: true,

@@ -34,6 +34,17 @@ export default function EditRiffModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Editing could clear a deadline that creation always required — for club
+    // riffs that stalled the cadence sweep outright, since a riff without one
+    // can't be revealed, given its grace week, or replaced. Clubless riffs were
+    // never meant to drop theirs either; that they could was an oversight in the
+    // same place, not a decision.
+    if (!deadline) {
+      setError("Please set a deadline");
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
 

@@ -119,7 +119,7 @@ Last updated: May 16, 2026
 - [x] @derek — Fix localhost URL fallbacks: change all `http://localhost:3000` fallbacks to `https://letsriff.app` in API routes (`src/app/api/riffs/[id]/route.ts`, `src/app/api/clubs/[id]/join/route.ts`, `src/lib/env.ts`)
 - [ ] @jarric — Error & 404 pages: create branded `src/app/error.tsx` and `src/app/not-found.tsx` matching the app's design system
 - [x] @derek — Security headers: add `headers()` function to `next.config.ts` with `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Strict-Transport-Security`, `Referrer-Policy`
-- [ ] @chris — Remove test pages: delete or gate `/test-*` pages behind `NODE_ENV !== "production"` check
+- [x] @chris — Remove test pages: delete or gate `/test-*` pages behind `NODE_ENV !== "production"` check
 - [x] Email unsubscribe: add unsubscribe link to notification emails + email preferences toggle in settings
 - [ ] @chris — Loading states: add `loading.tsx` with loading skeletons for clubs, clubs/[id], riffs/[id], read/[pieceId], profile/[userId], settings
 - [x] @derek — Page metadata: add `metadata` exports to login, clubs/[id], riffs/[id], profile/[userId], read/[pieceId] pages
@@ -140,8 +140,12 @@ Last updated: May 16, 2026
 - [x] Welcome tutorial: mobile-optimized version (portrait layout, swipe navigation)
 - [x] Engagement reminders v1: deadline-approaching (cadence scales with time left), remember-to-write (joined, no draft), join-riff-nudge (club member hasn't joined active riff) — all email-only via new `/api/cron/engagement-reminders`, rotating joke copy per reminder type. Cut from scope: club-invite tracking for non-members (no data model for it today) and a "someone started writing" social ping (unproven value, revisit only if the above don't move completion rate enough)
 - [ ] Notification emails via Resend — new comment digest (already covered by `daily-notifications` cron; deadline-approaching also covered by the same cron, formerly a separate `engagement-reminders` job)
+- [x] Email copy audit + revision: every email revised (preview text, no jokes, riff-named headlines), one riff reminder in place of three, new reading reminders after a reveal, open-riff join + piece-invite-accepted emails, piece-submitted link fix, Pacific-time dates, HTML escaping, and a `/dev/emails` preview page
+- [x] Resend batch sending: club-wide and cron emails go out through the batch API, with retry on rate limits
+- [x] Cadence on the club page: always-visible cadence line (Paused, Freestyle), clickable for host/co-host, and switching Freestyle/Paused → a rhythm opens a riff right away. Manual renamed Freestyle; the save button reads "Let's riff" when it will open one
 - [ ] Toast notifications replacing `console.error` catches
 - [ ] Onboarding page refinements (create-club, join-club pages)
+- [x] Club page riff sections: Current Riff always on top; Current Read/Past Riffs titles link to the riff page with a Riff mark (gray + blinking caret for the current riff); Current Read shows Revealed · Comments; hosts edit the prompt inline; Past Riffs rows show a scroll arrow when they overflow
 
 ---
 
