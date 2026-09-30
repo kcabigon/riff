@@ -256,6 +256,7 @@ All interactive elements: border/outline changes to green `#00FF66`.
 - Focus trap + ESC to close
 
 ### Tabs
+- Font: DM Sans 16px
 - Active tab: `fontWeight: 500`, color `#000`, 2px solid black bottom border
 - Inactive tab: `fontWeight: 300`, color `#808080`, 2px solid transparent bottom border
 - Divider below tabs: 1px solid `#E6E6E6`
