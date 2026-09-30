@@ -94,20 +94,21 @@ export default function AssignCoHostModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Assign co-host" size="sm">
       <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-        {/* Intro */}
-        <div>
+        {/* Intro — the extra 8px on top of the column gap sets it apart
+            from the controls below */}
+        <div style={{ marginBottom: "8px" }}>
           <p
             style={{
               fontFamily: "var(--font-dm-sans)",
               fontSize: "16px",
               fontWeight: 300,
               color: "#000000",
-              margin: "0 0 4px",
+              margin: "0 0 8px",
               lineHeight: 1.6,
             }}
           >
-            Host with a friend. Your co-host can start and reveal riffs, and
-            edit club details.
+            Host with a friend. They can start and reveal riffs and edit club
+            details.
           </p>
           <p
             style={{
@@ -119,8 +120,8 @@ export default function AssignCoHostModal({
               lineHeight: 1.6,
             }}
           >
-            You stay in control — they can&apos;t transfer admin privileges or
-            delete the club. You can remove them anytime.
+            They can&apos;t transfer hosting or delete the club. Remove them
+            anytime.
           </p>
         </div>
 
