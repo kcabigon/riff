@@ -248,7 +248,7 @@ All interactive elements: border/outline changes to green `#00FF66`.
 
 ### Modals
 - Backdrop: `rgba(0,0,0,0.4)`
-- Container: white background, 2px solid black border, 8px black shadow
+- Container: plain white background (no noise — it hurts readability), 2px solid black border, 8px black shadow
 - Padding: 40px
 - Title: DM Serif Text 24px
 - Sizes: sm (400px), md (480px), lg (600px)
