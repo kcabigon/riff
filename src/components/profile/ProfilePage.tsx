@@ -54,6 +54,23 @@ export default function ProfilePage({
     setPieces((prev) => prev.filter((p) => p.id !== pieceId));
   };
 
+  const handleHide = async (pieceId: string) => {
+    try {
+      const res = await fetch(`/api/pieces/${pieceId}/profile-visibility`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hidden: true }),
+      });
+      if (!res.ok) {
+        console.error("Error hiding piece:", await res.text());
+        return;
+      }
+      setPieces((prev) => prev.filter((p) => p.id !== pieceId));
+    } catch (err) {
+      console.error("Error hiding piece:", err);
+    }
+  };
+
   const handleShareCreated = (pieceId: string, share: PublicShare) => {
     setPieces((prev) =>
       prev.map((p) =>
@@ -125,6 +142,7 @@ export default function ProfilePage({
               setDeleteTarget({ id, title })
             }
             onShare={(pieceId) => setShareTarget(pieceId)}
+            onHide={handleHide}
           />
         </div>
       ) : null}

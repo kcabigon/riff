@@ -14,6 +14,7 @@ import PublicShareIndicator from "@/components/riffs/PublicShareIndicator";
 import DraftCard from "@/components/write/DraftCard";
 import ThreeDotButton from "@/components/shared/ThreeDotButton";
 import SectionHeading from "@/components/shared/SectionHeading";
+import { EyeOffIcon } from "@/components/shared/icons";
 import type { DropdownItem } from "@/components/shared/Dropdown";
 import DeletePieceModal from "@/components/profile/DeletePieceModal";
 import ShareModal, { PublicShare } from "@/components/profile/ShareModal";
@@ -99,6 +100,27 @@ interface WritingPiece {
   riffs: PieceRiffSummary[];
   isPublic: boolean;
   publicShareId: string | null;
+  hiddenFromProfile: boolean;
+}
+
+// Marker only (not a button) — the ⋯ menu is where you unhide. Padding and
+// border mirror IconButton so it lines up with the public-link buttons.
+function HiddenFromProfileIcon() {
+  return (
+    <div
+      role="img"
+      aria-label="Hidden from profile"
+      title="Hidden from profile"
+      style={{
+        display: "flex",
+        padding: "4px 6px",
+        border: "2px solid transparent",
+        opacity: 0.7,
+      }}
+    >
+      <EyeOffIcon color="#FFFFFF" />
+    </div>
+  );
 }
 
 interface MyRiffsClientProps {
@@ -471,6 +493,27 @@ export default function MyRiffsClient({
     }
   };
 
+  const handleProfileVisibility = async (pieceId: string, hidden: boolean) => {
+    try {
+      const res = await fetch(`/api/pieces/${pieceId}/profile-visibility`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hidden }),
+      });
+      if (!res.ok) {
+        console.error("Error updating profile visibility:", await res.text());
+        return;
+      }
+      setAllPieces((prev) =>
+        prev.map((p) =>
+          p.id === pieceId ? { ...p, hiddenFromProfile: hidden } : p
+        )
+      );
+    } catch (err) {
+      console.error("Error updating profile visibility:", err);
+    }
+  };
+
   const handleShareCreated = (pieceId: string, share: PublicShare) => {
     setAllPieces((prev) =>
       prev.map((p) =>
@@ -518,6 +561,19 @@ export default function MyRiffsClient({
                 },
               ]
             : []),
+          // Drafts never appear on the profile, so only finished pieces get this
+          ...(variant === "piece"
+            ? [
+                {
+                  type: "action" as const,
+                  label: piece.hiddenFromProfile
+                    ? "Unhide on profile"
+                    : "Hide from profile",
+                  onClick: () =>
+                    handleProfileVisibility(piece.id, !piece.hiddenFromProfile),
+                },
+              ]
+            : []),
           { type: "divider" },
           {
             type: "action",
@@ -561,8 +617,27 @@ export default function MyRiffsClient({
                 />
               </div>
               {variant === "piece" && piece.isPublic && (
-                <PublicShareIndicator pieceId={piece.id} />
+                <PublicShareIndicator
+                  pieceId={piece.id}
+                  trailing={
+                    piece.hiddenFromProfile && <HiddenFromProfileIcon />
+                  }
+                />
               )}
+              {variant === "piece" &&
+                !piece.isPublic &&
+                piece.hiddenFromProfile && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "8px",
+                      left: "8px",
+                      zIndex: 3,
+                    }}
+                  >
+                    <HiddenFromProfileIcon />
+                  </div>
+                )}
               {variant === "draft" ? (
                 <DraftCard
                   piece={{

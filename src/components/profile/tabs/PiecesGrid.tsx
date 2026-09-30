@@ -58,12 +58,14 @@ export default function PiecesGrid({
   profileUserId,
   onDelete,
   onShare,
+  onHide,
 }: {
   pieces: Piece[];
   isOwnProfile: boolean;
   profileUserId: string;
   onDelete: (id: string, title: string | null) => void;
   onShare: (pieceId: string) => void;
+  onHide: (pieceId: string) => void;
 }) {
   const router = useRouter();
 
@@ -81,6 +83,11 @@ export default function PiecesGrid({
       type: "action",
       label: "Edit",
       onClick: () => router.push(`/write/${piece.id}`),
+    },
+    {
+      type: "action",
+      label: "Hide from profile",
+      onClick: () => onHide(piece.id),
     },
     { type: "divider" },
     {
