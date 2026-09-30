@@ -44,7 +44,7 @@ const optionalSpan = (
       backgroundColor: "#FFFFFF",
       padding: "2px 8px",
       fontFamily: "var(--font-dm-sans)",
-      fontSize: "14px",
+      fontSize: "12px",
       fontWeight: 300,
       color: "#9C9C9C",
     }}

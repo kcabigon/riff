@@ -206,9 +206,9 @@ export default function AssignCoHostModal({
               }}
               style={{
                 width: "100%",
-                padding: "10px 12px",
+                padding: "12px",
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
+                fontSize: "16px",
                 fontWeight: 300,
                 color: selectedMemberId ? "#000000" : "#9C9C9C",
                 backgroundColor: "#FFFFFF",

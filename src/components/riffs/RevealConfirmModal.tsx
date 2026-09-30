@@ -53,7 +53,7 @@ export default function RevealConfirmModal({
           <p
             style={{
               fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
+              fontSize: "12px",
               fontWeight: 300,
               color: "#808080",
               margin: "0 0 8px",
@@ -69,7 +69,7 @@ export default function RevealConfirmModal({
             <p
               style={{
                 fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
+                fontSize: "16px",
                 fontWeight: 300,
                 color: "#000000",
                 margin: 0,
@@ -86,7 +86,7 @@ export default function RevealConfirmModal({
         <p
           style={{
             fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
+            fontSize: "16px",
             fontWeight: 300,
             color: "#DC2626",
             margin: "0 0 24px",

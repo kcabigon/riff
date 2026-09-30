@@ -143,7 +143,7 @@ export default function ClubSettingsModal({
               <span
                 style={{
                   fontFamily: "var(--font-dm-sans)",
-                  fontSize: "14px",
+                  fontSize: "12px",
                   fontWeight: 300,
                   color: "#9C9C9C",
                 }}
@@ -175,7 +175,7 @@ export default function ClubSettingsModal({
               <span
                 style={{
                   fontFamily: "var(--font-dm-sans)",
-                  fontSize: "14px",
+                  fontSize: "12px",
                   fontWeight: 300,
                   color: "#9C9C9C",
                 }}
