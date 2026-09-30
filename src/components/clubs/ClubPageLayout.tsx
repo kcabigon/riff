@@ -34,12 +34,11 @@ import {
   hasUnreadPieces,
   isRiffFullyRead,
   isPastDeadline,
-  getWaitingParticipants,
-  getSubmittedParticipants,
-  allPiecesSubmitted,
   daysUntil,
   formatDateLong,
   formatDateShort,
+  getRevealRoster,
+  isReadyToReveal,
 } from "@/lib/riff-utils";
 import DeleteClubConfirmModal from "@/components/clubs/DeleteClubConfirmModal";
 import LeaveClubConfirmModal from "@/components/clubs/LeaveClubConfirmModal";
@@ -398,7 +397,7 @@ export default function ClubPageLayout({
     ? isPastDeadline(activeRiff.deadline)
     : false;
   const piecesAllSubmitted = activeRiff
-    ? allPiecesSubmitted(activeRiff.participants, activeRiff.pieces)
+    ? isReadyToReveal(activeRiff.participants, activeRiff.pieces, club.members)
     : false;
 
   // Card-grid layout responsive to club size — sized so cards land close to
@@ -1567,20 +1566,12 @@ export default function ClubPageLayout({
           onClose={() => setIsRevealModalOpen(false)}
           onConfirm={handleRevealConfirm}
           isRevealing={isRevealing}
-          riffTitle={getRiffDisplayTitle(activeRiff, predictedVolumeNumber)}
-          waitingUsers={getWaitingParticipants(
+          deadline={activeRiff.deadline}
+          {...getRevealRoster(
             activeRiff.participants,
-            activeRiff.pieces
-          ).map((p) => ({
-            id: p.user.id,
-            name: p.user.name,
-            avatarUrl: p.user.avatarUrl,
-          }))}
-          submittedCount={
-            getSubmittedParticipants(activeRiff.participants, activeRiff.pieces)
-              .length
-          }
-          totalParticipants={activeRiff.participants.length}
+            activeRiff.pieces,
+            club.members
+          )}
         />
       )}
 

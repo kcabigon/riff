@@ -69,6 +69,12 @@ export default async function RiffPage({
           adminId: true,
           moderatorId: true,
           admin: { select: { firstName: true } },
+          // Roster for the reveal modal and early-reveal check
+          members: {
+            select: {
+              user: { select: { id: true, name: true, avatarUrl: true } },
+            },
+          },
         },
       },
       creator: {
@@ -342,6 +348,7 @@ export default async function RiffPage({
       isFirstReveal={isFirstReveal}
       predictedVolumeNumber={predictedVolumeNumber}
       hasStandaloneDrafts={hasStandaloneDrafts}
+      clubMembers={riff.club?.members ?? null}
     />
   );
 }

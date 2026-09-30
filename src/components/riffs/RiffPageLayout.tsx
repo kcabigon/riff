@@ -12,8 +12,6 @@ import NavBar from "@/components/clubs/NavBar";
 import RevealCelebration from "./RevealCelebration";
 import {
   getRiffDisplayTitle,
-  getSubmittedPieces,
-  allPiecesSubmitted,
   isPastDeadline,
   formatDateShort,
   formatDateLong,
@@ -22,6 +20,9 @@ import {
   getWaitingParticipants,
   isAuthoredBy,
   type RiffContributor,
+  getRevealRoster,
+  isReadyToReveal,
+  type RevealRosterUser,
 } from "@/lib/riff-utils";
 import DraftChoiceTrigger from "@/components/riffs/DraftChoiceTrigger";
 import RevealRiffButton, {
@@ -105,6 +106,8 @@ interface RiffPageLayoutProps {
   hostFirstName?: string | null;
   isFirstReveal?: boolean;
   predictedVolumeNumber?: number;
+  // Club roster for the early-reveal check; null for clubless riffs
+  clubMembers: { user: RevealRosterUser }[] | null;
 }
 
 export default function RiffPageLayout({
@@ -127,6 +130,7 @@ export default function RiffPageLayout({
   hostFirstName,
   isFirstReveal = false,
   predictedVolumeNumber,
+  clubMembers,
 }: RiffPageLayoutProps) {
   const [isJoined, setIsJoined] = useState(initialIsJoined);
   const [isRevealModalOpen, setIsRevealModalOpen] = useState(false);
@@ -158,7 +162,11 @@ export default function RiffPageLayout({
   };
   const hasUnreadComments = Object.values(badgeMap).some(Boolean);
   const deadlinePassed = isPastDeadline(riff.deadline);
-  const piecesAllSubmitted = allPiecesSubmitted(riff.participants, riff.pieces);
+  const piecesAllSubmitted = isReadyToReveal(
+    riff.participants,
+    riff.pieces,
+    clubMembers
+  );
   const submittedUsers = getSubmittedParticipants(
     riff.participants,
     riff.pieces
@@ -731,30 +739,8 @@ export default function RiffPageLayout({
         onClose={() => setIsRevealModalOpen(false)}
         onConfirm={handleRevealConfirm}
         isRevealing={isRevealing}
-        riffTitle={getRiffDisplayTitle(riff, predictedVolumeNumber)}
-        waitingUsers={riff.participants
-          .filter(
-            (p) =>
-              !riff.pieces.some(
-                (piece) =>
-                  piece.submittedAt !== null &&
-                  piece.piece.authorId === p.user.id
-              )
-          )
-          .map((p) => ({
-            id: p.user.id,
-            name: p.user.name,
-            avatarUrl: p.user.avatarUrl,
-          }))}
-        submittedCount={
-          riff.participants.filter((p) =>
-            riff.pieces.some(
-              (piece) =>
-                piece.submittedAt !== null && piece.piece.authorId === p.user.id
-            )
-          ).length
-        }
-        totalParticipants={riff.participants.length}
+        deadline={riff.deadline}
+        {...getRevealRoster(riff.participants, riff.pieces, clubMembers)}
       />
 
       {/* Reveal Celebration */}

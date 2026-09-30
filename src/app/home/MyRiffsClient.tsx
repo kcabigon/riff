@@ -23,11 +23,10 @@ import { useDraftCreation } from "@/hooks/useDraftCreation";
 import MyRiffsEmptyState from "@/components/home/MyRiffsEmptyState";
 import {
   getSubmittedPieces,
-  getSubmittedParticipants,
-  getWaitingParticipants,
   hasUnreadPieces,
   getRiffDisplayTitle,
   getPieceDisplayDate,
+  getRevealRoster,
 } from "@/lib/riff-utils";
 import { formatSubmittedDate } from "@/lib/timeAgo";
 import type { FriendSummary } from "@/lib/friends";
@@ -64,6 +63,9 @@ interface Riff {
     bannerImage: string | null;
     adminId: string;
     moderatorId: string | null;
+    members: Array<{
+      user: { id: string; name: string | null; avatarUrl: string | null };
+    }>;
   } | null; // null = clubless (open) riff
   participants: Array<{
     user: {
@@ -703,27 +705,12 @@ export default function MyRiffsClient({
           onClose={() => setRevealRiffId(null)}
           onConfirm={handleRevealConfirm}
           isRevealing={isRevealing}
-          riffTitle={getRiffDisplayTitle(
-            revealTarget,
-            revealTarget.club
-              ? predictedVolumeByClub[revealTarget.club.id]
-              : undefined
-          )}
-          waitingUsers={getWaitingParticipants(
+          deadline={revealTarget.deadline}
+          {...getRevealRoster(
             revealTarget.participants,
-            revealTarget.pieces
-          ).map((p) => ({
-            id: p.user.id,
-            name: p.user.name,
-            avatarUrl: p.user.avatarUrl,
-          }))}
-          submittedCount={
-            getSubmittedParticipants(
-              revealTarget.participants,
-              revealTarget.pieces
-            ).length
-          }
-          totalParticipants={revealTarget.participants.length}
+            revealTarget.pieces,
+            revealTarget.club?.members ?? null
+          )}
         />
       )}
 
@@ -888,6 +875,7 @@ export default function MyRiffsClient({
                         bannerImage: riff.club?.bannerImage ?? null,
                       }}
                       isClubless={!riff.club}
+                      clubMembers={riff.club?.members ?? null}
                       isJoined={isJoined}
                       hasDraft={hasDraft}
                       hasSubmitted={hasSubmitted}

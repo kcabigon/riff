@@ -110,6 +110,12 @@ export const RIFF_INCLUDE = {
       bannerImage: true,
       adminId: true,
       moderatorId: true,
+      // Roster for the reveal modal and early-reveal check
+      members: {
+        select: {
+          user: { select: { id: true, name: true, avatarUrl: true } },
+        },
+      },
     },
   },
   creator: {
