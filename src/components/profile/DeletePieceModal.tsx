@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Modal from "@/components/shared/Modal";
+import FormErrorText from "@/components/shared/FormErrorText";
 
 interface DeletePieceModalProps {
   pieceId: string;
@@ -130,20 +131,7 @@ export default function DeletePieceModal({
           riff, or club to establish Friend-status again.
         </p>
       )}
-      {error && (
-        <p
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
-            fontWeight: 300,
-            color: "#DC2626",
-            margin: "12px 0 0 0",
-            lineHeight: 1.6,
-          }}
-        >
-          {error}
-        </p>
-      )}
+      <FormErrorText message={error} style={{ marginTop: "12px" }} />
     </Modal>
   );
 }

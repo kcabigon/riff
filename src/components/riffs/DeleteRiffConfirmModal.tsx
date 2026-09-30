@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Modal from "@/components/shared/Modal";
+import FormErrorText from "@/components/shared/FormErrorText";
 import DestructiveButton from "@/components/DestructiveButton";
 
 interface DeleteRiffConfirmModalProps {
@@ -96,19 +97,7 @@ export default function DeleteRiffConfirmModal({
         </p>
       </div>
 
-      {error && (
-        <p
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
-            fontWeight: 300,
-            color: "#DC2626",
-            margin: "0 0 16px",
-          }}
-        >
-          {error}
-        </p>
-      )}
+      <FormErrorText message={error} style={{ marginBottom: "16px" }} />
 
       <DestructiveButton
         size="lg"

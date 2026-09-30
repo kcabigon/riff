@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Modal from "@/components/shared/Modal";
+import FormErrorText from "@/components/shared/FormErrorText";
 import DestructiveButton from "@/components/DestructiveButton";
 
 interface TransferHostModalProps {
@@ -139,19 +140,7 @@ export default function TransferHostModal({
           </DestructiveButton>
         )}
 
-        {error && (
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "12px",
-              fontWeight: 300,
-              color: "#DC2626",
-              margin: 0,
-            }}
-          >
-            {error}
-          </p>
-        )}
+        <FormErrorText message={error} />
       </div>
     </Modal>
   );

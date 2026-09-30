@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Modal from "@/components/shared/Modal";
+import FormErrorText from "@/components/shared/FormErrorText";
 import PrimaryButton from "@/components/PrimaryButton";
 
 interface AssignCoHostModalProps {
@@ -243,19 +244,7 @@ export default function AssignCoHostModal({
           </div>
         )}
 
-        {error && (
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "12px",
-              fontWeight: 300,
-              color: "#DC2626",
-              margin: 0,
-            }}
-          >
-            {error}
-          </p>
-        )}
+        <FormErrorText message={error} />
       </div>
     </Modal>
   );

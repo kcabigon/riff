@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Modal from "@/components/shared/Modal";
+import FormErrorText from "@/components/shared/FormErrorText";
 import TextInput from "@/components/TextInput";
 import DestructiveButton from "@/components/DestructiveButton";
 
@@ -128,19 +129,7 @@ export default function DeleteClubConfirmModal({
         />
       </div>
 
-      {error && (
-        <p
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "12px",
-            fontWeight: 300,
-            color: "#DC2626",
-            margin: "0 0 16px",
-          }}
-        >
-          {error}
-        </p>
-      )}
+      <FormErrorText message={error} style={{ marginBottom: "16px" }} />
 
       <DestructiveButton
         size="lg"

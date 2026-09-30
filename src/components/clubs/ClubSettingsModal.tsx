@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Modal from "@/components/shared/Modal";
+import FormErrorText from "@/components/shared/FormErrorText";
 import ImageUploadFlow from "@/components/shared/ImageUploadFlow";
 import type { ImageUploadFlowHandle } from "@/components/shared/ImageUploadFlow";
 import Image from "next/image";
@@ -215,19 +216,7 @@ export default function ClubSettingsModal({
             )}
           </div>
 
-          {error && (
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: 300,
-                color: "#DC2626",
-                margin: 0,
-              }}
-            >
-              {error}
-            </p>
-          )}
+          <FormErrorText message={error} />
 
           <PrimaryButton
             type="submit"

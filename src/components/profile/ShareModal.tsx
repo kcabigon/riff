@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Modal from "@/components/shared/Modal";
+import FormErrorText from "@/components/shared/FormErrorText";
 import ActionRow from "@/components/shared/ActionRow";
 import { CopyIcon, CheckIcon, OpenLinkIcon } from "@/components/shared/icons";
 import InvitePieceModal from "@/components/shared/InvitePieceModal";
@@ -402,19 +403,9 @@ export default function ShareModal({
             </div>
           )}
 
-          {error && (
-            <p style={{ ...errorTextStyle, marginTop: "8px" }}>{error}</p>
-          )}
+          <FormErrorText message={error} style={{ marginTop: "8px" }} />
         </div>
       </div>
     </Modal>
   );
 }
-
-const errorTextStyle: React.CSSProperties = {
-  fontFamily: "var(--font-dm-sans)",
-  fontSize: "12px",
-  fontWeight: 300,
-  color: "#DC2626",
-  margin: 0,
-};
