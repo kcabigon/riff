@@ -70,6 +70,8 @@ export async function generateMetadata({
     piece.author.firstName || piece.author.name || piece.author.username;
   const title = piece.title || "Untitled";
   const description = `${authorName} wants you to read this on Riff.`;
+  // Pieces without a cover fall back to the default Riff card image
+  const image = piece.coverImage || "/og-image.png";
 
   return {
     title: `${title} — ${authorName} wants to riff`,
@@ -79,13 +81,13 @@ export async function generateMetadata({
       title,
       description,
       type: "article",
-      ...(piece.coverImage ? { images: [{ url: piece.coverImage }] } : {}),
+      images: [{ url: image }],
     },
     twitter: {
-      card: piece.coverImage ? "summary_large_image" : "summary",
+      card: "summary_large_image",
       title,
       description,
-      ...(piece.coverImage ? { images: [piece.coverImage] } : {}),
+      images: [image],
     },
   };
 }
