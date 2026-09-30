@@ -134,6 +134,14 @@ export function isIntervalCadence(value: CadenceValue): boolean {
   return getCadenceDays(value) !== null;
 }
 
+// Whether the daily sweep reveals this club's riffs on its own. It reveals at
+// the deadline for every cadence but Freestyle (MANUAL) — Paused included,
+// since pausing stops new riffs without stranding submitted pieces — so only
+// Freestyle hosts get a Reveal button.
+export function revealsAutomatically(value: CadenceValue): boolean {
+  return value !== "MANUAL";
+}
+
 // Runtime guard for untrusted input (API request bodies).
 export function isCadenceValue(value: unknown): value is CadenceValue {
   return (
