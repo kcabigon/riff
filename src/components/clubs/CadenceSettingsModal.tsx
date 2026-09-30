@@ -172,19 +172,13 @@ export default function CadenceSettingsModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Riff cadence" size="sm">
       <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-        {/* A segmented bar styled like the rhythm list card. The active mode
-            takes the palette's light gray. */}
+        {/* Standard tabs, matching ImageUploadFlow's */}
         <div
           role="tablist"
           aria-label="Cadence mode"
-          style={{
-            display: "flex",
-            backgroundColor: "#FFFFFF",
-            border: "2px solid #000000",
-            boxShadow: "4px 4px 0px 0px #000000",
-          }}
+          style={{ display: "flex", borderBottom: "1px solid #E6E6E6" }}
         >
-          {MODES.map((m, i) => {
+          {MODES.map((m) => {
             const isActive = mode === m.value;
             return (
               <button
@@ -198,12 +192,15 @@ export default function CadenceSettingsModal({
                   fontFamily: "var(--font-dm-sans)",
                   fontSize: "16px",
                   fontWeight: isActive ? 500 : 300,
-                  color: "#000000",
-                  backgroundColor: isActive ? "#E6E6E6" : "#FFFFFF",
+                  color: isActive ? "#000000" : "#808080",
+                  background: "none",
                   border: "none",
-                  borderLeft: i === 0 ? "none" : "2px solid #000000",
-                  padding: "12px 8px",
+                  borderBottom: isActive
+                    ? "2px solid #000000"
+                    : "2px solid transparent",
+                  padding: "8px 0",
                   cursor: "pointer",
+                  transition: "color 0.15s",
                 }}
               >
                 {m.label}
