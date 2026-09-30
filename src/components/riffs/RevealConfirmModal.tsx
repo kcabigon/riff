@@ -32,104 +32,69 @@ export default function RevealConfirmModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Reveal pieces?">
       {/* Summary */}
-      <div
+      <p
         style={{
-          display: "inline-block",
-          backgroundColor: "#FFFFFF",
-          padding: "2px 8px",
-          marginBottom: "20px",
+          fontFamily: "var(--font-dm-sans)",
+          fontSize: "16px",
+          fontWeight: 300,
+          color: "#000000",
+          margin: "0 0 20px",
+          lineHeight: 1.5,
         }}
       >
-        <p
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
-            fontWeight: 300,
-            color: "#000000",
-            margin: 0,
-            lineHeight: 1.5,
-          }}
-        >
-          <span style={{ fontWeight: 700 }}>{submittedCount}</span> of{" "}
-          <span style={{ fontWeight: 700 }}>{totalParticipants}</span> members
-          have submitted to &ldquo;{riffTitle || "Untitled"}&rdquo;.
-        </p>
-      </div>
+        <span style={{ fontWeight: 700 }}>{submittedCount}</span> of{" "}
+        <span style={{ fontWeight: 700 }}>{totalParticipants}</span> members
+        have submitted to &ldquo;{riffTitle || "Untitled"}&rdquo;.
+      </p>
 
       {/* Waiting users */}
       {waitingUsers.length > 0 && (
         <div style={{ marginBottom: "20px" }}>
-          <div
+          <p
             style={{
-              display: "inline-block",
-              backgroundColor: "#FFFFFF",
-              padding: "2px 8px",
-              marginBottom: "8px",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "14px",
+              fontWeight: 300,
+              color: "#808080",
+              margin: "0 0 8px",
             }}
           >
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: 300,
-                color: "#808080",
-                margin: 0,
-              }}
-            >
-              Still writing:
-            </p>
-          </div>
+            Still writing:
+          </p>
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <AvatarStack
               users={waitingUsers.map((u) => ({ ...u, username: null }))}
               size={32}
             />
-            <div
+            <p
               style={{
-                display: "inline-block",
-                backgroundColor: "#FFFFFF",
-                padding: "2px 8px",
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: "14px",
+                fontWeight: 300,
+                color: "#000000",
+                margin: 0,
               }}
             >
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  fontSize: "14px",
-                  fontWeight: 300,
-                  color: "#000000",
-                  margin: 0,
-                }}
-              >
-                {waitingUsers.map((u) => u.name || "Unknown").join(", ")}
-              </p>
-            </div>
+              {waitingUsers.map((u) => u.name || "Unknown").join(", ")}
+            </p>
           </div>
         </div>
       )}
 
       {/* Warning */}
       {waitingUsers.length > 0 && (
-        <div
+        <p
           style={{
-            display: "inline-block",
-            backgroundColor: "#FFFFFF",
-            padding: "2px 8px",
-            marginBottom: "24px",
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "14px",
+            fontWeight: 300,
+            color: "#DC2626",
+            margin: "0 0 24px",
+            lineHeight: 1.5,
           }}
         >
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              fontWeight: 300,
-              color: "#DC2626",
-              margin: 0,
-              lineHeight: 1.5,
-            }}
-          >
-            Members who haven&apos;t submitted won&apos;t be included.
-          </p>
-        </div>
+          Members who haven&apos;t submitted won&apos;t be included.
+        </p>
       )}
 
       {/* Confirm */}

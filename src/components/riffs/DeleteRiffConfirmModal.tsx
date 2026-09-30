@@ -97,26 +97,17 @@ export default function DeleteRiffConfirmModal({
       </div>
 
       {error && (
-        <div
+        <p
           style={{
-            display: "inline-block",
-            backgroundColor: "#FFFFFF",
-            padding: "2px 8px",
-            marginBottom: "16px",
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "14px",
+            fontWeight: 300,
+            color: "#DC2626",
+            margin: "0 0 16px",
           }}
         >
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              fontWeight: 300,
-              color: "#DC2626",
-              margin: 0,
-            }}
-          >
-            {error}
-          </p>
-        </div>
+          {error}
+        </p>
       )}
 
       <DestructiveButton

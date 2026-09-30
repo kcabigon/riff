@@ -141,9 +141,6 @@ export default function ClubSettingsModal({
               />
               <span
                 style={{
-                  display: "inline-block",
-                  backgroundColor: "#FFFFFF",
-                  padding: "2px 8px",
                   fontFamily: "var(--font-dm-sans)",
                   fontSize: "14px",
                   fontWeight: 300,
@@ -176,9 +173,6 @@ export default function ClubSettingsModal({
               />
               <span
                 style={{
-                  display: "inline-block",
-                  backgroundColor: "#FFFFFF",
-                  padding: "2px 8px",
                   fontFamily: "var(--font-dm-sans)",
                   fontSize: "14px",
                   fontWeight: 300,
