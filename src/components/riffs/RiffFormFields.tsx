@@ -79,7 +79,7 @@ export default function RiffFormFields({
             color="#01EFFC"
             textColor="#000000"
             fontSize={16}
-            width={116}
+            width="fit"
             align="left"
           />
         </div>
@@ -125,7 +125,7 @@ export default function RiffFormFields({
             color="#00FF66"
             textColor="#000000"
             fontSize={16}
-            width={124}
+            width="fit"
             align="left"
           />
           {!titleRequired && optionalSpan}
@@ -150,7 +150,7 @@ export default function RiffFormFields({
             color="#EECF01"
             textColor="#000000"
             fontSize={16}
-            width={96}
+            width="fit"
             align="left"
           />
           {optionalSpan}

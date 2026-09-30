@@ -115,7 +115,7 @@ export default function ClubSettingsModal({
               color="#01EFFC"
               textColor="#000000"
               fontSize={16}
-              width={120}
+              width="fit"
               align="left"
             />
             <TextInput
@@ -136,7 +136,7 @@ export default function ClubSettingsModal({
                 color="#00FF66"
                 textColor="#000000"
                 fontSize={16}
-                width={132}
+                width="fit"
                 align="left"
               />
               <span
@@ -168,7 +168,7 @@ export default function ClubSettingsModal({
                 color="#EECF01"
                 textColor="#000000"
                 fontSize={16}
-                width={144}
+                width="fit"
                 align="left"
               />
               <span

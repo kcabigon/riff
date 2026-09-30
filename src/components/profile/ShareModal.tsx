@@ -334,7 +334,7 @@ export default function ShareModal({
               color="#00FF66"
               textColor="#000000"
               fontSize={16}
-              width={64}
+              width="fit"
               align="left"
             />
           </div>
@@ -364,7 +364,7 @@ export default function ShareModal({
               color="#01EFFC"
               textColor="#000000"
               fontSize={16}
-              width={88}
+              width="fit"
               align="left"
             />
           </div>
