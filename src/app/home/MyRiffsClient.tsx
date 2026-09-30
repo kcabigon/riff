@@ -566,9 +566,7 @@ export default function MyRiffsClient({
             ? [
                 {
                   type: "action" as const,
-                  label: piece.hiddenFromProfile
-                    ? "Unhide on profile"
-                    : "Hide from profile",
+                  label: piece.hiddenFromProfile ? "Unhide" : "Hide",
                   onClick: () =>
                     handleProfileVisibility(piece.id, !piece.hiddenFromProfile),
                 },

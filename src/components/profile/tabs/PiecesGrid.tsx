@@ -86,7 +86,7 @@ export default function PiecesGrid({
     },
     {
       type: "action",
-      label: "Hide from profile",
+      label: "Hide",
       onClick: () => onHide(piece.id),
     },
     { type: "divider" },
