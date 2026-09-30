@@ -97,6 +97,12 @@ export default function RiffEventCard({
     clubMembers
   );
   const submittedCount = getSubmittedPieces(riff.pieces).length;
+  // Club riffs count the whole club — members only become participants once
+  // they join, so participants alone reads "1/1" when the host submits first.
+  // Max guards a submitter who has since left the club.
+  const submittedTotal = clubMembers
+    ? Math.max(clubMembers.length, submittedCount)
+    : riff.participants.length;
   // Hosts see group progress the whole time — they're accountable for the
   // riff, not just their own piece. Members switch to it once they've
   // submitted, since their own word count stops being the useful number.
@@ -431,7 +437,7 @@ export default function RiffEventCard({
                         margin: 0,
                       }}
                     >
-                      {submittedCount}/{riff.participants.length}
+                      {submittedCount}/{submittedTotal}
                     </p>
                     <p
                       style={{
