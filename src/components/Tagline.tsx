@@ -6,7 +6,8 @@ interface TaglineProps {
   text: string;
   color?: string;
   textColor?: string;
-  width?: number;
+  // "fit" sizes the highlight to the text instead of a hand-picked width
+  width?: number | "fit";
   fontSize?: number;
   fontFamily?: string;
   fontWeight?: number;
@@ -20,7 +21,7 @@ interface TaglineProps {
  * @param text - The text to display
  * @param color - Background vector color (hex format, e.g., "#EECF01") - uses CSS filter to tint
  * @param textColor - Text color (defaults to white for custom colors, black for default yellow)
- * @param width - Custom width in pixels (defaults to 262px)
+ * @param width - Custom width in pixels, or "fit" to hug the text (defaults to 262px)
  * @param fontSize - Font size in pixels (defaults to 20px)
  * @param fontFamily - Font family (defaults to DM Sans)
  * @param fontWeight - Font weight (defaults to 300)
@@ -37,6 +38,7 @@ export default function Tagline({
   heightPadding = 14,
 }: TaglineProps) {
   const foregroundColor = textColor || "#000000";
+  const fit = width === "fit";
 
   // Generate CSS filter for color transformation
   // This is a simplified approach - for yellow (#EECF01), no filter
@@ -63,13 +65,14 @@ export default function Tagline({
   return (
     <div
       style={{
-        width: `${width}px`,
+        width: fit ? "fit-content" : `${width}px`,
         height: `${fontSize + heightPadding}px`,
         position: "relative",
         display: "flex",
         alignItems: "center",
         justifyContent: align === "left" ? "flex-start" : "center",
-        paddingLeft: align === "left" ? "8px" : 0,
+        paddingLeft: align === "left" ? "8px" : fit ? "16px" : 0,
+        paddingRight: fit ? "16px" : 0,
       }}
     >
       <Image

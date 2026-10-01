@@ -9,9 +9,12 @@ export interface RevealRiffParams {
   piecesAllSubmitted: boolean;
   isAdmin: boolean;
   status: string;
+  // The club's cadence reveals it at the deadline — no button for the host
+  autoReveals: boolean;
 }
 
 export function shouldShowReveal(p: RevealRiffParams): boolean {
+  if (p.autoReveals) return false;
   return (
     ((p.deadlinePassed && (!p.isJoined || p.hasSubmitted)) ||
       p.piecesAllSubmitted) &&

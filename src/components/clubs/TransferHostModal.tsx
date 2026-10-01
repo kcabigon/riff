@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Modal from "@/components/shared/Modal";
+import FormErrorText from "@/components/shared/FormErrorText";
 import DestructiveButton from "@/components/DestructiveButton";
 
 interface TransferHostModalProps {
@@ -106,9 +107,9 @@ export default function TransferHostModal({
           }}
           style={{
             width: "100%",
-            padding: "10px 12px",
+            padding: "12px",
             fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
+            fontSize: "16px",
             fontWeight: 300,
             color: selectedMemberId ? "#000000" : "#9C9C9C",
             backgroundColor: "#FFFFFF",
@@ -139,38 +140,7 @@ export default function TransferHostModal({
           </DestructiveButton>
         )}
 
-        {error && (
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "12px",
-              fontWeight: 300,
-              color: "#DC2626",
-              margin: 0,
-            }}
-          >
-            {error}
-          </p>
-        )}
-
-        <div style={{ textAlign: "center" }}>
-          <button
-            onClick={onClose}
-            style={{
-              backgroundColor: "#FFFFFF",
-              border: "none",
-              cursor: "pointer",
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "12px",
-              fontWeight: 300,
-              color: "#808080",
-              padding: "4px 12px",
-              textDecoration: "underline",
-            }}
-          >
-            Cancel
-          </button>
-        </div>
+        <FormErrorText message={error} />
       </div>
     </Modal>
   );

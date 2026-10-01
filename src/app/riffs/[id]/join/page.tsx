@@ -23,25 +23,23 @@ export async function generateMetadata({
 
   const title = `Join "${getRiffDisplayTitle(riff)}" on Riff`;
 
-  if (riff.prompt) {
-    return {
-      title,
-      description: riff.prompt,
-      openGraph: {
-        title,
-        description: riff.prompt,
-        images: [{ url: "/og-image.png", width: 1200, height: 630 }],
-      },
-      twitter: {
-        card: "summary_large_image",
-        title,
-        description: riff.prompt,
-        images: ["/og-image.png"],
-      },
-    };
-  }
+  const description = riff.prompt || "Write clubs for friends";
 
-  return { title };
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ["/og-image.png"],
+    },
+  };
 }
 
 export default async function JoinRiffPage({

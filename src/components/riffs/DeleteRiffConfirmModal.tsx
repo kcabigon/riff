@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Modal from "@/components/shared/Modal";
+import FormErrorText from "@/components/shared/FormErrorText";
 import DestructiveButton from "@/components/DestructiveButton";
 
 interface DeleteRiffConfirmModalProps {
@@ -50,8 +51,7 @@ export default function DeleteRiffConfirmModal({
     <Modal isOpen={isOpen} onClose={onClose} title="Delete riff?" size="sm">
       <div
         style={{
-          // eslint-disable-next-line riff/no-non-palette-colors -- destructive warning bg tint; pairs with the #DC2626 border below
-          backgroundColor: "#FFF5F5",
+          backgroundColor: "#FFFFFF",
           border: "2px solid #DC2626",
           padding: "16px",
           marginBottom: "24px",
@@ -61,10 +61,10 @@ export default function DeleteRiffConfirmModal({
           style={{
             fontFamily: "var(--font-dm-sans)",
             fontSize: "16px",
-            fontWeight: 400,
+            fontWeight: 300,
             color: "#000000",
             margin: "0 0 8px",
-            lineHeight: 1.5,
+            lineHeight: 1.6,
           }}
         >
           Are you sure you want to delete &ldquo;{riffTitle || "Untitled"}
@@ -73,11 +73,11 @@ export default function DeleteRiffConfirmModal({
         <p
           style={{
             fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
+            fontSize: "16px",
             fontWeight: 300,
             color: "#DC2626",
             margin: "0 0 4px",
-            lineHeight: 1.5,
+            lineHeight: 1.6,
           }}
         >
           This will permanently delete the riff and cannot be undone.
@@ -85,67 +85,27 @@ export default function DeleteRiffConfirmModal({
         <p
           style={{
             fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
+            fontSize: "16px",
             fontWeight: 300,
             color: "#808080",
             margin: 0,
-            lineHeight: 1.5,
+            lineHeight: 1.6,
           }}
         >
           Writers will keep their drafts, which will be detached from the riff.
         </p>
       </div>
 
-      {error && (
-        <div
-          style={{
-            display: "inline-block",
-            backgroundColor: "#FFFFFF",
-            padding: "2px 8px",
-            marginBottom: "16px",
-          }}
-        >
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "14px",
-              fontWeight: 300,
-              color: "#DC2626",
-              margin: 0,
-            }}
-          >
-            {error}
-          </p>
-        </div>
-      )}
+      <FormErrorText message={error} style={{ marginBottom: "16px" }} />
 
       <DestructiveButton
         size="lg"
         onClick={handleDelete}
         disabled={isDeleting}
-        style={{ width: "100%", marginBottom: "16px" }}
+        style={{ width: "100%" }}
       >
         {isDeleting ? "Deleting..." : "Delete riff"}
       </DestructiveButton>
-
-      <div style={{ textAlign: "center" }}>
-        <button
-          onClick={onClose}
-          style={{
-            backgroundColor: "#FFFFFF",
-            border: "none",
-            cursor: "pointer",
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
-            fontWeight: 300,
-            color: "#808080",
-            padding: "4px 12px",
-            textDecoration: "underline",
-          }}
-        >
-          Cancel
-        </button>
-      </div>
     </Modal>
   );
 }

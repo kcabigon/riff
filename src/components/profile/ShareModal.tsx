@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Modal from "@/components/shared/Modal";
+import FormErrorText from "@/components/shared/FormErrorText";
 import ActionRow from "@/components/shared/ActionRow";
 import { CopyIcon, CheckIcon, OpenLinkIcon } from "@/components/shared/icons";
 import InvitePieceModal from "@/components/shared/InvitePieceModal";
@@ -173,7 +174,7 @@ function AccessDropdown({
                     width: "14px",
                     height: "14px",
                     borderRadius: "64px",
-                    border: "2px solid #000000",
+                    border: "1px solid #000000",
                     backgroundColor: isSelected ? "#00FF66" : "#FFFFFF",
                     flexShrink: 0,
                     marginTop: "2px",
@@ -334,7 +335,7 @@ export default function ShareModal({
               color="#00FF66"
               textColor="#000000"
               fontSize={16}
-              width={64}
+              width="fit"
               align="left"
             />
           </div>
@@ -364,7 +365,7 @@ export default function ShareModal({
               color="#01EFFC"
               textColor="#000000"
               fontSize={16}
-              width={88}
+              width="fit"
               align="left"
             />
           </div>
@@ -402,19 +403,9 @@ export default function ShareModal({
             </div>
           )}
 
-          {error && (
-            <p style={{ ...errorTextStyle, marginTop: "8px" }}>{error}</p>
-          )}
+          <FormErrorText message={error} style={{ marginTop: "8px" }} />
         </div>
       </div>
     </Modal>
   );
 }
-
-const errorTextStyle: React.CSSProperties = {
-  fontFamily: "var(--font-dm-sans)",
-  fontSize: "12px",
-  fontWeight: 300,
-  color: "#DC2626",
-  margin: 0,
-};
