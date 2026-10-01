@@ -190,8 +190,8 @@ function emailButton(label: string, href: string): string {
             <td style="padding:32px 40px 40px 40px;">
               <table cellpadding="0" cellspacing="0" width="100%" style="border-collapse:separate;border-spacing:0;">
                 <tr>
-                  <td style="background-color:#00FF66;border:2px solid #000000;padding:14px 0;text-align:center;">
-                    <a href="${href}" style="display:block;font-size:17px;font-weight:300;color:#000000;text-decoration:none;font-family:'DM Sans',-apple-system,sans-serif;">${escapeHtml(label)}</a>
+                  <td style="background-color:#00FF66;border:2px solid #000000;padding:0;text-align:center;">
+                    <a href="${href}" style="display:block;padding:14px 0;font-size:17px;font-weight:300;color:#000000;text-decoration:none;font-family:'DM Sans',-apple-system,sans-serif;">${escapeHtml(label)}</a>
                   </td>
                   <td width="8" style="width:8px;min-width:8px;padding:0;font-size:0;line-height:0;background-color:#000000;background-image:linear-gradient(to bottom, #ffffff 8px, #000000 8px);">&nbsp;</td>
                 </tr>
@@ -845,11 +845,14 @@ export function buildPieceSharedEmail({
       : firstParagraph;
   const preview = opening || `A ${readLength}.`;
 
+  // The height is set because the Gmail app sizes the message before images
+  // load — a cover without one pushes the button past the end of the email,
+  // where it can't be scrolled to. Covers are cropped 4:5 (436 × 545).
   const cover = coverImage
     ? `
           <tr>
             <td style="padding:40px 40px 0;">
-              <a href="${pieceUrl}"><img src="${escapeHtml(coverImage)}" alt="" width="436" style="display:block;width:100%;height:auto;border:2px solid #000000;" /></a>
+              <a href="${pieceUrl}"><img src="${escapeHtml(coverImage)}" alt="" width="436" height="545" style="display:block;width:100%;height:auto;border:2px solid #000000;" /></a>
             </td>
           </tr>`
     : "";
