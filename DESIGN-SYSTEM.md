@@ -220,7 +220,7 @@ All interactive elements: border/outline changes to green `#00FF66`.
 | Component | File | Use for |
 |-----------|------|---------|
 | **NoiseBackground** | `NoiseBackground.tsx` | Fractal noise SVG backdrop. Props: `fillMode` |
-| **Tagline** | `Tagline.tsx` | Colored vector highlight text. Props: `text`, `color` |
+| **Tagline** | `Tagline.tsx` | Colored vector highlight text. Props: `text`, `color`, `width` (px, or `"fit"` to hug the text — use `"fit"` for form labels) |
 | **WelcomeNote** | `WelcomeNote.tsx` | Handwriting-font message box |
 | **RiffMark** | `shared/RiffMark.tsx` | Tiny (<1KB) redraw of the Riff logo for inline use — never the 500KB logo SVGs at icon size. Props: `width`, `variant` ("color" \| "progress": grays for a riff still being written), `caret` (blinks the last stroke like a text cursor, via `.riff-mark-caret`). On the club page it ends every riff title: gray + blinking for the current riff, color for revealed ones, re-writing its strokes on hover |
 
@@ -248,14 +248,16 @@ All interactive elements: border/outline changes to green `#00FF66`.
 
 ### Modals
 - Backdrop: `rgba(0,0,0,0.4)`
-- Container: white background, 2px solid black border, 8px black shadow
+- Container: plain white background (no noise — it hurts readability), 2px solid black border, 8px black shadow
 - Padding: 40px
 - Title: DM Serif Text 24px
-- Sizes: sm (400px), md (480px), lg (600px)
+- Sizes: sm (400px) for confirmations and share/invite flows, md (480px) for forms, lg (600px)
+- Errors: `FormErrorText`
 - Close: CloseButton in top-right
 - Focus trap + ESC to close
 
 ### Tabs
+- Font: DM Sans 16px
 - Active tab: `fontWeight: 500`, color `#000`, 2px solid black bottom border
 - Inactive tab: `fontWeight: 300`, color `#808080`, 2px solid transparent bottom border
 - Divider below tabs: 1px solid `#E6E6E6`

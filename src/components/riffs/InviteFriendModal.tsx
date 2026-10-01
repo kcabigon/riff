@@ -143,7 +143,7 @@ export default function InviteFriendModal({ onClose }: InviteFriendModalProps) {
                   <span
                     style={{
                       fontFamily: "var(--font-dm-serif-text)",
-                      fontSize: "18px",
+                      fontSize: "16px",
                       fontWeight: 400,
                       lineHeight: 1.3,
                       color: "#000000",

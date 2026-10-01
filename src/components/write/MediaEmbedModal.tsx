@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import Modal from "@/components/shared/Modal";
 import PrimaryButton from "@/components/PrimaryButton";
+import TextInput from "@/components/TextInput";
+import FormErrorText from "@/components/shared/FormErrorText";
 
 interface MediaEmbedModalProps {
   isOpen: boolean;
@@ -98,27 +100,18 @@ export default function MediaEmbedModal({
         Add
       </PrimaryButton>
       {type === "youtube" && (
-        <div
+        <p
           style={{
-            display: "inline-block",
-            backgroundColor: "#FFFFFF",
-            padding: "2px 8px",
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "12px",
+            fontWeight: 300,
+            color: "#808080",
+            margin: 0,
+            textAlign: "center",
           }}
         >
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "12px",
-              fontWeight: 300,
-              color: "#808080",
-              margin: 0,
-              textAlign: "center",
-            }}
-          >
-            Shortcut: paste the URL directly in the editor. Works for images
-            too.
-          </p>
-        </div>
+          Shortcut: paste the URL directly in the editor. Works for images too.
+        </p>
       )}
     </div>
   );
@@ -131,23 +124,10 @@ export default function MediaEmbedModal({
       size="sm"
       footer={footer}
     >
-      <div>
-        <label
-          htmlFor="embed-url"
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "14px",
-            fontWeight: 500,
-            color: "#000",
-            display: "block",
-            marginBottom: "6px",
-          }}
-        >
-          URL
-        </label>
-        <input
-          id="embed-url"
+      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+        <TextInput
           ref={urlRef}
+          aria-label="URL"
           value={url}
           onChange={(e) => {
             setUrl(e.target.value);
@@ -166,31 +146,9 @@ export default function MediaEmbedModal({
               handleEmbed();
             }
           }}
-          style={{
-            width: "100%",
-            backgroundColor: "#FFFFFF",
-            border: `2px solid ${urlError ? "#DC2626" : "#000000"}`,
-            padding: "12px",
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: "16px",
-            fontWeight: 300,
-            outline: "none",
-            boxSizing: "border-box",
-          }}
+          error={urlError ? " " : undefined}
         />
-        {urlError && (
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: "12px",
-              fontWeight: 300,
-              color: "#DC2626",
-              margin: "6px 0 0",
-            }}
-          >
-            {urlError}
-          </p>
-        )}
+        <FormErrorText message={urlError} />
       </div>
     </Modal>
   );

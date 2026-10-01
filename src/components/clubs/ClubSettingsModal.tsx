@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Modal from "@/components/shared/Modal";
+import FormErrorText from "@/components/shared/FormErrorText";
 import ImageUploadFlow from "@/components/shared/ImageUploadFlow";
 import type { ImageUploadFlowHandle } from "@/components/shared/ImageUploadFlow";
 import Image from "next/image";
@@ -115,7 +116,7 @@ export default function ClubSettingsModal({
               color="#01EFFC"
               textColor="#000000"
               fontSize={16}
-              width={120}
+              width="fit"
               align="left"
             />
             <TextInput
@@ -136,16 +137,13 @@ export default function ClubSettingsModal({
                 color="#00FF66"
                 textColor="#000000"
                 fontSize={16}
-                width={132}
+                width="fit"
                 align="left"
               />
               <span
                 style={{
-                  display: "inline-block",
-                  backgroundColor: "#FFFFFF",
-                  padding: "2px 8px",
                   fontFamily: "var(--font-dm-sans)",
-                  fontSize: "14px",
+                  fontSize: "12px",
                   fontWeight: 300,
                   color: "#9C9C9C",
                 }}
@@ -171,16 +169,13 @@ export default function ClubSettingsModal({
                 color="#EECF01"
                 textColor="#000000"
                 fontSize={16}
-                width={144}
+                width="fit"
                 align="left"
               />
               <span
                 style={{
-                  display: "inline-block",
-                  backgroundColor: "#FFFFFF",
-                  padding: "2px 8px",
                   fontFamily: "var(--font-dm-sans)",
-                  fontSize: "14px",
+                  fontSize: "12px",
                   fontWeight: 300,
                   color: "#9C9C9C",
                 }}
@@ -221,19 +216,7 @@ export default function ClubSettingsModal({
             )}
           </div>
 
-          {error && (
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans)",
-                fontSize: "14px",
-                fontWeight: 300,
-                color: "#DC2626",
-                margin: 0,
-              }}
-            >
-              {error}
-            </p>
-          )}
+          <FormErrorText message={error} />
 
           <PrimaryButton
             type="submit"
