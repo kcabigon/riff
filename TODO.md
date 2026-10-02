@@ -77,7 +77,7 @@ Last updated: May 16, 2026
 - [ ] Drafts list not updating immediately after new piece is created
 - [x] Add way to get back to club page from profile (BackButton using lastActiveClubId)
 - [ ] Access control deep dive — profile pages (and likely other pages) are wide open to any logged-in user; audit and enforce correct visibility rules across the app
-- [ ] Drafts tab visible to any logged-in user on someone else's profile — should be owner-only
+- [x] Drafts tab visible to any logged-in user on someone else's profile — should be owner-only
 - [ ] Profile banner image — reuse club banner upload component (ImageUploadModal)
 - [ ] After PieceRiff schema migration (DRAFT/SUBMITTED status field): fix profile Pieces tab to only show pieces that are SUBMITTED + riff is REVEALED — prevents sneak peeks on other users' profiles
 

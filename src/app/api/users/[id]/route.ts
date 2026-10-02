@@ -101,9 +101,16 @@ export async function GET(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Compute stats: pieceCount and totalWordCount
+    // Stats match the public profile Pieces tab: submitted or published
+    // only. Drafts stay out of other users' profile counts.
     const stats = await prisma.piece.aggregate({
-      where: { authorId: id },
+      where: {
+        authorId: id,
+        OR: [
+          { riffs: { some: { submittedAt: { not: null } } } },
+          { publishedAt: { not: null } },
+        ],
+      },
       _count: { id: true },
       _sum: { wordCount: true },
     });

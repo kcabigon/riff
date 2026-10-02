@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { isFriendOf, getFriends } from "@/lib/friends";
 import { getPieceDisplayDate } from "@/lib/riff-utils";
+import { getPiecesPage } from "@/lib/home-data";
 import ProfilePage from "@/components/profile/ProfilePage";
 
 export async function generateMetadata({
@@ -83,7 +84,9 @@ export default async function ProfilePageRoute({
   // Fetch pieces by this user — either submitted to a riff, or published
   // standalone (riff-less) — with riff status + club to determine visibility.
   // Runs alongside the friends check below — independent of each other.
-  const [friends, rawPieces] = await Promise.all([
+  // Drafts are owner-only: never query or serialize them for other viewers
+  // (keeps titles/previews out of the RSC payload). Pieces query is unchanged.
+  const [friends, rawPieces, draftsPage] = await Promise.all([
     // Only the owner can open Share (see PiecesGrid's isOwnProfile gate on
     // the 3-dot menu), so skip the query entirely when viewing someone else.
     isOwnProfile ? getFriends(currentUserId) : Promise.resolve([]),
@@ -117,6 +120,11 @@ export default async function ProfilePageRoute({
         },
       },
     }),
+    isOwnProfile
+      ? getPiecesPage(userId, "draft", { limit: 100 })
+      : Promise.resolve({
+          pieces: [] as Awaited<ReturnType<typeof getPiecesPage>>["pieces"],
+        }),
   ]);
   const hasFriends = friends.length > 0;
 
@@ -152,6 +160,19 @@ export default async function ProfilePageRoute({
   const pieceCount = pieces.length;
   const totalWordCount = pieces.reduce((sum, p) => sum + (p.wordCount ?? 0), 0);
 
+  // Owner-only draft cards for the Drafts tab. Non-owners get [].
+  const drafts = draftsPage.pieces.map((p) => ({
+    id: p.id,
+    title: p.title,
+    coverImage: p.coverImage,
+    // Drafts open in the editor for the owner; treat as unrevealed.
+    isRevealed: false,
+    viewerHasAccess: true,
+    isPublic: p.isPublic,
+    publicShareId: p.publicShareId,
+    displayDate: p.updatedAt,
+  }));
+
   return (
     <ProfilePage
       user={user}
@@ -167,6 +188,7 @@ export default async function ProfilePageRoute({
       }
       stats={{ pieceCount, totalWordCount }}
       pieces={pieces}
+      drafts={drafts}
       isOwnProfile={isOwnProfile}
       hasFriends={hasFriends}
       currentClub={currentClub}
