@@ -142,6 +142,86 @@ export function revealsAutomatically(value: CadenceValue): boolean {
   return value !== "MANUAL";
 }
 
+// The hour (UTC) the daily sweep is scheduled for — must match the cron in
+// vercel.json ("0 13 * * *"). Vercel Hobby only promises a daily cron fires
+// somewhere within its scheduled hour, never early, so each run lands between
+// 13:00 and 13:59 UTC.
+export const SWEEP_HOUR_UTC = 13;
+
+const HOUR_MS = 60 * 60 * 1000;
+const DAY_MS = 24 * HOUR_MS;
+
+// The scheduled sweep that acts on a riff due at `deadline`: the first 13:00 UTC
+// whose hour hasn't ended by then. The whole hour counts because the run can
+// fire anywhere in it — a riff the sweep opened is dated from the moment that
+// run fired (13:00:04, say), and the run on its deadline day may fire a few
+// seconds earlier than that. Comparing against the deadline itself would skip
+// it for a full day roughly half the time.
+//
+// Shared by the sweep (what's due now) and the countdown (when the action
+// happens), so the two can't disagree.
+export function sweepRunFor(deadline: Date): Date {
+  const latest = deadline.getTime() - HOUR_MS;
+  const day = new Date(latest);
+  const run = Date.UTC(
+    day.getUTCFullYear(),
+    day.getUTCMonth(),
+    day.getUTCDate(),
+    SWEEP_HOUR_UTC
+  );
+  return new Date(run > latest ? run : run + DAY_MS);
+}
+
+// Whether a riff's one grace week has already been granted, inferred from its
+// deadline rather than stored. Every riff on an interval club is dated exactly
+// one cadence period out — by the cron and by club creation alike, and hosts
+// can't open riffs on an interval club — so a deadline beyond that has been
+// extended. The extra day absorbs the millisecond skew between createdAt
+// (written by the database) and the deadline (computed just before the
+// insert); a granted grace sits a full seven days past the line, so the margin
+// is comfortable in both directions.
+//
+// A host who edits the deadline can consume or reset the grace through this
+// inference. Harmless either way — nobody has written — and the alternative is
+// a stored flag, which means a migration for a rule this small.
+function isGraceGranted(
+  createdAt: Date,
+  deadline: Date,
+  cadenceDays: number
+): boolean {
+  return deadline.getTime() > createdAt.getTime() + (cadenceDays + 1) * DAY_MS;
+}
+
+export type SweepOutcome = "reveal" | "extend" | "pause";
+
+// What the sweep will do to a club's active riff once it's due, or null when
+// it leaves the riff alone. The sweep acts on this, and the countdown names it
+// ("Revealing soon"), so they share one source.
+export function sweepOutcomeFor(
+  cadence: CadenceValue,
+  riff: { createdAt: Date; deadline: Date; submittedCount: number }
+): SweepOutcome | null {
+  // Freestyle clubs are host-driven end to end; the cron never touches them.
+  if (!revealsAutomatically(cadence)) return null;
+
+  // Work in it — reveal, whatever the cadence. A paused club still reveals:
+  // pausing stops new riffs, it doesn't strand pieces people already submitted.
+  if (riff.submittedCount > 0) return "reveal";
+
+  // Nothing in it. Paused clubs stop here rather than extending — an extended
+  // riff on a paused club is the zombie we're avoiding.
+  const cadenceDays = getCadenceDays(cadence);
+  if (!cadenceDays) return null;
+
+  // A whole cadence period with nothing written. The club gets one fixed grace
+  // week and a warning that says so, then pauses. One week regardless of
+  // cadence: it's a last call, and a week reads as a last call whether the
+  // club writes weekly or quarterly.
+  return isGraceGranted(riff.createdAt, riff.deadline, cadenceDays)
+    ? "pause"
+    : "extend";
+}
+
 // Runtime guard for untrusted input (API request bodies).
 export function isCadenceValue(value: unknown): value is CadenceValue {
   return (

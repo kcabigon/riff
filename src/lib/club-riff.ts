@@ -52,9 +52,9 @@ export async function createActiveClubRiff(
 // by the cadence sweep alike — and how the sweep sizes its grace week.
 //
 // A new club's first riff used to be dated in the browser as end-of-day in the
-// host's own timezone, which no server can know. The difference doesn't
-// surface: daysUntil buckets by UTC date, and the sweep only ever compares a
-// deadline against its own fixed daily tick.
+// host's own timezone, which no server can know. The time of day doesn't
+// matter: the sweep, and the countdown with it, act on the first daily run
+// after the deadline (see sweepRunFor).
 export function addDays(from: Date, days: number): Date {
   const d = new Date(from);
   d.setDate(d.getDate() + days);

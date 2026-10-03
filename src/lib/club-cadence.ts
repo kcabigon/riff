@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import {
   getCadenceDays,
   isIntervalCadence,
+  sweepOutcomeFor,
+  sweepRunFor,
   type CadenceValue,
 } from "@/lib/cadence";
 import { revealRiff } from "@/lib/reveal-riff";
@@ -18,8 +20,8 @@ import { addDays, predictVolumeNumber } from "@/lib/club-riff";
 import { getRiffDisplayTitle } from "@/lib/riff-utils";
 import { NotificationType } from "@prisma/client";
 
-// The club cadence sweep. Runs once daily from /api/cron/daily-notifications
-// (sharing that invocation keeps us under Vercel Hobby's two-job cap).
+// The club cadence sweep. Runs once daily from /api/cron/daily-notifications,
+// at 13:00 UTC or up to an hour after it (see sweepRunFor).
 //
 // Deciding and acting are separate on purpose: decideForClub works out what
 // should happen with no reads or writes, and applyDecision carries it out. That
@@ -52,7 +54,7 @@ export interface ClubDecision {
 }
 
 // The single grace period a quiet riff gets before its club is paused. Flat
-// across every cadence on purpose — see decideForClub.
+// across every cadence on purpose — see sweepOutcomeFor.
 export const PAUSE_GRACE_DAYS = 7;
 
 // Decides what should happen to one club. Pure — no reads, no writes — so the
@@ -88,71 +90,51 @@ export function decideForClub(
         action: { kind: "skip", reason: "active riff has no deadline" },
       };
     }
-    if (activeRiff.deadline > now) {
+    // Due from the scheduled run its deadline falls to, not the deadline
+    // itself — see sweepRunFor for why the two differ.
+    if (sweepRunFor(activeRiff.deadline) > now) {
       return {
         ...base,
         action: { kind: "skip", reason: "deadline not reached" },
       };
     }
 
-    // Deadline passed with work in it — reveal, whatever the cadence. A paused
-    // club still reveals: pausing stops new riffs, it doesn't strand pieces
-    // people already submitted.
-    if (activeRiff.submittedCount > 0) {
-      return {
-        ...base,
-        action: {
-          kind: "reveal",
-          riffId: activeRiff.id,
-          submittedCount: activeRiff.submittedCount,
-        },
-      };
+    const outcome = sweepOutcomeFor(club.cadence, {
+      createdAt: activeRiff.createdAt,
+      deadline: activeRiff.deadline,
+      submittedCount: activeRiff.submittedCount,
+    });
+
+    switch (outcome) {
+      case "reveal":
+        return {
+          ...base,
+          action: {
+            kind: "reveal",
+            riffId: activeRiff.id,
+            submittedCount: activeRiff.submittedCount,
+          },
+        };
+      case "pause":
+        return { ...base, action: { kind: "pause", riffId: activeRiff.id } };
+      case "extend":
+        return {
+          ...base,
+          action: {
+            kind: "extend",
+            riffId: activeRiff.id,
+            // Seven days from now, not from the old deadline — if the cron
+            // misses a stretch of days, "you have a week" should still mean a
+            // week.
+            newDeadline: addDays(now, PAUSE_GRACE_DAYS),
+          },
+        };
+      case null:
+        return {
+          ...base,
+          action: { kind: "skip", reason: "paused, empty riff left as-is" },
+        };
     }
-
-    // Deadline passed with nothing in it. Paused clubs stop here rather than
-    // extending — an extended riff on a paused club is the zombie we're
-    // avoiding.
-    if (club.cadence === "PAUSED" || !cadenceDays) {
-      return {
-        ...base,
-        action: { kind: "skip", reason: "paused, empty riff left as-is" },
-      };
-    }
-
-    // A whole cadence period with nothing written. The club gets one fixed
-    // grace week and a warning that says so, then pauses. One week regardless
-    // of cadence: it's a last call, and a week reads as a last call whether the
-    // club writes weekly or quarterly.
-    //
-    // Whether that week has already been granted is derived from the deadline
-    // rather than stored. Every riff on an interval club is dated exactly one
-    // cadence period out — by the cron and by club creation alike, and hosts
-    // can't open riffs on an interval club — so a deadline beyond that has been
-    // extended. The extra day absorbs the millisecond skew between createdAt
-    // (written by the database) and the deadline (computed just before the
-    // insert); a granted grace sits a full seven days past the line, so the
-    // margin is comfortable in both directions.
-    //
-    // A host who edits the deadline can consume or reset the grace through this
-    // inference. Harmless either way — nobody has written — and the alternative
-    // is a stored flag, which means a migration for a rule this small.
-    const graceGranted =
-      activeRiff.deadline > addDays(activeRiff.createdAt, cadenceDays + 1);
-
-    if (graceGranted) {
-      return { ...base, action: { kind: "pause", riffId: activeRiff.id } };
-    }
-
-    return {
-      ...base,
-      action: {
-        kind: "extend",
-        riffId: activeRiff.id,
-        // Seven days from now, not from the old deadline — if the cron misses a
-        // stretch of days, "you have a week" should still mean a week.
-        newDeadline: addDays(now, PAUSE_GRACE_DAYS),
-      },
-    };
   }
 
   // No active riff. Paused clubs stay empty until the host picks a cadence.
