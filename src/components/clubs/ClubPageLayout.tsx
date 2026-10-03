@@ -34,12 +34,13 @@ import {
   hasUnreadPieces,
   isRiffFullyRead,
   isPastDeadline,
-  daysUntil,
   formatDateLong,
   formatDateShort,
   getRevealRoster,
   isReadyToReveal,
+  type RiffCountdown,
 } from "@/lib/riff-utils";
+import { useRiffCountdown } from "@/hooks/useRiffCountdown";
 import DeleteClubConfirmModal from "@/components/clubs/DeleteClubConfirmModal";
 import LeaveClubConfirmModal from "@/components/clubs/LeaveClubConfirmModal";
 import TransferHostModal from "@/components/clubs/TransferHostModal";
@@ -400,6 +401,14 @@ export default function ClubPageLayout({
   const deadlinePassed = activeRiff
     ? isPastDeadline(activeRiff.deadline)
     : false;
+  const countdown = useRiffCountdown({
+    deadline: activeRiff?.deadline ?? null,
+    createdAt: activeRiff?.createdAt ?? "",
+    submittedCount: activeRiff
+      ? getSubmittedPieces(activeRiff.pieces).length
+      : 0,
+    cadence: clubCadence,
+  });
   const piecesAllSubmitted = activeRiff
     ? isReadyToReveal(activeRiff.participants, activeRiff.pieces, club.members)
     : false;
@@ -962,10 +971,7 @@ export default function ClubPageLayout({
                         {!deadlinePassed && activeRiff.deadline && (
                           <span style={{ color: "#808080" }}>·</span>
                         )}
-                        <DaysLeft
-                          deadline={activeRiff.deadline}
-                          deadlinePassed={deadlinePassed}
-                        />
+                        <DaysLeft countdown={countdown} />
                         {(isAdmin || isCoHost) && (
                           <ThreeDotButton
                             variant="light"
@@ -1046,10 +1052,7 @@ export default function ClubPageLayout({
                       {!deadlinePassed && activeRiff.deadline && (
                         <span style={{ color: "#808080" }}>·</span>
                       )}
-                      <DaysLeft
-                        deadline={activeRiff.deadline}
-                        deadlinePassed={deadlinePassed}
-                      />
+                      <DaysLeft countdown={countdown} />
                       {(isAdmin || isCoHost) && (
                         <ThreeDotButton
                           variant="light"
@@ -1670,14 +1673,9 @@ function RiffTitleLink({
   );
 }
 
-// The current riff's time left, bold in the last 3 days.
-function DaysLeft({
-  deadline,
-  deadlinePassed,
-}: {
-  deadline: string | null;
-  deadlinePassed: boolean;
-}) {
+// The current riff's time left (see useRiffCountdown), bold in the last 3 days
+// and while the sweep is about to act.
+function DaysLeft({ countdown }: { countdown: RiffCountdown | null }) {
   const style: React.CSSProperties = {
     fontFamily: "var(--font-dm-sans)",
     fontSize: "16px",
@@ -1686,14 +1684,16 @@ function DaysLeft({
     margin: 0,
   };
 
-  if (deadlinePassed) return <p style={style}>Deadline passed</p>;
-  if (!deadline)
+  if (!countdown)
     return <p style={{ ...style, color: "#808080" }}>No deadline</p>;
 
-  const days = daysUntil(new Date(deadline));
+  // The server renders a slightly earlier minute than the browser does.
   return (
-    <p style={{ ...style, fontWeight: days <= 3 ? 700 : 300 }}>
-      {`${days} ${days === 1 ? "day" : "days"} left`}
+    <p
+      style={{ ...style, fontWeight: countdown.urgent ? 700 : 300 }}
+      suppressHydrationWarning
+    >
+      {countdown.text}
     </p>
   );
 }
