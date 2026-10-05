@@ -63,3 +63,7 @@ next-env.d.ts
 # local Python output from Codex hook checks
 __pycache__/
 *.py[cod]
+
+# Claude Code mods: type declarations and tsconfig generated on load
+.claude/mods/*/.claude-plugin/types/
+.claude/mods/*/tsconfig.json

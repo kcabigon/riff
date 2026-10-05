@@ -130,5 +130,16 @@
         ]
       }
     ]
+  },
+  "extraKnownMarketplaces": {
+    "riff-mods": {
+      "source": {
+        "source": "directory",
+        "path": "./.claude/mods"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "riff-map@riff-mods": true
   }
 }
