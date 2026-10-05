@@ -1,0 +1,6 @@
+{
+  "name": "riff-map",
+  "version": "0.1.0",
+  "description": "Draws Riff's system design in a pane: /map, or automatically when you ask to build or explore part of the app",
+  "author": { "name": "Kyle" }
+}
