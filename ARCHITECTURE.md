@@ -1,6 +1,6 @@
 # Riff — Architecture & Project Reference
 
-**Last Updated**: September 27, 2026
+**Last Updated**: October 5, 2026
 
 This file is the single source of truth for project context. The `/letsriff` slash command reads this automatically at the start of each session. For the design system, shared component catalog, and UI patterns, see `DESIGN-SYSTEM.md`.
 
@@ -21,12 +21,15 @@ A private essay-sharing platform for creative communities. People write together
 **Home & navigation**
 - `/home` (formerly `/my-riffs`) — unified feed: current riffs, joinable club riffs, ready-to-reveal, drafts, pieces, past riffs, friends row
 - Global Create dropdown (New draft / New riff / New club), redesigned navbar, empty state for new users
+- **Creating a riff or club** opens a full-screen, multi-step overlay (`CreateRiffOverlay`, `CreateClubOverlay`, built on `HeroCardOverlay`). It's opened from the Create menu, the club switcher and the Home empty state, and `useCreationOverlay` sends you to the new riff or club when it's done. Riff creation offers one **Quick start** prompt (`TemplatePicker` + `src/lib/riff-quick-start.ts`): deliberately a single open-ended prompt, not a menu of topics, because topics put riffs in a box
+- The navbar and its menus (`NavBar`, `CreateDropdown`, `ClubDropdown`, `AvatarDropdown`) live in `src/components/clubs/` for historical reasons, but they're app-wide
 - Landing page (detects logged-in users), About page (founder's note with fake comment highlights), Terms page
 
 **Clubs**
 - Club page with grid/slot progress cards, unified desktop/mobile header. Sections run Current Riff → Current Read → Past Riffs; riff titles link to the riff page with a Riff mark; hosts/co-hosts edit the current riff's prompt in place
 - Join by link (`/clubs/[id]/join`), leave club, delete club (typed confirmation)
 - Host roles: assign / re-assign / remove co-host, transfer host (emails both parties)
+- **Club schedules (cadence)**: Weekly, Bi-weekly, Monthly, Bi-monthly or Quarterly, plus Pause and Freestyle (stored as `MANUAL`: the host starts and reveals riffs by hand; the schema default, so older clubs kept working as before). Defined in `src/lib/cadence.ts`, stored on `Club.cadence`, picked at creation and changed in `CadenceSettingsModal` (shown under the club name by `ClubCadenceLine`). Moving a club from Freestyle or Pause onto a schedule opens its first riff right away (`openRiffIfDue`); after that the daily cadence sweep runs it
 - Account deletion blocked for hosts with active club members
 
 **Riffs**
@@ -109,13 +112,17 @@ src/app/api/
 ├── onboarding/name, onboarding/complete
 ├── clubs/                        # CRUD, members, riffs, join, stats
 │   └── [id]/assign-cohost, [id]/transfer-admin
+│   └── [id]/members/[userId]     # PATCH a member's role; DELETE removes a member (also how you leave a club)
 ├── riffs/                        # POST creates an open (clubless) riff
 │   └── [id]/                     # CRUD, participants, pieces, attach-draft, comments, read, mark-read
 ├── drafts/                       # Create draft (optionally attached to a riff)
+├── home/pieces, home/past-riffs # "View all" paging on /home (same queries as lib/home-data.ts)
 ├── pieces/                       # create, [id] CRUD, autosave, versions, shares
 │   └── [id]/publish              # Publish a riff-less piece (sets publishedAt)
 │   └── [id]/join                 # Accept piece invite → mutual friendship
 │   └── [id]/send, send-candidates # Email a piece to chosen friends
+│   └── [id]/shares/[shareId]     # DELETE revokes a share (Share modal)
+│   └── [id]/profile-visibility   # Hide or show a piece on your profile (PieceVisibilitySettings)
 ├── comments/                     # list, create, [id]
 ├── notifications/                # list, [id] mark read, unread-count
 ├── cron/daily-notifications      # Vercel Cron (13:00 UTC): comment digest + riff/reading reminders + cadence sweep
@@ -131,17 +138,19 @@ src/app/api/
 src/components/
 ├── shared/        # Modal, Avatar, AvatarStack, AdminBadge, Badge, Dropdown, ThreeDotButton, IconButton,
 │                  # BackLink, SectionHeading, Toast, ShareLinkOptions, SendToFriendsModal, InvitePieceModal,
-│                  # MobileCardCarousel, HorizontalScrollRow, RiffMark, EnvironmentBadge,
+│                  # MobileCardCarousel, HorizontalScrollRow, RiffMark, EnvironmentBadge, ActionRow,
+│                  # FullScreenOverlay, HeroCardOverlay, OverlayStepHeader, BrushWordHero (creation flows),
 │                  # ImageUploadModal/Flow, ImageDropZone, icons
 ├── home/          # MyRiffsEmptyState
 ├── clubs/         # ClubPageLayout, NavBar, ClubDropdown, AvatarDropdown, CreateDropdown, CreatePillButton,
 │                  # ClubSettingsModal, JoinClubClient, AssignCoHostModal, TransferHostModal,
-│                  # LeaveClubConfirmModal, DeleteClubConfirmModal, RiffPromptEditor
+│                  # LeaveClubConfirmModal, DeleteClubConfirmModal, RiffPromptEditor, CreateClubOverlay,
+│                  # CadenceSettingsModal, CadenceOptionList, ClubCadenceLine, ClubStatsRow
 ├── riffs/         # RiffPageLayout, RiffEventCard, ProgressCard, PieceCard, CompletedRiffCard, ReadyToRevealCard,
 │                  # ActivityFeed, ReadByStrip, FriendsRow, RiffCTAButton, RevealRiffButton, RevealConfirmModal,
 │                  # RevealCelebration, CreateRiffModal, EditRiffModal, RiffFormFields, DeleteRiffConfirmModal,
 │                  # DraftChoiceModal, DraftChoiceTrigger, InviteFriendModal, JoinRiffClient, MosaicCollage,
-│                  # PublicShareIndicator, EmptyRiffState
+│                  # PublicShareIndicator, CreateRiffOverlay, TemplatePicker
 ├── pieces/        # PieceJoinClient
 ├── read/          # ReadPageLayout, ReadOnlyEditor, ReadToggle, ReadingProgress, PieceNavigation,
 │                  # CommentAnchor, CommentButton, CommentPopover, CommentSidebar, CommentModal,
@@ -170,6 +179,7 @@ src/hooks/
 ├── useProfileNavigation.ts    # Navigate to /profile/[userId]
 ├── useDraftCreation.ts        # Create draft + navigate to write page
 ├── useRevealRiff.ts           # Reveal-riff request + state
+├── useCreationOverlay.ts      # Open/close a create-riff/club overlay, then go to what was created
 ├── useTextSelection.ts        # Text selection detection
 ├── useThemeColor.ts           # Update iOS Safari status bar color
 └── useScrollDirection.ts      # Hide-on-scroll for auto-hiding nav bars
@@ -180,14 +190,20 @@ src/lib/
 ├── auth-utils.ts              # requireAuth(), getSession() (dev cookie override), getCurrentUser()
 ├── auth-redirect.ts           # Post-auth redirect helpers
 ├── env.ts                     # getBaseUrl() and environment helpers
+├── admin-access.ts            # hasAdminAccess(): the emails allowed into /admin
+├── names.ts                   # How people are named in emails: first names by default, full names for join announcements and bylines
+├── html.ts                    # escapeHtml() for anything people typed that goes into an email
 ├── friends.ts                 # friendOfWhere() / isFriendOf() — the Friends access relation
 ├── riff-utils.ts              # Riff helpers (submitted pieces, deadlines, display titles, date formatting)
+├── home-data.ts               # /home feed queries, shared with the /api/home "View all" routes
 ├── notifications.ts           # createNotification, notifyClubMembers, notifyRiffParticipants
 ├── comment-notifications.ts   # Daily comment digest job
 ├── engagement-reminders.ts    # Riff reminders job — halfway + last call, max two per person per riff
 ├── reading-reminders.ts      # Reading reminders job — 5 and 10 days after a reveal, unread pieces only
+├── cadence.ts                 # Club schedule options (Weekly … Quarterly, Pause, Freestyle) and their lengths
 ├── club-cadence.ts            # Daily cadence sweep: reveal / extend (grace week) / pause / open the next riff
 ├── reveal-riff.ts, club-riff.ts # revealRiff() shared by host + cron; opening a club riff; predictVolumeNumber()
+├── riff-quick-start.ts        # The one Quick start title + prompt offered when creating a riff
 ├── participant-joined.ts      # Open-riff join notification (in-app to all, email to creator)
 ├── resend.ts                  # All transactional emails (build + send) + opt-out checks
 ├── email-excerpt.ts           # A piece's opening for email — paragraphs, breaks, bold, italic only
@@ -206,7 +222,8 @@ src/middleware.ts              # Staging password gate + session-cookie protecti
 ```
 User         → email, name/first/last, username, bio, avatarUrl, lastActiveClubId,
                onboardingStep, emailNotifications, emailMarketing
-Club         → name, description, bannerImage, isArchived, adminId (host), moderatorId (co-host)
+Club         → name, description, bannerImage, isArchived, adminId (host), moderatorId (co-host),
+               cadence: WEEKLY … QUARTERLY | PAUSED | MANUAL (Freestyle)
 ClubMember   → role: ADMIN | MODERATOR | MEMBER
 Riff         → clubId (NULLABLE — null = open riff), creatorId (host), title, prompt, deadline,
                status: DRAFT | ACTIVE | REVEALED | COMPLETED, volumeNumber
@@ -214,6 +231,7 @@ RiffParticipant → user joined a riff (joinedAt)
 Piece        → title, subtitle, currentContent, coverImage, wordCount, readLengthMin,
                publishedAt (set when published outside a riff)
 PieceVersion → frozen snapshot
+PieceVisibilitySettings → a PRIVATE row hides that piece from its author's profile (display only)
 PieceRiff    → piece attached to a riff; submittedAt null = attached draft
 PieceRead    → who read which piece in which riff (reveal progress / read rings)
 Share        → shareType: CLUB | RIFF | INDIVIDUAL | PUBLIC (INDIVIDUAL = accepted piece invite)
