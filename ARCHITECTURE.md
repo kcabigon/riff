@@ -34,7 +34,7 @@ A private essay-sharing platform for creative communities. People write together
 - Reveal: clubs on any cadence but Freestyle reveal automatically at the deadline (Paused included), so hosts get no Reveal button. Freestyle hosts and open-riff hosts get it after the deadline, or before it once everyone has submitted (every club member for club riffs). "Reveal now" in the 3-dot menu reveals any time there's a submission. The reveal modal groups the club into Submitted / Still writing / Haven't started
 - **Open (clubless) riffs** — created with no club, joined via invite link (`/riffs/[id]/join`)
 - Riff page is one scrolling activity view: progress cards (locked until reveal), activity/comment feed, Read-by strip with progress rings
-- Mandatory deadlines with countdown; editing a riff never silently moves the deadline
+- Mandatory deadlines with a live countdown (days, then hours and minutes in the last 24 hours; auto-reveal clubs count to the sweep run — see Crons & Email); editing a riff never silently moves the deadline
 - Unified draft experience across riff + club pages (new draft vs attach existing draft)
 
 **Writing & publishing**
@@ -262,7 +262,8 @@ Routing lives in the `/auth/post-login` server component, NOT the NextAuth `redi
 
 ## Crons & Email
 
-- **One Vercel Cron** (`vercel.json`): `/api/cron/daily-notifications` at 13:00 UTC, authenticated with `CRON_SECRET`. It runs the comment digest, riff reminders, reading reminders and the club cadence sweep. Vercel Hobby allows 2 cron jobs, so one slot is free.
+- **One Vercel Cron** (`vercel.json`): `/api/cron/daily-notifications` at 13:00 UTC, authenticated with `CRON_SECRET`. It runs the comment digest, riff reminders, reading reminders and the club cadence sweep. Vercel Hobby allows up to 100 cron jobs, but each runs at most once a day and fires anywhere within its scheduled hour (13:00–13:59 UTC), never early.
+- **When the sweep acts on a riff**: on the first 13:00 UTC run at or after the deadline (`sweepRunFor()` in `src/lib/cadence.ts`), so never early. Deadlines the code sets — new cadence riffs, a new club's first riff, the grace week — land exactly on a run (`cadenceDeadline()`); host-picked ones stay as picked. The cron and the countdown both use it, so auto-reveal clubs count down to that run, not the deadline: whole days, then hours and minutes in the last 24 hours, then "Revealing soon" (or "Extending soon" / "Pausing soon" for an empty riff) for up to two hours while the run lands. Submitting stays open until the reveal.
 - One-time notification emails respect `User.emailNotifications` ("Notifications"); riff and reading reminders respect `emailMarketing`, repurposed as the "Reminders" toggle. Sign-in and welcome emails always send.
 
 ---

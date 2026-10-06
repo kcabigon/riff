@@ -1,3 +1,5 @@
+import type { SweepOutcome } from "@/lib/cadence";
+
 export function getRiffDisplayTitle(
   riff: {
     volumeNumber?: number | null;
@@ -316,24 +318,58 @@ export function getTotalWordCount(
   return pieces.reduce((sum, p) => sum + (p.piece?.wordCount || 0), 0);
 }
 
-// Calendar days between today and a future date (0 = later today, 1 =
-// tomorrow, etc). Uses UTC date components rather than raw elapsed
-// milliseconds so a deadline later *today* correctly returns 0 instead of
-// rounding up to "1 day" (which previously showed as "tomorrow").
-export function daysUntil(date: Date): number {
+export interface RiffCountdown {
+  // "5 days left", "14h 32m left", "Revealing soon", "Deadline passed"
+  text: string;
+  // Within the last three days, or waiting on the sweep.
+  urgent: boolean;
+}
+
+// How long a "Revealing soon" waits before giving up on the sweep. Its run
+// lands within the hour, so a second hour of margin means it was missed and
+// the honest thing left to say is that the deadline passed.
+const SOON_WINDOW_MS = 2 * 60 * 60 * 1000;
+
+const SOON_TEXT: Record<SweepOutcome, string> = {
+  reveal: "Revealing soon",
+  extend: "Extending soon",
+  pause: "Pausing soon",
+};
+
+// What a riff's countdown reads at `now`. `target` is when something happens:
+// the sweep run for auto-reveal clubs, the deadline itself otherwise. Whole
+// days until the last 24 hours, then hours and minutes, since that's when
+// people are rushing to finish (or waiting to read).
+export function getRiffCountdown(
+  target: Date,
+  outcome: SweepOutcome | null,
+  now: number
+): RiffCountdown {
   const DAY_MS = 24 * 60 * 60 * 1000;
-  const now = new Date();
-  const startOfToday = Date.UTC(
-    now.getUTCFullYear(),
-    now.getUTCMonth(),
-    now.getUTCDate()
-  );
-  const startOfTargetDay = Date.UTC(
-    date.getUTCFullYear(),
-    date.getUTCMonth(),
-    date.getUTCDate()
-  );
-  return Math.round((startOfTargetDay - startOfToday) / DAY_MS);
+  const left = target.getTime() - now;
+
+  if (left > DAY_MS) {
+    const days = Math.round(left / DAY_MS);
+    return {
+      text: `${days} ${days === 1 ? "day" : "days"} left`,
+      urgent: days <= 3,
+    };
+  }
+
+  if (left > 0) {
+    // Rounded up, so the last seconds read "1m left" rather than "0m left".
+    const minutes = Math.ceil(left / 60000);
+    const hours = Math.floor(minutes / 60);
+    return {
+      text: hours > 0 ? `${hours}h ${minutes % 60}m left` : `${minutes}m left`,
+      urgent: true,
+    };
+  }
+
+  if (outcome && -left < SOON_WINDOW_MS) {
+    return { text: SOON_TEXT[outcome], urgent: true };
+  }
+  return { text: "Deadline passed", urgent: false };
 }
 
 // Whole days elapsed since a past date, rounded down.

@@ -48,19 +48,6 @@ export async function createActiveClubRiff(
   return riff;
 }
 
-// `days` after `from`. How every cadence riff is dated — by club creation and
-// by the cadence sweep alike — and how the sweep sizes its grace week.
-//
-// A new club's first riff used to be dated in the browser as end-of-day in the
-// host's own timezone, which no server can know. The difference doesn't
-// surface: daysUntil buckets by UTC date, and the sweep only ever compares a
-// deadline against its own fixed daily tick.
-export function addDays(from: Date, days: number): Date {
-  const d = new Date(from);
-  d.setDate(d.getDate() + days);
-  return d;
-}
-
 // The volume number an active riff will get when it's revealed — the same
 // count the club page uses to call an untitled riff "Volume N" before then, and
 // the same one revealRiff assigns.

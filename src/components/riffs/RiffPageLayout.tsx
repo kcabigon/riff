@@ -17,7 +17,7 @@ import {
   isPastDeadline,
   formatDateShort,
   formatDateLong,
-  daysUntil,
+  getSubmittedPieces,
   getSubmittedParticipants,
   getWaitingParticipants,
   isAuthoredBy,
@@ -26,6 +26,7 @@ import {
   isReadyToReveal,
   type RevealRosterUser,
 } from "@/lib/riff-utils";
+import { useRiffCountdown } from "@/hooks/useRiffCountdown";
 import DraftChoiceTrigger from "@/components/riffs/DraftChoiceTrigger";
 import RevealRiffButton, {
   shouldShowReveal,
@@ -164,6 +165,12 @@ export default function RiffPageLayout({
   };
   const hasUnreadComments = Object.values(badgeMap).some(Boolean);
   const deadlinePassed = isPastDeadline(riff.deadline);
+  const countdown = useRiffCountdown({
+    deadline: riff.deadline,
+    createdAt: riff.createdAt,
+    submittedCount: getSubmittedPieces(riff.pieces).length,
+    cadence: riff.club?.cadence ?? null,
+  });
   const piecesAllSubmitted = isReadyToReveal(
     riff.participants,
     riff.pieces,
@@ -281,63 +288,63 @@ export default function RiffPageLayout({
               <div
                 style={{ display: "flex", alignItems: "center", gap: "8px" }}
               >
-                <p
-                  style={{
-                    fontFamily: "var(--font-dm-sans)",
-                    fontSize: "16px",
-                    fontWeight: 300,
-                    color:
-                      deadlinePassed && riff.status !== "REVEALED"
-                        ? "#DC2626"
-                        : "#808080",
-                    margin: 0,
-                  }}
-                >
-                  {deadlinePassed && riff.status !== "REVEALED" ? (
-                    "Deadline passed"
-                  ) : riff.status === "REVEALED" ? (
-                    riff.updatedAt ? (
-                      <>
-                        Revealed:{" "}
-                        <span style={{ color: "#000000" }}>
-                          {formatDateShort(riff.updatedAt)}
-                        </span>
-                        {" · "}
-                        Words:{" "}
-                        <span style={{ color: "#000000" }}>
-                          {totalWords.toLocaleString()}
-                        </span>
-                      </>
+                {/* Once the deadline passes the countdown says it all —
+                    "Revealing soon", or hours still left on an auto-reveal
+                    club whose run comes after the deadline. */}
+                {(riff.status === "REVEALED" ||
+                  !riff.deadline ||
+                  !deadlinePassed) && (
+                  <p
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "16px",
+                      fontWeight: 300,
+                      color: "#808080",
+                      margin: 0,
+                    }}
+                  >
+                    {riff.status === "REVEALED" ? (
+                      riff.updatedAt ? (
+                        <>
+                          Revealed:{" "}
+                          <span style={{ color: "#000000" }}>
+                            {formatDateShort(riff.updatedAt)}
+                          </span>
+                          {" · "}
+                          Words:{" "}
+                          <span style={{ color: "#000000" }}>
+                            {totalWords.toLocaleString()}
+                          </span>
+                        </>
+                      ) : (
+                        "Revealed"
+                      )
+                    ) : riff.deadline ? (
+                      `Deadline: ${formatDateLong(riff.deadline)}`
                     ) : (
-                      "Revealed"
-                    )
-                  ) : riff.deadline ? (
-                    `Deadline: ${formatDateLong(riff.deadline)}`
-                  ) : (
-                    "No deadline"
-                  )}
-                </p>
+                      "No deadline"
+                    )}
+                  </p>
+                )}
                 {!deadlinePassed &&
                   riff.status !== "REVEALED" &&
                   riff.deadline && <span style={{ color: "#808080" }}>·</span>}
-                {!deadlinePassed &&
-                  riff.status !== "REVEALED" &&
-                  riff.deadline && (
-                    <p
-                      style={{
-                        fontFamily: "var(--font-dm-sans)",
-                        fontSize: "16px",
-                        fontWeight: 300,
-                        color: "#DC2626",
-                        margin: 0,
-                      }}
-                    >
-                      {(() => {
-                        const days = daysUntil(new Date(riff.deadline));
-                        return `${days} ${days === 1 ? "day" : "days"} left`;
-                      })()}
-                    </p>
-                  )}
+                {riff.status !== "REVEALED" && countdown && (
+                  // The server renders a slightly earlier minute than the
+                  // browser does.
+                  <p
+                    style={{
+                      fontFamily: "var(--font-dm-sans)",
+                      fontSize: "16px",
+                      fontWeight: 300,
+                      color: "#DC2626",
+                      margin: 0,
+                    }}
+                    suppressHydrationWarning
+                  >
+                    {countdown.text}
+                  </p>
+                )}
                 {isAdmin &&
                   riff.status !== "REVEALED" &&
                   (() => {

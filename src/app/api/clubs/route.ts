@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
-import { getCadenceDays, isCadenceValue } from "@/lib/cadence";
-import { addDays, createActiveClubRiff } from "@/lib/club-riff";
+import { cadenceDeadline, getCadenceDays, isCadenceValue } from "@/lib/cadence";
+import { createActiveClubRiff } from "@/lib/club-riff";
 
 // GET /api/clubs - List all clubs user is a member of
 export async function GET(req: Request) {
@@ -156,7 +156,7 @@ export async function POST(req: Request) {
             clubId: created.id,
             creatorId: user.id,
             // Dated one period out, like every riff the cadence sweep opens.
-            deadline: addDays(new Date(), cadenceDays),
+            deadline: cadenceDeadline(new Date(), cadenceDays),
           },
           tx
         );
