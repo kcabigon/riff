@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import {
+  cadenceDeadline,
   getCadenceDays,
   isIntervalCadence,
   sweepOutcomeFor,
@@ -16,12 +17,12 @@ import {
   deliverMany,
 } from "@/lib/resend";
 import { getBaseUrl } from "@/lib/env";
-import { addDays, predictVolumeNumber } from "@/lib/club-riff";
+import { predictVolumeNumber } from "@/lib/club-riff";
 import { getRiffDisplayTitle } from "@/lib/riff-utils";
 import { NotificationType } from "@prisma/client";
 
 // The club cadence sweep. Runs once daily from /api/cron/daily-notifications,
-// at 13:00 UTC or up to an hour after it (see sweepRunFor).
+// at 13:00 UTC or up to an hour after it (see SWEEP_HOUR_UTC).
 //
 // Deciding and acting are separate on purpose: decideForClub works out what
 // should happen with no reads or writes, and applyDecision carries it out. That
@@ -90,8 +91,7 @@ export function decideForClub(
         action: { kind: "skip", reason: "active riff has no deadline" },
       };
     }
-    // Due from the scheduled run its deadline falls to, not the deadline
-    // itself — see sweepRunFor for why the two differ.
+    // Due from the run the countdown points at, so the two agree.
     if (sweepRunFor(activeRiff.deadline) > now) {
       return {
         ...base,
@@ -126,7 +126,7 @@ export function decideForClub(
             // Seven days from now, not from the old deadline — if the cron
             // misses a stretch of days, "you have a week" should still mean a
             // week.
-            newDeadline: addDays(now, PAUSE_GRACE_DAYS),
+            newDeadline: cadenceDeadline(now, PAUSE_GRACE_DAYS),
           },
         };
       case null:
@@ -144,7 +144,7 @@ export function decideForClub(
 
   return {
     ...base,
-    action: { kind: "create", deadline: addDays(now, cadenceDays) },
+    action: { kind: "create", deadline: cadenceDeadline(now, cadenceDays) },
   };
 }
 

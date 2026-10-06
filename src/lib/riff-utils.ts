@@ -352,7 +352,7 @@ export function getRiffCountdown(
     const days = Math.round(left / DAY_MS);
     return {
       text: `${days} ${days === 1 ? "day" : "days"} left`,
-      urgent: left <= 3 * DAY_MS,
+      urgent: days <= 3,
     };
   }
 

@@ -151,35 +151,43 @@ export const SWEEP_HOUR_UTC = 13;
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
 
-// The scheduled sweep that acts on a riff due at `deadline`: the first 13:00 UTC
-// whose hour hasn't ended by then. The whole hour counts because the run can
-// fire anywhere in it — a riff the sweep opened is dated from the moment that
-// run fired (13:00:04, say), and the run on its deadline day may fire a few
-// seconds earlier than that. Comparing against the deadline itself would skip
-// it for a full day roughly half the time.
+// The scheduled sweep that acts on a riff due at `deadline`: the first 13:00
+// UTC at or after it. Since a run never fires early, that run always finds the
+// riff due, and the sweep never acts before a deadline.
 //
 // Shared by the sweep (what's due now) and the countdown (when the action
 // happens), so the two can't disagree.
 export function sweepRunFor(deadline: Date): Date {
-  const latest = deadline.getTime() - HOUR_MS;
-  const day = new Date(latest);
+  const time = deadline.getTime();
   const run = Date.UTC(
-    day.getUTCFullYear(),
-    day.getUTCMonth(),
-    day.getUTCDate(),
+    deadline.getUTCFullYear(),
+    deadline.getUTCMonth(),
+    deadline.getUTCDate(),
     SWEEP_HOUR_UTC
   );
-  return new Date(run > latest ? run : run + DAY_MS);
+  return new Date(run >= time ? run : run + DAY_MS);
+}
+
+// How every cadence riff is dated — by club creation and by the sweep alike,
+// for new riffs and the grace week: `days` out, on the dot of a scheduled run.
+//
+// The dot matters. A run lands anywhere in its hour, so a deadline dated from
+// the moment one fired (13:00:04, say) is later than the next run that fires a
+// few seconds earlier in the hour, and the riff would sit a full day past its
+// deadline. Backing off an hour before rounding up keeps a riff the sweep opens
+// at exactly `days`, and one opened at any other time (a new club) at most an
+// hour short of it.
+export function cadenceDeadline(from: Date, days: number): Date {
+  return sweepRunFor(new Date(from.getTime() + days * DAY_MS - HOUR_MS));
 }
 
 // Whether a riff's one grace week has already been granted, inferred from its
-// deadline rather than stored. Every riff on an interval club is dated exactly
-// one cadence period out — by the cron and by club creation alike, and hosts
-// can't open riffs on an interval club — so a deadline beyond that has been
-// extended. The extra day absorbs the millisecond skew between createdAt
-// (written by the database) and the deadline (computed just before the
-// insert); a granted grace sits a full seven days past the line, so the margin
-// is comfortable in both directions.
+// deadline rather than stored. Every riff on an interval club is dated one
+// cadence period out by cadenceDeadline — by the cron and by club creation
+// alike, and hosts can't open riffs on an interval club — so a deadline beyond
+// that has been extended. The extra day absorbs cadenceDeadline rounding to the
+// next run (under a day either way); a granted grace sits a full seven days
+// past the line, so the margin is comfortable in both directions.
 //
 // A host who edits the deadline can consume or reset the grace through this
 // inference. Harmless either way — nobody has written — and the alternative is
