@@ -488,7 +488,6 @@ export default function WritePage({ piece, hasFriends }: WritePageProps) {
     } else {
       router.back();
     }
-    router.refresh();
   };
 
   if (!editor) {
