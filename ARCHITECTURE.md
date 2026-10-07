@@ -68,7 +68,7 @@ A private essay-sharing platform for creative communities. People write together
 - Sends retry when Resend rate-limits them (the daily jobs run side by side). The reminder jobs log only the emails that actually went out
 
 **Internal**
-- Admin analytics dashboard (`/admin`) — Kyle and Chris; leaderboard (`/leaderboard`) — Kyle only
+- Admin analytics dashboard (`/admin`) — Kyle, Chris and Jarric; leaderboard (`/leaderboard`) — Kyle only
 - Release notes page (`/release-notes`) — built but hidden/unlinked
 
 ### Known Gaps / In Progress
@@ -100,7 +100,7 @@ src/app/
 ├── write/[pieceId]/              # Draft editor
 ├── profile/[userId]/             # User profile
 ├── account/                      # Account settings
-├── admin/, leaderboard/          # Admin: Kyle + Chris; leaderboard: Kyle only
+├── admin/, leaderboard/          # Admin: Kyle, Chris, Jarric; leaderboard: Kyle only
 ├── release-notes/                # Hidden
 └── dev-signin/, dev/emails/      # Dev-only (not linked): account switching, email preview
 ```
@@ -129,7 +129,7 @@ src/app/api/
 ├── users/me/                     # current user, update, delete, export, email-preferences, admin-clubs
 ├── users/[id]/                   # public profile data
 ├── upload/image/                 # Image upload (auth required, 5MB max)
-├── admin/stats, leaderboard      # Admin stats: Kyle + Chris; leaderboard: Kyle only
+├── admin/stats, leaderboard      # Admin stats: Kyle, Chris, Jarric; leaderboard: Kyle only
 └── dev/set-user                  # Dev-only user switching
 ```
 
