@@ -23,6 +23,9 @@ If the user asks you to "regain context" or "catch up", run `/letsriff`.
 | `/promote` | Kyle only — promote develop → staging or staging → main (stops between steps) |
 | `/release` | Kyle only — fast-path: `develop → staging → main` chained with a single confirmation |
 | `/setup` | First-time setup — walks through environment, deps, database |
+| `/map [area]` | Opens a pane with Riff's system design, or one area of it (`/map clubs`). It also opens on its own when you ask to build or explore part of the app |
+
+`/map` comes from the `riff-map` mod in `.claude/mods/riff-map/`. It needs Claude Code v2.1.287 or later, and it loads after you trust the folder. Its file lists come from `ARCHITECTURE.md`, so keeping that file current keeps the map current. To work on the mod, run `claude plugin test` in its folder.
 
 ## Rules
 

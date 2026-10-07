@@ -1,0 +1,12 @@
+{
+  "name": "riff-mods",
+  "description": "Claude Code mods for working on Riff",
+  "owner": { "name": "Kyle" },
+  "plugins": [
+    {
+      "name": "riff-map",
+      "source": "./riff-map",
+      "description": "Draws Riff's system design in a pane: /map, or automatically when you ask to build or explore part of the app"
+    }
+  ]
+}

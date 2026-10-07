@@ -201,6 +201,7 @@ All interactive elements: border/outline changes to green `#00FF66`.
 |-----------|------|---------|
 | **BackButton** | `BackButton.tsx` | Back navigation. Props: `href`, `onClick`, `size` |
 | **CloseButton** | `CloseButton.tsx` | Close/dismiss actions. Props: `onClick`, `size` |
+| **ActionRow** | `shared/ActionRow.tsx` | Full-width row that opens something: label left, arrow right, light border and hover fill (menu styling, not a CTA). Props: `label`, `onClick`, `disabled`, `arrow` ("next" opens another screen \| "expand" toggles a menu in place), `active` (keep the hover fill while its menu is open) |
 | **ThreeDotButton** | `shared/ThreeDotButton.tsx` | All 3-dot settings menus (club page, riff page, piece cards, etc.). Wraps `Dropdown` internally — just pass `items`. Props: `variant` ("dark" for banner/dark bg, "light" for white bg), `items`, `align` ("left"\|"right"). Stays cyan while open. Never build an inline 3-dot button — use this. |
 
 ### Layout & Display (`src/components/` and `src/components/shared/`)
@@ -215,6 +216,10 @@ All interactive elements: border/outline changes to green `#00FF66`.
 | **EnvironmentBadge** | `shared/EnvironmentBadge.tsx` | Dev/staging/prod label |
 | **HorizontalScrollRow** | `shared/HorizontalScrollRow.tsx` | Desktop row of fixed-width cards that scrolls sideways, under a `header`. When it overflows, a round frosted arrow (20% white, blur, white chevron) floats over the edge with more to see and scrolls one card per click. Mobile uses **MobileCardCarousel** instead |
 | **MobileCardCarousel** | `shared/MobileCardCarousel.tsx` | Mobile one-card-at-a-time swipe row with dot pagination |
+| **FullScreenOverlay** | `shared/FullScreenOverlay.tsx` | Full-screen takeover with the same ESC, scroll-lock and focus handling as Modal. Use it instead of a Modal when the content needs the whole screen. Only render heavy `children` while `isOpen`. Props: `isOpen`, `onClose`, `ariaLabel` |
+| **HeroCardOverlay** | `shared/HeroCardOverlay.tsx` | **Go-to for multi-step creation flows.** A FullScreenOverlay with a brush-art hero and a white card overlapping it. The hero renders once, so only `children` change per step. Props: `isOpen`, `onClose`, `ariaLabel`, `word` ("riff" \| "writeclub"), `cardOverlap` (`{ desktop, mobile }` px) |
+| **OverlayStepHeader** | `shared/OverlayStepHeader.tsx` | Top row of a creation-flow card: a `heading` on step 1, a back arrow (`onBack`) on later steps. Same height either way, so fields don't jump |
+| **BrushWordHero** | `shared/BrushWordHero.tsx` | The landing page's brush-reveal word ("Riff" or "write club"). Used by HeroCardOverlay and the riff join page (`JoinRiffClient`). Props: `word`, `className` |
 
 ### Decorative (`src/components/`)
 | Component | File | Use for |
@@ -255,6 +260,13 @@ All interactive elements: border/outline changes to green `#00FF66`.
 - Errors: `FormErrorText`
 - Close: CloseButton in top-right
 - Focus trap + ESC to close
+
+### Creation Flows
+- Anything created in several steps (a riff, a club) uses **HeroCardOverlay**, not a Modal
+- One overlay for the whole flow; swap the card's `children` per step so the hero animation plays once
+- Every step's card starts with **OverlayStepHeader**
+- Open it through `useCreationOverlay` (`src/hooks/`), so every entry point lands on the same page afterward
+- Examples: `riffs/CreateRiffOverlay.tsx`, `clubs/CreateClubOverlay.tsx`
 
 ### Tabs
 - Font: DM Sans 16px
