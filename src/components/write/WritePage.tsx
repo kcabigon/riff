@@ -32,6 +32,7 @@ import EmbedModal from "@/components/write/EmbedModal";
 import MediaEmbedModal from "@/components/write/MediaEmbedModal";
 import LinkPopover from "@/components/write/LinkPopover";
 import { uploadImage } from "@/lib/upload-image";
+import { markDraftsStale } from "@/lib/stale-drafts";
 
 const ALLOWED_IMAGE_TYPES = [
   "image/jpeg",
@@ -295,6 +296,7 @@ export default function WritePage({ piece, hasFriends }: WritePageProps) {
           }),
         });
         if (res.ok) {
+          markDraftsStale();
           setSaveStatus("saved");
         } else {
           setSaveStatus("unsaved");
@@ -316,6 +318,7 @@ export default function WritePage({ piece, hasFriends }: WritePageProps) {
           body: JSON.stringify({ title: newTitle }),
         });
         if (res.ok) {
+          markDraftsStale();
           setSaveStatus("saved");
         } else {
           setSaveStatus("unsaved");
@@ -337,6 +340,7 @@ export default function WritePage({ piece, hasFriends }: WritePageProps) {
           body: JSON.stringify({ subtitle: newSubtitle }),
         });
         if (res.ok) {
+          markDraftsStale();
           setSaveStatus("saved");
         } else {
           setSaveStatus("unsaved");
@@ -358,6 +362,7 @@ export default function WritePage({ piece, hasFriends }: WritePageProps) {
           body: JSON.stringify({ coverImage: newCoverImage ?? "" }),
         });
         if (res.ok) {
+          markDraftsStale();
           setSaveStatus("saved");
         } else {
           setSaveStatus("unsaved");
@@ -480,15 +485,14 @@ export default function WritePage({ piece, hasFriends }: WritePageProps) {
   };
 
   const handleBack = () => {
-    // The destination (My Riffs, or the riff page) may already be sitting in
-    // the client-side Router Cache from before this edit session — refresh()
-    // forces it to refetch instead of showing what it looked like on the way in.
+    // No router.refresh() here: it blocked Back while the whole destination
+    // refetched. Autosave marks drafts stale instead (src/lib/stale-drafts.ts),
+    // and pages with draft cards refresh in the background once they mount.
     if (piece.riffs.length > 0) {
       router.push(riffHref(piece.riffs[0]));
     } else {
       router.back();
     }
-    router.refresh();
   };
 
   if (!editor) {

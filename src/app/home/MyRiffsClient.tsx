@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { consumeDraftsStale } from "@/lib/stale-drafts";
 import { revealsAutomatically, type CadenceValue } from "@/lib/cadence";
 import NavBar from "@/components/clubs/NavBar";
 import RiffEventCard from "@/components/riffs/RiffEventCard";
@@ -277,11 +278,19 @@ export default function MyRiffsClient({
 }: MyRiffsClientProps) {
   const router = useRouter();
   const [allPieces, setAllPieces] = useState(pieces);
+  // Take fresh server data after the background refresh below.
+  useEffect(() => setAllPieces(pieces), [pieces]);
   const [allRiffs, setAllRiffs] = useState(riffs);
   // router.refresh() (join, reveal) delivers a fresh `riffs` prop — resync
   // local state to it so those flows still update Current/Unread/Past Riffs,
   // not just the optimistic detach/delete edits below.
   useEffect(() => setAllRiffs(riffs), [riffs]);
+
+  // Back from the write page lands on the cached /home instantly; if a draft
+  // was edited, pull fresh draft previews in the background.
+  useEffect(() => {
+    if (consumeDraftsStale()) router.refresh();
+  }, [router]);
   const [deleteTarget, setDeleteTarget] = useState<{
     id: string;
     title: string;
