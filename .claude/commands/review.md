@@ -172,7 +172,7 @@ Anyone can merge a PR into develop; approvals are **not** required. After review
 
 ## Team handle → real name mapping
 
-See the table in `CLAUDE.md` under "## Team". Always display real names (e.g. `Chris`), never raw GitHub handles (e.g. `riffwithfriends`).
+See the table in `CLAUDE.md` under "## Team". Always display real names (e.g. `Chris`), never raw GitHub handles (e.g. `pedersennnnn`).
 
 ---
 

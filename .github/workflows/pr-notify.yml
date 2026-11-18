@@ -15,7 +15,7 @@ jobs:
           case "${{ github.event.pull_request.user.login }}" in
             kcabigon) echo "name=Kyle" >> $GITHUB_OUTPUT ;;
             jarric22) echo "name=Jarric" >> $GITHUB_OUTPUT ;;
-            riffwithfriends) echo "name=Chris" >> $GITHUB_OUTPUT ;;
+            pedersennnnn) echo "name=Chris" >> $GITHUB_OUTPUT ;;
             djorgensen316) echo "name=Derek" >> $GITHUB_OUTPUT ;;
             *) echo "name=${{ github.event.pull_request.user.login }}" >> $GITHUB_OUTPUT ;;
           esac
