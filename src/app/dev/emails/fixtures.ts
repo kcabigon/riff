@@ -296,7 +296,7 @@ export function getEmailPreviews(): EmailPreview[] {
         "Cron: at the halfway point and the day before the deadline. Every member who hasn't submitted (participants, for an open riff).",
       variants: [
         {
-          label: "Halfway, started",
+          label: "Checking in, started",
           build: () =>
             buildRiffReminderEmail({
               clubName: CLUB,
@@ -312,7 +312,7 @@ export function getEmailPreviews(): EmailPreview[] {
             }),
         },
         {
-          label: "Halfway, not started",
+          label: "Checking in, not started",
           build: () =>
             buildRiffReminderEmail({
               clubName: CLUB,

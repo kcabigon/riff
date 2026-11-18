@@ -1120,7 +1120,7 @@ export function buildRiffReminderEmail({
   const headline =
     milestone === "final"
       ? `Last call: ${escapeHtml(riffName)}`
-      : `Halfway there: ${escapeHtml(riffName)}`;
+      : `Checking in: ${escapeHtml(riffName)}`;
   const buttonLabel = draft ? "Continue writing" : "Start writing";
   // The preview is the button's own words — the one thing to do.
   const preview = `${buttonLabel}.`;
