@@ -18,6 +18,7 @@ import { useIsMobile } from "@/hooks/useMediaQuery";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { useScrollDirection } from "@/hooks/useScrollDirection";
 import BackButton from "@/components/BackButton";
+import { canGoBackTo } from "@/lib/history-back";
 import { CommentAuthor } from "@/types";
 import { ReplyData } from "./ReplyThread";
 
@@ -40,6 +41,16 @@ interface PendingSelection {
   end: number;
   rect: DOMRect;
 }
+
+// Pages the Back arrow returns to through browser history when the entry
+// behind the piece is one of them: Home, a club, a riff, a profile. Exact
+// page shapes only, so invite pages like /clubs/[id]/join don't count.
+const BACK_TO_HISTORY_PAGES = [
+  /^\/home$/,
+  /^\/clubs\/[^/]+$/,
+  /^\/riffs\/[^/]+$/,
+  /^\/profile\/[^/]+$/,
+];
 
 interface ReadPageLayoutProps {
   piece: {
@@ -413,7 +424,13 @@ export default function ReadPageLayout({
           >
             <BackButton
               onClick={() => {
-                if (backHref) {
+                // If the history entry behind this piece is a feed page, go
+                // back to it: instant, and the feed keeps its scroll position.
+                // Shared links, the editor, previous/next piece, or unknown
+                // history keep their usual destination.
+                if (canGoBackTo(BACK_TO_HISTORY_PAGES)) {
+                  router.back();
+                } else if (backHref) {
                   router.push(backHref);
                 } else if (fromProfileUserId) {
                   router.push(`/profile/${fromProfileUserId}`);
