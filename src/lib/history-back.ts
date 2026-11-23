@@ -17,12 +17,19 @@ export function previousHistoryPathname(): string | null {
   if (typeof window === "undefined") return null;
   const nav = (window as Window & { navigation?: NavigationLike }).navigation;
   const index = nav?.currentEntry?.index;
-  if (!nav || index === undefined || index < 1) return null;
+  if (!nav || typeof nav.entries !== "function") return null;
+  if (index === undefined || index < 1) return null;
 
-  const url = nav.entries()[index - 1]?.url;
-  if (!url) return null;
-  const parsed = new URL(url);
-  return parsed.origin === window.location.origin ? parsed.pathname : null;
+  // Any surprise from the API means "unknown", so the caller's usual
+  // destination still runs.
+  try {
+    const url = nav.entries()[index - 1]?.url;
+    if (!url) return null;
+    const parsed = new URL(url);
+    return parsed.origin === window.location.origin ? parsed.pathname : null;
+  } catch {
+    return null;
+  }
 }
 
 // True when going back through history is known to land on a page whose
