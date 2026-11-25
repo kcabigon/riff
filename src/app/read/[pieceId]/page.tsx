@@ -1,4 +1,3 @@
-import { cache } from "react";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getSession } from "@/lib/auth-utils";
@@ -14,10 +13,11 @@ import ReadPageLayout from "@/components/read/ReadPageLayout";
 const EXPERIMENT_ENABLED = true;
 const EXPERIMENT_PIECE_ID = "cmpbuo77j0001le04v4apbyyd";
 
-// One piece lookup per request, shared by the tab title and the page.
-// React's cache() dedupes the call within a single render.
-const getPiece = cache((pieceId: string) =>
-  prisma.piece.findUnique({
+// The page's piece lookup. The tab title keeps its own tiny query on purpose:
+// sharing this one (e.g. through React cache()) lets the full piece ride along
+// in dev-mode debug data on the redirect a reader without access receives.
+function getPiece(pieceId: string) {
+  return prisma.piece.findUnique({
     where: { id: pieceId },
     select: {
       id: true,
@@ -36,15 +36,9 @@ const getPiece = cache((pieceId: string) =>
           avatarUrl: true,
         },
       },
-      // Club name for the tab title
-      riffs: {
-        where: { submittedAt: { not: null } },
-        select: { riff: { select: { club: { select: { name: true } } } } },
-        take: 1,
-      },
     },
-  })
-);
+  });
+}
 
 export async function generateMetadata({
   params,
@@ -52,7 +46,16 @@ export async function generateMetadata({
   params: Promise<{ pieceId: string }>;
 }): Promise<Metadata> {
   const { pieceId } = await params;
-  const piece = await getPiece(pieceId);
+  const piece = await prisma.piece.findUnique({
+    where: { id: pieceId },
+    select: {
+      riffs: {
+        where: { submittedAt: { not: null } },
+        select: { riff: { select: { club: { select: { name: true } } } } },
+        take: 1,
+      },
+    },
+  });
   return {
     title: piece?.riffs[0]?.riff?.club?.name ?? "Riff",
     description: "Read this piece on Riff.",
