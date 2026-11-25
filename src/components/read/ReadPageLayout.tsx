@@ -4,7 +4,7 @@ import { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import { formatSubmittedDate } from "@/lib/timeAgo";
 import { useRouter } from "next/navigation";
 import Avatar from "@/components/shared/Avatar";
-import MotionExperienceCTA from "@/components/read/MotionExperienceCTA";
+import dynamic from "next/dynamic";
 import ReadToggle from "./ReadToggle";
 import ReadOnlyEditor, {
   buildAuthorColorMap,
@@ -21,6 +21,12 @@ import BackButton from "@/components/BackButton";
 import { canGoBackTo } from "@/lib/history-back";
 import { CommentAuthor } from "@/types";
 import { ReplyData } from "./ReplyThread";
+
+// The "Riff in motion" experiment shows on a single piece, so its code is
+// only downloaded when that piece renders it, not on every piece page.
+const MotionExperienceCTA = dynamic(
+  () => import("@/components/read/MotionExperienceCTA")
+);
 
 interface CommentData {
   id: string;

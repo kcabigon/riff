@@ -40,11 +40,22 @@ export default async function ClubPage({
 
   const userId = session.user.id;
 
-  // Fetch club (filtered to clubs the user is a member of), user's clubs dropdown,
-  // riffs, and whether the user has any standalone draft (for the Attach
-  // Draft option) all in parallel. If club is null, user is not a member of
-  // this club.
-  const [club, userClubs, riffs, standaloneDraftCount] = await Promise.all([
+  // Everything the page needs, in one round trip: the club (filtered to clubs
+  // the user is a member of; null means not a member), the clubs dropdown,
+  // riffs, whether the user has any standalone draft (for the Attach Draft
+  // option), the viewer's own piece content (for their draft preview), and
+  // the viewer's reads plus all comments on this club's revealed/completed
+  // riffs (read progress, Unread badges, comment counts). Each query filters
+  // by club ID directly so none has to wait for another.
+  const [
+    club,
+    userClubs,
+    riffs,
+    standaloneDraftCount,
+    ownPieceContents,
+    pastReads,
+    pastComments,
+  ] = await Promise.all([
     prisma.club.findFirst({
       where: { id, members: { some: { userId } }, isArchived: false },
       select: {
@@ -113,6 +124,31 @@ export default async function ClubPage({
     prisma.piece.count({
       where: { authorId: userId, riffs: { none: {} }, publishedAt: null },
     }),
+    // Full Tiptap content only for the viewer's own pieces in this club —
+    // pulling every member's essay content just to build the viewer's own
+    // preview would be wasted DB I/O.
+    prisma.piece.findMany({
+      where: { authorId: userId, riffs: { some: { riff: { clubId: id } } } },
+      select: { id: true, currentContent: true },
+    }),
+    prisma.pieceRead.findMany({
+      where: {
+        userId,
+        riff: { clubId: id, status: { in: ["REVEALED", "COMPLETED"] } },
+      },
+      select: { riffId: true, pieceId: true, readAt: true },
+    }),
+    prisma.comment.findMany({
+      where: {
+        riff: { clubId: id, status: { in: ["REVEALED", "COMPLETED"] } },
+      },
+      select: {
+        riffId: true,
+        pieceId: true,
+        createdAt: true,
+        authorId: true,
+      },
+    }),
   ]);
   const hasStandaloneDrafts = standaloneDraftCount > 0;
 
@@ -135,23 +171,6 @@ export default async function ClubPage({
     (m) => m.userId === userId
   )!.joinedAt;
 
-  // Content (full Tiptap JSON) is deliberately not selected on the riffs
-  // query above — pulling every member's full essay content across the
-  // club's entire history just to build the viewer's own preview (below)
-  // was wasted DB I/O on every club page load. Fetch it only for the
-  // viewer's own pieces, batched in one query.
-  const ownPieceIds = riffs.flatMap((r) =>
-    r.pieces
-      .filter((pr) => pr.piece.authorId === userId)
-      .map((pr) => pr.piece.id)
-  );
-  const ownPieceContents =
-    ownPieceIds.length > 0
-      ? await prisma.piece.findMany({
-          where: { id: { in: ownPieceIds } },
-          select: { id: true, currentContent: true },
-        })
-      : [];
   const ownPieceContentById = new Map(
     ownPieceContents.map((p) => [p.id, p.currentContent])
   );
@@ -236,10 +255,8 @@ export default async function ClubPage({
         .filter((p) => p.piece.authorId === userId && p.submittedAt !== null)
         .map((p) => p.piece.id)
     );
-    const reads = await prisma.pieceRead.findMany({
-      where: { userId, riffId: { in: revealedRiffIds } },
-      select: { riffId: true, pieceId: true },
-    });
+    // Already fetched with the past reads above; keep just these riffs.
+    const reads = pastReads.filter((r) => revealedRiffIds.includes(r.riffId));
     readPieceIds = reads.map((r) => r.pieceId);
     const countableReads =
       ownPieceIds.length > 0
@@ -258,45 +275,35 @@ export default async function ClubPage({
   // isFullyReadForUser runs client-side). Same PieceRead(readAt) + Comment
   // compare-and-count mechanic as hasNewCommentsMap in
   // src/app/riffs/[id]/page.tsx, aggregated per-riff instead of per-piece.
-  const pastEligibleRiffIds = [
-    ...completedRiffs,
-    ...pastRevealedRiffs,
-    ...revealedRiffs,
-  ].map((r) => r.id);
-  let newCommentCounts: Record<string, number> = {};
-  // Every comment on the riff, own included — Current Read's metadata line,
-  // matching the riff page's Comments (N) total. Tallied from the same rows.
-  let commentCounts: Record<string, number> = {};
-  if (pastEligibleRiffIds.length > 0) {
-    const [pastReads, pastComments] = await Promise.all([
-      prisma.pieceRead.findMany({
-        where: { userId, riffId: { in: pastEligibleRiffIds } },
-        select: { riffId: true, pieceId: true, readAt: true },
-      }),
-      prisma.comment.findMany({
-        where: { riffId: { in: pastEligibleRiffIds } },
-        select: {
-          riffId: true,
-          pieceId: true,
-          createdAt: true,
-          authorId: true,
-        },
-      }),
-    ]);
-    const readAtByPiece = new Map(pastReads.map((r) => [r.pieceId, r.readAt]));
-    newCommentCounts = pastComments.reduce<Record<string, number>>((acc, c) => {
+  // New comment activity for Past Riffs, across every riff that can end up
+  // there (COMPLETED + pre-join REVEALED + post-join REVEALED, since the final
+  // Past Riffs list is a client-side union and we don't know which post-join
+  // revealed riffs will migrate in until isFullyReadForUser runs client-side).
+  // Same PieceRead(readAt) + Comment compare-and-count mechanic as
+  // hasNewCommentsMap in src/app/riffs/[id]/page.tsx, aggregated per-riff.
+  // pastReads/pastComments cover exactly those riffs (this club's REVEALED
+  // and COMPLETED riffs), fetched in the first round trip.
+  const readAtByPiece = new Map(pastReads.map((r) => [r.pieceId, r.readAt]));
+  const newCommentCounts = pastComments.reduce<Record<string, number>>(
+    (acc, c) => {
       if (isAuthoredBy(c, userId)) return acc;
       const readAt = readAtByPiece.get(c.pieceId);
       if (readAt && c.riffId && c.createdAt > readAt) {
         acc[c.riffId] = (acc[c.riffId] || 0) + 1;
       }
       return acc;
-    }, {});
-    commentCounts = pastComments.reduce<Record<string, number>>((acc, c) => {
+    },
+    {}
+  );
+  // Every comment on the riff, own included — Current Read's metadata line,
+  // matching the riff page's Comments (N) total. Tallied from the same rows.
+  const commentCounts = pastComments.reduce<Record<string, number>>(
+    (acc, c) => {
       if (c.riffId) acc[c.riffId] = (acc[c.riffId] || 0) + 1;
       return acc;
-    }, {});
-  }
+    },
+    {}
+  );
 
   const isAdmin = club.adminId === userId;
 

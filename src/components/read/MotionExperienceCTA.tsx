@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import StrangeCaseExperience from "@/components/read/StrangeCaseExperience";
+import dynamic from "next/dynamic";
+
+// The WebGL/Web Audio experience is large; fetch it only when the reader
+// opens it. Browser-only (WebGL), so it never renders on the server.
+const StrangeCaseExperience = dynamic(
+  () => import("@/components/read/StrangeCaseExperience"),
+  { ssr: false }
+);
 
 /**
  * Entry point for the immersive "riff in motion" experience. Lives under the
