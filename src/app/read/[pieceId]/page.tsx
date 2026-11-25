@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getSession } from "@/lib/auth-utils";
@@ -13,22 +14,45 @@ import ReadPageLayout from "@/components/read/ReadPageLayout";
 const EXPERIMENT_ENABLED = true;
 const EXPERIMENT_PIECE_ID = "cmpbuo77j0001le04v4apbyyd";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ pieceId: string }>;
-}): Promise<Metadata> {
-  const { pieceId } = await params;
-  const piece = await prisma.piece.findUnique({
+// One piece lookup per request, shared by the tab title and the page.
+// React's cache() dedupes the call within a single render.
+const getPiece = cache((pieceId: string) =>
+  prisma.piece.findUnique({
     where: { id: pieceId },
     select: {
+      id: true,
+      title: true,
+      subtitle: true,
+      currentContent: true,
+      coverImage: true,
+      wordCount: true,
+      readLengthMin: true,
+      publishedAt: true,
+      author: {
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          avatarUrl: true,
+        },
+      },
+      // Club name for the tab title
       riffs: {
         where: { submittedAt: { not: null } },
         select: { riff: { select: { club: { select: { name: true } } } } },
         take: 1,
       },
     },
-  });
+  })
+);
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ pieceId: string }>;
+}): Promise<Metadata> {
+  const { pieceId } = await params;
+  const piece = await getPiece(pieceId);
   return {
     title: piece?.riffs[0]?.riff?.club?.name ?? "Riff",
     description: "Read this piece on Riff.",
@@ -64,110 +88,69 @@ export default async function ReadPage({
 
   const userId = session.user.id;
 
-  // Fetch piece with author info
-  const piece = await prisma.piece.findUnique({
-    where: { id: pieceId },
-    select: {
-      id: true,
-      title: true,
-      subtitle: true,
-      currentContent: true,
-      coverImage: true,
-      wordCount: true,
-      readLengthMin: true,
-      publishedAt: true,
-      author: {
-        select: {
-          id: true,
-          name: true,
-          username: true,
-          avatarUrl: true,
-        },
+  // Round 1: the piece, every revealed riff it's in that this reader can
+  // see, and the reader's own info. None depend on each other.
+  const [piece, readableRiffs, currentUser] = await Promise.all([
+    getPiece(pieceId),
+    prisma.pieceRiff.findMany({
+      where: {
+        pieceId,
+        riff: { status: "REVEALED" },
+        OR: [
+          { riff: { club: { members: { some: { userId } } } } },
+          { riff: { participants: { some: { userId } } } },
+          { piece: { authorId: userId } },
+          { piece: { author: friendOfWhere(userId) } },
+        ],
       },
-    },
-  });
+      select: {
+        riffId: true,
+        submittedAt: true,
+        riff: { select: { clubId: true } },
+      },
+    }),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        username: true,
+        avatarUrl: true,
+      },
+    }),
+  ]);
 
   if (!piece) {
     redirect("/");
   }
 
-  // Validate access: piece must be in a REVEALED riff and user must be a club member
-  let validRiffId: string | null = null;
-  let clubId: string | null = null;
+  // Prefer the riff named in the link, otherwise any riff the reader can see.
+  const pieceRiff =
+    (riffId && readableRiffs.find((pr) => pr.riffId === riffId)) ||
+    readableRiffs[0] ||
+    null;
+  const validRiffId: string | null = pieceRiff?.riffId ?? null;
+  const clubId: string | null = pieceRiff?.riff.clubId ?? null;
+  const submittedAt: string | null =
+    pieceRiff?.submittedAt?.toISOString() ?? null;
 
-  let submittedAt: string | null = null;
-
-  if (riffId) {
-    const pieceRiff = await prisma.pieceRiff.findFirst({
-      where: {
-        pieceId,
-        riffId,
-        riff: { status: "REVEALED" },
-        OR: [
-          { riff: { club: { members: { some: { userId } } } } },
-          { riff: { participants: { some: { userId } } } },
-          { piece: { authorId: userId } },
-          { piece: { author: friendOfWhere(userId) } },
-        ],
-      },
-      select: {
-        riffId: true,
-        submittedAt: true,
-        riff: { select: { clubId: true } },
-      },
-    });
-
-    if (pieceRiff) {
-      validRiffId = pieceRiff.riffId;
-      clubId = pieceRiff.riff.clubId;
-      submittedAt = pieceRiff.submittedAt?.toISOString() ?? null;
-    }
-  }
-
-  if (!validRiffId) {
-    const pieceRiff = await prisma.pieceRiff.findFirst({
-      where: {
-        pieceId,
-        riff: { status: "REVEALED" },
-        OR: [
-          { riff: { club: { members: { some: { userId } } } } },
-          { riff: { participants: { some: { userId } } } },
-          { piece: { authorId: userId } },
-          { piece: { author: friendOfWhere(userId) } },
-        ],
-      },
-      select: {
-        riffId: true,
-        submittedAt: true,
-        riff: { select: { clubId: true } },
-      },
-    });
-
-    if (pieceRiff) {
-      validRiffId = pieceRiff.riffId;
-      clubId = pieceRiff.riff.clubId;
-      submittedAt = pieceRiff.submittedAt?.toISOString() ?? null;
-    }
-  }
-
-  // Standalone (riff-less) published piece — no riff/club context at all.
-  // Access: the author, or a friend of the author (same relation that gates
-  // visibility on the profile page).
-  const isStandalonePublished =
-    !validRiffId &&
-    piece.publishedAt !== null &&
-    (userId === piece.author.id || (await isFriendOf(userId, piece.author.id)));
-
-  if (!validRiffId && !isStandalonePublished) {
+  // A riff-less published piece is readable by its author or the author's
+  // friends (same relation that gates the profile page). Anything else
+  // without a readable riff goes home.
+  const needsFriendCheck =
+    !validRiffId && piece.publishedAt !== null && userId !== piece.author.id;
+  if (!validRiffId && piece.publishedAt === null) {
     redirect("/");
   }
 
-  // Check if already read, fetch comments, sibling pieces (for prev/next
-  // navigation), and the current user's info (for comment compose) — none
-  // of these four depend on each other, so they run as one round trip
-  // instead of four sequential ones.
-  const [existingRead, rawComments, siblingPieces, currentUser] =
+  // Round 2: comments, read state and prev/next siblings, plus the friend
+  // check for a riff-less piece, all at once. Nothing is shown until the
+  // friend check passes.
+  const [isFriend, existingRead, rawComments, siblingPieces] =
     await Promise.all([
+      needsFriendCheck
+        ? isFriendOf(userId, piece.author.id)
+        : Promise.resolve(true),
       // Skipped for riff-less pieces, there's no reveal progress to track against.
       validRiffId
         ? prisma.pieceRead.findUnique({
@@ -215,16 +198,11 @@ export default async function ReadPage({
             orderBy: { submittedAt: "asc" },
           })
         : Promise.resolve([]),
-      prisma.user.findUnique({
-        where: { id: userId },
-        select: {
-          id: true,
-          name: true,
-          username: true,
-          avatarUrl: true,
-        },
-      }),
     ]);
+
+  if (!isFriend) {
+    redirect("/");
+  }
 
   // Serialize for client boundary
   const initialComments = rawComments.map((c) => ({
